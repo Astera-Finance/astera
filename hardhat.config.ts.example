@@ -1,0 +1,96 @@
+import '@nomicfoundation/hardhat-toolbox';
+import 'dotenv/config';
+import '@openzeppelin/hardhat-upgrades';
+import { HardhatUserConfig } from 'hardhat/types';
+const fs = require('fs');
+
+const PRIVATE_KEY = process.env.DEPLOYER_PRIVATE_KEY;
+const FTMSCAN_KEY = process.env.FTMSCAN_API_KEY;
+
+const config: HardhatUserConfig = {
+  solidity: {
+    compilers: [
+      {
+        version: '0.7.5',
+        settings: {
+          optimizer: {
+            enabled: true,
+            runs: 200,
+          },
+        },
+      },
+      {
+        version: '0.6.12',
+        settings: {
+          optimizer: {
+            enabled: true,
+            runs: 200,
+          },
+        },
+      }
+    ],
+  },
+  networks: {
+    fantom: {
+      url: `https://rpc.ankr.com/fantom`,
+      accounts: [`0x${PRIVATE_KEY}`],
+    },
+    optimism: {
+      url: `https://rpc.ankr.com/optimism`,
+      accounts: [`0x${PRIVATE_KEY}`],
+    },
+    metis: {
+      url: `https://andromeda.metis.io/?owner=1088`,
+      accounts: [`0x${PRIVATE_KEY}`],
+    },
+    arbitrum: {
+      url: `https://rpc.ankr.com/arbitrum`,
+      accounts: [`0x${PRIVATE_KEY}`],
+    },
+    ethereum: {
+      url: `https://rpc.ankr.com/eth`,
+      accounts: [`0x${PRIVATE_KEY}`],
+    },
+    binance: {
+      url: `https://rpc.ankr.com/bsc`,
+      accounts: [`0x${PRIVATE_KEY}`],
+    },
+    polygon: {
+      url: `https://rpc.ankr.com/polygon`,
+      accounts: [`0x${PRIVATE_KEY}`],
+      gasPrice: 250000000000,
+    }
+  },
+  etherscan: {
+    apiKey: {
+      opera: 'ABC123ABC123ABC123ABC123ABC123ABC1',
+      optimisticEthereum: 'ABC123ABC123ABC123ABC123ABC123ABC1',
+      andromeda: 'api-key',
+      arbitrumOne: 'ABC123ABC123ABC123ABC123ABC123ABC1',
+      bsc: 'ABC123ABC123ABC123ABC123ABC123ABC1',
+      mainnet: 'ABC123ABC123ABC123ABC123ABC123ABC1',
+      polygon: 'ABC123ABC123ABC123ABC123ABC123ABC1'
+    },
+    customChains: [
+      {
+        network: 'andromeda',
+        chainId: 1088,
+        urls: {
+          apiURL: 'https://andromeda-explorer.metis.io/api',
+          browserURL: 'https://andromeda-explorer.metis.io/'
+        }
+      }
+    ]
+  },
+  mocha: {
+    timeout: 1200000,
+  },
+  paths: {
+    sources: "./contracts",
+    tests: "./tests",
+    cache: "./cache",
+    artifacts: "./artifacts",
+  },
+};
+
+export default config;

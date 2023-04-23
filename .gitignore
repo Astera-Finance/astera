@@ -1,0 +1,19 @@
+node_modules
+.env
+.openzeppelin
+coverage
+coverage.json
+typechain
+typechain-types
+inspo
+package-lock.json
+providers.json
+
+#Hardhat files
+hardhat.config.ts
+cache
+artifacts
+
+#Forge files
+forge-cache
+out
