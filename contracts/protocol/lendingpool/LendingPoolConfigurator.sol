@@ -430,6 +430,16 @@ contract LendingPoolConfigurator is VersionedInitializable, ILendingPoolConfigur
     emit ReserveFactorChanged(asset, reserveFactor);
   }
 
+  function setReserveIsolationMode(address asset, bool isolated) external onlyPoolAdmin {
+    DataTypes.ReserveConfigurationMap memory currentConfig = pool.getConfiguration(asset);
+
+    currentConfig.setIsolationMode(isolated);
+
+    pool.setConfiguration(asset, currentConfig.data);
+
+    emit ReserveIsolationModeChanged(asset, isolated);
+  }
+
   /**
    * @dev Sets the interest rate strategy of a reserve
    * @param asset The address of the underlying asset of the reserve

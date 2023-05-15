@@ -10,15 +10,16 @@ import {DataTypes} from '../types/DataTypes.sol';
  * @notice Implements the bitmap logic to handle the reserve configuration
  */
 library ReserveConfiguration {
-  uint256 constant LTV_MASK =                   0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF0000; // prettier-ignore
-  uint256 constant LIQUIDATION_THRESHOLD_MASK = 0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF0000FFFF; // prettier-ignore
-  uint256 constant LIQUIDATION_BONUS_MASK =     0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF0000FFFFFFFF; // prettier-ignore
-  uint256 constant DECIMALS_MASK =              0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF00FFFFFFFFFFFF; // prettier-ignore
-  uint256 constant ACTIVE_MASK =                0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFEFFFFFFFFFFFFFF; // prettier-ignore
-  uint256 constant FROZEN_MASK =                0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFDFFFFFFFFFFFFFF; // prettier-ignore
-  uint256 constant BORROWING_MASK =             0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFBFFFFFFFFFFFFFF; // prettier-ignore
-  uint256 constant STABLE_BORROWING_MASK =      0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF7FFFFFFFFFFFFFF; // prettier-ignore
-  uint256 constant RESERVE_FACTOR_MASK =        0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF0000FFFFFFFFFFFFFFFF; // prettier-ignore
+  uint256 constant LTV_MASK =                            0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF0000; // prettier-ignore
+  uint256 constant LIQUIDATION_THRESHOLD_MASK =          0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF0000FFFF; // prettier-ignore
+  uint256 constant LIQUIDATION_BONUS_MASK =              0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF0000FFFFFFFF; // prettier-ignore
+  uint256 constant DECIMALS_MASK =                       0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF00FFFFFFFFFFFF; // prettier-ignore
+  uint256 constant ACTIVE_MASK =                         0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFEFFFFFFFFFFFFFF; // prettier-ignore
+  uint256 constant FROZEN_MASK =                         0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFDFFFFFFFFFFFFFF; // prettier-ignore
+  uint256 constant BORROWING_MASK =                      0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFBFFFFFFFFFFFFFF; // prettier-ignore
+  uint256 constant STABLE_BORROWING_MASK =               0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF7FFFFFFFFFFFFFF; // prettier-ignore
+  uint256 constant RESERVE_FACTOR_MASK =                 0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF0000FFFFFFFFFFFFFFFF; // prettier-ignore
+  uint256 constant ISOLATION_MODE_MASK =                 0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFEFFFFFFFFFFFFFFFFFFFF; // prettier-ignore
 
   /// @dev For the LTV, the start bit is 0 (up to 15), hence no bitshifting is needed
   uint256 constant LIQUIDATION_THRESHOLD_START_BIT_POSITION = 16;
@@ -29,6 +30,7 @@ library ReserveConfiguration {
   uint256 constant BORROWING_ENABLED_START_BIT_POSITION = 58;
   uint256 constant STABLE_BORROWING_ENABLED_START_BIT_POSITION = 59;
   uint256 constant RESERVE_FACTOR_START_BIT_POSITION = 64;
+  uint256 constant ISOLATION_MODE_START_BIT_POSITION = 80;
 
   uint256 constant MAX_VALID_LTV = 65535;
   uint256 constant MAX_VALID_LIQUIDATION_THRESHOLD = 65535;
@@ -262,6 +264,41 @@ library ReserveConfiguration {
     returns (uint256)
   {
     return (self.data & ~RESERVE_FACTOR_MASK) >> RESERVE_FACTOR_START_BIT_POSITION;
+  }
+
+  /**
+   * @notice Sets the borrowable in isolation flag for the reserve.
+   * @dev When this flag is set to true, the asset will be borrowable against isolated collaterals and the borrowed
+   * amount will be accumulated in the isolated collateral's total debt exposure.
+   * @dev Only assets of the same family (eg USD stablecoins) should be borrowable in isolation mode to keep
+   * consistency in the debt ceiling calculations.
+   * @param self The reserve configuration
+   * @param borrowable True if the asset is borrowable
+   */
+  function setIsolationMode(
+    DataTypes.ReserveConfigurationMap memory self,
+    bool borrowable
+  ) internal pure {
+    self.data =
+      (self.data & ISOLATION_MODE_MASK) |
+      (uint256(enabled ? 1 : 0) << ISOLATION_MODE_START_BIT_POSITION);
+  }
+
+  /**
+   * @notice Gets the borrowable in isolation flag for the reserve.
+   * @dev If the returned flag is true, the asset is borrowable against isolated collateral. Assets borrowed with
+   * isolated collateral is accounted for in the isolated collateral's total debt exposure.
+   * @dev Only assets of the same family (eg USD stablecoins) should be borrowable in isolation mode to keep
+   * consistency in the debt ceiling calculations.
+   * @param self The reserve configuration
+   * @return The borrowable in isolation flag
+   */
+  function getIsolationMode(DataTypes.ReserveConfigurationMap storage self)
+    internal
+    view
+    returns (bool)
+  {
+    return (self.data & ~ISOLATION_MODE_MASK) != 0;
   }
 
   /**

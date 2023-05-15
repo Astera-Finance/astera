@@ -232,6 +232,90 @@ library GenericLogic {
     );
   }
 
+  function calculateUserAccountDataIsolated(
+    address user,
+    mapping(address => DataTypes.ReserveData) storage reservesData,
+    DataTypes.UserConfigurationMap memory userConfig,
+    mapping(uint256 => address) storage reserves,
+    uint256 reservesCount,
+    address oracle
+  )
+  internal
+  view
+  returns (
+    uint256,
+    uint256,
+    uint256,
+    uint256,
+    uint256
+  ) {
+    CalculateUserAccountDataVars memory vars;
+
+    if (userConfig.isEmpty()) {
+      return (0, 0, 0, 0, uint256(-1));
+    }
+    for (vars.i = 0; vars.i < reservesCount; vars.i++) {
+      vars.currentReserveAddress = reserves[vars.i];
+      DataTypes.ReserveData storage currentReserve = reservesData[vars.currentReserveAddress];
+      bool isIsolatedReserve = currentReserve.configuration.getIsolationMode();
+      if (isIsolatedReserve) {
+        // basically get same data as user account collateral, but only calc'ing with isolated ones
+        if (!userConfig.isUsingAsCollateralOrBorrowing(vars.i)) {
+          continue;
+        }
+        (vars.ltv, vars.liquidationThreshold, , vars.decimals, ) = currentReserve
+          .configuration
+          .getParams();
+        vars.tokenUnit = 10**vars.decimals;
+        vars.reserveUnitPrice = IPriceOracleGetter(oracle).getAssetPrice(vars.currentReserveAddress);
+
+        if (vars.liquidationThreshold != 0 && userConfig.isUsingAsCollateral(vars.i)) {
+          vars.compoundedLiquidityBalance = IERC20(currentReserve.aTokenAddress).balanceOf(user);
+
+          uint256 liquidityBalanceETH = vars.reserveUnitPrice.mul(vars.compoundedLiquidityBalance).div(vars.tokenUnit);
+
+          vars.totalCollateralInETH = vars.totalCollateralInETH.add(liquidityBalanceETH);
+
+          vars.avgLtv = vars.avgLtv.add(liquidityBalanceETH.mul(vars.ltv));
+          vars.avgLiquidationThreshold = vars.avgLiquidationThreshold.add(
+            liquidityBalanceETH.mul(vars.liquidationThreshold)
+          );
+        }
+
+        if (userConfig.isBorrowing(vars.i)) {
+          vars.compoundedBorrowBalance = IERC20(currentReserve.stableDebtTokenAddress).balanceOf(
+            user
+          );
+          vars.compoundedBorrowBalance = vars.compoundedBorrowBalance.add(
+            IERC20(currentReserve.variableDebtTokenAddress).balanceOf(user)
+          );
+
+          vars.totalDebtInETH = vars.totalDebtInETH.add(
+            vars.reserveUnitPrice.mul(vars.compoundedBorrowBalance).div(vars.tokenUnit)
+          );
+        }
+      }
+    }
+
+    vars.avgLtv = vars.totalCollateralInETH > 0 ? vars.avgLtv.div(vars.totalCollateralInETH) : 0;
+    vars.avgLiquidationThreshold = vars.totalCollateralInETH > 0
+      ? vars.avgLiquidationThreshold.div(vars.totalCollateralInETH)
+      : 0;
+
+    vars.healthFactor = calculateHealthFactorFromBalances(
+      vars.totalCollateralInETH,
+      vars.totalDebtInETH,
+      vars.avgLiquidationThreshold
+    );
+    return (
+      vars.totalCollateralInETH,
+      vars.totalDebtInETH,
+      vars.avgLtv,
+      vars.avgLiquidationThreshold,
+      vars.healthFactor
+    );
+  }
+
   /**
    * @dev Calculates the health factor from the corresponding balances
    * @param totalCollateralInETH The total collateral in ETH
