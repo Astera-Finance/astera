@@ -155,38 +155,36 @@ library ValidationLogic {
       Errors.VL_INVALID_INTEREST_RATE_MODE_SELECTED
     );
 
-    if (reserve.configuration.getIsolationMode()) {
-      (
-        vars.userCollateralBalanceETHIsolated,
-        vars.userBorrowBalanceETHIsolated,
-        vars.currentLtvIsolated,
-        vars.currentLiquidationThresholdIsolated,
-        vars.healthFactorIsolated
-      ) = GenericLogic.calculateUserAccountDataIsolated(
-        userAddress,
-        reservesData,
-        userConfig,
-        reserves,
-        reservesCount,
-        oracle
-      );
+    (
+      vars.userCollateralBalanceETHIsolated,
+      vars.userBorrowBalanceETHIsolated,
+      vars.currentLtvIsolated,
+      vars.currentLiquidationThresholdIsolated,
+      vars.healthFactorIsolated
+    ) = GenericLogic.calculateUserAccountDataIsolated(
+      userAddress,
+      reservesData,
+      userConfig,
+      reserves,
+      reservesCount,
+      oracle
+    );
 
-      require(vars.userCollateralBalanceETHIsolated > 0, Errors.VL_COLLATERAL_BALANCE_IS_0);
-      require(
-        vars.healthFactorIsolated > GenericLogic.HEALTH_FACTOR_LIQUIDATION_THRESHOLD,
-        Errors.VL_HEALTH_FACTOR_LOWER_THAN_LIQUIDATION_THRESHOLD
-      );
+    require(vars.userCollateralBalanceETHIsolated > 0, Errors.VL_COLLATERAL_BALANCE_IS_0);
+    require(
+      vars.healthFactorIsolated > GenericLogic.HEALTH_FACTOR_LIQUIDATION_THRESHOLD,
+      Errors.VL_HEALTH_FACTOR_LOWER_THAN_LIQUIDATION_THRESHOLD
+    );
 
-      //add the current already borrowed amount to the amount requested to calculate the total collateral needed.
-      vars.amountOfCollateralNeededETHIsolated = vars.userBorrowBalanceETHIsolated.add(amountInETH).percentDiv(
-        vars.currentLtv
-      ); //LTV is calculated in percentage
+    //add the current already borrowed amount to the amount requested to calculate the total collateral needed.
+    vars.amountOfCollateralNeededETHIsolated = vars.userBorrowBalanceETHIsolated.add(amountInETH).percentDiv(
+      vars.currentLtv
+    ); //LTV is calculated in percentage
 
-      require(
-        vars.amountOfCollateralNeededETHIsolated <= vars.userCollateralBalanceETHIsolated,
-        Errors.VL_COLLATERAL_CANNOT_COVER_NEW_BORROW
-      );
-    }
+    require(
+      vars.amountOfCollateralNeededETHIsolated <= vars.userCollateralBalanceETHIsolated,
+      Errors.VL_COLLATERAL_CANNOT_COVER_NEW_BORROW
+    );
 
     (
       vars.userCollateralBalanceETH,
