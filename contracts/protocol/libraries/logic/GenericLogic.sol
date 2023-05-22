@@ -130,6 +130,7 @@ library GenericLogic {
     uint256 avgLtv;
     uint256 avgLiquidationThreshold;
     uint256 reservesLength;
+    uint256 userVolatility;
     bool healthFactorBelowThreshold;
     address currentReserveAddress;
     bool usageAsCollateralEnabled;
@@ -232,7 +233,18 @@ library GenericLogic {
     );
   }
 
-  function calculateUserAccountDataIsolated(
+  /**
+   * @dev Calculates the user data across the reserves.
+   * this includes the total liquidity/collateral/borrow balances in ETH,
+   * the average Loan To Value, the average Liquidation Ratio, and the Health factor.
+   * @param user The address of the user
+   * @param reservesData Data of all the reserves
+   * @param userConfig The configuration of the user
+   * @param reserves The list of the available reserves
+   * @param oracle The price oracle address
+   * @return The total collateral and total debt of the user in ETH, the avg ltv, liquidation threshold and the HF
+   **/
+  function calculateUserAccountDataVolatile(
     address user,
     mapping(address => DataTypes.ReserveData) storage reservesData,
     DataTypes.UserConfigurationMap memory userConfig,
@@ -254,46 +266,67 @@ library GenericLogic {
     if (userConfig.isEmpty()) {
       return (0, 0, 0, 0, uint256(-1));
     }
+
+    // Get the user's volatility tier
     for (vars.i = 0; vars.i < reservesCount; vars.i++) {
       vars.currentReserveAddress = reserves[vars.i];
       DataTypes.ReserveData storage currentReserve = reservesData[vars.currentReserveAddress];
-      bool isIsolatedReserve = currentReserve.configuration.getIsolationMode();
-      if (isIsolatedReserve) {
-        // basically get same data as user account collateral, but only calc'ing with isolated ones
-        if (!userConfig.isUsingAsCollateralOrBorrowing(vars.i)) {
-          continue;
-        }
-        (vars.ltv, vars.liquidationThreshold, , vars.decimals, ) = currentReserve
-          .configuration
-          .getParams();
-        vars.tokenUnit = 10**vars.decimals;
-        vars.reserveUnitPrice = IPriceOracleGetter(oracle).getAssetPrice(vars.currentReserveAddress);
 
-        if (vars.liquidationThreshold != 0 && userConfig.isUsingAsCollateral(vars.i)) {
-          vars.compoundedLiquidityBalance = IERC20(currentReserve.aTokenAddress).balanceOf(user);
+      if (!userConfig.isUsingAsCollateralOrBorrowing(vars.i)) {
+        continue;
+      }
 
-          uint256 liquidityBalanceETH = vars.reserveUnitPrice.mul(vars.compoundedLiquidityBalance).div(vars.tokenUnit);
+      if (vars.userVolatility < currentReserve.configuration.getVolatilityTier()) {
+        vars.userVolatility = currentReserve.configuration.getVolatilityTier();
+      }
+    }
 
-          vars.totalCollateralInETH = vars.totalCollateralInETH.add(liquidityBalanceETH);
+    for (vars.i = 0; vars.i < reservesCount; vars.i++) {
+      vars.currentReserveAddress = reserves[vars.i];
+      DataTypes.ReserveData storage currentReserve = reservesData[vars.currentReserveAddress];
+      // basically get same data as user account collateral, but with different LTVs being used depending on user's most volatile asset
+      if (!userConfig.isUsingAsCollateralOrBorrowing(vars.i)) {
+        continue;
+      }
+      (, vars.liquidationThreshold, , vars.decimals, ) = currentReserve
+        .configuration
+        .getParams();
 
-          vars.avgLtv = vars.avgLtv.add(liquidityBalanceETH.mul(vars.ltv));
-          vars.avgLiquidationThreshold = vars.avgLiquidationThreshold.add(
-            liquidityBalanceETH.mul(vars.liquidationThreshold)
-          );
-        }
+      if (vars.userVolatility == 0) {
+        vars.ltv = currentReserve.configuration.getLowVolatilityLtv();
+      } else if (vars.userVolatility == 1) {
+        vars.ltv = currentReserve.configuration.getMediumVolatilityLtv();
+      } else if (vars.userVolatility == 2) {
+        vars.ltv = currentReserve.configuration.getHighVolatilityLtv();
+      }
 
-        if (userConfig.isBorrowing(vars.i)) {
-          vars.compoundedBorrowBalance = IERC20(currentReserve.stableDebtTokenAddress).balanceOf(
-            user
-          );
-          vars.compoundedBorrowBalance = vars.compoundedBorrowBalance.add(
-            IERC20(currentReserve.variableDebtTokenAddress).balanceOf(user)
-          );
+      vars.tokenUnit = 10**vars.decimals;
+      vars.reserveUnitPrice = IPriceOracleGetter(oracle).getAssetPrice(vars.currentReserveAddress);
 
-          vars.totalDebtInETH = vars.totalDebtInETH.add(
-            vars.reserveUnitPrice.mul(vars.compoundedBorrowBalance).div(vars.tokenUnit)
-          );
-        }
+      if (vars.liquidationThreshold != 0 && userConfig.isUsingAsCollateral(vars.i)) {
+        vars.compoundedLiquidityBalance = IERC20(currentReserve.aTokenAddress).balanceOf(user);
+
+        uint256 liquidityBalanceETH = vars.reserveUnitPrice.mul(vars.compoundedLiquidityBalance).div(vars.tokenUnit);
+
+        vars.totalCollateralInETH = vars.totalCollateralInETH.add(liquidityBalanceETH);
+
+        vars.avgLtv = vars.avgLtv.add(liquidityBalanceETH.mul(vars.ltv));
+        vars.avgLiquidationThreshold = vars.avgLiquidationThreshold.add(
+          liquidityBalanceETH.mul(vars.liquidationThreshold)
+        );
+      }
+
+      if (userConfig.isBorrowing(vars.i)) {
+        vars.compoundedBorrowBalance = IERC20(currentReserve.stableDebtTokenAddress).balanceOf(
+          user
+        );
+        vars.compoundedBorrowBalance = vars.compoundedBorrowBalance.add(
+          IERC20(currentReserve.variableDebtTokenAddress).balanceOf(user)
+        );
+
+        vars.totalDebtInETH = vars.totalDebtInETH.add(
+          vars.reserveUnitPrice.mul(vars.compoundedBorrowBalance).div(vars.tokenUnit)
+        );
       }
     }
 
