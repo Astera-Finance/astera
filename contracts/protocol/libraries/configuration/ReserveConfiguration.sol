@@ -19,7 +19,10 @@ library ReserveConfiguration {
   uint256 constant BORROWING_MASK =                      0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFBFFFFFFFFFFFFFF; // prettier-ignore
   uint256 constant STABLE_BORROWING_MASK =               0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF7FFFFFFFFFFFFFF; // prettier-ignore
   uint256 constant RESERVE_FACTOR_MASK =                 0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF0000FFFFFFFFFFFFFFFF; // prettier-ignore
-  uint256 constant ISOLATION_MODE_MASK =                 0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFEFFFFFFFFFFFFFFFFFFFF; // prettier-ignore
+  uint256 constant LOW_VOLATILITY_LTV_MASK =             0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF0000FFFFFFFFFFFFFFFFFFFF; // prettier-ignore
+  uint256 constant MEDIUM_VOLATILITY_LTV_MASK =          0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF0000FFFFFFFFFFFFFFFFFFFFFFFF; // prettier-ignore
+  uint256 constant HIGH_VOLATILITY_LTV_MASK =            0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF0000FFFFFFFFFFFFFFFFFFFFFFFFFFFF; // prettier-ignore
+  uint256 constant VOLATILITY_TIER_MASK =                0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFDFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF; // prettier-ignore
 
   /// @dev For the LTV, the start bit is 0 (up to 15), hence no bitshifting is needed
   uint256 constant LIQUIDATION_THRESHOLD_START_BIT_POSITION = 16;
@@ -30,13 +33,17 @@ library ReserveConfiguration {
   uint256 constant BORROWING_ENABLED_START_BIT_POSITION = 58;
   uint256 constant STABLE_BORROWING_ENABLED_START_BIT_POSITION = 59;
   uint256 constant RESERVE_FACTOR_START_BIT_POSITION = 64;
-  uint256 constant ISOLATION_MODE_START_BIT_POSITION = 80;
+  uint256 constant LOW_VOLATILITY_LTV_START_BIT_POSITION = 80;
+  uint256 constant MEDIUM_VOLATILITY_LTV_START_BIT_POSITION = 96;
+  uint256 constant HIGH_VOLATILITY_LTV_START_BIT_POSITION = 112;
+  uint256 constant VOLATILITY_TIER_START_BIT_POSITION = 127;
 
   uint256 constant MAX_VALID_LTV = 65535;
   uint256 constant MAX_VALID_LIQUIDATION_THRESHOLD = 65535;
   uint256 constant MAX_VALID_LIQUIDATION_BONUS = 65535;
   uint256 constant MAX_VALID_DECIMALS = 255;
   uint256 constant MAX_VALID_RESERVE_FACTOR = 65535;
+  uint256 constant MAX_VALID_VOLATILITY_TIER = 4;
 
   /**
    * @dev Sets the Loan to Value of the reserve
@@ -266,6 +273,36 @@ library ReserveConfiguration {
     return (self.data & ~RESERVE_FACTOR_MASK) >> RESERVE_FACTOR_START_BIT_POSITION;
   }
 
+    function setLowVolatilityLtv(DataTypes.ReserveConfigurationMap memory self, uint256 lowVolatilityLtv) internal pure {
+    require(lowVolatilityLtv <= MAX_VALID_LTV, Errors.RC_INVALID_LTV);
+
+    self.data = (self.data & LOW_VOLATILITY_LTV_MASK) | lowVolatilityLtv;
+  }
+
+  function getLowVolatilityLtv(DataTypes.ReserveConfigurationMap storage self) internal view returns (uint256) {
+    return (self.data & ~LOW_VOLATILITY_LTV_MASK) >> LOW_VOLATILITY_LTV_START_BIT_POSITION;
+  }
+
+  function setMediumVolatilityLtv(DataTypes.ReserveConfigurationMap memory self, uint256 mediumVolatilityLtv) internal pure {
+    require(mediumVolatilityLtv <= MAX_VALID_LTV, Errors.RC_INVALID_LTV);
+
+    self.data = (self.data & MEDIUM_VOLATILITY_LTV_MASK) | mediumVolatilityLtv;
+  }
+
+  function getMediumVolatilityLtv(DataTypes.ReserveConfigurationMap storage self) internal view returns (uint256) {
+    return (self.data & ~MEDIUM_VOLATILITY_LTV_MASK) >> MEDIUM_VOLATILITY_LTV_START_BIT_POSITION;
+  }
+
+  function setHighVolatilityLtv(DataTypes.ReserveConfigurationMap memory self, uint256 highVolatilityLtv) internal pure {
+    require(highVolatilityLtv <= MAX_VALID_LTV, Errors.RC_INVALID_LTV);
+
+    self.data = (self.data & HIGH_VOLATILITY_LTV_MASK) | highVolatilityLtv;
+  }
+
+  function getHighVolatilityLtv(DataTypes.ReserveConfigurationMap storage self) internal view returns (uint256) {
+    return (self.data & ~HIGH_VOLATILITY_LTV_MASK) >> HIGH_VOLATILITY_LTV_START_BIT_POSITION;
+  }
+
   /**
    * @notice Sets the borrowable in isolation flag for the reserve.
    * @dev When this flag is set to true, the asset will be borrowable against isolated collaterals and the borrowed
@@ -275,13 +312,14 @@ library ReserveConfiguration {
    * @param self The reserve configuration
    * @param borrowable True if the asset is borrowable
    */
-  function setIsolationMode(
+  function setVolatilityTier(
     DataTypes.ReserveConfigurationMap memory self,
-    bool borrowable
+    uint256 volatilityTier
   ) internal pure {
+    require (volatilityTier <= MAX_VALID_VOLATILITY_TIER, Errors.RC_INVALID_VOLATILITY_TIER);
     self.data =
-      (self.data & ISOLATION_MODE_MASK) |
-      (uint256(enabled ? 1 : 0) << ISOLATION_MODE_START_BIT_POSITION);
+      (self.data & VOLATILITY_TIER_MASK) |
+      (volatilityTier << VOLATILITY_TIER_START_BIT_POSITION);
   }
 
   /**
@@ -293,12 +331,12 @@ library ReserveConfiguration {
    * @param self The reserve configuration
    * @return The borrowable in isolation flag
    */
-  function getIsolationMode(DataTypes.ReserveConfigurationMap storage self)
+  function getVolatilityTier(DataTypes.ReserveConfigurationMap storage self)
     internal
     view
-    returns (bool)
+    returns (uint256)
   {
-    return (self.data & ~ISOLATION_MODE_MASK) != 0;
+    return (self.data & ~VOLATILITY_TIER_MASK) >> VOLATILITY_TIER_START_BIT_POSITION;
   }
 
   /**
