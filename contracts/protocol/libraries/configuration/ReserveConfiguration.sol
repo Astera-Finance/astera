@@ -304,13 +304,10 @@ library ReserveConfiguration {
   }
 
   /**
-   * @notice Sets the borrowable in isolation flag for the reserve.
-   * @dev When this flag is set to true, the asset will be borrowable against isolated collaterals and the borrowed
-   * amount will be accumulated in the isolated collateral's total debt exposure.
-   * @dev Only assets of the same family (eg USD stablecoins) should be borrowable in isolation mode to keep
-   * consistency in the debt ceiling calculations.
+   * @notice Sets the volatility tier of this reserve
+   * @dev The higher the tier, the lower the user will be able to borrow accross all his assets
    * @param self The reserve configuration
-   * @param borrowable True if the asset is borrowable
+   * @param volatilityTier The rank of the reserve
    */
   function setVolatilityTier(
     DataTypes.ReserveConfigurationMap memory self,
@@ -323,13 +320,10 @@ library ReserveConfiguration {
   }
 
   /**
-   * @notice Gets the borrowable in isolation flag for the reserve.
-   * @dev If the returned flag is true, the asset is borrowable against isolated collateral. Assets borrowed with
-   * isolated collateral is accounted for in the isolated collateral's total debt exposure.
-   * @dev Only assets of the same family (eg USD stablecoins) should be borrowable in isolation mode to keep
-   * consistency in the debt ceiling calculations.
+   * @notice Gets the volatility tier of the reserve
+   * @dev The higher the tier, the lower the user will be able to borrow accross all his assets
    * @param self The reserve configuration
-   * @return The borrowable in isolation flag
+   * @return volatilityTier The reserve's volatility tier
    */
   function getVolatilityTier(DataTypes.ReserveConfigurationMap storage self)
     internal

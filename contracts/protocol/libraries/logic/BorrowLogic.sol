@@ -6,7 +6,6 @@ import {SafeERC20} from '../../../dependencies/openzeppelin/contracts/SafeERC20.
 import {IStableDebtToken} from '../../../interfaces/IStableDebtToken.sol';
 import {IVariableDebtToken} from '../../../interfaces/IVariableDebtToken.sol';
 import {IAToken} from '../../../interfaces/IAToken.sol';
-import {ILendingPool} from '../../interfaces/ILendingPool';
 import {ReserveConfiguration} from '../configuration/ReserveConfiguration.sol';
 import {UserConfiguration} from '../configuration/UserConfiguration.sol';
 import {Errors} from '../helpers/Errors.sol';
@@ -30,6 +29,10 @@ import {ReserveLogic} from './ReserveLogic.sol';
     // Borrowing from a regularAsset means that the user's overall balance dervide from all reserves is what validates the borrow
     // Isolated Reserves are basically a subset of the reserves
     // More params can be added to the reserve config if we want to play around ltvs, liquidation thresholds...
+    //
+    // Go deeper with the reserves
+    // introducing: Risk Tiers !!! (start with 3 of those)
+    //
     //
     // Thoughts: When borrowing (both regular and isolated), should we still look at the other 'type', to check that we are not breaking a threshold? Probably, right?
     // So, now matter which borrow is undergoing, we end up looking at all the data
