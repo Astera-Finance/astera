@@ -430,14 +430,44 @@ contract LendingPoolConfigurator is VersionedInitializable, ILendingPoolConfigur
     emit ReserveFactorChanged(asset, reserveFactor);
   }
 
-  function setReserveIsolationMode(address asset, bool isolated) external onlyPoolAdmin {
+  function setReserveVolatilityTier(address asset, uint256 tier) external onlyPoolAdmin {
     DataTypes.ReserveConfigurationMap memory currentConfig = pool.getConfiguration(asset);
 
-    currentConfig.setIsolationMode(isolated);
+    currentConfig.setVolatilityTier(tier);
 
     pool.setConfiguration(asset, currentConfig.data);
 
-    emit ReserveIsolationModeChanged(asset, isolated);
+    emit ReserveVolatilityTierChanged(asset, tier);
+  }
+
+    function setLowVolatilityLtv(address asset, uint256 ltv) external onlyPoolAdmin {
+    DataTypes.ReserveConfigurationMap memory currentConfig = pool.getConfiguration(asset);
+
+    currentConfig.setLowVolatilityLtv(ltv);
+
+    pool.setConfiguration(asset, currentConfig.data);
+
+    emit ReserveLowVolatilityLtvChanged(asset, ltv);
+  }
+
+  function setMediumVolatilityLtv(address asset, uint256 ltv) external onlyPoolAdmin {
+    DataTypes.ReserveConfigurationMap memory currentConfig = pool.getConfiguration(asset);
+
+    currentConfig.setMediumVolatilityLtv(ltv);
+
+    pool.setConfiguration(asset, currentConfig.data);
+
+    emit ReserveMediumVolatilityLtvChanged(asset, ltv);
+  }
+
+  function setHighVolatilityLtv(address asset, uint256 ltv) external onlyPoolAdmin { // Store update params in array
+    DataTypes.ReserveConfigurationMap memory currentConfig = pool.getConfiguration(asset);
+
+    currentConfig.setHighVolatilityLtv(ltv);
+
+    pool.setConfiguration(asset, currentConfig.data);
+
+    emit ReserveHighVolatilityLtvChanged(asset, ltv);
   }
 
   /**

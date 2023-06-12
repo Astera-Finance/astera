@@ -6,6 +6,7 @@ import {SafeMath} from '../../../dependencies/openzeppelin/contracts/SafeMath.so
 import {IERC20} from '../../../dependencies/openzeppelin/contracts/IERC20.sol';
 import {ReserveLogic} from './ReserveLogic.sol';
 import {GenericLogic} from './GenericLogic.sol';
+import {BorrowLogic} from './BorrowLogic.sol';
 import {WadRayMath} from '../math/WadRayMath.sol';
 import {PercentageMath} from '../math/PercentageMath.sol';
 import {SafeERC20} from '../../../dependencies/openzeppelin/contracts/SafeERC20.sol';
@@ -156,43 +157,12 @@ library ValidationLogic {
     );
 
     (
-      vars.userCollateralBalanceETHIsolated,
-      vars.userBorrowBalanceETHIsolated,
-      vars.currentLtvIsolated,
-      vars.currentLiquidationThresholdIsolated,
-      vars.healthFactorIsolated
-    ) = GenericLogic.calculateUserAccountDataIsolated(
-      userAddress,
-      reservesData,
-      userConfig,
-      reserves,
-      reservesCount,
-      oracle
-    );
-
-    require(vars.userCollateralBalanceETHIsolated > 0, Errors.VL_COLLATERAL_BALANCE_IS_0);
-    require(
-      vars.healthFactorIsolated > GenericLogic.HEALTH_FACTOR_LIQUIDATION_THRESHOLD,
-      Errors.VL_HEALTH_FACTOR_LOWER_THAN_LIQUIDATION_THRESHOLD
-    );
-
-    //add the current already borrowed amount to the amount requested to calculate the total collateral needed.
-    vars.amountOfCollateralNeededETHIsolated = vars.userBorrowBalanceETHIsolated.add(amountInETH).percentDiv(
-      vars.currentLtv
-    ); //LTV is calculated in percentage
-
-    require(
-      vars.amountOfCollateralNeededETHIsolated <= vars.userCollateralBalanceETHIsolated,
-      Errors.VL_COLLATERAL_CANNOT_COVER_NEW_BORROW
-    );
-
-    (
       vars.userCollateralBalanceETH,
       vars.userBorrowBalanceETH,
       vars.currentLtv,
       vars.currentLiquidationThreshold,
       vars.healthFactor
-    ) = GenericLogic.calculateUserAccountData(
+    ) = BorrowLogic.calculateUserAccountDataVolatile(
       userAddress,
       reservesData,
       userConfig,
