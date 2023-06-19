@@ -9,7 +9,7 @@ import {DataTypes} from '../types/DataTypes.sol';
  * @author Aave
  * @notice Implements the bitmap logic to handle the reserve configuration regarding borrows and isolated markets
  */
-library ReserveConfiguration {
+library ReserveBorrowConfiguration {
   uint256 constant LOW_VOLATILITY_LTV_MASK =
     0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF0000; // prettier-ignore
   uint256 constant LOW_VOLATILITY_LIQUIDATION_THRESHOLD_MASK =

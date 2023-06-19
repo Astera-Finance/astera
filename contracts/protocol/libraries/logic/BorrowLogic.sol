@@ -11,6 +11,7 @@ import {DataTypes} from '../types/DataTypes.sol';
 import {GenericLogic} from './GenericLogic.sol';
 import {ReserveLogic} from './ReserveLogic.sol';
 import {ReserveConfiguration} from '../configuration/ReserveConfiguration.sol';
+import {ReserveBorrowConfiguration} from '../configuration/ReserveBorrowConfiguration.sol';
 import {UserConfiguration} from '../configuration/UserConfiguration.sol';
 
 /**
@@ -25,6 +26,7 @@ import {UserConfiguration} from '../configuration/UserConfiguration.sol';
     using WadRayMath for uint256;
     using PercentageMath for uint256;
     using ReserveConfiguration for DataTypes.ReserveConfigurationMap;
+    using ReserveBorrowConfiguration for DataTypes.ReserveBorrowConfigurationMap;
     using UserConfiguration for DataTypes.UserConfigurationMap;
 
     struct CalculateUserAccountDataVolatileVars {
@@ -92,8 +94,8 @@ import {UserConfiguration} from '../configuration/UserConfiguration.sol';
         continue;
       }
 
-      if (vars.userVolatility < currentReserve.configuration.getVolatilityTier()) {
-        vars.userVolatility = currentReserve.configuration.getVolatilityTier();
+      if (vars.userVolatility < currentReserve.borrowConfiguration.getVolatilityTier()) {
+        vars.userVolatility = currentReserve.borrowConfiguration.getVolatilityTier();
       }
     }
 
@@ -109,11 +111,11 @@ import {UserConfiguration} from '../configuration/UserConfiguration.sol';
         .getParams();
 
       if (vars.userVolatility == 0) {
-        vars.ltv = currentReserve.configuration.getLowVolatilityLtv();
+        vars.ltv = currentReserve.borrowConfiguration.getLowVolatilityLtv();
       } else if (vars.userVolatility == 1) {
-        vars.ltv = currentReserve.configuration.getMediumVolatilityLtv();
+        vars.ltv = currentReserve.borrowConfiguration.getMediumVolatilityLtv();
       } else if (vars.userVolatility == 2) {
-        vars.ltv = currentReserve.configuration.getHighVolatilityLtv();
+        vars.ltv = currentReserve.borrowConfiguration.getHighVolatilityLtv();
       }
 
       vars.tokenUnit = 10**vars.decimals;

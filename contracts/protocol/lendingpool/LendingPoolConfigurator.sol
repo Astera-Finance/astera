@@ -8,6 +8,7 @@ import {
   InitializableImmutableAdminUpgradeabilityProxy
 } from '../libraries/aave-upgradeability/InitializableImmutableAdminUpgradeabilityProxy.sol';
 import {ReserveConfiguration} from '../libraries/configuration/ReserveConfiguration.sol';
+import {ReserveBorrowConfiguration} from '../libraries/configuration/ReserveBorrowConfiguration.sol';
 import {ILendingPoolAddressesProvider} from '../../interfaces/ILendingPoolAddressesProvider.sol';
 import {ILendingPool} from '../../interfaces/ILendingPool.sol';
 import {IERC20Detailed} from '../../dependencies/openzeppelin/contracts/IERC20Detailed.sol';
@@ -29,6 +30,7 @@ contract LendingPoolConfigurator is VersionedInitializable, ILendingPoolConfigur
   using SafeMath for uint256;
   using PercentageMath for uint256;
   using ReserveConfiguration for DataTypes.ReserveConfigurationMap;
+  using ReserveBorrowConfiguration for DataTypes.ReserveBorrowConfigurationMap;
 
   ILendingPoolAddressesProvider internal addressesProvider;
   ILendingPool internal pool;
