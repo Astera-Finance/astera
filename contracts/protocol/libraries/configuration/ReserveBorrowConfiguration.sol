@@ -38,17 +38,17 @@ library ReserveBorrowConfiguration {
   uint256 constant MAX_VALID_LIQUIDATION_THRESHOLD = 65535;
   uint256 constant MAX_VALID_VOLATILITY_TIER = 4;
 
-    function setLowVolatilityLtv(DataTypes.ReserveConfigurationMap memory self, uint256 lowVolatilityLtv) internal pure {
+    function setLowVolatilityLtv(DataTypes.ReserveBorrowConfigurationMap memory self, uint256 lowVolatilityLtv) internal pure {
         require(lowVolatilityLtv <= MAX_VALID_LTV, Errors.RC_INVALID_LTV);
 
         self.data = (self.data & LOW_VOLATILITY_LTV_MASK) | lowVolatilityLtv;
     }
 
-    function getLowVolatilityLtv(DataTypes.ReserveConfigurationMap storage self) internal view returns (uint256) {
+    function getLowVolatilityLtv(DataTypes.ReserveBorrowConfigurationMap storage self) internal view returns (uint256) {
         return self.data & ~LOW_VOLATILITY_LTV_MASK;
     }
 
-    function setLowVolatilityLiquidationThreshold(DataTypes.ReserveConfigurationMap memory self, uint256 threshold)
+    function setLowVolatilityLiquidationThreshold(DataTypes.ReserveBorrowConfigurationMap memory self, uint256 threshold)
         internal
         pure
     {
@@ -59,7 +59,7 @@ library ReserveBorrowConfiguration {
         (threshold << LOW_VOLATILITY_LIQUIDATION_THRESHOLD_START_BIT_POSITION);
     }
 
-    function getLowVolatilityLiquidationThreshold(DataTypes.ReserveConfigurationMap storage self)
+    function getLowVolatilityLiquidationThreshold(DataTypes.ReserveBorrowConfigurationMap storage self)
         internal
         view
         returns (uint256)
@@ -67,17 +67,17 @@ library ReserveBorrowConfiguration {
         return (self.data & ~LOW_VOLATILITY_LIQUIDATION_THRESHOLD_MASK) >> LOW_VOLATILITY_LIQUIDATION_THRESHOLD_START_BIT_POSITION;
     }
 
-    function setMediumVolatilityLtv(DataTypes.ReserveConfigurationMap memory self, uint256 mediumVolatilityLtv) internal pure {
+    function setMediumVolatilityLtv(DataTypes.ReserveBorrowConfigurationMap memory self, uint256 mediumVolatilityLtv) internal pure {
         require(mediumVolatilityLtv <= MAX_VALID_LTV, Errors.RC_INVALID_LTV);
 
         self.data = (self.data & MEDIUM_VOLATILITY_LTV_MASK) | (mediumVolatilityLtv << MEDIUM_VOLATILITY_LTV_START_BIT_POSITION);
     }
 
-    function getMediumVolatilityLtv(DataTypes.ReserveConfigurationMap storage self) internal view returns (uint256) {
+    function getMediumVolatilityLtv(DataTypes.ReserveBorrowConfigurationMap storage self) internal view returns (uint256) {
         return (self.data & ~MEDIUM_VOLATILITY_LTV_MASK) >> MEDIUM_VOLATILITY_LTV_START_BIT_POSITION;
     }
 
-    function setMediumVolatilityLiquidationThreshold(DataTypes.ReserveConfigurationMap memory self, uint256 threshold)
+    function setMediumVolatilityLiquidationThreshold(DataTypes.ReserveBorrowConfigurationMap memory self, uint256 threshold)
         internal
         pure
     {
@@ -88,7 +88,7 @@ library ReserveBorrowConfiguration {
         (threshold << MEDIUM_VOLATILITY_LIQUIDATION_THRESHOLD_START_BIT_POSITION);
     }
 
-    function getMediumVolatilityLiquidationThreshold(DataTypes.ReserveConfigurationMap storage self)
+    function getMediumVolatilityLiquidationThreshold(DataTypes.ReserveBorrowConfigurationMap storage self)
         internal
         view
         returns (uint256)
@@ -96,17 +96,17 @@ library ReserveBorrowConfiguration {
         return (self.data & ~MEDIUM_VOLATILITY_LIQUIDATION_THRESHOLD_MASK) >> MEDIUM_VOLATILITY_LIQUIDATION_THRESHOLD_START_BIT_POSITION;
     }
 
-    function setHighVolatilityLtv(DataTypes.ReserveConfigurationMap memory self, uint256 highVolatilityLtv) internal pure {
+    function setHighVolatilityLtv(DataTypes.ReserveBorrowConfigurationMap memory self, uint256 highVolatilityLtv) internal pure {
         require(highVolatilityLtv <= MAX_VALID_LTV, Errors.RC_INVALID_LTV);
 
         self.data = (self.data & HIGH_VOLATILITY_LTV_MASK) | (highVolatilityLtv << HIGH_VOLATILITY_LTV_START_BIT_POSITION);
     }
 
-    function getHighVolatilityLtv(DataTypes.ReserveConfigurationMap storage self) internal view returns (uint256) {
+    function getHighVolatilityLtv(DataTypes.ReserveBorrowConfigurationMap storage self) internal view returns (uint256) {
         return (self.data & ~HIGH_VOLATILITY_LTV_MASK) >> HIGH_VOLATILITY_LTV_START_BIT_POSITION;
     }
 
-    function setHighVolatilityLiquidationThreshold(DataTypes.ReserveConfigurationMap memory self, uint256 threshold)
+    function setHighVolatilityLiquidationThreshold(DataTypes.ReserveBorrowConfigurationMap memory self, uint256 threshold)
         internal
         pure
     {
@@ -117,7 +117,7 @@ library ReserveBorrowConfiguration {
         (threshold << HIGH_VOLATILITY_LIQUIDATION_THRESHOLD_START_BIT_POSITION);
     }
 
-    function getHighVolatilityLiquidationThreshold(DataTypes.ReserveConfigurationMap storage self)
+    function getHighVolatilityLiquidationThreshold(DataTypes.ReserveBorrowConfigurationMap storage self)
         internal
         view
         returns (uint256)
@@ -132,7 +132,7 @@ library ReserveBorrowConfiguration {
     * @param volatilityTier The rank of the reserve
     */
     function setVolatilityTier(
-        DataTypes.ReserveConfigurationMap memory self,
+        DataTypes.ReserveBorrowConfigurationMap memory self,
         uint256 volatilityTier
     ) internal pure {
         require (volatilityTier <= MAX_VALID_VOLATILITY_TIER, Errors.RC_INVALID_VOLATILITY_TIER);
@@ -147,7 +147,7 @@ library ReserveBorrowConfiguration {
     * @param self The reserve configuration
     * @return volatilityTier The reserve's volatility tier
     */
-    function getVolatilityTier(DataTypes.ReserveConfigurationMap storage self)
+    function getVolatilityTier(DataTypes.ReserveBorrowConfigurationMap storage self)
         internal
         view
         returns (uint256)
@@ -160,7 +160,7 @@ library ReserveBorrowConfiguration {
     * @param self The reserve configuration
     * @return The state params representing low, medium, high paarms for the ltv and liquidation threshold
     **/
-    function getVolatilityParams(DataTypes.ReserveConfigurationMap storage self)
+    function getVolatilityParams(DataTypes.ReserveBorrowConfigurationMap storage self)
         internal
         view
         returns (

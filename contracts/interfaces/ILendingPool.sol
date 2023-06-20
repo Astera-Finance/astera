@@ -360,6 +360,18 @@ interface ILendingPool {
     view
     returns (DataTypes.ReserveConfigurationMap memory);
 
+  function setBorrowConfiguration(address reserve, uint256 borrowConfiguration) external;
+
+  /**
+   * @dev Returns the borrow configuration of the reserve
+   * @param asset The address of the underlying asset of the reserve
+   * @return The borrow configuration of the reserve
+   **/
+  function getBorrowConfiguration(address asset)
+    external
+    view
+    returns (DataTypes.ReserveBorrowConfigurationMap memory);
+
   /**
    * @dev Returns the configuration of the user across all the reserves
    * @param user The user address

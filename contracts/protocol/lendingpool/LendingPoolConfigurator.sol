@@ -433,41 +433,41 @@ contract LendingPoolConfigurator is VersionedInitializable, ILendingPoolConfigur
   }
 
   function setReserveVolatilityTier(address asset, uint256 tier) external onlyPoolAdmin {
-    DataTypes.ReserveConfigurationMap memory currentConfig = pool.getConfiguration(asset);
+    DataTypes.ReserveBorrowConfigurationMap memory currentBorrowConfig = pool.getBorrowConfiguration(asset);
 
-    currentConfig.setVolatilityTier(tier);
+    currentBorrowConfig.setVolatilityTier(tier);
 
-    pool.setConfiguration(asset, currentConfig.data);
+    pool.setBorrowConfiguration(asset, currentBorrowConfig.data);
 
     emit ReserveVolatilityTierChanged(asset, tier);
   }
 
     function setLowVolatilityLtv(address asset, uint256 ltv) external onlyPoolAdmin {
-    DataTypes.ReserveConfigurationMap memory currentConfig = pool.getConfiguration(asset);
+    DataTypes.ReserveBorrowConfigurationMap memory currentBorrowConfig = pool.getBorrowConfiguration(asset);
 
-    currentConfig.setLowVolatilityLtv(ltv);
+    currentBorrowConfig.setLowVolatilityLtv(ltv);
 
-    pool.setConfiguration(asset, currentConfig.data);
+    pool.setBorrowConfiguration(asset, currentBorrowConfig.data);
 
     emit ReserveLowVolatilityLtvChanged(asset, ltv);
   }
 
   function setMediumVolatilityLtv(address asset, uint256 ltv) external onlyPoolAdmin {
-    DataTypes.ReserveConfigurationMap memory currentConfig = pool.getConfiguration(asset);
+    DataTypes.ReserveBorrowConfigurationMap memory currentBorrowConfig = pool.getBorrowConfiguration(asset);
 
-    currentConfig.setMediumVolatilityLtv(ltv);
+    currentBorrowConfig.setMediumVolatilityLtv(ltv);
 
-    pool.setConfiguration(asset, currentConfig.data);
+    pool.setBorrowConfiguration(asset, currentBorrowConfig.data);
 
     emit ReserveMediumVolatilityLtvChanged(asset, ltv);
   }
 
   function setHighVolatilityLtv(address asset, uint256 ltv) external onlyPoolAdmin { // Store update params in array
-    DataTypes.ReserveConfigurationMap memory currentConfig = pool.getConfiguration(asset);
+    DataTypes.ReserveBorrowConfigurationMap memory currentBorrowConfig = pool.getBorrowConfiguration(asset);
 
-    currentConfig.setHighVolatilityLtv(ltv);
+    currentBorrowConfig.setHighVolatilityLtv(ltv);
 
-    pool.setConfiguration(asset, currentConfig.data);
+    pool.setBorrowConfiguration(asset, currentBorrowConfig.data);
 
     emit ReserveHighVolatilityLtvChanged(asset, ltv);
   }

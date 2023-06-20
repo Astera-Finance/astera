@@ -637,6 +637,20 @@ contract LendingPool is VersionedInitializable, ILendingPool, LendingPoolStorage
   }
 
   /**
+   * @dev Returns the borrow configuration of the reserve
+   * @param asset The address of the underlying asset of the reserve
+   * @return The borrow configuration of the reserve
+   **/
+  function getBorrowConfiguration(address asset)
+    external
+    view
+    override
+    returns (DataTypes.ReserveBorrowConfigurationMap memory)
+  {
+    return _reserves[asset].borrowConfiguration;
+  }
+
+  /**
    * @dev Returns the configuration of the user across all the reserves
    * @param user The user address
    * @return The configuration of the user
@@ -825,6 +839,20 @@ contract LendingPool is VersionedInitializable, ILendingPool, LendingPoolStorage
     onlyLendingPoolConfigurator
   {
     _reserves[asset].configuration.data = configuration;
+  }
+
+  /**
+   * @dev Sets the borrow configuration bitmap of the reserve as a whole
+   * - Only callable by the LendingPoolConfigurator contract
+   * @param asset The address of the underlying asset of the reserve
+   * @param borrowConfiguration The new borrow configuration bitmap
+   **/
+  function setBorrowConfiguration(address asset, uint256 borrowConfiguration)
+    external
+    override
+    onlyLendingPoolConfigurator
+  {
+    _reserves[asset].borrowConfiguration.data = borrowConfiguration;
   }
 
   /**
