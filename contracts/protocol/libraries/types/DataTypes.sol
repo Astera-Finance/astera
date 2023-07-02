@@ -54,7 +54,16 @@ library DataTypes {
     uint256 data;
   }
 
+  // struct UserData {
+  //   UserConfigurationMap userConfiguration;
+  //   UserRecentBorrowMap userRecentBorrow;
+  // }
+
   struct UserConfigurationMap {
+    uint256 data;
+  }
+
+  struct UserRecentBorrowMap {
     uint256 data;
   }
 

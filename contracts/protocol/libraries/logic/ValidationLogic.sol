@@ -134,8 +134,10 @@ library ValidationLogic {
     uint256 maxStableLoanPercent,
     mapping(address => DataTypes.ReserveData) storage reservesData,
     DataTypes.UserConfigurationMap storage userConfig,
+    DataTypes.UserRecentBorrowMap storage userRecentBorrow,
     mapping(uint256 => address) storage reserves,
     uint256 reservesCount,
+    uint256 lendingUpdateTimestamp,
     address oracle
   ) external view {
     ValidateBorrowLocalVars memory vars;
@@ -166,8 +168,10 @@ library ValidationLogic {
       userAddress,
       reservesData,
       userConfig,
+      userRecentBorrow,
       reserves,
       reservesCount,
+      lendingUpdateTimestamp,
       oracle
     );
 

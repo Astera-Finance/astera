@@ -853,6 +853,7 @@ contract LendingPool is VersionedInitializable, ILendingPool, LendingPoolStorage
     onlyLendingPoolConfigurator
   {
     _reserves[asset].borrowConfiguration.data = borrowConfiguration;
+    _lendingUpdateTimestamp = block.timestamp;
   }
 
   /**
@@ -883,6 +884,7 @@ contract LendingPool is VersionedInitializable, ILendingPool, LendingPoolStorage
   function _executeBorrow(ExecuteBorrowParams memory vars) internal {
     DataTypes.ReserveData storage reserve = _reserves[vars.asset];
     DataTypes.UserConfigurationMap storage userConfig = _usersConfig[vars.onBehalfOf];
+    DataTypes.UserRecentBorrowMap storage userRecentBorrow = _usersRecentBorrow[vars.onBehalfOf];
 
     address oracle = _addressesProvider.getPriceOracle();
 
@@ -901,8 +903,10 @@ contract LendingPool is VersionedInitializable, ILendingPool, LendingPoolStorage
       _maxStableRateBorrowSizePercent,
       _reserves,
       userConfig,
+      userRecentBorrow,
       _reservesList,
       _reservesCount,
+      _lendingUpdateTimestamp,
       oracle
     );
 

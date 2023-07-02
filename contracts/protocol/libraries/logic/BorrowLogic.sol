@@ -13,6 +13,7 @@ import {ReserveLogic} from './ReserveLogic.sol';
 import {ReserveConfiguration} from '../configuration/ReserveConfiguration.sol';
 import {ReserveBorrowConfiguration} from '../configuration/ReserveBorrowConfiguration.sol';
 import {UserConfiguration} from '../configuration/UserConfiguration.sol';
+import {UserRecentBorrow} from '../configuration/UserRecentBorrow.sol';
 
 /**
  * @title BorrowLogic library
@@ -28,6 +29,7 @@ import {UserConfiguration} from '../configuration/UserConfiguration.sol';
     using ReserveConfiguration for DataTypes.ReserveConfigurationMap;
     using ReserveBorrowConfiguration for DataTypes.ReserveBorrowConfigurationMap;
     using UserConfiguration for DataTypes.UserConfigurationMap;
+    using UserRecentBorrow for DataTypes.UserRecentBorrowMap;
 
     struct CalculateUserAccountDataVolatileVars {
         uint256 reserveUnitPrice;
@@ -66,8 +68,10 @@ import {UserConfiguration} from '../configuration/UserConfiguration.sol';
     address user,
     mapping(address => DataTypes.ReserveData) storage reservesData,
     DataTypes.UserConfigurationMap memory userConfig,
+    DataTypes.UserRecentBorrowMap storage userRecentBorrow,
     mapping(uint256 => address) storage reserves,
     uint256 reservesCount,
+    uint256 lendingUpdateTimestamp,
     address oracle
   )
   internal
@@ -153,11 +157,26 @@ import {UserConfiguration} from '../configuration/UserConfiguration.sol';
       ? vars.avgLiquidationThreshold.div(vars.totalCollateralInETH)
       : 0;
 
-    vars.healthFactor = GenericLogic.calculateHealthFactorFromBalances(
-      vars.totalCollateralInETH,
-      vars.totalDebtInETH,
-      vars.avgLiquidationThreshold
-    );
+    if (userRecentBorrow.getTimestamp() < lendingUpdateTimestamp) {
+      /// Calculate health factor using new total collateral, new totalDebt, olf avgLiqThres
+      vars.healthFactor = GenericLogic.calculateHealthFactorFromBalances(
+        vars.totalCollateralInETH,
+        vars.totalDebtInETH,
+        userRecentBorrow.getAverageLiquidationThreshold()
+      );
+    } else {
+      vars.healthFactor = GenericLogic.calculateHealthFactorFromBalances(
+        vars.totalCollateralInETH,
+        vars.totalDebtInETH,
+        vars.avgLiquidationThreshold
+      );
+    }
+
+
+    userRecentBorrow.setAverageLtv(vars.avgLtv);
+    userRecentBorrow.setAverageLiquidationThreshold(vars.avgLiquidationThreshold);
+    userRecentBorrow.setTimestamp(block.timestamp);
+
     return (
       vars.totalCollateralInETH,
       vars.totalDebtInETH,
@@ -166,18 +185,4 @@ import {UserConfiguration} from '../configuration/UserConfiguration.sol';
       vars.healthFactor
     );
   }
-    // TODO: Compile all the changes in this contract
-
-    // Note: There are now isolatedReserves and regularReserves
-    // Borrowing from an isolatedAsset means that the user's balance derived from isolatedReserves is what validates the borrow
-    // Borrowing from a regularAsset means that the user's overall balance dervide from all reserves is what validates the borrow
-    // Isolated Reserves are basically a subset of the reserves
-    // More params can be added to the reserve config if we want to play around ltvs, liquidation thresholds...
-    //
-    // Go deeper with the reserves
-    // introducing: Risk Tiers !!! (start with 3 of those)
-    //
-    //
-    // Thoughts: When borrowing (both regular and isolated), should we still look at the other 'type', to check that we are not breaking a threshold? Probably, right?
-    // So, now matter which borrow is undergoing, we end up looking at all the data
  }
