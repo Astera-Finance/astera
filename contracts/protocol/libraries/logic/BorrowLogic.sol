@@ -54,25 +54,32 @@ import {UserRecentBorrow} from '../configuration/UserRecentBorrow.sol';
     }
 
     /**
+    * @param user The address of the user
+    * @param reservesData Data of all the reserves
+    * @param userConfig The configuration of the user
+    * @param reserves The list of the available reserves
+    * @param oracle The price oracle address
+     */
+    struct CalculateUserAccountDataVolatileParams {
+      address user;
+      uint256 reservesCount;
+      uint256 lendingUpdateTimestamp;
+      address oracle;
+    }
+
+    /**
    * @dev Calculates the user data across the reserves.
    * this includes the total liquidity/collateral/borrow balances in ETH,
    * the average Loan To Value, the average Liquidation Ratio, and the Health factor.
-   * @param user The address of the user
-   * @param reservesData Data of all the reserves
-   * @param userConfig The configuration of the user
-   * @param reserves The list of the available reserves
-   * @param oracle The price oracle address
+   * @param params the params necessary to get the correct borrow data
    * @return The total collateral and total debt of the user in ETH, the avg ltv, liquidation threshold and the HF
    **/
   function calculateUserAccountDataVolatile(
-    address user,
+    CalculateUserAccountDataVolatileParams memory params,
     mapping(address => DataTypes.ReserveData) storage reservesData,
     DataTypes.UserConfigurationMap memory userConfig,
     DataTypes.UserRecentBorrowMap storage userRecentBorrow,
-    mapping(uint256 => address) storage reserves,
-    uint256 reservesCount,
-    uint256 lendingUpdateTimestamp,
-    address oracle
+    mapping(uint256 => address) storage reserves
   )
   internal
   view
@@ -90,20 +97,21 @@ import {UserRecentBorrow} from '../configuration/UserRecentBorrow.sol';
     }
 
     // Get the user's volatility tier
-    for (vars.i = 0; vars.i < reservesCount; vars.i++) {
-      vars.currentReserveAddress = reserves[vars.i];
-      DataTypes.ReserveData storage currentReserve = reservesData[vars.currentReserveAddress];
+    vars.userVolatility = calculateUserVolatilityTier(reservesData,userConfig,reserves,params.reservesCount);
+    // for (vars.i = 0; vars.i < params.reservesCount; vars.i++) {
+    //   vars.currentReserveAddress = reserves[vars.i];
+    //   DataTypes.ReserveData storage currentReserve = reservesData[vars.currentReserveAddress];
 
-      if (!userConfig.isUsingAsCollateralOrBorrowing(vars.i)) {
-        continue;
-      }
+    //   if (!userConfig.isUsingAsCollateralOrBorrowing(vars.i)) {
+    //     continue;
+    //   }
 
-      if (vars.userVolatility < currentReserve.borrowConfiguration.getVolatilityTier()) {
-        vars.userVolatility = currentReserve.borrowConfiguration.getVolatilityTier();
-      }
-    }
+    //   if (vars.userVolatility < currentReserve.borrowConfiguration.getVolatilityTier()) {
+    //     vars.userVolatility = currentReserve.borrowConfiguration.getVolatilityTier();
+    //   }
+    // }
 
-    for (vars.i = 0; vars.i < reservesCount; vars.i++) {
+    for (vars.i = 0; vars.i < params.reservesCount; vars.i++) {
       vars.currentReserveAddress = reserves[vars.i];
       DataTypes.ReserveData storage currentReserve = reservesData[vars.currentReserveAddress];
       // basically get same data as user account collateral, but with different LTVs being used depending on user's most volatile asset
@@ -123,10 +131,10 @@ import {UserRecentBorrow} from '../configuration/UserRecentBorrow.sol';
       }
 
       vars.tokenUnit = 10**vars.decimals;
-      vars.reserveUnitPrice = IPriceOracleGetter(oracle).getAssetPrice(vars.currentReserveAddress);
+      vars.reserveUnitPrice = IPriceOracleGetter(params.oracle).getAssetPrice(vars.currentReserveAddress);
 
       if (vars.liquidationThreshold != 0 && userConfig.isUsingAsCollateral(vars.i)) {
-        vars.compoundedLiquidityBalance = IERC20(currentReserve.aTokenAddress).balanceOf(user);
+        vars.compoundedLiquidityBalance = IERC20(currentReserve.aTokenAddress).balanceOf(params.user);
 
         uint256 liquidityBalanceETH = vars.reserveUnitPrice.mul(vars.compoundedLiquidityBalance).div(vars.tokenUnit);
 
@@ -140,10 +148,10 @@ import {UserRecentBorrow} from '../configuration/UserRecentBorrow.sol';
 
       if (userConfig.isBorrowing(vars.i)) {
         vars.compoundedBorrowBalance = IERC20(currentReserve.stableDebtTokenAddress).balanceOf(
-          user
+          params.user
         );
         vars.compoundedBorrowBalance = vars.compoundedBorrowBalance.add(
-          IERC20(currentReserve.variableDebtTokenAddress).balanceOf(user)
+          IERC20(currentReserve.variableDebtTokenAddress).balanceOf(params.user)
         );
 
         vars.totalDebtInETH = vars.totalDebtInETH.add(
@@ -157,7 +165,7 @@ import {UserRecentBorrow} from '../configuration/UserRecentBorrow.sol';
       ? vars.avgLiquidationThreshold.div(vars.totalCollateralInETH)
       : 0;
 
-    if (userRecentBorrow.getTimestamp() < lendingUpdateTimestamp) {
+    if (userRecentBorrow.getTimestamp() < params.lendingUpdateTimestamp) {
       /// Calculate health factor using new total collateral, new totalDebt, olf avgLiqThres
       vars.healthFactor = GenericLogic.calculateHealthFactorFromBalances(
         vars.totalCollateralInETH,
@@ -184,5 +192,29 @@ import {UserRecentBorrow} from '../configuration/UserRecentBorrow.sol';
       vars.avgLiquidationThreshold,
       vars.healthFactor
     );
+  }
+
+  function calculateUserVolatilityTier(
+    mapping(address => DataTypes.ReserveData) storage reservesData,
+    DataTypes.UserConfigurationMap memory userConfig,
+    mapping(uint256 => address) storage reserves,
+    uint256 reservesCount
+  )
+  internal
+  view
+  returns (
+    uint256 userVolatility
+  ) {
+    for (uint256 i; i < reservesCount; i++) {
+      address currentReserveAddress = reserves[i];
+      DataTypes.ReserveData storage currentReserve = reservesData[currentReserveAddress];
+      if(!userConfig.isUsingAsCollateralOrBorrowing(i)) {
+        continue;
+      }
+      uint256 currentReserveVolatility = currentReserve.borrowConfiguration.getVolatilityTier();
+      if (userVolatility < currentReserveVolatility) {
+        userVolatility = currentReserveVolatility;
+      }
+    }
   }
  }
