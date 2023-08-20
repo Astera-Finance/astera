@@ -180,6 +180,7 @@ interface ILendingPool {
    **/
   function deposit(
     address asset,
+    bool reserveType,
     uint256 amount,
     address onBehalfOf,
     uint16 referralCode
@@ -221,6 +222,7 @@ interface ILendingPool {
    **/
   function borrow(
     address asset,
+    bool reserveType,
     uint256 amount,
     uint256 interestRateMode,
     uint16 referralCode,
@@ -274,7 +276,7 @@ interface ILendingPool {
    * @param reserveType Whether the reserve is boosted by a vault
    * @param useAsCollateral `true` if the user wants to use the deposit as collateral, `false` otherwise
    **/
-  function setUserUseReserveAsCollateral(address asset, bool useAsCollateral) external;
+  function setUserUseReserveAsCollateral(address asset, bool reserveType, bool useAsCollateral) external;
 
   /**
    * @dev Function to liquidate a non-healthy position collateral-wise, with Health Factor below 1
@@ -315,6 +317,7 @@ interface ILendingPool {
   function flashLoan(
     address receiverAddress,
     address[] calldata assets,
+    bool[] calldata reserveTypes,
     uint256[] calldata amounts,
     uint256[] calldata modes,
     address onBehalfOf,

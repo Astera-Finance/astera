@@ -495,7 +495,7 @@ contract LendingPool is VersionedInitializable, ILendingPool, LendingPoolStorage
   function flashLoan(
     address receiverAddress,
     address[] calldata assets,
-    bool[] calldata types,
+    bool[] calldata reserveTypes,
     uint256[] calldata amounts,
     uint256[] calldata modes,
     address onBehalfOf,
@@ -504,7 +504,7 @@ contract LendingPool is VersionedInitializable, ILendingPool, LendingPoolStorage
   ) external override whenNotPaused {
     FlashLoanLocalVars memory vars;
 
-    ValidationLogic.validateFlashloan(assets, amounts);
+    ValidationLogic.validateFlashloan(assets, amounts); //@todo add types array to this funciton too
 
     address[] memory aTokenAddresses = new address[](assets.length);
     uint256[] memory premiums = new uint256[](assets.length);
@@ -512,7 +512,7 @@ contract LendingPool is VersionedInitializable, ILendingPool, LendingPoolStorage
     vars.receiver = IFlashLoanReceiver(receiverAddress);
 
     for (vars.i = 0; vars.i < assets.length; vars.i++) {
-      aTokenAddresses[vars.i] = _reserves[assets[vars.i]][types[vars.i]].aTokenAddress;
+      aTokenAddresses[vars.i] = _reserves[assets[vars.i]][reserveTypes[vars.i]].aTokenAddress;
 
       premiums[vars.i] = amounts[vars.i].mul(_flashLoanPremiumTotal).div(10000);
 
@@ -526,7 +526,7 @@ contract LendingPool is VersionedInitializable, ILendingPool, LendingPoolStorage
 
     for (vars.i = 0; vars.i < assets.length; vars.i++) {
       vars.currentAsset = assets[vars.i];
-      vars.currentType = types[vars.i];
+      vars.currentType = reserveTypes[vars.i];
       vars.currentAmount = amounts[vars.i];
       vars.currentPremium = premiums[vars.i];
       vars.currentATokenAddress = aTokenAddresses[vars.i];
@@ -960,7 +960,7 @@ contract LendingPool is VersionedInitializable, ILendingPool, LendingPoolStorage
 
     require(reservesCount < _maxNumberOfReserves, Errors.LP_NO_MORE_RESERVES_ALLOWED);
 
-    bool reserveAlreadyAdded = _reserves[asset][reserveType].id != 0 || _reservesList[0] == asset;
+    bool reserveAlreadyAdded = _reserves[asset][reserveType].id != 0 || _reservesList[0].asset == asset;
 
     if (!reserveAlreadyAdded) {
       _reserves[asset][reserveType].id = uint8(reservesCount);

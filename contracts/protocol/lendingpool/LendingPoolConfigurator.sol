@@ -116,6 +116,7 @@ contract LendingPoolConfigurator is VersionedInitializable, ILendingPoolConfigur
 
     pool.initReserve(
       input.underlyingAsset,
+      input.reserveType,
       aTokenProxyAddress,
       stableDebtTokenProxyAddress,
       variableDebtTokenProxyAddress,
@@ -123,18 +124,19 @@ contract LendingPoolConfigurator is VersionedInitializable, ILendingPoolConfigur
     );
 
     DataTypes.ReserveConfigurationMap memory currentConfig =
-      pool.getConfiguration(input.underlyingAsset);
+      pool.getConfiguration(input.underlyingAsset, input.reserveType);
 
     currentConfig.setDecimals(input.underlyingAssetDecimals);
 
     currentConfig.setActive(true);
     currentConfig.setFrozen(false);
 
-    pool.setConfiguration(input.underlyingAsset, currentConfig.data);
+    pool.setConfiguration(input.underlyingAsset, input.reserveType, currentConfig.data);
 
     emit ReserveInitialized(
       input.underlyingAsset,
       aTokenProxyAddress,
+      input.reserveType,
       stableDebtTokenProxyAddress,
       variableDebtTokenProxyAddress,
       input.interestRateStrategyAddress
@@ -169,7 +171,7 @@ contract LendingPoolConfigurator is VersionedInitializable, ILendingPoolConfigur
       encodedCall
     );
 
-    emit ATokenUpgraded(input.asset, input.reserveType, reserveData.aTokenAddress, input.implementation);
+    emit ATokenUpgraded(input.asset, reserveData.aTokenAddress, input.implementation, input.reserveType);
   }
 
   /**
@@ -253,7 +255,7 @@ contract LendingPoolConfigurator is VersionedInitializable, ILendingPoolConfigur
     external
     onlyPoolAdmin
   {
-    DataTypes.ReserveConfigurationMap memory currentConfig = pool.getConfiguration(asset);
+    DataTypes.ReserveConfigurationMap memory currentConfig = pool.getConfiguration(asset, reserveType);
 
     currentConfig.setBorrowingEnabled(true);
     currentConfig.setStableRateBorrowingEnabled(stableBorrowRateEnabled);
@@ -269,7 +271,7 @@ contract LendingPoolConfigurator is VersionedInitializable, ILendingPoolConfigur
    * @param reserveType Whether the reserve is boosted by a vault
    **/
   function disableBorrowingOnReserve(address asset, bool reserveType) external onlyPoolAdmin {
-    DataTypes.ReserveConfigurationMap memory currentConfig = pool.getConfiguration(asset);
+    DataTypes.ReserveConfigurationMap memory currentConfig = pool.getConfiguration(asset, reserveType);
 
     currentConfig.setBorrowingEnabled(false);
 
@@ -320,7 +322,7 @@ contract LendingPoolConfigurator is VersionedInitializable, ILendingPoolConfigur
       //if the liquidation threshold is being set to 0,
       // the reserve is being disabled as collateral. To do so,
       //we need to ensure no liquidity is deposited
-      _checkNoLiquidity(asset);
+      _checkNoLiquidity(asset, reserveType);
     }
 
     currentConfig.setLtv(ltv);
@@ -383,7 +385,7 @@ contract LendingPoolConfigurator is VersionedInitializable, ILendingPoolConfigur
    * @param reserveType Whether the reserve is boosted by a vault
    **/
   function deactivateReserve(address asset, bool reserveType) external onlyPoolAdmin {
-    _checkNoLiquidity(asset);
+    _checkNoLiquidity(asset, reserveType);
 
     DataTypes.ReserveConfigurationMap memory currentConfig = pool.getConfiguration(asset, reserveType);
 
@@ -486,8 +488,8 @@ contract LendingPoolConfigurator is VersionedInitializable, ILendingPoolConfigur
     proxy.upgradeToAndCall(implementation, initParams);
   }
 
-  function _checkNoLiquidity(address asset) internal view {
-    DataTypes.ReserveData memory reserveData = pool.getReserveData(asset);
+  function _checkNoLiquidity(address asset, bool reserveType) internal view {
+    DataTypes.ReserveData memory reserveData = pool.getReserveData(asset, reserveType);
 
     uint256 availableLiquidity = IERC20Detailed(asset).balanceOf(reserveData.aTokenAddress);
 

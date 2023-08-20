@@ -40,6 +40,7 @@ contract AToken is
   ILendingPool internal _pool;
   address internal _treasury;
   address internal _underlyingAsset;
+  bool internal _reserveType;
   IAaveIncentivesController internal _incentivesController;
 
   modifier onlyLendingPool {
@@ -211,7 +212,7 @@ contract AToken is
     override(IncentivizedERC20, IERC20)
     returns (uint256)
   {
-    return super.balanceOf(user).rayMul(_pool.getReserveNormalizedIncome(_underlyingAsset));
+    return super.balanceOf(user).rayMul(_pool.getReserveNormalizedIncome(_underlyingAsset, _reserveType));
   }
 
   /**
@@ -252,7 +253,7 @@ contract AToken is
       return 0;
     }
 
-    return currentSupplyScaled.rayMul(_pool.getReserveNormalizedIncome(_underlyingAsset));
+    return currentSupplyScaled.rayMul(_pool.getReserveNormalizedIncome(_underlyingAsset, _reserveType));
   }
 
   /**
@@ -376,7 +377,7 @@ contract AToken is
     address underlyingAsset = _underlyingAsset;
     ILendingPool pool = _pool;
 
-    uint256 index = pool.getReserveNormalizedIncome(underlyingAsset);
+    uint256 index = pool.getReserveNormalizedIncome(underlyingAsset, _reserveType);
 
     uint256 fromBalanceBefore = super.balanceOf(from).rayMul(index);
     uint256 toBalanceBefore = super.balanceOf(to).rayMul(index);
@@ -384,7 +385,7 @@ contract AToken is
     super._transfer(from, to, amount.rayDiv(index));
 
     if (validate) {
-      pool.finalizeTransfer(underlyingAsset, from, to, amount, fromBalanceBefore, toBalanceBefore);
+      pool.finalizeTransfer(underlyingAsset, _reserveType, from, to, amount, fromBalanceBefore, toBalanceBefore);
     }
 
     emit BalanceTransfer(from, to, amount, index);

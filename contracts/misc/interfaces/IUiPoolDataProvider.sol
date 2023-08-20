@@ -78,7 +78,7 @@ interface IUiPoolDataProvider {
   function getReservesList(ILendingPoolAddressesProvider provider)
     external
     view
-    returns (address[] memory);
+    returns (address[] memory, bool[] memory);
 
   function incentivesController() external view returns (IAaveIncentivesController);
 

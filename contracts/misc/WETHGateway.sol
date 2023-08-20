@@ -40,11 +40,12 @@ contract WETHGateway is IWETHGateway, Ownable {
    **/
   function depositETH(
     address lendingPool,
+    bool reserveType,
     address onBehalfOf,
     uint16 referralCode
   ) external payable override {
     WETH.deposit{value: msg.value}();
-    ILendingPool(lendingPool).deposit(address(WETH), msg.value, onBehalfOf, referralCode);
+    ILendingPool(lendingPool).deposit(address(WETH), reserveType, msg.value, onBehalfOf, referralCode);
   }
 
   /**
@@ -118,12 +119,14 @@ contract WETHGateway is IWETHGateway, Ownable {
    */
   function borrowETH(
     address lendingPool,
+    bool reserveType,
     uint256 amount,
     uint256 interesRateMode,
     uint16 referralCode
   ) external override {
     ILendingPool(lendingPool).borrow(
       address(WETH),
+      reserveType,
       amount,
       interesRateMode,
       referralCode,
