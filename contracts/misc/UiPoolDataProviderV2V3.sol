@@ -58,10 +58,13 @@ contract UiPoolDataProviderV2V3 is IUiPoolDataProviderV3 {
     public
     view
     override
-    returns (address[] memory)
+    returns (address[] memory, bool[] memory)
   {
     ILendingPool lendingPool = ILendingPool(provider.getLendingPool());
-    return lendingPool.getReservesList();
+    address[] memory reserves = new address[](lendingPool.getReservesCount());
+    bool[] memory reservesTypes = new bool[](lendingPool.getReservesCount());
+    (reserves, reservesTypes) = lendingPool.getReservesList();
+    return (reserves, reservesTypes);
   }
 
   function getReservesData(ILendingPoolAddressesProvider provider)
@@ -72,16 +75,20 @@ contract UiPoolDataProviderV2V3 is IUiPoolDataProviderV3 {
   {
     IAaveOracle oracle = IAaveOracle(provider.getPriceOracle());
     ILendingPool lendingPool = ILendingPool(provider.getLendingPool());
-    address[] memory reserves = lendingPool.getReservesList();
+    address[] memory reserves = new address[](lendingPool.getReservesCount());
+    bool[] memory reservesTypes = new bool[](lendingPool.getReservesCount());
+    (reserves, reservesTypes) = lendingPool.getReservesList();
     AggregatedReserveData[] memory reservesData = new AggregatedReserveData[](reserves.length);
 
     for (uint256 i = 0; i < reserves.length; i++) {
       AggregatedReserveData memory reserveData = reservesData[i];
       reserveData.underlyingAsset = reserves[i];
+      reserveData.reserveType = reservesTypes[i];
 
       // reserve current state
       DataTypes.ReserveData memory baseData = lendingPool.getReserveData(
-        reserveData.underlyingAsset
+        reserveData.underlyingAsset,
+        reserveData.reserveType
       );
       reserveData.liquidityIndex = baseData.liquidityIndex;
       reserveData.variableBorrowIndex = baseData.variableBorrowIndex;
@@ -175,7 +182,9 @@ contract UiPoolDataProviderV2V3 is IUiPoolDataProviderV3 {
     returns (UserReserveData[] memory, uint8)
   {
     ILendingPool lendingPool = ILendingPool(provider.getLendingPool());
-    address[] memory reserves = lendingPool.getReservesList();
+    address[] memory reserves = new address[](lendingPool.getReservesCount());
+    bool[] memory reservesTypes = new bool[](lendingPool.getReservesCount());
+    (reserves, reservesTypes) = lendingPool.getReservesList();
     DataTypes.UserConfigurationMap memory userConfig = lendingPool.getUserConfiguration(user);
 
     UserReserveData[] memory userReservesData = new UserReserveData[](
@@ -183,10 +192,11 @@ contract UiPoolDataProviderV2V3 is IUiPoolDataProviderV3 {
     );
 
     for (uint256 i = 0; i < reserves.length; i++) {
-      DataTypes.ReserveData memory baseData = lendingPool.getReserveData(reserves[i]);
+      DataTypes.ReserveData memory baseData = lendingPool.getReserveData(reserves[i], reservesTypes[i]);
 
       // user reserve data
       userReservesData[i].underlyingAsset = reserves[i];
+      userReservesData[i].reserveType = reservesTypes[i];
       userReservesData[i].scaledATokenBalance = IAToken(baseData.aTokenAddress).scaledBalanceOf(
         user
       );

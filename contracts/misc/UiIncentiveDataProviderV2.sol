@@ -42,15 +42,18 @@ contract UiIncentiveDataProviderV2 is IUiIncentiveDataProviderV2 {
     returns (AggregatedReserveIncentiveData[] memory)
   {
     ILendingPool lendingPool = ILendingPool(provider.getLendingPool());
-    address[] memory reserves = lendingPool.getReservesList();
+    address[] memory reserves = new address[](lendingPool.getReservesCount());
+    bool[] memory reservesTypes = new bool[](lendingPool.getReservesCount());
+    (reserves, reservesTypes) = lendingPool.getReservesList();
     AggregatedReserveIncentiveData[] memory reservesIncentiveData =
       new AggregatedReserveIncentiveData[](reserves.length);
 
     for (uint256 i = 0; i < reserves.length; i++) {
       AggregatedReserveIncentiveData memory reserveIncentiveData = reservesIncentiveData[i];
       reserveIncentiveData.underlyingAsset = reserves[i];
+      reserveIncentiveData.reserveType = reservesTypes[i];
 
-      DataTypes.ReserveData memory baseData = lendingPool.getReserveData(reserves[i]);
+      DataTypes.ReserveData memory baseData = lendingPool.getReserveData(reserves[i], reservesTypes[i]);
 
       try IStableDebtToken(baseData.aTokenAddress).getIncentivesController() returns (IAaveIncentivesController aTokenIncentiveController) {
         if (address(aTokenIncentiveController) != address(0)) {
@@ -202,16 +205,19 @@ contract UiIncentiveDataProviderV2 is IUiIncentiveDataProviderV2 {
     returns (UserReserveIncentiveData[] memory)
   {
     ILendingPool lendingPool = ILendingPool(provider.getLendingPool());
-    address[] memory reserves = lendingPool.getReservesList();
+    address[] memory reserves = new address[](lendingPool.getReservesCount());
+    bool[] memory reservesTypes = new bool[](lendingPool.getReservesCount());
+    (reserves, reservesTypes) = lendingPool.getReservesList();
 
     UserReserveIncentiveData[] memory userReservesIncentivesData =
       new UserReserveIncentiveData[](user != address(0) ? reserves.length : 0);
 
     for (uint256 i = 0; i < reserves.length; i++) {
-      DataTypes.ReserveData memory baseData = lendingPool.getReserveData(reserves[i]);
+      DataTypes.ReserveData memory baseData = lendingPool.getReserveData(reserves[i], reservesTypes[i]);
 
       // user reserve data
       userReservesIncentivesData[i].underlyingAsset = reserves[i];
+      userReservesIncentivesData[i].reserveType = reservesTypes[i];
 
       IUiIncentiveDataProviderV2.UserIncentiveData memory aUserIncentiveData;
 

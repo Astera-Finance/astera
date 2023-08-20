@@ -55,7 +55,7 @@ contract UiPoolDataProvider is IUiPoolDataProvider {
     public
     view
     override
-    returns (address[] memory)
+    returns (address[] memory, bool[] memory)
   {
     ILendingPool lendingPool = ILendingPool(provider.getLendingPool());
     return lendingPool.getReservesList();
@@ -72,16 +72,19 @@ contract UiPoolDataProvider is IUiPoolDataProvider {
     )
   {
     ILendingPool lendingPool = ILendingPool(provider.getLendingPool());
-    address[] memory reserves = lendingPool.getReservesList();
+    address[] memory reserves = new address[](lendingPool.getReservesCount());
+    bool[] memory reservesTypes = new bool[](lendingPool.getReservesCount());
+    (reserves, reservesTypes) = lendingPool.getReservesList();
     AggregatedReserveData[] memory reservesData = new AggregatedReserveData[](reserves.length);
 
     for (uint256 i = 0; i < reserves.length; i++) {
       AggregatedReserveData memory reserveData = reservesData[i];
       reserveData.underlyingAsset = reserves[i];
+      reserveData.reserveType = reservesTypes[i];
 
       // reserve current state
       DataTypes.ReserveData memory baseData =
-        lendingPool.getReserveData(reserveData.underlyingAsset);
+        lendingPool.getReserveData(reserveData.underlyingAsset, reserveData.reserveType);
       reserveData.liquidityIndex = baseData.liquidityIndex;
       reserveData.variableBorrowIndex = baseData.variableBorrowIndex;
       reserveData.liquidityRate = baseData.currentLiquidityRate;
@@ -172,14 +175,16 @@ contract UiPoolDataProvider is IUiPoolDataProvider {
     returns (UserReserveData[] memory, uint256)
   {
     ILendingPool lendingPool = ILendingPool(provider.getLendingPool());
-    address[] memory reserves = lendingPool.getReservesList();
+    address[] memory reserves = new address[](lendingPool.getReservesCount());
+    bool[] memory reservesTypes = new bool[](lendingPool.getReservesCount());
+    (reserves, reservesTypes) = lendingPool.getReservesList();
     DataTypes.UserConfigurationMap memory userConfig = lendingPool.getUserConfiguration(user);
 
     UserReserveData[] memory userReservesData =
       new UserReserveData[](user != address(0) ? reserves.length : 0);
 
     for (uint256 i = 0; i < reserves.length; i++) {
-      DataTypes.ReserveData memory baseData = lendingPool.getReserveData(reserves[i]);
+      DataTypes.ReserveData memory baseData = lendingPool.getReserveData(reserves[i], reservesTypes[i]);
       // incentives
       if (address(0) != address(incentivesController)) {
         userReservesData[i].aTokenincentivesUserIndex = incentivesController.getUserAssetData(
@@ -197,6 +202,7 @@ contract UiPoolDataProvider is IUiPoolDataProvider {
       }
       // user reserve data
       userReservesData[i].underlyingAsset = reserves[i];
+      userReservesData[i].reserveType = reservesTypes[i];
       userReservesData[i].scaledATokenBalance = IAToken(baseData.aTokenAddress).scaledBalanceOf(
         user
       );
@@ -242,7 +248,9 @@ contract UiPoolDataProvider is IUiPoolDataProvider {
     )
   {
     ILendingPool lendingPool = ILendingPool(provider.getLendingPool());
-    address[] memory reserves = lendingPool.getReservesList();
+    address[] memory reserves = new address[](lendingPool.getReservesCount());
+    bool[] memory reservesTypes = new bool[](lendingPool.getReservesCount());
+    (reserves, reservesTypes) = lendingPool.getReservesList();
     DataTypes.UserConfigurationMap memory userConfig = lendingPool.getUserConfiguration(user);
 
     AggregatedReserveData[] memory reservesData = new AggregatedReserveData[](reserves.length);
@@ -252,10 +260,11 @@ contract UiPoolDataProvider is IUiPoolDataProvider {
     for (uint256 i = 0; i < reserves.length; i++) {
       AggregatedReserveData memory reserveData = reservesData[i];
       reserveData.underlyingAsset = reserves[i];
+      reserveData.reserveType = reservesTypes[i];
 
       // reserve current state
       DataTypes.ReserveData memory baseData =
-        lendingPool.getReserveData(reserveData.underlyingAsset);
+        lendingPool.getReserveData(reserveData.underlyingAsset, reserveData.reserveType);
       reserveData.liquidityIndex = baseData.liquidityIndex;
       reserveData.variableBorrowIndex = baseData.variableBorrowIndex;
       reserveData.liquidityRate = baseData.currentLiquidityRate;

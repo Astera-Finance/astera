@@ -147,9 +147,9 @@ contract LendingPoolConfigurator is VersionedInitializable, ILendingPoolConfigur
   function updateAToken(UpdateATokenInput calldata input) external onlyPoolAdmin {
     ILendingPool cachedPool = pool;
 
-    DataTypes.ReserveData memory reserveData = cachedPool.getReserveData(input.asset);
+    DataTypes.ReserveData memory reserveData = cachedPool.getReserveData(input.asset, input.reserveType);
 
-    (, , , uint256 decimals, ) = cachedPool.getConfiguration(input.asset).getParamsMemory();
+    (, , , uint256 decimals, ) = cachedPool.getConfiguration(input.asset, input.reserveType).getParamsMemory();
 
     bytes memory encodedCall = abi.encodeWithSelector(
         IInitializableAToken.initialize.selector,
@@ -169,7 +169,7 @@ contract LendingPoolConfigurator is VersionedInitializable, ILendingPoolConfigur
       encodedCall
     );
 
-    emit ATokenUpgraded(input.asset, reserveData.aTokenAddress, input.implementation);
+    emit ATokenUpgraded(input.asset, input.reserveType, reserveData.aTokenAddress, input.implementation);
   }
 
   /**
@@ -178,9 +178,9 @@ contract LendingPoolConfigurator is VersionedInitializable, ILendingPoolConfigur
   function updateStableDebtToken(UpdateDebtTokenInput calldata input) external onlyPoolAdmin {
     ILendingPool cachedPool = pool;
 
-    DataTypes.ReserveData memory reserveData = cachedPool.getReserveData(input.asset);
+    DataTypes.ReserveData memory reserveData = cachedPool.getReserveData(input.asset, input.reserveType);
      
-    (, , , uint256 decimals, ) = cachedPool.getConfiguration(input.asset).getParamsMemory();
+    (, , , uint256 decimals, ) = cachedPool.getConfiguration(input.asset, input.reserveType).getParamsMemory();
 
     bytes memory encodedCall = abi.encodeWithSelector(
         IInitializableDebtToken.initialize.selector,
@@ -215,9 +215,9 @@ contract LendingPoolConfigurator is VersionedInitializable, ILendingPoolConfigur
   {
     ILendingPool cachedPool = pool;
 
-    DataTypes.ReserveData memory reserveData = cachedPool.getReserveData(input.asset);
+    DataTypes.ReserveData memory reserveData = cachedPool.getReserveData(input.asset, input.reserveType);
 
-    (, , , uint256 decimals, ) = cachedPool.getConfiguration(input.asset).getParamsMemory();
+    (, , , uint256 decimals, ) = cachedPool.getConfiguration(input.asset, input.reserveType).getParamsMemory();
 
     bytes memory encodedCall = abi.encodeWithSelector(
         IInitializableDebtToken.initialize.selector,
@@ -246,9 +246,10 @@ contract LendingPoolConfigurator is VersionedInitializable, ILendingPoolConfigur
   /**
    * @dev Enables borrowing on a reserve
    * @param asset The address of the underlying asset of the reserve
+   * @param reserveType Whether the reserve is boosted by a vault
    * @param stableBorrowRateEnabled True if stable borrow rate needs to be enabled by default on this reserve
    **/
-  function enableBorrowingOnReserve(address asset, bool stableBorrowRateEnabled)
+  function enableBorrowingOnReserve(address asset, bool reserveType, bool stableBorrowRateEnabled)
     external
     onlyPoolAdmin
   {
@@ -257,28 +258,30 @@ contract LendingPoolConfigurator is VersionedInitializable, ILendingPoolConfigur
     currentConfig.setBorrowingEnabled(true);
     currentConfig.setStableRateBorrowingEnabled(stableBorrowRateEnabled);
 
-    pool.setConfiguration(asset, currentConfig.data);
+    pool.setConfiguration(asset, reserveType, currentConfig.data);
 
-    emit BorrowingEnabledOnReserve(asset, stableBorrowRateEnabled);
+    emit BorrowingEnabledOnReserve(asset, reserveType, stableBorrowRateEnabled);
   }
 
   /**
    * @dev Disables borrowing on a reserve
    * @param asset The address of the underlying asset of the reserve
+   * @param reserveType Whether the reserve is boosted by a vault
    **/
-  function disableBorrowingOnReserve(address asset) external onlyPoolAdmin {
+  function disableBorrowingOnReserve(address asset, bool reserveType) external onlyPoolAdmin {
     DataTypes.ReserveConfigurationMap memory currentConfig = pool.getConfiguration(asset);
 
     currentConfig.setBorrowingEnabled(false);
 
-    pool.setConfiguration(asset, currentConfig.data);
-    emit BorrowingDisabledOnReserve(asset);
+    pool.setConfiguration(asset, reserveType, currentConfig.data);
+    emit BorrowingDisabledOnReserve(asset, reserveType);
   }
 
   /**
    * @dev Configures the reserve collateralization parameters
    * all the values are expressed in percentages with two decimals of precision. A valid value is 10000, which means 100.00%
    * @param asset The address of the underlying asset of the reserve
+   * @param reserveType Whether the reserve is boosted by a vault
    * @param ltv The loan to value of the asset when used as collateral
    * @param liquidationThreshold The threshold at which loans using this asset as collateral will be considered undercollateralized
    * @param liquidationBonus The bonus liquidators receive to liquidate this asset. The values is always above 100%. A value of 105%
@@ -286,11 +289,12 @@ contract LendingPoolConfigurator is VersionedInitializable, ILendingPoolConfigur
    **/
   function configureReserveAsCollateral(
     address asset,
+    bool reserveType,
     uint256 ltv,
     uint256 liquidationThreshold,
     uint256 liquidationBonus
   ) external onlyPoolAdmin {
-    DataTypes.ReserveConfigurationMap memory currentConfig = pool.getConfiguration(asset);
+    DataTypes.ReserveConfigurationMap memory currentConfig = pool.getConfiguration(asset, reserveType);
 
     //validation of the parameters: the LTV can
     //only be lower or equal than the liquidation threshold
@@ -323,124 +327,132 @@ contract LendingPoolConfigurator is VersionedInitializable, ILendingPoolConfigur
     currentConfig.setLiquidationThreshold(liquidationThreshold);
     currentConfig.setLiquidationBonus(liquidationBonus);
 
-    pool.setConfiguration(asset, currentConfig.data);
+    pool.setConfiguration(asset, reserveType, currentConfig.data);
 
-    emit CollateralConfigurationChanged(asset, ltv, liquidationThreshold, liquidationBonus);
+    emit CollateralConfigurationChanged(asset, reserveType, ltv, liquidationThreshold, liquidationBonus);
   }
 
   /**
    * @dev Enable stable rate borrowing on a reserve
    * @param asset The address of the underlying asset of the reserve
+   * @param reserveType Whether the reserve is boosted by a vault
    **/
-  function enableReserveStableRate(address asset) external onlyPoolAdmin {
-    DataTypes.ReserveConfigurationMap memory currentConfig = pool.getConfiguration(asset);
+  function enableReserveStableRate(address asset, bool reserveType) external onlyPoolAdmin {
+    DataTypes.ReserveConfigurationMap memory currentConfig = pool.getConfiguration(asset, reserveType);
 
     currentConfig.setStableRateBorrowingEnabled(true);
 
-    pool.setConfiguration(asset, currentConfig.data);
+    pool.setConfiguration(asset, reserveType, currentConfig.data);
 
-    emit StableRateEnabledOnReserve(asset);
+    emit StableRateEnabledOnReserve(asset, reserveType);
   }
 
   /**
    * @dev Disable stable rate borrowing on a reserve
    * @param asset The address of the underlying asset of the reserve
+   * @param reserveType Whether the reserve is boosted by a vault
    **/
-  function disableReserveStableRate(address asset) external onlyPoolAdmin {
-    DataTypes.ReserveConfigurationMap memory currentConfig = pool.getConfiguration(asset);
+  function disableReserveStableRate(address asset, bool reserveType) external onlyPoolAdmin {
+    DataTypes.ReserveConfigurationMap memory currentConfig = pool.getConfiguration(asset, reserveType);
 
     currentConfig.setStableRateBorrowingEnabled(false);
 
-    pool.setConfiguration(asset, currentConfig.data);
+    pool.setConfiguration(asset, reserveType, currentConfig.data);
 
-    emit StableRateDisabledOnReserve(asset);
+    emit StableRateDisabledOnReserve(asset, reserveType);
   }
 
   /**
    * @dev Activates a reserve
    * @param asset The address of the underlying asset of the reserve
+   * @param reserveType Whether the reserve is boosted by a vault
    **/
-  function activateReserve(address asset) external onlyPoolAdmin {
-    DataTypes.ReserveConfigurationMap memory currentConfig = pool.getConfiguration(asset);
+  function activateReserve(address asset, bool reserveType) external onlyPoolAdmin {
+    DataTypes.ReserveConfigurationMap memory currentConfig = pool.getConfiguration(asset, reserveType);
 
     currentConfig.setActive(true);
 
-    pool.setConfiguration(asset, currentConfig.data);
+    pool.setConfiguration(asset, reserveType, currentConfig.data);
 
-    emit ReserveActivated(asset);
+    emit ReserveActivated(asset, reserveType);
   }
 
   /**
    * @dev Deactivates a reserve
    * @param asset The address of the underlying asset of the reserve
+   * @param reserveType Whether the reserve is boosted by a vault
    **/
-  function deactivateReserve(address asset) external onlyPoolAdmin {
+  function deactivateReserve(address asset, bool reserveType) external onlyPoolAdmin {
     _checkNoLiquidity(asset);
 
-    DataTypes.ReserveConfigurationMap memory currentConfig = pool.getConfiguration(asset);
+    DataTypes.ReserveConfigurationMap memory currentConfig = pool.getConfiguration(asset, reserveType);
 
     currentConfig.setActive(false);
 
-    pool.setConfiguration(asset, currentConfig.data);
+    pool.setConfiguration(asset, reserveType, currentConfig.data);
 
-    emit ReserveDeactivated(asset);
+    emit ReserveDeactivated(asset, reserveType);
   }
 
   /**
    * @dev Freezes a reserve. A frozen reserve doesn't allow any new deposit, borrow or rate swap
    *  but allows repayments, liquidations, rate rebalances and withdrawals
    * @param asset The address of the underlying asset of the reserve
+   * @param reserveType Whether the reserve is boosted by a vault
    **/
-  function freezeReserve(address asset) external onlyPoolAdmin {
-    DataTypes.ReserveConfigurationMap memory currentConfig = pool.getConfiguration(asset);
+  function freezeReserve(address asset, bool reserveType) external onlyPoolAdmin {
+    DataTypes.ReserveConfigurationMap memory currentConfig = pool.getConfiguration(asset, reserveType);
 
     currentConfig.setFrozen(true);
 
-    pool.setConfiguration(asset, currentConfig.data);
+    pool.setConfiguration(asset, reserveType, currentConfig.data);
 
-    emit ReserveFrozen(asset);
+    emit ReserveFrozen(asset, reserveType);
   }
 
   /**
    * @dev Unfreezes a reserve
    * @param asset The address of the underlying asset of the reserve
+   * @param reserveType Whether the reserve is boosted by a vault
    **/
-  function unfreezeReserve(address asset) external onlyPoolAdmin {
-    DataTypes.ReserveConfigurationMap memory currentConfig = pool.getConfiguration(asset);
+  function unfreezeReserve(address asset, bool reserveType) external onlyPoolAdmin {
+    DataTypes.ReserveConfigurationMap memory currentConfig = pool.getConfiguration(asset, reserveType);
 
     currentConfig.setFrozen(false);
 
-    pool.setConfiguration(asset, currentConfig.data);
+    pool.setConfiguration(asset, reserveType, currentConfig.data);
 
-    emit ReserveUnfrozen(asset);
+    emit ReserveUnfrozen(asset, reserveType);
   }
 
   /**
    * @dev Updates the reserve factor of a reserve
    * @param asset The address of the underlying asset of the reserve
+   * @param reserveType Whether the reserve is boosted by a vault
    * @param reserveFactor The new reserve factor of the reserve
    **/
-  function setReserveFactor(address asset, uint256 reserveFactor) external onlyPoolAdmin {
-    DataTypes.ReserveConfigurationMap memory currentConfig = pool.getConfiguration(asset);
+  function setReserveFactor(address asset, bool reserveType, uint256 reserveFactor) external onlyPoolAdmin {
+    DataTypes.ReserveConfigurationMap memory currentConfig = pool.getConfiguration(asset, reserveType);
 
     currentConfig.setReserveFactor(reserveFactor);
 
-    pool.setConfiguration(asset, currentConfig.data);
+    pool.setConfiguration(asset, reserveType, currentConfig.data);
 
-    emit ReserveFactorChanged(asset, reserveFactor);
+    emit ReserveFactorChanged(asset, reserveType, reserveFactor);
   }
 
   /**
    * @dev Sets the interest rate strategy of a reserve
    * @param asset The address of the underlying asset of the reserve
+   * @param reserveType Whether the reserve is boosted by a vault
    * @param rateStrategyAddress The new address of the interest strategy contract
    **/
-  function setReserveInterestRateStrategyAddress(address asset, address rateStrategyAddress)
+  function setReserveInterestRateStrategyAddress(address asset, bool reserveType, address rateStrategyAddress)
     external
     onlyPoolAdmin
   {
-    pool.setReserveInterestRateStrategyAddress(asset, rateStrategyAddress);
-    emit ReserveInterestRateStrategyChanged(asset, rateStrategyAddress);
+    pool.setReserveInterestRateStrategyAddress(asset, reserveType, rateStrategyAddress);
+    emit ReserveInterestRateStrategyChanged(asset, reserveType, rateStrategyAddress);
   }
 
   /**

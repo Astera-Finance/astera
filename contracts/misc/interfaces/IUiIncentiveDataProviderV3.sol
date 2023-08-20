@@ -7,6 +7,7 @@ import {ILendingPoolAddressesProvider} from '../../interfaces/ILendingPoolAddres
 interface IUiIncentiveDataProviderV3 {
   struct AggregatedReserveIncentiveData {
     address underlyingAsset;
+    bool reserveType;
     IncentiveData aIncentiveData;
     IncentiveData vIncentiveData;
     IncentiveData sIncentiveData;
@@ -34,6 +35,7 @@ interface IUiIncentiveDataProviderV3 {
 
   struct UserReserveIncentiveData {
     address underlyingAsset;
+    bool reserveType;
     UserIncentiveData aTokenIncentivesUserData;
     UserIncentiveData vTokenIncentivesUserData;
     UserIncentiveData sTokenIncentivesUserData;

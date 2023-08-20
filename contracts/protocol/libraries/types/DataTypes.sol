@@ -41,6 +41,11 @@ library DataTypes {
     uint256 data;
   }
 
+  struct ReserveReference {
+    address asset; // underlying asset
+    bool reserveType; // if the reserve is vault-boosted
+  }
+
   struct UserConfigurationMap {
     uint256 data;
   }

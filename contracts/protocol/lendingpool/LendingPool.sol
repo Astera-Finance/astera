@@ -133,6 +133,7 @@ contract LendingPool is VersionedInitializable, ILendingPool, LendingPoolStorage
    * @dev Withdraws an `amount` of underlying asset from the reserve, burning the equivalent aTokens owned
    * E.g. User has 100 aUSDC, calls withdraw() and receives 100 USDC, burning the 100 aUSDC
    * @param asset The address of the underlying asset to withdraw
+   * @param reserveType Whether the reserve is boosted by a vault
    * @param amount The underlying amount to be withdrawn
    *   - Send the value type(uint256).max in order to withdraw the whole aToken balance
    * @param to Address that will receive the underlying, same as msg.sender if the user
@@ -160,6 +161,7 @@ contract LendingPool is VersionedInitializable, ILendingPool, LendingPoolStorage
 
     ValidationLogic.validateWithdraw(
       asset,
+      reserveType,
       amountToWithdraw,
       userBalance,
       _reserves,
@@ -213,6 +215,7 @@ contract LendingPool is VersionedInitializable, ILendingPool, LendingPoolStorage
     _executeBorrow(
       ExecuteBorrowParams(
         asset,
+        reserveType,
         msg.sender,
         onBehalfOf,
         amount,
@@ -228,6 +231,7 @@ contract LendingPool is VersionedInitializable, ILendingPool, LendingPoolStorage
    * @notice Repays a borrowed `amount` on a specific reserve, burning the equivalent debt tokens owned
    * - E.g. User repays 100 USDC, burning 100 variable/stable debt tokens of the `onBehalfOf` address
    * @param asset The address of the borrowed underlying asset previously borrowed
+   * @param reserveType Whether the reserve is boosted by a vault
    * @param amount The amount to repay
    * - Send the value type(uint256).max in order to repay the whole debt for `asset` on the specific `debtMode`
    * @param rateMode The interest rate mode at of the debt the user wants to repay: 1 for Stable, 2 for Variable
@@ -349,6 +353,7 @@ contract LendingPool is VersionedInitializable, ILendingPool, LendingPoolStorage
    *     2. the current deposit APY is below REBALANCE_UP_THRESHOLD * maxVariableBorrowRate, which means that too much has been
    *        borrowed at a stable rate and depositors are not earning enough
    * @param asset The address of the underlying asset borrowed
+   * @param reserveType Whether the reserve is boosted by a vault
    * @param user The address of the user to be rebalanced
    **/
   function rebalanceStableBorrowRate(address asset, bool reserveType, address user) external override whenNotPaused {
@@ -386,6 +391,7 @@ contract LendingPool is VersionedInitializable, ILendingPool, LendingPoolStorage
   /**
    * @dev Allows depositors to enable/disable a specific deposited asset as collateral
    * @param asset The address of the underlying asset deposited
+   * @param reserveType Whether the reserve is boosted by a vault
    * @param useAsCollateral `true` if the user wants to use the deposit as collateral, `false` otherwise
    **/
   function setUserUseReserveAsCollateral(address asset, bool reserveType, bool useAsCollateral)
@@ -398,6 +404,7 @@ contract LendingPool is VersionedInitializable, ILendingPool, LendingPoolStorage
     ValidationLogic.validateSetUseReserveAsCollateral(
       reserve,
       asset,
+      reserveType,
       useAsCollateral,
       _reserves,
       _usersConfig[msg.sender],
@@ -549,6 +556,7 @@ contract LendingPool is VersionedInitializable, ILendingPool, LendingPoolStorage
         _executeBorrow(
           ExecuteBorrowParams(
             vars.currentAsset,
+            vars.currentType,
             msg.sender,
             onBehalfOf,
             vars.currentAmount,
@@ -696,15 +704,20 @@ contract LendingPool is VersionedInitializable, ILendingPool, LendingPoolStorage
   /**
    * @dev Returns the list of the initialized reserves
    **/
-  function getReservesList() external view override returns (address[] memory) {
+  function getReservesList() external view override returns (address[] memory, bool[] memory) {
     address[] memory _activeReserves = new address[](_reservesCount);
+    bool[] memory _activeReservesTypes = new bool[](_reservesCount);
 
     for (uint256 i = 0; i < _reservesCount; i++) {
-      _activeReserves[i] = _reservesList[i];
+      _activeReserves[i] = _reservesList[i].asset;
+      _activeReservesTypes[i] = _reservesList[i].reserveType;
     }
-    return _activeReserves;
+    return (_activeReserves, _activeReservesTypes);
   }
 
+  function getReservesCount() external view override returns (uint256) {
+    return _reservesCount;
+  }
   /**
    * @dev Returns the cached LendingPoolAddressesProvider connected to this contract
    **/
@@ -785,6 +798,7 @@ contract LendingPool is VersionedInitializable, ILendingPool, LendingPoolStorage
    * interest rate strategy
    * - Only callable by the LendingPoolConfigurator contract
    * @param asset The address of the underlying asset of the reserve
+   * @param reserveType Whether the reserve is boosted by a vault
    * @param aTokenAddress The address of the aToken that will be assigned to the reserve
    * @param stableDebtAddress The address of the StableDebtToken that will be assigned to the reserve
    * @param aTokenAddress The address of the VariableDebtToken that will be assigned to the reserve
@@ -812,6 +826,7 @@ contract LendingPool is VersionedInitializable, ILendingPool, LendingPoolStorage
    * @dev Updates the address of the interest rate strategy contract
    * - Only callable by the LendingPoolConfigurator contract
    * @param asset The address of the underlying asset of the reserve
+   * @param reserveType Whether the reserve is boosted by a vault
    * @param rateStrategyAddress The address of the interest rate strategy contract
    **/
   function setReserveInterestRateStrategyAddress(address asset, bool reserveType, address rateStrategyAddress)
@@ -826,6 +841,7 @@ contract LendingPool is VersionedInitializable, ILendingPool, LendingPoolStorage
    * @dev Sets the configuration bitmap of the reserve as a whole
    * - Only callable by the LendingPoolConfigurator contract
    * @param asset The address of the underlying asset of the reserve
+   * @param reserveType Whether the reserve is boosted by a vault
    * @param configuration The new configuration bitmap
    **/
   function setConfiguration(address asset, bool reserveType, uint256 configuration)
@@ -948,7 +964,7 @@ contract LendingPool is VersionedInitializable, ILendingPool, LendingPoolStorage
 
     if (!reserveAlreadyAdded) {
       _reserves[asset][reserveType].id = uint8(reservesCount);
-      _reservesList[reservesCount] = asset;
+      _reservesList[reservesCount] = DataTypes.ReserveReference(asset, reserveType);
 
       _reservesCount = reservesCount + 1;
     }

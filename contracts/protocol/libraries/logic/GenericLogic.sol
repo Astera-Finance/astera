@@ -54,21 +54,22 @@ library GenericLogic {
    **/
   function balanceDecreaseAllowed(
     address asset,
+    bool reserveType,
     address user,
     uint256 amount,
-    mapping(address => DataTypes.ReserveData) storage reservesData,
+    mapping(address => mapping(bool => DataTypes.ReserveData)) storage reservesData,
     DataTypes.UserConfigurationMap calldata userConfig,
-    mapping(uint256 => address) storage reserves,
+    mapping(uint256 => DataTypes.ReserveReference) storage reserves,
     uint256 reservesCount,
     address oracle
   ) external view returns (bool) {
-    if (!userConfig.isBorrowingAny() || !userConfig.isUsingAsCollateral(reservesData[asset].id)) {
+    if (!userConfig.isBorrowingAny() || !userConfig.isUsingAsCollateral(reservesData[asset][reserveType].id)) {
       return true;
     }
 
     balanceDecreaseAllowedLocalVars memory vars;
 
-    (, vars.liquidationThreshold, , vars.decimals, ) = reservesData[asset]
+    (, vars.liquidationThreshold, , vars.decimals, ) = reservesData[asset][reserveType]
       .configuration
       .getParams();
 
@@ -132,6 +133,7 @@ library GenericLogic {
     uint256 reservesLength;
     bool healthFactorBelowThreshold;
     address currentReserveAddress;
+    bool currentReserveType;
     bool usageAsCollateralEnabled;
     bool userUsesReserveAsCollateral;
   }
@@ -149,9 +151,9 @@ library GenericLogic {
    **/
   function calculateUserAccountData(
     address user,
-    mapping(address => DataTypes.ReserveData) storage reservesData,
+    mapping(address => mapping(bool => DataTypes.ReserveData)) storage reservesData,
     DataTypes.UserConfigurationMap memory userConfig,
-    mapping(uint256 => address) storage reserves,
+    mapping(uint256 => DataTypes.ReserveReference) storage reserves,
     uint256 reservesCount,
     address oracle
   )
@@ -175,8 +177,9 @@ library GenericLogic {
         continue;
       }
 
-      vars.currentReserveAddress = reserves[vars.i];
-      DataTypes.ReserveData storage currentReserve = reservesData[vars.currentReserveAddress];
+      vars.currentReserveAddress = reserves[vars.i].asset;
+      vars.currentReserveType = reserves[vars.i].reserveType;
+      DataTypes.ReserveData storage currentReserve = reservesData[vars.currentReserveAddress][vars.currentReserveType];
 
       (vars.ltv, vars.liquidationThreshold, , vars.decimals, ) = currentReserve
         .configuration

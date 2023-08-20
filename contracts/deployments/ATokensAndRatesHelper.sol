@@ -27,6 +27,7 @@ contract ATokensAndRatesHelper is Ownable {
 
   struct ConfigureReserveInput {
     address asset;
+    bool reserveType;
     uint256 baseLTV;
     uint256 liquidationThreshold;
     uint256 liquidationBonus;
@@ -69,6 +70,7 @@ contract ATokensAndRatesHelper is Ownable {
     for (uint256 i = 0; i < inputParams.length; i++) {
       configurator.configureReserveAsCollateral(
         inputParams[i].asset,
+        inputParams[i].reserveType,
         inputParams[i].baseLTV,
         inputParams[i].liquidationThreshold,
         inputParams[i].liquidationBonus
@@ -77,10 +79,11 @@ contract ATokensAndRatesHelper is Ownable {
       if (inputParams[i].borrowingEnabled) {
         configurator.enableBorrowingOnReserve(
           inputParams[i].asset,
+          inputParams[i].reserveType,
           inputParams[i].stableBorrowingEnabled
         );
       }
-      configurator.setReserveFactor(inputParams[i].asset, inputParams[i].reserveFactor);
+      configurator.setReserveFactor(inputParams[i].asset, inputParams[i].reserveType, inputParams[i].reserveFactor);
     }
   }
 }

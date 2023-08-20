@@ -31,16 +31,19 @@ contract GranaryTreasury is Ownable {
   }
 
   function withdrawAllReserves() external returns (bool) {
-    withdrawReserves(LENDING_POOL.getReservesList());
+    address[] memory _activeReserves = new address[](LENDING_POOL.getReservesCount());
+    bool[] memory _activeReservesTypes = new bool[](LENDING_POOL.getReservesCount());
+    (_activeReserves, _activeReservesTypes) = LENDING_POOL.getReservesList();
+    withdrawReserves(_activeReserves, _activeReservesTypes);
     return true;
   }
 
-  function withdrawReserves(address[] memory assets) public returns (bool) {
+  function withdrawReserves(address[] memory assets, bool[] memory reservesTypes) public returns (bool) {
     for (uint256 i = 0; i < assets.length; i++) {
-      DataTypes.ReserveData memory reserveData = LENDING_POOL.getReserveData(assets[i]);
+      DataTypes.ReserveData memory reserveData = LENDING_POOL.getReserveData(assets[i], reservesTypes[i]);
       uint256 balance = IAToken(reserveData.aTokenAddress).balanceOf(address(this));
       if (balance != 0) {
-        LENDING_POOL.withdraw(assets[i], balance, currentTreasury);
+        LENDING_POOL.withdraw(assets[i], reservesTypes[i], balance, currentTreasury);
       }
     }
     return true;

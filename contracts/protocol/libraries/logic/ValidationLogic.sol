@@ -59,23 +59,25 @@ library ValidationLogic {
    */
   function validateWithdraw(
     address reserveAddress,
+    bool reserveType,
     uint256 amount,
     uint256 userBalance,
-    mapping(address => DataTypes.ReserveData) storage reservesData,
+    mapping(address => mapping(bool => DataTypes.ReserveData)) storage reservesData,
     DataTypes.UserConfigurationMap storage userConfig,
-    mapping(uint256 => address) storage reserves,
+    mapping(uint256 => DataTypes.ReserveReference) storage reserves,
     uint256 reservesCount,
     address oracle
   ) external view {
     require(amount != 0, Errors.VL_INVALID_AMOUNT);
     require(amount <= userBalance, Errors.VL_NOT_ENOUGH_AVAILABLE_USER_BALANCE);
 
-    (bool isActive, , , ) = reservesData[reserveAddress].configuration.getFlags();
+    (bool isActive, , , ) = reservesData[reserveAddress][reserveType].configuration.getFlags();
     require(isActive, Errors.VL_NO_ACTIVE_RESERVE);
 
     require(
       GenericLogic.balanceDecreaseAllowed(
         reserveAddress,
+        reserveType,
         msg.sender,
         amount,
         reservesData,
@@ -125,9 +127,9 @@ library ValidationLogic {
     uint256 amountInETH,
     uint256 interestRateMode,
     uint256 maxStableLoanPercent,
-    mapping(address => DataTypes.ReserveData) storage reservesData,
+    mapping(address => mapping(bool => DataTypes.ReserveData)) storage reservesData,
     DataTypes.UserConfigurationMap storage userConfig,
-    mapping(uint256 => address) storage reserves,
+    mapping(uint256 => DataTypes.ReserveReference) storage reserves,
     uint256 reservesCount,
     address oracle
   ) external view {
@@ -344,10 +346,11 @@ library ValidationLogic {
   function validateSetUseReserveAsCollateral(
     DataTypes.ReserveData storage reserve,
     address reserveAddress,
+    bool reserveType,
     bool useAsCollateral,
-    mapping(address => DataTypes.ReserveData) storage reservesData,
+    mapping(address => mapping(bool => DataTypes.ReserveData)) storage reservesData,
     DataTypes.UserConfigurationMap storage userConfig,
-    mapping(uint256 => address) storage reserves,
+    mapping(uint256 => DataTypes.ReserveReference) storage reserves,
     uint256 reservesCount,
     address oracle
   ) external view {
@@ -359,6 +362,7 @@ library ValidationLogic {
       useAsCollateral ||
         GenericLogic.balanceDecreaseAllowed(
           reserveAddress,
+          reserveType,
           msg.sender,
           underlyingBalance,
           reservesData,
@@ -445,9 +449,9 @@ library ValidationLogic {
    */
   function validateTransfer(
     address from,
-    mapping(address => DataTypes.ReserveData) storage reservesData,
+    mapping(address => mapping(bool => DataTypes.ReserveData)) storage reservesData,
     DataTypes.UserConfigurationMap storage userConfig,
-    mapping(uint256 => address) storage reserves,
+    mapping(uint256 => DataTypes.ReserveReference) storage reserves,
     uint256 reservesCount,
     address oracle
   ) internal view {

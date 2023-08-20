@@ -7,6 +7,7 @@ import {ILendingPoolAddressesProvider} from '../../interfaces/ILendingPoolAddres
 interface IUiPoolDataProviderV2 {
   struct AggregatedReserveData {
     address underlyingAsset;
+    bool reserveType;
     string name;
     string symbol;
     uint256 decimals;
@@ -45,6 +46,7 @@ interface IUiPoolDataProviderV2 {
 
   struct UserReserveData {
     address underlyingAsset;
+    bool reserveType;
     uint256 scaledATokenBalance;
     bool usageAsCollateralEnabledOnUser;
     uint256 stableBorrowRate;

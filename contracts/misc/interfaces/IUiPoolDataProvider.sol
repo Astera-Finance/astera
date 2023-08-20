@@ -8,6 +8,7 @@ import {IAaveIncentivesController} from '../../interfaces/IAaveIncentivesControl
 interface IUiPoolDataProvider {
   struct AggregatedReserveData {
     address underlyingAsset;
+    bool reserveType;
     string name;
     string symbol;
     uint256 decimals;
@@ -56,6 +57,7 @@ interface IUiPoolDataProvider {
 
   struct UserReserveData {
     address underlyingAsset;
+    bool reserveType;
     uint256 scaledATokenBalance;
     bool usageAsCollateralEnabledOnUser;
     uint256 stableBorrowRate;
