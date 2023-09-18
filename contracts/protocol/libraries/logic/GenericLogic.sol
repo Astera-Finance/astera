@@ -89,9 +89,7 @@ library GenericLogic {
       return true;
     }
 
-    vars.amountToDecreaseInETH = IPriceOracleGetter(oracle).getAssetPrice(asset).mul(amount).div(
-      10**vars.decimals
-    );
+    vars.amountToDecreaseInETH = getAmountToDecreaseInEth(oracle, asset, amount, vars.decimals);
 
     vars.collateralBalanceAfterDecrease = vars.totalCollateralInETH.sub(vars.amountToDecreaseInETH);
 
@@ -114,6 +112,12 @@ library GenericLogic {
       );
 
     return healthFactorAfterDecrease >= GenericLogic.HEALTH_FACTOR_LIQUIDATION_THRESHOLD;
+  }
+
+  function getAmountToDecreaseInEth(address oracle, address asset, uint256 amount, uint256 decimals) internal view returns (uint256) {
+    return IPriceOracleGetter(oracle).getAssetPrice(asset).mul(amount).div(
+      10**decimals
+    );
   }
 
   struct CalculateUserAccountDataVars {

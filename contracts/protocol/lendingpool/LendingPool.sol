@@ -435,7 +435,9 @@ contract LendingPool is VersionedInitializable, ILendingPool, LendingPoolStorage
    **/
   function liquidationCall(
     address collateralAsset,
+    bool collateralAssetType,
     address debtAsset,
+    bool debtAssetType,
     address user,
     uint256 debtToCover,
     bool receiveAToken
@@ -446,9 +448,11 @@ contract LendingPool is VersionedInitializable, ILendingPool, LendingPoolStorage
     (bool success, bytes memory result) =
       collateralManager.delegatecall(
         abi.encodeWithSignature(
-          'liquidationCall(address,address,address,uint256,bool)',
+          'liquidationCall(address,bool,address,bool,address,uint256,bool)',
           collateralAsset,
+          collateralAssetType,
           debtAsset,
+          debtAssetType,
           user,
           debtToCover,
           receiveAToken
@@ -480,57 +484,45 @@ contract LendingPool is VersionedInitializable, ILendingPool, LendingPoolStorage
    * as long as the amount taken plus a fee is returned.
    * IMPORTANT There are security concerns for developers of flashloan receiver contracts that must be kept into consideration.
    * For further details please visit https://developers.aave.com
-   * @param receiverAddress The address of the contract receiving the funds, implementing the IFlashLoanReceiver interface
-   * @param assets The addresses of the assets being flash-borrowed
-   * @param amounts The amounts amounts being flash-borrowed
+   * @param flashLoanParams struct containing receiverAddress, onBehalfOf, referralCode, assets, amounts
    * @param modes Types of the debt to open if the flash loan is not returned:
    *   0 -> Don't open any debt, just revert if funds can't be transferred from the receiver
    *   1 -> Open debt at stable rate for the value of the amount flash-borrowed to the `onBehalfOf` address
    *   2 -> Open debt at variable rate for the value of the amount flash-borrowed to the `onBehalfOf` address
-   * @param onBehalfOf The address  that will receive the debt in the case of using on `modes` 1 or 2
    * @param params Variadic packed params to pass to the receiver as extra information
-   * @param referralCode Code used to register the integrator originating the operation, for potential rewards.
-   *   0 if the action is executed directly by the user, without any middle-man
    **/
   function flashLoan(
-    address receiverAddress,
-    address[] calldata assets,
-    bool[] calldata reserveTypes,
+    FlashLoanParams memory flashLoanParams,
     uint256[] calldata amounts,
     uint256[] calldata modes,
-    address onBehalfOf,
-    bytes calldata params,
-    uint16 referralCode
+    bytes calldata params
   ) external override whenNotPaused {
     FlashLoanLocalVars memory vars;
 
-    ValidationLogic.validateFlashloan(assets, amounts); //@todo add types array to this funciton too
+    ValidationLogic.validateFlashloan(flashLoanParams.assets, amounts); //@todo add types array to this funciton too
 
-    address[] memory aTokenAddresses = new address[](assets.length);
-    uint256[] memory premiums = new uint256[](assets.length);
+    address[] memory aTokenAddresses = new address[](flashLoanParams.assets.length);
+    uint256[] memory premiums = new uint256[](flashLoanParams.assets.length);
 
-    vars.receiver = IFlashLoanReceiver(receiverAddress);
+    vars.receiver = IFlashLoanReceiver(flashLoanParams.receiverAddress);
 
-    for (vars.i = 0; vars.i < assets.length; vars.i++) {
-      aTokenAddresses[vars.i] = _reserves[assets[vars.i]][reserveTypes[vars.i]].aTokenAddress;
-
-      premiums[vars.i] = amounts[vars.i].mul(_flashLoanPremiumTotal).div(10000);
-
-      IAToken(aTokenAddresses[vars.i]).transferUnderlyingTo(receiverAddress, amounts[vars.i]);
-    }
+    (aTokenAddresses, premiums) = getATokenAdressesAndPremiums(
+      flashLoanParams.receiverAddress,
+      flashLoanParams.assets,
+      flashLoanParams.reserveTypes,
+      amounts);
 
     require(
-      vars.receiver.executeOperation(assets, amounts, premiums, msg.sender, params),
+      vars.receiver.executeOperation(flashLoanParams.assets, amounts, premiums, msg.sender, params),
       Errors.LP_INVALID_FLASH_LOAN_EXECUTOR_RETURN
     );
 
-    for (vars.i = 0; vars.i < assets.length; vars.i++) {
-      vars.currentAsset = assets[vars.i];
-      vars.currentType = reserveTypes[vars.i];
+    for (vars.i = 0; vars.i < flashLoanParams.assets.length; vars.i++) {
+      vars.currentAsset = flashLoanParams.assets[vars.i];
+      vars.currentType = flashLoanParams.reserveTypes[vars.i];
       vars.currentAmount = amounts[vars.i];
       vars.currentPremium = premiums[vars.i];
       vars.currentATokenAddress = aTokenAddresses[vars.i];
-      vars.currentAmountPlusPremium = vars.currentAmount.add(vars.currentPremium);
 
       if (DataTypes.InterestRateMode(modes[vars.i]) == DataTypes.InterestRateMode.NONE) {
         _reserves[vars.currentAsset][vars.currentType].updateState();
@@ -541,14 +533,14 @@ contract LendingPool is VersionedInitializable, ILendingPool, LendingPoolStorage
         _reserves[vars.currentAsset][vars.currentType].updateInterestRates(
           vars.currentAsset,
           vars.currentATokenAddress,
-          vars.currentAmountPlusPremium,
+          vars.currentAmount.add(vars.currentPremium),
           0
         );
 
         IERC20(vars.currentAsset).safeTransferFrom(
-          receiverAddress,
+          flashLoanParams.receiverAddress,
           vars.currentATokenAddress,
-          vars.currentAmountPlusPremium
+          vars.currentAmount.add(vars.currentPremium)
         );
       } else {
         // If the user chose to not return the funds, the system checks if there is enough collateral and
@@ -558,23 +550,38 @@ contract LendingPool is VersionedInitializable, ILendingPool, LendingPoolStorage
             vars.currentAsset,
             vars.currentType,
             msg.sender,
-            onBehalfOf,
+            flashLoanParams.onBehalfOf,
             vars.currentAmount,
             modes[vars.i],
             vars.currentATokenAddress,
-            referralCode,
+            flashLoanParams.referralCode,
             false
           )
         );
       }
       emit FlashLoan(
-        receiverAddress,
+        flashLoanParams.receiverAddress,
         msg.sender,
         vars.currentAsset,
         vars.currentAmount,
         vars.currentPremium,
-        referralCode
+        flashLoanParams.referralCode
       );
+    }
+  }
+
+  function getATokenAdressesAndPremiums(
+    address receiverAddress,
+    address[] memory assets,
+    bool[] memory reserveTypes,
+    uint256[] calldata amounts
+  ) internal returns (address[] memory aTokenAddresses, uint256[] memory premiums) {
+    for (uint256 i = 0; i < assets.length; i++) {
+      aTokenAddresses[i] = _reserves[assets[i]][reserveTypes[i]].aTokenAddress;
+
+      premiums[i] = amounts[i].mul(_flashLoanPremiumTotal).div(10000);
+
+      IAToken(aTokenAddresses[i]).transferUnderlyingTo(receiverAddress, amounts[i]);
     }
   }
 
