@@ -99,6 +99,12 @@ export async function deployProtocol() {
     weth.address
   ];
 
+  const reserveTypes = [
+    false,
+    false,
+    false
+  ]
+
   const UsdcPriceFeed = await hre.ethers.getContractFactory("MockAggregator");
   const usdcPriceFeed = await UsdcPriceFeed.deploy("100000000");
 
@@ -229,6 +235,7 @@ export async function deployProtocol() {
     underlyingAssetDecimals: BigNumberish;
     interestRateStrategyAddress: string;
     underlyingAsset: string;
+    reserveType: boolean;
     treasury: string;
     incentivesController: string;
     underlyingAssetName: string;
@@ -248,6 +255,7 @@ export async function deployProtocol() {
     underlyingAssetDecimals: 6, 
     interestRateStrategyAddress: stableStrategy.address,
     underlyingAsset: tokens[0],
+    reserveType: reserveTypes[0],
     treasury: granaryTreasury.address,
     incentivesController: rewarder.address,
     underlyingAssetName: "USDC",
@@ -268,6 +276,7 @@ export async function deployProtocol() {
     underlyingAssetDecimals: 8, 
     interestRateStrategyAddress: volatileStrategy.address,
     underlyingAsset: tokens[1],
+    reserveType: reserveTypes[1],
     treasury: granaryTreasury.address,
     incentivesController: rewarder.address,
     underlyingAssetName: "WBTC",
@@ -287,6 +296,7 @@ export async function deployProtocol() {
     underlyingAssetDecimals: 18, 
     interestRateStrategyAddress: volatileStrategy.address,
     underlyingAsset: tokens[2],
+    reserveType: reserveTypes[2],
     treasury: granaryTreasury.address,
     incentivesController: rewarder.address,
     underlyingAssetName: "ETH",
@@ -357,7 +367,7 @@ export async function deployProtocol() {
 
   await wETHGateway.authorizeLendingPool(lendingPoolProxyAddress);
 
-  let usdcReserveTokens = await aaveProtocolDataProvider.getReserveTokensAddresses(usdc.address);
+  let usdcReserveTokens = await aaveProtocolDataProvider.getReserveTokensAddresses(usdc.address, false);
   let GrainUSDC = await hre.ethers.getContractFactory("AToken");
   let grainUSDC = await GrainUSDC.attach(usdcReserveTokens.aTokenAddress);
   let StableDebtUSDC = await hre.ethers.getContractFactory("StableDebtToken");
@@ -365,7 +375,7 @@ export async function deployProtocol() {
   let VariableDebtUSDC = await hre.ethers.getContractFactory("VariableDebtToken");
   let variableDebtUSDC = await VariableDebtUSDC.attach(usdcReserveTokens.variableDebtTokenAddress);
 
-  let wbtcReserveTokens = await aaveProtocolDataProvider.getReserveTokensAddresses(wbtc.address);
+  let wbtcReserveTokens = await aaveProtocolDataProvider.getReserveTokensAddresses(wbtc.address, false);
   let GrainWBTC = await hre.ethers.getContractFactory("AToken");
   let grainWBTC = await GrainWBTC.attach(wbtcReserveTokens.aTokenAddress);
   let StableDebtWBTC = await hre.ethers.getContractFactory("StableDebtToken");
@@ -373,7 +383,7 @@ export async function deployProtocol() {
   let VariableDebtWBTC = await hre.ethers.getContractFactory("VariableDebtToken");
   let variableDebtWBTC = await VariableDebtWBTC.attach(wbtcReserveTokens.variableDebtTokenAddress);
 
-  let ethReserveTokens = await aaveProtocolDataProvider.getReserveTokensAddresses(weth.address);
+  let ethReserveTokens = await aaveProtocolDataProvider.getReserveTokensAddresses(weth.address, false);
   let GrainETH = await hre.ethers.getContractFactory("AToken");
   let grainETH = await GrainETH.attach(ethReserveTokens.aTokenAddress);
   let StableDebtETH = await hre.ethers.getContractFactory("StableDebtToken");
@@ -406,59 +416,59 @@ export async function approve(contractAddress, token, account) {
   return { receipt, gasPrice };
 }
 
-export async function deposit(lendingPoolProxy, account, tokenAddress, amount, onBehalfOf) {
-  const tx = await lendingPoolProxy.connect(account).deposit(tokenAddress, amount, onBehalfOf, "0");
+export async function deposit(lendingPoolProxy, account, tokenAddress, reserveType, amount, onBehalfOf) {
+  const tx = await lendingPoolProxy.connect(account).deposit(tokenAddress, reserveType, amount, onBehalfOf, "0");
   const receipt = await tx.wait();
   return receipt;
 }
 
-export async function withdraw(lendingPoolProxy, account, tokenAddress, amount, to) {
-  const tx = await lendingPoolProxy.connect(account).withdraw(tokenAddress, amount, to);
+export async function withdraw(lendingPoolProxy, account, tokenAddress, reserveType, amount, to) {
+  const tx = await lendingPoolProxy.connect(account).withdraw(tokenAddress, reserveType, amount, to);
   const receipt = await tx.wait();
   return receipt;
 }
 
-export async function borrow(lendingPoolProxy, account, tokenAddress, amount, onBehalfOf) {
-  const tx = await lendingPoolProxy.connect(account).borrow(tokenAddress, amount, "2", "0", onBehalfOf);
+export async function borrow(lendingPoolProxy, account, tokenAddress, reserveType, amount, onBehalfOf) {
+  const tx = await lendingPoolProxy.connect(account).borrow(tokenAddress, reserveType, amount, "2", "0", onBehalfOf);
   const receipt = await tx.wait();
   return receipt;
 }
 
-export async function repay(lendingPoolProxy, account, tokenAddress, amount, onBehalfOf) {
-  const tx = await lendingPoolProxy.connect(account).repay(tokenAddress, amount, "2", onBehalfOf);
+export async function repay(lendingPoolProxy, account, tokenAddress, reserveType, amount, onBehalfOf) {
+  const tx = await lendingPoolProxy.connect(account).repay(tokenAddress, reserveType, amount, "2", onBehalfOf);
   const receipt = await tx.wait();
   return receipt;
 }
 
-export async function setUserUseReserveAsCollateral(lendingPoolProxy, account, tokenAddress, useAsCollateral) {
-  const tx = await lendingPoolProxy.connect(account).setUserUseReserveAsCollateral(tokenAddress, useAsCollateral);
+export async function setUserUseReserveAsCollateral(lendingPoolProxy, account, tokenAddress, reserveType, useAsCollateral) {
+  const tx = await lendingPoolProxy.connect(account).setUserUseReserveAsCollateral(tokenAddress, reserveType, useAsCollateral);
   const receipt = await tx.wait();
   return receipt;
 }
 
-export async function depositETH(wETHGateway, account, lendingPoolProxyAddress, amount, onBehalfOf) {
-  const tx = await wETHGateway.connect(account).depositETH(lendingPoolProxyAddress, onBehalfOf, "0", { value: amount });
+export async function depositETH(wETHGateway, account, lendingPoolProxyAddress, reserveType, amount, onBehalfOf) {
+  const tx = await wETHGateway.connect(account).depositETH(lendingPoolProxyAddress, reserveType, onBehalfOf, "0", { value: amount });
   const receipt = await tx.wait();
   const gasPrice = tx.gasPrice;
   return { receipt, gasPrice };
 }
 
-export async function withdrawETH(wETHGateway, account, lendingPoolProxyAddress, amount, to) {
-  const tx = await wETHGateway.connect(account).withdrawETH(lendingPoolProxyAddress, amount, to);
+export async function withdrawETH(wETHGateway, account, lendingPoolProxyAddress, reserveType, amount, to) {
+  const tx = await wETHGateway.connect(account).withdrawETH(lendingPoolProxyAddress, reserveType, amount, to);
   const receipt = await tx.wait();
   const gasPrice = tx.gasPrice;
   return { receipt, gasPrice };
 }
 
-export async function borrowETH(wETHGateway, account, lendingPoolProxyAddress, amount) {
-  const tx = await wETHGateway.connect(account).borrowETH(lendingPoolProxyAddress, amount, "2", "0");
+export async function borrowETH(wETHGateway, account, lendingPoolProxyAddress, reserveType, amount) {
+  const tx = await wETHGateway.connect(account).borrowETH(lendingPoolProxyAddress, reserveType, amount, "2", "0");
   const receipt = await tx.wait();
   const gasPrice = tx.gasPrice;
   return { receipt, gasPrice };
 }
 
-export async function repayETH(wETHGateway, account, lendingPoolProxyAddress, amount, onBehalfOf) {
-  const tx = await wETHGateway.connect(account).repayETH(lendingPoolProxyAddress, amount, "2", onBehalfOf, { value: amount });
+export async function repayETH(wETHGateway, account, lendingPoolProxyAddress, reserveType, amount, onBehalfOf) {
+  const tx = await wETHGateway.connect(account).repayETH(lendingPoolProxyAddress, reserveType, amount, "2", onBehalfOf, { value: amount });
   const receipt = await tx.wait();
   const gasPrice = tx.gasPrice;
   return { receipt, gasPrice };

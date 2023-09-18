@@ -28,7 +28,7 @@ describe("WETHGateway", function () {
 
     const { grainETH, lendingPoolProxy, wETHGateway } = await loadFixture(deployProtocol);
 
-    const ethDeposit = await depositETH(wETHGateway, addr1, lendingPoolProxy.address, ETH_DEPOSIT_SIZE, addr1.address);
+    const ethDeposit = await depositETH(wETHGateway, addr1, lendingPoolProxy.address, false, ETH_DEPOSIT_SIZE, addr1.address);
     expect(await grainETH.balanceOf(addr1.address)).to.equal(ETH_DEPOSIT_SIZE);
   });
 
@@ -37,7 +37,7 @@ describe("WETHGateway", function () {
     const ETH_DEPOSIT_SIZE = ethers.utils.parseUnits("1", 18);
     const { grainETH, lendingPoolProxy, wETHGateway } = await loadFixture(deployProtocol);
 
-    const depositTx = await depositETH(wETHGateway, owner, lendingPoolProxy.address, ETH_DEPOSIT_SIZE, owner.address);
+    const depositTx = await depositETH(wETHGateway, owner, lendingPoolProxy.address, false, ETH_DEPOSIT_SIZE, owner.address);
 
     const priorEthersBalance = await owner.getBalance();
 
@@ -45,7 +45,7 @@ describe("WETHGateway", function () {
     const { gasUsed: approveGas } = approveTx.receipt;
     const approveGasCost = approveGas.mul(approveTx.gasPrice);
 
-    const withdrawalTx = await withdrawETH(wETHGateway, owner, lendingPoolProxy.address, ETH_DEPOSIT_SIZE, owner.address);
+    const withdrawalTx = await withdrawETH(wETHGateway, owner, lendingPoolProxy.address, false, ETH_DEPOSIT_SIZE, owner.address);
     const { gasUsed: withdrawalGas } = withdrawalTx.receipt;
     const withdrawalGasCost = withdrawalGas.mul(withdrawalTx.gasPrice);
 
@@ -64,18 +64,18 @@ describe("WETHGateway", function () {
     const ETH_DEPOSIT_SIZE = ethers.utils.parseUnits("1", 18);
     const { weth, variableDebtETH, lendingPoolProxy, wETHGateway, aaveProtocolDataProvider } = await loadFixture(deployProtocol);
 
-    await depositETH(wETHGateway, owner, lendingPoolProxy.address, ETH_DEPOSIT_SIZE, owner.address);
+    await depositETH(wETHGateway, owner, lendingPoolProxy.address, false, ETH_DEPOSIT_SIZE, owner.address);
 
     const priorEthersBalance = await owner.getBalance();
 
-    const ethLTV = (await aaveProtocolDataProvider.getReserveConfigurationData(weth.address)).ltv;
+    const ethLTV = (await aaveProtocolDataProvider.getReserveConfigurationData(weth.address, false)).ltv;
     const ethMaxBorrowNative = ETH_DEPOSIT_SIZE.mul(ethLTV).div(10000);
 
     const approveTx = await approveDelegation(variableDebtETH, owner, wETHGateway.address, ethMaxBorrowNative);
     const { gasUsed: approveGas } = approveTx.receipt;
     const approveGasCost = approveGas.mul(approveTx.gasPrice);
 
-    const borrowTx = await borrowETH(wETHGateway, owner, lendingPoolProxy.address, ethMaxBorrowNative);
+    const borrowTx = await borrowETH(wETHGateway, owner, lendingPoolProxy.address, false, ethMaxBorrowNative);
     const { gasUsed: borrowGas } = borrowTx.receipt;
     const borrowGasCost = borrowGas.mul(borrowTx.gasPrice);
 
@@ -94,23 +94,23 @@ describe("WETHGateway", function () {
     const ETH_DEPOSIT_SIZE = ethers.utils.parseUnits("1", 18);
     const { weth, variableDebtETH, lendingPoolProxy, wETHGateway, aaveProtocolDataProvider } = await loadFixture(deployProtocol);
 
-    await depositETH(wETHGateway, owner, lendingPoolProxy.address, ETH_DEPOSIT_SIZE, owner.address);
+    await depositETH(wETHGateway, owner, lendingPoolProxy.address, false, ETH_DEPOSIT_SIZE, owner.address);
 
     const priorEthersBalance = await owner.getBalance();
 
-    const ethLTV = (await aaveProtocolDataProvider.getReserveConfigurationData(weth.address)).ltv;
+    const ethLTV = (await aaveProtocolDataProvider.getReserveConfigurationData(weth.address, false)).ltv;
     const ethMaxBorrowNative = ETH_DEPOSIT_SIZE.mul(ethLTV).div(10000);
 
     const approveTx = await approveDelegation(variableDebtETH, owner, wETHGateway.address, ethMaxBorrowNative);
     const { gasUsed: approveGas } = approveTx.receipt;
     const approveGasCost = approveGas.mul(approveTx.gasPrice);
 
-    const borrowTx = await borrowETH(wETHGateway, owner, lendingPoolProxy.address, ethMaxBorrowNative);
+    const borrowTx = await borrowETH(wETHGateway, owner, lendingPoolProxy.address, false, ethMaxBorrowNative);
     const { gasUsed: borrowGas } = borrowTx.receipt;
     const borrowGasCost = borrowGas.mul(borrowTx.gasPrice);
 
     const beforeRepay = await owner.getBalance();
-    const repayTx = await repayETH(wETHGateway, owner, lendingPoolProxy.address, ethMaxBorrowNative.mul(2), owner.address);
+    const repayTx = await repayETH(wETHGateway, owner, lendingPoolProxy.address, false, ethMaxBorrowNative.mul(2), owner.address);
     const { gasUsed: repayGas } = repayTx.receipt;
     const repayGasCost = repayGas.mul(repayTx.gasPrice);
 

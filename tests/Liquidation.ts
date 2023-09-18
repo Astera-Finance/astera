@@ -28,7 +28,7 @@ describe("Liquidations", function () {
 
       const usdcDepositValue = (USDC_DEPOSIT_SIZE).mul(await usdcPriceFeed.latestAnswer());
 
-      const usdcLTV = (await aaveProtocolDataProvider.getReserveConfigurationData(usdc.address)).ltv;
+      const usdcLTV = (await aaveProtocolDataProvider.getReserveConfigurationData(usdc.address, false)).ltv;
 
       const usdcMaxBorrowNative = ( USDC_DEPOSIT_SIZE * (usdcLTV / 10000));
 
@@ -42,15 +42,15 @@ describe("Liquidations", function () {
       await approve(lendingPoolProxy.address, usdc, owner);
       await approve(lendingPoolProxy.address, wbtc, addr1);
 
-      await deposit(lendingPoolProxy, owner, usdc.address, USDC_DEPOSIT_SIZE, owner.address);
-      await deposit(lendingPoolProxy, addr1, wbtc.address, WBTC_DEPOSIT_SIZE, addr1.address);
+      await deposit(lendingPoolProxy, owner, usdc.address, false, USDC_DEPOSIT_SIZE, owner.address);
+      await deposit(lendingPoolProxy, addr1, wbtc.address, false, WBTC_DEPOSIT_SIZE, addr1.address);
 
-      await borrow(lendingPoolProxy, owner, wbtc.address, maxBitcoinBorrow, owner.address);
-      const userReserveData = await aaveProtocolDataProvider.getUserReserveData(usdc.address, owner.address);
+      await borrow(lendingPoolProxy, owner, wbtc.address, false, maxBitcoinBorrow, owner.address);
+      const userReserveData = await aaveProtocolDataProvider.getUserReserveData(usdc.address, false, owner.address);
       const amountToLiquidate = userReserveData.currentVariableDebt.div(2);
 
       // address collateralAsset, address debtAsset, address user, uint256 debtToCover, bool receiveAToken
-      await expect(lendingPoolProxy.liquidationCall(usdc.address, wbtc.address, owner.address, amountToLiquidate, true)).to.be.revertedWith(
+      await expect(lendingPoolProxy.liquidationCall(usdc.address, false, wbtc.address, false, owner.address, amountToLiquidate, true)).to.be.revertedWith(
         "42" // LPCM_HEALTH_FACTOR_NOT_BELOW_THRESHOLD
       );
     });
@@ -67,7 +67,7 @@ describe("Liquidations", function () {
 
       const usdcDepositValue = (USDC_DEPOSIT_SIZE).mul(await usdcPriceFeed.latestAnswer());
 
-      const usdcLTV = (await aaveProtocolDataProvider.getReserveConfigurationData(usdc.address)).ltv;
+      const usdcLTV = (await aaveProtocolDataProvider.getReserveConfigurationData(usdc.address, false)).ltv;
 
       const usdcMaxBorrowNative = ( USDC_DEPOSIT_SIZE * (usdcLTV / 10000));
 
@@ -81,37 +81,39 @@ describe("Liquidations", function () {
       await approve(lendingPoolProxy.address, usdc, owner);
       await approve(lendingPoolProxy.address, wbtc, addr1);
 
-      await deposit(lendingPoolProxy, owner, usdc.address, USDC_DEPOSIT_SIZE, owner.address);
-      await deposit(lendingPoolProxy, addr1, wbtc.address, WBTC_DEPOSIT_SIZE, addr1.address);
+      await deposit(lendingPoolProxy, owner, usdc.address, false, USDC_DEPOSIT_SIZE, owner.address);
+      await deposit(lendingPoolProxy, addr1, wbtc.address, false, WBTC_DEPOSIT_SIZE, addr1.address);
 
-      await borrow(lendingPoolProxy, owner, wbtc.address, maxBitcoinBorrow, owner.address);
+      await borrow(lendingPoolProxy, owner, wbtc.address, false, maxBitcoinBorrow, owner.address);
 
       const userAccountDataBefore = await lendingPoolProxy.getUserAccountData(owner.address);
       expect(userAccountDataBefore.healthFactor).to.be.gt(MIN_HEALTH_FACTOR);
 
-      const newUsdcPriceFeed = await deployMockAggregator("94000000", await usdc.decimals());
+      const newUsdcPriceFeed = await deployMockAggregator("94000000"); // , await usdc.decimals()
       await setAssetSources(aaveOracle, owner, [usdc.address], [newUsdcPriceFeed.address])
 
       // BEFORE
-      const usdcReserveDataBefore = await aaveProtocolDataProvider.getReserveData(usdc.address);
-      const wbtcReserveDataBefore = await aaveProtocolDataProvider.getReserveData(wbtc.address);
-      const userReserveDataBefore = await aaveProtocolDataProvider.getUserReserveData(wbtc.address, owner.address);
+      const usdcReserveDataBefore = await aaveProtocolDataProvider.getReserveData(usdc.address, false);
+      const wbtcReserveDataBefore = await aaveProtocolDataProvider.getReserveData(wbtc.address, false);
+      const userReserveDataBefore = await aaveProtocolDataProvider.getUserReserveData(wbtc.address, false, owner.address);
 
       await prepareMockTokens(wbtc, addr2, WBTC_DEPOSIT_SIZE);
       await approve(lendingPoolProxy.address, wbtc, addr2);
       const amountToLiquidate = userReserveDataBefore.currentVariableDebt.div(2);
       const tx = await lendingPoolProxy.connect(addr2).liquidationCall(
         usdc.address,
+        false,
         wbtc.address,
+        false,
         owner.address,
         amountToLiquidate,
         true
       );
 
       // AFTER
-      const usdcReserveDataAfter = await aaveProtocolDataProvider.getReserveData(usdc.address);
-      const wbtcReserveDataAfter = await aaveProtocolDataProvider.getReserveData(wbtc.address);
-      const userReserveDataAfter = await aaveProtocolDataProvider.getUserReserveData(wbtc.address, owner.address);
+      const usdcReserveDataAfter = await aaveProtocolDataProvider.getReserveData(usdc.address, false);
+      const wbtcReserveDataAfter = await aaveProtocolDataProvider.getReserveData(wbtc.address, false);
+      const userReserveDataAfter = await aaveProtocolDataProvider.getUserReserveData(wbtc.address, false, owner.address);
       const userAccountDataAfter = await lendingPoolProxy.getUserAccountData(owner.address);
 
       const collateralPrice = await newUsdcPriceFeed.latestAnswer();
@@ -119,7 +121,7 @@ describe("Liquidations", function () {
       const collateralDecimals = await usdc.decimals();
       const debtDecimals = await wbtc.decimals();
 
-      const reserveConfigurationData = await aaveProtocolDataProvider.getReserveConfigurationData(usdc.address);
+      const reserveConfigurationData = await aaveProtocolDataProvider.getReserveConfigurationData(usdc.address, false);
 
       const expectedCollateralLiquidated = debtPrice
         .mul(amountToLiquidate.mul(reserveConfigurationData.liquidationBonus).div(10000))
@@ -170,7 +172,7 @@ describe("Liquidations", function () {
       );
 
       expect(
-        (await aaveProtocolDataProvider.getUserReserveData(usdc.address, owner.address))
+        (await aaveProtocolDataProvider.getUserReserveData(usdc.address, false, owner.address))
           .usageAsCollateralEnabled
       ).to.be.true;
     });
@@ -188,7 +190,7 @@ describe("Liquidations", function () {
 
       const usdcDepositValue = (USDC_DEPOSIT_SIZE).mul(await usdcPriceFeed.latestAnswer());
 
-      const usdcLTV = (await aaveProtocolDataProvider.getReserveConfigurationData(usdc.address)).ltv;
+      const usdcLTV = (await aaveProtocolDataProvider.getReserveConfigurationData(usdc.address, false)).ltv;
 
       const usdcMaxBorrowNative = ( USDC_DEPOSIT_SIZE * (usdcLTV / 10000));
 
@@ -202,15 +204,15 @@ describe("Liquidations", function () {
       await approve(lendingPoolProxy.address, usdc, owner);
       await approve(lendingPoolProxy.address, wbtc, addr1);
 
-      await deposit(lendingPoolProxy, owner, usdc.address, USDC_DEPOSIT_SIZE, owner.address);
-      await deposit(lendingPoolProxy, addr1, wbtc.address, WBTC_DEPOSIT_SIZE, addr1.address);
+      await deposit(lendingPoolProxy, owner, usdc.address, false, USDC_DEPOSIT_SIZE, owner.address);
+      await deposit(lendingPoolProxy, addr1, wbtc.address, false, WBTC_DEPOSIT_SIZE, addr1.address);
 
-      await borrow(lendingPoolProxy, owner, wbtc.address, maxBitcoinBorrow, owner.address);
-      const userReserveData = await aaveProtocolDataProvider.getUserReserveData(usdc.address, owner.address);
+      await borrow(lendingPoolProxy, owner, wbtc.address, false, maxBitcoinBorrow, owner.address);
+      const userReserveData = await aaveProtocolDataProvider.getUserReserveData(usdc.address, false, owner.address);
       const amountToLiquidate = userReserveData.currentVariableDebt.div(2);
 
       // address collateralAsset, address debtAsset, address user, uint256 debtToCover, bool receiveAToken
-      await expect(lendingPoolProxy.liquidationCall(usdc.address, wbtc.address, owner.address, amountToLiquidate, false)).to.be.revertedWith(
+      await expect(lendingPoolProxy.liquidationCall(usdc.address, false, wbtc.address, false, owner.address, amountToLiquidate, false)).to.be.revertedWith(
         "42" // LPCM_HEALTH_FACTOR_NOT_BELOW_THRESHOLD
       );
     });
@@ -228,7 +230,7 @@ describe("Liquidations", function () {
 
       const usdcDepositValue = (USDC_DEPOSIT_SIZE).mul(await usdcPriceFeed.latestAnswer());
 
-      const usdcLTV = (await aaveProtocolDataProvider.getReserveConfigurationData(usdc.address)).ltv;
+      const usdcLTV = (await aaveProtocolDataProvider.getReserveConfigurationData(usdc.address, false)).ltv;
 
       const usdcMaxBorrowNative = ( USDC_DEPOSIT_SIZE * (usdcLTV / 10000));
 
@@ -242,21 +244,21 @@ describe("Liquidations", function () {
       await approve(lendingPoolProxy.address, usdc, owner);
       await approve(lendingPoolProxy.address, wbtc, addr1);
 
-      await deposit(lendingPoolProxy, owner, usdc.address, USDC_DEPOSIT_SIZE, owner.address);
-      await deposit(lendingPoolProxy, addr1, wbtc.address, WBTC_DEPOSIT_SIZE, addr1.address);
+      await deposit(lendingPoolProxy, owner, usdc.address, false, USDC_DEPOSIT_SIZE, owner.address);
+      await deposit(lendingPoolProxy, addr1, wbtc.address, false, WBTC_DEPOSIT_SIZE, addr1.address);
 
-      await borrow(lendingPoolProxy, owner, wbtc.address, maxBitcoinBorrow, owner.address);
+      await borrow(lendingPoolProxy, owner, wbtc.address, false, maxBitcoinBorrow, owner.address);
 
       const userAccountDataBefore = await lendingPoolProxy.getUserAccountData(owner.address);
       expect(userAccountDataBefore.healthFactor).to.be.gt(MIN_HEALTH_FACTOR);
 
-      const newUsdcPriceFeed = await deployMockAggregator("94000000", await usdc.decimals());
+      const newUsdcPriceFeed = await deployMockAggregator("94000000");
       await setAssetSources(aaveOracle, owner, [usdc.address], [newUsdcPriceFeed.address])
 
       // BEFORE
-      const usdcReserveDataBefore = await aaveProtocolDataProvider.getReserveData(usdc.address);
-      const wbtcReserveDataBefore = await aaveProtocolDataProvider.getReserveData(wbtc.address);
-      const userReserveDataBefore = await aaveProtocolDataProvider.getUserReserveData(wbtc.address, owner.address);
+      const usdcReserveDataBefore = await aaveProtocolDataProvider.getReserveData(usdc.address, false);
+      const wbtcReserveDataBefore = await aaveProtocolDataProvider.getReserveData(wbtc.address, false);
+      const userReserveDataBefore = await aaveProtocolDataProvider.getUserReserveData(wbtc.address, false, owner.address);
 
       await prepareMockTokens(wbtc, addr2, WBTC_DEPOSIT_SIZE);
       await approve(lendingPoolProxy.address, wbtc, addr2);
@@ -264,16 +266,18 @@ describe("Liquidations", function () {
       
       const tx = await lendingPoolProxy.connect(addr2).liquidationCall(
         usdc.address,
+        false,
         wbtc.address,
+        false,
         owner.address,
         amountToLiquidate,
         false
       );
 
       // AFTER
-      const usdcReserveDataAfter = await aaveProtocolDataProvider.getReserveData(usdc.address);
-      const wbtcReserveDataAfter = await aaveProtocolDataProvider.getReserveData(wbtc.address);
-      const userReserveDataAfter = await aaveProtocolDataProvider.getUserReserveData(wbtc.address, owner.address);
+      const usdcReserveDataAfter = await aaveProtocolDataProvider.getReserveData(usdc.address, false);
+      const wbtcReserveDataAfter = await aaveProtocolDataProvider.getReserveData(wbtc.address, false);
+      const userReserveDataAfter = await aaveProtocolDataProvider.getUserReserveData(wbtc.address, false, owner.address);
       const userAccountDataAfter = await lendingPoolProxy.getUserAccountData(owner.address);
 
       const collateralPrice = await newUsdcPriceFeed.latestAnswer();
@@ -281,7 +285,7 @@ describe("Liquidations", function () {
       const collateralDecimals = await usdc.decimals();
       const debtDecimals = await wbtc.decimals();
 
-      const reserveConfigurationData = await aaveProtocolDataProvider.getReserveConfigurationData(usdc.address);
+      const reserveConfigurationData = await aaveProtocolDataProvider.getReserveConfigurationData(usdc.address, false);
 
       const expectedCollateralLiquidated = debtPrice
         .mul(amountToLiquidate.mul(reserveConfigurationData.liquidationBonus).div(10000))
@@ -332,7 +336,7 @@ describe("Liquidations", function () {
       );
 
       expect(
-        (await aaveProtocolDataProvider.getUserReserveData(usdc.address, owner.address))
+        (await aaveProtocolDataProvider.getUserReserveData(usdc.address, false, owner.address))
           .usageAsCollateralEnabled
       ).to.be.true;
     });

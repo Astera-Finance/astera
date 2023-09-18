@@ -20,7 +20,7 @@ describe("LendingPoolConfigurator", function () {
     const invalidReserveFactor = 77777;
 
     await expect(
-      lendingPoolConfiguratorProxy.setReserveFactor(weth.address, invalidReserveFactor)
+      lendingPoolConfiguratorProxy.setReserveFactor(weth.address, false, invalidReserveFactor)
     ).to.be.revertedWith("71");
   });
 
@@ -29,8 +29,8 @@ describe("LendingPoolConfigurator", function () {
 
     const { weth, lendingPoolConfiguratorProxy, aaveProtocolDataProvider } = await loadFixture(deployProtocol);
 
-    await lendingPoolConfiguratorProxy.deactivateReserve(weth.address);
-    const { isActive } = await aaveProtocolDataProvider.getReserveConfigurationData(weth.address);
+    await lendingPoolConfiguratorProxy.deactivateReserve(weth.address, false);
+    const { isActive } = await aaveProtocolDataProvider.getReserveConfigurationData(weth.address, false);
     expect(isActive).to.be.equal(false);
   });
 
@@ -39,9 +39,9 @@ describe("LendingPoolConfigurator", function () {
 
     const { weth, lendingPoolConfiguratorProxy, aaveProtocolDataProvider } = await loadFixture(deployProtocol);
 
-    await lendingPoolConfiguratorProxy.deactivateReserve(weth.address);
-    await lendingPoolConfiguratorProxy.activateReserve(weth.address);
-    const { isActive } = await aaveProtocolDataProvider.getReserveConfigurationData(weth.address);
+    await lendingPoolConfiguratorProxy.deactivateReserve(weth.address, false);
+    await lendingPoolConfiguratorProxy.activateReserve(weth.address, false);
+    const { isActive } = await aaveProtocolDataProvider.getReserveConfigurationData(weth.address, false);
     expect(isActive).to.be.equal(true);
   });
 
@@ -51,7 +51,7 @@ describe("LendingPoolConfigurator", function () {
     const { weth, lendingPoolConfiguratorProxy } = await loadFixture(deployProtocol);
 
     await expect(
-      lendingPoolConfiguratorProxy.connect(addr1).deactivateReserve(weth.address)
+      lendingPoolConfiguratorProxy.connect(addr1).deactivateReserve(weth.address, false)
     ).to.be.revertedWith("33");
   });
 
@@ -61,7 +61,7 @@ describe("LendingPoolConfigurator", function () {
     const { weth, lendingPoolConfiguratorProxy } = await loadFixture(deployProtocol);
 
     await expect(
-      lendingPoolConfiguratorProxy.connect(addr1).activateReserve(weth.address)
+      lendingPoolConfiguratorProxy.connect(addr1).activateReserve(weth.address, false)
     ).to.be.revertedWith("33");
   });
 
@@ -70,7 +70,7 @@ describe("LendingPoolConfigurator", function () {
 
     const { weth, lendingPoolConfiguratorProxy, aaveProtocolDataProvider } = await loadFixture(deployProtocol);
 
-    await lendingPoolConfiguratorProxy.freezeReserve(weth.address);
+    await lendingPoolConfiguratorProxy.freezeReserve(weth.address, false);
     const {
       decimals,
       ltv,
@@ -81,7 +81,7 @@ describe("LendingPoolConfigurator", function () {
       borrowingEnabled,
       isActive,
       isFrozen,
-    } = await aaveProtocolDataProvider.getReserveConfigurationData(weth.address);
+    } = await aaveProtocolDataProvider.getReserveConfigurationData(weth.address, false);
 
     expect(borrowingEnabled).to.be.equal(true);
     expect(isActive).to.be.equal(true);
@@ -99,7 +99,7 @@ describe("LendingPoolConfigurator", function () {
 
     const { weth, lendingPoolConfiguratorProxy, aaveProtocolDataProvider } = await loadFixture(deployProtocol);
 
-    await lendingPoolConfiguratorProxy.unfreezeReserve(weth.address);
+    await lendingPoolConfiguratorProxy.unfreezeReserve(weth.address, false);
     const {
       decimals,
       ltv,
@@ -110,7 +110,7 @@ describe("LendingPoolConfigurator", function () {
       borrowingEnabled,
       isActive,
       isFrozen,
-    } = await aaveProtocolDataProvider.getReserveConfigurationData(weth.address);
+    } = await aaveProtocolDataProvider.getReserveConfigurationData(weth.address, false);
 
     expect(borrowingEnabled).to.be.equal(true);
     expect(isActive).to.be.equal(true);
@@ -129,7 +129,7 @@ describe("LendingPoolConfigurator", function () {
     const { weth, lendingPoolConfiguratorProxy } = await loadFixture(deployProtocol);
 
     await expect(
-      lendingPoolConfiguratorProxy.connect(addr1).freezeReserve(weth.address)
+      lendingPoolConfiguratorProxy.connect(addr1).freezeReserve(weth.address, false)
     ).to.be.revertedWith("33");
   });
 
@@ -140,7 +140,7 @@ describe("LendingPoolConfigurator", function () {
     const { weth, lendingPoolConfiguratorProxy } = await loadFixture(deployProtocol);
 
     await expect(
-      lendingPoolConfiguratorProxy.connect(addr1).unfreezeReserve(weth.address)
+      lendingPoolConfiguratorProxy.connect(addr1).unfreezeReserve(weth.address, false)
     ).to.be.revertedWith("33");
   });
 
@@ -149,7 +149,7 @@ describe("LendingPoolConfigurator", function () {
 
     const { weth, lendingPoolConfiguratorProxy, aaveProtocolDataProvider } = await loadFixture(deployProtocol);
 
-    await lendingPoolConfiguratorProxy.disableBorrowingOnReserve(weth.address);
+    await lendingPoolConfiguratorProxy.disableBorrowingOnReserve(weth.address, false);
     const {
       decimals,
       ltv,
@@ -160,7 +160,7 @@ describe("LendingPoolConfigurator", function () {
       borrowingEnabled,
       isActive,
       isFrozen,
-    } = await aaveProtocolDataProvider.getReserveConfigurationData(weth.address);
+    } = await aaveProtocolDataProvider.getReserveConfigurationData(weth.address, false);
 
     expect(borrowingEnabled).to.be.equal(false);
     expect(isActive).to.be.equal(true);
@@ -179,8 +179,8 @@ describe("LendingPoolConfigurator", function () {
 
     const { weth, lendingPoolConfiguratorProxy, aaveProtocolDataProvider } = await loadFixture(deployProtocol);
 
-    await lendingPoolConfiguratorProxy.enableBorrowingOnReserve(weth.address, false);
-    const { variableBorrowIndex } = await aaveProtocolDataProvider.getReserveData(weth.address);
+    await lendingPoolConfiguratorProxy.enableBorrowingOnReserve(weth.address, false, false);
+    const { variableBorrowIndex } = await aaveProtocolDataProvider.getReserveData(weth.address, false);
     const {
       decimals,
       ltv,
@@ -191,7 +191,7 @@ describe("LendingPoolConfigurator", function () {
       borrowingEnabled,
       isActive,
       isFrozen,
-    } = await aaveProtocolDataProvider.getReserveConfigurationData(weth.address);
+    } = await aaveProtocolDataProvider.getReserveConfigurationData(weth.address, false);
 
     expect(borrowingEnabled).to.be.equal(true);
     expect(isActive).to.be.equal(true);
@@ -211,7 +211,7 @@ describe("LendingPoolConfigurator", function () {
     const { weth, lendingPoolConfiguratorProxy } = await loadFixture(deployProtocol);
 
     await expect(
-      lendingPoolConfiguratorProxy.connect(addr1).disableBorrowingOnReserve(weth.address)
+      lendingPoolConfiguratorProxy.connect(addr1).disableBorrowingOnReserve(weth.address, false)
     ).to.be.revertedWith("33");
   });
 
@@ -221,7 +221,7 @@ describe("LendingPoolConfigurator", function () {
     const { weth, lendingPoolConfiguratorProxy } = await loadFixture(deployProtocol);
 
     await expect(
-      lendingPoolConfiguratorProxy.connect(addr1).enableBorrowingOnReserve(weth.address, false)
+      lendingPoolConfiguratorProxy.connect(addr1).enableBorrowingOnReserve(weth.address, false, false)
     ).to.be.revertedWith("33");
   });
 
@@ -230,7 +230,7 @@ describe("LendingPoolConfigurator", function () {
 
     const { weth, lendingPoolConfiguratorProxy, aaveProtocolDataProvider } = await loadFixture(deployProtocol);
 
-    await lendingPoolConfiguratorProxy.configureReserveAsCollateral(weth.address, 0, 0, 0);
+    await lendingPoolConfiguratorProxy.configureReserveAsCollateral(weth.address, false, 0, 0, 0);
     const {
       decimals,
       ltv,
@@ -241,7 +241,7 @@ describe("LendingPoolConfigurator", function () {
       borrowingEnabled,
       isActive,
       isFrozen,
-    } = await aaveProtocolDataProvider.getReserveConfigurationData(weth.address);
+    } = await aaveProtocolDataProvider.getReserveConfigurationData(weth.address, false);
 
     expect(borrowingEnabled).to.be.equal(true);
     expect(isActive).to.be.equal(true);
@@ -259,7 +259,7 @@ describe("LendingPoolConfigurator", function () {
 
     const { weth, lendingPoolConfiguratorProxy, aaveProtocolDataProvider } = await loadFixture(deployProtocol);
 
-    await lendingPoolConfiguratorProxy.configureReserveAsCollateral(weth.address, "8000", "8250", "10500");
+    await lendingPoolConfiguratorProxy.configureReserveAsCollateral(weth.address, false, "8000", "8250", "10500");
     const {
       decimals,
       ltv,
@@ -270,7 +270,7 @@ describe("LendingPoolConfigurator", function () {
       borrowingEnabled,
       isActive,
       isFrozen,
-    } = await aaveProtocolDataProvider.getReserveConfigurationData(weth.address);
+    } = await aaveProtocolDataProvider.getReserveConfigurationData(weth.address, false);
 
     expect(borrowingEnabled).to.be.equal(true);
     expect(isActive).to.be.equal(true);
@@ -289,7 +289,7 @@ describe("LendingPoolConfigurator", function () {
     const { weth, lendingPoolConfiguratorProxy } = await loadFixture(deployProtocol);
 
     await expect(
-      lendingPoolConfiguratorProxy.connect(addr1).configureReserveAsCollateral(weth.address, "8000", "8250", "10500")
+      lendingPoolConfiguratorProxy.connect(addr1).configureReserveAsCollateral(weth.address, false,"8000", "8250", "10500")
     ).to.be.revertedWith("33");
   });
 
@@ -298,7 +298,7 @@ describe("LendingPoolConfigurator", function () {
 
     const { weth, lendingPoolConfiguratorProxy, aaveProtocolDataProvider } = await loadFixture(deployProtocol);
 
-    await lendingPoolConfiguratorProxy.disableReserveStableRate(weth.address);
+    await lendingPoolConfiguratorProxy.disableReserveStableRate(weth.address, false);
     const {
       decimals,
       ltv,
@@ -309,7 +309,7 @@ describe("LendingPoolConfigurator", function () {
       borrowingEnabled,
       isActive,
       isFrozen,
-    } = await aaveProtocolDataProvider.getReserveConfigurationData(weth.address);
+    } = await aaveProtocolDataProvider.getReserveConfigurationData(weth.address, false);
 
     expect(borrowingEnabled).to.be.equal(true);
     expect(isActive).to.be.equal(true);
@@ -327,7 +327,7 @@ describe("LendingPoolConfigurator", function () {
 
     const { weth, lendingPoolConfiguratorProxy, aaveProtocolDataProvider } = await loadFixture(deployProtocol);
 
-    await lendingPoolConfiguratorProxy.enableReserveStableRate(weth.address);
+    await lendingPoolConfiguratorProxy.enableReserveStableRate(weth.address, false);
     const {
       decimals,
       ltv,
@@ -338,7 +338,7 @@ describe("LendingPoolConfigurator", function () {
       borrowingEnabled,
       isActive,
       isFrozen,
-    } = await aaveProtocolDataProvider.getReserveConfigurationData(weth.address);
+    } = await aaveProtocolDataProvider.getReserveConfigurationData(weth.address, false);
 
     expect(borrowingEnabled).to.be.equal(true);
     expect(isActive).to.be.equal(true);
@@ -357,7 +357,7 @@ describe("LendingPoolConfigurator", function () {
     const { weth, lendingPoolConfiguratorProxy } = await loadFixture(deployProtocol);
 
     await expect(
-      lendingPoolConfiguratorProxy.connect(addr1).disableReserveStableRate(weth.address)
+      lendingPoolConfiguratorProxy.connect(addr1).disableReserveStableRate(weth.address, false)
     ).to.be.revertedWith("33");
   });
 
@@ -368,7 +368,7 @@ describe("LendingPoolConfigurator", function () {
     const { weth, lendingPoolConfiguratorProxy } = await loadFixture(deployProtocol);
 
     await expect(
-      lendingPoolConfiguratorProxy.connect(addr1).enableReserveStableRate(weth.address)
+      lendingPoolConfiguratorProxy.connect(addr1).enableReserveStableRate(weth.address, false)
     ).to.be.revertedWith("33");
   });
 
@@ -377,7 +377,7 @@ describe("LendingPoolConfigurator", function () {
 
     const { weth, lendingPoolConfiguratorProxy, aaveProtocolDataProvider } = await loadFixture(deployProtocol);
 
-    await lendingPoolConfiguratorProxy.setReserveFactor(weth.address, "1000");
+    await lendingPoolConfiguratorProxy.setReserveFactor(weth.address, false, "1000");
     const {
       decimals,
       ltv,
@@ -388,7 +388,7 @@ describe("LendingPoolConfigurator", function () {
       borrowingEnabled,
       isActive,
       isFrozen,
-    } = await aaveProtocolDataProvider.getReserveConfigurationData(weth.address);
+    } = await aaveProtocolDataProvider.getReserveConfigurationData(weth.address, false);
 
     expect(borrowingEnabled).to.be.equal(true);
     expect(isActive).to.be.equal(true);
@@ -407,7 +407,7 @@ describe("LendingPoolConfigurator", function () {
     const { weth, lendingPoolConfiguratorProxy } = await loadFixture(deployProtocol);
 
     await expect(
-      lendingPoolConfiguratorProxy.connect(addr1).setReserveFactor(weth.address, "2000")
+      lendingPoolConfiguratorProxy.connect(addr1).setReserveFactor(weth.address, false, "2000")
     ).to.be.revertedWith("33");
   });
 
@@ -421,10 +421,10 @@ describe("LendingPoolConfigurator", function () {
 
     await approve(lendingPoolProxy.address, usdc, addr1);
 
-    await deposit(lendingPoolProxy, addr1, usdc.address, USDC_DEPOSIT_SIZE, addr1.address);
+    await deposit(lendingPoolProxy, addr1, usdc.address, false, USDC_DEPOSIT_SIZE, addr1.address);
 
     await expect(
-      lendingPoolConfiguratorProxy.deactivateReserve(usdc.address)
+      lendingPoolConfiguratorProxy.deactivateReserve(usdc.address, false)
     ).to.be.revertedWith("34");
   });
 });
