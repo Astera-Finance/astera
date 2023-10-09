@@ -40,10 +40,14 @@ library ValidationLogic {
    */
   function validateDeposit(DataTypes.ReserveData storage reserve, uint256 amount) external view {
     (bool isActive, bool isFrozen, , ) = reserve.configuration.getFlags();
-
+    uint256 depositCapExponent = reserve.configuration.getDepositCap();
+    uint256 depositCap = depositCapExponent != 0 ? 10 ^ (depositCapExponent) : type(uint256).max;
+    uint256 total = IERC20(reserve.aTokenAddress).totalSupply();
+    uint256 newTotal = total + amount;
     require(amount != 0, Errors.VL_INVALID_AMOUNT);
     require(isActive, Errors.VL_NO_ACTIVE_RESERVE);
     require(!isFrozen, Errors.VL_RESERVE_FROZEN);
+    require(newTotal < depositCap, Errors.VL_DEPOSIT_CAP_REACHED);
   }
 
   /**

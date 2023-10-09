@@ -443,6 +443,16 @@ contract LendingPoolConfigurator is VersionedInitializable, ILendingPoolConfigur
     emit ReserveFactorChanged(asset, reserveType, reserveFactor);
   }
 
+  function setDepositCap(address asset, bool reserveType, uint256 depositCap) external onlyPoolAdmin {
+    DataTypes.ReserveConfigurationMap memory currentConfig = pool.getConfiguration(asset, reserveType);
+
+    currentConfig.setDepositCap(depositCap);
+
+    pool.setConfiguration(asset, reserveType, currentConfig.data);
+
+    emit ReserveDepositCapChanged(asset, reserveType, depositCap);
+  }
+
   /**
    * @dev Sets the interest rate strategy of a reserve
    * @param asset The address of the underlying asset of the reserve

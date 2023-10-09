@@ -152,6 +152,14 @@ interface ILendingPoolConfigurator {
   event ReserveDecimalsChanged(address indexed asset, bool reserveType, uint256 decimals);
 
   /**
+   * @dev Emitted when the reserve deposit cap is updated
+   * @param asset The address of the underlying asset of the reserve
+   * @param reserveType Whether the reserve is boosted by a vault
+   * @param depositCap The new depositCap, a 0 means no deposit cap
+   **/
+  event ReserveDepositCapChanged(address indexed asset, bool reserveType, uint256 depositCap);
+
+  /**
    * @dev Emitted when a reserve interest strategy contract is updated
    * @param asset The address of the underlying asset of the reserve
    * @param reserveType Whether the reserve is boosted by a vault
