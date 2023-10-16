@@ -9,6 +9,7 @@ import {IStableDebtToken} from '../../../interfaces/IStableDebtToken.sol';
 import {IVariableDebtToken} from '../../../interfaces/IVariableDebtToken.sol';
 import {IReserveInterestRateStrategy} from '../../../interfaces/IReserveInterestRateStrategy.sol';
 import {ReserveConfiguration} from '../configuration/ReserveConfiguration.sol';
+import {ReserveBorrowConfiguration} from '../configuration/ReserveBorrowConfiguration.sol';
 import {MathUtils} from '../math/MathUtils.sol';
 import {WadRayMath} from '../math/WadRayMath.sol';
 import {PercentageMath} from '../math/PercentageMath.sol';
@@ -46,6 +47,7 @@ library ReserveLogic {
 
   using ReserveLogic for DataTypes.ReserveData;
   using ReserveConfiguration for DataTypes.ReserveConfigurationMap;
+  using ReserveBorrowConfiguration for DataTypes.ReserveBorrowConfigurationMap;
 
   /**
    * @dev Returns the ongoing normalized income for the reserve

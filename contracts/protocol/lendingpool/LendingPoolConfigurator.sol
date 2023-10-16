@@ -8,6 +8,7 @@ import {
   InitializableImmutableAdminUpgradeabilityProxy
 } from '../libraries/aave-upgradeability/InitializableImmutableAdminUpgradeabilityProxy.sol';
 import {ReserveConfiguration} from '../libraries/configuration/ReserveConfiguration.sol';
+import {ReserveBorrowConfiguration} from '../libraries/configuration/ReserveBorrowConfiguration.sol';
 import {ILendingPoolAddressesProvider} from '../../interfaces/ILendingPoolAddressesProvider.sol';
 import {ILendingPool} from '../../interfaces/ILendingPool.sol';
 import {IERC20Detailed} from '../../dependencies/openzeppelin/contracts/IERC20Detailed.sol';
@@ -29,6 +30,7 @@ contract LendingPoolConfigurator is VersionedInitializable, ILendingPoolConfigur
   using SafeMath for uint256;
   using PercentageMath for uint256;
   using ReserveConfiguration for DataTypes.ReserveConfigurationMap;
+  using ReserveBorrowConfiguration for DataTypes.ReserveBorrowConfigurationMap;
 
   ILendingPoolAddressesProvider internal addressesProvider;
   ILendingPool internal pool;
@@ -451,6 +453,46 @@ contract LendingPoolConfigurator is VersionedInitializable, ILendingPoolConfigur
     pool.setConfiguration(asset, reserveType, currentConfig.data);
 
     emit ReserveDepositCapChanged(asset, reserveType, depositCap);
+  }
+
+  function setReserveVolatilityTier(address asset, uint256 tier) external onlyPoolAdmin {
+    DataTypes.ReserveBorrowConfigurationMap memory currentBorrowConfig = pool.getBorrowConfiguration(asset);
+
+    currentBorrowConfig.setVolatilityTier(tier);
+
+    pool.setBorrowConfiguration(asset, currentBorrowConfig.data);
+
+    emit ReserveVolatilityTierChanged(asset, tier);
+  }
+
+    function setLowVolatilityLtv(address asset, uint256 ltv) external onlyPoolAdmin {
+    DataTypes.ReserveBorrowConfigurationMap memory currentBorrowConfig = pool.getBorrowConfiguration(asset);
+
+    currentBorrowConfig.setLowVolatilityLtv(ltv);
+
+    pool.setBorrowConfiguration(asset, currentBorrowConfig.data);
+
+    emit ReserveLowVolatilityLtvChanged(asset, ltv);
+  }
+
+  function setMediumVolatilityLtv(address asset, uint256 ltv) external onlyPoolAdmin {
+    DataTypes.ReserveBorrowConfigurationMap memory currentBorrowConfig = pool.getBorrowConfiguration(asset);
+
+    currentBorrowConfig.setMediumVolatilityLtv(ltv);
+
+    pool.setBorrowConfiguration(asset, currentBorrowConfig.data);
+
+    emit ReserveMediumVolatilityLtvChanged(asset, ltv);
+  }
+
+  function setHighVolatilityLtv(address asset, uint256 ltv) external onlyPoolAdmin { // Store update params in array
+    DataTypes.ReserveBorrowConfigurationMap memory currentBorrowConfig = pool.getBorrowConfiguration(asset);
+
+    currentBorrowConfig.setHighVolatilityLtv(ltv);
+
+    pool.setBorrowConfiguration(asset, currentBorrowConfig.data);
+
+    emit ReserveHighVolatilityLtvChanged(asset, ltv);
   }
 
   /**

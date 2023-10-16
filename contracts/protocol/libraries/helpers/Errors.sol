@@ -104,7 +104,10 @@ library Errors {
   string public constant SDT_STABLE_DEBT_OVERFLOW = '79';
   string public constant SDT_BURN_EXCEEDS_BALANCE = '80';
   string public constant RC_INVALID_DEPOSIT_CAP = '81';
-  string public constant VL_DEPOSIT_CAP_REACHED = '82';
+  string public constant RC_INVALID_VOLATILITY_TIER = '82';
+  string public constant UB_INVALID_TIMESTAMP = '83';
+  string public constant VL_DEPOSIT_CAP_REACHED = '84';
+
 
   enum CollateralManagerErrors {
     NO_ERROR,

@@ -659,6 +659,20 @@ contract LendingPool is VersionedInitializable, ILendingPool, LendingPoolStorage
   }
 
   /**
+   * @dev Returns the borrow configuration of the reserve
+   * @param asset The address of the underlying asset of the reserve
+   * @return The borrow configuration of the reserve
+   **/
+  function getBorrowConfiguration(address asset)
+    external
+    view
+    override
+    returns (DataTypes.ReserveBorrowConfigurationMap memory)
+  {
+    return _reserves[asset].borrowConfiguration;
+  }
+
+  /**
    * @dev Returns the configuration of the user across all the reserves
    * @param user The user address
    * @return The configuration of the user
@@ -860,6 +874,21 @@ contract LendingPool is VersionedInitializable, ILendingPool, LendingPoolStorage
   }
 
   /**
+   * @dev Sets the borrow configuration bitmap of the reserve as a whole
+   * - Only callable by the LendingPoolConfigurator contract
+   * @param asset The address of the underlying asset of the reserve
+   * @param borrowConfiguration The new borrow configuration bitmap
+   **/
+  function setBorrowConfiguration(address asset, uint256 borrowConfiguration)
+    external
+    override
+    onlyLendingPoolConfigurator
+  {
+    _reserves[asset].borrowConfiguration.data = borrowConfiguration;
+    _lendingUpdateTimestamp = block.timestamp;
+  }
+
+  /**
    * @dev Set the _pause state of a reserve
    * - Only callable by the LendingPoolConfigurator contract
    * @param val `true` to pause the reserve, `false` to un-pause it
@@ -888,6 +917,9 @@ contract LendingPool is VersionedInitializable, ILendingPool, LendingPoolStorage
   function _executeBorrow(ExecuteBorrowParams memory vars) internal {
     DataTypes.ReserveData storage reserve = _reserves[vars.asset][vars.reserveType];
     DataTypes.UserConfigurationMap storage userConfig = _usersConfig[vars.onBehalfOf];
+    DataTypes.UserRecentBorrowMap storage userRecentBorrow = _usersRecentBorrow[vars.onBehalfOf];
+
+    ValidationLogic.ValidateBorrowParams memory validateBorrowParams;
 
     address oracle = _addressesProvider.getPriceOracle();
 
@@ -896,46 +928,50 @@ contract LendingPool is VersionedInitializable, ILendingPool, LendingPoolStorage
         10**reserve.configuration.getDecimals()
       );
 
+    validateBorrowParams.asset = vars.asset;
+    validateBorrowParams.userAddress = vars.onBehalfOf;
+    validateBorrowParams.amount = vars.amount;
+    validateBorrowParams.amountInETH = amountInETH;
+    validateBorrowParams.interestRateMode = vars.interestRateMode;
+    validateBorrowParams.maxStableLoanPercent = _maxStableRateBorrowSizePercent;
+    validateBorrowParams.reservesCount = _reservesCount;
+    validateBorrowParams.lendingUpdateTimestamp = _lendingUpdateTimestamp;
+    validateBorrowParams.oracle = oracle;
     ValidationLogic.validateBorrow(
-      vars.asset,
+      validateBorrowParams,
       reserve,
-      vars.onBehalfOf,
-      vars.amount,
-      amountInETH,
-      vars.interestRateMode,
-      _maxStableRateBorrowSizePercent,
       _reserves,
       userConfig,
-      _reservesList,
-      _reservesCount,
-      oracle
+      userRecentBorrow,
+      _reservesList
     );
 
     reserve.updateState();
 
     uint256 currentStableRate = 0;
 
-    bool isFirstBorrowing = false;
-    if (DataTypes.InterestRateMode(vars.interestRateMode) == DataTypes.InterestRateMode.STABLE) {
-      currentStableRate = reserve.currentStableBorrowRate;
+    {
+      bool isFirstBorrowing = false;
+      if (DataTypes.InterestRateMode(vars.interestRateMode) == DataTypes.InterestRateMode.STABLE) {
+        currentStableRate = reserve.currentStableBorrowRate;
 
-      isFirstBorrowing = IStableDebtToken(reserve.stableDebtTokenAddress).mint(
-        vars.user,
-        vars.onBehalfOf,
-        vars.amount,
-        currentStableRate
-      );
-    } else {
-      isFirstBorrowing = IVariableDebtToken(reserve.variableDebtTokenAddress).mint(
-        vars.user,
-        vars.onBehalfOf,
-        vars.amount,
-        reserve.variableBorrowIndex
-      );
-    }
-
-    if (isFirstBorrowing) {
-      userConfig.setBorrowing(reserve.id, true);
+        isFirstBorrowing = IStableDebtToken(reserve.stableDebtTokenAddress).mint(
+          vars.user,
+          vars.onBehalfOf,
+          vars.amount,
+          currentStableRate
+        );
+      } else {
+        isFirstBorrowing = IVariableDebtToken(reserve.variableDebtTokenAddress).mint(
+          vars.user,
+          vars.onBehalfOf,
+          vars.amount,
+          reserve.variableBorrowIndex
+        );
+      }
+      if (isFirstBorrowing) {
+        userConfig.setBorrowing(reserve.id, true);
+      }
     }
 
     reserve.updateInterestRates(

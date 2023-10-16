@@ -135,6 +135,7 @@ library GenericLogic {
     uint256 avgLtv;
     uint256 avgLiquidationThreshold;
     uint256 reservesLength;
+    uint256 userVolatility;
     bool healthFactorBelowThreshold;
     address currentReserveAddress;
     bool currentReserveType;

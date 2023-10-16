@@ -6,6 +6,7 @@ import {SafeMath} from '../../../dependencies/openzeppelin/contracts/SafeMath.so
 import {IERC20} from '../../../dependencies/openzeppelin/contracts/IERC20.sol';
 import {ReserveLogic} from './ReserveLogic.sol';
 import {GenericLogic} from './GenericLogic.sol';
+import {BorrowLogic} from './BorrowLogic.sol';
 import {WadRayMath} from '../math/WadRayMath.sol';
 import {PercentageMath} from '../math/PercentageMath.sol';
 import {SafeERC20} from '../../../dependencies/openzeppelin/contracts/SafeERC20.sol';
@@ -94,6 +95,29 @@ library ValidationLogic {
     );
   }
 
+  /**
+  * @param asset The address of the asset to borrow
+  * @param userAddress The address of the user
+  * @param amount The amount to be borrowed
+  * @param amountInETH The amount to be borrowed, in ETH
+  * @param interestRateMode The interest rate mode at which the user is borrowing
+  * @param maxStableLoanPercent The max amount of the liquidity that can be borrowed at stable rate, in percentage
+  * @param reservesCount
+  * @param lendingUpdateTimestamp
+  * @param oracle The price oracle
+  */
+  struct ValidateBorrowParams{
+    address asset;
+    address userAddress;
+    uint256 amount;
+    uint256 amountInETH;
+    uint256 interestRateMode;
+    uint256 maxStableLoanPercent;
+    uint256 reservesCount;
+    uint256 lendingUpdateTimestamp;
+    address oracle;
+  }
+
   struct ValidateBorrowLocalVars {
     uint256 currentLtv;
     uint256 currentLiquidationThreshold;
@@ -102,6 +126,12 @@ library ValidationLogic {
     uint256 userBorrowBalanceETH;
     uint256 availableLiquidity;
     uint256 healthFactor;
+    uint256 amountOfCollateralNeededETHIsolated;
+    uint256 userCollateralBalanceETHIsolated;
+    uint256 userBorrowBalanceETHIsolated;
+    uint256 currentLtvIsolated;
+    uint256 currentLiquidationThresholdIsolated;
+    uint256 healthFactorIsolated;
     bool isActive;
     bool isFrozen;
     bool borrowingEnabled;
@@ -110,21 +140,14 @@ library ValidationLogic {
 
   /**
    * @dev Validates a borrow action
-   * @param asset The address of the asset to borrow
    * @param reserve The reserve state from which the user is borrowing
-   * @param userAddress The address of the user
-   * @param amount The amount to be borrowed
-   * @param amountInETH The amount to be borrowed, in ETH
-   * @param interestRateMode The interest rate mode at which the user is borrowing
-   * @param maxStableLoanPercent The max amount of the liquidity that can be borrowed at stable rate, in percentage
    * @param reservesData The state of all the reserves
    * @param userConfig The state of the user for the specific reserve
    * @param reserves The addresses of all the active reserves
-   * @param oracle The price oracle
    */
 
   function validateBorrow(
-    address asset,
+    ValidateBorrowParams memory validateParams,
     DataTypes.ReserveData storage reserve,
     address userAddress,
     uint256 amount,
@@ -135,9 +158,15 @@ library ValidationLogic {
     DataTypes.UserConfigurationMap storage userConfig,
     mapping(uint256 => DataTypes.ReserveReference) storage reserves,
     uint256 reservesCount,
-    address oracle
+    address oracle,
+    DataTypes.UserRecentBorrowMap storage userRecentBorrow
   ) external view {
     ValidateBorrowLocalVars memory vars;
+    BorrowLogic.CalculateUserAccountDataVolatileParams memory params;
+    params.user = validateParams.userAddress;
+    params.reservesCount = validateParams.reservesCount;
+    params.lendingUpdateTimestamp = validateParams.lendingUpdateTimestamp;
+    params.oracle = validateParams.oracle;
 
     (vars.isActive, vars.isFrozen, vars.borrowingEnabled, vars.stableRateBorrowingEnabled) = reserve
       .configuration
@@ -145,14 +174,13 @@ library ValidationLogic {
 
     require(vars.isActive, Errors.VL_NO_ACTIVE_RESERVE);
     require(!vars.isFrozen, Errors.VL_RESERVE_FROZEN);
-    require(amount != 0, Errors.VL_INVALID_AMOUNT);
-
+    require(validateParams.amount != 0, Errors.VL_INVALID_AMOUNT);
     require(vars.borrowingEnabled, Errors.VL_BORROWING_NOT_ENABLED);
 
     //validate interest rate mode
     require(
-      uint256(DataTypes.InterestRateMode.VARIABLE) == interestRateMode ||
-        uint256(DataTypes.InterestRateMode.STABLE) == interestRateMode,
+      uint256(DataTypes.InterestRateMode.VARIABLE) == validateParams.interestRateMode ||
+        uint256(DataTypes.InterestRateMode.STABLE) == validateParams.interestRateMode,
       Errors.VL_INVALID_INTEREST_RATE_MODE_SELECTED
     );
 
@@ -162,13 +190,12 @@ library ValidationLogic {
       vars.currentLtv,
       vars.currentLiquidationThreshold,
       vars.healthFactor
-    ) = GenericLogic.calculateUserAccountData(
-      userAddress,
+    ) = BorrowLogic.calculateUserAccountDataVolatile(
+      params,
       reservesData,
       userConfig,
-      reserves,
-      reservesCount,
-      oracle
+      userRecentBorrow,
+      reserves
     );
 
     require(vars.userCollateralBalanceETH > 0, Errors.VL_COLLATERAL_BALANCE_IS_0);
@@ -179,7 +206,7 @@ library ValidationLogic {
     );
 
     //add the current already borrowed amount to the amount requested to calculate the total collateral needed.
-    vars.amountOfCollateralNeededETH = vars.userBorrowBalanceETH.add(amountInETH).percentDiv(
+    vars.amountOfCollateralNeededETH = vars.userBorrowBalanceETH.add(validateParams.amountInETH).percentDiv(
       vars.currentLtv
     ); //LTV is calculated in percentage
 
@@ -196,7 +223,7 @@ library ValidationLogic {
      * 3. Users will be able to borrow only a portion of the total available liquidity
      **/
 
-    if (interestRateMode == uint256(DataTypes.InterestRateMode.STABLE)) {
+    if (validateParams.interestRateMode == uint256(DataTypes.InterestRateMode.STABLE)) {
       //check if the borrow mode is stable and if stable rate borrowing is enabled on this reserve
 
       require(vars.stableRateBorrowingEnabled, Errors.VL_STABLE_BORROWING_NOT_ENABLED);
@@ -204,17 +231,17 @@ library ValidationLogic {
       require(
         !userConfig.isUsingAsCollateral(reserve.id) ||
           reserve.configuration.getLtv() == 0 ||
-          amount > IERC20(reserve.aTokenAddress).balanceOf(userAddress),
+          validateParams.amount > IERC20(reserve.aTokenAddress).balanceOf(validateParams.userAddress),
         Errors.VL_COLLATERAL_SAME_AS_BORROWING_CURRENCY
       );
 
-      vars.availableLiquidity = IERC20(asset).balanceOf(reserve.aTokenAddress);
+      vars.availableLiquidity = IERC20(validateParams.asset).balanceOf(reserve.aTokenAddress);
 
       //calculate the max available loan size in stable rate mode as a percentage of the
       //available liquidity
-      uint256 maxLoanSizeStable = vars.availableLiquidity.percentMul(maxStableLoanPercent);
+      uint256 maxLoanSizeStable = vars.availableLiquidity.percentMul(validateParams.maxStableLoanPercent);
 
-      require(amount <= maxLoanSizeStable, Errors.VL_AMOUNT_BIGGER_THAN_MAX_LOAN_SIZE_STABLE);
+      require(validateParams.amount <= maxLoanSizeStable, Errors.VL_AMOUNT_BIGGER_THAN_MAX_LOAN_SIZE_STABLE);
     }
   }
 
