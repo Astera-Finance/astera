@@ -381,14 +381,15 @@ interface ILendingPool {
     view
     returns (DataTypes.ReserveConfigurationMap memory);
 
-  function setBorrowConfiguration(address reserve, uint256 borrowConfiguration) external;
+  function setBorrowConfiguration(address reserve, bool reserveType, uint256 borrowConfiguration) external;
 
   /**
    * @dev Returns the borrow configuration of the reserve
    * @param asset The address of the underlying asset of the reserve
+   * @param reserveType The type of the reserve
    * @return The borrow configuration of the reserve
    **/
-  function getBorrowConfiguration(address asset)
+  function getBorrowConfiguration(address asset, bool reserveType)
     external
     view
     returns (DataTypes.ReserveBorrowConfigurationMap memory);

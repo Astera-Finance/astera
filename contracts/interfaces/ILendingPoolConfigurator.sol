@@ -148,16 +148,16 @@ interface ILendingPoolConfigurator {
    * @param asset The address of the underlying asset of the reserve
    * @param tier The new volatility tier
    **/
-  event ReserveVolatilityTierChanged(address indexed asset, uint256 tier);
+  event ReserveVolatilityTierChanged(address indexed asset, bool reserveType, uint256 tier);
 
   /**
    * @dev Emitted when a reserve's ltv is updated for a volatility tier
    * @param asset The address of the underlying asset of the reserve
    * @param ltv The LTV for that tier
    */
-  event ReserveLowVolatilityLtvChanged(address indexed asset, uint256 ltv);
-  event ReserveMediumVolatilityLtvChanged(address indexed asset, uint256 ltv);
-  event ReserveHighVolatilityLtvChanged(address indexed asset, uint256 ltv);
+  event ReserveLowVolatilityLtvChanged(address indexed asset, bool reserveType, uint256 ltv);
+  event ReserveMediumVolatilityLtvChanged(address indexed asset, bool reserveType, uint256 ltv);
+  event ReserveHighVolatilityLtvChanged(address indexed asset, bool reserveType, uint256 ltv);
 
   /**
    * @dev Emitted when the reserve decimals are updated

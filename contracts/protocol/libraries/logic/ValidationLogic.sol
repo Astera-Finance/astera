@@ -149,16 +149,9 @@ library ValidationLogic {
   function validateBorrow(
     ValidateBorrowParams memory validateParams,
     DataTypes.ReserveData storage reserve,
-    address userAddress,
-    uint256 amount,
-    uint256 amountInETH,
-    uint256 interestRateMode,
-    uint256 maxStableLoanPercent,
     mapping(address => mapping(bool => DataTypes.ReserveData)) storage reservesData,
     DataTypes.UserConfigurationMap storage userConfig,
     mapping(uint256 => DataTypes.ReserveReference) storage reserves,
-    uint256 reservesCount,
-    address oracle,
     DataTypes.UserRecentBorrowMap storage userRecentBorrow
   ) external view {
     ValidateBorrowLocalVars memory vars;

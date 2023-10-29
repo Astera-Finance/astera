@@ -49,6 +49,7 @@ import {UserRecentBorrow} from '../configuration/UserRecentBorrow.sol';
         uint256 userVolatility;
         bool healthFactorBelowThreshold;
         address currentReserveAddress;
+        bool currentReserveType;
         bool usageAsCollateralEnabled;
         bool userUsesReserveAsCollateral;
     }
@@ -76,10 +77,10 @@ import {UserRecentBorrow} from '../configuration/UserRecentBorrow.sol';
    **/
   function calculateUserAccountDataVolatile(
     CalculateUserAccountDataVolatileParams memory params,
-    mapping(address => DataTypes.ReserveData) storage reservesData,
+    mapping(address => mapping(bool => DataTypes.ReserveData)) storage reservesData,
     DataTypes.UserConfigurationMap memory userConfig,
     DataTypes.UserRecentBorrowMap storage userRecentBorrow,
-    mapping(uint256 => address) storage reserves
+    mapping(uint256 => DataTypes.ReserveReference) storage reserves
   )
   internal
   view
@@ -112,8 +113,9 @@ import {UserRecentBorrow} from '../configuration/UserRecentBorrow.sol';
     // }
 
     for (vars.i = 0; vars.i < params.reservesCount; vars.i++) {
-      vars.currentReserveAddress = reserves[vars.i];
-      DataTypes.ReserveData storage currentReserve = reservesData[vars.currentReserveAddress];
+      vars.currentReserveAddress = reserves[vars.i].asset;
+      vars.currentReserveType = reserves[vars.i].reserveType;
+      DataTypes.ReserveData storage currentReserve = reservesData[vars.currentReserveAddress][vars.currentReserveType];
       // basically get same data as user account collateral, but with different LTVs being used depending on user's most volatile asset
       if (!userConfig.isUsingAsCollateralOrBorrowing(vars.i)) {
         continue;
@@ -195,9 +197,9 @@ import {UserRecentBorrow} from '../configuration/UserRecentBorrow.sol';
   }
 
   function calculateUserVolatilityTier(
-    mapping(address => DataTypes.ReserveData) storage reservesData,
+    mapping(address => mapping(bool => DataTypes.ReserveData)) storage reservesData,
     DataTypes.UserConfigurationMap memory userConfig,
-    mapping(uint256 => address) storage reserves,
+    mapping(uint256 => DataTypes.ReserveReference) storage reserves,
     uint256 reservesCount
   )
   internal
@@ -206,8 +208,9 @@ import {UserRecentBorrow} from '../configuration/UserRecentBorrow.sol';
     uint256 userVolatility
   ) {
     for (uint256 i; i < reservesCount; i++) {
-      address currentReserveAddress = reserves[i];
-      DataTypes.ReserveData storage currentReserve = reservesData[currentReserveAddress];
+      address currentReserveAddress = reserves[i].asset;
+      bool currentReserveType = reserves[i].reserveType;
+      DataTypes.ReserveData storage currentReserve = reservesData[currentReserveAddress][currentReserveType];
       if(!userConfig.isUsingAsCollateralOrBorrowing(i)) {
         continue;
       }

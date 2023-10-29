@@ -661,15 +661,16 @@ contract LendingPool is VersionedInitializable, ILendingPool, LendingPoolStorage
   /**
    * @dev Returns the borrow configuration of the reserve
    * @param asset The address of the underlying asset of the reserve
+   * @param reserveType The type of the reserve
    * @return The borrow configuration of the reserve
    **/
-  function getBorrowConfiguration(address asset)
+  function getBorrowConfiguration(address asset, bool reserveType)
     external
     view
     override
     returns (DataTypes.ReserveBorrowConfigurationMap memory)
   {
-    return _reserves[asset].borrowConfiguration;
+    return _reserves[asset][reserveType].borrowConfiguration;
   }
 
   /**
@@ -879,12 +880,12 @@ contract LendingPool is VersionedInitializable, ILendingPool, LendingPoolStorage
    * @param asset The address of the underlying asset of the reserve
    * @param borrowConfiguration The new borrow configuration bitmap
    **/
-  function setBorrowConfiguration(address asset, uint256 borrowConfiguration)
+  function setBorrowConfiguration(address asset, bool reserveType, uint256 borrowConfiguration)
     external
     override
     onlyLendingPoolConfigurator
   {
-    _reserves[asset].borrowConfiguration.data = borrowConfiguration;
+    _reserves[asset][reserveType].borrowConfiguration.data = borrowConfiguration;
     _lendingUpdateTimestamp = block.timestamp;
   }
 
@@ -942,8 +943,8 @@ contract LendingPool is VersionedInitializable, ILendingPool, LendingPoolStorage
       reserve,
       _reserves,
       userConfig,
-      userRecentBorrow,
-      _reservesList
+      _reservesList,
+      userRecentBorrow
     );
 
     reserve.updateState();
