@@ -97,9 +97,7 @@ contract UiPoolDataProvider is IUiPoolDataProvider {
       reserveData.interestRateStrategyAddress = baseData.interestRateStrategyAddress;
       reserveData.priceInEth = oracle.getAssetPrice(reserveData.underlyingAsset);
 
-      reserveData.availableLiquidity = IERC20Detailed(reserveData.underlyingAsset).balanceOf(
-        reserveData.aTokenAddress
-      );
+      reserveData.availableLiquidity = IAToken(reserveData.aTokenAddress).getTotalManagedAssets();
       (
         reserveData.totalPrincipalStableDebt,
         ,

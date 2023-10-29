@@ -169,7 +169,7 @@ contract LendingPool is VersionedInitializable, ILendingPool, LendingPoolStorage
       _reservesList,
       _reservesCount,
       _addressesProvider.getPriceOracle()
-    ); // @todo update here and underlying function most likely
+    );
 
     reserve.updateState();
 
@@ -901,6 +901,28 @@ contract LendingPool is VersionedInitializable, ILendingPool, LendingPoolStorage
     } else {
       emit Unpaused();
     }
+  }
+
+  function setFarmingPct(address aTokenAddress, uint256 farmingPct) external override onlyLendingPoolConfigurator {
+    IAToken(aTokenAddress).setFarmingPct(farmingPct);
+  }
+  function setClaimingThreshold(address aTokenAddress, uint256 claimingThreshold) external override onlyLendingPoolConfigurator {
+    IAToken(aTokenAddress).setClaimingThreshold(claimingThreshold);
+  }
+  function setFarmingPctDrift(address aTokenAddress, uint256 _farmingPctDrift) external override onlyLendingPoolConfigurator {
+    IAToken(aTokenAddress).setFarmingPctDrift(_farmingPctDrift);
+  }
+  function setProfitHandler(address aTokenAddress, address _profitHandler) external override onlyLendingPoolConfigurator {
+    IAToken(aTokenAddress).setProfitHandler(_profitHandler);
+  }
+  function setVault(address aTokenAddress, address _vault) external override onlyLendingPoolConfigurator {
+    IAToken(aTokenAddress).setVault(_vault);
+  }
+  function rebalance(address aTokenAddress) external override onlyLendingPoolConfigurator {
+    IAToken(aTokenAddress).rebalance();
+  }
+  function getTotalManagedAssets(address aTokenAddress) external view override onlyLendingPoolConfigurator returns (uint256){
+    return IAToken(aTokenAddress).getTotalManagedAssets();
   }
 
   struct ExecuteBorrowParams {

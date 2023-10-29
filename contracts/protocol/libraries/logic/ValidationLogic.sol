@@ -16,6 +16,7 @@ import {Errors} from '../helpers/Errors.sol';
 import {Helpers} from '../helpers/Helpers.sol';
 import {IReserveInterestRateStrategy} from '../../../interfaces/IReserveInterestRateStrategy.sol';
 import {DataTypes} from '../types/DataTypes.sol';
+import {IAToken} from '../../../interfaces/IAToken.sol';
 
 /**
  * @title ReserveLogic library
@@ -340,7 +341,7 @@ library ValidationLogic {
     //if the usage ratio is below 95%, no rebalances are needed
     uint256 totalDebt =
       stableDebtToken.totalSupply().add(variableDebtToken.totalSupply()).wadToRay();
-    uint256 availableLiquidity = IERC20(reserveAddress).balanceOf(aTokenAddress).wadToRay();
+    uint256 availableLiquidity = IAToken(reserve.aTokenAddress).getTotalManagedAssets().wadToRay();
     uint256 usageRatio = totalDebt == 0 ? 0 : totalDebt.rayDiv(availableLiquidity.add(totalDebt));
 
     //if the liquidity rate is below REBALANCE_UP_THRESHOLD of the max variable APR at 95% usage,

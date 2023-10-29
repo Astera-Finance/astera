@@ -427,4 +427,15 @@ describe("LendingPoolConfigurator", function () {
       lendingPoolConfiguratorProxy.deactivateReserve(usdc.address, false)
     ).to.be.revertedWith("34");
   });
+
+  // it("Accepts setting rehypothecation values on AToken", async function () {
+  //   [owner, addr1] = await ethers.getSigners();
+  //   const { lendingPoolConfiguratorProxy, grainUSDC, mockUsdcErc4626 } = await loadFixture(deployProtocol);
+  //   await lendingPoolConfiguratorProxy.setVault(grainUSDC.address, mockUsdcErc4626.address);
+  //   await lendingPoolConfiguratorProxy.setProfitHandler(grainUSDC.address, owner.address);
+  //   await lendingPoolConfiguratorProxy.setFarmingPct(grainUSDC.address, 500);
+  //   await lendingPoolConfiguratorProxy.setClaimingThreshold(grainUSDC.address, 1000000);
+  //   await lendingPoolConfiguratorProxy.setFarmingPctDrift(grainUSDC.address, 100);
+  //   await lendingPoolConfiguratorProxy.rebalance(grainUSDC.address);
+  // });
 });

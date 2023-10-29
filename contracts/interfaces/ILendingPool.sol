@@ -446,4 +446,12 @@ interface ILendingPool {
   function setPause(bool val) external;
 
   function paused() external view returns (bool);
+
+  function setFarmingPct(address aTokenAddress, uint256 farmingPct) external;
+  function setClaimingThreshold(address aTokenAddress, uint256 claimingThreshold) external;
+  function setFarmingPctDrift(address aTokenAddress, uint256 _farmingPctDrift) external;
+  function setProfitHandler(address aTokenAddress, address _profitHandler) external;
+  function setVault(address aTokenAddress, address _vault) external;
+  function rebalance(address aTokenAddress) external;
+  function getTotalManagedAssets(address aTokenAddres) external view returns (uint256);
 }

@@ -19,6 +19,7 @@ import {IInitializableDebtToken} from '../../interfaces/IInitializableDebtToken.
 import {IInitializableAToken} from '../../interfaces/IInitializableAToken.sol';
 import {IAaveIncentivesController} from '../../interfaces/IAaveIncentivesController.sol';
 import {ILendingPoolConfigurator} from '../../interfaces/ILendingPoolConfigurator.sol';
+import {IAToken} from '../../interfaces/IAToken.sol';
 
 /**
  * @title LendingPoolConfigurator contract
@@ -557,5 +558,25 @@ contract LendingPoolConfigurator is VersionedInitializable, ILendingPoolConfigur
       availableLiquidity == 0 && reserveData.currentLiquidityRate == 0,
       Errors.LPC_RESERVE_LIQUIDITY_NOT_0
     );
+  }
+
+  function setFarmingPct(address aTokenAddress, uint256 farmingPct) external onlyPoolAdmin {
+    pool.setFarmingPct(aTokenAddress, farmingPct);
+  }
+  function setClaimingThreshold(address aTokenAddress, uint256 claimingThreshold) external onlyPoolAdmin {
+    pool.setClaimingThreshold(aTokenAddress, claimingThreshold);
+  }
+
+  function setFarmingPctDrift(address aTokenAddress, uint256 _farmingPctDrift) external onlyPoolAdmin {
+    pool.setFarmingPctDrift(aTokenAddress, _farmingPctDrift);
+  }
+  function setProfitHandler(address aTokenAddress, address _profitHandler) external onlyPoolAdmin {
+    pool.setProfitHandler(aTokenAddress, _profitHandler);
+  }
+  function setVault(address aTokenAddress, address _vault) external onlyPoolAdmin {
+    pool.setVault(aTokenAddress, _vault);
+  }
+  function rebalance(address aTokenAddress) external onlyEmergencyAdmin {
+    pool.rebalance(aTokenAddress);
   }
 }

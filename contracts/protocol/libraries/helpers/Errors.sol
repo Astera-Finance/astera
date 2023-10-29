@@ -107,6 +107,9 @@ library Errors {
   string public constant RC_INVALID_VOLATILITY_TIER = '82';
   string public constant UB_INVALID_TIMESTAMP = '83';
   string public constant VL_DEPOSIT_CAP_REACHED = '84';
+  string public constant AT_INVALID_ADDRESS = '85';
+  string public constant AT_INVALID_AMOUNT = '86';
+  string public constant AT_VAULT_ALREADY_INITIALIZED = '87';
 
 
   enum CollateralManagerErrors {

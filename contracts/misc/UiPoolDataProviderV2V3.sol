@@ -104,9 +104,7 @@ contract UiPoolDataProviderV2V3 is IUiPoolDataProviderV3 {
         reserveData.underlyingAsset
       );
 
-      reserveData.availableLiquidity = IERC20Detailed(reserveData.underlyingAsset).balanceOf(
-        reserveData.aTokenAddress
-      );
+      reserveData.availableLiquidity = IAToken(reserveData.aTokenAddress).getTotalManagedAssets();
       (
         reserveData.totalPrincipalStableDebt,
         ,

@@ -104,4 +104,15 @@ interface IAToken is IERC20, IScaledBalanceToken, IInitializableAToken {
    * @dev Returns the address of the underlying asset of this aToken (E.g. WETH for aWETH)
    **/
   function UNDERLYING_ASSET_ADDRESS() external view returns (address);
+
+  /**
+   * @dev Returns the total balance of underlying asset of this token, including balance lent to a vault
+   **/
+  function getTotalManagedAssets() external view returns(uint256);
+  function setFarmingPct(uint256 _farmingPct) external;
+  function setClaimingThreshold(uint256 _claimingThreshold) external;
+  function setFarmingPctDrift(uint256 _farmingPctDrift) external;
+  function setProfitHandler(address _profitHandler) external;
+  function setVault(address _vault) external;
+  function rebalance() external;
 }

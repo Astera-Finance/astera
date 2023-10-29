@@ -153,7 +153,7 @@ contract LendingPoolCollateralManager is
     // collateral reserve
     if (!receiveAToken) {
       uint256 currentAvailableCollateral =
-        IERC20(collateralAsset).balanceOf(address(vars.collateralAtoken));
+        IAToken(vars.collateralAtoken).getTotalManagedAssets();
       if (currentAvailableCollateral < vars.maxCollateralToLiquidate) {
         return (
           uint256(Errors.CollateralManagerErrors.NOT_ENOUGH_LIQUIDITY),

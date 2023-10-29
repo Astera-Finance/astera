@@ -46,4 +46,12 @@ describe("AToken-Modifiers", function () {
       "29"
     );
   });
+
+  // it("Tries to set a vault to the AToken not being the LendingPool", async function () {
+  //   [owner, addr1] = await ethers.getSigners();
+  //   const { grainUSDC, mockUsdcErc4626 } = await loadFixture(deployProtocol);
+  //   await expect(grainUSDC.setVault(mockUsdcErc4626.address)).to.be.revertedWith(
+  //     "29"
+  //   );
+  // });
 });

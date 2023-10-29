@@ -19,7 +19,7 @@ import {
 describe("Pausable-Functions", function () {
   let owner, addr1, addr2, addr3, depositor, borrower, liquidator;
 
-  it("User 0 deposits 1000 USDC. Configurator pauses pool. Transfers to user 1 reverts. Configurator unpauses the network and next transfer succeeds", async function () {
+  it("Tries to transfer grainToken while LendingPool is paused", async function () {
     [owner, addr1, addr2] = await ethers.getSigners();
     const USDC_DEPOSIT_SIZE = ethers.utils.parseUnits("1000", 6);
 
