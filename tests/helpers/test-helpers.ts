@@ -106,13 +106,13 @@ export async function deployProtocol() {
   ]
 
   const UsdcPriceFeed = await hre.ethers.getContractFactory("MockAggregator");
-  const usdcPriceFeed = await UsdcPriceFeed.deploy("100000000", await usdc.decimals());
+  const usdcPriceFeed = await UsdcPriceFeed.deploy("100000000");
 
   const WbtcPriceFeed = await hre.ethers.getContractFactory("MockAggregator");
-  const wbtcPriceFeed = await WbtcPriceFeed.deploy("1600000000000", await wbtc.decimals());
+  const wbtcPriceFeed = await WbtcPriceFeed.deploy("1600000000000");
 
   const EthPriceFeed = await hre.ethers.getContractFactory("MockAggregator");
-  const ethPriceFeed = await EthPriceFeed.deploy("120000000000", await weth.decimals());
+  const ethPriceFeed = await EthPriceFeed.deploy("120000000000");
 
   const aggregators = [
     usdcPriceFeed.address,
@@ -525,9 +525,9 @@ export async function deployMockFlashLoanReceiver(lendingPoolAddressesProviderAd
   return mockFlashLoanReceiver;
 }
 
-export async function deployMockAggregator(initialAnswer, decimals) {
+export async function deployMockAggregator(initialAnswer) {
   const PriceFeed = await hre.ethers.getContractFactory("MockAggregator");
-  const priceFeed = await PriceFeed.deploy(initialAnswer, decimals);
+  const priceFeed = await PriceFeed.deploy(initialAnswer);
   return priceFeed;
 }
 

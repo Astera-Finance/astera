@@ -89,7 +89,7 @@ describe("Liquidations", function () {
       const userAccountDataBefore = await lendingPoolProxy.getUserAccountData(owner.address);
       expect(userAccountDataBefore.healthFactor).to.be.gt(MIN_HEALTH_FACTOR);
 
-      const newUsdcPriceFeed = await deployMockAggregator("94000000", await usdc.decimals());
+      const newUsdcPriceFeed = await deployMockAggregator("94000000");
       await setAssetSources(aaveOracle, owner, [usdc.address], [newUsdcPriceFeed.address])
 
       // BEFORE
@@ -252,7 +252,7 @@ describe("Liquidations", function () {
       const userAccountDataBefore = await lendingPoolProxy.getUserAccountData(owner.address);
       expect(userAccountDataBefore.healthFactor).to.be.gt(MIN_HEALTH_FACTOR);
 
-      const newUsdcPriceFeed = await deployMockAggregator("94000000", await usdc.decimals());
+      const newUsdcPriceFeed = await deployMockAggregator("94000000");
       await setAssetSources(aaveOracle, owner, [usdc.address], [newUsdcPriceFeed.address])
 
       // BEFORE

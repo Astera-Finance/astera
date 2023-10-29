@@ -262,15 +262,15 @@ describe("Rehypothecation", function () {
       await approve(lendingPoolProxy.address, usdc, owner);
       await approve(lendingPoolProxy.address, wbtc, addr1);
 
-      await deposit(lendingPoolProxy, owner, usdc.address, USDC_DEPOSIT_SIZE, owner.address);
-      await deposit(lendingPoolProxy, addr1, wbtc.address, WBTC_DEPOSIT_SIZE, addr1.address);
+      await deposit(lendingPoolProxy, false, owner, usdc.address, USDC_DEPOSIT_SIZE, owner.address);
+      await deposit(lendingPoolProxy, false, addr1, wbtc.address, WBTC_DEPOSIT_SIZE, addr1.address);
 
-      await borrow(lendingPoolProxy, owner, wbtc.address, maxBitcoinBorrow, owner.address);
+      await borrow(lendingPoolProxy, false, owner, wbtc.address, maxBitcoinBorrow, owner.address);
 
       const userAccountDataBefore = await lendingPoolProxy.getUserAccountData(owner.address);
       expect(userAccountDataBefore.healthFactor).to.be.gt(MIN_HEALTH_FACTOR);
 
-      const newUsdcPriceFeed = await deployMockAggregator("94000000", await usdc.decimals());
+      const newUsdcPriceFeed = await deployMockAggregator("94000000");
       await setAssetSources(aaveOracle, owner, [usdc.address], [newUsdcPriceFeed.address])
 
       // BEFORE
