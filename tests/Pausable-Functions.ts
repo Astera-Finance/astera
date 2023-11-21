@@ -156,7 +156,7 @@ describe("Pausable-Functions", function () {
     const WETH_DEPOSIT_SIZE = ethers.utils.parseEther("1");
 
 
-    const { usdc, weth, usdcPriceFeed, ethPriceFeed, lendingPoolProxy, lendingPoolConfiguratorProxy, aaveOracle, aaveProtocolDataProvider } = await loadFixture(deployProtocol);
+    const { usdc, weth, usdcPriceFeed, ethPriceFeed, lendingPoolProxy, lendingPoolConfiguratorProxy, oracle, protocolDataProvider } = await loadFixture(deployProtocol);
 
     await prepareMockTokens(usdc, depositor, USDC_DEPOSIT_SIZE);
     await approve(lendingPoolProxy.address, usdc, depositor);
@@ -169,19 +169,19 @@ describe("Pausable-Functions", function () {
     const userGlobalData = await lendingPoolProxy.getUserAccountData(borrower.address);
 
     const wethDepositValue = (WETH_DEPOSIT_SIZE).mul(await ethPriceFeed.latestAnswer());
-    const wethLTV = (await aaveProtocolDataProvider.getReserveConfigurationData(weth.address)).ltv;
+    const wethLTV = (await protocolDataProvider.getReserveConfigurationData(weth.address)).ltv;
     const wethMaxBorrowValue = wethDepositValue.mul(wethLTV).div(10000).div(ethers.utils.parseEther("1"));
     const maxUsdcBorrow = wethMaxBorrowValue.div((await usdcPriceFeed.latestAnswer()).div(ethers.utils.parseUnits("1", 6)));
 
     await lendingPoolProxy.connect(borrower).borrow(usdc.address, maxUsdcBorrow, "2", "0", borrower.address);
 
     let newUsdcPriceFeed = await deployMockAggregator("120000000");
-    await setAssetSources(aaveOracle, owner, [usdc.address], [newUsdcPriceFeed.address])
+    await setAssetSources(oracle, owner, [usdc.address], [newUsdcPriceFeed.address])
 
     await prepareMockTokens(usdc, liquidator, USDC_DEPOSIT_SIZE);
     await approve(lendingPoolProxy.address, usdc, liquidator);
 
-    const userReserveDataBefore = await aaveProtocolDataProvider.getUserReserveData(
+    const userReserveDataBefore = await protocolDataProvider.getUserReserveData(
       usdc.address,
       borrower.address
     );

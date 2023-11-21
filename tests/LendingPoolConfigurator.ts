@@ -27,25 +27,25 @@ describe("LendingPoolConfigurator", function () {
   it("Deactivates the ETH reserve", async function () {
     [owner, addr1] = await ethers.getSigners();
 
-    const { weth, lendingPoolConfiguratorProxy, aaveProtocolDataProvider } = await loadFixture(deployProtocol);
+    const { weth, lendingPoolConfiguratorProxy, protocolDataProvider } = await loadFixture(deployProtocol);
 
     await lendingPoolConfiguratorProxy.deactivateReserve(weth.address);
-    const { isActive } = await aaveProtocolDataProvider.getReserveConfigurationData(weth.address);
+    const { isActive } = await protocolDataProvider.getReserveConfigurationData(weth.address);
     expect(isActive).to.be.equal(false);
   });
 
   it("Rectivates the ETH reserve", async function () {
     [owner, addr1] = await ethers.getSigners();
 
-    const { weth, lendingPoolConfiguratorProxy, aaveProtocolDataProvider } = await loadFixture(deployProtocol);
+    const { weth, lendingPoolConfiguratorProxy, protocolDataProvider } = await loadFixture(deployProtocol);
 
     await lendingPoolConfiguratorProxy.deactivateReserve(weth.address);
     await lendingPoolConfiguratorProxy.activateReserve(weth.address);
-    const { isActive } = await aaveProtocolDataProvider.getReserveConfigurationData(weth.address);
+    const { isActive } = await protocolDataProvider.getReserveConfigurationData(weth.address);
     expect(isActive).to.be.equal(true);
   });
 
-  it("Check the onlyAaveAdmin on deactivateReserve", async function () {
+  it("Check the onlyAdmin on deactivateReserve", async function () {
     [owner, addr1] = await ethers.getSigners();
 
     const { weth, lendingPoolConfiguratorProxy } = await loadFixture(deployProtocol);
@@ -55,7 +55,7 @@ describe("LendingPoolConfigurator", function () {
     ).to.be.revertedWith("33");
   });
 
-  it("Check the onlyAaveAdmin on activateReserve", async function () {
+  it("Check the onlyAdmin on activateReserve", async function () {
     [owner, addr1] = await ethers.getSigners();
 
     const { weth, lendingPoolConfiguratorProxy } = await loadFixture(deployProtocol);
@@ -68,7 +68,7 @@ describe("LendingPoolConfigurator", function () {
   it("Freezes the ETH reserve", async function () {
     [owner, addr1] = await ethers.getSigners();
 
-    const { weth, lendingPoolConfiguratorProxy, aaveProtocolDataProvider } = await loadFixture(deployProtocol);
+    const { weth, lendingPoolConfiguratorProxy, protocolDataProvider } = await loadFixture(deployProtocol);
 
     await lendingPoolConfiguratorProxy.freezeReserve(weth.address);
     const {
@@ -81,7 +81,7 @@ describe("LendingPoolConfigurator", function () {
       borrowingEnabled,
       isActive,
       isFrozen,
-    } = await aaveProtocolDataProvider.getReserveConfigurationData(weth.address);
+    } = await protocolDataProvider.getReserveConfigurationData(weth.address);
 
     expect(borrowingEnabled).to.be.equal(true);
     expect(isActive).to.be.equal(true);
@@ -97,7 +97,7 @@ describe("LendingPoolConfigurator", function () {
   it("Unfreezes the ETH reserve", async function () {
     [owner, addr1] = await ethers.getSigners();
 
-    const { weth, lendingPoolConfiguratorProxy, aaveProtocolDataProvider } = await loadFixture(deployProtocol);
+    const { weth, lendingPoolConfiguratorProxy, protocolDataProvider } = await loadFixture(deployProtocol);
 
     await lendingPoolConfiguratorProxy.unfreezeReserve(weth.address);
     const {
@@ -110,7 +110,7 @@ describe("LendingPoolConfigurator", function () {
       borrowingEnabled,
       isActive,
       isFrozen,
-    } = await aaveProtocolDataProvider.getReserveConfigurationData(weth.address);
+    } = await protocolDataProvider.getReserveConfigurationData(weth.address);
 
     expect(borrowingEnabled).to.be.equal(true);
     expect(isActive).to.be.equal(true);
@@ -123,7 +123,7 @@ describe("LendingPoolConfigurator", function () {
     expect(reserveFactor).to.be.equal("1500");
   });
 
-  it("Check the onlyAaveAdmin on freezeReserve", async function () {
+  it("Check the onlyAdmin on freezeReserve", async function () {
     [owner, addr1] = await ethers.getSigners();
 
     const { weth, lendingPoolConfiguratorProxy } = await loadFixture(deployProtocol);
@@ -134,7 +134,7 @@ describe("LendingPoolConfigurator", function () {
   });
 
 
-  it("Check the onlyAaveAdmin on unfreezeReserve", async function () {
+  it("Check the onlyAdmin on unfreezeReserve", async function () {
     [owner, addr1] = await ethers.getSigners();
 
     const { weth, lendingPoolConfiguratorProxy } = await loadFixture(deployProtocol);
@@ -147,7 +147,7 @@ describe("LendingPoolConfigurator", function () {
   it("Deactivates the ETH reserve for borrowing", async function () {
     [owner, addr1] = await ethers.getSigners();
 
-    const { weth, lendingPoolConfiguratorProxy, aaveProtocolDataProvider } = await loadFixture(deployProtocol);
+    const { weth, lendingPoolConfiguratorProxy, protocolDataProvider } = await loadFixture(deployProtocol);
 
     await lendingPoolConfiguratorProxy.disableBorrowingOnReserve(weth.address);
     const {
@@ -160,7 +160,7 @@ describe("LendingPoolConfigurator", function () {
       borrowingEnabled,
       isActive,
       isFrozen,
-    } = await aaveProtocolDataProvider.getReserveConfigurationData(weth.address);
+    } = await protocolDataProvider.getReserveConfigurationData(weth.address);
 
     expect(borrowingEnabled).to.be.equal(false);
     expect(isActive).to.be.equal(true);
@@ -177,10 +177,10 @@ describe("LendingPoolConfigurator", function () {
     [owner, addr1] = await ethers.getSigners();
     const RAY = ethers.utils.parseUnits("1", 27);
 
-    const { weth, lendingPoolConfiguratorProxy, aaveProtocolDataProvider } = await loadFixture(deployProtocol);
+    const { weth, lendingPoolConfiguratorProxy, protocolDataProvider } = await loadFixture(deployProtocol);
 
     await lendingPoolConfiguratorProxy.enableBorrowingOnReserve(weth.address, false);
-    const { variableBorrowIndex } = await aaveProtocolDataProvider.getReserveData(weth.address);
+    const { variableBorrowIndex } = await protocolDataProvider.getReserveData(weth.address);
     const {
       decimals,
       ltv,
@@ -191,7 +191,7 @@ describe("LendingPoolConfigurator", function () {
       borrowingEnabled,
       isActive,
       isFrozen,
-    } = await aaveProtocolDataProvider.getReserveConfigurationData(weth.address);
+    } = await protocolDataProvider.getReserveConfigurationData(weth.address);
 
     expect(borrowingEnabled).to.be.equal(true);
     expect(isActive).to.be.equal(true);
@@ -205,7 +205,7 @@ describe("LendingPoolConfigurator", function () {
     expect(variableBorrowIndex.toString()).to.be.equal(RAY);
   });
 
-  it("Check the onlyAaveAdmin on disableBorrowingOnReserve", async function () {
+  it("Check the onlyAdmin on disableBorrowingOnReserve", async function () {
     [owner, addr1] = await ethers.getSigners();
 
     const { weth, lendingPoolConfiguratorProxy } = await loadFixture(deployProtocol);
@@ -215,7 +215,7 @@ describe("LendingPoolConfigurator", function () {
     ).to.be.revertedWith("33");
   });
 
-  it("Check the onlyAaveAdmin on enableBorrowingOnReserve", async function () {
+  it("Check the onlyAdmin on enableBorrowingOnReserve", async function () {
     [owner, addr1] = await ethers.getSigners();
 
     const { weth, lendingPoolConfiguratorProxy } = await loadFixture(deployProtocol);
@@ -228,7 +228,7 @@ describe("LendingPoolConfigurator", function () {
   it("Deactivates the ETH reserve as collateral", async function () {
     [owner, addr1] = await ethers.getSigners();
 
-    const { weth, lendingPoolConfiguratorProxy, aaveProtocolDataProvider } = await loadFixture(deployProtocol);
+    const { weth, lendingPoolConfiguratorProxy, protocolDataProvider } = await loadFixture(deployProtocol);
 
     await lendingPoolConfiguratorProxy.configureReserveAsCollateral(weth.address, 0, 0, 0);
     const {
@@ -241,7 +241,7 @@ describe("LendingPoolConfigurator", function () {
       borrowingEnabled,
       isActive,
       isFrozen,
-    } = await aaveProtocolDataProvider.getReserveConfigurationData(weth.address);
+    } = await protocolDataProvider.getReserveConfigurationData(weth.address);
 
     expect(borrowingEnabled).to.be.equal(true);
     expect(isActive).to.be.equal(true);
@@ -257,7 +257,7 @@ describe("LendingPoolConfigurator", function () {
   it("Activates the ETH reserve as collateral", async function () {
     [owner, addr1] = await ethers.getSigners();
 
-    const { weth, lendingPoolConfiguratorProxy, aaveProtocolDataProvider } = await loadFixture(deployProtocol);
+    const { weth, lendingPoolConfiguratorProxy, protocolDataProvider } = await loadFixture(deployProtocol);
 
     await lendingPoolConfiguratorProxy.configureReserveAsCollateral(weth.address, "8000", "8250", "10500");
     const {
@@ -270,7 +270,7 @@ describe("LendingPoolConfigurator", function () {
       borrowingEnabled,
       isActive,
       isFrozen,
-    } = await aaveProtocolDataProvider.getReserveConfigurationData(weth.address);
+    } = await protocolDataProvider.getReserveConfigurationData(weth.address);
 
     expect(borrowingEnabled).to.be.equal(true);
     expect(isActive).to.be.equal(true);
@@ -283,7 +283,7 @@ describe("LendingPoolConfigurator", function () {
     expect(reserveFactor).to.be.equal("1500");
   });
 
-  it("Check the onlyAaveAdmin on configureReserveAsCollateral", async function () {
+  it("Check the onlyAdmin on configureReserveAsCollateral", async function () {
     [owner, addr1] = await ethers.getSigners();
 
     const { weth, lendingPoolConfiguratorProxy } = await loadFixture(deployProtocol);
@@ -296,7 +296,7 @@ describe("LendingPoolConfigurator", function () {
   it("Disable stable borrow rate on the ETH reserve", async function () {
     [owner, addr1] = await ethers.getSigners();
 
-    const { weth, lendingPoolConfiguratorProxy, aaveProtocolDataProvider } = await loadFixture(deployProtocol);
+    const { weth, lendingPoolConfiguratorProxy, protocolDataProvider } = await loadFixture(deployProtocol);
 
     await lendingPoolConfiguratorProxy.disableReserveStableRate(weth.address);
     const {
@@ -309,7 +309,7 @@ describe("LendingPoolConfigurator", function () {
       borrowingEnabled,
       isActive,
       isFrozen,
-    } = await aaveProtocolDataProvider.getReserveConfigurationData(weth.address);
+    } = await protocolDataProvider.getReserveConfigurationData(weth.address);
 
     expect(borrowingEnabled).to.be.equal(true);
     expect(isActive).to.be.equal(true);
@@ -325,7 +325,7 @@ describe("LendingPoolConfigurator", function () {
   it("Enables stable borrow rate on the ETH reserve", async function () {
     [owner, addr1] = await ethers.getSigners();
 
-    const { weth, lendingPoolConfiguratorProxy, aaveProtocolDataProvider } = await loadFixture(deployProtocol);
+    const { weth, lendingPoolConfiguratorProxy, protocolDataProvider } = await loadFixture(deployProtocol);
 
     await lendingPoolConfiguratorProxy.enableReserveStableRate(weth.address);
     const {
@@ -338,7 +338,7 @@ describe("LendingPoolConfigurator", function () {
       borrowingEnabled,
       isActive,
       isFrozen,
-    } = await aaveProtocolDataProvider.getReserveConfigurationData(weth.address);
+    } = await protocolDataProvider.getReserveConfigurationData(weth.address);
 
     expect(borrowingEnabled).to.be.equal(true);
     expect(isActive).to.be.equal(true);
@@ -351,7 +351,7 @@ describe("LendingPoolConfigurator", function () {
     expect(reserveFactor).to.be.equal("1500");
   });
 
-  it("Check the onlyAaveAdmin on disableReserveStableRate", async function () {
+  it("Check the onlyAdmin on disableReserveStableRate", async function () {
     [owner, addr1] = await ethers.getSigners();
 
     const { weth, lendingPoolConfiguratorProxy } = await loadFixture(deployProtocol);
@@ -361,8 +361,8 @@ describe("LendingPoolConfigurator", function () {
     ).to.be.revertedWith("33");
   });
 
-  //Check the onlyAaveAdmin on enableReserveStableRate
-  it("Check the onlyAaveAdmin on enableReserveStableRate", async function () {
+  //Check the onlyAdmin on enableReserveStableRate
+  it("Check the onlyAdmin on enableReserveStableRate", async function () {
     [owner, addr1] = await ethers.getSigners();
 
     const { weth, lendingPoolConfiguratorProxy } = await loadFixture(deployProtocol);
@@ -375,7 +375,7 @@ describe("LendingPoolConfigurator", function () {
   it("Changes the reserve factor of WETH", async function () {
     [owner, addr1] = await ethers.getSigners();
 
-    const { weth, lendingPoolConfiguratorProxy, aaveProtocolDataProvider } = await loadFixture(deployProtocol);
+    const { weth, lendingPoolConfiguratorProxy, protocolDataProvider } = await loadFixture(deployProtocol);
 
     await lendingPoolConfiguratorProxy.setReserveFactor(weth.address, "1000");
     const {
@@ -388,7 +388,7 @@ describe("LendingPoolConfigurator", function () {
       borrowingEnabled,
       isActive,
       isFrozen,
-    } = await aaveProtocolDataProvider.getReserveConfigurationData(weth.address);
+    } = await protocolDataProvider.getReserveConfigurationData(weth.address);
 
     expect(borrowingEnabled).to.be.equal(true);
     expect(isActive).to.be.equal(true);

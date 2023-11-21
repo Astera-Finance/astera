@@ -62,13 +62,13 @@ describe("WETHGateway", function () {
   it("borrowETH", async function () {
     [owner, addr1] = await ethers.getSigners();
     const ETH_DEPOSIT_SIZE = ethers.utils.parseUnits("1", 18);
-    const { weth, variableDebtETH, lendingPoolProxy, wETHGateway, aaveProtocolDataProvider } = await loadFixture(deployProtocol);
+    const { weth, variableDebtETH, lendingPoolProxy, wETHGateway, protocolDataProvider } = await loadFixture(deployProtocol);
 
     await depositETH(wETHGateway, owner, lendingPoolProxy.address, ETH_DEPOSIT_SIZE, owner.address);
 
     const priorEthersBalance = await owner.getBalance();
 
-    const ethLTV = (await aaveProtocolDataProvider.getReserveConfigurationData(weth.address)).ltv;
+    const ethLTV = (await protocolDataProvider.getReserveConfigurationData(weth.address)).ltv;
     const ethMaxBorrowNative = ETH_DEPOSIT_SIZE.mul(ethLTV).div(10000);
 
     const approveTx = await approveDelegation(variableDebtETH, owner, wETHGateway.address, ethMaxBorrowNative);
@@ -92,13 +92,13 @@ describe("WETHGateway", function () {
   it("repayETH", async function () {
     [owner, addr1] = await ethers.getSigners();
     const ETH_DEPOSIT_SIZE = ethers.utils.parseUnits("1", 18);
-    const { weth, variableDebtETH, lendingPoolProxy, wETHGateway, aaveProtocolDataProvider } = await loadFixture(deployProtocol);
+    const { weth, variableDebtETH, lendingPoolProxy, wETHGateway, protocolDataProvider } = await loadFixture(deployProtocol);
 
     await depositETH(wETHGateway, owner, lendingPoolProxy.address, ETH_DEPOSIT_SIZE, owner.address);
 
     const priorEthersBalance = await owner.getBalance();
 
-    const ethLTV = (await aaveProtocolDataProvider.getReserveConfigurationData(weth.address)).ltv;
+    const ethLTV = (await protocolDataProvider.getReserveConfigurationData(weth.address)).ltv;
     const ethMaxBorrowNative = ETH_DEPOSIT_SIZE.mul(ethLTV).div(10000);
 
     const approveTx = await approveDelegation(variableDebtETH, owner, wETHGateway.address, ethMaxBorrowNative);

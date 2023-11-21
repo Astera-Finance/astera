@@ -11,7 +11,7 @@ import {DataTypes} from '../protocol/libraries/types/DataTypes.sol';
 import {Ownable} from '../dependencies/openzeppelin/contracts/Ownable.sol';
 
 
-contract GranaryTreasury is Ownable {
+contract Treasury is Ownable {
   ILendingPoolAddressesProvider public ADDRESSES_PROVIDER;
   ILendingPool public LENDING_POOL;
   address private currentTreasury = address(this);
