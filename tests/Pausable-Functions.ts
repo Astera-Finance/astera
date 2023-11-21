@@ -180,7 +180,7 @@ describe("Pausable-Functions", function () {
 
     await lendingPoolProxy.connect(borrower).borrow(usdc.address, false, maxUsdcBorrow, "2", "0", borrower.address);
 
-    let newUsdcPriceFeed = await deployMockAggregator("120000000");
+    let newUsdcPriceFeed = await deployMockAggregator("120000000", usdc.decimals());
     await setAssetSources(aaveOracle, owner, [usdc.address], [newUsdcPriceFeed.address])
 
     await prepareMockTokens(usdc, liquidator, USDC_DEPOSIT_SIZE);

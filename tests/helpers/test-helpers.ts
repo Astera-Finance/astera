@@ -59,7 +59,7 @@ export async function deployProtocol() {
     ethers.utils.parseUnits("0.039", 27), // usdc
     ethers.utils.parseUnits("0.03", 27), // wbtc
     ethers.utils.parseUnits("0.03", 27) // eth
-  ];  
+  ];
 
   const volStrat = [
     ethers.utils.parseUnits("0.45", 27), // optimalUtilizationRate
@@ -106,13 +106,13 @@ export async function deployProtocol() {
   ]
 
   const UsdcPriceFeed = await hre.ethers.getContractFactory("MockAggregator");
-  const usdcPriceFeed = await UsdcPriceFeed.deploy("100000000");
+  const usdcPriceFeed = await UsdcPriceFeed.deploy("100000000", await usdc.decimals());
 
   const WbtcPriceFeed = await hre.ethers.getContractFactory("MockAggregator");
-  const wbtcPriceFeed = await WbtcPriceFeed.deploy("1600000000000");
+  const wbtcPriceFeed = await WbtcPriceFeed.deploy("1600000000000", await wbtc.decimals());
 
   const EthPriceFeed = await hre.ethers.getContractFactory("MockAggregator");
-  const ethPriceFeed = await EthPriceFeed.deploy("120000000000");
+  const ethPriceFeed = await EthPriceFeed.deploy("120000000000", await weth.decimals());
 
   const aggregators = [
     usdcPriceFeed.address,
@@ -525,9 +525,9 @@ export async function deployMockFlashLoanReceiver(lendingPoolAddressesProviderAd
   return mockFlashLoanReceiver;
 }
 
-export async function deployMockAggregator(initialAnswer) {
+export async function deployMockAggregator(initialAnswer, decimals) {
   const PriceFeed = await hre.ethers.getContractFactory("MockAggregator");
-  const priceFeed = await PriceFeed.deploy(initialAnswer);
+  const priceFeed = await PriceFeed.deploy(initialAnswer, decimals);
   return priceFeed;
 }
 
