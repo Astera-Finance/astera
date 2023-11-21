@@ -215,7 +215,7 @@ describe("Rehypothecation", function () {
 
       await prepareMockTokens(usdc, addr1, USDC_DEPOSIT_SIZE);
       await approve(lendingPoolProxy.address, usdc, addr1);
-      await deposit(lendingPoolProxy, addr1, usdc.address, USDC_DEPOSIT_SIZE, addr1.address);
+      await deposit(lendingPoolProxy, addr1, usdc.address, false, USDC_DEPOSIT_SIZE, addr1.address);
       await borrow(lendingPoolProxy, addr1, usdc.address, ethers.utils.parseUnits("10", 6), addr1.address);
       
       // BEFORE REBALANCE
