@@ -8,9 +8,9 @@ import {ILendingPool} from '../../interfaces/ILendingPool.sol';
 import {IAToken} from '../../interfaces/IAToken.sol';
 import {WadRayMath} from '../libraries/math/WadRayMath.sol';
 import {Errors} from '../libraries/helpers/Errors.sol';
-import {VersionedInitializable} from '../libraries/aave-upgradeability/VersionedInitializable.sol';
+import {VersionedInitializable} from '../libraries/upgradeability/VersionedInitializable.sol';
 import {IncentivizedERC20} from './IncentivizedERC20.sol';
-import {IAaveIncentivesController} from '../../interfaces/IAaveIncentivesController.sol';
+import {IRewarder} from '../../interfaces/IRewarder.sol';
 import {IERC4626} from '../../interfaces/IERC4626.sol';
 
 /**
@@ -44,7 +44,26 @@ contract AToken is
   address internal _treasury;
   address internal _underlyingAsset;
   bool internal _reserveType;
-  IAaveIncentivesController internal _incentivesController;
+  IRewarder internal _incentivesController;
+
+  /**
+  * @dev Rehypothecation related vars
+  * vault is the ERC4626 contract the aToken will supply part of its tokens to
+  * underlyingAmount is the recorded amount of underlying entering and exiting this contract from the perspective of the protocol
+  * farmingPct is the share of underlying that should be rehypothecated
+  * farmingBal is the recorded amount of underlying supplied to the vault
+  * claimingThreshold is the minimum amount this contract will try to claim as profit
+  * farmingPctDrift is the minimum difference in pct after which the contract will rebalance
+  * profitHandler is the EOA/contract receiving profit
+  */
+  IERC4626 public vault;
+  uint256 public underlyingAmount;
+  uint256 public farmingPct;
+  uint256 public farmingBal;
+  uint256 public claimingThreshold;
+  uint256 public farmingPctDrift;
+  address public profitHandler;
+
 
   /**
   * @dev Rehypothecation related vars
@@ -88,7 +107,7 @@ contract AToken is
     ILendingPool pool,
     address treasury,
     address underlyingAsset,
-    IAaveIncentivesController incentivesController,
+    IRewarder incentivesController,
     uint8 aTokenDecimals,
     string calldata aTokenName,
     string calldata aTokenSymbol,
@@ -314,14 +333,14 @@ contract AToken is
   /**
    * @dev For internal usage in the logic of the parent contract IncentivizedERC20
    **/
-  function _getIncentivesController() internal view override returns (IAaveIncentivesController) {
+  function _getIncentivesController() internal view override returns (IRewarder) {
     return _incentivesController;
   }
 
   /**
    * @dev Returns the address of the incentives controller contract
    **/
-  function getIncentivesController() external view override returns (IAaveIncentivesController) {
+  function getIncentivesController() external view override returns (IRewarder) {
     return _getIncentivesController();
   }
 

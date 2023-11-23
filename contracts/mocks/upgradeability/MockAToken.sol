@@ -3,7 +3,7 @@ pragma solidity 0.6.12;
 
 import {AToken} from '../../protocol/tokenization/AToken.sol';
 import {ILendingPool} from '../../interfaces/ILendingPool.sol';
-import {IAaveIncentivesController} from '../../interfaces/IAaveIncentivesController.sol';
+import {IRewarder} from '../../interfaces/IRewarder.sol';
 
 contract MockAToken is AToken {
   function getRevision() internal pure override returns (uint256) {

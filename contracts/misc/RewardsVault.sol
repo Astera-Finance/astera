@@ -2,12 +2,12 @@
 pragma solidity 0.6.12;
 pragma experimental ABIEncoderV2;
 
-import {IERC20} from './interfaces/IERC20.sol';
-import {ILendingPoolAddressesProvider} from './interfaces/ILendingPoolAddressesProvider.sol';
-import {Ownable} from './lib/Ownable.sol';
-import {Errors} from './lib/Errors.sol';
+import {IERC20} from '../dependencies/openzeppelin/contracts/IERC20.sol';
+import {ILendingPoolAddressesProvider} from '../interfaces/ILendingPoolAddressesProvider.sol';
+import {Ownable} from '../dependencies/openzeppelin/contracts/Ownable.sol';
+import {Errors} from '../protocol/libraries/helpers/Errors.sol';
 
-contract GranaryRewardsVault is Ownable {
+contract RewardsVault is Ownable {
   ILendingPoolAddressesProvider public ADDRESSES_PROVIDER;
   address public INCENTIVES_CONTROLLER;
   address public REWARD_TOKEN;

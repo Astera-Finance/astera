@@ -6,7 +6,7 @@ import {IERC20Detailed} from '../dependencies/openzeppelin/contracts/IERC20Detai
 import {ILendingPoolAddressesProvider} from '../interfaces/ILendingPoolAddressesProvider.sol';
 import {IUiPoolDataProviderV2} from './interfaces/IUiPoolDataProviderV2.sol';
 import {ILendingPool} from '../interfaces/ILendingPool.sol';
-import {IAaveOracle} from './interfaces/IAaveOracle.sol';
+import {IOracle} from './interfaces/IOracle.sol';
 import {IAToken} from '../interfaces/IAToken.sol';
 import {IVariableDebtToken} from '../interfaces/IVariableDebtToken.sol';
 import {IStableDebtToken} from '../interfaces/IStableDebtToken.sol';
@@ -73,7 +73,7 @@ contract UiPoolDataProviderV2 is IUiPoolDataProviderV2 {
     override
     returns (AggregatedReserveData[] memory, BaseCurrencyInfo memory)
   {
-    IAaveOracle oracle = IAaveOracle(provider.getPriceOracle());
+    IOracle oracle = IOracle(provider.getPriceOracle());
     ILendingPool lendingPool = ILendingPool(provider.getLendingPool());
     address[] memory reserves = new address[](lendingPool.getReservesCount());
     bool[] memory reservesTypes = new bool[](lendingPool.getReservesCount());

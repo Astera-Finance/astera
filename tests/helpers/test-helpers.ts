@@ -169,8 +169,8 @@ export async function deployProtocol() {
   });
   const lendingPoolProxy = await LendingPoolProxy.attach(lendingPoolProxyAddress);
 
-  const GranaryTreasury = await hre.ethers.getContractFactory("GranaryTreasury");
-  const granaryTreasury = await GranaryTreasury.deploy(lendingPoolAddressesProvider.address);
+  const Treasury = await hre.ethers.getContractFactory("Treasury");
+  const treasury = await Treasury.deploy(lendingPoolAddressesProvider.address);
 
   const LendingPoolConfigurator = await hre.ethers.getContractFactory("LendingPoolConfigurator");
   const lendingPoolConfigurator = await LendingPoolConfigurator.deploy();
@@ -200,10 +200,10 @@ export async function deployProtocol() {
   const StableDebtToken = await hre.ethers.getContractFactory("StableDebtToken");
   const stableDebtToken = await StableDebtToken.deploy();
 
-  const AaveOracle = await hre.ethers.getContractFactory("AaveOracle");
-  const aaveOracle = await AaveOracle.deploy(tokens, aggregators, FALLBACK_ORACLE,  BASE_CURRENCY, BASE_CURRENCY_UNIT);
+  const Oracle = await hre.ethers.getContractFactory("Oracle");
+  const oracle = await Oracle.deploy(tokens, aggregators, FALLBACK_ORACLE,  BASE_CURRENCY, BASE_CURRENCY_UNIT);
 
-  await lendingPoolAddressesProvider.setPriceOracle(aaveOracle.address);
+  await lendingPoolAddressesProvider.setPriceOracle(oracle.address);
 
   const LendingRateOracle = await hre.ethers.getContractFactory("LendingRateOracle");
   const lendingRateOracle = await LendingRateOracle.deploy();
@@ -216,8 +216,13 @@ export async function deployProtocol() {
 
   await stableAndVariableTokensHelper.setOracleOwnership(lendingRateOracle.address, adminAddress);
 
-  const AaveProtocolDataProvider = await hre.ethers.getContractFactory("AaveProtocolDataProvider");
-  const aaveProtocolDataProvider = await AaveProtocolDataProvider.deploy(lendingPoolAddressesProvider.address);
+  const ProtocolDataProvider = await hre.ethers.getContractFactory("ProtocolDataProvider");
+  const protocolDataProvider = await ProtocolDataProvider.deploy(lendingPoolAddressesProvider.address);
+
+  const UiPoolDataProvider = await hre.ethers.getContractFactory("UiPoolDataProvider");
+  const uiPoolDataProvider = await UiPoolDataProvider.deploy(rewarder.address, oracle.address);
+  const UiPoolDataProviderV2 = await hre.ethers.getContractFactory("UiPoolDataProviderV2");
+  const uiPoolDataProviderV2 = await UiPoolDataProviderV2.deploy(ethPriceFeed.address, ethPriceFeed.address);
 
   const UiPoolDataProvider = await hre.ethers.getContractFactory("UiPoolDataProvider");
   const uiPoolDataProvider = await UiPoolDataProvider.deploy(rewarder.address, aaveOracle.address);
@@ -261,7 +266,7 @@ export async function deployProtocol() {
     interestRateStrategyAddress: stableStrategy.address,
     underlyingAsset: tokens[0],
     reserveType: reserveTypes[0],
-    treasury: granaryTreasury.address,
+    treasury: treasury.address,
     incentivesController: rewarder.address,
     underlyingAssetName: "USDC",
     aTokenName: "Granary USDC",
@@ -282,7 +287,7 @@ export async function deployProtocol() {
     interestRateStrategyAddress: volatileStrategy.address,
     underlyingAsset: tokens[1],
     reserveType: reserveTypes[1],
-    treasury: granaryTreasury.address,
+    treasury: treasury.address,
     incentivesController: rewarder.address,
     underlyingAssetName: "WBTC",
     aTokenName: "Granary WBTC",
@@ -302,7 +307,7 @@ export async function deployProtocol() {
     interestRateStrategyAddress: volatileStrategy.address,
     underlyingAsset: tokens[2],
     reserveType: reserveTypes[2],
-    treasury: granaryTreasury.address,
+    treasury: treasury.address,
     incentivesController: rewarder.address,
     underlyingAssetName: "ETH",
     aTokenName: "Granary ETH",
@@ -372,7 +377,7 @@ export async function deployProtocol() {
 
   await wETHGateway.authorizeLendingPool(lendingPoolProxyAddress);
 
-  let usdcReserveTokens = await aaveProtocolDataProvider.getReserveTokensAddresses(usdc.address, false);
+  let usdcReserveTokens = await protocolDataProvider.getReserveTokensAddresses(usdc.address, false);
   let GrainUSDC = await hre.ethers.getContractFactory("AToken");
   let grainUSDC = await GrainUSDC.attach(usdcReserveTokens.aTokenAddress);
   let StableDebtUSDC = await hre.ethers.getContractFactory("StableDebtToken");
@@ -380,7 +385,7 @@ export async function deployProtocol() {
   let VariableDebtUSDC = await hre.ethers.getContractFactory("VariableDebtToken");
   let variableDebtUSDC = await VariableDebtUSDC.attach(usdcReserveTokens.variableDebtTokenAddress);
 
-  let wbtcReserveTokens = await aaveProtocolDataProvider.getReserveTokensAddresses(wbtc.address, false);
+  let wbtcReserveTokens = await protocolDataProvider.getReserveTokensAddresses(wbtc.address, false);
   let GrainWBTC = await hre.ethers.getContractFactory("AToken");
   let grainWBTC = await GrainWBTC.attach(wbtcReserveTokens.aTokenAddress);
   let StableDebtWBTC = await hre.ethers.getContractFactory("StableDebtToken");
@@ -388,7 +393,7 @@ export async function deployProtocol() {
   let VariableDebtWBTC = await hre.ethers.getContractFactory("VariableDebtToken");
   let variableDebtWBTC = await VariableDebtWBTC.attach(wbtcReserveTokens.variableDebtTokenAddress);
 
-  let ethReserveTokens = await aaveProtocolDataProvider.getReserveTokensAddresses(weth.address, false);
+  let ethReserveTokens = await protocolDataProvider.getReserveTokensAddresses(weth.address, false);
   let GrainETH = await hre.ethers.getContractFactory("AToken");
   let grainETH = await GrainETH.attach(ethReserveTokens.aTokenAddress);
   let StableDebtETH = await hre.ethers.getContractFactory("StableDebtToken");
@@ -401,8 +406,8 @@ export async function deployProtocol() {
 
 
   return { usdc, wbtc, weth, usdcPriceFeed, wbtcPriceFeed, ethPriceFeed, rewarder, lendingPoolAddressesProviderRegistry,
-  lendingPoolAddressesProvider, lendingPool, lendingPoolProxy, granaryTreasury, lendingPoolConfigurator, lendingPoolConfiguratorProxy,
-  aToken, variableDebtToken, stableDebtToken, aaveOracle, lendingRateOracle, aaveProtocolDataProvider, wETHGateway,
+  lendingPoolAddressesProvider, lendingPool, lendingPoolProxy, treasury, lendingPoolConfigurator, lendingPoolConfiguratorProxy,
+  aToken, variableDebtToken, stableDebtToken, oracle, lendingRateOracle, protocolDataProvider, wETHGateway,
   stableStrategy, volatileStrategy, lendingPoolCollateralManager, grainUSDC, stableDebtUSDC, variableDebtUSDC,
   grainWBTC, stableDebtWBTC, variableDebtWBTC, grainETH, stableDebtETH, variableDebtETH, uiPoolDataProvider, uiPoolDataProviderV2 };
 }
@@ -531,8 +536,8 @@ export async function deployMockAggregator(initialAnswer, decimals) {
   return priceFeed;
 }
 
-export async function setAssetSources(aaveOracle, account, assets, sources) {
-  const tx = await aaveOracle.connect(account).setAssetSources(assets, sources);
+export async function setAssetSources(oracle, account, assets, sources) {
+  const tx = await oracle.connect(account).setAssetSources(assets, sources);
   const receipt = await tx.wait();
   return receipt;
 }
@@ -587,9 +592,9 @@ export async function percentMul(value, percentage) {
   return (value.mul(percentage).add("5000")).div("10000");
 }
 // ONLY USE IF UTILIZATION RATE IS BELOW OPTIMAL UTILIZATION RATE (WILL ADD OVER OUR SOON)
-export async function getExpectedVariableRate(aaveProtocolDataProvider, underlying, grainToken, reserveStrategy) {
-  const reserveData = await aaveProtocolDataProvider.getReserveData(underlying.address);
-  const reserveConfigurationData = await aaveProtocolDataProvider.getReserveConfigurationData(underlying.address);
+export async function getExpectedVariableRate(protocolDataProvider, underlying, grainToken, reserveStrategy) {
+  const reserveData = await protocolDataProvider.getReserveData(underlying.address);
+  const reserveConfigurationData = await protocolDataProvider.getReserveConfigurationData(underlying.address);
   // console.log("Farming Balance:    "+await grainToken.farmingBal());
   // console.log("Underlying Balance: "+await underlying.balanceOf(grainToken.address));
   const availableLiquidity = (await underlying.balanceOf(grainToken.address)).add(await grainToken.farmingBal());
@@ -598,9 +603,9 @@ export async function getExpectedVariableRate(aaveProtocolDataProvider, underlyi
   const expectedVariableRate = await rayDiv((await rayMul(utilizationRate, await reserveStrategy.variableRateSlope1())), optimalUtilizationRate)
   return expectedVariableRate;
 }
-export async function getCurrentVariableRate(aaveProtocolDataProvider, underlying, grainToken, reserveStrategy) {
-  const reserveData = await aaveProtocolDataProvider.getReserveData(underlying.address);
-  const reserveConfigurationData = await aaveProtocolDataProvider.getReserveConfigurationData(underlying.address);
+export async function getCurrentVariableRate(protocolDataProvider, underlying, grainToken, reserveStrategy) {
+  const reserveData = await protocolDataProvider.getReserveData(underlying.address);
+  const reserveConfigurationData = await protocolDataProvider.getReserveConfigurationData(underlying.address);
   const {
     0: currentLiquidityRate,
     1: currentStableBorrowRate,

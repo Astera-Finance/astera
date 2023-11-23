@@ -12,7 +12,7 @@ import {ReserveConfiguration} from '../protocol/libraries/configuration/ReserveC
 import {UserConfiguration} from '../protocol/libraries/configuration/UserConfiguration.sol';
 import {DataTypes} from '../protocol/libraries/types/DataTypes.sol';
 
-contract AaveProtocolDataProvider {
+contract ProtocolDataProvider {
   using ReserveConfiguration for DataTypes.ReserveConfigurationMap;
   using UserConfiguration for DataTypes.UserConfigurationMap;
 

@@ -112,11 +112,11 @@ describe("LendingPool", function () {
     const WBTC_DEPOSIT_SIZE = ethers.utils.parseUnits("1", 8);
 
     const { usdc, wbtc, weth, grainUSDC, grainWBTC, grainETH,variableDebtUSDC, variableDebtWBTC, 
-    variableDebtETH, lendingPoolProxy, usdcPriceFeed, wbtcPriceFeed, ethPriceFeed, aaveProtocolDataProvider } = await loadFixture(deployProtocol);
+    variableDebtETH, lendingPoolProxy, usdcPriceFeed, wbtcPriceFeed, ethPriceFeed, protocolDataProvider } = await loadFixture(deployProtocol);
 
     const usdcDepositValue = (USDC_DEPOSIT_SIZE).mul(await usdcPriceFeed.latestAnswer());
 
-    const usdcLTV = (await aaveProtocolDataProvider.getReserveConfigurationData(usdc.address, false)).ltv;
+    const usdcLTV = (await protocolDataProvider.getReserveConfigurationData(usdc.address, false)).ltv;
 
     const usdcMaxBorrowNative = ( USDC_DEPOSIT_SIZE * (usdcLTV / 10000));
 
@@ -152,11 +152,11 @@ describe("LendingPool", function () {
     const WBTC_DEPOSIT_SIZE = ethers.utils.parseUnits("1", 8);
 
     const { usdc, wbtc, weth, grainUSDC, grainWBTC, grainETH,variableDebtUSDC, variableDebtWBTC, 
-    variableDebtETH, lendingPoolProxy, usdcPriceFeed, wbtcPriceFeed, ethPriceFeed, aaveProtocolDataProvider } = await loadFixture(deployProtocol);
+    variableDebtETH, lendingPoolProxy, usdcPriceFeed, wbtcPriceFeed, ethPriceFeed, protocolDataProvider } = await loadFixture(deployProtocol);
 
     const usdcDepositValue = (USDC_DEPOSIT_SIZE).mul(await usdcPriceFeed.latestAnswer());
 
-    const usdcLTV = (await aaveProtocolDataProvider.getReserveConfigurationData(usdc.address, false)).ltv;
+    const usdcLTV = (await protocolDataProvider.getReserveConfigurationData(usdc.address, false)).ltv;
 
     const usdcMaxBorrowNative = ( USDC_DEPOSIT_SIZE * (usdcLTV / 10000));
 
@@ -195,11 +195,11 @@ describe("LendingPool", function () {
     const WBTC_DEPOSIT_SIZE = ethers.utils.parseUnits("1", 8);
 
     const { usdc, wbtc, weth, grainUSDC, grainWBTC, grainETH,variableDebtUSDC, variableDebtWBTC, 
-    variableDebtETH, lendingPoolProxy, usdcPriceFeed, wbtcPriceFeed, ethPriceFeed, aaveProtocolDataProvider } = await loadFixture(deployProtocol);
+    variableDebtETH, lendingPoolProxy, usdcPriceFeed, wbtcPriceFeed, ethPriceFeed, protocolDataProvider } = await loadFixture(deployProtocol);
 
     const usdcDepositValue = (USDC_DEPOSIT_SIZE).mul(await usdcPriceFeed.latestAnswer());
 
-    const usdcLTV = (await aaveProtocolDataProvider.getReserveConfigurationData(usdc.address, false)).ltv;
+    const usdcLTV = (await protocolDataProvider.getReserveConfigurationData(usdc.address, false)).ltv;
 
     const usdcMaxBorrowNative = ( USDC_DEPOSIT_SIZE * (usdcLTV / 10000));
 
