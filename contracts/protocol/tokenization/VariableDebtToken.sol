@@ -36,6 +36,7 @@ contract VariableDebtToken is DebtTokenBase, IVariableDebtToken {
   function initialize(
     ILendingPool pool,
     address underlyingAsset,
+    IRewarder incentivesController,
     uint8 debtTokenDecimals,
     string memory debtTokenName,
     string memory debtTokenSymbol,

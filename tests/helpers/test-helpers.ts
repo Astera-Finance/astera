@@ -219,13 +219,8 @@ export async function deployProtocol() {
   const ProtocolDataProvider = await hre.ethers.getContractFactory("ProtocolDataProvider");
   const protocolDataProvider = await ProtocolDataProvider.deploy(lendingPoolAddressesProvider.address);
 
-  const UiPoolDataProvider = await hre.ethers.getContractFactory("UiPoolDataProvider");
-  const uiPoolDataProvider = await UiPoolDataProvider.deploy(rewarder.address, oracle.address);
-  const UiPoolDataProviderV2 = await hre.ethers.getContractFactory("UiPoolDataProviderV2");
-  const uiPoolDataProviderV2 = await UiPoolDataProviderV2.deploy(ethPriceFeed.address, ethPriceFeed.address);
-
-  const UiPoolDataProvider = await hre.ethers.getContractFactory("UiPoolDataProvider");
-  const uiPoolDataProvider = await UiPoolDataProvider.deploy(rewarder.address, aaveOracle.address);
+  // const UiPoolDataProvider = await hre.ethers.getContractFactory("UiPoolDataProvider");
+  // const uiPoolDataProvider = await UiPoolDataProvider.deploy(rewarder.address, oracle.address);
   const UiPoolDataProviderV2 = await hre.ethers.getContractFactory("UiPoolDataProviderV2");
   const uiPoolDataProviderV2 = await UiPoolDataProviderV2.deploy(ethPriceFeed.address, ethPriceFeed.address);
 

@@ -65,25 +65,6 @@ contract AToken is
   address public profitHandler;
 
 
-  /**
-  * @dev Rehypothecation related vars
-  * vault is the ERC4626 contract the aToken will supply part of its tokens to
-  * underlyingAmount is the recorded amount of underlying entering and exiting this contract from the perspective of the protocol
-  * farmingPct is the share of underlying that should be rehypothecated
-  * farmingBal is the recorded amount of underlying supplied to the vault
-  * claimingThreshold is the minimum amount this contract will try to claim as profit
-  * farmingPctDrift is the minimum difference in pct after which the contract will rebalance
-  * profitHandler is the EOA/contract receiving profit
-  */
-  IERC4626 public vault;
-  uint256 public underlyingAmount;
-  uint256 public farmingPct;
-  uint256 public farmingBal;
-  uint256 public claimingThreshold;
-  uint256 public farmingPctDrift;
-  address public profitHandler;
-
-
   modifier onlyLendingPool {
     require(_msgSender() == address(_pool), Errors.CT_CALLER_MUST_BE_LENDING_POOL);
     _;
