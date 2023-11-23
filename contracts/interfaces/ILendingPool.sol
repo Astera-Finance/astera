@@ -180,6 +180,7 @@ interface ILendingPool {
    **/
   function deposit(
     address asset,
+    bool reserveType,
     uint256 amount,
     address onBehalfOf,
     uint16 referralCode
@@ -189,6 +190,7 @@ interface ILendingPool {
    * @dev Withdraws an `amount` of underlying asset from the reserve, burning the equivalent aTokens owned
    * E.g. User has 100 aUSDC, calls withdraw() and receives 100 USDC, burning the 100 aUSDC
    * @param asset The address of the underlying asset to withdraw
+   * @param reserveType Whether the reserve is boosted by a vault
    * @param amount The underlying amount to be withdrawn
    *   - Send the value type(uint256).max in order to withdraw the whole aToken balance
    * @param to Address that will receive the underlying, same as msg.sender if the user
@@ -198,6 +200,7 @@ interface ILendingPool {
    **/
   function withdraw(
     address asset,
+    bool reserveType,
     uint256 amount,
     address to
   ) external returns (uint256);
@@ -219,6 +222,7 @@ interface ILendingPool {
    **/
   function borrow(
     address asset,
+    bool reserveType,
     uint256 amount,
     uint256 interestRateMode,
     uint16 referralCode,
@@ -229,6 +233,7 @@ interface ILendingPool {
    * @notice Repays a borrowed `amount` on a specific reserve, burning the equivalent debt tokens owned
    * - E.g. User repays 100 USDC, burning 100 variable/stable debt tokens of the `onBehalfOf` address
    * @param asset The address of the borrowed underlying asset previously borrowed
+   * @param reserveType Whether the reserve is boosted by a vault
    * @param amount The amount to repay
    * - Send the value type(uint256).max in order to repay the whole debt for `asset` on the specific `debtMode`
    * @param rateMode The interest rate mode at of the debt the user wants to repay: 1 for Stable, 2 for Variable
@@ -239,6 +244,7 @@ interface ILendingPool {
    **/
   function repay(
     address asset,
+    bool reserveType,
     uint256 amount,
     uint256 rateMode,
     address onBehalfOf
@@ -247,9 +253,10 @@ interface ILendingPool {
   /**
    * @dev Allows a borrower to swap his debt between stable and variable mode, or viceversa
    * @param asset The address of the underlying asset borrowed
+   * @param reserveType Whether the reserve is boosted by a vault
    * @param rateMode The rate mode that the user wants to swap to
    **/
-  function swapBorrowRateMode(address asset, uint256 rateMode) external;
+  function swapBorrowRateMode(address asset, bool reserveType, uint256 rateMode) external;
 
   /**
    * @dev Rebalances the stable interest rate of a user to the current stable rate defined on the reserve.
@@ -258,16 +265,18 @@ interface ILendingPool {
    *     2. the current deposit APY is below REBALANCE_UP_THRESHOLD * maxVariableBorrowRate, which means that too much has been
    *        borrowed at a stable rate and depositors are not earning enough
    * @param asset The address of the underlying asset borrowed
+   * @param reserveType Whether the reserve is boosted by a vault
    * @param user The address of the user to be rebalanced
    **/
-  function rebalanceStableBorrowRate(address asset, address user) external;
+  function rebalanceStableBorrowRate(address asset, bool reserveType, address user) external;
 
   /**
    * @dev Allows depositors to enable/disable a specific deposited asset as collateral
    * @param asset The address of the underlying asset deposited
+   * @param reserveType Whether the reserve is boosted by a vault
    * @param useAsCollateral `true` if the user wants to use the deposit as collateral, `false` otherwise
    **/
-  function setUserUseReserveAsCollateral(address asset, bool useAsCollateral) external;
+  function setUserUseReserveAsCollateral(address asset, bool reserveType, bool useAsCollateral) external;
 
   /**
    * @dev Function to liquidate a non-healthy position collateral-wise, with Health Factor below 1
@@ -282,37 +291,47 @@ interface ILendingPool {
    **/
   function liquidationCall(
     address collateralAsset,
+    bool collateralAssetType,
     address debtAsset,
+    bool debtAssetType,
     address user,
     uint256 debtToCover,
     bool receiveAToken
   ) external;
 
   /**
+   * @param receiverAddress The address of the contract receiving the funds, implementing the IFlashLoanReceiver interface
+   * @param assets The addresses of the assets being flash-borrowed
+   * @param amounts The amounts amounts being flash-borrowed
+   * @param onBehalfOf The address  that will receive the debt in the case of using on `modes` 1 or 2
+   * @param referralCode Code used to register the integrator originating the operation, for potential rewards.
+   *   0 if the action is executed directly by the user, without any middle-man
+   **/
+  struct FlashLoanParams {
+    address receiverAddress;
+    address[] assets;
+    bool[] reserveTypes;
+    address onBehalfOf;
+    uint16 referralCode;
+  }
+
+  /**
    * @dev Allows smartcontracts to access the liquidity of the pool within one transaction,
    * as long as the amount taken plus a fee is returned.
    * IMPORTANT There are security concerns for developers of flashloan receiver contracts that must be kept into consideration.
    * For further details please visit https://developers.aave.com
-   * @param receiverAddress The address of the contract receiving the funds, implementing the IFlashLoanReceiver interface
-   * @param assets The addresses of the assets being flash-borrowed
-   * @param amounts The amounts amounts being flash-borrowed
+   * @param flashLoanParams struct containing receiverAddress, onBehalfOf, referralCode
    * @param modes Types of the debt to open if the flash loan is not returned:
    *   0 -> Don't open any debt, just revert if funds can't be transferred from the receiver
    *   1 -> Open debt at stable rate for the value of the amount flash-borrowed to the `onBehalfOf` address
    *   2 -> Open debt at variable rate for the value of the amount flash-borrowed to the `onBehalfOf` address
-   * @param onBehalfOf The address  that will receive the debt in the case of using on `modes` 1 or 2
    * @param params Variadic packed params to pass to the receiver as extra information
-   * @param referralCode Code used to register the integrator originating the operation, for potential rewards.
-   *   0 if the action is executed directly by the user, without any middle-man
    **/
   function flashLoan(
-    address receiverAddress,
-    address[] calldata assets,
+    FlashLoanParams memory flashLoanParams,
     uint256[] calldata amounts,
     uint256[] calldata modes,
-    address onBehalfOf,
-    bytes calldata params,
-    uint16 referralCode
+    bytes calldata params
   ) external;
 
   /**
@@ -339,26 +358,41 @@ interface ILendingPool {
 
   function initReserve(
     address reserve,
+    bool reserveType,
     address aTokenAddress,
     address stableDebtAddress,
     address variableDebtAddress,
     address interestRateStrategyAddress
   ) external;
 
-  function setReserveInterestRateStrategyAddress(address reserve, address rateStrategyAddress)
+  function setReserveInterestRateStrategyAddress(address reserve, bool reserveType, address rateStrategyAddress)
     external;
 
-  function setConfiguration(address reserve, uint256 configuration) external;
+  function setConfiguration(address reserve, bool reserveType, uint256 configuration) external;
 
   /**
    * @dev Returns the configuration of the reserve
    * @param asset The address of the underlying asset of the reserve
+   * @param reserveType Whether the reserve is boosted by a vault
    * @return The configuration of the reserve
    **/
-  function getConfiguration(address asset)
+  function getConfiguration(address asset, bool reserveType)
     external
     view
     returns (DataTypes.ReserveConfigurationMap memory);
+
+  function setBorrowConfiguration(address reserve, bool reserveType, uint256 borrowConfiguration) external;
+
+  /**
+   * @dev Returns the borrow configuration of the reserve
+   * @param asset The address of the underlying asset of the reserve
+   * @param reserveType The type of the reserve
+   * @return The borrow configuration of the reserve
+   **/
+  function getBorrowConfiguration(address asset, bool reserveType)
+    external
+    view
+    returns (DataTypes.ReserveBorrowConfigurationMap memory);
 
   /**
    * @dev Returns the configuration of the user across all the reserves
@@ -373,26 +407,30 @@ interface ILendingPool {
   /**
    * @dev Returns the normalized income normalized income of the reserve
    * @param asset The address of the underlying asset of the reserve
+   * @param reserveType Whether the reserve is boosted by a vault
    * @return The reserve's normalized income
    */
-  function getReserveNormalizedIncome(address asset) external view returns (uint256);
+  function getReserveNormalizedIncome(address asset, bool reserveType) external view returns (uint256);
 
   /**
    * @dev Returns the normalized variable debt per unit of asset
    * @param asset The address of the underlying asset of the reserve
+   * @param reserveType Whether the reserve is boosted by a vault
    * @return The reserve normalized variable debt
    */
-  function getReserveNormalizedVariableDebt(address asset) external view returns (uint256);
+  function getReserveNormalizedVariableDebt(address asset, bool reserveType) external view returns (uint256);
 
   /**
    * @dev Returns the state and configuration of the reserve
    * @param asset The address of the underlying asset of the reserve
+   * @param reserveType Whether the reserve is boosted by a vault
    * @return The state of the reserve
    **/
-  function getReserveData(address asset) external view returns (DataTypes.ReserveData memory);
+  function getReserveData(address asset, bool reserveType) external view returns (DataTypes.ReserveData memory);
 
   function finalizeTransfer(
     address asset,
+    bool reserveType,
     address from,
     address to,
     uint256 amount,
@@ -400,11 +438,20 @@ interface ILendingPool {
     uint256 balanceToBefore
   ) external;
 
-  function getReservesList() external view returns (address[] memory);
+  function getReservesList() external view returns (address[] memory, bool[] memory);
+  function getReservesCount() external view returns (uint256);
 
   function getAddressesProvider() external view returns (ILendingPoolAddressesProvider);
 
   function setPause(bool val) external;
 
   function paused() external view returns (bool);
+
+  function setFarmingPct(address aTokenAddress, uint256 farmingPct) external;
+  function setClaimingThreshold(address aTokenAddress, uint256 claimingThreshold) external;
+  function setFarmingPctDrift(address aTokenAddress, uint256 _farmingPctDrift) external;
+  function setProfitHandler(address aTokenAddress, address _profitHandler) external;
+  function setVault(address aTokenAddress, address _vault) external;
+  function rebalance(address aTokenAddress) external;
+  function getTotalManagedAssets(address aTokenAddres) external view returns (uint256);
 }

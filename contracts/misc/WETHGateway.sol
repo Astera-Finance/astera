@@ -40,11 +40,12 @@ contract WETHGateway is IWETHGateway, Ownable {
    **/
   function depositETH(
     address lendingPool,
+    bool reserveType,
     address onBehalfOf,
     uint16 referralCode
   ) external payable override {
     WETH.deposit{value: msg.value}();
-    ILendingPool(lendingPool).deposit(address(WETH), msg.value, onBehalfOf, referralCode);
+    ILendingPool(lendingPool).deposit(address(WETH), reserveType, msg.value, onBehalfOf, referralCode);
   }
 
   /**
@@ -55,10 +56,11 @@ contract WETHGateway is IWETHGateway, Ownable {
    */
   function withdrawETH(
     address lendingPool,
+    bool reserveType,
     uint256 amount,
     address to
   ) external override {
-    IAToken aWETH = IAToken(ILendingPool(lendingPool).getReserveData(address(WETH)).aTokenAddress);
+    IAToken aWETH = IAToken(ILendingPool(lendingPool).getReserveData(address(WETH), reserveType).aTokenAddress);
     uint256 userBalance = aWETH.balanceOf(msg.sender);
     uint256 amountToWithdraw = amount;
 
@@ -67,7 +69,7 @@ contract WETHGateway is IWETHGateway, Ownable {
       amountToWithdraw = userBalance;
     }
     aWETH.transferFrom(msg.sender, address(this), amountToWithdraw);
-    ILendingPool(lendingPool).withdraw(address(WETH), amountToWithdraw, address(this));
+    ILendingPool(lendingPool).withdraw(address(WETH), reserveType, amountToWithdraw, address(this));
     WETH.withdraw(amountToWithdraw);
     _safeTransferETH(to, amountToWithdraw);
   }
@@ -81,6 +83,7 @@ contract WETHGateway is IWETHGateway, Ownable {
    */
   function repayETH(
     address lendingPool,
+    bool reserveType,
     uint256 amount,
     uint256 rateMode,
     address onBehalfOf
@@ -88,7 +91,7 @@ contract WETHGateway is IWETHGateway, Ownable {
     (uint256 stableDebt, uint256 variableDebt) =
       Helpers.getUserCurrentDebtMemory(
         onBehalfOf,
-        ILendingPool(lendingPool).getReserveData(address(WETH))
+        ILendingPool(lendingPool).getReserveData(address(WETH), reserveType)
       );
 
     uint256 paybackAmount =
@@ -101,7 +104,7 @@ contract WETHGateway is IWETHGateway, Ownable {
     }
     require(msg.value >= paybackAmount, 'msg.value is less than repayment amount');
     WETH.deposit{value: paybackAmount}();
-    ILendingPool(lendingPool).repay(address(WETH), msg.value, rateMode, onBehalfOf);
+    ILendingPool(lendingPool).repay(address(WETH), reserveType, msg.value, rateMode, onBehalfOf);
 
     // refund remaining dust eth
     if (msg.value > paybackAmount) _safeTransferETH(msg.sender, msg.value - paybackAmount);
@@ -116,12 +119,14 @@ contract WETHGateway is IWETHGateway, Ownable {
    */
   function borrowETH(
     address lendingPool,
+    bool reserveType,
     uint256 amount,
     uint256 interesRateMode,
     uint16 referralCode
   ) external override {
     ILendingPool(lendingPool).borrow(
       address(WETH),
+      reserveType,
       amount,
       interesRateMode,
       referralCode,

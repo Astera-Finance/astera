@@ -21,6 +21,7 @@ contract VariableDebtToken is DebtTokenBase, IVariableDebtToken {
 
   ILendingPool internal _pool;
   address internal _underlyingAsset;
+  bool internal _reserveType;
   IRewarder internal _incentivesController;
 
   /**
@@ -79,7 +80,7 @@ contract VariableDebtToken is DebtTokenBase, IVariableDebtToken {
       return 0;
     }
 
-    return scaledBalance.rayMul(_pool.getReserveNormalizedVariableDebt(_underlyingAsset));
+    return scaledBalance.rayMul(_pool.getReserveNormalizedVariableDebt(_underlyingAsset, _reserveType));
   }
 
   /**
@@ -148,7 +149,7 @@ contract VariableDebtToken is DebtTokenBase, IVariableDebtToken {
    * @return The total supply
    **/
   function totalSupply() public view virtual override returns (uint256) {
-    return super.totalSupply().rayMul(_pool.getReserveNormalizedVariableDebt(_underlyingAsset));
+    return super.totalSupply().rayMul(_pool.getReserveNormalizedVariableDebt(_underlyingAsset, _reserveType));
   }
 
   /**

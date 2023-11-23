@@ -82,11 +82,14 @@ contract WalletBalanceProvider {
     returns (address[] memory, uint256[] memory)
   {
     ILendingPool pool = ILendingPool(ILendingPoolAddressesProvider(provider).getLendingPool());
-
-    address[] memory reserves = pool.getReservesList();
+    address[] memory reserves = new address[](pool.getReservesCount());
+    bool[] memory reservesTypes = new bool[](pool.getReservesCount());
+    (reserves, reservesTypes) = pool.getReservesList();
     address[] memory reservesWithEth = new address[](reserves.length + 1);
+    bool[] memory reservesWithEthTypes = new bool[](reservesTypes.length);
     for (uint256 i = 0; i < reserves.length; i++) {
       reservesWithEth[i] = reserves[i];
+      reservesWithEthTypes[i] = reservesTypes[i];
     }
     reservesWithEth[reserves.length] = MOCK_ETH_ADDRESS;
 
@@ -94,7 +97,7 @@ contract WalletBalanceProvider {
 
     for (uint256 j = 0; j < reserves.length; j++) {
       DataTypes.ReserveConfigurationMap memory configuration =
-        pool.getConfiguration(reservesWithEth[j]);
+        pool.getConfiguration(reservesWithEth[j], reservesWithEthTypes[j]);
 
       (bool isActive, , , ) = configuration.getFlagsMemory();
 

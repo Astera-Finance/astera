@@ -19,7 +19,7 @@ import {
 describe("Pausable-Functions", function () {
   let owner, addr1, addr2, addr3, depositor, borrower, liquidator;
 
-  it("User 0 deposits 1000 USDC. Configurator pauses pool. Transfers to user 1 reverts. Configurator unpauses the network and next transfer succeeds", async function () {
+  it("Tries to transfer grainToken while LendingPool is paused", async function () {
     [owner, addr1, addr2] = await ethers.getSigners();
     const USDC_DEPOSIT_SIZE = ethers.utils.parseUnits("1000", 6);
 
@@ -29,7 +29,7 @@ describe("Pausable-Functions", function () {
 
     await approve(lendingPoolProxy.address, usdc, addr1);
 
-    const usdcDeposit = await deposit(lendingPoolProxy, addr1, usdc.address, USDC_DEPOSIT_SIZE, addr1.address);
+    const usdcDeposit = await deposit(lendingPoolProxy, addr1, usdc.address, false, USDC_DEPOSIT_SIZE, addr1.address);
     const addr1Balance = await grainUSDC.balanceOf(addr1.address);
     const addr2Balance = await grainUSDC.balanceOf(addr2.address);
 
@@ -68,7 +68,7 @@ describe("Pausable-Functions", function () {
     await lendingPoolConfiguratorProxy.setPoolPause(true);
 
     await expect(
-      deposit(lendingPoolProxy, addr1, usdc.address, USDC_DEPOSIT_SIZE, addr1.address)
+      deposit(lendingPoolProxy, addr1, usdc.address, false, USDC_DEPOSIT_SIZE, addr1.address)
     ).to.revertedWith("64");
   });
 
@@ -80,11 +80,11 @@ describe("Pausable-Functions", function () {
 
     await prepareMockTokens(usdc, addr1, USDC_DEPOSIT_SIZE);
     await approve(lendingPoolProxy.address, usdc, addr1);
-    await deposit(lendingPoolProxy, addr1, usdc.address, USDC_DEPOSIT_SIZE, addr1.address);
+    await deposit(lendingPoolProxy, addr1, usdc.address, false, USDC_DEPOSIT_SIZE, addr1.address);
     await lendingPoolConfiguratorProxy.setPoolPause(true);
 
     await expect(
-      withdraw(lendingPoolProxy, addr1, usdc.address, USDC_DEPOSIT_SIZE, addr1.address)
+      withdraw(lendingPoolProxy, addr1, usdc.address, false,USDC_DEPOSIT_SIZE, addr1.address)
     ).to.revertedWith("64");
   });
 
@@ -97,11 +97,11 @@ describe("Pausable-Functions", function () {
 
     await prepareMockTokens(usdc, addr1, USDC_DEPOSIT_SIZE);
     await approve(lendingPoolProxy.address, usdc, addr1);
-    await deposit(lendingPoolProxy, addr1, usdc.address, USDC_DEPOSIT_SIZE, addr1.address);
+    await deposit(lendingPoolProxy, addr1, usdc.address, false, USDC_DEPOSIT_SIZE, addr1.address);
     await lendingPoolConfiguratorProxy.setPoolPause(true);
 
     await expect(
-      borrow(lendingPoolProxy, addr1, usdc.address, USDC_BORROW_SIZE, addr1.address)
+      borrow(lendingPoolProxy, addr1, usdc.address, false, USDC_BORROW_SIZE, addr1.address)
     ).to.revertedWith("64");
   });
 
@@ -114,13 +114,13 @@ describe("Pausable-Functions", function () {
 
     await prepareMockTokens(usdc, addr1, USDC_DEPOSIT_SIZE);
     await approve(lendingPoolProxy.address, usdc, addr1);
-    await deposit(lendingPoolProxy, addr1, usdc.address, USDC_DEPOSIT_SIZE, addr1.address);
-    await borrow(lendingPoolProxy, addr1, usdc.address, USDC_BORROW_SIZE, addr1.address)
+    await deposit(lendingPoolProxy, addr1, usdc.address, false, USDC_DEPOSIT_SIZE, addr1.address);
+    await borrow(lendingPoolProxy, addr1, usdc.address, false, USDC_BORROW_SIZE, addr1.address)
 
     await lendingPoolConfiguratorProxy.setPoolPause(true);
 
     await expect(
-      repay(lendingPoolProxy, addr1, usdc.address, USDC_BORROW_SIZE, addr1.address)
+      repay(lendingPoolProxy, addr1, usdc.address, false, USDC_BORROW_SIZE, addr1.address)
     ).to.revertedWith("64");
   });
 
@@ -136,15 +136,20 @@ describe("Pausable-Functions", function () {
     await mockFlashLoanReceiver.setFailExecutionTransfer(true);
     await lendingPoolConfiguratorProxy.setPoolPause(true);
 
+    const flashloanParams = {
+      receiverAddress: mockFlashLoanReceiver.address,
+      assets: [weth.address],
+      reserveTypes: [false],
+      onBehalfOf: owner.address,
+      referralCode: '0'
+    };
+
     await expect(
       lendingPoolProxy.flashLoan(
-          mockFlashLoanReceiver.address,
-          [weth.address],
+          flashloanParams,
           [FLASH_LOAN_SIZE],
           [1],
-          owner.address,
-          '0x10',
-          '0'
+          '0x10'
         )
     ).revertedWith("64");
   });
@@ -160,22 +165,22 @@ describe("Pausable-Functions", function () {
 
     await prepareMockTokens(usdc, depositor, USDC_DEPOSIT_SIZE);
     await approve(lendingPoolProxy.address, usdc, depositor);
-    await deposit(lendingPoolProxy, depositor, usdc.address, USDC_DEPOSIT_SIZE, depositor.address);
+    await deposit(lendingPoolProxy, depositor, usdc.address, false, USDC_DEPOSIT_SIZE, depositor.address);
 
     await prepareMockTokens(weth, borrower, WETH_DEPOSIT_SIZE);
     await approve(lendingPoolProxy.address, weth, borrower);
-    await deposit(lendingPoolProxy, borrower, weth.address, WETH_DEPOSIT_SIZE, borrower.address);
+    await deposit(lendingPoolProxy, borrower, weth.address, false, WETH_DEPOSIT_SIZE, borrower.address);
 
     const userGlobalData = await lendingPoolProxy.getUserAccountData(borrower.address);
 
     const wethDepositValue = (WETH_DEPOSIT_SIZE).mul(await ethPriceFeed.latestAnswer());
-    const wethLTV = (await protocolDataProvider.getReserveConfigurationData(weth.address)).ltv;
+    const wethLTV = (await protocolDataProvider.getReserveConfigurationData(weth.address, false)).ltv;
     const wethMaxBorrowValue = wethDepositValue.mul(wethLTV).div(10000).div(ethers.utils.parseEther("1"));
     const maxUsdcBorrow = wethMaxBorrowValue.div((await usdcPriceFeed.latestAnswer()).div(ethers.utils.parseUnits("1", 6)));
 
-    await lendingPoolProxy.connect(borrower).borrow(usdc.address, maxUsdcBorrow, "2", "0", borrower.address);
+    await lendingPoolProxy.connect(borrower).borrow(usdc.address, false, maxUsdcBorrow, "2", "0", borrower.address);
 
-    let newUsdcPriceFeed = await deployMockAggregator("120000000");
+    let newUsdcPriceFeed = await deployMockAggregator("120000000", usdc.decimals());
     await setAssetSources(oracle, owner, [usdc.address], [newUsdcPriceFeed.address])
 
     await prepareMockTokens(usdc, liquidator, USDC_DEPOSIT_SIZE);
@@ -183,6 +188,7 @@ describe("Pausable-Functions", function () {
 
     const userReserveDataBefore = await protocolDataProvider.getUserReserveData(
       usdc.address,
+      false,
       borrower.address
     );
 
@@ -191,7 +197,7 @@ describe("Pausable-Functions", function () {
     await lendingPoolConfiguratorProxy.setPoolPause(true);
 
     await expect(
-      lendingPoolProxy.liquidationCall(weth.address, usdc.address, borrower.address, amountToLiquidate, true)
+      lendingPoolProxy.liquidationCall(weth.address, false, usdc.address, false, borrower.address, amountToLiquidate, true)
     ).revertedWith("64");
   });
 
@@ -203,12 +209,12 @@ describe("Pausable-Functions", function () {
 
     await prepareMockTokens(usdc, addr1, USDC_DEPOSIT_SIZE);
     await approve(lendingPoolProxy.address, usdc, addr1);
-    await deposit(lendingPoolProxy, addr1, usdc.address, USDC_DEPOSIT_SIZE, addr1.address);
+    await deposit(lendingPoolProxy, addr1, usdc.address, false, USDC_DEPOSIT_SIZE, addr1.address);
 
     await lendingPoolConfiguratorProxy.setPoolPause(true);
 
     await expect(
-      setUserUseReserveAsCollateral(lendingPoolProxy, addr1, usdc.address, false)
+      setUserUseReserveAsCollateral(lendingPoolProxy, addr1, usdc.address, false, false)
     ).to.revertedWith("64");
   });
 });

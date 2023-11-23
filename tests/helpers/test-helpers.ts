@@ -59,7 +59,7 @@ export async function deployProtocol() {
     ethers.utils.parseUnits("0.039", 27), // usdc
     ethers.utils.parseUnits("0.03", 27), // wbtc
     ethers.utils.parseUnits("0.03", 27) // eth
-  ];  
+  ];
 
   const volStrat = [
     ethers.utils.parseUnits("0.45", 27), // optimalUtilizationRate
@@ -99,14 +99,20 @@ export async function deployProtocol() {
     weth.address
   ];
 
+  const reserveTypes = [
+    false,
+    false,
+    false
+  ]
+
   const UsdcPriceFeed = await hre.ethers.getContractFactory("MockAggregator");
-  const usdcPriceFeed = await UsdcPriceFeed.deploy("100000000");
+  const usdcPriceFeed = await UsdcPriceFeed.deploy("100000000", await usdc.decimals());
 
   const WbtcPriceFeed = await hre.ethers.getContractFactory("MockAggregator");
-  const wbtcPriceFeed = await WbtcPriceFeed.deploy("1600000000000");
+  const wbtcPriceFeed = await WbtcPriceFeed.deploy("1600000000000", await wbtc.decimals());
 
   const EthPriceFeed = await hre.ethers.getContractFactory("MockAggregator");
-  const ethPriceFeed = await EthPriceFeed.deploy("120000000000");
+  const ethPriceFeed = await EthPriceFeed.deploy("120000000000", await weth.decimals());
 
   const aggregators = [
     usdcPriceFeed.address,
@@ -213,6 +219,11 @@ export async function deployProtocol() {
   const ProtocolDataProvider = await hre.ethers.getContractFactory("ProtocolDataProvider");
   const protocolDataProvider = await ProtocolDataProvider.deploy(lendingPoolAddressesProvider.address);
 
+  const UiPoolDataProvider = await hre.ethers.getContractFactory("UiPoolDataProvider");
+  const uiPoolDataProvider = await UiPoolDataProvider.deploy(rewarder.address, oracle.address);
+  const UiPoolDataProviderV2 = await hre.ethers.getContractFactory("UiPoolDataProviderV2");
+  const uiPoolDataProviderV2 = await UiPoolDataProviderV2.deploy(ethPriceFeed.address, ethPriceFeed.address);
+
   const WETHGateway = await hre.ethers.getContractFactory("WETHGateway");
   const wETHGateway = await WETHGateway.deploy(weth.address);
 
@@ -229,6 +240,7 @@ export async function deployProtocol() {
     underlyingAssetDecimals: BigNumberish;
     interestRateStrategyAddress: string;
     underlyingAsset: string;
+    reserveType: boolean;
     treasury: string;
     incentivesController: string;
     underlyingAssetName: string;
@@ -248,6 +260,7 @@ export async function deployProtocol() {
     underlyingAssetDecimals: 6, 
     interestRateStrategyAddress: stableStrategy.address,
     underlyingAsset: tokens[0],
+    reserveType: reserveTypes[0],
     treasury: treasury.address,
     incentivesController: rewarder.address,
     underlyingAssetName: "USDC",
@@ -268,6 +281,7 @@ export async function deployProtocol() {
     underlyingAssetDecimals: 8, 
     interestRateStrategyAddress: volatileStrategy.address,
     underlyingAsset: tokens[1],
+    reserveType: reserveTypes[1],
     treasury: treasury.address,
     incentivesController: rewarder.address,
     underlyingAssetName: "WBTC",
@@ -287,6 +301,7 @@ export async function deployProtocol() {
     underlyingAssetDecimals: 18, 
     interestRateStrategyAddress: volatileStrategy.address,
     underlyingAsset: tokens[2],
+    reserveType: reserveTypes[2],
     treasury: treasury.address,
     incentivesController: rewarder.address,
     underlyingAssetName: "ETH",
@@ -357,7 +372,7 @@ export async function deployProtocol() {
 
   await wETHGateway.authorizeLendingPool(lendingPoolProxyAddress);
 
-  let usdcReserveTokens = await protocolDataProvider.getReserveTokensAddresses(usdc.address);
+  let usdcReserveTokens = await protocolDataProvider.getReserveTokensAddresses(usdc.address, false);
   let GrainUSDC = await hre.ethers.getContractFactory("AToken");
   let grainUSDC = await GrainUSDC.attach(usdcReserveTokens.aTokenAddress);
   let StableDebtUSDC = await hre.ethers.getContractFactory("StableDebtToken");
@@ -365,7 +380,7 @@ export async function deployProtocol() {
   let VariableDebtUSDC = await hre.ethers.getContractFactory("VariableDebtToken");
   let variableDebtUSDC = await VariableDebtUSDC.attach(usdcReserveTokens.variableDebtTokenAddress);
 
-  let wbtcReserveTokens = await protocolDataProvider.getReserveTokensAddresses(wbtc.address);
+  let wbtcReserveTokens = await protocolDataProvider.getReserveTokensAddresses(wbtc.address, false);
   let GrainWBTC = await hre.ethers.getContractFactory("AToken");
   let grainWBTC = await GrainWBTC.attach(wbtcReserveTokens.aTokenAddress);
   let StableDebtWBTC = await hre.ethers.getContractFactory("StableDebtToken");
@@ -373,7 +388,7 @@ export async function deployProtocol() {
   let VariableDebtWBTC = await hre.ethers.getContractFactory("VariableDebtToken");
   let variableDebtWBTC = await VariableDebtWBTC.attach(wbtcReserveTokens.variableDebtTokenAddress);
 
-  let ethReserveTokens = await protocolDataProvider.getReserveTokensAddresses(weth.address);
+  let ethReserveTokens = await protocolDataProvider.getReserveTokensAddresses(weth.address, false);
   let GrainETH = await hre.ethers.getContractFactory("AToken");
   let grainETH = await GrainETH.attach(ethReserveTokens.aTokenAddress);
   let StableDebtETH = await hre.ethers.getContractFactory("StableDebtToken");
@@ -389,7 +404,7 @@ export async function deployProtocol() {
   lendingPoolAddressesProvider, lendingPool, lendingPoolProxy, treasury, lendingPoolConfigurator, lendingPoolConfiguratorProxy,
   aToken, variableDebtToken, stableDebtToken, oracle, lendingRateOracle, protocolDataProvider, wETHGateway,
   stableStrategy, volatileStrategy, lendingPoolCollateralManager, grainUSDC, stableDebtUSDC, variableDebtUSDC,
-  grainWBTC, stableDebtWBTC, variableDebtWBTC, grainETH, stableDebtETH, variableDebtETH };
+  grainWBTC, stableDebtWBTC, variableDebtWBTC, grainETH, stableDebtETH, variableDebtETH, uiPoolDataProvider, uiPoolDataProviderV2 };
 }
 
 export async function prepareMockTokens(token, account, amount) {
@@ -406,59 +421,59 @@ export async function approve(contractAddress, token, account) {
   return { receipt, gasPrice };
 }
 
-export async function deposit(lendingPoolProxy, account, tokenAddress, amount, onBehalfOf) {
-  const tx = await lendingPoolProxy.connect(account).deposit(tokenAddress, amount, onBehalfOf, "0");
+export async function deposit(lendingPoolProxy, account, tokenAddress, reserveType, amount, onBehalfOf) {
+  const tx = await lendingPoolProxy.connect(account).deposit(tokenAddress, reserveType, amount, onBehalfOf, "0");
   const receipt = await tx.wait();
   return receipt;
 }
 
-export async function withdraw(lendingPoolProxy, account, tokenAddress, amount, to) {
-  const tx = await lendingPoolProxy.connect(account).withdraw(tokenAddress, amount, to);
+export async function withdraw(lendingPoolProxy, account, tokenAddress, reserveType, amount, to) {
+  const tx = await lendingPoolProxy.connect(account).withdraw(tokenAddress, reserveType, amount, to);
   const receipt = await tx.wait();
   return receipt;
 }
 
-export async function borrow(lendingPoolProxy, account, tokenAddress, amount, onBehalfOf) {
-  const tx = await lendingPoolProxy.connect(account).borrow(tokenAddress, amount, "2", "0", onBehalfOf);
+export async function borrow(lendingPoolProxy, account, tokenAddress, reserveType, amount, onBehalfOf) {
+  const tx = await lendingPoolProxy.connect(account).borrow(tokenAddress, reserveType, amount, "2", "0", onBehalfOf);
   const receipt = await tx.wait();
   return receipt;
 }
 
-export async function repay(lendingPoolProxy, account, tokenAddress, amount, onBehalfOf) {
-  const tx = await lendingPoolProxy.connect(account).repay(tokenAddress, amount, "2", onBehalfOf);
+export async function repay(lendingPoolProxy, account, tokenAddress, reserveType, amount, onBehalfOf) {
+  const tx = await lendingPoolProxy.connect(account).repay(tokenAddress, reserveType, amount, "2", onBehalfOf);
   const receipt = await tx.wait();
   return receipt;
 }
 
-export async function setUserUseReserveAsCollateral(lendingPoolProxy, account, tokenAddress, useAsCollateral) {
-  const tx = await lendingPoolProxy.connect(account).setUserUseReserveAsCollateral(tokenAddress, useAsCollateral);
+export async function setUserUseReserveAsCollateral(lendingPoolProxy, account, tokenAddress, reserveType, useAsCollateral) {
+  const tx = await lendingPoolProxy.connect(account).setUserUseReserveAsCollateral(tokenAddress, reserveType, useAsCollateral);
   const receipt = await tx.wait();
   return receipt;
 }
 
-export async function depositETH(wETHGateway, account, lendingPoolProxyAddress, amount, onBehalfOf) {
-  const tx = await wETHGateway.connect(account).depositETH(lendingPoolProxyAddress, onBehalfOf, "0", { value: amount });
+export async function depositETH(wETHGateway, account, lendingPoolProxyAddress, reserveType, amount, onBehalfOf) {
+  const tx = await wETHGateway.connect(account).depositETH(lendingPoolProxyAddress, reserveType, onBehalfOf, "0", { value: amount });
   const receipt = await tx.wait();
   const gasPrice = tx.gasPrice;
   return { receipt, gasPrice };
 }
 
-export async function withdrawETH(wETHGateway, account, lendingPoolProxyAddress, amount, to) {
-  const tx = await wETHGateway.connect(account).withdrawETH(lendingPoolProxyAddress, amount, to);
+export async function withdrawETH(wETHGateway, account, lendingPoolProxyAddress, reserveType, amount, to) {
+  const tx = await wETHGateway.connect(account).withdrawETH(lendingPoolProxyAddress, reserveType, amount, to);
   const receipt = await tx.wait();
   const gasPrice = tx.gasPrice;
   return { receipt, gasPrice };
 }
 
-export async function borrowETH(wETHGateway, account, lendingPoolProxyAddress, amount) {
-  const tx = await wETHGateway.connect(account).borrowETH(lendingPoolProxyAddress, amount, "2", "0");
+export async function borrowETH(wETHGateway, account, lendingPoolProxyAddress, reserveType, amount) {
+  const tx = await wETHGateway.connect(account).borrowETH(lendingPoolProxyAddress, reserveType, amount, "2", "0");
   const receipt = await tx.wait();
   const gasPrice = tx.gasPrice;
   return { receipt, gasPrice };
 }
 
-export async function repayETH(wETHGateway, account, lendingPoolProxyAddress, amount, onBehalfOf) {
-  const tx = await wETHGateway.connect(account).repayETH(lendingPoolProxyAddress, amount, "2", onBehalfOf, { value: amount });
+export async function repayETH(wETHGateway, account, lendingPoolProxyAddress, reserveType, amount, onBehalfOf) {
+  const tx = await wETHGateway.connect(account).repayETH(lendingPoolProxyAddress, reserveType, amount, "2", onBehalfOf, { value: amount });
   const receipt = await tx.wait();
   const gasPrice = tx.gasPrice;
   return { receipt, gasPrice };
@@ -510,9 +525,9 @@ export async function deployMockFlashLoanReceiver(lendingPoolAddressesProviderAd
   return mockFlashLoanReceiver;
 }
 
-export async function deployMockAggregator(initialAnswer) {
+export async function deployMockAggregator(initialAnswer, decimals) {
   const PriceFeed = await hre.ethers.getContractFactory("MockAggregator");
-  const priceFeed = await PriceFeed.deploy(initialAnswer);
+  const priceFeed = await PriceFeed.deploy(initialAnswer, decimals);
   return priceFeed;
 }
 
@@ -520,6 +535,87 @@ export async function setAssetSources(oracle, account, assets, sources) {
   const tx = await oracle.connect(account).setAssetSources(assets, sources);
   const receipt = await tx.wait();
   return receipt;
+}
+
+export async function prepareRehypothecation(lendingPoolConfiguratorProxy, tokens, grainTokens, ownerAddress) {
+  const farmingPct = "2000";     // 20%
+  const farmingPctDrift = "100"; // 1%
+  const usdcMockErc4626 = await deployMockErc4626(tokens[0]);
+  const wbtcMockErc4626 = await deployMockErc4626(tokens[1]);
+  const wethMockErc4626 = await deployMockErc4626(tokens[2]);
+  //setVault(address aTokenAddress, address _vault)
+  await lendingPoolConfiguratorProxy.setVault(grainTokens[0].address, usdcMockErc4626.address);
+  await lendingPoolConfiguratorProxy.setVault(grainTokens[1].address, wbtcMockErc4626.address);
+  await lendingPoolConfiguratorProxy.setVault(grainTokens[2].address, wethMockErc4626.address);
+  // setFarmingPct(address aTokenAddress, uint256 farmingPct)
+  await lendingPoolConfiguratorProxy.setFarmingPct(grainTokens[0].address, farmingPct);
+  await lendingPoolConfiguratorProxy.setFarmingPct(grainTokens[1].address, farmingPct);
+  await lendingPoolConfiguratorProxy.setFarmingPct(grainTokens[2].address, farmingPct);
+  // setClaimingThreshold(address aTokenAddress, uint256 claimingThreshold)
+  await lendingPoolConfiguratorProxy.setClaimingThreshold(grainTokens[0].address, ethers.utils.parseUnits("1", 6));      // ~$1
+  await lendingPoolConfiguratorProxy.setClaimingThreshold(grainTokens[1].address, ethers.utils.parseUnits("0.0001", 8)); // ~$1
+  await lendingPoolConfiguratorProxy.setClaimingThreshold(grainTokens[2].address, ethers.utils.parseUnits("0.001", 18)); // ~$1
+  // setFarmingPctDrift(address aTokenAddress, uint256 _farmingPctDrift)
+  await lendingPoolConfiguratorProxy.setFarmingPctDrift(grainTokens[0].address, farmingPctDrift);
+  await lendingPoolConfiguratorProxy.setFarmingPctDrift(grainTokens[1].address, farmingPctDrift);
+  await lendingPoolConfiguratorProxy.setFarmingPctDrift(grainTokens[2].address, farmingPctDrift);
+  // setProfitHandler(address aTokenAddress, address _profitHandler)
+  await lendingPoolConfiguratorProxy.setProfitHandler(grainTokens[0].address, ownerAddress);
+  await lendingPoolConfiguratorProxy.setProfitHandler(grainTokens[1].address, ownerAddress);
+  await lendingPoolConfiguratorProxy.setProfitHandler(grainTokens[2].address, ownerAddress);
+}
+export async function deployMockErc4626(token) {
+  const MockErc4626 = await hre.ethers.getContractFactory("MockERC4626");
+  const mockErc4626 = await MockErc4626.deploy(token.address, "Mock ERC4626", "mock", await token.decimals());
+  return mockErc4626;
+}
+export async function rayDiv(a, b) {
+  const RAY = (BigNumber.from(10)).pow(27);
+  const halfB = b.div(2);
+  const quotient = halfB
+    .add(a.mul(RAY))
+    .div(b)
+  return quotient;
+}
+export async function rayMul(a, b) {
+  const RAY = (BigNumber.from(10)).pow(27);
+  const HALF_RAY = ((BigNumber.from(10)).pow(27)).div(2);
+  const product = ((a.mul(b)).add(HALF_RAY)).div(RAY);
+  return product;
+}
+export async function percentMul(value, percentage) {
+  return (value.mul(percentage).add("5000")).div("10000");
+}
+// ONLY USE IF UTILIZATION RATE IS BELOW OPTIMAL UTILIZATION RATE (WILL ADD OVER OUR SOON)
+export async function getExpectedVariableRate(protocolDataProvider, underlying, grainToken, reserveStrategy) {
+  const reserveData = await protocolDataProvider.getReserveData(underlying.address);
+  const reserveConfigurationData = await protocolDataProvider.getReserveConfigurationData(underlying.address);
+  // console.log("Farming Balance:    "+await grainToken.farmingBal());
+  // console.log("Underlying Balance: "+await underlying.balanceOf(grainToken.address));
+  const availableLiquidity = (await underlying.balanceOf(grainToken.address)).add(await grainToken.farmingBal());
+  const utilizationRate = await rayDiv(reserveData.totalVariableDebt, (availableLiquidity).add(reserveData.totalVariableDebt))
+  const optimalUtilizationRate = await reserveStrategy.OPTIMAL_UTILIZATION_RATE();
+  const expectedVariableRate = await rayDiv((await rayMul(utilizationRate, await reserveStrategy.variableRateSlope1())), optimalUtilizationRate)
+  return expectedVariableRate;
+}
+export async function getCurrentVariableRate(protocolDataProvider, underlying, grainToken, reserveStrategy) {
+  const reserveData = await protocolDataProvider.getReserveData(underlying.address);
+  const reserveConfigurationData = await protocolDataProvider.getReserveConfigurationData(underlying.address);
+  const {
+    0: currentLiquidityRate,
+    1: currentStableBorrowRate,
+    2: currentVariableBorrowRate,
+  } = await reserveStrategy['calculateInterestRates(address,address,uint256,uint256,uint256,uint256,uint256,uint256)'](
+    underlying.address, // address reserve
+    grainToken.address, // address aToken
+    "0", // uint256 liquidityAdded
+    "0", // uint256 liquidityTaken
+    "0", // uint256 totalStableDebt
+    reserveData.totalVariableDebt, // uint256 totalVariableDebt
+    "0", // uint256 averageStableBorrowRate
+    reserveConfigurationData.reserveFactor // uint256 reserveFactor
+  );
+  return currentVariableBorrowRate;
 }
 
 export async function calcExpectedVariableDebtTokenBalance(
@@ -537,7 +633,7 @@ export async function calcExpectedVariableDebtTokenBalance(
   const { scaledVariableDebt } = userData;
 
   return (await rayMul(scaledVariableDebt, normalizedDebt));
-}
+};
 
 export async function calcExpectedReserveNormalizedDebt(
   variableBorrowRate,
@@ -559,7 +655,7 @@ export async function calcExpectedReserveNormalizedDebt(
   const debt = (await rayMul(cumulatedInterest, variableBorrowIndex));
 
   return debt;
-}
+};
 
 export async function calcCompoundedInterest(
   rate,
@@ -593,12 +689,4 @@ export async function calcCompoundedInterest(
     .add(ratePerSecond.mul(timeDifference))
     .add(secondTerm)
     .add(thirdTerm);
-}
-
-export async function rayMul(a, b) {
-  const RAY = (BigNumber.from(10)).pow(27);
-  const HALF_RAY = ((BigNumber.from(10)).pow(27)).div(2);
-
-  const product = ((a.mul(b)).add(HALF_RAY)).div(RAY);
-  return product;
-}
+};

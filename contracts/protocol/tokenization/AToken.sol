@@ -3,6 +3,7 @@ pragma solidity 0.6.12;
 
 import {IERC20} from '../../dependencies/openzeppelin/contracts/IERC20.sol';
 import {SafeERC20} from '../../dependencies/openzeppelin/contracts/SafeERC20.sol';
+import {SignedSafeMath} from '../../dependencies/openzeppelin/contracts/SignedSafeMath.sol';
 import {ILendingPool} from '../../interfaces/ILendingPool.sol';
 import {IAToken} from '../../interfaces/IAToken.sol';
 import {WadRayMath} from '../libraries/math/WadRayMath.sol';
@@ -10,6 +11,7 @@ import {Errors} from '../libraries/helpers/Errors.sol';
 import {VersionedInitializable} from '../libraries/upgradeability/VersionedInitializable.sol';
 import {IncentivizedERC20} from './IncentivizedERC20.sol';
 import {IRewarder} from '../../interfaces/IRewarder.sol';
+import {IERC4626} from '../../interfaces/IERC4626.sol';
 
 /**
  * @title Aave ERC20 AToken
@@ -23,6 +25,7 @@ contract AToken is
 {
   using WadRayMath for uint256;
   using SafeERC20 for IERC20;
+  using SignedSafeMath for int256;
 
   bytes public constant EIP712_REVISION = bytes('1');
   bytes32 internal constant EIP712_DOMAIN =
@@ -40,7 +43,27 @@ contract AToken is
   ILendingPool internal _pool;
   address internal _treasury;
   address internal _underlyingAsset;
+  bool internal _reserveType;
   IRewarder internal _incentivesController;
+
+  /**
+  * @dev Rehypothecation related vars
+  * vault is the ERC4626 contract the aToken will supply part of its tokens to
+  * underlyingAmount is the recorded amount of underlying entering and exiting this contract from the perspective of the protocol
+  * farmingPct is the share of underlying that should be rehypothecated
+  * farmingBal is the recorded amount of underlying supplied to the vault
+  * claimingThreshold is the minimum amount this contract will try to claim as profit
+  * farmingPctDrift is the minimum difference in pct after which the contract will rebalance
+  * profitHandler is the EOA/contract receiving profit
+  */
+  IERC4626 public vault;
+  uint256 public underlyingAmount;
+  uint256 public farmingPct;
+  uint256 public farmingBal;
+  uint256 public claimingThreshold;
+  uint256 public farmingPctDrift;
+  address public profitHandler;
+
 
   modifier onlyLendingPool {
     require(_msgSender() == address(_pool), Errors.CT_CALLER_MUST_BE_LENDING_POOL);
@@ -125,6 +148,8 @@ contract AToken is
   ) external override onlyLendingPool {
     uint256 amountScaled = amount.rayDiv(index);
     require(amountScaled != 0, Errors.CT_INVALID_BURN_AMOUNT);
+    _rebalance(amount);
+    underlyingAmount = underlyingAmount.sub(amount);
     _burn(user, amountScaled);
 
     IERC20(_underlyingAsset).safeTransfer(receiverOfUnderlying, amount);
@@ -150,6 +175,8 @@ contract AToken is
 
     uint256 amountScaled = amount.rayDiv(index);
     require(amountScaled != 0, Errors.CT_INVALID_MINT_AMOUNT);
+    underlyingAmount = underlyingAmount.add(amount);
+    _rebalance(0);
     _mint(user, amountScaled);
 
     emit Transfer(address(0), user, amount);
@@ -211,7 +238,7 @@ contract AToken is
     override(IncentivizedERC20, IERC20)
     returns (uint256)
   {
-    return super.balanceOf(user).rayMul(_pool.getReserveNormalizedIncome(_underlyingAsset));
+    return super.balanceOf(user).rayMul(_pool.getReserveNormalizedIncome(_underlyingAsset, _reserveType));
   }
 
   /**
@@ -252,7 +279,7 @@ contract AToken is
       return 0;
     }
 
-    return currentSupplyScaled.rayMul(_pool.getReserveNormalizedIncome(_underlyingAsset));
+    return currentSupplyScaled.rayMul(_pool.getReserveNormalizedIncome(_underlyingAsset, _reserveType));
   }
 
   /**
@@ -311,6 +338,8 @@ contract AToken is
     onlyLendingPool
     returns (uint256)
   {
+    _rebalance(amount);
+    underlyingAmount = underlyingAmount.sub(amount);
     IERC20(_underlyingAsset).safeTransfer(target, amount);
     return amount;
   }
@@ -376,7 +405,7 @@ contract AToken is
     address underlyingAsset = _underlyingAsset;
     ILendingPool pool = _pool;
 
-    uint256 index = pool.getReserveNormalizedIncome(underlyingAsset);
+    uint256 index = pool.getReserveNormalizedIncome(underlyingAsset, _reserveType);
 
     uint256 fromBalanceBefore = super.balanceOf(from).rayMul(index);
     uint256 toBalanceBefore = super.balanceOf(to).rayMul(index);
@@ -384,7 +413,7 @@ contract AToken is
     super._transfer(from, to, amount.rayDiv(index));
 
     if (validate) {
-      pool.finalizeTransfer(underlyingAsset, from, to, amount, fromBalanceBefore, toBalanceBefore);
+      pool.finalizeTransfer(underlyingAsset, _reserveType, from, to, amount, fromBalanceBefore, toBalanceBefore);
     }
 
     emit BalanceTransfer(from, to, amount, index);
@@ -402,5 +431,88 @@ contract AToken is
     uint256 amount
   ) internal override {
     _transfer(from, to, amount, true);
+  }
+
+  /// @dev Rebalance so as to free _amountToWithdraw for a future transfer
+  function _rebalance(uint256 _amountToWithdraw) internal {
+    if (farmingPct == 0 && farmingBal == 0) {
+      return;
+    }
+    // how much has been allocated as per our internal records?
+    uint256 currentAllocated = farmingBal;
+    // what is the present value of our shares?
+    uint256 ownedShares = IERC20(address(vault)).balanceOf(address(this));
+    uint256 sharesToAssets = vault.convertToAssets(ownedShares);
+    uint256 profit;
+    uint256 toWithdraw;
+    uint256 toDeposit;
+    // if we have profit that's more than the threshold, record it for withdrawal and redistribution
+    if (sharesToAssets.sub(currentAllocated) >= claimingThreshold) {
+      profit = sharesToAssets.sub(currentAllocated);
+    }
+    // what % of the final pool balance would the current allocation be?
+    uint256 finalBalance = underlyingAmount.sub(_amountToWithdraw);
+    uint256 pctOfFinalBal = finalBalance == 0 ? type(uint256).max : currentAllocated.mul(10000).div(finalBalance);
+    // if abs(percentOfFinalBal - yieldingPercentage) > drift, we will need to deposit more or withdraw some
+    uint256 finalFarmingAmount = finalBalance.mul(farmingPct).div(10000);
+    if (pctOfFinalBal > farmingPct && pctOfFinalBal.sub(farmingPct) > farmingPctDrift) {
+      // we will end up overallocated, withdraw some
+      toWithdraw = currentAllocated.sub(finalFarmingAmount);
+      farmingBal = farmingBal.sub(toWithdraw);
+    } else if (pctOfFinalBal < farmingPct && farmingPct.sub(pctOfFinalBal) > farmingPctDrift) {
+      // we will end up underallocated, deposit more
+      toDeposit = finalFarmingAmount.sub(currentAllocated);
+      farmingBal = farmingBal.add(toDeposit);
+    }
+    // + means deposit, - means withdraw
+    int256 netAssetMovement = int256(toDeposit).sub(int256(toWithdraw)).sub(int256(profit));
+    if (netAssetMovement > 0) {
+      vault.deposit(uint256(netAssetMovement), address(this));
+    } else if (netAssetMovement < 0) {
+      vault.withdraw(uint256(-netAssetMovement), address(this), address(this));
+    }
+    // if we recorded profit, recalculate it for precision and distribute
+    if (profit != 0) {
+      // profit is ultimately (coll at hand) + (coll allocated to yield generator) - (recorded total coll Amount in pool)
+      profit = IERC20(_underlyingAsset).balanceOf(address(this)).add(farmingBal).sub(underlyingAmount);
+      if (profit != 0) {
+        // distribute to profitHandler
+        IERC20(_underlyingAsset).safeTransfer(profitHandler, profit);
+      }
+    }
+  }
+  function setFarmingPct(uint256 _farmingPct) external onlyLendingPool override {
+    require(address(vault) != address(0), '84');
+    require(_farmingPct <= 10000, '82');
+    farmingPct = _farmingPct;
+  }
+  function setClaimingThreshold(uint256 _claimingThreshold) external onlyLendingPool override {
+    require(address(vault) != address(0), '84');
+    claimingThreshold = _claimingThreshold;
+  }
+  function setFarmingPctDrift(uint256 _farmingPctDrift) external onlyLendingPool override {
+    require(_farmingPctDrift <= 10000, '82');
+    require(address(vault) != address(0), '84');
+    farmingPctDrift = _farmingPctDrift;
+  }
+  function setProfitHandler(address _profitHandler) external onlyLendingPool override {
+    require(_profitHandler != address(0), '83');
+    require(address(vault) != address(0), '84');
+    profitHandler = _profitHandler;
+  }
+  function setVault(address _vault) external onlyLendingPool override {
+    require(address(vault) == address(0), '84');
+    require(IERC4626(_vault).asset() == _underlyingAsset, '83');
+    vault = IERC4626(_vault);
+    IERC20(_underlyingAsset).safeApprove(address(vault), type(uint256).max);
+  }
+  function rebalance() external onlyLendingPool override {
+    _rebalance(0);
+  }
+  /**
+   * @dev Returns the total balance of underlying asset of this token, including balance lent to a vault
+   **/
+  function getTotalManagedAssets() public view override returns (uint256) {
+    return underlyingAmount;
   }
 }
