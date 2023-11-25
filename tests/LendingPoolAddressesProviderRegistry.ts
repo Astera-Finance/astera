@@ -1,99 +1,141 @@
-import { expect } from "chai";
-import hre from "hardhat";
-import { Wallet, utils } from "ethers"; 
-import { deployLendingPoolAddressesProviderRegistry } from "./helpers/test-helpers";
+import { ethers } from 'hardhat';
+import { expect } from 'chai';
+import { Wallet } from 'ethers';
+import { deployRegistry } from './helpers/test-helpers.ts';
 
-describe("LendingPoolAddressesProviderRegistry", function () {
-  let id = "1";
-  let ZERO_ADDRESS = "0x0000000000000000000000000000000000000000";
+describe('LendingPoolAddressesProviderRegistry', function () {
+  let owner;
+  let addr1;
 
-  it("getAddressesProvidersList", async function () {
-    const lendingPoolAddressesProviderRegistry = await deployLendingPoolAddressesProviderRegistry();
-    const mockLendingPoolAddressesProvider1 = Wallet.createRandom().address;
-    const mockLendingPoolAddressesProvider2 = Wallet.createRandom().address;
+  const id = '1';
+  const ZERO_ADDRESS = '0x0000000000000000000000000000000000000000';
 
-    await lendingPoolAddressesProviderRegistry.registerAddressesProvider(mockLendingPoolAddressesProvider1, id);
-    await lendingPoolAddressesProviderRegistry.registerAddressesProvider(mockLendingPoolAddressesProvider2, id);
-    let providers = await lendingPoolAddressesProviderRegistry.getAddressesProvidersList();
-    expect(providers[0]).to.equal(mockLendingPoolAddressesProvider1);
-    expect(providers[1]).to.equal(mockLendingPoolAddressesProvider2);
+  it('getAddressesProvidersList', async function () {
+    const registry = await deployRegistry();
+    const mockProvider1 = Wallet.createRandom().address;
+    const mockProvider2 = Wallet.createRandom().address;
 
-    await lendingPoolAddressesProviderRegistry.unregisterAddressesProvider(mockLendingPoolAddressesProvider1);
-    providers = await lendingPoolAddressesProviderRegistry.getAddressesProvidersList();
+    await registry.registerAddressesProvider(
+      mockProvider1,
+      id,
+    );
+    await registry.registerAddressesProvider(
+      mockProvider2,
+      id,
+    );
+    let providers = await registry.getAddressesProvidersList();
+    expect(providers[0]).to.equal(mockProvider1);
+    expect(providers[1]).to.equal(mockProvider2);
+
+    await registry.unregisterAddressesProvider(
+      mockProvider1,
+    );
+    providers = await registry.getAddressesProvidersList();
     expect(providers[0]).to.equal(ZERO_ADDRESS);
-    expect(providers[1]).to.equal(mockLendingPoolAddressesProvider2);
+    expect(providers[1]).to.equal(mockProvider2);
   });
 
-  it("registerAddressesProvider", async function () {
-  	const newId = "2";
-    const lendingPoolAddressesProviderRegistry = await deployLendingPoolAddressesProviderRegistry();
-    const mockLendingPoolAddressesProvider = Wallet.createRandom().address;
+  it('registerAddressesProvider', async function () {
+    const newId = '2';
+    const registry = await deployRegistry();
+    const mockProvider = Wallet.createRandom().address;
 
     await expect(
-      lendingPoolAddressesProviderRegistry.registerAddressesProvider(mockLendingPoolAddressesProvider, "0")
-    ).to.be.revertedWith("72");
+      registry.registerAddressesProvider(
+        mockProvider,
+        '0',
+      ),
+    ).to.be.revertedWith('72');
 
-    const tx = await lendingPoolAddressesProviderRegistry.registerAddressesProvider(mockLendingPoolAddressesProvider, id);
+    const tx = await registry.registerAddressesProvider(
+      mockProvider,
+      id,
+    );
     const receipt = await tx.wait();
-    expect(receipt.events[0].event).to.equal("AddressesProviderRegistered");
-    expect(receipt.events[0].args?.newAddress).to.equal(mockLendingPoolAddressesProvider);
+    expect(receipt.events[0].event).to.equal('AddressesProviderRegistered');
+    expect(receipt.events[0].args?.newAddress).to.equal(mockProvider);
     expect(
-    	await lendingPoolAddressesProviderRegistry.getAddressesProviderIdByAddress(mockLendingPoolAddressesProvider)
-	).to.equal(id);
-    
-    const providers = await lendingPoolAddressesProviderRegistry.getAddressesProvidersList();
+      await registry.getAddressesProviderIdByAddress(
+        mockProvider,
+      ),
+    ).to.equal(id);
+
+    const providers = await registry.getAddressesProvidersList();
     expect(providers.length).to.equal(1);
-    expect(providers[0]).to.equal(mockLendingPoolAddressesProvider);
+    expect(providers[0]).to.equal(mockProvider);
 
-	await lendingPoolAddressesProviderRegistry.registerAddressesProvider(mockLendingPoolAddressesProvider, newId);
+    await registry.registerAddressesProvider(
+      mockProvider,
+      newId,
+    );
     expect(
-    	await lendingPoolAddressesProviderRegistry.getAddressesProviderIdByAddress(mockLendingPoolAddressesProvider)
-	).to.equal(newId);
+      await registry.getAddressesProviderIdByAddress(
+        mockProvider,
+      ),
+    ).to.equal(newId);
   });
 
-  it("unregisterAddressesProvider", async function () {
-    const lendingPoolAddressesProviderRegistry = await deployLendingPoolAddressesProviderRegistry();
-    const mockLendingPoolAddressesProvider = Wallet.createRandom().address;
+  it('unregisterAddressesProvider', async function () {
+    const registry = await deployRegistry();
+    const mockProvider = Wallet.createRandom().address;
 
     await expect(
-      lendingPoolAddressesProviderRegistry.unregisterAddressesProvider(mockLendingPoolAddressesProvider)
-    ).to.be.revertedWith("41");
+      registry.unregisterAddressesProvider(
+        mockProvider,
+      ),
+    ).to.be.revertedWith('41');
 
-    await lendingPoolAddressesProviderRegistry.registerAddressesProvider(mockLendingPoolAddressesProvider, id);
+    await registry.registerAddressesProvider(
+      mockProvider,
+      id,
+    );
 
-    const tx = await lendingPoolAddressesProviderRegistry.unregisterAddressesProvider(mockLendingPoolAddressesProvider);
+    const tx = await registry.unregisterAddressesProvider(
+      mockProvider,
+    );
     const receipt = await tx.wait();
-    expect(receipt.events[0].event).to.equal("AddressesProviderUnregistered");
-    expect(receipt.events[0].args?.newAddress).to.equal(mockLendingPoolAddressesProvider);
-    expect(await lendingPoolAddressesProviderRegistry.getAddressesProviderIdByAddress(mockLendingPoolAddressesProvider)).to.equal("0");
+    expect(receipt.events[0].event).to.equal('AddressesProviderUnregistered');
+    expect(receipt.events[0].args?.newAddress).to.equal(mockProvider);
+    expect(await registry.getAddressesProviderIdByAddress(
+      mockProvider,
+    )).to.equal('0');
 
-    const providers = await lendingPoolAddressesProviderRegistry.getAddressesProvidersList();
+    const providers = await registry.getAddressesProvidersList();
     expect(providers.length).to.equal(1);
     expect(providers[0]).to.equal(ZERO_ADDRESS);
   });
 
-  it("getAddressesProviderIdByAddress", async function () {
-    const lendingPoolAddressesProviderRegistry = await deployLendingPoolAddressesProviderRegistry();
-    const mockLendingPoolAddressesProvider = Wallet.createRandom().address;
+  it('getAddressesProviderIdByAddress', async function () {
+    const registry = await deployRegistry();
+    const mockProvider = Wallet.createRandom().address;
 
-    await lendingPoolAddressesProviderRegistry.registerAddressesProvider(mockLendingPoolAddressesProvider, id);
-    expect(await lendingPoolAddressesProviderRegistry.getAddressesProviderIdByAddress(mockLendingPoolAddressesProvider)).to.equal(id);
+    await registry.registerAddressesProvider(
+      mockProvider,
+      id,
+    );
+    expect(await registry.getAddressesProviderIdByAddress(
+      mockProvider,
+    )).to.equal(id);
   });
 
-  it("onlyOwner modifier", async function () {
-    let owner, account0;
-    [owner, account0] = await ethers.getSigners();
+  it('onlyOwner modifier', async function () {
+    [owner, addr1] = await ethers.getSigners();
 
-    const mockLendingPoolAddressesProvider = Wallet.createRandom().address;
+    const mockProvider = Wallet.createRandom().address;
 
-    const lendingPoolAddressesProviderRegistry = await deployLendingPoolAddressesProviderRegistry();
-    await lendingPoolAddressesProviderRegistry.transferOwnership(account0.address);
+    const registry = await deployRegistry();
+    await registry.transferOwnership(addr1.address);
 
     await expect(
-      lendingPoolAddressesProviderRegistry.registerAddressesProvider(mockLendingPoolAddressesProvider, id)
-    ).to.be.revertedWith("Ownable: caller is not the owner");
+      registry.registerAddressesProvider(
+        mockProvider,
+        id,
+      ),
+    ).to.be.revertedWith('Ownable: caller is not the owner');
     await expect(
-      lendingPoolAddressesProviderRegistry.unregisterAddressesProvider(mockLendingPoolAddressesProvider)
-    ).to.be.revertedWith("Ownable: caller is not the owner");
+      registry.unregisterAddressesProvider(
+        mockProvider,
+      ),
+    ).to.be.revertedWith('Ownable: caller is not the owner');
   });
 });
