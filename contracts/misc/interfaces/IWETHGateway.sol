@@ -5,8 +5,7 @@ interface IWETHGateway {
   function depositETH(
     address lendingPool,
     bool reserveType,
-    address onBehalfOf,
-    uint16 referralCode
+    address onBehalfOf
   ) external payable;
 
   function withdrawETH(
@@ -20,15 +19,12 @@ interface IWETHGateway {
     address lendingPool,
     bool reserveType,
     uint256 amount,
-    uint256 rateMode,
     address onBehalfOf
   ) external payable;
 
   function borrowETH(
     address lendingPool,
     bool reserveType,
-    uint256 amount,
-    uint256 interesRateMode,
-    uint16 referralCode
+    uint256 amount
   ) external;
 }

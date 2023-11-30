@@ -78,8 +78,6 @@ export async function deployProtocol() {
     ethers.utils.parseUnits('0', 27), // baseVariableBorrowRate
     ethers.utils.parseUnits('0.07', 27), // variableRateSlope1
     ethers.utils.parseUnits('3', 27), // variableRateSlope2
-    '0', // stableRateSlope1
-    '0', // stableRateSlope2
   ];
 
   const sStrat = [
@@ -87,8 +85,6 @@ export async function deployProtocol() {
     ethers.utils.parseUnits('0', 27), // baseVariableBorrowRate
     ethers.utils.parseUnits('0.04', 27), // variableRateSlope1
     ethers.utils.parseUnits('0.75', 27), // variableRateSlope2
-    '0', // stableRateSlope1
-    '0', // stableRateSlope2
   ];
 
   const ZERO_ADDRESS = '0x0000000000000000000000000000000000000000';
@@ -203,12 +199,6 @@ export async function deployProtocol() {
 
   await configuratorProxy.setPoolPause(true);
 
-  const StableAndVariableTokensHelper = await hre.ethers.getContractFactory('StableAndVariableTokensHelper');
-  const stableAndVariableTokensHelper = await StableAndVariableTokensHelper.deploy(
-    lendingPoolProxyAddress,
-    provider.address,
-  );
-
   const ATokensAndRatesHelper = await hre.ethers.getContractFactory('ATokensAndRatesHelper');
   const aTokensAndRatesHelper = await ATokensAndRatesHelper.deploy(
     lendingPoolProxyAddress,
@@ -222,9 +212,6 @@ export async function deployProtocol() {
   const VariableDebtToken = await hre.ethers.getContractFactory('VariableDebtToken');
   const variableDebtToken = await VariableDebtToken.deploy();
 
-  const StableDebtToken = await hre.ethers.getContractFactory('StableDebtToken');
-  const stableDebtToken = await StableDebtToken.deploy();
-
   const Oracle = await hre.ethers.getContractFactory('Oracle');
   const oracle = await Oracle.deploy(
     tokens,
@@ -235,21 +222,6 @@ export async function deployProtocol() {
   );
 
   await provider.setPriceOracle(oracle.address);
-
-  const LendingRateOracle = await hre.ethers.getContractFactory('LendingRateOracle');
-  const lendingRateOracle = await LendingRateOracle.deploy();
-
-  await provider.setLendingRateOracle(lendingRateOracle.address);
-
-  await lendingRateOracle.transferOwnership(stableAndVariableTokensHelper.address);
-
-  await stableAndVariableTokensHelper.setOracleBorrowRates(
-    tokens,
-    rates,
-    lendingRateOracle.address,
-  );
-
-  await stableAndVariableTokensHelper.setOracleOwnership(lendingRateOracle.address, adminAddress);
 
   const ProtocolDataProvider = await hre.ethers.getContractFactory('ProtocolDataProvider');
   const protocolDataProvider = await ProtocolDataProvider.deploy(
@@ -274,8 +246,6 @@ export async function deployProtocol() {
     sStrat[1],
     sStrat[2],
     sStrat[3],
-    sStrat[4],
-    sStrat[5],
   );
 
   const VolatileStrategy = await hre.ethers.getContractFactory('DefaultReserveInterestRateStrategy');
@@ -285,13 +255,10 @@ export async function deployProtocol() {
     volStrat[1],
     volStrat[2],
     volStrat[3],
-    volStrat[4],
-    volStrat[5],
   );
 
   const initInputParams: {
     aTokenImpl: string;
-    stableDebtTokenImpl: string;
     variableDebtTokenImpl: string;
     underlyingAssetDecimals: BigNumberish;
     interestRateStrategyAddress: string;
@@ -304,14 +271,11 @@ export async function deployProtocol() {
     aTokenSymbol: string;
     variableDebtTokenName: string;
     variableDebtTokenSymbol: string;
-    stableDebtTokenName: string;
-    stableDebtTokenSymbol: string;
     params: string;
   }[] = [];
 
   initInputParams.push({
     aTokenImpl: aToken.address,
-    stableDebtTokenImpl: stableDebtToken.address,
     variableDebtTokenImpl: variableDebtToken.address,
     underlyingAssetDecimals: 6,
     interestRateStrategyAddress: stableStrategy.address,
@@ -324,14 +288,11 @@ export async function deployProtocol() {
     aTokenSymbol: 'grainUSDC',
     variableDebtTokenName: 'Granary variable debt bearing USDC',
     variableDebtTokenSymbol: 'variableDebtUSDC',
-    stableDebtTokenName: 'Granary stable debt bearing USDC',
-    stableDebtTokenSymbol: 'stableDebtUSDC',
     params: '0x10',
   });
 
   initInputParams.push({
     aTokenImpl: aToken.address,
-    stableDebtTokenImpl: stableDebtToken.address,
     variableDebtTokenImpl: variableDebtToken.address,
     underlyingAssetDecimals: 8,
     interestRateStrategyAddress: volatileStrategy.address,
@@ -344,14 +305,11 @@ export async function deployProtocol() {
     aTokenSymbol: 'grainWBTC',
     variableDebtTokenName: 'Granary variable debt bearing WBTC',
     variableDebtTokenSymbol: 'variableDebtWBTC',
-    stableDebtTokenName: 'Granary stable debt bearing WBTC',
-    stableDebtTokenSymbol: 'stableDebtWBTC',
     params: '0x10',
   });
 
   initInputParams.push({
     aTokenImpl: aToken.address,
-    stableDebtTokenImpl: stableDebtToken.address,
     variableDebtTokenImpl: variableDebtToken.address,
     underlyingAssetDecimals: 18,
     interestRateStrategyAddress: volatileStrategy.address,
@@ -364,8 +322,6 @@ export async function deployProtocol() {
     aTokenSymbol: 'grainETH',
     variableDebtTokenName: 'Granary variable debt bearing ETH',
     variableDebtTokenSymbol: 'variableDebtETH',
-    stableDebtTokenName: 'Granary stable debt bearing ETH',
-    stableDebtTokenSymbol: 'stableDebtETH',
     params: '0x10',
   });
 
@@ -377,7 +333,6 @@ export async function deployProtocol() {
     liquidationThreshold: BigNumberish;
     liquidationBonus: BigNumberish;
     reserveFactor: BigNumberish;
-    stableBorrowingEnabled: boolean;
     borrowingEnabled: boolean;
   }[] = [];
 
@@ -388,7 +343,6 @@ export async function deployProtocol() {
     liquidationThreshold: 8500,
     liquidationBonus: 10500,
     reserveFactor: 1500,
-    stableBorrowingEnabled: false,
     borrowingEnabled: true,
   });
 
@@ -399,7 +353,6 @@ export async function deployProtocol() {
     liquidationThreshold: 8500,
     liquidationBonus: 10500,
     reserveFactor: 1500,
-    stableBorrowingEnabled: false,
     borrowingEnabled: true,
   });
 
@@ -410,7 +363,6 @@ export async function deployProtocol() {
     liquidationThreshold: 8500,
     liquidationBonus: 10500,
     reserveFactor: 1500,
-    stableBorrowingEnabled: false,
     borrowingEnabled: true,
   });
 
@@ -435,8 +387,6 @@ export async function deployProtocol() {
   );
   const GrainUSDC = await hre.ethers.getContractFactory('AToken');
   const grainUSDC = await GrainUSDC.attach(usdcReserveTokens.aTokenAddress);
-  const StableDebtUSDC = await hre.ethers.getContractFactory('StableDebtToken');
-  const stableDebtUSDC = await StableDebtUSDC.attach(usdcReserveTokens.stableDebtTokenAddress);
   const VariableDebtUSDC = await hre.ethers.getContractFactory('VariableDebtToken');
   const variableDebtUSDC = await VariableDebtUSDC.attach(
     usdcReserveTokens.variableDebtTokenAddress,
@@ -448,8 +398,6 @@ export async function deployProtocol() {
   );
   const GrainWBTC = await hre.ethers.getContractFactory('AToken');
   const grainWBTC = await GrainWBTC.attach(wbtcReserveTokens.aTokenAddress);
-  const StableDebtWBTC = await hre.ethers.getContractFactory('StableDebtToken');
-  const stableDebtWBTC = await StableDebtWBTC.attach(wbtcReserveTokens.stableDebtTokenAddress);
   const VariableDebtWBTC = await hre.ethers.getContractFactory('VariableDebtToken');
   const variableDebtWBTC = await VariableDebtWBTC.attach(
     wbtcReserveTokens.variableDebtTokenAddress,
@@ -461,8 +409,6 @@ export async function deployProtocol() {
   );
   const GrainETH = await hre.ethers.getContractFactory('AToken');
   const grainETH = await GrainETH.attach(ethReserveTokens.aTokenAddress);
-  const StableDebtETH = await hre.ethers.getContractFactory('StableDebtToken');
-  const stableDebtETH = await StableDebtETH.attach(ethReserveTokens.stableDebtTokenAddress);
   const VariableDebtETH = await hre.ethers.getContractFactory('VariableDebtToken');
   const variableDebtETH = await VariableDebtETH.attach(ethReserveTokens.variableDebtTokenAddress);
 
@@ -485,25 +431,22 @@ export async function deployProtocol() {
     configuratorProxy,
     aToken,
     variableDebtToken,
-    stableDebtToken,
     oracle,
-    lendingRateOracle,
     protocolDataProvider,
     wETHGateway,
     stableStrategy,
     volatileStrategy,
     collateralManager,
     grainUSDC,
-    stableDebtUSDC,
     variableDebtUSDC,
     grainWBTC,
-    stableDebtWBTC,
     variableDebtWBTC,
     grainETH,
-    stableDebtETH,
     variableDebtETH,
     uiPoolDataProviderV2,
     mockUsdcErc4626,
+    aggregators,
+    tokens,
   };
 }
 
@@ -534,7 +477,6 @@ export async function deposit(
     reserveType,
     amount,
     onBehalfOf,
-    '0',
   );
   const receipt = await tx.wait();
   return receipt;
@@ -570,8 +512,6 @@ export async function borrow(
     tokenAddress,
     reserveType,
     amount,
-    '2',
-    '0',
     onBehalfOf,
   );
   const receipt = await tx.wait();
@@ -590,7 +530,6 @@ export async function repay(
     tokenAddress,
     reserveType,
     amount,
-    '2',
     onBehalfOf,
   );
   const receipt = await tx.wait();
@@ -625,7 +564,6 @@ export async function depositETH(
     lendingPoolProxyAddress,
     reserveType,
     onBehalfOf,
-    '0',
     { value: amount },
   );
   const receipt = await tx.wait();
@@ -663,8 +601,6 @@ export async function borrowETH(
     lendingPoolProxyAddress,
     reserveType,
     amount,
-    '2',
-    '0',
   );
   const receipt = await tx.wait();
   const gasPrice = tx.gasPrice;
@@ -683,7 +619,6 @@ export async function repayETH(
     lendingPoolProxyAddress,
     reserveType,
     amount,
-    '2',
     onBehalfOf,
     { value: amount },
   );
@@ -756,6 +691,30 @@ export async function setAssetSources(oracle, account, assets, sources) {
   const tx = await oracle.connect(account).setAssetSources(assets, sources);
   const receipt = await tx.wait();
   return receipt;
+}
+
+export async function deployVariableDebtToken() {
+  const VariableDebtToken = await hre.ethers.getContractFactory('VariableDebtToken');
+  const variableDebtToken = await VariableDebtToken.deploy();
+  return variableDebtToken;
+}
+
+export async function deployOracle(
+  tokens,
+  aggregators,
+  fallBackOracle,
+  baseCurrency,
+  baseCurrencyUnit,
+) {
+  const Oracle = await hre.ethers.getContractFactory('Oracle');
+  const oracle = await Oracle.deploy(
+    tokens,
+    aggregators,
+    fallBackOracle,
+    baseCurrency,
+    baseCurrencyUnit,
+  );
+  return oracle;
 }
 
 export async function prepareRehypothecation(
@@ -859,18 +818,15 @@ export async function getCurrentVariableRate(
   );
   const {
     0: currentLiquidityRate,
-    1: currentStableBorrowRate,
-    2: currentVariableBorrowRate,
+    1: currentVariableBorrowRate,
   } = await reserveStrategy[
-    'calculateInterestRates(address,address,uint256,uint256,uint256,uint256,uint256,uint256)'
+    'calculateInterestRates(address,address,uint256,uint256,uint256,uint256)'
   ](
     underlying.address, // address reserve
     grainToken.address, // address aToken
     '0', // uint256 liquidityAdded
     '0', // uint256 liquidityTaken
-    '0', // uint256 totalStableDebt
     reserveData.totalVariableDebt, // uint256 totalVariableDebt
-    '0', // uint256 averageStableBorrowRate
     reserveConfigurationData.reserveFactor, // uint256 reserveFactor
   );
   return currentVariableBorrowRate;

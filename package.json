@@ -19,5 +19,8 @@
     "eslint-config-airbnb-base": "^15.0.0",
     "eslint-plugin-import": "^2.29.0",
     "hardhat": "^2.14.0"
+  },
+  "dependencies": {
+    "hardhat-contract-sizer": "^2.10.0"
   }
 }

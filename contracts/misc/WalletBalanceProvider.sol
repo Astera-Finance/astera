@@ -99,7 +99,7 @@ contract WalletBalanceProvider {
       DataTypes.ReserveConfigurationMap memory configuration =
         pool.getConfiguration(reservesWithEth[j], reservesWithEthTypes[j]);
 
-      (bool isActive, , , ) = configuration.getFlagsMemory();
+      (bool isActive, , ) = configuration.getFlagsMemory();
 
       if (!isActive) {
         balances[j] = 0;

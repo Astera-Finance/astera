@@ -297,7 +297,6 @@ library ReserveConfiguration {
     returns (
       bool,
       bool,
-      bool,
       bool
     )
   {
@@ -306,8 +305,7 @@ library ReserveConfiguration {
     return (
       (dataLocal & ~ACTIVE_MASK) != 0,
       (dataLocal & ~FROZEN_MASK) != 0,
-      (dataLocal & ~BORROWING_MASK) != 0,
-      (dataLocal & ~STABLE_BORROWING_MASK) != 0
+      (dataLocal & ~BORROWING_MASK) != 0
     );
   }
 
@@ -374,15 +372,13 @@ library ReserveConfiguration {
     returns (
       bool,
       bool,
-      bool,
       bool
     )
   {
     return (
       (self.data & ~ACTIVE_MASK) != 0,
       (self.data & ~FROZEN_MASK) != 0,
-      (self.data & ~BORROWING_MASK) != 0,
-      (self.data & ~STABLE_BORROWING_MASK) != 0
+      (self.data & ~BORROWING_MASK) != 0
     );
   }
 }

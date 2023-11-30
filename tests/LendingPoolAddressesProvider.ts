@@ -220,30 +220,6 @@ describe('LendingPoolAddressesProvider', function () {
     expect(receipt.events[0].event).to.equal('PriceOracleUpdated');
     expect(receipt.events[0].args?.newAddress).to.equal(mockPriceOracle);
   });
-
-  it('getLendingRateOracle', async function () {
-    const mockLendingRateOracle = Wallet.createRandom().address;
-
-    const provider = await deployProvider(marketId);
-
-    const tx = await provider.setLendingRateOracle(mockLendingRateOracle);
-    const receipt = await tx.wait();
-    expect(
-      await provider.getLendingRateOracle(),
-    ).to.equal(receipt.events[0].args?.newAddress);
-  });
-
-  it('setLendingRateOracle', async function () {
-    const mockLendingRateOracle = Wallet.createRandom().address;
-
-    const provider = await deployProvider(marketId);
-
-    const tx = await provider.setLendingRateOracle(mockLendingRateOracle);
-    const receipt = await tx.wait();
-    expect(receipt.events[0].event).to.equal('LendingRateOracleUpdated');
-    expect(receipt.events[0].args?.newAddress).to.equal(mockLendingRateOracle);
-  });
-
   it('onlyOwner modifier', async function () {
     [owner, addr1] = await ethers.getSigners();
 
@@ -258,8 +234,7 @@ describe('LendingPoolAddressesProvider', function () {
       provider.setLendingPoolConfiguratorImpl,
       provider.setLendingPoolCollateralManager,
       provider.setPoolAdmin,
-      provider.setPriceOracle,
-      provider.setLendingRateOracle,
+      provider.setPriceOracle
     ]) {
       await expect(
         contractFunction(mockAddress),

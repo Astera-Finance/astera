@@ -6,7 +6,6 @@ import {IERC20Detailed} from '../dependencies/openzeppelin/contracts/IERC20Detai
 import {IAToken} from '../interfaces/IAToken.sol';
 import {ILendingPoolAddressesProvider} from '../interfaces/ILendingPoolAddressesProvider.sol';
 import {ILendingPool} from '../interfaces/ILendingPool.sol';
-import {IStableDebtToken} from '../interfaces/IStableDebtToken.sol';
 import {IVariableDebtToken} from '../interfaces/IVariableDebtToken.sol';
 import {ReserveConfiguration} from '../protocol/libraries/configuration/ReserveConfiguration.sol';
 import {UserConfiguration} from '../protocol/libraries/configuration/UserConfiguration.sol';
@@ -79,7 +78,6 @@ contract ProtocolDataProvider {
       uint256 reserveFactor,
       bool usageAsCollateralEnabled,
       bool borrowingEnabled,
-      bool stableBorrowRateEnabled,
       bool isActive,
       bool isFrozen
     )
@@ -90,7 +88,7 @@ contract ProtocolDataProvider {
     (ltv, liquidationThreshold, liquidationBonus, decimals, reserveFactor) = configuration
       .getParamsMemory();
 
-    (isActive, isFrozen, borrowingEnabled, stableBorrowRateEnabled) = configuration
+    (isActive, isFrozen, borrowingEnabled) = configuration
       .getFlagsMemory();
 
     usageAsCollateralEnabled = liquidationThreshold > 0;
@@ -101,12 +99,9 @@ contract ProtocolDataProvider {
     view
     returns (
       uint256 availableLiquidity,
-      uint256 totalStableDebt,
       uint256 totalVariableDebt,
       uint256 liquidityRate,
       uint256 variableBorrowRate,
-      uint256 stableBorrowRate,
-      uint256 averageStableBorrowRate,
       uint256 liquidityIndex,
       uint256 variableBorrowIndex,
       uint40 lastUpdateTimestamp
@@ -117,12 +112,9 @@ contract ProtocolDataProvider {
 
     return (
       IERC20Detailed(asset).balanceOf(reserve.aTokenAddress),
-      IERC20Detailed(reserve.stableDebtTokenAddress).totalSupply(),
       IERC20Detailed(reserve.variableDebtTokenAddress).totalSupply(),
       reserve.currentLiquidityRate,
       reserve.currentVariableBorrowRate,
-      reserve.currentStableBorrowRate,
-      IStableDebtToken(reserve.stableDebtTokenAddress).getAverageStableRate(),
       reserve.liquidityIndex,
       reserve.variableBorrowIndex,
       reserve.lastUpdateTimestamp
@@ -134,13 +126,9 @@ contract ProtocolDataProvider {
     view
     returns (
       uint256 currentATokenBalance,
-      uint256 currentStableDebt,
       uint256 currentVariableDebt,
-      uint256 principalStableDebt,
       uint256 scaledVariableDebt,
-      uint256 stableBorrowRate,
       uint256 liquidityRate,
-      uint40 stableRateLastUpdated,
       bool usageAsCollateralEnabled
     )
   {
@@ -152,14 +140,8 @@ contract ProtocolDataProvider {
 
     currentATokenBalance = IERC20Detailed(reserve.aTokenAddress).balanceOf(user);
     currentVariableDebt = IERC20Detailed(reserve.variableDebtTokenAddress).balanceOf(user);
-    currentStableDebt = IERC20Detailed(reserve.stableDebtTokenAddress).balanceOf(user);
-    principalStableDebt = IStableDebtToken(reserve.stableDebtTokenAddress).principalBalanceOf(user);
     scaledVariableDebt = IVariableDebtToken(reserve.variableDebtTokenAddress).scaledBalanceOf(user);
     liquidityRate = reserve.currentLiquidityRate;
-    stableBorrowRate = IStableDebtToken(reserve.stableDebtTokenAddress).getUserStableRate(user);
-    stableRateLastUpdated = IStableDebtToken(reserve.stableDebtTokenAddress).getUserLastUpdated(
-      user
-    );
     usageAsCollateralEnabled = userConfig.isUsingAsCollateral(reserve.id);
   }
 
@@ -168,7 +150,6 @@ contract ProtocolDataProvider {
     view
     returns (
       address aTokenAddress,
-      address stableDebtTokenAddress,
       address variableDebtTokenAddress
     )
   {
@@ -177,7 +158,6 @@ contract ProtocolDataProvider {
 
     return (
       reserve.aTokenAddress,
-      reserve.stableDebtTokenAddress,
       reserve.variableDebtTokenAddress
     );
   }

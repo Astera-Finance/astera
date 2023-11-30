@@ -254,8 +254,6 @@ describe('Pausable-Functions', function () {
       usdc.address,
       false,
       maxUsdcBorrow,
-      '2',
-      '0',
       borrower.address,
     );
 

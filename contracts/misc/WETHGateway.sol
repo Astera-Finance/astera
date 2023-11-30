@@ -36,16 +36,14 @@ contract WETHGateway is IWETHGateway, Ownable {
    * is minted.
    * @param lendingPool address of the targeted underlying lending pool
    * @param onBehalfOf address of the user who will receive the aTokens representing the deposit
-   * @param referralCode integrators are assigned a referral code and can potentially receive rewards.
    **/
   function depositETH(
     address lendingPool,
     bool reserveType,
-    address onBehalfOf,
-    uint16 referralCode
+    address onBehalfOf
   ) external payable override {
     WETH.deposit{value: msg.value}();
-    ILendingPool(lendingPool).deposit(address(WETH), reserveType, msg.value, onBehalfOf, referralCode);
+    ILendingPool(lendingPool).deposit(address(WETH), reserveType, msg.value, onBehalfOf);
   }
 
   /**
@@ -78,33 +76,28 @@ contract WETHGateway is IWETHGateway, Ownable {
    * @dev repays a borrow on the WETH reserve, for the specified amount (or for the whole amount, if uint256(-1) is specified).
    * @param lendingPool address of the targeted underlying lending pool
    * @param amount the amount to repay, or uint256(-1) if the user wants to repay everything
-   * @param rateMode the rate mode to repay
    * @param onBehalfOf the address for which msg.sender is repaying
    */
   function repayETH(
     address lendingPool,
     bool reserveType,
     uint256 amount,
-    uint256 rateMode,
     address onBehalfOf
   ) external payable override {
-    (uint256 stableDebt, uint256 variableDebt) =
+    (uint256 variableDebt) =
       Helpers.getUserCurrentDebtMemory(
         onBehalfOf,
         ILendingPool(lendingPool).getReserveData(address(WETH), reserveType)
       );
 
-    uint256 paybackAmount =
-      DataTypes.InterestRateMode(rateMode) == DataTypes.InterestRateMode.STABLE
-        ? stableDebt
-        : variableDebt;
+    uint256 paybackAmount = variableDebt;
 
     if (amount < paybackAmount) {
       paybackAmount = amount;
     }
     require(msg.value >= paybackAmount, 'msg.value is less than repayment amount');
     WETH.deposit{value: paybackAmount}();
-    ILendingPool(lendingPool).repay(address(WETH), reserveType, msg.value, rateMode, onBehalfOf);
+    ILendingPool(lendingPool).repay(address(WETH), reserveType, msg.value, onBehalfOf);
 
     // refund remaining dust eth
     if (msg.value > paybackAmount) _safeTransferETH(msg.sender, msg.value - paybackAmount);
@@ -114,22 +107,16 @@ contract WETHGateway is IWETHGateway, Ownable {
    * @dev borrow WETH, unwraps to ETH and send both the ETH and DebtTokens to msg.sender, via `approveDelegation` and onBehalf argument in `LendingPool.borrow`.
    * @param lendingPool address of the targeted underlying lending pool
    * @param amount the amount of ETH to borrow
-   * @param interesRateMode the interest rate mode
-   * @param referralCode integrators are assigned a referral code and can potentially receive rewards
    */
   function borrowETH(
     address lendingPool,
     bool reserveType,
-    uint256 amount,
-    uint256 interesRateMode,
-    uint16 referralCode
+    uint256 amount
   ) external override {
     ILendingPool(lendingPool).borrow(
       address(WETH),
       reserveType,
       amount,
-      interesRateMode,
-      referralCode,
       msg.sender
     );
     WETH.withdraw(amount);

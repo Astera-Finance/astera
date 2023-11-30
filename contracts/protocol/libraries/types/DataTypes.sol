@@ -16,12 +16,9 @@ library DataTypes {
     uint128 currentLiquidityRate;
     //the current variable borrow rate. Expressed in ray
     uint128 currentVariableBorrowRate;
-    //the current stable borrow rate. Expressed in ray
-    uint128 currentStableBorrowRate;
     uint40 lastUpdateTimestamp;
     //tokens addresses
     address aTokenAddress;
-    address stableDebtTokenAddress;
     address variableDebtTokenAddress;
     //address of the interest rate strategy
     address interestRateStrategyAddress;
@@ -72,5 +69,5 @@ library DataTypes {
     uint256 data;
   }
 
-  enum InterestRateMode {NONE, STABLE, VARIABLE}
+  enum InterestRateMode {NONE, VARIABLE}
 }
