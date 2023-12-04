@@ -17,7 +17,6 @@ library ReserveConfiguration {
   uint256 constant ACTIVE_MASK =                0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFEFFFFFFFFFFFFFF; // prettier-ignore
   uint256 constant FROZEN_MASK =                0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFDFFFFFFFFFFFFFF; // prettier-ignore
   uint256 constant BORROWING_MASK =             0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFBFFFFFFFFFFFFFF; // prettier-ignore
-  uint256 constant STABLE_BORROWING_MASK =      0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF7FFFFFFFFFFFFFF; // prettier-ignore
   uint256 constant RESERVE_FACTOR_MASK =        0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF0000FFFFFFFFFFFFFFFF; // prettier-ignore
   uint256 constant DEPOSIT_CAP_MASK =           0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF00FFFFFFFFFFFFFFFFFFFF; // prettier-ignore
 
@@ -28,7 +27,6 @@ library ReserveConfiguration {
   uint256 constant IS_ACTIVE_START_BIT_POSITION = 56;
   uint256 constant IS_FROZEN_START_BIT_POSITION = 57;
   uint256 constant BORROWING_ENABLED_START_BIT_POSITION = 58;
-  uint256 constant STABLE_BORROWING_ENABLED_START_BIT_POSITION = 59;
   uint256 constant RESERVE_FACTOR_START_BIT_POSITION = 64;
   uint256 constant DEPOSIT_CAP_START_BIT_POSITION = 80;
 
@@ -212,33 +210,6 @@ library ReserveConfiguration {
   }
 
   /**
-   * @dev Enables or disables stable rate borrowing on the reserve
-   * @param self The reserve configuration
-   * @param enabled True if the stable rate borrowing needs to be enabled, false otherwise
-   **/
-  function setStableRateBorrowingEnabled(
-    DataTypes.ReserveConfigurationMap memory self,
-    bool enabled
-  ) internal pure {
-    self.data =
-      (self.data & STABLE_BORROWING_MASK) |
-      (uint256(enabled ? 1 : 0) << STABLE_BORROWING_ENABLED_START_BIT_POSITION);
-  }
-
-  /**
-   * @dev Gets the stable rate borrowing state of the reserve
-   * @param self The reserve configuration
-   * @return The stable rate borrowing state
-   **/
-  function getStableRateBorrowingEnabled(DataTypes.ReserveConfigurationMap storage self)
-    internal
-    view
-    returns (bool)
-  {
-    return (self.data & ~STABLE_BORROWING_MASK) != 0;
-  }
-
-  /**
    * @dev Sets the reserve factor of the reserve
    * @param self The reserve configuration
    * @param reserveFactor The reserve factor
@@ -289,7 +260,7 @@ library ReserveConfiguration {
   /**
    * @dev Gets the configuration flags of the reserve
    * @param self The reserve configuration
-   * @return The state flags representing active, frozen, borrowing enabled, stableRateBorrowing enabled
+   * @return The state flags representing active, frozen, borrowing enabled
    **/
   function getFlags(DataTypes.ReserveConfigurationMap storage self)
     internal
@@ -364,7 +335,7 @@ library ReserveConfiguration {
   /**
    * @dev Gets the configuration flags of the reserve from a memory object
    * @param self The reserve configuration
-   * @return The state flags representing active, frozen, borrowing enabled, stableRateBorrowing enabled
+   * @return The state flags representing active, frozen, borrowing enabled
    **/
   function getFlagsMemory(DataTypes.ReserveConfigurationMap memory self)
     internal

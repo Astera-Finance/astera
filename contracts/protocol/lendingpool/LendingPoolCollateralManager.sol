@@ -165,14 +165,11 @@ contract LendingPoolCollateralManager is
         debtReserve.variableBorrowIndex
       );
     } else {
-      // If the user doesn't have variable debt, no need to try to burn variable debt tokens
-      if (vars.userVariableDebt > 0) {
-        IVariableDebtToken(debtReserve.variableDebtTokenAddress).burn(
-          user,
-          vars.userVariableDebt,
-          debtReserve.variableBorrowIndex
-        );
-      }
+      IVariableDebtToken(debtReserve.variableDebtTokenAddress).burn(
+        user,
+        vars.userVariableDebt,
+        debtReserve.variableBorrowIndex
+      );
     }
 
     debtReserve.updateInterestRates(
