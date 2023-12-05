@@ -4,7 +4,6 @@ pragma solidity 0.6.12;
 import {SafeMath} from '../../dependencies/openzeppelin/contracts//SafeMath.sol';
 import {IERC20} from '../../dependencies/openzeppelin/contracts//IERC20.sol';
 import {IAToken} from '../../interfaces/IAToken.sol';
-import {IStableDebtToken} from '../../interfaces/IStableDebtToken.sol';
 import {IVariableDebtToken} from '../../interfaces/IVariableDebtToken.sol';
 import {IPriceOracleGetter} from '../../interfaces/IPriceOracleGetter.sol';
 import {ILendingPoolCollateralManager} from '../../interfaces/ILendingPoolCollateralManager.sol';
@@ -40,13 +39,11 @@ contract LendingPoolCollateralManager is
 
   struct LiquidationCallLocalVars {
     uint256 userCollateralBalance;
-    uint256 userStableDebt;
     uint256 userVariableDebt;
     uint256 maxLiquidatableDebt;
     uint256 actualDebtToLiquidate;
     uint256 liquidationRatio;
     uint256 maxAmountCollateralToLiquidate;
-    uint256 userStableRate;
     uint256 maxCollateralToLiquidate;
     uint256 debtAmountNeeded;
     uint256 healthFactor;
@@ -102,14 +99,13 @@ contract LendingPoolCollateralManager is
       _addressesProvider.getPriceOracle()
     );
 
-    (vars.userStableDebt, vars.userVariableDebt) = Helpers.getUserCurrentDebt(user, debtReserve);
+    (vars.userVariableDebt) = Helpers.getUserCurrentDebt(user, debtReserve);
 
     (vars.errorCode, vars.errorMsg) = ValidationLogic.validateLiquidationCall(
       collateralReserve,
       debtReserve,
       userConfig,
       vars.healthFactor,
-      vars.userStableDebt,
       vars.userVariableDebt
     );
 
@@ -121,9 +117,7 @@ contract LendingPoolCollateralManager is
 
     vars.userCollateralBalance = vars.collateralAtoken.balanceOf(user);
 
-    vars.maxLiquidatableDebt = vars.userStableDebt.add(vars.userVariableDebt).percentMul(
-      LIQUIDATION_CLOSE_FACTOR_PERCENT
-    );
+    vars.maxLiquidatableDebt = vars.userVariableDebt.percentMul(LIQUIDATION_CLOSE_FACTOR_PERCENT);
 
     vars.actualDebtToLiquidate = debtToCover > vars.maxLiquidatableDebt
       ? vars.maxLiquidatableDebt
@@ -171,17 +165,10 @@ contract LendingPoolCollateralManager is
         debtReserve.variableBorrowIndex
       );
     } else {
-      // If the user doesn't have variable debt, no need to try to burn variable debt tokens
-      if (vars.userVariableDebt > 0) {
-        IVariableDebtToken(debtReserve.variableDebtTokenAddress).burn(
-          user,
-          vars.userVariableDebt,
-          debtReserve.variableBorrowIndex
-        );
-      }
-      IStableDebtToken(debtReserve.stableDebtTokenAddress).burn(
+      IVariableDebtToken(debtReserve.variableDebtTokenAddress).burn(
         user,
-        vars.actualDebtToLiquidate.sub(vars.userVariableDebt)
+        vars.userVariableDebt,
+        debtReserve.variableBorrowIndex
       );
     }
 

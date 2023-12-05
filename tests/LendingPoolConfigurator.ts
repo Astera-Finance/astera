@@ -83,7 +83,6 @@ describe('LendingPoolConfigurator', function () {
       liquidationBonus,
       liquidationThreshold,
       reserveFactor,
-      stableBorrowRateEnabled,
       borrowingEnabled,
       isActive,
       isFrozen,
@@ -96,7 +95,6 @@ describe('LendingPoolConfigurator', function () {
     expect(ltv).to.be.equal('8000');
     expect(liquidationThreshold).to.be.equal('8500');
     expect(liquidationBonus).to.be.equal('10500');
-    expect(stableBorrowRateEnabled).to.be.equal(false);
     expect(reserveFactor).to.be.equal('1500');
   });
 
@@ -112,7 +110,6 @@ describe('LendingPoolConfigurator', function () {
       liquidationBonus,
       liquidationThreshold,
       reserveFactor,
-      stableBorrowRateEnabled,
       borrowingEnabled,
       isActive,
       isFrozen,
@@ -125,7 +122,6 @@ describe('LendingPoolConfigurator', function () {
     expect(ltv).to.be.equal('8000');
     expect(liquidationThreshold).to.be.equal('8500');
     expect(liquidationBonus).to.be.equal('10500');
-    expect(stableBorrowRateEnabled).to.be.equal(false);
     expect(reserveFactor).to.be.equal('1500');
   });
 
@@ -161,7 +157,6 @@ describe('LendingPoolConfigurator', function () {
       liquidationBonus,
       liquidationThreshold,
       reserveFactor,
-      stableBorrowRateEnabled,
       borrowingEnabled,
       isActive,
       isFrozen,
@@ -174,7 +169,6 @@ describe('LendingPoolConfigurator', function () {
     expect(ltv).to.be.equal('8000');
     expect(liquidationThreshold).to.be.equal('8500');
     expect(liquidationBonus).to.be.equal('10500');
-    expect(stableBorrowRateEnabled).to.be.equal(false);
     expect(reserveFactor).to.be.equal('1500');
   });
 
@@ -184,7 +178,7 @@ describe('LendingPoolConfigurator', function () {
 
     const { weth, configuratorProxy, protocolDataProvider } = await loadFixture(deployProtocol);
 
-    await configuratorProxy.enableBorrowingOnReserve(weth.address, false, false);
+    await configuratorProxy.enableBorrowingOnReserve(weth.address, false);
     const { variableBorrowIndex } = await protocolDataProvider.getReserveData(
       weth.address,
       false,
@@ -195,7 +189,6 @@ describe('LendingPoolConfigurator', function () {
       liquidationBonus,
       liquidationThreshold,
       reserveFactor,
-      stableBorrowRateEnabled,
       borrowingEnabled,
       isActive,
       isFrozen,
@@ -208,7 +201,6 @@ describe('LendingPoolConfigurator', function () {
     expect(ltv).to.be.equal('8000');
     expect(liquidationThreshold).to.be.equal('8500');
     expect(liquidationBonus).to.be.equal('10500');
-    expect(stableBorrowRateEnabled).to.be.equal(false);
     expect(reserveFactor).to.be.equal('1500');
     expect(variableBorrowIndex.toString()).to.be.equal(RAY);
   });
@@ -229,7 +221,7 @@ describe('LendingPoolConfigurator', function () {
     const { weth, configuratorProxy } = await loadFixture(deployProtocol);
 
     await expect(
-      configuratorProxy.connect(addr1).enableBorrowingOnReserve(weth.address, false, false),
+      configuratorProxy.connect(addr1).enableBorrowingOnReserve(weth.address, false),
     ).to.be.revertedWith('33');
   });
 
@@ -245,7 +237,6 @@ describe('LendingPoolConfigurator', function () {
       liquidationBonus,
       liquidationThreshold,
       reserveFactor,
-      stableBorrowRateEnabled,
       borrowingEnabled,
       isActive,
       isFrozen,
@@ -258,7 +249,6 @@ describe('LendingPoolConfigurator', function () {
     expect(ltv).to.be.equal('0');
     expect(liquidationThreshold).to.be.equal('0');
     expect(liquidationBonus).to.be.equal('0');
-    expect(stableBorrowRateEnabled).to.be.equal(false);
     expect(reserveFactor).to.be.equal('1500');
   });
 
@@ -280,7 +270,6 @@ describe('LendingPoolConfigurator', function () {
       liquidationBonus,
       liquidationThreshold,
       reserveFactor,
-      stableBorrowRateEnabled,
       borrowingEnabled,
       isActive,
       isFrozen,
@@ -293,7 +282,6 @@ describe('LendingPoolConfigurator', function () {
     expect(ltv).to.be.equal('8000');
     expect(liquidationThreshold).to.be.equal('8250');
     expect(liquidationBonus).to.be.equal('10500');
-    expect(stableBorrowRateEnabled).to.be.equal(false);
     expect(reserveFactor).to.be.equal('1500');
   });
 
@@ -313,85 +301,6 @@ describe('LendingPoolConfigurator', function () {
     ).to.be.revertedWith('33');
   });
 
-  it('Disable stable borrow rate on the ETH reserve', async function () {
-    [owner, addr1] = await ethers.getSigners();
-
-    const { weth, configuratorProxy, protocolDataProvider } = await loadFixture(deployProtocol);
-
-    await configuratorProxy.disableReserveStableRate(weth.address, false);
-    const {
-      decimals,
-      ltv,
-      liquidationBonus,
-      liquidationThreshold,
-      reserveFactor,
-      stableBorrowRateEnabled,
-      borrowingEnabled,
-      isActive,
-      isFrozen,
-    } = await protocolDataProvider.getReserveConfigurationData(weth.address, false);
-
-    expect(borrowingEnabled).to.be.equal(true);
-    expect(isActive).to.be.equal(true);
-    expect(isFrozen).to.be.equal(false);
-    expect(decimals).to.be.equal(18);
-    expect(ltv).to.be.equal('8000');
-    expect(liquidationThreshold).to.be.equal('8500');
-    expect(liquidationBonus).to.be.equal('10500');
-    expect(stableBorrowRateEnabled).to.be.equal(false);
-    expect(reserveFactor).to.be.equal('1500');
-  });
-
-  it('Enables stable borrow rate on the ETH reserve', async function () {
-    [owner, addr1] = await ethers.getSigners();
-
-    const { weth, configuratorProxy, protocolDataProvider } = await loadFixture(deployProtocol);
-
-    await configuratorProxy.enableReserveStableRate(weth.address, false);
-    const {
-      decimals,
-      ltv,
-      liquidationBonus,
-      liquidationThreshold,
-      reserveFactor,
-      stableBorrowRateEnabled,
-      borrowingEnabled,
-      isActive,
-      isFrozen,
-    } = await protocolDataProvider.getReserveConfigurationData(weth.address, false);
-
-    expect(borrowingEnabled).to.be.equal(true);
-    expect(isActive).to.be.equal(true);
-    expect(isFrozen).to.be.equal(false);
-    expect(decimals).to.be.equal(18);
-    expect(ltv).to.be.equal('8000');
-    expect(liquidationThreshold).to.be.equal('8500');
-    expect(liquidationBonus).to.be.equal('10500');
-    expect(stableBorrowRateEnabled).to.be.equal(true);
-    expect(reserveFactor).to.be.equal('1500');
-  });
-
-  it('Check the onlyAdmin on disableReserveStableRate', async function () {
-    [owner, addr1] = await ethers.getSigners();
-
-    const { weth, configuratorProxy } = await loadFixture(deployProtocol);
-
-    await expect(
-      configuratorProxy.connect(addr1).disableReserveStableRate(weth.address, false),
-    ).to.be.revertedWith('33');
-  });
-
-  // Check the onlyAdmin on enableReserveStableRate
-  it('Check the onlyAdmin on enableReserveStableRate', async function () {
-    [owner, addr1] = await ethers.getSigners();
-
-    const { weth, configuratorProxy } = await loadFixture(deployProtocol);
-
-    await expect(
-      configuratorProxy.connect(addr1).enableReserveStableRate(weth.address, false),
-    ).to.be.revertedWith('33');
-  });
-
   it('Changes the reserve factor of WETH', async function () {
     [owner, addr1] = await ethers.getSigners();
 
@@ -404,7 +313,6 @@ describe('LendingPoolConfigurator', function () {
       liquidationBonus,
       liquidationThreshold,
       reserveFactor,
-      stableBorrowRateEnabled,
       borrowingEnabled,
       isActive,
       isFrozen,
@@ -417,7 +325,6 @@ describe('LendingPoolConfigurator', function () {
     expect(ltv).to.be.equal('8000');
     expect(liquidationThreshold).to.be.equal('8500');
     expect(liquidationBonus).to.be.equal('10500');
-    expect(stableBorrowRateEnabled).to.be.equal(false);
     expect(reserveFactor).to.be.equal('1000');
   });
 

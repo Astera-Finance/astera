@@ -166,7 +166,6 @@ describe('LendingPool', function () {
 
   it('borrow', async function () {
     [owner, addr1] = await ethers.getSigners();
-    const VARIABLE_RATE_MODE = '2';
     const USDC_DEPOSIT_SIZE = ethers.utils.parseUnits('1000', 6);
     const WBTC_DEPOSIT_SIZE = ethers.utils.parseUnits('1', 8);
 
@@ -218,14 +217,12 @@ describe('LendingPool', function () {
     expect(wbtcBorrow.events[4].args?.user).to.equal(owner.address);
     expect(wbtcBorrow.events[4].args?.onBehalfOf).to.equal(owner.address);
     expect(wbtcBorrow.events[4].args?.amount).to.equal(maxBitcoinBorrow);
-    expect(wbtcBorrow.events[4].args?.borrowRateMode).to.equal(VARIABLE_RATE_MODE);
     expect(await variableDebtWBTC.balanceOf(owner.address)).to.equal(maxBitcoinBorrow);
     expect(await wbtc.balanceOf(owner.address)).to.equal(maxBitcoinBorrow);
   });
 
   it('repay', async function () {
     [owner, addr1] = await ethers.getSigners();
-    // const VARIABLE_RATE_MODE = '2';
     const USDC_DEPOSIT_SIZE = ethers.utils.parseUnits('1000', 6);
     const WBTC_DEPOSIT_SIZE = ethers.utils.parseUnits('1', 8);
 
@@ -294,7 +291,6 @@ describe('LendingPool', function () {
 
   it('setUserUseReserveAsCollateral', async function () {
     [owner, addr1] = await ethers.getSigners();
-    const VARIABLE_RATE_MODE = '2';
     const USDC_DEPOSIT_SIZE = ethers.utils.parseUnits('1000', 6);
     const WBTC_DEPOSIT_SIZE = ethers.utils.parseUnits('1', 8);
 
@@ -371,7 +367,6 @@ describe('LendingPool', function () {
     expect(wbtcBorrow.events[4].args?.user).to.equal(owner.address);
     expect(wbtcBorrow.events[4].args?.onBehalfOf).to.equal(owner.address);
     expect(wbtcBorrow.events[4].args?.amount).to.equal(maxBitcoinBorrow);
-    expect(wbtcBorrow.events[4].args?.borrowRateMode).to.equal(VARIABLE_RATE_MODE);
     expect(await variableDebtWBTC.balanceOf(owner.address)).to.equal(maxBitcoinBorrow);
     expect(await wbtc.balanceOf(owner.address)).to.equal(maxBitcoinBorrow);
   });

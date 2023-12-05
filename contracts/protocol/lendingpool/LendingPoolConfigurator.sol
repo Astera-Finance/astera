@@ -87,21 +87,6 @@ contract LendingPoolConfigurator is VersionedInitializable, ILendingPoolConfigur
         )
       );
 
-    address stableDebtTokenProxyAddress =
-      _initTokenWithProxy(
-        input.stableDebtTokenImpl,
-        abi.encodeWithSelector(
-          IInitializableDebtToken.initialize.selector,
-          pool,
-          input.underlyingAsset,
-          IRewarder(input.incentivesController),
-          input.underlyingAssetDecimals,
-          input.stableDebtTokenName,
-          input.stableDebtTokenSymbol,
-          input.params
-        )
-      );
-
     address variableDebtTokenProxyAddress =
       _initTokenWithProxy(
         input.variableDebtTokenImpl,
@@ -121,7 +106,6 @@ contract LendingPoolConfigurator is VersionedInitializable, ILendingPoolConfigur
       input.underlyingAsset,
       input.reserveType,
       aTokenProxyAddress,
-      stableDebtTokenProxyAddress,
       variableDebtTokenProxyAddress,
       input.interestRateStrategyAddress
     );
@@ -140,7 +124,6 @@ contract LendingPoolConfigurator is VersionedInitializable, ILendingPoolConfigur
       input.underlyingAsset,
       aTokenProxyAddress,
       input.reserveType,
-      stableDebtTokenProxyAddress,
       variableDebtTokenProxyAddress,
       input.interestRateStrategyAddress
     );
@@ -175,40 +158,6 @@ contract LendingPoolConfigurator is VersionedInitializable, ILendingPoolConfigur
     );
 
     emit ATokenUpgraded(input.asset, reserveData.aTokenAddress, input.implementation, input.reserveType);
-  }
-
-  /**
-   * @dev Updates the stable debt token implementation for the reserve
-   **/
-  function updateStableDebtToken(UpdateDebtTokenInput calldata input) external onlyPoolAdmin {
-    ILendingPool cachedPool = pool;
-
-    DataTypes.ReserveData memory reserveData = cachedPool.getReserveData(input.asset, input.reserveType);
-     
-    (, , , uint256 decimals, ) = cachedPool.getConfiguration(input.asset, input.reserveType).getParamsMemory();
-
-    bytes memory encodedCall = abi.encodeWithSelector(
-        IInitializableDebtToken.initialize.selector,
-        cachedPool,
-        input.asset,
-        input.incentivesController,
-        decimals,
-        input.name,
-        input.symbol,
-        input.params
-      );
-
-    _upgradeTokenImplementation(
-      reserveData.stableDebtTokenAddress,
-      input.implementation,
-      encodedCall
-    );
-
-    emit StableDebtTokenUpgraded(
-      input.asset,
-      reserveData.stableDebtTokenAddress,
-      input.implementation
-    );
   }
 
   /**
@@ -252,20 +201,18 @@ contract LendingPoolConfigurator is VersionedInitializable, ILendingPoolConfigur
    * @dev Enables borrowing on a reserve
    * @param asset The address of the underlying asset of the reserve
    * @param reserveType Whether the reserve is boosted by a vault
-   * @param stableBorrowRateEnabled True if stable borrow rate needs to be enabled by default on this reserve
    **/
-  function enableBorrowingOnReserve(address asset, bool reserveType, bool stableBorrowRateEnabled)
+  function enableBorrowingOnReserve(address asset, bool reserveType)
     external
     onlyPoolAdmin
   {
     DataTypes.ReserveConfigurationMap memory currentConfig = pool.getConfiguration(asset, reserveType);
 
     currentConfig.setBorrowingEnabled(true);
-    currentConfig.setStableRateBorrowingEnabled(stableBorrowRateEnabled);
 
     pool.setConfiguration(asset, reserveType, currentConfig.data);
 
-    emit BorrowingEnabledOnReserve(asset, reserveType, stableBorrowRateEnabled);
+    emit BorrowingEnabledOnReserve(asset, reserveType);
   }
 
   /**
@@ -346,36 +293,6 @@ contract LendingPoolConfigurator is VersionedInitializable, ILendingPoolConfigur
   }
 
   /**
-   * @dev Enable stable rate borrowing on a reserve
-   * @param asset The address of the underlying asset of the reserve
-   * @param reserveType Whether the reserve is boosted by a vault
-   **/
-  function enableReserveStableRate(address asset, bool reserveType) external onlyPoolAdmin {
-    DataTypes.ReserveConfigurationMap memory currentConfig = pool.getConfiguration(asset, reserveType);
-
-    currentConfig.setStableRateBorrowingEnabled(true);
-
-    pool.setConfiguration(asset, reserveType, currentConfig.data);
-
-    emit StableRateEnabledOnReserve(asset, reserveType);
-  }
-
-  /**
-   * @dev Disable stable rate borrowing on a reserve
-   * @param asset The address of the underlying asset of the reserve
-   * @param reserveType Whether the reserve is boosted by a vault
-   **/
-  function disableReserveStableRate(address asset, bool reserveType) external onlyPoolAdmin {
-    DataTypes.ReserveConfigurationMap memory currentConfig = pool.getConfiguration(asset, reserveType);
-
-    currentConfig.setStableRateBorrowingEnabled(false);
-
-    pool.setConfiguration(asset, reserveType, currentConfig.data);
-
-    emit StableRateDisabledOnReserve(asset, reserveType);
-  }
-
-  /**
    * @dev Activates a reserve
    * @param asset The address of the underlying asset of the reserve
    * @param reserveType Whether the reserve is boosted by a vault
@@ -408,8 +325,8 @@ contract LendingPoolConfigurator is VersionedInitializable, ILendingPoolConfigur
   }
 
   /**
-   * @dev Freezes a reserve. A frozen reserve doesn't allow any new deposit, borrow or rate swap
-   *  but allows repayments, liquidations, rate rebalances and withdrawals
+   * @dev Freezes a reserve. A frozen reserve doesn't allow any new deposit, or borrow
+   *  but allows repayments, liquidations, and withdrawals
    * @param asset The address of the underlying asset of the reserve
    * @param reserveType Whether the reserve is boosted by a vault
    **/
@@ -563,6 +480,7 @@ contract LendingPoolConfigurator is VersionedInitializable, ILendingPoolConfigur
   function setFarmingPct(address aTokenAddress, uint256 farmingPct) external onlyPoolAdmin {
     pool.setFarmingPct(aTokenAddress, farmingPct);
   }
+
   function setClaimingThreshold(address aTokenAddress, uint256 claimingThreshold) external onlyPoolAdmin {
     pool.setClaimingThreshold(aTokenAddress, claimingThreshold);
   }
@@ -570,12 +488,15 @@ contract LendingPoolConfigurator is VersionedInitializable, ILendingPoolConfigur
   function setFarmingPctDrift(address aTokenAddress, uint256 _farmingPctDrift) external onlyPoolAdmin {
     pool.setFarmingPctDrift(aTokenAddress, _farmingPctDrift);
   }
+
   function setProfitHandler(address aTokenAddress, address _profitHandler) external onlyPoolAdmin {
     pool.setProfitHandler(aTokenAddress, _profitHandler);
   }
+
   function setVault(address aTokenAddress, address _vault) external onlyPoolAdmin {
     pool.setVault(aTokenAddress, _vault);
   }
+
   function rebalance(address aTokenAddress) external onlyEmergencyAdmin {
     pool.rebalance(aTokenAddress);
   }

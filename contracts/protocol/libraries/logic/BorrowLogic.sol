@@ -149,11 +149,8 @@ import {UserRecentBorrow} from '../configuration/UserRecentBorrow.sol';
       }
 
       if (userConfig.isBorrowing(vars.i)) {
-        vars.compoundedBorrowBalance = IERC20(currentReserve.stableDebtTokenAddress).balanceOf(
+        vars.compoundedBorrowBalance = IERC20(currentReserve.variableDebtTokenAddress).balanceOf(
           params.user
-        );
-        vars.compoundedBorrowBalance = vars.compoundedBorrowBalance.add(
-          IERC20(currentReserve.variableDebtTokenAddress).balanceOf(params.user)
         );
 
         vars.totalDebtInETH = vars.totalDebtInETH.add(

@@ -22,7 +22,7 @@ contract ATokensAndRatesHelper is Ownable {
 
   struct InitDeploymentInput {
     address asset;
-    uint256[6] rates;
+    uint256[4] rates;
   }
 
   struct ConfigureReserveInput {
@@ -32,7 +32,6 @@ contract ATokensAndRatesHelper is Ownable {
     uint256 liquidationThreshold;
     uint256 liquidationBonus;
     uint256 reserveFactor;
-    bool stableBorrowingEnabled;
     bool borrowingEnabled;
   }
 
@@ -56,9 +55,7 @@ contract ATokensAndRatesHelper is Ownable {
             inputParams[i].rates[0],
             inputParams[i].rates[1],
             inputParams[i].rates[2],
-            inputParams[i].rates[3],
-            inputParams[i].rates[4],
-            inputParams[i].rates[5]
+            inputParams[i].rates[3]
           )
         )
       );
@@ -79,8 +76,7 @@ contract ATokensAndRatesHelper is Ownable {
       if (inputParams[i].borrowingEnabled) {
         configurator.enableBorrowingOnReserve(
           inputParams[i].asset,
-          inputParams[i].reserveType,
-          inputParams[i].stableBorrowingEnabled
+          inputParams[i].reserveType
         );
       }
       configurator.setReserveFactor(inputParams[i].asset, inputParams[i].reserveType, inputParams[i].reserveFactor);
