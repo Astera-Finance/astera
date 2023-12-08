@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: agpl-3.0
-pragma solidity 0.6.12;
+pragma solidity ^0.8.23;
 
 contract MockAggregator {
   int256 private _latestAnswer;
@@ -7,10 +7,10 @@ contract MockAggregator {
 
   event AnswerUpdated(int256 indexed current, uint256 indexed roundId, uint256 timestamp);
 
-  constructor(int256 _initialAnswer, int256 decimals) public {
+  constructor(int256 _initialAnswer, int256 decimals) {
     _latestAnswer = _initialAnswer;
     _decimals = decimals;
-    emit AnswerUpdated(_initialAnswer, 0, now);
+    emit AnswerUpdated(_initialAnswer, 0, block.timestamp);
   }
 
   function latestAnswer() external view returns (int256) {

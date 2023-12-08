@@ -1,6 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity 0.6.12;
-pragma experimental ABIEncoderV2;
+pragma solidity ^0.8.23;
 
 import {IERC20} from '../dependencies/openzeppelin/contracts/IERC20.sol';
 import {ILendingPoolAddressesProvider} from '../interfaces/ILendingPoolAddressesProvider.sol';
@@ -21,7 +20,7 @@ contract RewardsVault is Ownable {
     address incentivesController,
     ILendingPoolAddressesProvider provider,
     address rewardToken
-  ) public {
+  ) public Ownable(msg.sender) {
     INCENTIVES_CONTROLLER = incentivesController;
     ADDRESSES_PROVIDER = provider;
     REWARD_TOKEN = rewardToken;

@@ -1,6 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity 0.7.5;
-pragma experimental ABIEncoderV2;
+pragma solidity ^0.8.20;
 
 import {IRewardsDistributor} from './interfaces/IRewardsDistributor.sol';
 import {IERC20Detailed} from './interfaces/IERC20Detailed.sol';
@@ -33,6 +32,8 @@ abstract contract RewardsDistributor is IRewardsDistributor, Ownable {
 	mapping(address => bool) internal _isRewardEnabled;
 
 	address[] internal _rewardTokens;
+
+  constructor(address initialOwner) Ownable(initialOwner) {}
 
   function getRewardsData(address asset, address reward)
     public

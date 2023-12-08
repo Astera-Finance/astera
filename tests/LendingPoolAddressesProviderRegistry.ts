@@ -131,11 +131,11 @@ describe('LendingPoolAddressesProviderRegistry', function () {
         mockProvider,
         id,
       ),
-    ).to.be.revertedWith('Ownable: caller is not the owner');
+    ).to.be.revertedWithCustomError(registry,'OwnableUnauthorizedAccount');
     await expect(
       registry.unregisterAddressesProvider(
         mockProvider,
       ),
-    ).to.be.revertedWith('Ownable: caller is not the owner');
+    ).to.be.revertedWithCustomError(registry,'OwnableUnauthorizedAccount');
   });
 });

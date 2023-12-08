@@ -1,6 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity 0.6.12;
-pragma experimental ABIEncoderV2;
+pragma solidity ^0.8.23;
 
 import {Errors} from '../protocol/libraries/helpers/Errors.sol';
 import {ILendingPoolAddressesProvider} from '../interfaces/ILendingPoolAddressesProvider.sol';
@@ -24,7 +23,7 @@ contract Treasury is Ownable {
 
   constructor (
     ILendingPoolAddressesProvider provider
-  ) public {
+  ) public Ownable(msg.sender) {
     ADDRESSES_PROVIDER = provider;
     LENDING_POOL = ILendingPool(ADDRESSES_PROVIDER.getLendingPool());
     multisig = _msgSender();

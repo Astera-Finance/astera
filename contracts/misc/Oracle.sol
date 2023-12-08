@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: agpl-3.0
-pragma solidity 0.6.12;
+pragma solidity ^0.8.23;
 
 import {Ownable} from '../dependencies/openzeppelin/contracts/Ownable.sol';
 import {IERC20} from '../dependencies/openzeppelin/contracts/IERC20.sol';
@@ -40,7 +40,7 @@ contract Oracle is IPriceOracleGetter, Ownable {
     address fallbackOracle,
     address baseCurrency,
     uint256 baseCurrencyUnit
-  ) public {
+  ) public Ownable(msg.sender) {
     _setFallbackOracle(fallbackOracle);
     _setAssetsSources(assets, sources);
     BASE_CURRENCY = baseCurrency;

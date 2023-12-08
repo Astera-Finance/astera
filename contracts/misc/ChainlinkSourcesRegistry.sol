@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity 0.6.12;
+pragma solidity ^0.8.23;
 
 import {Ownable} from '../dependencies/openzeppelin/contracts/Ownable.sol';
 
@@ -8,6 +8,8 @@ contract ChainlinkSourcesRegistry is Ownable {
   mapping (address => address) public aggregatorsOfAssets;
   
   event AggregatorUpdated(address token, address aggregator);
+
+  constructor() public Ownable(msg.sender) {}
 
     
   function updateAggregators(address[] memory assets, address[] memory aggregators) external onlyOwner {    

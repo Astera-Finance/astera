@@ -1,9 +1,10 @@
 // SPDX-License-Identifier: agpl-3.0
-pragma solidity 0.6.12;
+pragma solidity ^0.8.23;
 
 import {IERC20} from '../../dependencies/openzeppelin/contracts/IERC20.sol';
 import {SafeERC20} from '../../dependencies/openzeppelin/contracts/SafeERC20.sol';
 import {SignedSafeMath} from '../../dependencies/openzeppelin/contracts/SignedSafeMath.sol';
+import {SafeMath} from '../../dependencies/openzeppelin/contracts/SafeMath.sol';
 import {ILendingPool} from '../../interfaces/ILendingPool.sol';
 import {IAToken} from '../../interfaces/IAToken.sol';
 import {WadRayMath} from '../libraries/math/WadRayMath.sol';
@@ -26,6 +27,7 @@ contract AToken is
   using WadRayMath for uint256;
   using SafeERC20 for IERC20;
   using SignedSafeMath for int256;
+  using SafeMath for uint256;
 
   bytes public constant EIP712_REVISION = bytes('1');
   bytes32 internal constant EIP712_DOMAIN =
@@ -505,7 +507,7 @@ contract AToken is
     require(address(vault) == address(0), '84');
     require(IERC4626(_vault).asset() == _underlyingAsset, '83');
     vault = IERC4626(_vault);
-    IERC20(_underlyingAsset).safeApprove(address(vault), type(uint256).max);
+    IERC20(_underlyingAsset).forceApprove(address(vault), type(uint256).max);
   }
   function rebalance() external onlyLendingPool override {
     _rebalance(0);

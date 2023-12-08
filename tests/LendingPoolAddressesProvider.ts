@@ -238,7 +238,7 @@ describe('LendingPoolAddressesProvider', function () {
     ]) {
       await expect(
         contractFunction(mockAddress),
-      ).to.be.revertedWith('Ownable: caller is not the owner');
+      ).to.be.revertedWithCustomError(provider,'OwnableUnauthorizedAccount');
     }
 
     await expect(
@@ -246,13 +246,13 @@ describe('LendingPoolAddressesProvider', function () {
         utils.keccak256(utils.toUtf8Bytes('RANDOM_ID')),
         mockAddress,
       ),
-    ).to.be.revertedWith('Ownable: caller is not the owner');
+    ).to.be.revertedWithCustomError(provider,'OwnableUnauthorizedAccount');
 
     await expect(
       provider.setAddressAsProxy(
         utils.keccak256(utils.toUtf8Bytes('RANDOM_ID')),
         mockAddress,
       ),
-    ).to.be.revertedWith('Ownable: caller is not the owner');
+    ).to.be.revertedWithCustomError(provider,'OwnableUnauthorizedAccount');
   });
 });

@@ -1,6 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity 0.7.5;
-pragma experimental ABIEncoderV2;
+pragma solidity ^0.8.23;
 
 import {IRewardsDistributor} from './IRewardsDistributor.sol';
 import {DistributionTypes} from '../libraries/DistributionTypes.sol';

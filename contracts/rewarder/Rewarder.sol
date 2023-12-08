@@ -1,6 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity 0.7.5;
-pragma experimental ABIEncoderV2;
+pragma solidity ^0.8.20;
 
 import {IERC20} from './interfaces/IERC20.sol';
 import {SafeERC20} from './libraries/SafeERC20.sol';
@@ -13,6 +12,8 @@ contract Rewarder is RewardsController {
   mapping(address => address) internal _rewardsVault;
 
   event RewardsVaultUpdated(address indexed vault);
+
+  constructor() RewardsController(msg.sender) {}
 
   function setRewardsVault(address vault, address reward) external onlyOwner {
   	_rewardsVault[reward] = vault;

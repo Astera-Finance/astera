@@ -1,5 +1,5 @@
-// SPDX-License-Identifier: agpl-3.0
-pragma solidity ^0.6.0;
+// SPDX-License-Identifier: AGPL-3.0
+pragma solidity ^0.8.20;
 
 /**
  * @title Proxy
@@ -11,6 +11,7 @@ pragma solidity ^0.6.0;
 abstract contract Proxy {
   /**
    * @dev Fallback function.
+   * Will run if no other function in the contract matches the call data.
    * Implemented entirely in `_fallback`.
    */
   fallback() external payable {
@@ -44,13 +45,13 @@ abstract contract Proxy {
       returndatacopy(0, 0, returndatasize())
 
       switch result
-        // delegatecall returns 0 on error.
-        case 0 {
-          revert(0, returndatasize())
-        }
-        default {
-          return(0, returndatasize())
-        }
+      // delegatecall returns 0 on error.
+      case 0 {
+        revert(0, returndatasize())
+      }
+      default {
+        return(0, returndatasize())
+      }
     }
   }
 

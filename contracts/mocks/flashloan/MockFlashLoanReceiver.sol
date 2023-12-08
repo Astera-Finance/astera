@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: agpl-3.0
-pragma solidity 0.6.12;
+pragma solidity ^0.8.23;
 
 import {SafeMath} from '../../dependencies/openzeppelin/contracts/SafeMath.sol';
 import {IERC20} from '../../dependencies/openzeppelin/contracts/IERC20.sol';
@@ -11,6 +11,7 @@ import {ILendingPoolAddressesProvider} from '../../interfaces/ILendingPoolAddres
 
 contract MockFlashLoanReceiver is FlashLoanReceiverBase {
   using SafeERC20 for IERC20;
+  using SafeMath for uint256;
 
   ILendingPoolAddressesProvider internal _provider;
 
@@ -21,7 +22,7 @@ contract MockFlashLoanReceiver is FlashLoanReceiverBase {
   uint256 _amountToApprove;
   bool _simulateEOA;
 
-  constructor(ILendingPoolAddressesProvider provider) public FlashLoanReceiverBase(provider) {}
+  constructor(ILendingPoolAddressesProvider provider) FlashLoanReceiverBase(provider) {}
 
   function setFailExecutionTransfer(bool fail) public {
     _failExecution = fail;

@@ -1,6 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity 0.7.5;
-pragma experimental ABIEncoderV2;
+pragma solidity ^0.8.20;
 
 import {IRewardsController} from './interfaces/IRewardsController.sol';
 import {RewardsDistributor} from './RewardsDistributor.sol';
@@ -15,6 +14,8 @@ abstract contract RewardsController is RewardsDistributor, IRewardsController {
     require(_authorizedClaimers[user] == claimer, 'CLAIMER_UNAUTHORIZED');
     _;
   }
+
+  constructor(address initialOwner) RewardsDistributor(initialOwner) {}
 
   function getClaimer(address user) external view override returns (address) {
     return _authorizedClaimers[user];

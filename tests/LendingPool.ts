@@ -49,11 +49,11 @@ describe('LendingPool', function () {
       addr1.address,
     );
 
-    expect(usdcDeposit.events[6].event).to.equal('Deposit');
-    expect(usdcDeposit.events[6].args?.reserve).to.equal(usdc.address);
-    expect(usdcDeposit.events[6].args?.user).to.equal(addr1.address);
-    expect(usdcDeposit.events[6].args?.onBehalfOf).to.equal(addr1.address);
-    expect(usdcDeposit.events[6].args?.amount).to.equal(USDC_DEPOSIT_SIZE);
+    expect(usdcDeposit.events[5].event).to.equal('Deposit');
+    expect(usdcDeposit.events[5].args?.reserve).to.equal(usdc.address);
+    expect(usdcDeposit.events[5].args?.user).to.equal(addr1.address);
+    expect(usdcDeposit.events[5].args?.onBehalfOf).to.equal(addr1.address);
+    expect(usdcDeposit.events[5].args?.amount).to.equal(USDC_DEPOSIT_SIZE);
     expect(await grainUSDC.balanceOf(addr1.address)).to.equal(USDC_DEPOSIT_SIZE);
 
     const wbtcDeposit = await deposit(
@@ -64,11 +64,11 @@ describe('LendingPool', function () {
       WBTC_DEPOSIT_SIZE,
       addr1.address,
     );
-    expect(wbtcDeposit.events[6].event).to.equal('Deposit');
-    expect(wbtcDeposit.events[6].args?.reserve).to.equal(wbtc.address);
-    expect(wbtcDeposit.events[6].args?.user).to.equal(addr1.address);
-    expect(wbtcDeposit.events[6].args?.onBehalfOf).to.equal(addr1.address);
-    expect(wbtcDeposit.events[6].args?.amount).to.equal(WBTC_DEPOSIT_SIZE);
+    expect(wbtcDeposit.events[5].event).to.equal('Deposit');
+    expect(wbtcDeposit.events[5].args?.reserve).to.equal(wbtc.address);
+    expect(wbtcDeposit.events[5].args?.user).to.equal(addr1.address);
+    expect(wbtcDeposit.events[5].args?.onBehalfOf).to.equal(addr1.address);
+    expect(wbtcDeposit.events[5].args?.amount).to.equal(WBTC_DEPOSIT_SIZE);
     expect(await grainWBTC.balanceOf(addr1.address)).to.equal(WBTC_DEPOSIT_SIZE);
 
     const wethDeposit = await deposit(
@@ -282,11 +282,11 @@ describe('LendingPool', function () {
     );
     expect(await variableDebtWBTC.balanceOf(owner.address)).to.equal('0');
     expect(await wbtc.balanceOf(owner.address)).to.equal('0');
-    expect(wbtcRepay.events[5].event).to.equal('Repay');
-    expect(wbtcRepay.events[5].args?.reserve).to.equal(wbtc.address);
-    expect(wbtcRepay.events[5].args?.user).to.equal(owner.address);
-    expect(wbtcRepay.events[5].args?.repayer).to.equal(owner.address);
-    expect(wbtcRepay.events[5].args?.amount).to.equal(maxBitcoinBorrow);
+    expect(wbtcRepay.events[4].event).to.equal('Repay');
+    expect(wbtcRepay.events[4].args?.reserve).to.equal(wbtc.address);
+    expect(wbtcRepay.events[4].args?.user).to.equal(owner.address);
+    expect(wbtcRepay.events[4].args?.repayer).to.equal(owner.address);
+    expect(wbtcRepay.events[4].args?.amount).to.equal(maxBitcoinBorrow);
   });
 
   it('setUserUseReserveAsCollateral', async function () {
