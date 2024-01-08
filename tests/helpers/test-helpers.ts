@@ -33,14 +33,38 @@ export async function deployLendingPool() {
   });
   const validationLogic = await ValidationLogic.deploy();
 
+  const DepositLogic = await hre.ethers.getContractFactory('DepositLogic', {
+    libraries: {
+      ValidationLogic: validationLogic.address,
+    },
+  });
+  const depositLogic = await DepositLogic.deploy();
+
+  const WithdrawLogic = await hre.ethers.getContractFactory('WithdrawLogic', {
+    libraries: {
+      ValidationLogic: validationLogic.address,
+    },
+  });
+  const withdrawLogic = await WithdrawLogic.deploy();
+
+  const BorrowLogic = await hre.ethers.getContractFactory('BorrowLogic' , {
+    libraries: {
+      ValidationLogic: validationLogic.address,
+    },
+  });
+  const borrowLogic = await BorrowLogic.deploy();
+
   const LendingPool = await hre.ethers.getContractFactory('LendingPool', {
     libraries: {
+      WithdrawLogic: withdrawLogic.address,
+      DepositLogic: depositLogic.address,
+      BorrowLogic: borrowLogic.address,
       ReserveLogic: reserveLogic.address,
       ValidationLogic: validationLogic.address,
     },
   });
   const lendingPool = await LendingPool.deploy();
-  return lendingPool;
+  return {lendingPool, depositLogic, withdrawLogic, borrowLogic, reserveLogic, validationLogic};
 }
 
 export async function deployConfigurator() {
@@ -160,13 +184,16 @@ export async function deployProtocol() {
   });
   const validationLogic = await ValidationLogic.deploy();
 
-  const LendingPool = await hre.ethers.getContractFactory('LendingPool', {
+  /*const LendingPool = await hre.ethers.getContractFactory('LendingPool', {
     libraries: {
       ReserveLogic: reserveLogic.address,
       ValidationLogic: validationLogic.address,
     },
   });
-  const lendingPool = await LendingPool.deploy();
+  const lendingPool = await LendingPool.deploy();*/
+
+  const lendingPoolReturn = await deployLendingPool();
+  const lendingPool = lendingPoolReturn.lendingPool;
 
   await lendingPool.initialize(provider.address);
 
@@ -176,8 +203,11 @@ export async function deployProtocol() {
 
   const LendingPoolProxy = await hre.ethers.getContractFactory('LendingPool', {
     libraries: {
-      ReserveLogic: reserveLogic.address,
-      ValidationLogic: validationLogic.address,
+      WithdrawLogic: lendingPoolReturn.withdrawLogic.address,
+      DepositLogic: lendingPoolReturn.depositLogic.address,
+      BorrowLogic: lendingPoolReturn.borrowLogic.address,
+      ReserveLogic: lendingPoolReturn.reserveLogic.address,
+      ValidationLogic: lendingPoolReturn.validationLogic.address,
     },
   });
   const lendingPoolProxy = await LendingPoolProxy.attach(lendingPoolProxyAddress);

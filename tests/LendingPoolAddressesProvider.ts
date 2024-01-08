@@ -40,13 +40,13 @@ describe('LendingPoolAddressesProvider', function () {
 
     const tx = await provider.setAddressAsProxy(
       proxiedAddressId,
-      lendingPool.address,
+      lendingPool.lendingPool.address,
     );
     const receipt = await tx.wait();
     expect(receipt.events[0].event).to.equal('ProxyCreated');
     expect(receipt.events[1].event).to.equal('AddressSet');
     expect(receipt.events[1].args?.id).to.equal(proxiedAddressId);
-    expect(receipt.events[1].args?.newAddress).to.equal(lendingPool.address);
+    expect(receipt.events[1].args?.newAddress).to.equal(lendingPool.lendingPool.address);
     expect(receipt.events[1].args?.hasProxy).to.equal(true);
   });
 
@@ -83,7 +83,7 @@ describe('LendingPoolAddressesProvider', function () {
     const provider = await deployProvider(marketId);
     const lendingPool = await deployLendingPool();
 
-    const tx = await provider.setLendingPoolImpl(lendingPool.address);
+    const tx = await provider.setLendingPoolImpl(lendingPool.lendingPool.address);
     const receipt = await tx.wait();
     expect(
       await provider.getLendingPool(),
@@ -94,11 +94,11 @@ describe('LendingPoolAddressesProvider', function () {
     const provider = await deployProvider(marketId);
     const lendingPool = await deployLendingPool();
 
-    const tx = await provider.setLendingPoolImpl(lendingPool.address);
+    const tx = await provider.setLendingPoolImpl(lendingPool.lendingPool.address);
     const receipt = await tx.wait();
     expect(receipt.events[0].event).to.equal('ProxyCreated');
     expect(receipt.events[1].event).to.equal('LendingPoolUpdated');
-    expect(receipt.events[1].args?.newAddress).to.equal(lendingPool.address);
+    expect(receipt.events[1].args?.newAddress).to.equal(lendingPool.lendingPool.address);
   });
 
   it('getLendingPoolConfigurator', async function () {

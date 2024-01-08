@@ -3,6 +3,9 @@ pragma solidity ^0.8.23;
 
 import {IERC20} from '../../../dependencies/openzeppelin/contracts/IERC20.sol';
 import {IPriceOracleGetter} from '../../../interfaces/IPriceOracleGetter.sol';
+import {ILendingPoolAddressesProvider} from '../../../interfaces/ILendingPoolAddressesProvider.sol';
+import {IAToken} from '../../../interfaces/IAToken.sol';
+import {IVariableDebtToken} from '../../../interfaces/IVariableDebtToken.sol';
 import {SafeMath} from '../../../dependencies/openzeppelin/contracts/SafeMath.sol';
 import {WadRayMath} from '../math/WadRayMath.sol';
 import {PercentageMath} from '../math/PercentageMath.sol';
@@ -10,6 +13,7 @@ import {Errors} from '../helpers/Errors.sol';
 import {DataTypes} from '../types/DataTypes.sol';
 import {GenericLogic} from './GenericLogic.sol';
 import {ReserveLogic} from './ReserveLogic.sol';
+import {ValidationLogic} from './ValidationLogic.sol';
 import {ReserveConfiguration} from '../configuration/ReserveConfiguration.sol';
 import {ReserveBorrowConfiguration} from '../configuration/ReserveBorrowConfiguration.sol';
 import {UserConfiguration} from '../configuration/UserConfiguration.sol';
@@ -30,6 +34,15 @@ import {UserRecentBorrow} from '../configuration/UserRecentBorrow.sol';
     using ReserveBorrowConfiguration for DataTypes.ReserveBorrowConfigurationMap;
     using UserConfiguration for DataTypes.UserConfigurationMap;
     using UserRecentBorrow for DataTypes.UserRecentBorrowMap;
+    using ValidationLogic for ValidationLogic.ValidateBorrowParams;
+
+    event Borrow(
+      address indexed reserve,
+      address user,
+      address indexed onBehalfOf,
+      uint256 amount,
+      uint256 borrowRate
+  );
 
     struct CalculateUserAccountDataVolatileVars {
         uint256 reserveUnitPrice;
@@ -96,7 +109,6 @@ import {UserRecentBorrow} from '../configuration/UserRecentBorrow.sol';
     if (userConfig.isEmpty()) {
       return (0, 0, 0, 0, type(uint256).max);
     }
-
     // Get the user's volatility tier
     vars.userVolatility = calculateUserVolatilityTier(reservesData,userConfig,reserves,params.reservesCount);
     // for (vars.i = 0; vars.i < params.reservesCount; vars.i++) {
@@ -111,6 +123,7 @@ import {UserRecentBorrow} from '../configuration/UserRecentBorrow.sol';
     //     vars.userVolatility = currentReserve.borrowConfiguration.getVolatilityTier();
     //   }
     // }
+
 
     for (vars.i = 0; vars.i < params.reservesCount; vars.i++) {
       vars.currentReserveAddress = reserves[vars.i].asset;
@@ -216,5 +229,107 @@ import {UserRecentBorrow} from '../configuration/UserRecentBorrow.sol';
         userVolatility = currentReserveVolatility;
       }
     }
+  }
+
+  struct ExecuteBorrowParams {
+    address asset;
+    bool reserveType;
+    address user;
+    address onBehalfOf;
+    uint256 amount;
+    address aTokenAddress;
+    bool releaseUnderlying;
+    ILendingPoolAddressesProvider addressesProvider;
+    uint256 reservesCount;
+  }
+
+
+  function executeBorrow(
+    ExecuteBorrowParams memory vars,
+    mapping(address => mapping(bool => DataTypes.ReserveData)) storage reserves,
+    mapping(uint256 => DataTypes.ReserveReference) storage reservesList,
+    mapping(address => DataTypes.UserConfigurationMap) storage usersConfig,
+    mapping(address => DataTypes.UserRecentBorrowMap) storage _usersRecentBorrow
+  ) public {
+    DataTypes.ReserveData storage reserve = reserves[vars.asset][vars.reserveType];
+    require(reserve.configuration.getActive(), Errors.VL_NO_ACTIVE_RESERVE);
+    
+    DataTypes.UserConfigurationMap storage userConfig = usersConfig[vars.onBehalfOf];
+    DataTypes.UserRecentBorrowMap storage userRecentBorrow = _usersRecentBorrow[vars.onBehalfOf];
+
+    ValidationLogic.ValidateBorrowParams memory validateBorrowParams;
+
+    /*{
+    address oracle = vars.addressesProvider.getPriceOracle();
+
+    uint256 amountInETH =
+      IPriceOracleGetter(oracle).getAssetPrice(vars.asset).mul(vars.amount).div(
+        10**reserve.configuration.getDecimals()
+      );
+
+    }*/
+    address oracle = vars.addressesProvider.getPriceOracle();
+    uint256 amountInETH = amountInETH(vars.asset, vars.amount, reserve.configuration.getDecimals(), oracle);
+
+    validateBorrowParams.asset = vars.asset;
+    validateBorrowParams.userAddress = vars.onBehalfOf;
+    validateBorrowParams.amount = vars.amount;
+    validateBorrowParams.amountInETH = amountInETH;
+    validateBorrowParams.reservesCount = vars.reservesCount;
+    validateBorrowParams.oracle = oracle;
+    ValidationLogic.validateBorrow(
+      validateBorrowParams,
+      reserve,
+      reserves,
+      userConfig,
+      reservesList,
+      userRecentBorrow
+    );
+
+    reserve.updateState();
+
+    {
+      bool isFirstBorrowing = false;
+
+      isFirstBorrowing = IVariableDebtToken(reserve.variableDebtTokenAddress).mint(
+        vars.user,
+        vars.onBehalfOf,
+        vars.amount,
+        reserve.variableBorrowIndex
+      );
+
+      if (isFirstBorrowing) {
+        userConfig.setBorrowing(reserve.id, true);
+      }
+    }
+
+    reserve.updateInterestRates(
+      vars.asset,
+      vars.aTokenAddress,
+      0,
+      vars.releaseUnderlying ? vars.amount : 0
+    );
+
+    if (vars.releaseUnderlying) {
+      IAToken(vars.aTokenAddress).transferUnderlyingTo(vars.user, vars.amount);
+    }
+
+    emit Borrow(
+      vars.asset,
+      vars.user,
+      vars.onBehalfOf,
+      vars.amount,
+      reserve.currentVariableBorrowRate
+    );
+
+  }
+
+  function amountInETH(
+    address asset,
+    uint256 amount,
+    uint256 decimals,
+    address oracle
+  ) internal view returns (uint256) {
+    return IPriceOracleGetter(oracle).getAssetPrice(asset).mul(amount).div(10**decimals);
   }
  }

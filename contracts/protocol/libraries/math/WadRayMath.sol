@@ -79,6 +79,21 @@ library WadRayMath {
   }
 
   /**
+   * @dev Divides two wad, rounding half down to the nearest wad
+   * @param a Wad
+   * @param b Wad
+   * @return The result of a/b, in wad
+   **/
+  function wadDivDown(uint256 a, uint256 b) internal pure returns (uint256) {
+    require(b != 0, Errors.MATH_DIVISION_BY_ZERO);
+
+    require(a <= (type(uint256).max) / WAD, Errors.MATH_MULTIPLICATION_OVERFLOW);
+
+    return ((a * WAD)  / b);
+  }
+
+
+  /**
    * @dev Multiplies two ray, rounding half up to the nearest ray
    * @param a Ray
    * @param b Ray

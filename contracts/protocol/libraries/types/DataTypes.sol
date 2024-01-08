@@ -70,4 +70,28 @@ library DataTypes {
   }
 
   enum InterestRateMode {NONE, VARIABLE}
+
+  struct snapshot {
+    uint8 reserveID;
+    uint16 usedLTV;
+    uint16 usedLiquidationThreshold;
+    uint128 index;
+    uint256 amount;
+  }
+
+  struct collSnapshot{
+    snapshot[] collateralSnapshots;
+    uint8 numCollateral;
+  }
+
+  struct debtSnapshot{
+    snapshot[] debtSnapshots;
+    uint8 numDebt;
+  }
+
+  struct LoanInfo{
+    collSnapshot collateralInfo;
+    debtSnapshot debtInfo;
+    bool relation;
+  }
 }

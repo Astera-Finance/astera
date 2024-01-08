@@ -59,34 +59,39 @@ library ValidationLogic {
    * @param reservesCount The number of reserves
    * @param oracle The price oracle
    */
+
+
+   struct ValidateWithdrawParams {
+     address reserveAddress;
+     bool reserveType;
+     uint256 amount;
+     uint256 userBalance;
+     uint256 reservesCount;
+     address oracle;
+   }
   function validateWithdraw(
-    address reserveAddress,
-    bool reserveType,
-    uint256 amount,
-    uint256 userBalance,
+    ValidateWithdrawParams memory validateParams,
     mapping(address => mapping(bool => DataTypes.ReserveData)) storage reservesData,
     DataTypes.UserConfigurationMap storage userConfig,
-    mapping(uint256 => DataTypes.ReserveReference) storage reserves,
-    uint256 reservesCount,
-    address oracle
+    mapping(uint256 => DataTypes.ReserveReference) storage reserves
   ) external view {
-    require(amount != 0, Errors.VL_INVALID_AMOUNT);
-    require(amount <= userBalance, Errors.VL_NOT_ENOUGH_AVAILABLE_USER_BALANCE);
+    require(validateParams.amount != 0, Errors.VL_INVALID_AMOUNT);
+    require(validateParams.amount <= validateParams.userBalance, Errors.VL_NOT_ENOUGH_AVAILABLE_USER_BALANCE);
 
-    (bool isActive, , ) = reservesData[reserveAddress][reserveType].configuration.getFlags();
+    (bool isActive, , ) = reservesData[validateParams.reserveAddress][validateParams.reserveType].configuration.getFlags();
     require(isActive, Errors.VL_NO_ACTIVE_RESERVE);
 
     require(
       GenericLogic.balanceDecreaseAllowed(
-        reserveAddress,
-        reserveType,
+        validateParams.reserveAddress,
+        validateParams.reserveType,
         msg.sender,
-        amount,
+        validateParams.amount,
         reservesData,
         userConfig,
         reserves,
-        reservesCount,
-        oracle
+        validateParams.reservesCount,
+        validateParams.oracle
       ),
       Errors.VL_TRANSFER_NOT_ALLOWED
     );
