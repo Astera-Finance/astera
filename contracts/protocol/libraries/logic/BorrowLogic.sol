@@ -2,6 +2,7 @@
 pragma solidity ^0.8.23;
 
 import {IERC20} from '../../../dependencies/openzeppelin/contracts/IERC20.sol';
+import {SafeERC20} from '../../../dependencies/openzeppelin/contracts/SafeERC20.sol';
 import {IPriceOracleGetter} from '../../../interfaces/IPriceOracleGetter.sol';
 import {ILendingPoolAddressesProvider} from '../../../interfaces/ILendingPoolAddressesProvider.sol';
 import {IAToken} from '../../../interfaces/IAToken.sol';
@@ -18,6 +19,7 @@ import {ReserveConfiguration} from '../configuration/ReserveConfiguration.sol';
 import {ReserveBorrowConfiguration} from '../configuration/ReserveBorrowConfiguration.sol';
 import {UserConfiguration} from '../configuration/UserConfiguration.sol';
 import {UserRecentBorrow} from '../configuration/UserRecentBorrow.sol';
+import {Helpers} from '../helpers/Helpers.sol';
 
 /**
  * @title BorrowLogic library
@@ -28,6 +30,7 @@ import {UserRecentBorrow} from '../configuration/UserRecentBorrow.sol';
  library BorrowLogic {
     using ReserveLogic for DataTypes.ReserveData;
     using SafeMath for uint256;
+    using SafeERC20 for IERC20;
     using WadRayMath for uint256;
     using PercentageMath for uint256;
     using ReserveConfiguration for DataTypes.ReserveConfigurationMap;
@@ -332,4 +335,73 @@ import {UserRecentBorrow} from '../configuration/UserRecentBorrow.sol';
   ) internal view returns (uint256) {
     return IPriceOracleGetter(oracle).getAssetPrice(asset).mul(amount).div(10**decimals);
   }
+
+  struct repayParams {
+    address asset;
+    bool reserveType;
+    uint256 amount;
+    address onBehalfOf;
+    ILendingPoolAddressesProvider addressesProvider;
+  }
+
+  event Repay(
+    address indexed reserve,
+    address indexed user,
+    address indexed repayer,
+    uint256 amount
+  );
+
+
+  function repay(
+    repayParams memory params,
+    mapping(address => mapping(bool => DataTypes.ReserveData)) storage _reserves,
+    mapping(address => DataTypes.UserConfigurationMap) storage _usersConfig
+  ) external returns (uint256) {
+    DataTypes.ReserveData storage reserve = _reserves[params.asset][params.reserveType];
+
+    (uint256 variableDebt) = Helpers.getUserCurrentDebt(params.onBehalfOf, reserve);
+
+    ValidationLogic.validateRepay(
+      reserve,
+      params.amount,
+      params.onBehalfOf,
+      variableDebt
+    );
+
+    uint256 paybackAmount = variableDebt;
+
+    if (params.amount < paybackAmount) {
+      paybackAmount = params.amount;
+    }
+
+    reserve.updateState();
+
+
+    IVariableDebtToken(reserve.variableDebtTokenAddress).burn(
+      params.onBehalfOf,
+      paybackAmount,
+      reserve.variableBorrowIndex
+    );
+
+
+    address aToken = reserve.aTokenAddress;
+    reserve.updateInterestRates(params.asset, aToken, paybackAmount, 0);
+
+    if (variableDebt.sub(paybackAmount) == 0) {
+      _usersConfig[params.onBehalfOf].setBorrowing(reserve.id, false);
+    }
+
+    IERC20(params.asset).safeTransferFrom(msg.sender, aToken, paybackAmount);
+
+    IAToken(aToken).handleRepayment(msg.sender, paybackAmount);
+
+    emit Repay(params.asset, params.onBehalfOf, msg.sender, paybackAmount);
+
+    return paybackAmount;
+  }
+
+
+
+
+
  }

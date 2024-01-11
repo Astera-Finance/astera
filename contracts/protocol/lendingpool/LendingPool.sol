@@ -210,47 +210,18 @@ contract LendingPool is VersionedInitializable, ILendingPool, LendingPoolStorage
     uint256 amount,
     address onBehalfOf
   ) external override whenNotPaused returns (uint256) {
-    DataTypes.ReserveData storage reserve = _reserves[asset][reserveType];
-
-    (uint256 variableDebt) = Helpers.getUserCurrentDebt(onBehalfOf, reserve);
-
-    ValidationLogic.validateRepay(
-      reserve,
-      amount,
-      onBehalfOf,
-      variableDebt
+    return BorrowLogic.repay(
+      BorrowLogic.repayParams(
+        asset,
+        reserveType,
+        amount,
+        onBehalfOf,
+        _addressesProvider
+      ),
+      _reserves,
+      _usersConfig
     );
 
-    uint256 paybackAmount = variableDebt;
-
-    if (amount < paybackAmount) {
-      paybackAmount = amount;
-    }
-
-    reserve.updateState();
-
-
-    IVariableDebtToken(reserve.variableDebtTokenAddress).burn(
-      onBehalfOf,
-      paybackAmount,
-      reserve.variableBorrowIndex
-    );
-
-
-    address aToken = reserve.aTokenAddress;
-    reserve.updateInterestRates(asset, aToken, paybackAmount, 0);
-
-    if (variableDebt.sub(paybackAmount) == 0) {
-      _usersConfig[onBehalfOf].setBorrowing(reserve.id, false);
-    }
-
-    IERC20(asset).safeTransferFrom(msg.sender, aToken, paybackAmount);
-
-    IAToken(aToken).handleRepayment(msg.sender, paybackAmount);
-
-    emit Repay(asset, onBehalfOf, msg.sender, paybackAmount);
-
-    return paybackAmount;
   }
 
   /**
