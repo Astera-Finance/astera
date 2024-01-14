@@ -27,6 +27,7 @@ import {LendingPoolStorage} from './LendingPoolStorage.sol';
 import {DepositLogic} from '../libraries/logic/DepositLogic.sol';
 import {WithdrawLogic} from '../libraries/logic/WithdrawLogic.sol';
 import {BorrowLogic} from '../libraries/logic/BorrowLogic.sol';
+import {FlashLoanLogic} from '../libraries/logic/FlashLoanLogic.sol';
 
 /**
  * @title LendingPool contract
@@ -332,80 +333,24 @@ contract LendingPool is VersionedInitializable, ILendingPool, LendingPoolStorage
     uint256[] calldata modes,
     bytes calldata params
   ) external override whenNotPaused {
-    FlashLoanLocalVars memory vars;
-
-    ValidationLogic.validateFlashloan(flashLoanParams.assets, amounts); //@todo add types array to this funciton too
-
-    address[] memory aTokenAddresses = new address[](flashLoanParams.assets.length);
-    uint256[] memory premiums = new uint256[](flashLoanParams.assets.length);
-
-    vars.receiver = IFlashLoanReceiver(flashLoanParams.receiverAddress);
-
-    (aTokenAddresses, premiums) = getATokenAdressesAndPremiums(
-      flashLoanParams.receiverAddress,
-      flashLoanParams.assets,
-      flashLoanParams.reserveTypes,
-      amounts);
-
-    require(
-      vars.receiver.executeOperation(flashLoanParams.assets, amounts, premiums, msg.sender, params),
-      Errors.LP_INVALID_FLASH_LOAN_EXECUTOR_RETURN
-    );
-
-    for (vars.i = 0; vars.i < flashLoanParams.assets.length; vars.i++) {
-      vars.currentAsset = flashLoanParams.assets[vars.i];
-      vars.currentType = flashLoanParams.reserveTypes[vars.i];
-      vars.currentAmount = amounts[vars.i];
-      vars.currentPremium = premiums[vars.i];
-      vars.currentATokenAddress = aTokenAddresses[vars.i];
-
-      if (DataTypes.InterestRateMode(modes[vars.i]) == DataTypes.InterestRateMode.NONE) {
-        _reserves[vars.currentAsset][vars.currentType].updateState();
-        _reserves[vars.currentAsset][vars.currentType].cumulateToLiquidityIndex(
-          IERC20(vars.currentATokenAddress).totalSupply(),
-          vars.currentPremium
-        );
-        _reserves[vars.currentAsset][vars.currentType].updateInterestRates(
-          vars.currentAsset,
-          vars.currentATokenAddress,
-          vars.currentAmount.add(vars.currentPremium),
-          0
-        );
-
-        IERC20(vars.currentAsset).safeTransferFrom(
-          flashLoanParams.receiverAddress,
-          vars.currentATokenAddress,
-          vars.currentAmount.add(vars.currentPremium)
-        );
-      } else {
-        // If the user chose to not return the funds, the system checks if there is enough collateral and
-        // eventually opens a debt position
-        BorrowLogic.executeBorrow(
-          BorrowLogic.ExecuteBorrowParams(
-            vars.currentAsset,
-            vars.currentType,
-            msg.sender,
-            flashLoanParams.onBehalfOf,
-            vars.currentAmount,
-            vars.currentATokenAddress,
-            false,
-            _addressesProvider,
-            _reservesCount
-          ),
-            _reserves,
-            _reservesList,
-            _usersConfig,
-            _usersRecentBorrow
-        );
-      }
-      emit FlashLoan(
+    FlashLoanLogic.flashLoan(
+      FlashLoanLogic.FlashLoanParams(
         flashLoanParams.receiverAddress,
-        msg.sender,
-        vars.currentAsset,
-        vars.currentAmount,
-        vars.currentPremium
-      );
-    }
+        flashLoanParams.assets,
+        flashLoanParams.reserveTypes,
+        flashLoanParams.onBehalfOf,
+        _addressesProvider,
+        _reservesCount,
+        _flashLoanPremiumTotal,
+        amounts,
+        modes,
+        params
+      ),
+      _reservesList,
+      _usersConfig,
+      _usersRecentBorrow,
+      _reserves
+    );
   }
 
   function getATokenAdressesAndPremiums(

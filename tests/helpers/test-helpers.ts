@@ -54,6 +54,13 @@ export async function deployLendingPool() {
   });
   const borrowLogic = await BorrowLogic.deploy();
 
+  const FlashLoanLogic = await hre.ethers.getContractFactory('FlashLoanLogic', {
+    libraries: {
+      BorrowLogic: borrowLogic.address,
+    },
+  });
+  const flashLoanLogic = await FlashLoanLogic.deploy();
+
   const LendingPool = await hre.ethers.getContractFactory('LendingPool', {
     libraries: {
       WithdrawLogic: withdrawLogic.address,
@@ -61,10 +68,11 @@ export async function deployLendingPool() {
       BorrowLogic: borrowLogic.address,
       ReserveLogic: reserveLogic.address,
       ValidationLogic: validationLogic.address,
+      FlashLoanLogic: flashLoanLogic.address,
     },
   });
   const lendingPool = await LendingPool.deploy();
-  return {lendingPool, depositLogic, withdrawLogic, borrowLogic, reserveLogic, validationLogic};
+  return {lendingPool, depositLogic, withdrawLogic, borrowLogic, reserveLogic, validationLogic, flashLoanLogic};
 }
 
 export async function deployConfigurator() {
@@ -208,6 +216,7 @@ export async function deployProtocol() {
       BorrowLogic: lendingPoolReturn.borrowLogic.address,
       ReserveLogic: lendingPoolReturn.reserveLogic.address,
       ValidationLogic: lendingPoolReturn.validationLogic.address,
+      FlashLoanLogic: lendingPoolReturn.flashLoanLogic.address,
     },
   });
   const lendingPoolProxy = await LendingPoolProxy.attach(lendingPoolProxyAddress);
