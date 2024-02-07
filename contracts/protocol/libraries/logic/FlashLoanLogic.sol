@@ -34,7 +34,7 @@ library FlashLoanLogic {
     using UserConfiguration for DataTypes.UserConfigurationMap;
 
 
-        struct FlashLoanLocalVars {
+      struct FlashLoanLocalVars {
         IFlashLoanReceiver receiver;
         address oracle;
         uint256 i;

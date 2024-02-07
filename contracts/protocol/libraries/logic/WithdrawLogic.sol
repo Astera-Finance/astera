@@ -35,6 +35,7 @@ library WithdrawLogic {
 
     event ReserveUsedAsCollateralDisabled(address indexed reserve, address indexed user);
     event Withdraw(address indexed reserve, address indexed user, address indexed to, uint256 amount);
+    event ReserveUsedAsCollateralEnabled(address indexed reserve, address indexed user);
 
 
 
@@ -100,6 +101,54 @@ library WithdrawLogic {
         emit Withdraw(params.asset, msg.sender, params.to, localVars.amountToWithdraw);
 
         return localVars.amountToWithdraw;
+    }
+
+
+
+    struct finalizeTransferParams {
+        address asset;
+        bool reserveType;
+        address from;
+        address to;
+        uint256 amount;
+        uint256 balanceFromBefore;
+        uint256 balanceToBefore;
+        uint256 reservesCount;
+    }
+    function finalizeTransfer(
+        finalizeTransferParams memory params,
+        mapping(address => mapping(bool => DataTypes.ReserveData)) storage reserves,
+        mapping(address => DataTypes.UserConfigurationMap) storage usersConfig, 
+        mapping(uint256 => DataTypes.ReserveReference) storage reservesList,
+        ILendingPoolAddressesProvider addressesProvider
+    ) external {
+        
+        require(msg.sender == reserves[params.asset][params.reserveType].aTokenAddress, Errors.LP_CALLER_MUST_BE_AN_ATOKEN);
+
+        ValidationLogic.validateTransfer(
+        params.from,
+        reserves,
+        usersConfig[params.from],
+        reservesList,
+        params.reservesCount,
+        addressesProvider.getPriceOracle()
+        );
+
+        uint256 reserveId = reserves[params.asset][params.reserveType].id;
+
+        if (params.from != params.to) {
+            if (params.balanceFromBefore.sub(params.amount) == 0) {
+                DataTypes.UserConfigurationMap storage fromConfig = usersConfig[params.from];
+                fromConfig.setUsingAsCollateral(reserveId, false);
+                emit ReserveUsedAsCollateralDisabled(params.asset, params.from);
+            }
+
+            if (params.balanceToBefore == 0 && params.amount != 0) {
+                DataTypes.UserConfigurationMap storage toConfig = usersConfig[params.to];
+                toConfig.setUsingAsCollateral(reserveId, true);
+                emit ReserveUsedAsCollateralEnabled(params.asset, params.to);
+            }
+        }
     }
 
 }

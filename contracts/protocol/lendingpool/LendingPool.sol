@@ -28,6 +28,7 @@ import {DepositLogic} from '../libraries/logic/DepositLogic.sol';
 import {WithdrawLogic} from '../libraries/logic/WithdrawLogic.sol';
 import {BorrowLogic} from '../libraries/logic/BorrowLogic.sol';
 import {FlashLoanLogic} from '../libraries/logic/FlashLoanLogic.sol';
+import {LiquidationLogic} from '../libraries/logic/LiquidationLogic.sol';
 
 /**
  * @title LendingPool contract
@@ -279,28 +280,18 @@ contract LendingPool is VersionedInitializable, ILendingPool, LendingPoolStorage
     uint256 debtToCover,
     bool receiveAToken
   ) external override whenNotPaused {
-    address collateralManager = _addressesProvider.getLendingPoolCollateralManager();
-
-    //solium-disable-next-line
-    (bool success, bytes memory result) =
-      collateralManager.delegatecall(
-        abi.encodeWithSignature(
-          'liquidationCall(address,bool,address,bool,address,uint256,bool)',
-          collateralAsset,
-          collateralAssetType,
-          debtAsset,
-          debtAssetType,
-          user,
-          debtToCover,
-          receiveAToken
-        )
-      );
-
-    require(success, Errors.LP_LIQUIDATION_CALL_FAILED);
-
-    (uint256 returnCode, string memory returnMessage) = abi.decode(result, (uint256, string));
-
-    require(returnCode == 0, string(abi.encodePacked(returnMessage)));
+    LiquidationLogic.liquidationCall(
+      LiquidationLogic.liquidationCallParams(
+        collateralAsset,
+        collateralAssetType,
+        debtAsset,
+        debtAssetType,
+        user,
+        debtToCover,
+        receiveAToken,
+        address(_addressesProvider)
+      )
+    );
   }
 
   struct FlashLoanLocalVars {
@@ -351,21 +342,6 @@ contract LendingPool is VersionedInitializable, ILendingPool, LendingPoolStorage
       _usersRecentBorrow,
       _reserves
     );
-  }
-
-  function getATokenAdressesAndPremiums(
-    address receiverAddress,
-    address[] memory assets,
-    bool[] memory reserveTypes,
-    uint256[] calldata amounts
-  ) internal returns (address[] memory aTokenAddresses, uint256[] memory premiums) {
-    for (uint256 i = 0; i < assets.length; i++) {
-      aTokenAddresses[i] = _reserves[assets[i]][reserveTypes[i]].aTokenAddress;
-
-      premiums[i] = amounts[i].mul(_flashLoanPremiumTotal).div(10000);
-
-      IAToken(aTokenAddresses[i]).transferUnderlyingTo(receiverAddress, amounts[i]);
-    }
   }
 
   /**
@@ -563,32 +539,23 @@ contract LendingPool is VersionedInitializable, ILendingPool, LendingPoolStorage
     uint256 balanceFromBefore,
     uint256 balanceToBefore
   ) external override whenNotPaused {
-    require(msg.sender == _reserves[asset][reserveType].aTokenAddress, Errors.LP_CALLER_MUST_BE_AN_ATOKEN);
-
-    ValidationLogic.validateTransfer(
-      from,
+    WithdrawLogic.finalizeTransfer(
+      WithdrawLogic.finalizeTransferParams(
+        asset,
+        reserveType,
+        from,
+        to,
+        amount,
+        balanceFromBefore,
+        balanceToBefore,
+        _reservesCount
+      ),
       _reserves,
-      _usersConfig[from],
+      _usersConfig,
       _reservesList,
-      _reservesCount,
-      _addressesProvider.getPriceOracle()
+      _addressesProvider
     );
 
-    uint256 reserveId = _reserves[asset][reserveType].id;
-
-    if (from != to) {
-      if (balanceFromBefore.sub(amount) == 0) {
-        DataTypes.UserConfigurationMap storage fromConfig = _usersConfig[from];
-        fromConfig.setUsingAsCollateral(reserveId, false);
-        emit ReserveUsedAsCollateralDisabled(asset, from);
-      }
-
-      if (balanceToBefore == 0 && amount != 0) {
-        DataTypes.UserConfigurationMap storage toConfig = _usersConfig[to];
-        toConfig.setUsingAsCollateral(reserveId, true);
-        emit ReserveUsedAsCollateralEnabled(asset, to);
-      }
-    }
   }
 
   /**
