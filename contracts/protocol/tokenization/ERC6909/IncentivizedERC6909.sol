@@ -21,6 +21,11 @@ abstract contract IncentivizedERC6909 is Context, ERC6909{
     mapping(uint256 => uint8)   private _decimals;
     ///     id      => tokenURI
     mapping(uint256 => string)  private _tokenURI;
+    ///     id      => totalSupply
+    mapping(uint256 => uint256) private _totalSupply;
+
+    constructor() {
+    }
 
     function name(uint256 id) public view override returns (string memory){
         return(_name[id]);
@@ -30,13 +35,45 @@ abstract contract IncentivizedERC6909 is Context, ERC6909{
         return(_symbol[id]);
     }
 
-    function decimals(uint256 id) public view override returns (uint8){
+    function decimals(uint256 id) public view virtual override returns (uint8){
         return(_decimals[id]);
     }
 
-    function tokenURI(uint256 id) public view override returns(string memory){
+    function tokenURI(uint256 id) public view virtual override returns(string memory){
         return(_tokenURI[id]);
     }
+
+    function _getIncentivesController() internal view virtual returns (IRewarder);
+
+    function totalSupply(uint256 id) public view virtual returns (uint256){
+        return _totalSupply[id];
+    }
+
+    function _decrementTotalSupply(uint256 id, uint256 amt) internal virtual {
+        _totalSupply[id] = _totalSupply[id].sub(amt);
+    }
+
+    function _incrementTotalSupply(uint256 id, uint256 amt) internal virtual {
+        _totalSupply[id] = _totalSupply[id].add(amt);
+    }
+
+    function _setTokenURI(uint256 id, string memory tokenURI) internal virtual {
+        _tokenURI[id] = tokenURI;
+    }
+
+    function _setDecimals(uint256 id, uint8 decimals) internal virtual {
+        _decimals[id] = decimals;
+    }
+
+    function _setSymbol(uint256 id, string memory symbol) internal virtual {
+        _symbol[id] = symbol;
+    }
+
+    function _setName(uint256 id, string memory name) internal virtual{
+        _name[id] = name;
+    }
+
+
 
 
 

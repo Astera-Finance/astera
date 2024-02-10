@@ -100,6 +100,7 @@ library Errors {
   string public constant AT_INVALID_ADDRESS = '85';
   string public constant AT_INVALID_AMOUNT = '86';
   string public constant AT_VAULT_ALREADY_INITIALIZED = '87';
+  string public constant AT_VL_INVALID_ATOKEN_PARAMS = '88';
 
 
   enum CollateralManagerErrors {
