@@ -23,6 +23,16 @@ contract ATokenERC6909 is IncentivizedERC6909(), VersionedInitializable {
   ILendingPool public POOL;
   IRewarder public INCENTIVES_CONTROLLER;
 
+/***
+    * @dev Mapping of the underlying asset address to the aToken id
+    * @param underlyingAssetAddresses The address of the underlying asset
+    * @param id The id of the aToken
+    * @notice while the underlying asset address here is the actual asset underlying,
+    * (i.e. USDC) the aToken here is double nested and what is actually deposited is aTokens from the general Pool
+    * (i.e. aUSDC) this allows for double rate incentives / penalties on lending
+    * You can think of it is a nested aToken
+ */
+
   mapping(uint256 => address) private _underlyingAssetAddresses;
 
 
@@ -86,4 +96,17 @@ contract ATokenERC6909 is IncentivizedERC6909(), VersionedInitializable {
   function getUnderlyingAsset(uint256 id) external view returns (address) {
     return _underlyingAssetAddresses[id];
   }
+
+    function _afterTokenTransfer(
+    address from,
+    address to,
+    uint256 id,
+    uint256 amount
+    ) internal override {
+        if(from == address(0) && to != address(0)) {
+            _incrementTotalSupply(id, amount);
+        } else if(to == address(0) && from != address(0)) {
+            _decrementTotalSupply(id, amount);
+        }
+    }
 }
