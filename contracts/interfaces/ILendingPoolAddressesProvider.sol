@@ -52,4 +52,5 @@ interface ILendingPoolAddressesProvider {
   function getPriceOracle() external view returns (address);
 
   function setPriceOracle(address priceOracle) external;
+  
 }
