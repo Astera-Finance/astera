@@ -518,4 +518,8 @@ contract AToken is
   function getTotalManagedAssets() public view override returns (uint256) {
     return underlyingAmount;
   }
+
+  function getPool() external view returns (address) {
+    return address(_pool);
+  }
 }

@@ -22,7 +22,8 @@ import {ValidationLogic} from '../../libraries/logic/ValidationLogic.sol';
 import {ReserveConfiguration} from '../../libraries/configuration/ReserveConfiguration.sol';
 import {UserConfiguration} from '../../libraries/configuration/UserConfiguration.sol';
 import {DataTypes} from '../../libraries/types/DataTypes.sol';
-import {LendingPoolStorage} from '../LendingPoolStorage.sol';
+import {MiniPoolStorage} from './MiniPoolStorage.sol';
+import {IMiniPool} from '../../../interfaces/IMiniPool.sol';
 
 import {DepositLogic} from '../../libraries/logic/DepositLogic.sol';
 import {WithdrawLogic} from '../../libraries/logic/WithdrawLogic.sol';
@@ -46,7 +47,7 @@ import {LiquidationLogic} from '../../libraries/logic/LiquidationLogic.sol';
  *   LendingPoolAddressesProvider
  * @author Aave
  **/
-contract MiniPool is VersionedInitializable, ILendingPool, LendingPoolStorage {
+contract MiniPool is VersionedInitializable, IMiniPool, MiniPoolStorage {
   using SafeMath for uint256;
   using WadRayMath for uint256;
   using PercentageMath for uint256;
@@ -89,9 +90,10 @@ contract MiniPool is VersionedInitializable, ILendingPool, LendingPoolStorage {
    *   on subsequent operations
    * @param provider The address of the LendingPoolAddressesProvider
    **/
-  function initialize(ILendingPoolAddressesProvider provider) public initializer {
+  function initialize(ILendingPoolAddressesProvider provider, uint256 minipoolID) public initializer {
     _addressesProvider = provider;
-    _flashLoanPremiumTotal = 9;
+    _minipoolId = minipoolID;
+    _flashLoanPremiumTotal = 1;
     _maxNumberOfReserves = 128;
   }
 
@@ -641,34 +643,6 @@ contract MiniPool is VersionedInitializable, ILendingPool, LendingPoolStorage {
     } else {
       emit Unpaused();
     }
-  }
-
-  function setFarmingPct(address aTokenAddress, uint256 farmingPct) external override onlyLendingPoolConfigurator {
-    IAToken(aTokenAddress).setFarmingPct(farmingPct);
-  }
-
-  function setClaimingThreshold(address aTokenAddress, uint256 claimingThreshold) external override onlyLendingPoolConfigurator {
-    IAToken(aTokenAddress).setClaimingThreshold(claimingThreshold);
-  }
-
-  function setFarmingPctDrift(address aTokenAddress, uint256 _farmingPctDrift) external override onlyLendingPoolConfigurator {
-    IAToken(aTokenAddress).setFarmingPctDrift(_farmingPctDrift);
-  }
-
-  function setProfitHandler(address aTokenAddress, address _profitHandler) external override onlyLendingPoolConfigurator {
-    IAToken(aTokenAddress).setProfitHandler(_profitHandler);
-  }
-
-  function setVault(address aTokenAddress, address _vault) external override onlyLendingPoolConfigurator {
-    IAToken(aTokenAddress).setVault(_vault);
-  }
-
-  function rebalance(address aTokenAddress) external override onlyLendingPoolConfigurator {
-    IAToken(aTokenAddress).rebalance();
-  }
-
-  function getTotalManagedAssets(address aTokenAddress) external view override onlyLendingPoolConfigurator returns (uint256){
-    return IAToken(aTokenAddress).getTotalManagedAssets();
   }
 
   function _addReserveToList(address asset, bool reserveType) internal {

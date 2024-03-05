@@ -121,4 +121,6 @@ interface IAToken is IERC20, IScaledBalanceToken, IInitializableAToken {
   function setVault(address _vault) external;
   
   function rebalance() external;
+
+  function getPool() external view returns (address);
 }
