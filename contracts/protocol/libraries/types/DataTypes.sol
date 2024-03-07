@@ -26,6 +26,34 @@ library DataTypes {
     uint8 id;
   }
 
+  struct MiniPoolReserveData {
+    //stores the reserve configuration
+    ReserveConfigurationMap configuration;
+    //stores the reserve borrow configuration
+    ReserveBorrowConfigurationMap borrowConfiguration;
+    //the liquidity index. Expressed in ray
+    uint128 liquidityIndex;
+    //variable borrow index. Expressed in ray
+    uint128 variableBorrowIndex;
+    //the current supply rate. Expressed in ray
+    uint128 currentLiquidityRate;
+    //the current amount available to borrow from the lending pool
+    uint256 availableMLPLiquidity;
+    //the current variable borrow rate. Expressed in ray
+    uint128 currentVariableBorrowRate;
+    uint40 lastUpdateTimestamp;
+    //tokens addresses
+    address aTokenAddress;
+    uint256 aTokenID;
+    uint256 variableDebtTokenID;
+    //address of the interest rate strategy
+    address interestRateStrategyAddress;
+    //the id of the reserve. Represents the position in the list of the active reserves
+    uint8 id;
+  }
+
+
+
   struct ReserveConfigurationMap {
     //bit 0-15: LTV
     //bit 16-31: Liq. threshold

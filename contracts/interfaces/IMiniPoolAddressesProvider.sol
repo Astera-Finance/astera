@@ -27,4 +27,6 @@ interface IMiniPoolAddressesProvider {
     // Functions for mapping MiniPools to AERC6909 tokens
     function getMiniPoolToAERC6909(address minipool) external view returns (address);
     function getAERC6909BYID(uint256 id) external view returns (address);
+    function getMiniPoolTreasury(uint256 id) external view returns (address);
+    function getMiniPoolConfigurator() external view returns (address);
 }

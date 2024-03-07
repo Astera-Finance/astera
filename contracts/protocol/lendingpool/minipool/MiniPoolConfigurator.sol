@@ -71,6 +71,8 @@ contract MiniPoolConfigurator is VersionedInitializable, IMiniPoolConfigurator {
   }
 
   function _initReserve(IMiniPool pool, InitReserveInput calldata input) internal {
+    address aERC6909proxy = addressesProvider.getMiniPoolToAERC6909(address(pool));
+
   }
 
   
@@ -347,7 +349,7 @@ contract MiniPoolConfigurator is VersionedInitializable, IMiniPoolConfigurator {
   }
 
   function _checkNoLiquidity(address asset, bool reserveType, IMiniPool pool) internal view {
-    DataTypes.ReserveData memory reserveData = pool.getReserveData(asset, reserveType);
+    DataTypes.MiniPoolReserveData memory reserveData = pool.getReserveData(asset, reserveType);
 
     uint256 availableLiquidity = IERC20Detailed(asset).balanceOf(reserveData.aTokenAddress);
 

@@ -2,9 +2,12 @@
 pragma solidity ^0.8.23;
 
 import {SafeMath} from '../../../dependencies/openzeppelin/contracts/SafeMath.sol';
+import {Address} from '../../../dependencies/openzeppelin/contracts/Address.sol';
+import {IAERC6909} from '../../../interfaces/IAERC6909.sol';
 import {IERC20} from '../../../dependencies/openzeppelin/contracts/IERC20.sol';
 import {SafeERC20} from '../../../dependencies/openzeppelin/contracts/SafeERC20.sol';
-import {Address} from '../../../dependencies/openzeppelin/contracts/Address.sol';
+import {IMiniPoolAddressesProvider} from '../../../interfaces/IMiniPoolAddressesProvider.sol';
+
 import {ILendingPoolAddressesProvider} from '../../../interfaces/ILendingPoolAddressesProvider.sol';
 import {IAToken} from '../../../interfaces/IAToken.sol';
 import {IVariableDebtToken} from '../../../interfaces/IVariableDebtToken.sol';
@@ -16,24 +19,24 @@ import {Helpers} from '../../libraries/helpers/Helpers.sol';
 import {Errors} from '../../libraries/helpers/Errors.sol';
 import {WadRayMath} from '../../libraries/math/WadRayMath.sol';
 import {PercentageMath} from '../../libraries/math/PercentageMath.sol';
-import {ReserveLogic} from '../../libraries/logic/ReserveLogic.sol';
-import {GenericLogic} from '../../libraries/logic/GenericLogic.sol';
-import {ValidationLogic} from '../../libraries/logic/ValidationLogic.sol';
+import {MiniPoolReserveLogic} from './logic/MiniPoolReserveLogic.sol';
+import {MiniPoolGenericLogic} from './logic/MiniPoolGenericLogic.sol';
+import {MiniPoolValidationLogic} from './logic/MiniPoolValidationLogic.sol';
 import {ReserveConfiguration} from '../../libraries/configuration/ReserveConfiguration.sol';
 import {UserConfiguration} from '../../libraries/configuration/UserConfiguration.sol';
 import {DataTypes} from '../../libraries/types/DataTypes.sol';
 import {MiniPoolStorage} from './MiniPoolStorage.sol';
 import {IMiniPool} from '../../../interfaces/IMiniPool.sol';
 
-import {DepositLogic} from '../../libraries/logic/DepositLogic.sol';
-import {WithdrawLogic} from '../../libraries/logic/WithdrawLogic.sol';
-import {BorrowLogic} from '../../libraries/logic/BorrowLogic.sol';
-import {FlashLoanLogic} from '../../libraries/logic/FlashLoanLogic.sol';
-import {LiquidationLogic} from '../../libraries/logic/LiquidationLogic.sol';
+import {MiniPoolDepositLogic} from './logic/MiniPoolDepositLogic.sol';
+import {MiniPoolWithdrawLogic} from './logic/MiniPoolWithdrawLogic.sol';
+import {MiniPoolBorrowLogic} from './logic/MiniPoolBorrowLogic.sol';
+import {MiniPoolFlashLoanLogic} from './logic/MiniPoolFlashLoanLogic.sol';
+import {MiniPoolLiquidationLogic} from './logic/MiniPoolLiquidationLogic.sol';
 
 /**
  * @title MiniPool contract
- * @dev Main point of interaction with an Aave protocol's market
+ * @dev A highly correlated sub market that can borrow from the main lending pool and charge double interest rates on those loans
  * - Users can:
  *   # Deposit
  *   # Withdraw
@@ -42,9 +45,9 @@ import {LiquidationLogic} from '../../libraries/logic/LiquidationLogic.sol';
  *   # Enable/disable their deposits as collateral
  *   # Liquidate positions
  *   # Execute Flash Loans
- * - To be covered by a proxy contract, owned by the LendingPoolAddressesProvider of the specific market
- * - All admin functions are callable by the LendingPoolConfigurator contract defined also in the
- *   LendingPoolAddressesProvider
+ * - To be covered by a proxy contract, owned by the MiniPoolAddressesProvider of the specific market
+ * - All admin functions are callable by the MiniPoolConfigurator contract defined also in the
+ *   MiniPoolAddressesProvider
  * @author Aave
  **/
 contract MiniPool is VersionedInitializable, IMiniPool, MiniPoolStorage {
@@ -52,19 +55,19 @@ contract MiniPool is VersionedInitializable, IMiniPool, MiniPoolStorage {
   using WadRayMath for uint256;
   using PercentageMath for uint256;
   using SafeERC20 for IERC20;
-  using ReserveLogic for DataTypes.ReserveData;
+  using MiniPoolReserveLogic for DataTypes.MiniPoolReserveData;
   using ReserveConfiguration for DataTypes.ReserveConfigurationMap;
   using UserConfiguration for DataTypes.UserConfigurationMap;
 
-  uint256 public constant LENDINGPOOL_REVISION = 0x2;
+  uint256 public constant MINIPOOL_REVISION = 0x1;
 
   modifier whenNotPaused() {
     _whenNotPaused();
     _;
   }
 
-  modifier onlyLendingPoolConfigurator() {
-    _onlyLendingPoolConfigurator();
+  modifier onlyMiniPoolConfigurator() {
+    _onlyMiniPoolConfigurator();
     _;
   }
 
@@ -72,15 +75,15 @@ contract MiniPool is VersionedInitializable, IMiniPool, MiniPoolStorage {
     require(!_paused, Errors.LP_IS_PAUSED);
   }
 
-  function _onlyLendingPoolConfigurator() internal view {
+  function _onlyMiniPoolConfigurator() internal view {
     require(
-      _addressesProvider.getLendingPoolConfigurator() == msg.sender,
+      _addressesProvider.getMiniPoolConfigurator() == msg.sender,
       Errors.LP_CALLER_NOT_LENDING_POOL_CONFIGURATOR
     );
   }
 
   function getRevision() internal pure override returns (uint256) {
-    return LENDINGPOOL_REVISION;
+    return MINIPOOL_REVISION;
   }
 
   /**
@@ -90,7 +93,7 @@ contract MiniPool is VersionedInitializable, IMiniPool, MiniPoolStorage {
    *   on subsequent operations
    * @param provider The address of the LendingPoolAddressesProvider
    **/
-  function initialize(ILendingPoolAddressesProvider provider, uint256 minipoolID) public initializer {
+  function initialize(IMiniPoolAddressesProvider provider, uint256 minipoolID) public initializer {
     _addressesProvider = provider;
     _minipoolId = minipoolID;
     _flashLoanPremiumTotal = 1;
@@ -112,10 +115,9 @@ contract MiniPool is VersionedInitializable, IMiniPool, MiniPoolStorage {
     uint256 amount,
     address onBehalfOf
   ) external override whenNotPaused {
-    DepositLogic.deposit(
-      DepositLogic.DepositParams(
+    MiniPoolDepositLogic.deposit(
+      MiniPoolDepositLogic.DepositParams(
         asset,
-        reserveType,
         amount,
         onBehalfOf
       ),
@@ -143,8 +145,8 @@ contract MiniPool is VersionedInitializable, IMiniPool, MiniPoolStorage {
     uint256 amount,
     address to
   ) external override whenNotPaused returns (uint256) {
-    return WithdrawLogic.withdraw(
-      WithdrawLogic.withdrawParams(
+    return MiniPoolWithdrawLogic.withdraw(
+      MiniPoolWithdrawLogic.withdrawParams(
         asset,
         reserveType,
         amount,
@@ -175,16 +177,19 @@ contract MiniPool is VersionedInitializable, IMiniPool, MiniPoolStorage {
     uint256 amount,
     address onBehalfOf
   ) external override whenNotPaused {
-    DataTypes.ReserveData storage reserve = _reserves[asset][reserveType];
+    DataTypes.MiniPoolReserveData storage reserve = _reserves[asset];
 
-    BorrowLogic.executeBorrow(
-        BorrowLogic.ExecuteBorrowParams(
+    MiniPoolBorrowLogic.executeBorrow(
+        MiniPoolBorrowLogic.ExecuteBorrowParams(
             asset,
             reserveType,
             msg.sender,
             onBehalfOf,
             amount,
             reserve.aTokenAddress,
+            0,
+            0,
+            0,
             true,
             _addressesProvider,
             _reservesCount
@@ -214,8 +219,8 @@ contract MiniPool is VersionedInitializable, IMiniPool, MiniPoolStorage {
     uint256 amount,
     address onBehalfOf
   ) external override whenNotPaused returns (uint256) {
-    return BorrowLogic.repay(
-      BorrowLogic.repayParams(
+    return MiniPoolBorrowLogic.repay(
+      MiniPoolBorrowLogic.repayParams(
         asset,
         reserveType,
         amount,
@@ -239,9 +244,9 @@ contract MiniPool is VersionedInitializable, IMiniPool, MiniPoolStorage {
     override
     whenNotPaused
   {
-    DataTypes.ReserveData storage reserve = _reserves[asset][reserveType];
+    DataTypes.MiniPoolReserveData storage reserve = _reserves[asset];
 
-    ValidationLogic.validateSetUseReserveAsCollateral(
+    MiniPoolValidationLogic.validateSetUseReserveAsCollateral(
       reserve,
       asset,
       reserveType,
@@ -282,8 +287,8 @@ contract MiniPool is VersionedInitializable, IMiniPool, MiniPoolStorage {
     uint256 debtToCover,
     bool receiveAToken
   ) external override whenNotPaused {
-    LiquidationLogic.liquidationCall(
-      LiquidationLogic.liquidationCallParams(
+    MiniPoolLiquidationLogic.liquidationCall(
+      MiniPoolLiquidationLogic.liquidationCallParams(
         collateralAsset,
         collateralAssetType,
         debtAsset,
@@ -326,8 +331,8 @@ contract MiniPool is VersionedInitializable, IMiniPool, MiniPoolStorage {
     uint256[] calldata modes,
     bytes calldata params
   ) external override whenNotPaused {
-    FlashLoanLogic.flashLoan(
-      FlashLoanLogic.FlashLoanParams(
+    MiniPoolFlashLoanLogic.flashLoan(
+      MiniPoolFlashLoanLogic.FlashLoanParams(
         flashLoanParams.receiverAddress,
         flashLoanParams.assets,
         flashLoanParams.reserveTypes,
@@ -355,9 +360,9 @@ contract MiniPool is VersionedInitializable, IMiniPool, MiniPoolStorage {
     external
     view
     override
-    returns (DataTypes.ReserveData memory)
+    returns (DataTypes.MiniPoolReserveData memory)
   {
-    return _reserves[asset][reserveType];
+    return _reserves[asset];
   }
 
   /**
@@ -389,7 +394,7 @@ contract MiniPool is VersionedInitializable, IMiniPool, MiniPoolStorage {
       ltv,
       currentLiquidationThreshold,
       healthFactor
-    ) = GenericLogic.calculateUserAccountData(
+    ) = MiniPoolGenericLogic.calculateUserAccountData(
       user,
       _reserves,
       _usersConfig[user],
@@ -398,7 +403,7 @@ contract MiniPool is VersionedInitializable, IMiniPool, MiniPoolStorage {
       _addressesProvider.getPriceOracle()
     );
 
-    availableBorrowsETH = GenericLogic.calculateAvailableBorrowsETH(
+    availableBorrowsETH = MiniPoolGenericLogic.calculateAvailableBorrowsETH(
       totalCollateralETH,
       totalDebtETH,
       ltv
@@ -416,7 +421,7 @@ contract MiniPool is VersionedInitializable, IMiniPool, MiniPoolStorage {
     override
     returns (DataTypes.ReserveConfigurationMap memory)
   {
-    return _reserves[asset][reserveType].configuration;
+    return _reserves[asset].configuration;
   }
 
   /**
@@ -431,7 +436,7 @@ contract MiniPool is VersionedInitializable, IMiniPool, MiniPoolStorage {
     override
     returns (DataTypes.ReserveBorrowConfigurationMap memory)
   {
-    return _reserves[asset][reserveType].borrowConfiguration;
+    return _reserves[asset].borrowConfiguration;
   }
 
   /**
@@ -460,7 +465,7 @@ contract MiniPool is VersionedInitializable, IMiniPool, MiniPoolStorage {
     override
     returns (uint256)
   {
-    return _reserves[asset][reserveType].getNormalizedIncome();
+    return _reserves[asset].getNormalizedIncome();
   }
 
   /**
@@ -474,7 +479,7 @@ contract MiniPool is VersionedInitializable, IMiniPool, MiniPoolStorage {
     override
     returns (uint256)
   {
-    return _reserves[asset][reserveType].getNormalizedDebt();
+    return _reserves[asset].getNormalizedDebt();
   }
 
   /**
@@ -504,7 +509,7 @@ contract MiniPool is VersionedInitializable, IMiniPool, MiniPoolStorage {
   /**
    * @dev Returns the cached LendingPoolAddressesProvider connected to this contract
    **/
-  function getAddressesProvider() external view override returns (ILendingPoolAddressesProvider) {
+  function getAddressesProvider() external view override returns (IMiniPoolAddressesProvider) {
     return _addressesProvider;
   }
 
@@ -541,8 +546,8 @@ contract MiniPool is VersionedInitializable, IMiniPool, MiniPoolStorage {
     uint256 balanceFromBefore,
     uint256 balanceToBefore
   ) external override whenNotPaused {
-    WithdrawLogic.finalizeTransfer(
-      WithdrawLogic.finalizeTransferParams(
+    MiniPoolWithdrawLogic.finalizeTransfer(
+      MiniPoolWithdrawLogic.finalizeTransferParams(
         asset,
         reserveType,
         from,
@@ -565,25 +570,26 @@ contract MiniPool is VersionedInitializable, IMiniPool, MiniPoolStorage {
    * interest rate strategy
    * - Only callable by the LendingPoolConfigurator contract
    * @param asset The address of the underlying asset of the reserve
-   * @param reserveType Whether the reserve is boosted by a vault
-   * @param aTokenAddress The address of the aToken that will be assigned to the reserve
-   * @param aTokenAddress The address of the VariableDebtToken that will be assigned to the reserve
+   * @param aTokenAddress Whether the reserve is boosted by a vault
+   * @param aTokenID The address of the aToken that will be assigned to the reserve
+   * @param variableDebtTokenID The address of the VariableDebtToken that will be assigned to the reserve
    * @param interestRateStrategyAddress The address of the interest rate strategy contract
    **/
   function initReserve(
     address asset,
-    bool reserveType,
-    address aTokenAddress,
-    address variableDebtAddress,
+    IAERC6909 aTokenAddress,
+    uint256 aTokenID,
+    uint256 variableDebtTokenID,
     address interestRateStrategyAddress
-  ) external override onlyLendingPoolConfigurator {
+  ) external override onlyMiniPoolConfigurator {
     require(Address.isContract(asset), Errors.LP_NOT_CONTRACT);
-    _reserves[asset][reserveType].init(
+    _reserves[asset].init(
       aTokenAddress,
-      variableDebtAddress,
+      aTokenID,
+      variableDebtTokenID,
       interestRateStrategyAddress
     );
-    _addReserveToList(asset, reserveType);
+    _addReserveToList(asset, false);
   }
 
   /**
@@ -596,9 +602,9 @@ contract MiniPool is VersionedInitializable, IMiniPool, MiniPoolStorage {
   function setReserveInterestRateStrategyAddress(address asset, bool reserveType, address rateStrategyAddress)
     external
     override
-    onlyLendingPoolConfigurator
+    onlyMiniPoolConfigurator
   {
-    _reserves[asset][reserveType].interestRateStrategyAddress = rateStrategyAddress;
+    _reserves[asset].interestRateStrategyAddress = rateStrategyAddress;
   }
 
   /**
@@ -611,9 +617,9 @@ contract MiniPool is VersionedInitializable, IMiniPool, MiniPoolStorage {
   function setConfiguration(address asset, bool reserveType, uint256 configuration)
     external
     override
-    onlyLendingPoolConfigurator
+    onlyMiniPoolConfigurator
   {
-    _reserves[asset][reserveType].configuration.data = configuration;
+    _reserves[asset].configuration.data = configuration;
   }
 
   /**
@@ -625,9 +631,9 @@ contract MiniPool is VersionedInitializable, IMiniPool, MiniPoolStorage {
   function setBorrowConfiguration(address asset, bool reserveType, uint256 borrowConfiguration)
     external
     override
-    onlyLendingPoolConfigurator
+    onlyMiniPoolConfigurator
   {
-    _reserves[asset][reserveType].borrowConfiguration.data = borrowConfiguration;
+    _reserves[asset].borrowConfiguration.data = borrowConfiguration;
     _lendingUpdateTimestamp = block.timestamp;
   }
 
@@ -636,7 +642,7 @@ contract MiniPool is VersionedInitializable, IMiniPool, MiniPoolStorage {
    * - Only callable by the LendingPoolConfigurator contract
    * @param val `true` to pause the reserve, `false` to un-pause it
    */
-  function setPause(bool val) external override onlyLendingPoolConfigurator {
+  function setPause(bool val) external override onlyMiniPoolConfigurator {
     _paused = val;
     if (_paused) {
       emit Paused();
@@ -650,10 +656,10 @@ contract MiniPool is VersionedInitializable, IMiniPool, MiniPoolStorage {
 
     require(reservesCount < _maxNumberOfReserves, Errors.LP_NO_MORE_RESERVES_ALLOWED);
 
-    bool reserveAlreadyAdded = _reserves[asset][reserveType].id != 0 || _reservesList[0].asset == asset;
+    bool reserveAlreadyAdded = _reserves[asset].id != 0 || _reservesList[0].asset == asset;
 
     if (!reserveAlreadyAdded) {
-      _reserves[asset][reserveType].id = uint8(reservesCount);
+      _reserves[asset].id = uint8(reservesCount);
       _reservesList[reservesCount] = DataTypes.ReserveReference(asset, reserveType);
 
       _reservesCount = reservesCount + 1;

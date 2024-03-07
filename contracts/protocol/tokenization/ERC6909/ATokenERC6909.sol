@@ -50,6 +50,8 @@ contract ATokenERC6909 is IncentivizedERC6909(), VersionedInitializable {
   mapping(uint256 => address) private _underlyingAssetAddresses;
   mapping(uint256 => bool) private _isTranche;
   uint256 private _minipoolId;
+  //ID -> User -> Delegate -> Allowance
+  mapping(uint256 => mapping(address => mapping(address => uint256))) private _borrowAllowances;
 
 
   function getRevision() internal pure virtual override returns (uint256) {
@@ -93,9 +95,9 @@ contract ATokenERC6909 is IncentivizedERC6909(), VersionedInitializable {
     string memory name,
     string memory symbol,
     uint8 decimals
-  ) external {
+  ) external returns (uint256 aTokenID, uint256 debtTokenID, bool isTranche){
     require(msg.sender == address(POOL), Errors.CT_CALLER_MUST_BE_LENDING_POOL);
-    (uint256 aTokenID, uint256 debtTokenID, bool isTranche) = getIdForUnderlying(underlyingAsset);
+    (aTokenID,  debtTokenID, isTranche) = getIdForUnderlying(underlyingAsset);
     if(isTranche) {
       _totalTrancheTokens++;
       _isTranche[aTokenID] = true;
@@ -135,6 +137,7 @@ contract ATokenERC6909 is IncentivizedERC6909(), VersionedInitializable {
     return _underlyingAssetAddresses[id];
   }
 
+
     function _beforeTokenTransfer(
     address from,
     address to,
@@ -142,7 +145,7 @@ contract ATokenERC6909 is IncentivizedERC6909(), VersionedInitializable {
     uint256 amount
     ) internal override {
         if(isDebtToken(id)) {
-            revert();
+            require(msg.sender == address(POOL), Errors.CT_CALLER_MUST_BE_LENDING_POOL);
         }
     }
 
@@ -159,6 +162,65 @@ contract ATokenERC6909 is IncentivizedERC6909(), VersionedInitializable {
         }
     }
 
+    function transfer(
+    address to,
+    uint256 id,
+    uint256 amount
+    ) public payable override returns (bool){
+        if(isAToken(id)){
+          address underlyingAsset = _underlyingAssetAddresses[id];
+
+          uint256 index = POOL.getReserveNormalizedIncome(underlyingAsset, true);
+          uint256 fromBalanceBefore = super.balanceOf(msg.sender, id).rayMul(index);
+          uint256 toBalanceBefore = super.balanceOf(to, id).rayMul(index);
+
+          super.transfer(to, id, amount);
+
+          POOL.finalizeTransfer(
+            _underlyingAssetAddresses[id],
+            true,
+            msg.sender,
+            to,
+            amount,
+            fromBalanceBefore,
+            toBalanceBefore
+          );
+
+        }else{
+          super.transfer(to, id, amount);
+        }
+    }
+    
+    function transferFrom(
+    address from,
+    address to,
+    uint256 id,
+    uint256 amount
+    ) public payable override returns (bool){
+        if(isAToken(id)){
+          address underlyingAsset = _underlyingAssetAddresses[id];
+
+          uint256 index = POOL.getReserveNormalizedIncome(underlyingAsset, true);
+          uint256 fromBalanceBefore = super.balanceOf(from, id).rayMul(index);
+          uint256 toBalanceBefore = super.balanceOf(to, id).rayMul(index);
+
+          super.transferFrom(from,to, id, amount);
+
+          POOL.finalizeTransfer(
+            _underlyingAssetAddresses[id],
+            true,
+            from,
+            to,
+            amount,
+            fromBalanceBefore,
+            toBalanceBefore
+          );
+
+        }else{
+          super.transferFrom(from, to, id, amount);
+        }
+    }
+
     function getIndexForUnderlyingAsset(address underlyingAsset) public view returns (uint256 index) {
         ILendingPool pool = ILendingPool(_addressesProvider.getLendingPool());
         index = pool.getReserveData(underlyingAsset, true).liquidityIndex;
@@ -171,7 +233,7 @@ contract ATokenERC6909 is IncentivizedERC6909(), VersionedInitializable {
         index = index.rayMul(underlyingIndex).rayDiv(1E27);
     }
 
-    function transferUnderlyingTo(uint256 id, address to, uint256 amount) external {
+    function transferUnderlyingTo(address to, uint256 id, uint256 amount) public {
         require(msg.sender == address(POOL), Errors.CT_CALLER_MUST_BE_LENDING_POOL);
         if(_isTranche[id]) {
             //pool.transferAndUnwrap(_underlyingAssetAddresses[id], to, amount);
@@ -198,6 +260,14 @@ contract ATokenERC6909 is IncentivizedERC6909(), VersionedInitializable {
     return currentSupplyScaled.rayMul(getIndexForOverlyingAsset(id));
   }
 
+  function scaledTotalSupply(uint256 id) public view returns (uint256) {
+    return super.totalSupply(id);
+  }
+
+  function isAToken(uint256 id) public pure returns (bool) {
+    return id < DebtTokenAddressableIDs && id >= ATokenAddressableIDs;
+  }
+
   function isDebtToken(uint256 id) public pure returns (bool) {
     return id >= DebtTokenAddressableIDs;
   }
@@ -222,4 +292,90 @@ contract ATokenERC6909 is IncentivizedERC6909(), VersionedInitializable {
       return false;
     }
   }
+   function mintToTreasury(uint256 id, uint256 amount, uint256 index) external {
+    require(msg.sender == address(POOL), Errors.CT_CALLER_MUST_BE_LENDING_POOL);
+    if (amount == 0) {
+      return;
+    }
+
+    address treasury = _addressesProvider.getMiniPoolTreasury(_minipoolId);
+
+    // Compared to the normal mint, we don't check for rounding errors.
+    // The amount to mint can easily be very small since it is a fraction of the interest ccrued.
+    // In that case, the treasury will experience a (very small) loss, but it
+    // wont cause potentially valid transactions to fail.
+    _mint(treasury, id,  amount.rayDiv(index));
+  }
+
+  function mint(address user, address onBehalfOf, uint256 id, uint256 amount, uint256 index) external returns (bool){
+    require(msg.sender == address(POOL), Errors.CT_CALLER_MUST_BE_LENDING_POOL);
+    if (amount == 0) {
+      return false;
+    }
+
+    uint256 previousBalance;
+
+    if(id >= DebtTokenAddressableIDs) {
+      if(onBehalfOf != user) {
+        require(_borrowAllowances[id][onBehalfOf][user] >= amount, Errors.BORROW_ALLOWANCE_NOT_ENOUGH);
+        _decreaseBorrowAllowance(onBehalfOf, user, id, amount);
+      }
+      previousBalance = super.balanceOf(onBehalfOf, id);
+      uint256 amountScaled = amount.rayDiv(index);
+      require(amountScaled != 0, Errors.CT_INVALID_MINT_AMOUNT);
+      _mint(user, id, amountScaled);
+    } else {
+      previousBalance = super.balanceOf(user, id);
+      uint256 amountScaled = amount.rayDiv(index);
+      require(amountScaled != 0, Errors.CT_INVALID_MINT_AMOUNT);
+      _mint(user, id, amountScaled);
+    }
+
+    return previousBalance == 0;
+  }
+
+  function burn(
+    address user,
+    address receiverOfUnderlying,
+    uint256 id,
+    uint256 amount,
+    uint256 index
+  ) external {
+    require(msg.sender == address(POOL), Errors.CT_CALLER_MUST_BE_LENDING_POOL);
+    if(isDebtToken(id)) {
+      uint256 amountScaled = amount.rayDiv(index);
+      require(amountScaled != 0, Errors.CT_INVALID_BURN_AMOUNT);
+      _burn(user, id, amountScaled);
+    } else {
+      uint256 amountScaled = amount.rayDiv(index);
+      require(amountScaled != 0, Errors.CT_INVALID_BURN_AMOUNT);
+      _burn(user, id, amountScaled);
+      transferUnderlyingTo(receiverOfUnderlying, id, amount);
+    }
+  }
+  
+
+  function _decreaseBorrowAllowance(
+    address delegator,
+    address delegatee,
+    uint256 id,
+    uint256 amount
+  ) internal {
+    uint256 newAllowance = 
+      _borrowAllowances[id][delegator][delegatee].sub(amount, Errors.BORROW_ALLOWANCE_NOT_ENOUGH);
+    _borrowAllowances[id][delegator][delegatee] = newAllowance;
+  }
+
+  function approveDelegation(address delegatee, uint256 id, uint256 amount) external {
+    _borrowAllowances[id][msg.sender][delegatee] = amount;
+  }
+
+  function balanceOf(address user, uint256 id) public override view returns (uint256) {
+    return super.balanceOf(user, id).rayMul(POOL.getReserveNormalizedIncome(_underlyingAssetAddresses[id], true));
+  }
+
+  function handleRepayment(address user, uint256 id, uint256 amount) external {
+    require(msg.sender == address(POOL), Errors.CT_CALLER_MUST_BE_LENDING_POOL);
+  }
+
 }

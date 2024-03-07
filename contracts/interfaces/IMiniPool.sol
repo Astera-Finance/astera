@@ -1,7 +1,8 @@
 // SPDX-License-Identifier: agpl-3.0
 pragma solidity ^0.8.23;
 
-import {ILendingPoolAddressesProvider} from './ILendingPoolAddressesProvider.sol';
+import {IMiniPoolAddressesProvider} from './IMiniPoolAddressesProvider.sol';
+import {IAERC6909} from './IAERC6909.sol';
 import {DataTypes} from '../protocol/libraries/types/DataTypes.sol';
 
 interface IMiniPool {
@@ -296,11 +297,11 @@ interface IMiniPool {
       uint256 healthFactor
     );
 
-  function initReserve(
-    address reserve,
-    bool reserveType,
-    address aTokenAddress,
-    address variableDebtAddress,
+function initReserve(
+    address asset,
+    IAERC6909 aTokenAddress,
+    uint256 aTokenID,
+    uint256 variableDebtTokenID,
     address interestRateStrategyAddress
   ) external;
 
@@ -365,7 +366,7 @@ interface IMiniPool {
    * @param reserveType Whether the reserve is boosted by a vault
    * @return The state of the reserve
    **/
-  function getReserveData(address asset, bool reserveType) external view returns (DataTypes.ReserveData memory);
+  function getReserveData(address asset, bool reserveType) external view returns (DataTypes.MiniPoolReserveData memory);
 
   function finalizeTransfer(
     address asset,
@@ -380,7 +381,7 @@ interface IMiniPool {
   function getReservesList() external view returns (address[] memory, bool[] memory);
   function getReservesCount() external view returns (uint256);
 
-  function getAddressesProvider() external view returns (ILendingPoolAddressesProvider);
+  function getAddressesProvider() external view returns (IMiniPoolAddressesProvider);
 
   function MAX_NUMBER_RESERVES() external view returns (uint256);
 

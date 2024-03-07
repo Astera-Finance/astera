@@ -22,6 +22,7 @@ contract MiniPoolAddressesProvider is Ownable{
 
   mapping(uint256 => address) private _minipools;
   mapping(address => address) private _miniPoolToAERC6909;
+  mapping(uint256 => address) private _miniPoolToTreasury; 
   uint256 private _minipoolCount;
 
   bytes32 private constant LENDING_POOL = 'LENDING_POOL';
@@ -120,6 +121,14 @@ contract MiniPoolAddressesProvider is Ownable{
 
   function getAERC6909BYID(uint256 id) external view returns (address) {
     return _miniPoolToAERC6909[_minipools[id]];
+  }
+
+  function getMiniPoolTreasury(uint256 id) external view returns (address) {
+    return _miniPoolToTreasury[id];
+  }
+
+  function getMiniPoolConfigurator() external view returns (address) {
+    return _addresses[LENDING_POOL_CONFIGURATOR];
   }
 
 

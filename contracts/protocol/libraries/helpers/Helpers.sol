@@ -2,6 +2,7 @@
 pragma solidity ^0.8.23;
 
 import {IERC20} from '../../../dependencies/openzeppelin/contracts/IERC20.sol';
+import {IERC6909} from '../../../interfaces/IERC6909.sol';
 import {DataTypes} from '../types/DataTypes.sol';
 
 /**
@@ -32,6 +33,26 @@ library Helpers {
   {
     return (
       IERC20(reserve.variableDebtTokenAddress).balanceOf(user)
+    );
+  }
+
+    function getUserCurrentDebt(address user, DataTypes.MiniPoolReserveData storage reserve)
+    internal
+    view
+    returns (uint256)
+  {
+    return (
+      IERC6909(reserve.aTokenAddress).balanceOf(user, reserve.variableDebtTokenID)
+    );
+  }
+
+  function getUserCurrentDebtMemory(address user, DataTypes.MiniPoolReserveData memory reserve)
+    internal
+    view
+    returns (uint256)
+  {
+    return (
+      IERC6909(reserve.aTokenAddress).balanceOf(user, reserve.variableDebtTokenID)
     );
   }
 }
