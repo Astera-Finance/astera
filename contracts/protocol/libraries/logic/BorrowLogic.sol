@@ -21,6 +21,8 @@ import {UserConfiguration} from '../configuration/UserConfiguration.sol';
 import {UserRecentBorrow} from '../configuration/UserRecentBorrow.sol';
 import {Helpers} from '../helpers/Helpers.sol';
 
+import {IFlowLimiter} from '../../../interfaces/IFlowLimiter.sol';
+
 /**
  * @title BorrowLogic library
  * @author Granary
@@ -400,6 +402,55 @@ import {Helpers} from '../helpers/Helpers.sol';
     return paybackAmount;
   }
 
+
+
+  struct ExecuteMiniPoolBorrowParams {
+    address asset;
+    bool reserveType;
+    uint256 amount;
+    address miniPoolAddress;
+    address aTokenAddress;
+    ILendingPoolAddressesProvider addressesProvider;
+    uint256 reservesCount;
+  }
+  function executeMiniPoolBorrow(
+    ExecuteMiniPoolBorrowParams memory vars,
+    mapping(address => mapping(bool => DataTypes.ReserveData)) storage reserves
+  ) external {
+      IFlowLimiter flowLimiter = IFlowLimiter(vars.addressesProvider.getFlowLimiter());
+      DataTypes.ReserveData storage reserve = reserves[vars.asset][vars.reserveType];
+      require(reserve.configuration.getActive(), Errors.VL_NO_ACTIVE_RESERVE);
+
+      if(flowLimiter.currentFlow(vars.asset, vars.miniPoolAddress) + vars.amount > flowLimiter.getFlowLimit(vars.asset, vars.miniPoolAddress)) {
+        //revert(Errors.VL_BORROW_FLOW_LIMIT_REACHED);
+        revert();
+      }else {
+
+        IVariableDebtToken(reserve.variableDebtTokenAddress).mint(
+        vars.miniPoolAddress,
+        vars.miniPoolAddress,
+        vars.amount,
+        reserve.variableBorrowIndex);
+
+        reserve.updateInterestRates(
+          vars.asset,
+          vars.aTokenAddress,
+          0,
+          vars.amount
+        );     
+           
+        IAToken(vars.aTokenAddress).transferUnderlyingTo(vars.miniPoolAddress, vars.amount);
+        
+
+        emit Borrow(
+          vars.asset,
+          vars.miniPoolAddress,
+          address(flowLimiter),
+          vars.amount,
+          reserve.currentVariableBorrowRate
+        );
+      }
+  }
 
 
 

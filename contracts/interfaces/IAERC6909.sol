@@ -31,4 +31,5 @@ interface IAERC6909 is IERC6909{
     function burn(address user, address receiverOfUnderlying, uint256 id, uint256 amount, uint256 index) external;
     function approveDelegation(address delegatee, uint256 id, uint256 amount) external;
     function handleRepayment(address user, uint256 id, uint256 amount) external;
+    function isTranche(uint256 id) external view returns (bool);
 }

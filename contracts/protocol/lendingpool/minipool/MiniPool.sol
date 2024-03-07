@@ -114,7 +114,7 @@ contract MiniPool is VersionedInitializable, IMiniPool, MiniPoolStorage {
     bool reserveType,
     uint256 amount,
     address onBehalfOf
-  ) external override whenNotPaused {
+  ) public override whenNotPaused {
     MiniPoolDepositLogic.deposit(
       MiniPoolDepositLogic.DepositParams(
         asset,
@@ -160,6 +160,14 @@ contract MiniPool is VersionedInitializable, IMiniPool, MiniPoolStorage {
     );
   }
 
+
+  struct borrowVars{
+    uint256 availableLiquidity;
+    uint256 amountRecieved;
+    address onBehalfOf;
+    address aTokenAddress;
+    address LendingPool;
+  }
   /**
    * @dev Allows users to borrow a specific `amount` of the reserve underlying asset, provided that the borrower
    * already deposited enough collateral, or he was given enough allowance by a credit delegator on the VariableDebtToken
@@ -178,6 +186,33 @@ contract MiniPool is VersionedInitializable, IMiniPool, MiniPoolStorage {
     address onBehalfOf
   ) external override whenNotPaused {
     DataTypes.MiniPoolReserveData storage reserve = _reserves[asset];
+    borrowVars memory vars;
+    vars.aTokenAddress = reserve.aTokenAddress;
+    require(vars.aTokenAddress != address(0), "Reserve not initialized");
+    vars.availableLiquidity = IERC20(asset).balanceOf(vars.aTokenAddress);
+    if(amount > vars.availableLiquidity && IAERC6909(reserve.aTokenAddress).isTranche(reserve.aTokenID)){
+      vars.LendingPool = _addressesProvider.getLendingPool();
+      ILendingPool(vars.LendingPool).
+        miniPoolBorrow(
+          asset,
+          reserveType,
+          amount.sub(vars.availableLiquidity),
+          address(this),
+          address(this)
+        );
+     
+        address underlying = IAERC6909(vars.aTokenAddress).getUnderlyingAsset(reserve.aTokenID);
+        vars.amountRecieved = IERC20(underlying).balanceOf(address(this));
+
+        IERC20(underlying).approve(vars.LendingPool, vars.amountRecieved);
+        ILendingPool(vars.LendingPool).deposit(underlying, true, vars.amountRecieved, address(this));
+
+        vars.amountRecieved = IERC20(asset).balanceOf(address(this));
+
+        IERC20(asset).approve(vars.aTokenAddress, vars.amountRecieved);
+        deposit(asset, reserveType, vars.amountRecieved, address(this));
+      }
+
 
     MiniPoolBorrowLogic.executeBorrow(
         MiniPoolBorrowLogic.ExecuteBorrowParams(

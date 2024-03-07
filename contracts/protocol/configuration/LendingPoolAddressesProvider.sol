@@ -26,6 +26,8 @@ contract LendingPoolAddressesProvider is Ownable, ILendingPoolAddressesProvider 
   bytes32 private constant EMERGENCY_ADMIN = 'EMERGENCY_ADMIN';
   bytes32 private constant LENDING_POOL_COLLATERAL_MANAGER = 'COLLATERAL_MANAGER';
   bytes32 private constant PRICE_ORACLE = 'PRICE_ORACLE';
+  bytes32 private constant MINIPOOL_ADDRESSES_PROVIDER = 'MINIPOOL_ADDRESSES_PROVIDER';
+  bytes32 private constant FLOW_LIMITER = 'FLOW_LIMITER';
 
   constructor(string memory marketId) public Ownable(msg.sender) {
     _setMarketId(marketId);
@@ -201,5 +203,21 @@ contract LendingPoolAddressesProvider is Ownable, ILendingPoolAddressesProvider 
   function _setMarketId(string memory marketId) internal {
     _marketId = marketId;
     emit MarketIdSet(marketId);
+  }
+
+  function getMiniPoolAddressesProvider() external view override returns (address) {
+    return getAddress(MINIPOOL_ADDRESSES_PROVIDER);
+  }
+
+  function setMiniPoolAddressesProvider(address provider) external override onlyOwner {
+    _addresses[MINIPOOL_ADDRESSES_PROVIDER] = provider;
+  }
+
+  function getFlowLimiter() external view override returns (address) {
+    return getAddress(FLOW_LIMITER);
+  }
+
+  function setFlowLimiter(address flowLimiter) external override onlyOwner {
+    _addresses[FLOW_LIMITER] = flowLimiter;
   }
 }

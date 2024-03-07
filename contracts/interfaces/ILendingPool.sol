@@ -401,4 +401,13 @@ interface ILendingPool {
   function rebalance(address aTokenAddress) external;
   
   function getTotalManagedAssets(address aTokenAddres) external view returns (uint256);
+
+
+  function miniPoolBorrow(
+    address asset,
+    bool reserveType,
+    uint256 amount,
+    address miniPoolAddress,
+    address aTokenAddress
+  ) external;
 }

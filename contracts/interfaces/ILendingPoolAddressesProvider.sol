@@ -52,5 +52,14 @@ interface ILendingPoolAddressesProvider {
   function getPriceOracle() external view returns (address);
 
   function setPriceOracle(address priceOracle) external;
+
+  function getMiniPoolAddressesProvider() external view returns (address);
+
+  function setMiniPoolAddressesProvider(address provider) external;
+
+  function getFlowLimiter() external view returns (address);
+
+  function setFlowLimiter(address flowLimiter) external;
+
   
 }

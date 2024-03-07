@@ -344,6 +344,29 @@ contract LendingPool is VersionedInitializable, ILendingPool, LendingPoolStorage
     );
   }
 
+  function miniPoolBorrow(
+    address asset,
+    bool reserveType,
+    uint256 amount,
+    address miniPoolAddress,
+    address aTokenAddress
+  ) external override whenNotPaused {
+    DataTypes.ReserveData storage reserve = _reserves[asset][reserveType];
+
+    BorrowLogic.executeMiniPoolBorrow(
+        BorrowLogic.ExecuteMiniPoolBorrowParams(
+            asset,
+            reserveType,
+            amount,
+            msg.sender,
+            aTokenAddress,
+            _addressesProvider,
+            _reservesCount
+        ),
+        _reserves
+    );
+  }
+
   /**
    * @dev Returns the state and configuration of the reserve
    * @param asset The address of the underlying asset of the reserve
