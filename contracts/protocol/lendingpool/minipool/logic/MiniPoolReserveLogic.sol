@@ -167,6 +167,7 @@ library MiniPoolReserveLogic {
 
     reserve.liquidityIndex = uint128(WadRayMath.ray());
     reserve.variableBorrowIndex = uint128(WadRayMath.ray());
+    reserve.aTokenAddress = address(aTokenAddress);
     reserve.aTokenID = aTokenID;
     reserve.variableDebtTokenID = variableDebtTokenID;
     reserve.interestRateStrategyAddress = interestRateStrategyAddress;

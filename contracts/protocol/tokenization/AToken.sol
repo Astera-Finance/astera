@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: agpl-3.0
-pragma solidity ^0.8.23;
+pragma solidity ^0.8.20;
 
 import {IERC20} from '../../dependencies/openzeppelin/contracts/IERC20.sol';
 import {SafeERC20} from '../../dependencies/openzeppelin/contracts/SafeERC20.sol';
@@ -449,25 +449,25 @@ contract AToken is
     uint256 toWithdraw;
     uint256 toDeposit;
     // if we have profit that's more than the threshold, record it for withdrawal and redistribution
-    if (sharesToAssets.sub(currentAllocated) >= claimingThreshold) {
-      profit = sharesToAssets.sub(currentAllocated);
+    if (sharesToAssets - currentAllocated >= claimingThreshold) {
+      profit = sharesToAssets - currentAllocated;
     }
     // what % of the final pool balance would the current allocation be?
-    uint256 finalBalance = underlyingAmount.sub(_amountToWithdraw);
-    uint256 pctOfFinalBal = finalBalance == 0 ? type(uint256).max : currentAllocated.mul(10000).div(finalBalance);
+    uint256 finalBalance = underlyingAmount - _amountToWithdraw;
+    uint256 pctOfFinalBal = finalBalance == 0 ? type(uint256).max : currentAllocated * 10000 / finalBalance;
     // if abs(percentOfFinalBal - yieldingPercentage) > drift, we will need to deposit more or withdraw some
-    uint256 finalFarmingAmount = finalBalance.mul(farmingPct).div(10000);
-    if (pctOfFinalBal > farmingPct && pctOfFinalBal.sub(farmingPct) > farmingPctDrift) {
+    uint256 finalFarmingAmount = finalBalance * farmingPct / 10000;
+    if (pctOfFinalBal > farmingPct && pctOfFinalBal - farmingPct > farmingPctDrift) {
       // we will end up overallocated, withdraw some
-      toWithdraw = currentAllocated.sub(finalFarmingAmount);
-      farmingBal = farmingBal.sub(toWithdraw);
-    } else if (pctOfFinalBal < farmingPct && farmingPct.sub(pctOfFinalBal) > farmingPctDrift) {
+      toWithdraw = currentAllocated - finalFarmingAmount;
+      farmingBal = farmingBal - toWithdraw;
+    } else if (pctOfFinalBal < farmingPct && farmingPct - pctOfFinalBal > farmingPctDrift) {
       // we will end up underallocated, deposit more
-      toDeposit = finalFarmingAmount.sub(currentAllocated);
-      farmingBal = farmingBal.add(toDeposit);
+      toDeposit = finalFarmingAmount - currentAllocated;
+      farmingBal = farmingBal + toDeposit;
     }
     // + means deposit, - means withdraw
-    int256 netAssetMovement = int256(toDeposit).sub(int256(toWithdraw)).sub(int256(profit));
+    int256 netAssetMovement = int256(toDeposit) - int256(toWithdraw) - int256(profit);
     if (netAssetMovement > 0) {
       vault.deposit(uint256(netAssetMovement), address(this));
     } else if (netAssetMovement < 0) {
@@ -476,7 +476,7 @@ contract AToken is
     // if we recorded profit, recalculate it for precision and distribute
     if (profit != 0) {
       // profit is ultimately (coll at hand) + (coll allocated to yield generator) - (recorded total coll Amount in pool)
-      profit = IERC20(_underlyingAsset).balanceOf(address(this)).add(farmingBal).sub(underlyingAmount);
+      profit = IERC20(_underlyingAsset).balanceOf(address(this)) + farmingBal - underlyingAmount;
       if (profit != 0) {
         // distribute to profitHandler
         IERC20(_underlyingAsset).safeTransfer(profitHandler, profit);
@@ -508,6 +508,16 @@ contract AToken is
     require(IERC4626(_vault).asset() == _underlyingAsset, '83');
     vault = IERC4626(_vault);
     IERC20(_underlyingAsset).forceApprove(address(vault), type(uint256).max);
+  }
+
+  function setTreasury(address treasury) external onlyLendingPool override {
+    require(treasury != address(0), '85');
+    _treasury = treasury;
+  }
+
+  function setIncentivesController(IRewarder incentivesController) external onlyLendingPool override {
+    require(address(incentivesController) != address(0), '85');
+    _incentivesController = incentivesController;
   }
   function rebalance() external onlyLendingPool override {
     _rebalance(0);

@@ -1,0 +1,112 @@
+// SPDX-License-Identifier: BUSL-1.1
+pragma solidity ^0.8.0;
+
+import "./Common.sol";
+import "contracts/protocol/libraries/helpers/Errors.sol";
+import {WadRayMath} from "contracts/protocol/libraries/math/WadRayMath.sol";
+// import {ILendingPool} from "contracts/interfaces/ILendingPool.sol";
+
+contract DefaultReserveInterestRateStrategyTest is Common {
+    using WadRayMath for uint256;
+
+    ERC20[] erc20Tokens;
+    DeployedContracts deployedContracts;
+    ConfigAddresses configAddresses;
+
+    function setUp() public {
+        opFork = vm.createSelectFork(RPC, FORK_BLOCK);
+        assertEq(vm.activeFork(), opFork);
+        deployedContracts = fixture_deployProtocol();
+        configAddresses = ConfigAddresses(
+            address(deployedContracts.stableStrategy),
+            address(deployedContracts.volatileStrategy),
+            address(deployedContracts.treasury),
+            address(deployedContracts.rewarder),
+            address(deployedContracts.aTokensAndRatesHelper)
+        );
+        fixture_configureProtocol(
+            address(deployedContracts.lendingPool),
+            configAddresses,
+            deployedContracts.lendingPoolConfigurator,
+            deployedContracts.lendingPoolAddressesProvider,
+            deployedContracts.protocolDataProvider
+        );
+        (grainTokens, variableDebtTokens) =
+            fixture_getGrainTokensAndDebts(tokens, deployedContracts.protocolDataProvider);
+        mockedVaults = fixture_deployErc4626Mocks(tokens, address(deployedContracts.treasury));
+        erc20Tokens = fixture_getErc20Tokens(tokens);
+        fixture_transferTokensToTestContract(erc20Tokens, tokensWhales, address(this));
+    }
+
+    function testCheckRatesAtZeroUtilizationRate() public {
+        uint256[] memory reserveFactors = new uint256[](erc20Tokens.length);
+        for (uint32 idx = 0; idx < erc20Tokens.length; idx++) {
+            uint256 currentLiquidityRate = 0;
+            uint256 currentVariableBorrowRate = 0;
+            (,,,, reserveFactors[idx],,,,) =
+                deployedContracts.protocolDataProvider.getReserveConfigurationData(address(erc20Tokens[idx]), false);
+            (currentLiquidityRate, currentVariableBorrowRate) = deployedContracts.stableStrategy.calculateInterestRates(
+                address(erc20Tokens[idx]), address(grainTokens[idx]), 0, 0, 0, reserveFactors[idx]
+            );
+            assertEq(currentLiquidityRate, 0);
+            assertEq(currentVariableBorrowRate, 0);
+        }
+    }
+
+    function testCheckRatesAtEightyUtilizationRate() public {
+        uint256[] memory reserveFactors = new uint256[](erc20Tokens.length);
+        for (uint32 idx = 0; idx < erc20Tokens.length; idx++) {
+            uint256 currentLiquidityRate = 0;
+            uint256 currentVariableBorrowRate = 0;
+            (,,,, reserveFactors[idx],,,,) =
+                deployedContracts.protocolDataProvider.getReserveConfigurationData(address(erc20Tokens[idx]), false);
+            (currentLiquidityRate, currentVariableBorrowRate) = deployedContracts.stableStrategy.calculateInterestRates(
+                address(erc20Tokens[idx]),
+                address(grainTokens[idx]),
+                200000000000000000,
+                0,
+                800000000000000000,
+                reserveFactors[idx]
+            );
+            uint256 baseVariableBorrowRate = deployedContracts.stableStrategy.baseVariableBorrowRate();
+            uint256 variableRateSlope1 = deployedContracts.stableStrategy.variableRateSlope1();
+            console.log("baseVariableBorrowRate: ", baseVariableBorrowRate);
+            console.log("variableRateSlope1: ", variableRateSlope1);
+            uint256 expectedVariableRate = baseVariableBorrowRate + variableRateSlope1;
+            uint256 value = expectedVariableRate * 80 / 100;
+            uint256 percentage = PERCENTAGE_FACTOR - reserveFactors[idx];
+            console.log("percentage: ", percentage);
+            uint256 expectedLiquidityRate = (value * percentage + 5000) / PERCENTAGE_FACTOR;
+
+            assertEq(currentLiquidityRate, expectedLiquidityRate);
+            assertEq(currentVariableBorrowRate, expectedVariableRate);
+        }
+    }
+
+    function testCheckRatesAtHundredUtilizationRate() public {
+        uint256[] memory reserveFactors = new uint256[](erc20Tokens.length);
+        for (uint32 idx = 0; idx < erc20Tokens.length; idx++) {
+            uint256 currentLiquidityRate = 0;
+            uint256 currentVariableBorrowRate = 0;
+            (,,,, reserveFactors[idx],,,,) =
+                deployedContracts.protocolDataProvider.getReserveConfigurationData(address(erc20Tokens[idx]), false);
+            (currentLiquidityRate, currentVariableBorrowRate) = deployedContracts.stableStrategy.calculateInterestRates(
+                address(erc20Tokens[idx]), address(grainTokens[idx]), 0, 0, 800000000000000000, reserveFactors[idx]
+            );
+            uint256 baseVariableBorrowRate = deployedContracts.stableStrategy.baseVariableBorrowRate();
+            uint256 variableRateSlope1 = deployedContracts.stableStrategy.variableRateSlope1();
+            uint256 variableRateSlope2 = deployedContracts.stableStrategy.variableRateSlope2();
+            console.log("baseVariableBorrowRate: ", baseVariableBorrowRate);
+            console.log("variableRateSlope1: ", variableRateSlope1);
+            console.log("variableRateSlope2: ", variableRateSlope2);
+            uint256 expectedVariableRate = baseVariableBorrowRate + variableRateSlope1 + variableRateSlope2;
+            uint256 value = expectedVariableRate;
+            uint256 percentage = PERCENTAGE_FACTOR - reserveFactors[idx];
+            console.log("percentage: ", percentage);
+            uint256 expectedLiquidityRate = (value * percentage + 5000) / PERCENTAGE_FACTOR;
+
+            assertEq(currentLiquidityRate, expectedLiquidityRate);
+            assertEq(currentVariableBorrowRate, expectedVariableRate);
+        }
+    }
+}

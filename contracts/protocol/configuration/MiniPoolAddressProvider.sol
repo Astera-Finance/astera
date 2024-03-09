@@ -27,7 +27,7 @@ contract MiniPoolAddressesProvider is Ownable{
 
   bytes32 private constant LENDING_POOL = 'LENDING_POOL';
   bytes32 private constant LENDING_POOL_ADDRESSES_PROVIDER = 'LENDING_POOL_ADDRESSES_PROVIDER';
-  bytes32 private constant LENDING_POOL_CONFIGURATOR = 'LENDING_POOL_CONFIGURATOR';
+  bytes32 private constant MINI_POOL_CONFIGURATOR = 'MINI_POOL_CONFIGURATOR';
   bytes32 private constant POOL_ADMIN = 'POOL_ADMIN';
   bytes32 private constant EMERGENCY_ADMIN = 'EMERGENCY_ADMIN';
   bytes32 private constant LENDING_POOL_COLLATERAL_MANAGER = 'COLLATERAL_MANAGER';
@@ -36,10 +36,9 @@ contract MiniPoolAddressesProvider is Ownable{
   bytes32 private constant MINIPOOL_IMPL = 'MINIPOOL_IMPL';
   bytes32 private constant ATOKEN6909_IMPL = 'ATOKEN6909_IMPL';
 
-  constructor(ILendingPoolAddressesProvider provider) public Ownable(msg.sender) {
+  constructor(ILendingPoolAddressesProvider provider) Ownable(msg.sender) {
     _addresses[LENDING_POOL_ADDRESSES_PROVIDER] = address(provider);
     _addresses[LENDING_POOL] = provider.getLendingPool();
-    _addresses[LENDING_POOL_CONFIGURATOR] = provider.getLendingPoolConfigurator();
     _addresses[POOL_ADMIN] = provider.getPoolAdmin();
     _addresses[EMERGENCY_ADMIN] = provider.getEmergencyAdmin();
     _addresses[LENDING_POOL_COLLATERAL_MANAGER] = provider.getLendingPoolCollateralManager();
@@ -55,7 +54,7 @@ contract MiniPoolAddressesProvider is Ownable{
   }
 
   function getLendingPoolConfigurator() external view returns (address) {
-    return _addresses[LENDING_POOL_CONFIGURATOR];
+    return _addresses[MINI_POOL_CONFIGURATOR];
   }
 
   function getPoolAdmin() external view returns (address) {
@@ -96,17 +95,19 @@ contract MiniPoolAddressesProvider is Ownable{
 
   function deployMiniPool() external onlyOwner {
     InitializableImmutableAdminUpgradeabilityProxy proxy = new InitializableImmutableAdminUpgradeabilityProxy(
-      _addresses[MINIPOOL_IMPL]);
+    address(this));
 
-    bytes memory data = abi.encode(_minipoolCount);
-    proxy.initialize(address(this), data);
+    bytes memory params = abi.encodeWithSignature('initialize(address,uint256)', address(this),_minipoolCount);
+    proxy.initialize(_addresses[MINIPOOL_IMPL], params);
 
     _minipools[_minipoolCount] = address(proxy);
 
     InitializableImmutableAdminUpgradeabilityProxy aTokenProxy = new InitializableImmutableAdminUpgradeabilityProxy(
-      _addresses[ATOKEN6909_IMPL]);
+      address(this));
 
-    aTokenProxy.initialize(address(this), data);
+    aTokenProxy.initialize(_addresses[ATOKEN6909_IMPL], params);
+
+    _miniPoolToAERC6909[address(proxy)] = address(aTokenProxy);
 
     _minipoolCount++;
   }
@@ -128,7 +129,27 @@ contract MiniPoolAddressesProvider is Ownable{
   }
 
   function getMiniPoolConfigurator() external view returns (address) {
-    return _addresses[LENDING_POOL_CONFIGURATOR];
+    return _addresses[MINI_POOL_CONFIGURATOR];
+  }
+
+  function _updateImpl(bytes32 id, address newAddress) internal {
+    address payable proxyAddress = payable(_addresses[id]);
+
+    InitializableImmutableAdminUpgradeabilityProxy proxy =
+      InitializableImmutableAdminUpgradeabilityProxy(proxyAddress);
+    bytes memory params = abi.encodeWithSignature('initialize(address)', address(this));
+
+    if (proxyAddress == address(0)) {
+      proxy = new InitializableImmutableAdminUpgradeabilityProxy(address(this));
+      proxy.initialize(newAddress, params);
+      _addresses[id] = address(proxy);
+    } else {
+      proxy.upgradeToAndCall(newAddress, params);
+    }
+  }
+
+  function setMiniPoolConfigurator(address configuratorIMPL) external onlyOwner {
+    _updateImpl(MINI_POOL_CONFIGURATOR, configuratorIMPL);
   }
 
 

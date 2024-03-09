@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: agpl-3.0
-pragma solidity ^0.8.23;
+pragma solidity ^0.8.20;
 
 interface IChainlinkAggregator {
   function decimals() external view returns (uint8);

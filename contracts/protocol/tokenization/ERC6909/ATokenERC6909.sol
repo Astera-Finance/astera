@@ -35,7 +35,7 @@ contract ATokenERC6909 is IncentivizedERC6909(), VersionedInitializable {
   uint256 constant ATokenAddressableIDs = 1000; // This is the first ID for aToken
   uint256 constant DebtTokenAddressableIDs = 2000; // This is the first ID for debtToken
 
-
+  event TokenInitialized(uint256 indexed id, string name, string symbol, uint8 decimals, address underlyingAsset);
 
 /***
     * @dev Mapping of the underlying asset address to the aToken id
@@ -65,6 +65,7 @@ contract ATokenERC6909 is IncentivizedERC6909(), VersionedInitializable {
     require(address(provider) != address(0), Errors.LP_NOT_CONTRACT);
     _addressesProvider = IMiniPoolAddressesProvider(provider);
     _minipoolId = minipoolId;
+    POOL = IMiniPool(_addressesProvider.getMiniPool(minipoolId));
   }
 
   function _initializeATokenID(uint256 id, address underlyingAsset, string memory name, string memory symbol, uint8 decimals) internal {
@@ -76,6 +77,7 @@ contract ATokenERC6909 is IncentivizedERC6909(), VersionedInitializable {
     _setSymbol(id, string.concat('grain',symbol));
     _setDecimals(id, decimals);
     _setUnderlyingAsset(id, underlyingAsset);
+    emit TokenInitialized(id, name, symbol, decimals, underlyingAsset);
     
   }
 
@@ -88,6 +90,7 @@ contract ATokenERC6909 is IncentivizedERC6909(), VersionedInitializable {
     _setSymbol(id, string.concat('vDebt',symbol));
     _setDecimals(id, decimals);
     _setUnderlyingAsset(id, underlyingAsset);
+    emit TokenInitialized(id, name, symbol, decimals, underlyingAsset);
   }
 
   function initReserve(
@@ -96,7 +99,7 @@ contract ATokenERC6909 is IncentivizedERC6909(), VersionedInitializable {
     string memory symbol,
     uint8 decimals
   ) external returns (uint256 aTokenID, uint256 debtTokenID, bool isTranche){
-    require(msg.sender == address(POOL), Errors.CT_CALLER_MUST_BE_LENDING_POOL);
+    //require(msg.sender == address(_addressesProvider.getMiniPoolConfigurator()), "Must Be Provider");
     (aTokenID,  debtTokenID, isTranche) = getIdForUnderlying(underlyingAsset);
     if(isTranche) {
       _totalTrancheTokens++;
@@ -377,5 +380,10 @@ contract ATokenERC6909 is IncentivizedERC6909(), VersionedInitializable {
   function handleRepayment(address user, uint256 id, uint256 amount) external {
     require(msg.sender == address(POOL), Errors.CT_CALLER_MUST_BE_LENDING_POOL);
   }
+
+  function isTranche(uint256 id) public view returns (bool) {
+    return _isTranche[id];
+  }
+
 
 }

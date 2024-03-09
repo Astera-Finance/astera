@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: agpl-3.0
-pragma solidity ^0.8.23;
+pragma solidity ^0.8.20;
 
 import {IERC20} from '../dependencies/openzeppelin/contracts/IERC20.sol';
 import {IScaledBalanceToken} from './IScaledBalanceToken.sol';
@@ -119,7 +119,11 @@ interface IAToken is IERC20, IScaledBalanceToken, IInitializableAToken {
   function setProfitHandler(address _profitHandler) external;
 
   function setVault(address _vault) external;
-  
+
+  function setTreasury(address _treasury) external;
+
+  function setIncentivesController(IRewarder _incentivesController) external;
+
   function rebalance() external;
 
   function getPool() external view returns (address);

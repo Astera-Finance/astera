@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.20;
 
-import {IERC20} from './interfaces/IERC20.sol';
-import {SafeERC20} from './libraries/SafeERC20.sol';
+import {IERC20} from '../dependencies/openzeppelin/contracts/IERC20.sol';
+import {SafeERC20} from '../dependencies/openzeppelin/contracts/SafeERC20.sol';
 import {RewardsController} from './RewardsController.sol';
 
 contract Rewarder is RewardsController {

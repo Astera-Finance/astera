@@ -30,3 +30,6 @@ Note: Node LTS is recommended (18.12.1)
 
 ### Time Permitting
 - [ ] Automated Buybacks
+
+### Test
+ Run "forge test -vvvv --via-ir" to test with forge

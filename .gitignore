@@ -17,3 +17,4 @@ artifacts
 #Forge files
 forge-cache
 out
+cache_forge

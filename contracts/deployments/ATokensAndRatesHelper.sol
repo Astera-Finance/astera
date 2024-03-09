@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: agpl-3.0
-pragma solidity ^0.8.23;
+pragma solidity ^0.8.20;
 
 import {LendingPool} from '../protocol/lendingpool/LendingPool.sol';
 import {
@@ -38,7 +38,7 @@ contract ATokensAndRatesHelper is Ownable {
     address payable _pool,
     address _addressesProvider,
     address _poolConfigurator
-  ) public Ownable(msg.sender) {
+  ) Ownable(msg.sender) {
     pool = _pool;
     addressesProvider = _addressesProvider;
     poolConfigurator = _poolConfigurator;

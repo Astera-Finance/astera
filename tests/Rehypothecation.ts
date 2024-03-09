@@ -701,6 +701,19 @@ describe('Rehypothecation', function () {
       expect(await grainUSDC.getTotalManagedAssets()).to.equal(USDC_DEPOSIT_SIZE);
     });
   });
+ 
+  // ## Scenarios ##
+  describe("Scenarios", function () {
+    before(async function () {
+      [owner, addr1] = await ethers.getSigners();
+    });
+    // paused LendingPool - mint, burn, and transferUnderlyingTo will not be called, but we can still call rebalance()
+    describe("paused LendingPool", function () {
+      before(async function () {
+        [owner, addr1] = await ethers.getSigners();
+      });
+      it("rebalance()", async function () {
+        const { usdc, grainUSDC, lendingPoolProxy, lendingPoolConfiguratorProxy } = await loadFixture(deployProtocol);
 
   // ## Scenarios ##
   describe('Scenarios', function () {
@@ -739,6 +752,40 @@ describe('Rehypothecation', function () {
 
         expect(await grainUSDC.getTotalManagedAssets()).to.equal(USDC_DEPOSIT_SIZE);
       });
+    });
+
+    it("deposit and withdraw with yield", async function () {
+      const { usdc, grainUSDC, lendingPoolProxy, lendingPoolConfiguratorProxy } = await loadFixture(deployProtocol);
+
+      const USDC_DEPOSIT_SIZE = ethers.utils.parseUnits("100", 6);
+      await prepareMockTokens(usdc, addr1, USDC_DEPOSIT_SIZE);
+      await approve(lendingPoolProxy.address, usdc, addr1);
+      await deposit(lendingPoolProxy, addr1, usdc.address, false, USDC_DEPOSIT_SIZE, addr1.address);
+
+      let usdcMockErc4626 = await deployMockErc4626(usdc);
+      await lendingPoolConfiguratorProxy.setVault(grainUSDC.address, usdcMockErc4626.address);
+      await lendingPoolConfiguratorProxy.setFarmingPct(grainUSDC.address, "2000");
+      await lendingPoolConfiguratorProxy.setClaimingThreshold(grainUSDC.address, ethers.utils.parseUnits("1", 6));
+      await lendingPoolConfiguratorProxy.setFarmingPctDrift(grainUSDC.address, "200");
+      await lendingPoolConfiguratorProxy.setProfitHandler(grainUSDC.address, owner.address);
+
+      // Starting here, vault should be able to handle asset
+      expect(await usdc.balanceOf(grainUSDC.address)).to.equal(USDC_DEPOSIT_SIZE);
+
+      const remainingPct = BigNumber.from("10000").sub(await grainUSDC.farmingPct());
+      await lendingPoolConfiguratorProxy.rebalance(grainUSDC.address);
+      expect(await usdc.balanceOf(grainUSDC.address)).to.equal(USDC_DEPOSIT_SIZE.mul(remainingPct).div(10000));
+
+      // Artificially increasing balance of vault should result in yield for the graintoken
+      await prepareMockTokens(usdc, addr1, USDC_DEPOSIT_SIZE);
+      await usdc.connect(addr1).transfer(usdcMockErc4626.address, USDC_DEPOSIT_SIZE.div(2));
+      await lendingPoolConfiguratorProxy.rebalance(grainUSDC.address);
+
+      await lendingPoolConfiguratorProxy.setFarmingPct(grainUSDC.address, "5000");
+      await lendingPoolConfiguratorProxy.rebalance(grainUSDC.address);
+      // await withdraw(lendingPoolProxy, addr1, usdc.address, false, ethers.utils.parseUnits("90", 6), addr1.address);
+
+      // expect(await grainUSDC.getTotalManagedAssets()).to.equal(USDC_DEPOSIT_SIZE);
     });
 
     // not enough liquidity to withdraw, rebalance

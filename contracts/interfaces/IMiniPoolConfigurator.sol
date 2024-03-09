@@ -3,20 +3,11 @@ pragma solidity ^0.8.23;
 
 interface IMiniPoolConfigurator {
   struct InitReserveInput {
-    address aTokenImpl;
-    address variableDebtTokenImpl;
     uint8 underlyingAssetDecimals;
     address interestRateStrategyAddress;
     address underlyingAsset;
-    address treasury;
-    address incentivesController;
     string underlyingAssetName;
-    bool reserveType;
-    string aTokenName;
-    string aTokenSymbol;
-    string variableDebtTokenName;
-    string variableDebtTokenSymbol;
-    bytes params;
+    string underlyingAssetSymbol;
   }
 
   struct UpdateATokenInput {
