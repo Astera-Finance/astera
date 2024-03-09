@@ -165,16 +165,17 @@ contract MiniPoolTest is Common {
         );
 
 
-
         vm.stopPrank();
 
     }
 
   
 
-    function testDepositsAndWithdrawals() public {
+    function testDeposits() public {
         address whale = 0xacD03D601e5bB1B275Bb94076fF46ED9D753435A;
         vm.label(whale, "Whale");
+        address daiWhale = 0xD28843E10C3795E51A6e574378f8698aFe803029;
+        vm.label(daiWhale, "DaiWhale");
 
         address user = makeAddr("user");
         uint256 mpId = 0;
@@ -196,6 +197,10 @@ contract MiniPoolTest is Common {
         vm.prank(whale);
         usdc.transfer(user, amount);
 
+        console.log("whale balance: ", dai.balanceOf(daiWhale));
+        vm.prank(daiWhale);
+        dai.transfer(user, amount*1E12);
+
         vm.startPrank(user);
 
         usdc.approve(address(deployedContracts.lendingPool), amount);
@@ -212,9 +217,54 @@ contract MiniPoolTest is Common {
         assertEq(grainUSDC6909balance, amount);
 
 
+        dai.approve(address(mp), amount*1E12);
+        IMiniPool(mp).deposit(address(dai), true, amount*1E12, user);
+        assertEq(dai.balanceOf(user), 0);
+
+        uint256 dai6909balance = ATOKEN.scaledTotalSupply(1128);
+        assertEq(dai6909balance, amount*1E12);
+
+    }
+
+    function testWithdrawalsZeroDebt() public {
+        testDeposits();
+        IERC20 dai = IERC20(0xDA10009cBd5D07dd0CeCc66161FC93D7c9000da1);
+        address user = makeAddr("user");
+        uint256 mpId = 0;
+        address mp = miniPoolContracts.miniPoolAddressesProvider.getMiniPool(mpId);
+        vm.label(mp, "MiniPool");
+        IAERC6909 ATOKEN = IAERC6909(miniPoolContracts.miniPoolAddressesProvider.getMiniPoolToAERC6909(mp));
+        vm.label(address(ATOKEN), "ATOKEN");
+
+        IMiniPool(mp).withdraw(address(dai), false, 1E12, user);
+        assertEq(dai.balanceOf(user), 1E12);
+        IMiniPool(mp).withdraw(address(grainTokens[0]), false, 1E6, user);
+        assertEq(grainTokens[0].balanceOf(user), 1E6);
+
+    }
+
+    function testTransferCollateral() public {
+        testDeposits();
+        IERC20 dai = IERC20(0xDA10009cBd5D07dd0CeCc66161FC93D7c9000da1);
+        address user = makeAddr("user");
+        address user2 = makeAddr("user2");
+        uint256 mpId = 0;
+        address mp = miniPoolContracts.miniPoolAddressesProvider.getMiniPool(mpId);
+        vm.label(mp, "MiniPool");
+        IAERC6909 ATOKEN = IAERC6909(miniPoolContracts.miniPoolAddressesProvider.getMiniPoolToAERC6909(mp));
+        vm.label(address(ATOKEN), "ATOKEN");
+
+        ATOKEN.transfer(user2, 1000, 1E6);
+        ATOKEN.transfer(user2, 1128, 1E12);
+
+
 
 
     }
+
+    // function testBorrowRepay() public {
+    //     testDeposits();
+    // }
 
     // function testBorrowRepay() public {
     //     address user = makeAddr("user");

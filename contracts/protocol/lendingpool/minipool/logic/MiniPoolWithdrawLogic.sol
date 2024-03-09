@@ -2,11 +2,9 @@
 pragma solidity ^0.8.23;
 
 import {SafeMath} from '../../../../dependencies/openzeppelin/contracts/SafeMath.sol';
-import {IERC20} from '../../../../dependencies/openzeppelin/contracts/IERC20.sol';
+import {IAERC6909} from '../../../../interfaces/IAERC6909.sol';
 import {IMiniPoolAddressesProvider} from '../../../../interfaces/IMiniPoolAddressesProvider.sol';
 import {SafeERC20} from '../../../../dependencies/openzeppelin/contracts/SafeERC20.sol';
-import {IAToken} from '../../../../interfaces/IAToken.sol';
-import {IVariableDebtToken} from '../../../../interfaces/IVariableDebtToken.sol';
 import {IReserveInterestRateStrategy} from '../../../../interfaces/IReserveInterestRateStrategy.sol';
 import {ReserveConfiguration} from '../../../libraries/configuration/ReserveConfiguration.sol';
 import {ReserveBorrowConfiguration} from '../../../libraries/configuration/ReserveBorrowConfiguration.sol';
@@ -28,7 +26,6 @@ library MiniPoolWithdrawLogic {
   using SafeMath for uint256;
   using WadRayMath for uint256;
   using PercentageMath for uint256;
-  using SafeERC20 for IERC20;
   using MiniPoolReserveLogic for DataTypes.MiniPoolReserveData;
   using ReserveConfiguration for DataTypes.ReserveConfigurationMap;
   using UserConfiguration for DataTypes.UserConfigurationMap;
@@ -51,6 +48,7 @@ library MiniPoolWithdrawLogic {
         uint256 userBalance;
         uint256 amountToWithdraw;
         address aToken;
+        uint256 id;
     }
 
     function withdraw(
@@ -64,8 +62,9 @@ library MiniPoolWithdrawLogic {
         withdrawLocalVars memory localVars;
         
         {localVars.aToken = reserve.aTokenAddress;
+        localVars.id = reserve.aTokenID;
 
-        localVars.userBalance = IAToken(localVars.aToken).balanceOf(msg.sender);
+        localVars.userBalance = IAERC6909(localVars.aToken).balanceOf(msg.sender, localVars.id);
 
         localVars.amountToWithdraw = params.amount;
 
@@ -96,7 +95,7 @@ library MiniPoolWithdrawLogic {
             emit ReserveUsedAsCollateralDisabled(params.asset, msg.sender);
         }
 
-        IAToken(localVars.aToken).burn(msg.sender, params.to, localVars.amountToWithdraw, reserve.liquidityIndex);
+        IAERC6909(localVars.aToken).burn(msg.sender, params.to, localVars.id, localVars.amountToWithdraw, reserve.liquidityIndex);
 
         emit Withdraw(params.asset, msg.sender, params.to, localVars.amountToWithdraw);
 
@@ -125,13 +124,13 @@ library MiniPoolWithdrawLogic {
         
         require(msg.sender == reserves[params.asset].aTokenAddress, Errors.LP_CALLER_MUST_BE_AN_ATOKEN);
 
-        MiniPoolValidationLogic.validateTransfer(
-        params.from,
-        reserves,
-        usersConfig[params.from],
-        reservesList,
-        params.reservesCount,
-        addressesProvider.getPriceOracle()
+       MiniPoolValidationLogic.validateTransfer(
+            params.from,
+            reserves,
+            usersConfig[params.from],
+            reservesList,
+            params.reservesCount,
+            addressesProvider.getPriceOracle()
         );
 
         uint256 reserveId = reserves[params.asset].id;

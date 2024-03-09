@@ -3,6 +3,7 @@ pragma solidity ^0.8.23;
 
 import {SafeMath} from '../../../../dependencies/openzeppelin/contracts/SafeMath.sol';
 import {IERC20} from '../../../../dependencies/openzeppelin/contracts/IERC20.sol';
+import {IAToken} from '../../../../interfaces/IAToken.sol';
 import {IAERC6909} from '../../../../interfaces/IAERC6909.sol'; 
 import {MiniPoolReserveLogic} from './MiniPoolReserveLogic.sol';
 import {ReserveConfiguration} from '../../../libraries/configuration/ReserveConfiguration.sol';
@@ -136,6 +137,7 @@ library MiniPoolGenericLogic {
     uint256 avgLiquidationThreshold;
     uint256 reservesLength;
     uint256 userVolatility;
+    address underlyingAsset;
     bool healthFactorBelowThreshold;
     address currentReserveAddress;
     bool currentReserveType;
@@ -191,8 +193,12 @@ library MiniPoolGenericLogic {
         .getParams();
 
       vars.tokenUnit = 10**vars.decimals;
-      vars.reserveUnitPrice = IPriceOracleGetter(oracle).getAssetPrice(vars.currentReserveAddress);
-
+      if(IAERC6909(currentReserve.aTokenAddress).isTranche(currentReserve.aTokenID)){
+        vars.underlyingAsset = IAToken(vars.currentReserveAddress).UNDERLYING_ASSET_ADDRESS();
+        vars.reserveUnitPrice = IPriceOracleGetter(oracle).getAssetPrice(vars.underlyingAsset);
+      }else{
+        vars.reserveUnitPrice = IPriceOracleGetter(oracle).getAssetPrice(vars.currentReserveAddress);
+      }
       if (vars.liquidationThreshold != 0 && userConfig.isUsingAsCollateral(vars.i)) {
         vars.compoundedLiquidityBalance = IAERC6909(currentReserve.aTokenAddress).balanceOf(
           user, currentReserve.aTokenID);

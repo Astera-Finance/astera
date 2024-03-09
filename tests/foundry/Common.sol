@@ -86,12 +86,14 @@ contract Common is Test {
     address constant USDC = 0x0b2C639c533813f4Aa9D7837CAf62653d097Ff85;
     address constant WBTC = 0x68f180fcCe6836688e9084f035309E29Bf0A2095;
     address constant WETH = 0x4200000000000000000000000000000000000006;
+    address constant DAI = 0xDA10009cBd5D07dd0CeCc66161FC93D7c9000da1;
     address constant USDC_WHALE = 0x383BB83D698733b021dD4d943c12BB12217f9AB8;
     address constant WBTC_WHALE = 0x99b7AE9ff695C0430D63460C69b141F7703349e7;
     address constant WETH_WHALE = 0x240F670a93e7DAC470d22722Aba5f7ff8915c5f2;
+    address constant DAI_WHALE = 0x1eED63EfBA5f81D95bfe37d82C8E736b974F477b;
 
-    address[] tokens = [USDC, WBTC, WETH];
-    address[] tokensWhales = [USDC_WHALE, WBTC_WHALE, WETH_WHALE];
+    address[] tokens = [USDC, WBTC, WETH, DAI];
+    address[] tokensWhales = [USDC_WHALE, WBTC_WHALE, WETH_WHALE, DAI_WHALE];
 
     address admin = 0xe027880CEB8114F2e367211dF977899d00e66138;
     uint256[] rates = [0.039e27, 0.03e27, 0.03e27]; //usdc, wbtc, eth
@@ -212,11 +214,12 @@ contract Common is Test {
 
         /* Prices to be changed here */
         ERC20[] memory erc20tokens = fixture_getErc20Tokens(tokens);
-        int256[] memory prices = new int256[](3);
+        int256[] memory prices = new int256[](4);
         // All chainlink price feeds have 8 decimals
         prices[0] = int256(1 * 10 ** PRICE_FEED_DECIMALS); // USDC
         prices[1] = int256(67_000 * 10 ** PRICE_FEED_DECIMALS); // WBTC
         prices[2] = int256(3700 * 10 ** PRICE_FEED_DECIMALS); // ETH
+        prices[3] = int256(1 * 10 ** PRICE_FEED_DECIMALS); // DAI
         mockedVaults = fixture_deployErc4626Mocks(tokens, _treasury);
         // usdcPriceFeed = new MockAggregator(100000000, int256(uint256(mintableUsdc.decimals())));
         // wbtcPriceFeed = new MockAggregator(1600000000000, int256(uint256(mintableWbtc.decimals())));
