@@ -303,201 +303,75 @@ contract MiniPoolTest is Common {
 
     }
 
-    // function testBorrowRepay() public {
-    //     address user = makeAddr("user");
+    struct flowLimiterTestLocalVars {
+        IERC20 usdc;
+        IERC20 grainUSDC;
+        IERC20 dai;
+        uint256 mpId;
+        address mp;
+        IAERC6909 ATOKEN;
+        address user;
+        address whaleUser;
+        address usdcWhale;
+        address daiWhale;
+        uint256 amount;
+        address flowLimiter;
+    }
 
-    //     IERC20 usdc = erc20Tokens[0];
-    //     IERC20 wbtc = erc20Tokens[1];
-    //     uint256 usdcDepositAmount = 5e9; /* $5k */ // consider fuzzing here
+    function testFlowLimiter() public {
+        flowLimiterTestLocalVars memory vars;
+        vars.user = makeAddr("user");
+        vars.mpId = 0;
+        vars.mp = miniPoolContracts.miniPoolAddressesProvider.getMiniPool(vars.mpId);
+        vm.label(vars.mp, "MiniPool");
+        vars.ATOKEN = IAERC6909(miniPoolContracts.miniPoolAddressesProvider.getMiniPoolToAERC6909(vars.mp));
+        vm.label(address(vars.ATOKEN), "ATOKEN");
 
-    //     uint256 wbtcPrice = oracle.getAssetPrice(address(wbtc)); // 6e12 / 1e6; /* $60k / $1 */ // TODO - price feeds
-    //     uint256 usdcPrice = oracle.getAssetPrice(address(usdc));
-    //     uint256 usdcDepositValue = usdcDepositAmount * usdcPrice / (10 ** PRICE_FEED_DECIMALS);
-    //     (, uint256 usdcLtv,,,,,,,) =
-    //         deployedContracts.protocolDataProvider.getReserveConfigurationData(address(usdc), false);
-    //     // (, uint256 wbtcLtv,,,,,,,) =
-    //     //     deployedContracts.protocolDataProvider.getReserveConfigurationData(address(wbtc), false);
-    //     console.log("LTV: ", usdcLtv);
-    //     uint256 usdcMaxBorrowValue = usdcLtv * usdcDepositValue / 10_000;
+        vars.whaleUser = makeAddr("whaleUser");
 
-    //     console.log("Price: ", wbtcPrice);
-    //     uint256 wbtcMaxBorrowAmountWithUsdcCollateral = (usdcMaxBorrowValue * 10 ** PRICE_FEED_DECIMALS) / wbtcPrice;
-    //     require(wbtc.balanceOf(address(this)) > wbtcMaxBorrowAmountWithUsdcCollateral, "Too less wbtc");
-    //     console.log("Max to borrow: ", wbtcMaxBorrowAmountWithUsdcCollateral);
-    //     uint256 wbtcDepositAmount = wbtcMaxBorrowAmountWithUsdcCollateral * 15 / 10;
+        vars.usdcWhale = 0xacD03D601e5bB1B275Bb94076fF46ED9D753435A;
+        vm.label(vars.usdcWhale, "Whale");
+        vars.daiWhale = 0xD28843E10C3795E51A6e574378f8698aFe803029;
+        vm.label(vars.daiWhale, "DaiWhale");
 
-    //     /* Main user deposits usdc and wants to borrow */
-    //     usdc.approve(address(deployedContracts.lendingPool), usdcDepositAmount);
-    //     deployedContracts.lendingPool.deposit(address(usdc), false, usdcDepositAmount, address(this));
 
-    //     /* Other user deposits wbtc thanks to that there is enaugh funds to borrow */
-    //     wbtc.approve(address(deployedContracts.lendingPool), wbtcDepositAmount);
-    //     deployedContracts.lendingPool.deposit(address(wbtc), false, wbtcDepositAmount, user);
+        vars.usdc = erc20Tokens[0];
+        vars.grainUSDC = grainTokens[0];
+        vars.amount = 5E8; //bound(amount, 1E6, 1E13); /* $50 */ // consider fuzzing here
+        uint256 usdcAID = 1000;
+        // uint256 usdcDID = 2000;
+        // uint256 daiAID = 1128;
+        // uint256 daiDID = 2128;
+        vars.dai = IERC20(0xDA10009cBd5D07dd0CeCc66161FC93D7c9000da1);
+        
+        vm.prank(vars.usdcWhale);
+        vars.usdc.transfer(vars.whaleUser, vars.amount*1000);
 
-    //     uint256 wbtcBalanceBeforeBorrow = wbtc.balanceOf(address(this));
-    //     console.log("Wbtc balance before: ", wbtcBalanceBeforeBorrow);
+        console.log("whale balance: ", vars.dai.balanceOf(vars.daiWhale)/(10**18));
+        vm.prank(vars.daiWhale);
+        vars.dai.transfer(vars.user, vars.amount*1E14); // 5000 DAI
 
-    //     /* Main user borrows maxPossible amount of wbtc */
-    //     // vm.expectEmit(true, true, true, true);
-    //     // emit Borrow(
-    //     //     address(wbtc),
-    //     //     address(this),
-    //     //     address(this),
-    //     //     wbtcMaxBorrowAmountWithUsdcCollateral,
-    //     //     1251838485129347319607618207 // TODO
-    //     // );
-    //     deployedContracts.lendingPool.borrow(address(wbtc), false, wbtcMaxBorrowAmountWithUsdcCollateral, address(this));
-    //     /* Main user's balance should be: initial amount + borrowed amount */
-    //     assertEq(wbtcBalanceBeforeBorrow + wbtcMaxBorrowAmountWithUsdcCollateral, wbtc.balanceOf(address(this)));
-    //     console.log("Wbtc balance after: ", wbtc.balanceOf(address(this)));
-    //     /* Main user repays his debt */
+        vm.startPrank(vars.whaleUser);
+        vars.usdc.approve(address(deployedContracts.lendingPool), vars.amount*1000); //50000 USDC
+        deployedContracts.lendingPool.deposit(address(vars.usdc), false, vars.amount*1000, vars.whaleUser);
+        vm.stopPrank();
+        
+        vm.startPrank(vars.user);
+        vars.dai.approve(address(vars.mp), vars.amount*1E14);
+        console.log("User balance: ", vars.dai.balanceOf(vars.user)/(10**18));
+        console.log("User depositAmount: ", vars.amount*1E14/(10**18));
+        IMiniPool(vars.mp).deposit(address(vars.dai), true, vars.amount*1E14, vars.user);
+        vm.stopPrank();
 
-    //     wbtc.approve(address(deployedContracts.lendingPool), wbtcMaxBorrowAmountWithUsdcCollateral);
-    //     vm.expectEmit(true, true, true, true);
-    //     emit Repay(address(wbtc), address(this), address(this), wbtcMaxBorrowAmountWithUsdcCollateral);
-    //     deployedContracts.lendingPool.repay(address(wbtc), false, wbtcMaxBorrowAmountWithUsdcCollateral, address(this));
-    //     /* Main user's balance should be the same as before borrowing */
-    //     assertEq(wbtcBalanceBeforeBorrow, wbtc.balanceOf(address(this)));
-    //     console.log("Wbtc balance end: ", wbtc.balanceOf(address(this)));
-    // }
+        vars.flowLimiter = address(miniPoolContracts.flowLimiter);
 
-    // function testBorrowTooBigForUsersCollateral() public {
-    //     address user = makeAddr("user");
+        vm.prank(address(miniPoolContracts.miniPoolAddressesProvider));
+        miniPoolContracts.flowLimiter.setFlowLimit(address(vars.usdc), vars.mp, vars.amount*100);
 
-    //     ERC20 usdc = erc20Tokens[0];
-    //     ERC20 wbtc = erc20Tokens[1];
-    //     uint256 usdcDepositAmount = 5e9; /* $5k */ // consider fuzzing here
+        vm.startPrank(vars.user);
+        IMiniPool(vars.mp).borrow(address(vars.grainUSDC),false, vars.amount*94, vars.user);
 
-    //     uint256 wbtcPrice = oracle.getAssetPrice(address(wbtc)); // 6e12 / 1e6; /* $60k / $1 */ // TODO - price feeds
-    //     uint256 usdcPrice = oracle.getAssetPrice(address(usdc));
-    //     uint256 usdcDepositValue = usdcDepositAmount * usdcPrice / (10 ** PRICE_FEED_DECIMALS);
-    //     console.log("usdc value: ", usdcDepositValue);
-    //     (, uint256 usdcLtv,,,,,,,) =
-    //         deployedContracts.protocolDataProvider.getReserveConfigurationData(address(usdc), false);
-    //     // (, uint256 wbtcLtv,,,,,,,) =
-    //     //     deployedContracts.protocolDataProvider.getReserveConfigurationData(address(wbtc), false);
-    //     console.log("LTV: ", usdcLtv);
-    //     uint256 usdcMaxBorrowValue = usdcLtv * usdcDepositValue / 10_000;
-    //     uint256 wbtcMaxBorrowAmountWithUsdcCollateral;
-    //     console.log("Price: ", wbtcPrice);
-    //     {
-    //         uint256 wbtcMaxBorrowAmountRaw = (usdcMaxBorrowValue * 10 ** PRICE_FEED_DECIMALS) / wbtcPrice;
-    //         wbtcMaxBorrowAmountWithUsdcCollateral = (wbtc.decimals() > usdc.decimals())
-    //             ? wbtcMaxBorrowAmountRaw * (10 ** (wbtc.decimals() - usdc.decimals()))
-    //             : wbtcMaxBorrowAmountRaw / (10 ** (usdc.decimals() - wbtc.decimals()));
-    //         require(wbtc.balanceOf(address(this)) > wbtcMaxBorrowAmountWithUsdcCollateral, "Too less wbtc");
-    //         console.log("Max to borrow: ", wbtcMaxBorrowAmountWithUsdcCollateral);
-    //     }
-    //     {
-    //         uint256 wbtcDepositAmount = wbtcMaxBorrowAmountWithUsdcCollateral * 15 / 10;
-    //         /* Other user deposits wbtc thanks to that there is enaugh funds to borrow */
-    //         wbtc.approve(address(deployedContracts.lendingPool), wbtcDepositAmount);
-    //         deployedContracts.lendingPool.deposit(address(wbtc), false, wbtcDepositAmount, user);
-    //     }
 
-    //     /* Main user deposits usdc and wants to borrow */
-    //     usdc.approve(address(deployedContracts.lendingPool), usdcDepositValue);
-    //     deployedContracts.lendingPool.deposit(address(usdc), false, usdcDepositValue, address(this));
 
-    //     /* Main user borrows maxPossible amount of wbtc */
-    //     vm.expectRevert(bytes(Errors.VL_COLLATERAL_CANNOT_COVER_NEW_BORROW));
-    //     deployedContracts.lendingPool.borrow(
-    //         address(wbtc), false, wbtcMaxBorrowAmountWithUsdcCollateral + 100, address(this)
-    //     );
-    //     // Issue: Why we not having error for +1 ?
-    // }
-
-    // function testBorrowTooBigForProtocolsCollateral() public {
-    //     address user = makeAddr("user");
-
-    //     ERC20 usdc = erc20Tokens[0];
-    //     ERC20 wbtc = erc20Tokens[1];
-    //     uint256 usdcDepositAmount = 5e9; /* $5k */ // consider fuzzing here
-
-    //     uint256 wbtcPrice = oracle.getAssetPrice(address(wbtc)); // 6e12 / 1e6; /* $60k / $1 */ // TODO - price feeds
-    //     uint256 usdcPrice = oracle.getAssetPrice(address(usdc));
-    //     uint256 usdcDepositValue = usdcDepositAmount * usdcPrice / (10 ** PRICE_FEED_DECIMALS);
-    //     console.log("usdc value: ", usdcDepositValue);
-    //     (, uint256 usdcLtv,,,,,,,) =
-    //         deployedContracts.protocolDataProvider.getReserveConfigurationData(address(usdc), false);
-    //     // (, uint256 wbtcLtv,,,,,,,) =
-    //     //     deployedContracts.protocolDataProvider.getReserveConfigurationData(address(wbtc), false);
-    //     console.log("LTV: ", usdcLtv);
-    //     uint256 usdcMaxBorrowValue = usdcLtv * usdcDepositValue / 10_000;
-    //     uint256 wbtcMaxBorrowAmountWithUsdcCollateral;
-    //     console.log("Price: ", wbtcPrice);
-    //     {
-    //         wbtcMaxBorrowAmountWithUsdcCollateral = fixture_calcMaxAmountToBorrowBasedOnCollateral(
-    //             usdcMaxBorrowValue, wbtcPrice, usdc.decimals(), wbtc.decimals()
-    //         );
-    //         require(wbtc.balanceOf(address(this)) > wbtcMaxBorrowAmountWithUsdcCollateral, "Too less wbtc");
-    //         console.log("Max to borrow: ", wbtcMaxBorrowAmountWithUsdcCollateral);
-    //     }
-    //     uint256 wbtcDepositAmount = wbtcMaxBorrowAmountWithUsdcCollateral - 1;
-
-    //     /* Main user deposits usdc and wants to borrow */
-    //     usdc.approve(address(deployedContracts.lendingPool), usdcDepositAmount);
-    //     deployedContracts.lendingPool.deposit(address(usdc), false, usdcDepositAmount, address(this));
-
-    //     /* Other user deposits wbtc thanks to that there is enaugh funds to borrow */
-    //     wbtc.approve(address(deployedContracts.lendingPool), wbtcDepositAmount);
-    //     deployedContracts.lendingPool.deposit(address(wbtc), false, wbtcDepositAmount, user);
-
-    //     /* Main user borrows maxPossible amount of wbtc */
-    //     vm.expectRevert();
-    //     //vm.expectRevert(bytes(Errors.LP_NOT_ENOUGH_LIQUIDITY_TO_BORROW)); // Issue: over/underflow instead of LP_NOT_ENOUGH_LIQUIDITY_TO_BORROW
-    //     deployedContracts.lendingPool.borrow(address(wbtc), false, wbtcMaxBorrowAmountWithUsdcCollateral, address(this));
-    // }
-
-    // function testUseReserveAsCollateral() public {
-    //     address user = makeAddr("user");
-
-    //     // add for loop for all tokens
-    //     IERC20 usdc = erc20Tokens[0];
-    //     IERC20 wbtc = erc20Tokens[1];
-    //     uint256 usdcDepositAmount = 5e9; /* $5k */ // consider fuzzing here
-    //     uint256 wbtcPriceInUsdc = oracle.getAssetPrice(address(wbtc)); // 6e12 / 1e6; /* $60k / $1 */ // TODO - price feeds
-    //     (, uint256 usdcLtv,,,,,,,) =
-    //         deployedContracts.protocolDataProvider.getReserveConfigurationData(address(usdc), false);
-    //     // (, uint256 wbtcLtv,,,,,,,) =
-    //     //     deployedContracts.protocolDataProvider.getReserveConfigurationData(address(wbtc), false);
-    //     console.log("LTV: ", usdcLtv);
-    //     uint256 usdcMaxBorrowAmount = usdcLtv * usdcDepositAmount / 10_000;
-
-    //     console.log("Price: ", wbtcPriceInUsdc);
-    //     uint256 wbtcMaxBorrowAmountWithUsdcCollateral = usdcMaxBorrowAmount * 1e10 / wbtcPriceInUsdc;
-    //     require(wbtc.balanceOf(address(this)) > wbtcMaxBorrowAmountWithUsdcCollateral, "Too less wbtc");
-    //     console.log("Max to borrow: ", wbtcMaxBorrowAmountWithUsdcCollateral);
-    //     uint256 wbtcDepositAmount = wbtc.balanceOf(address(this));
-
-    //     /* Main user deposits usdc and wants to borrow */
-    //     usdc.approve(address(deployedContracts.lendingPool), usdcDepositAmount);
-    //     deployedContracts.lendingPool.deposit(address(usdc), false, usdcDepositAmount, address(this));
-
-    //     /* Other user deposits wbtc thanks to that there is enaugh funds to borrow */
-    //     wbtc.approve(address(deployedContracts.lendingPool), wbtcDepositAmount);
-    //     deployedContracts.lendingPool.deposit(address(wbtc), false, wbtcDepositAmount, user);
-
-    //     uint256 usdcBalanceBeforeBorrow = usdc.balanceOf(address(this));
-    //     console.log("Usdc balance before: ", usdcBalanceBeforeBorrow);
-
-    //     deployedContracts.lendingPool.setUserUseReserveAsCollateral(address(usdc), false, false);
-    //     vm.expectRevert(bytes(Errors.VL_COLLATERAL_BALANCE_IS_0));
-    //     deployedContracts.lendingPool.borrow(address(usdc), false, usdcMaxBorrowAmount, address(this));
-
-    //     deployedContracts.lendingPool.setUserUseReserveAsCollateral(address(usdc), false, true);
-    //     /* Main user borrows maxPossible amount of wbtc */
-    //     vm.expectEmit(true, true, true, true);
-    //     emit Borrow(
-    //         address(usdc),
-    //         address(this),
-    //         address(this),
-    //         usdcMaxBorrowAmount,
-    //         40000000000000000000000000 // TODO
-    //     );
-    //     deployedContracts.lendingPool.borrow(address(usdc), false, usdcMaxBorrowAmount, address(this));
-    //     /* Main user's balance should be: initial amount + borrowed amount */
-    //     assertEq(usdcBalanceBeforeBorrow + usdcMaxBorrowAmount, usdc.balanceOf(address(this)));
-    //     console.log("Usdc balance after: ", usdc.balanceOf(address(this)));
-    // }
+    }
 }

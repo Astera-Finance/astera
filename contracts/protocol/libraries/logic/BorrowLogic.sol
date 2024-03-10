@@ -414,39 +414,40 @@ import {IFlowLimiter} from '../../../interfaces/IFlowLimiter.sol';
     uint256 reservesCount;
   }
   function executeMiniPoolBorrow(
-    ExecuteMiniPoolBorrowParams memory vars,
+    ExecuteMiniPoolBorrowParams memory params,
     mapping(address => mapping(bool => DataTypes.ReserveData)) storage reserves
   ) external {
-      IFlowLimiter flowLimiter = IFlowLimiter(vars.addressesProvider.getFlowLimiter());
-      DataTypes.ReserveData storage reserve = reserves[vars.asset][vars.reserveType];
+      IFlowLimiter flowLimiter = IFlowLimiter(params.addressesProvider.getFlowLimiter());
+      DataTypes.ReserveData storage reserve = reserves[params.asset][params.reserveType];
       require(reserve.configuration.getActive(), Errors.VL_NO_ACTIVE_RESERVE);
 
-      if(flowLimiter.currentFlow(vars.asset, vars.miniPoolAddress) + vars.amount > flowLimiter.getFlowLimit(vars.asset, vars.miniPoolAddress)) {
+      if(flowLimiter.currentFlow(params.asset, params.reserveType, params.miniPoolAddress) + params.amount > 
+        flowLimiter.getFlowLimit(params.asset, params.miniPoolAddress)) {
         //revert(Errors.VL_BORROW_FLOW_LIMIT_REACHED);
         revert();
       }else {
 
         IVariableDebtToken(reserve.variableDebtTokenAddress).mint(
-        vars.miniPoolAddress,
-        vars.miniPoolAddress,
-        vars.amount,
+        params.miniPoolAddress,
+        params.miniPoolAddress,
+        params.amount,
         reserve.variableBorrowIndex);
 
         reserve.updateInterestRates(
-          vars.asset,
-          vars.aTokenAddress,
+          params.asset,
+          params.aTokenAddress,
           0,
-          vars.amount
+          params.amount
         );     
            
-        IAToken(vars.aTokenAddress).transferUnderlyingTo(vars.miniPoolAddress, vars.amount);
+        IAToken(params.aTokenAddress).transferUnderlyingTo(params.miniPoolAddress, params.amount);
         
 
         emit Borrow(
-          vars.asset,
-          vars.miniPoolAddress,
+          params.asset,
+          params.miniPoolAddress,
           address(flowLimiter),
-          vars.amount,
+          params.amount,
           reserve.currentVariableBorrowRate
         );
       }

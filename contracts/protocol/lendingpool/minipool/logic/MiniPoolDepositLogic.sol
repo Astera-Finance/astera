@@ -86,6 +86,34 @@ library MiniPoolDepositLogic {
         emit Deposit(params.asset, msg.sender, params.onBehalfOf, params.amount);
     }
 
+    function internalDeposit(
+        DepositParams memory params,
+        mapping(address => DataTypes.MiniPoolReserveData) storage _reserves,
+        mapping(address => DataTypes.UserConfigurationMap) storage _usersConfig,
+        IMiniPoolAddressesProvider _addressesProvider
+    ) external {
+         DataTypes.MiniPoolReserveData storage reserve = _reserves[params.asset];
+
+        MiniPoolValidationLogic.validateDeposit(reserve, params.amount);
+
+        address aToken = reserve.aTokenAddress;
+
+        reserve.updateState();
+        reserve.updateInterestRates(params.asset, params.amount, 0);
+
+        IERC20(params.asset).safeTransfer(aToken, params.amount);
+
+        bool isFirstDeposit = IAERC6909(reserve.aTokenAddress).
+                                mint(
+                                    address(this),
+                                    address(this), 
+                                    reserve.aTokenID,
+                                    params.amount, 
+                                    reserve.liquidityIndex);
+
+        emit Deposit(params.asset, address(this), address(this), params.amount);
+    }
+
 
 }
 

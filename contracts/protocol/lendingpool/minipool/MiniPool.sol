@@ -191,26 +191,33 @@ contract MiniPool is VersionedInitializable, IMiniPool, MiniPoolStorage {
     require(vars.aTokenAddress != address(0), "Reserve not initialized");
     vars.availableLiquidity = IERC20(asset).balanceOf(vars.aTokenAddress);
     if(amount > vars.availableLiquidity && IAERC6909(reserve.aTokenAddress).isTranche(reserve.aTokenID)){
+      address underlying = IAToken(asset).UNDERLYING_ASSET_ADDRESS();
       vars.LendingPool = _addressesProvider.getLendingPool();
       ILendingPool(vars.LendingPool).
         miniPoolBorrow(
-          asset,
+          underlying,
           reserveType,
           amount.sub(vars.availableLiquidity),
           address(this),
-          address(this)
+          address(asset)
         );
      
-        address underlying = IAERC6909(vars.aTokenAddress).getUnderlyingAsset(reserve.aTokenID);
         vars.amountRecieved = IERC20(underlying).balanceOf(address(this));
 
         IERC20(underlying).approve(vars.LendingPool, vars.amountRecieved);
-        ILendingPool(vars.LendingPool).deposit(underlying, true, vars.amountRecieved, address(this));
+        ILendingPool(vars.LendingPool).deposit(underlying, reserveType, vars.amountRecieved, address(this));
 
         vars.amountRecieved = IERC20(asset).balanceOf(address(this));
-
-        IERC20(asset).approve(vars.aTokenAddress, vars.amountRecieved);
-        deposit(asset, reserveType, vars.amountRecieved, address(this));
+        MiniPoolDepositLogic.internalDeposit(
+          MiniPoolDepositLogic.DepositParams(
+            asset, 
+            vars.amountRecieved, 
+            address(this)
+          ),
+          _reserves,
+          _usersConfig,
+          _addressesProvider
+        );
       }
 
 
