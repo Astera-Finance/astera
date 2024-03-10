@@ -306,6 +306,7 @@ contract MiniPoolTest is Common {
     struct flowLimiterTestLocalVars {
         IERC20 usdc;
         IERC20 grainUSDC;
+        IERC20 debtUSDC;
         IERC20 dai;
         uint256 mpId;
         address mp;
@@ -337,6 +338,7 @@ contract MiniPoolTest is Common {
 
         vars.usdc = erc20Tokens[0];
         vars.grainUSDC = grainTokens[0];
+        vars.debtUSDC = variableDebtTokens[0];
         vars.amount = 5E8; //bound(amount, 1E6, 1E13); /* $500 */ // consider fuzzing here
         uint256 usdcAID = 1000;
         // uint256 usdcDID = 2000;
@@ -370,8 +372,26 @@ contract MiniPoolTest is Common {
 
         vm.startPrank(vars.user);
         IMiniPool(vars.mp).borrow(address(vars.grainUSDC),false, vars.amount*94, vars.user); // 47000 USDC
+        assertEq(vars.debtUSDC.balanceOf(vars.mp), vars.amount*94);
+        DataTypes.ReserveData memory reserveData = deployedContracts.lendingPool.getReserveData(address(vars.usdc), false);
+        uint128 currentLiquidityRate = reserveData.currentLiquidityRate;
+        uint128 currentVariableBorrowRate = reserveData.currentVariableBorrowRate;
+        uint128 delta = currentVariableBorrowRate - currentLiquidityRate;
+        console.log("CurrentLiquidityRate: ", currentLiquidityRate);
+        console.log("CurrentVariableBorrowRate: ", currentVariableBorrowRate);
+        console.log("Delta: ", delta);
+        DataTypes.MiniPoolReserveData memory mpReserveData = IMiniPool(vars.mp).getReserveData(address(grainTokens[0]), false);
+        uint128 mpCurrentLiquidityRate = mpReserveData.currentLiquidityRate;
+        uint128 mpCurrentVariableBorrowRate = mpReserveData.currentVariableBorrowRate;
+        assertGe(mpCurrentVariableBorrowRate, delta );
+
+
         IERC20(vars.grainUSDC).approve(address(vars.mp), vars.amount*94);
         IMiniPool(vars.mp).repay(address(vars.grainUSDC),false, vars.amount*94, vars.user); // 47000 USDC
+
+
+
+        assertEq(vars.debtUSDC.balanceOf(vars.mp), 0);
 
 
 

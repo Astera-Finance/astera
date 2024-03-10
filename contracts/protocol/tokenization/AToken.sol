@@ -515,9 +515,9 @@ contract AToken is
     _treasury = treasury;
   }
 
-  function setIncentivesController(IRewarder incentivesController) external onlyLendingPool override {
-    require(address(incentivesController) != address(0), '85');
-    _incentivesController = incentivesController;
+  function setIncentivesController(address incentivesController) external onlyLendingPool override {
+    require(incentivesController != address(0), '85');
+    _incentivesController = IRewarder(incentivesController);
   }
   function rebalance() external onlyLendingPool override {
     _rebalance(0);

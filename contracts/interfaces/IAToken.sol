@@ -122,7 +122,7 @@ interface IAToken is IERC20, IScaledBalanceToken, IInitializableAToken {
 
   function setTreasury(address _treasury) external;
 
-  function setIncentivesController(IRewarder _incentivesController) external;
+  function setIncentivesController(address _incentivesController) external;
 
   function rebalance() external;
 

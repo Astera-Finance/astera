@@ -728,4 +728,18 @@ contract LendingPool is VersionedInitializable, ILendingPool, LendingPoolStorage
       _reservesCount = reservesCount + 1;
     }
   }
+
+  function updateFlashLoanFee(uint256 flashLoanPremiumTotal) external override onlyLendingPoolConfigurator {
+    _flashLoanPremiumTotal = flashLoanPremiumTotal;
+  }
+
+  function setRewarderForReserve(address asset, bool reserveType, address rewarder) external override onlyLendingPoolConfigurator {
+    IAToken(_reserves[asset][reserveType].aTokenAddress).setIncentivesController(rewarder);
+  }
+
+  function setTreasury(address asset, bool reserveType, address treasury) external override onlyLendingPoolConfigurator {
+    IAToken(_reserves[asset][reserveType].aTokenAddress).setTreasury(treasury);
+  }
+
+
 }

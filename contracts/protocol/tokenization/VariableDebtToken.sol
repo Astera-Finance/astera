@@ -207,4 +207,9 @@ contract VariableDebtToken is DebtTokenBase, IVariableDebtToken {
   function _getLendingPool() internal view override returns (ILendingPool) {
     return _pool;
   }
+
+  function setIncentivesController(address newController) external override onlyLendingPool {
+    require(newController != address(0), "INVALID_CONTROLLER");
+    _incentivesController = IRewarder(newController);
+  }
 }
