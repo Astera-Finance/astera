@@ -226,6 +226,26 @@ contract LendingPool is VersionedInitializable, ILendingPool, LendingPoolStorage
 
   }
 
+  function repayWithATokens(
+    address asset,
+    bool reserveType,
+    uint256 amount,
+    address onBehalfOf
+  ) external override whenNotPaused returns (uint256) {
+    return BorrowLogic.repayWithAtokens(
+      BorrowLogic.repayParams(
+        asset,
+        reserveType,
+        amount,
+        onBehalfOf,
+        _addressesProvider
+      ),
+      _reserves,
+      _usersConfig
+    );
+
+  }
+
   /**
    * @dev Allows depositors to enable/disable a specific deposited asset as collateral
    * @param asset The address of the underlying asset deposited

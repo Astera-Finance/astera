@@ -2,7 +2,9 @@
 pragma solidity ^0.8.23;
 
 import {SafeMath} from '../../../../dependencies/openzeppelin/contracts/SafeMath.sol';
+import {IAToken}  from '../../../../interfaces/IAToken.sol';
 import {IAERC6909} from '../../../../interfaces/IAERC6909.sol';
+import {ILendingPool} from '../../../../interfaces/ILendingPool.sol';
 import {IReserveInterestRateStrategy} from '../../../../interfaces/IReserveInterestRateStrategy.sol';
 import {ReserveConfiguration} from '../../../libraries/configuration/ReserveConfiguration.sol';
 import {ReserveBorrowConfiguration} from '../../../libraries/configuration/ReserveBorrowConfiguration.sol';
@@ -11,6 +13,10 @@ import {WadRayMath} from '../../../libraries/math/WadRayMath.sol';
 import {PercentageMath} from '../../../libraries/math/PercentageMath.sol';
 import {Errors} from '../../../libraries/helpers/Errors.sol';
 import {DataTypes} from '../../../libraries/types/DataTypes.sol';
+import {IMiniPoolAddressesProvider} from '../../../../interfaces/IMiniPoolAddressesProvider.sol';
+import {ReserveLogic} from '../../../libraries/logic/ReserveLogic.sol';
+import {IFlowLimiter} from '../../../../interfaces/IFlowLimiter.sol';
+import {IMiniPoolReserveInterestRateStrategy} from '../../../../interfaces/IMiniPoolReserveInterestRateStrategy.sol';
 
 /**
  * @title ReserveLogic library
@@ -21,6 +27,7 @@ library MiniPoolReserveLogic {
   using SafeMath for uint256;
   using WadRayMath for uint256;
   using PercentageMath for uint256;
+  using ReserveLogic for DataTypes.ReserveData;
 
   /**
    * @dev Emitted when the state of a reserve is updated
@@ -202,7 +209,6 @@ library MiniPoolReserveLogic {
       .rayMul(reserve.variableBorrowIndex);
 
 
-    //@audit This needs more work to adapt to the new aToken
     (
       vars.newLiquidityRate,
       vars.newVariableRate
@@ -324,5 +330,88 @@ library MiniPoolReserveLogic {
     //solium-disable-next-line
     reserve.lastUpdateTimestamp = uint40(block.timestamp);
     return (newLiquidityIndex, newVariableBorrowIndex);
+  }
+
+  struct augmentedInterestRateVars{
+    address underlyingAsset;
+    address flowLimiter;
+    address lendingPool;
+    uint256 totalAvailableBackstopLiquidity;
+    uint256 utilizedBackstopLiquidity;
+    uint128 underlyingLiqRate;
+    uint128 underlyingVarRate;
+    uint256 totalVariableDebt;
+    uint256 availableLiquidity;
+    uint256 newLiquidityRate;
+    uint256 newVariableRate;
+
+  }
+
+  /**
+   * @dev Updates the current variable borrow rate and the current liquidity rate
+   * @param reserve The address of the reserve to be updated
+   * @param liquidityAdded The amount of liquidity added to the protocol (deposit or repay) in the previous action
+   * @param liquidityTaken The amount of liquidity taken from the protocol (redeem or borrow)
+   **/
+  function updateInterestRatesAugmented(
+    DataTypes.MiniPoolReserveData storage reserve,
+    address reserveAddress,
+    uint256 liquidityAdded,
+    uint256 liquidityTaken,
+    IMiniPoolAddressesProvider addressesProvider,
+    bool reserveType
+  ) internal {
+    augmentedInterestRateVars memory vars;
+
+    //calculates the total variable debt locally using the scaled total supply instead
+    //of totalSupply(), as it's noticeably cheaper. Also, the index has been
+    //updated by the previous updateState() call
+    vars.totalVariableDebt = IAERC6909(reserve.aTokenAddress)
+      .scaledTotalSupply((reserve.variableDebtTokenID))
+      .rayMul(reserve.variableBorrowIndex);
+
+
+    vars.availableLiquidity = IAToken(reserveAddress).balanceOf(reserve.aTokenAddress);
+    vars.availableLiquidity = vars.availableLiquidity.add(liquidityAdded).sub(liquidityTaken);
+
+    vars.underlyingAsset = IAToken(reserveAddress).UNDERLYING_ASSET_ADDRESS();
+    vars.lendingPool = addressesProvider.getLendingPool();
+    vars.flowLimiter = addressesProvider.getFlowLimiter();
+    vars.totalAvailableBackstopLiquidity = IFlowLimiter(vars.flowLimiter).getFlowLimit(vars.underlyingAsset, address(this));
+    vars.utilizedBackstopLiquidity = IFlowLimiter(vars.flowLimiter).currentFlow(vars.underlyingAsset, reserveType, address(this));
+
+    DataTypes.ReserveData memory cachedReserve = ILendingPool(vars.lendingPool).getReserveData(vars.underlyingAsset, reserveType);
+    vars.underlyingLiqRate = cachedReserve.currentLiquidityRate;
+    vars.underlyingVarRate = cachedReserve.currentVariableBorrowRate;
+
+    (
+      vars.newLiquidityRate, 
+      vars.newVariableRate
+    ) = IMiniPoolReserveInterestRateStrategy(reserve.interestRateStrategyAddress).calculateAugmentedInterestRate(
+      IMiniPoolReserveInterestRateStrategy.augmentedInterestRateParams(
+        vars.totalVariableDebt,
+        vars.availableLiquidity,
+        vars.totalAvailableBackstopLiquidity,
+        vars.utilizedBackstopLiquidity,
+        vars.underlyingLiqRate,
+        vars.underlyingVarRate,
+        reserve.configuration.getReserveFactor()
+      ));
+    
+
+
+    require(vars.newLiquidityRate <= type(uint128).max, Errors.RL_LIQUIDITY_RATE_OVERFLOW);
+    require(vars.newVariableRate <= type(uint128).max, Errors.RL_VARIABLE_BORROW_RATE_OVERFLOW);
+
+    reserve.currentLiquidityRate = uint128(vars.newLiquidityRate);
+    reserve.currentVariableBorrowRate = uint128(vars.newVariableRate);
+
+    emit ReserveDataUpdated(
+      reserveAddress,
+      vars.newLiquidityRate,
+      vars.newVariableRate,
+      reserve.liquidityIndex,
+      reserve.variableBorrowIndex
+    );
   }
 }

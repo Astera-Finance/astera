@@ -2,7 +2,7 @@
 pragma solidity ^0.8.20;
 
 import {SafeMath} from '../../../dependencies/openzeppelin/contracts/SafeMath.sol';
-import {IReserveInterestRateStrategy} from '../../../interfaces/IReserveInterestRateStrategy.sol';
+import {IMiniPoolReserveInterestRateStrategy} from '../../../interfaces/IMiniPoolReserveInterestRateStrategy.sol';
 import {WadRayMath} from '../../libraries/math/WadRayMath.sol';
 import {PercentageMath} from '../../libraries/math/PercentageMath.sol';
 import {ILendingPoolAddressesProvider} from '../../../interfaces/ILendingPoolAddressesProvider.sol';
@@ -19,7 +19,7 @@ import {IMiniPoolAddressesProvider} from '../../../interfaces/IMiniPoolAddresses
  *   of the LendingPoolAddressesProvider
  * @author Aave
  **/
-contract MiniPoolDefaultReserveInterestRateStrategy is IReserveInterestRateStrategy {
+contract MiniPoolDefaultReserveInterestRateStrategy is IMiniPoolReserveInterestRateStrategy {
   using WadRayMath for uint256;
   using SafeMath for uint256;
   using PercentageMath for uint256;
@@ -39,6 +39,7 @@ contract MiniPoolDefaultReserveInterestRateStrategy is IReserveInterestRateStrat
   uint256 public immutable EXCESS_UTILIZATION_RATE;
 
   IMiniPoolAddressesProvider public immutable addressesProvider;
+  ILendingPoolAddressesProvider public immutable lendingPoolAddressesProvider;
 
   // Base variable borrow rate when Utilization rate = 0. Expressed in ray
   uint256 internal immutable _baseVariableBorrowRate;
@@ -180,5 +181,64 @@ contract MiniPoolDefaultReserveInterestRateStrategy is IReserveInterestRateStrat
       vars.currentLiquidityRate,
       vars.currentVariableBorrowRate
     );
+  }
+
+
+
+  struct CalcAugmentedInterestRatesLocalVars {
+    uint256 interestRateDelta;
+    uint256 currentVariableBorrowRate;
+    uint256 currentLiquidityRate;
+    uint256 utilizationRate;
+    uint256 backstopUtilizationRate;
+  }
+
+  function calculateAugmentedInterestRate(
+    augmentedInterestRateParams memory params
+  ) external view override returns (uint256, uint256) {
+      CalcAugmentedInterestRatesLocalVars memory vars;
+      vars.interestRateDelta = uint256(params.underlyingVarRate) - uint256(params.underlyingLiqRate);
+      vars.utilizationRate = params.totalVariableDebt == 0
+        ? 0
+        : params.totalVariableDebt.rayDiv(params.availableLiquidity.add(params.totalVariableDebt));
+      vars.backstopUtilizationRate = params.utilizedBackstopLiquidity == 0
+        ? 0
+        : params.utilizedBackstopLiquidity.rayDiv(params.totalAvailableBackstopLiquidity);
+
+        if(vars.backstopUtilizationRate > 0){
+          if(vars.backstopUtilizationRate > OPTIMAL_UTILIZATION_RATE){
+            uint256 excessUtilizationRateRatio =
+            vars.backstopUtilizationRate.sub(OPTIMAL_UTILIZATION_RATE).rayDiv(EXCESS_UTILIZATION_RATE);
+          
+            vars.currentVariableBorrowRate = vars.interestRateDelta.add(_variableRateSlope1).add(
+              _variableRateSlope2.rayMul(excessUtilizationRateRatio)
+            );
+          }else {
+            vars.currentVariableBorrowRate = vars.interestRateDelta.add(
+            vars.backstopUtilizationRate.rayMul(_variableRateSlope1).rayDiv(OPTIMAL_UTILIZATION_RATE));
+          }
+        }else{
+          if (vars.utilizationRate > OPTIMAL_UTILIZATION_RATE) {
+            uint256 excessUtilizationRateRatio =
+              vars.utilizationRate.sub(OPTIMAL_UTILIZATION_RATE).rayDiv(EXCESS_UTILIZATION_RATE);
+  
+            vars.currentVariableBorrowRate = _baseVariableBorrowRate.add(_variableRateSlope1).add(
+              _variableRateSlope2.rayMul(excessUtilizationRateRatio)
+            );
+          } else {
+            vars.currentVariableBorrowRate = _baseVariableBorrowRate.add(
+              vars.utilizationRate.rayMul(_variableRateSlope1).rayDiv(OPTIMAL_UTILIZATION_RATE)
+            );
+          }
+        }
+
+        vars.currentLiquidityRate = vars.currentVariableBorrowRate
+          .rayMul(vars.utilizationRate)
+          .percentMul(PercentageMath.PERCENTAGE_FACTOR.sub(params.reserveFactor));
+
+        return(
+          vars.currentLiquidityRate,
+          vars.currentVariableBorrowRate
+        );
   }
 }

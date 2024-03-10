@@ -144,7 +144,7 @@ contract MiniPool is VersionedInitializable, IMiniPool, MiniPoolStorage {
     bool reserveType,
     uint256 amount,
     address to
-  ) external override whenNotPaused returns (uint256) {
+  ) public override whenNotPaused returns (uint256) {
     return MiniPoolWithdrawLogic.withdraw(
       MiniPoolWithdrawLogic.withdrawParams(
         asset,
@@ -203,6 +203,7 @@ contract MiniPool is VersionedInitializable, IMiniPool, MiniPoolStorage {
         );
      
         vars.amountRecieved = IERC20(underlying).balanceOf(address(this));
+        _lendingPoolDebt[(underlying)] = _lendingPoolDebt[(underlying)].add(vars.amountRecieved);
 
         IERC20(underlying).approve(vars.LendingPool, vars.amountRecieved);
         ILendingPool(vars.LendingPool).deposit(underlying, reserveType, vars.amountRecieved, address(this));
@@ -241,6 +242,14 @@ contract MiniPool is VersionedInitializable, IMiniPool, MiniPoolStorage {
         _usersConfig,
         _usersRecentBorrow
     );
+    pokeInterestRate(asset, reserveType);
+  }
+
+
+  struct repayVars{
+    uint256 repayAmount;
+    address aTokenAddress;
+    address underlyingAsset;
   }
 
   /**
@@ -261,7 +270,7 @@ contract MiniPool is VersionedInitializable, IMiniPool, MiniPoolStorage {
     uint256 amount,
     address onBehalfOf
   ) external override whenNotPaused returns (uint256) {
-    return MiniPoolBorrowLogic.repay(
+    uint256 repayAmount = MiniPoolBorrowLogic.repay(
       MiniPoolBorrowLogic.repayParams(
         asset,
         reserveType,
@@ -272,6 +281,36 @@ contract MiniPool is VersionedInitializable, IMiniPool, MiniPoolStorage {
       _reserves,
       _usersConfig
     );
+    DataTypes.MiniPoolReserveData storage reserve = _reserves[asset];
+    repayVars memory vars;
+    vars.aTokenAddress = reserve.aTokenAddress;
+    if(IAERC6909(reserve.aTokenAddress).isTranche(reserve.aTokenID)){
+      vars.underlyingAsset = IAToken(asset).UNDERLYING_ASSET_ADDRESS();
+      if(_lendingPoolDebt[vars.underlyingAsset] != 0){
+        MiniPoolWithdrawLogic.
+        internalWithdraw(
+          MiniPoolWithdrawLogic.withdrawParams(
+            asset, 
+            reserveType, 
+            amount, 
+            address(this), 
+            _reservesCount
+          ),
+          _reserves,
+          _usersConfig,
+          _reservesList,
+          _addressesProvider
+        );
+        
+        IERC20(asset).approve(_addressesProvider.getLendingPool(), amount);
+        
+        ILendingPool(_addressesProvider.getLendingPool()).
+          repayWithATokens(vars.underlyingAsset, reserveType, amount, address(this));
+
+        pokeInterestRate(asset, reserveType);
+      }
+    }
+    
 
   }
 
@@ -705,6 +744,12 @@ contract MiniPool is VersionedInitializable, IMiniPool, MiniPoolStorage {
       _reservesList[reservesCount] = DataTypes.ReserveReference(asset, reserveType);
 
       _reservesCount = reservesCount + 1;
+    }
+  }
+
+  function pokeInterestRate(address asset, bool reserveType) public {
+    if(_lendingPoolDebt[asset] != 0){
+      _reserves[asset].updateInterestRatesAugmented(asset,0,0,_addressesProvider,reserveType);
     }
   }
 }

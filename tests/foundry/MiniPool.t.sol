@@ -337,7 +337,7 @@ contract MiniPoolTest is Common {
 
         vars.usdc = erc20Tokens[0];
         vars.grainUSDC = grainTokens[0];
-        vars.amount = 5E8; //bound(amount, 1E6, 1E13); /* $50 */ // consider fuzzing here
+        vars.amount = 5E8; //bound(amount, 1E6, 1E13); /* $500 */ // consider fuzzing here
         uint256 usdcAID = 1000;
         // uint256 usdcDID = 2000;
         // uint256 daiAID = 1128;
@@ -349,10 +349,10 @@ contract MiniPoolTest is Common {
 
         console.log("whale balance: ", vars.dai.balanceOf(vars.daiWhale)/(10**18));
         vm.prank(vars.daiWhale);
-        vars.dai.transfer(vars.user, vars.amount*1E14); // 5000 DAI
+        vars.dai.transfer(vars.user, vars.amount*1E14); // 50000 DAI
 
         vm.startPrank(vars.whaleUser);
-        vars.usdc.approve(address(deployedContracts.lendingPool), vars.amount*1000); //50000 USDC
+        vars.usdc.approve(address(deployedContracts.lendingPool), vars.amount*1000); //500000 USDC
         deployedContracts.lendingPool.deposit(address(vars.usdc), false, vars.amount*1000, vars.whaleUser);
         vm.stopPrank();
         
@@ -366,10 +366,12 @@ contract MiniPoolTest is Common {
         vars.flowLimiter = address(miniPoolContracts.flowLimiter);
 
         vm.prank(address(miniPoolContracts.miniPoolAddressesProvider));
-        miniPoolContracts.flowLimiter.setFlowLimit(address(vars.usdc), vars.mp, vars.amount*100);
+        miniPoolContracts.flowLimiter.setFlowLimit(address(vars.usdc), vars.mp, vars.amount*100);// 50000 USDC
 
         vm.startPrank(vars.user);
-        IMiniPool(vars.mp).borrow(address(vars.grainUSDC),false, vars.amount*94, vars.user);
+        IMiniPool(vars.mp).borrow(address(vars.grainUSDC),false, vars.amount*94, vars.user); // 47000 USDC
+        IERC20(vars.grainUSDC).approve(address(vars.mp), vars.amount*94);
+        IMiniPool(vars.mp).repay(address(vars.grainUSDC),false, vars.amount*94, vars.user); // 47000 USDC
 
 
 

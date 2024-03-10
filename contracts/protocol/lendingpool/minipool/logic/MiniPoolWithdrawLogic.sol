@@ -150,5 +150,51 @@ library MiniPoolWithdrawLogic {
         }
     }
 
+    function internalWithdraw(
+        withdrawParams memory params,
+        mapping(address => DataTypes.MiniPoolReserveData) storage reservesData,
+        mapping(address => DataTypes.UserConfigurationMap) storage usersConfig,
+        mapping(uint256 => DataTypes.ReserveReference) storage reserves,
+        IMiniPoolAddressesProvider addressesProvider
+    ) external returns (uint256) {
+        DataTypes.MiniPoolReserveData storage reserve = reservesData[params.asset];
+        withdrawLocalVars memory localVars;
+        
+        {localVars.aToken = reserve.aTokenAddress;
+        localVars.id = reserve.aTokenID;
+
+        localVars.userBalance = IAERC6909(localVars.aToken).balanceOf(address(this), localVars.id);
+
+        localVars.amountToWithdraw = params.amount;
+
+        if (params.amount == type(uint256).max) {
+            localVars.amountToWithdraw = localVars.userBalance;
+        }
+        }
+        MiniPoolValidationLogic.validateWithdraw(
+            MiniPoolValidationLogic.ValidateWithdrawParams(
+                params.asset,
+                params.reserveType,
+                localVars.amountToWithdraw,
+                localVars.userBalance,
+                params.reservesCount,
+                addressesProvider.getPriceOracle()
+            ),
+            reservesData,
+            usersConfig[address(this)],
+            reserves
+        );
+
+        reserve.updateState();
+
+        reserve.updateInterestRates(params.asset, 0, localVars.amountToWithdraw);
+
+        IAERC6909(localVars.aToken).burn(address(this), params.to, localVars.id, localVars.amountToWithdraw, reserve.liquidityIndex);
+
+        emit Withdraw(params.asset, address(this), params.to, localVars.amountToWithdraw);
+
+        return localVars.amountToWithdraw;
+    }
+
 }
 

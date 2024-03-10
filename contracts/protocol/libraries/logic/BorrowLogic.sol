@@ -402,6 +402,52 @@ import {IFlowLimiter} from '../../../interfaces/IFlowLimiter.sol';
     return paybackAmount;
   }
 
+  function repayWithAtokens(
+    repayParams memory params,
+    mapping(address => mapping(bool => DataTypes.ReserveData)) storage _reserves,
+    mapping(address => DataTypes.UserConfigurationMap) storage _usersConfig
+  ) external returns (uint256) {
+    DataTypes.ReserveData storage reserve = _reserves[params.asset][params.reserveType];
+
+    (uint256 variableDebt) = Helpers.getUserCurrentDebt(params.onBehalfOf, reserve);
+
+    ValidationLogic.validateRepay(
+      reserve,
+      params.amount,
+      params.onBehalfOf,
+      variableDebt
+    );
+
+    uint256 paybackAmount = variableDebt;
+
+    if (params.amount < paybackAmount) {
+      paybackAmount = params.amount;
+    }
+
+    reserve.updateState();
+
+
+    IVariableDebtToken(reserve.variableDebtTokenAddress).burn(
+      params.onBehalfOf,
+      paybackAmount,
+      reserve.variableBorrowIndex
+    );
+
+
+    address aToken = reserve.aTokenAddress;
+    reserve.updateInterestRates(params.asset, aToken, paybackAmount, 0);
+
+    if (variableDebt.sub(paybackAmount) == 0) {
+      _usersConfig[params.onBehalfOf].setBorrowing(reserve.id, false);
+    }
+
+    IAToken(aToken).burn(params.onBehalfOf, aToken, paybackAmount, reserve.liquidityIndex);
+
+    emit Repay(params.asset, params.onBehalfOf, msg.sender, paybackAmount);
+
+    return paybackAmount;
+  }
+
 
 
   struct ExecuteMiniPoolBorrowParams {

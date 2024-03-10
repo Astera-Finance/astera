@@ -73,6 +73,10 @@ contract MiniPoolAddressesProvider is Ownable{
     return _addresses[PRICE_ORACLE];
   }
 
+  function getFlowLimiter() external view returns (address) {
+    return ILendingPoolAddressesProvider(_addresses[LENDING_POOL_ADDRESSES_PROVIDER]).getFlowLimiter();
+  }
+
   function setMiniPoolImpl(address impl) external onlyOwner {
     _addresses[MINIPOOL_IMPL] = impl;
   }
