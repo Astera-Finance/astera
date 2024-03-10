@@ -66,6 +66,7 @@ import {Helpers} from '../../../libraries/helpers/Helpers.sol';
         uint256 userVolatility;
         bool healthFactorBelowThreshold;
         address currentReserveAddress;
+        address underlyingAsset;
         bool currentReserveType;
         bool usageAsCollateralEnabled;
         bool userUsesReserveAsCollateral;
@@ -128,7 +129,6 @@ import {Helpers} from '../../../libraries/helpers/Helpers.sol';
     //   }
     // }
 
-
     for (vars.i = 0; vars.i < params.reservesCount; vars.i++) {
       vars.currentReserveAddress = reserves[vars.i].asset;
       vars.currentReserveType = reserves[vars.i].reserveType;
@@ -140,6 +140,7 @@ import {Helpers} from '../../../libraries/helpers/Helpers.sol';
       (, vars.liquidationThreshold, , vars.decimals, ) = currentReserve
         .configuration
         .getParams();
+      
 
       if (vars.userVolatility == 0) {
         vars.ltv = currentReserve.borrowConfiguration.getLowVolatilityLtv();
@@ -150,8 +151,12 @@ import {Helpers} from '../../../libraries/helpers/Helpers.sol';
       }
 
       vars.tokenUnit = 10**vars.decimals;
-      vars.reserveUnitPrice = IPriceOracleGetter(params.oracle).getAssetPrice(vars.currentReserveAddress);
-
+      if(IAERC6909(currentReserve.aTokenAddress).isTranche(currentReserve.aTokenID)){
+        vars.underlyingAsset = IAToken(vars.currentReserveAddress).UNDERLYING_ASSET_ADDRESS();
+        vars.reserveUnitPrice = IPriceOracleGetter(params.oracle).getAssetPrice(vars.underlyingAsset);
+      }else{
+        vars.reserveUnitPrice = IPriceOracleGetter(params.oracle).getAssetPrice(vars.currentReserveAddress);
+      }
       if (vars.liquidationThreshold != 0 && userConfig.isUsingAsCollateral(vars.i)) {
         vars.compoundedLiquidityBalance = IAERC6909(currentReserve.aTokenAddress).balanceOf(params.user, currentReserve.aTokenID);
 
@@ -341,6 +346,9 @@ import {Helpers} from '../../../libraries/helpers/Helpers.sol';
     uint256 decimals,
     address oracle
   ) internal view returns (uint256) {
+    if(IPriceOracleGetter(oracle).getSourceOfAsset(asset) == address(0)) {
+      asset = IAToken(asset).UNDERLYING_ASSET_ADDRESS();
+    }
     return IPriceOracleGetter(oracle).getAssetPrice(asset).mul(amount).div(10**decimals);
   }
 

@@ -80,8 +80,9 @@ contract MiniPoolConfigurator is VersionedInitializable, IMiniPoolConfigurator {
       input.underlyingAssetDecimals);
     pool.initReserve(input.underlyingAsset, IAERC6909(AERC6909proxy),
      aTokenID, debtTokenID, input.interestRateStrategyAddress);
-
-
+    DataTypes.ReserveConfigurationMap memory currentConfig = pool.getConfiguration(input.underlyingAsset, false);
+    currentConfig.setDecimals(input.underlyingAssetDecimals);
+    pool.setConfiguration(input.underlyingAsset, false, currentConfig.data);
   }
 
   
@@ -334,28 +335,6 @@ contract MiniPoolConfigurator is VersionedInitializable, IMiniPoolConfigurator {
     pool.setPause(val);
   }
 
-  function _initTokenWithProxy(address implementation, bytes memory initParams, IMiniPool pool)
-    internal
-    returns (address)
-  {
-    InitializableImmutableAdminUpgradeabilityProxy proxy =
-      new InitializableImmutableAdminUpgradeabilityProxy(address(this));
-
-    proxy.initialize(implementation, initParams);
-
-    return address(proxy);
-  }
-
-  function _upgradeTokenImplementation(
-    address proxyAddress,
-    address implementation,
-    bytes memory initParams
-  ) internal {
-    InitializableImmutableAdminUpgradeabilityProxy proxy =
-      InitializableImmutableAdminUpgradeabilityProxy(payable(proxyAddress));
-
-    proxy.upgradeToAndCall(implementation, initParams);
-  }
 
   function _checkNoLiquidity(address asset, bool reserveType, IMiniPool pool) internal view {
     DataTypes.MiniPoolReserveData memory reserveData = pool.getReserveData(asset, reserveType);

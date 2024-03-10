@@ -257,14 +257,51 @@ contract MiniPoolTest is Common {
         ATOKEN.transfer(user2, 1000, 1E6);
         ATOKEN.transfer(user2, 1128, 1E12);
 
-
-
-
     }
 
-    // function testBorrowRepay() public {
-    //     testDeposits();
-    // }
+    function testBorrowRepay() public {
+        testDeposits();
+        address user = makeAddr("user");
+        address user2 = makeAddr("user2");
+        uint mpId = 0;
+        address mp = miniPoolContracts.miniPoolAddressesProvider.getMiniPool(mpId);
+        vm.label(mp, "MiniPool");
+        IAERC6909 ATOKEN = IAERC6909(miniPoolContracts.miniPoolAddressesProvider.getMiniPoolToAERC6909(mp));
+        vm.label(address(ATOKEN), "ATOKEN");
+        require(ATOKEN.balanceOf(user, 1000) > 0, "No balance");
+
+        IMiniPool(mp).borrow(address(grainTokens[0]), true, 500E6, user);
+        uint256 userBalance = grainTokens[0].balanceOf(user);
+        require(userBalance > 0, "No balance");
+        console.log("User balance: ", userBalance);
+        require(ATOKEN.scaledTotalSupply(2000) > 0, "No balance");
+        console.log("ATOKEN balance: ", ATOKEN.scaledTotalSupply(2000));
+        vm.expectRevert(); //Test that you cannot transfer a debtTokenID
+        ATOKEN.transfer(user2, 2000, 1E6);
+
+        skip(36000);
+        {
+        (
+            uint256 totalCollateralETH,
+            uint256 totalDebtETH,
+            uint256 availableBorrowsETH,
+            uint256 currentLiquidationThreshold,
+            uint256 ltv,
+            uint256 healthFactor
+        )=IMiniPool(mp).getUserAccountData(user);
+        console.log("User data: totalCollateralETH ", totalCollateralETH);
+        console.log("User data: totalDebtETH ",totalDebtETH);
+        console.log("User data: availableBorrowsETH ",availableBorrowsETH);
+        console.log("User data: currentLiquidationThreshold ",currentLiquidationThreshold);
+        console.log("User data: ltv ",ltv);
+        console.log("User data: healthFactor ", healthFactor);
+        }
+        IERC20(grainTokens[0]).approve(address(mp), 500E6);
+        IMiniPool(mp).repay(address(grainTokens[0]), true, 500E6, user);
+        console.log("User balance: ", grainTokens[0].balanceOf(user));
+        console.log("ATOKEN balance: ", ATOKEN.balanceOf(user, 2000));
+
+    }
 
     // function testBorrowRepay() public {
     //     address user = makeAddr("user");
