@@ -18,6 +18,7 @@ contract DefaultReserveInterestRateStrategyTest is Common {
         assertEq(vm.activeFork(), opFork);
         deployedContracts = fixture_deployProtocol();
         configAddresses = ConfigAddresses(
+            address(deployedContracts.protocolDataProvider),
             address(deployedContracts.stableStrategy),
             address(deployedContracts.volatileStrategy),
             address(deployedContracts.treasury),
@@ -26,13 +27,13 @@ contract DefaultReserveInterestRateStrategyTest is Common {
         );
         fixture_configureProtocol(
             address(deployedContracts.lendingPool),
+            address(aToken),
             configAddresses,
             deployedContracts.lendingPoolConfigurator,
-            deployedContracts.lendingPoolAddressesProvider,
-            deployedContracts.protocolDataProvider
+            deployedContracts.lendingPoolAddressesProvider
         );
-        (grainTokens, variableDebtTokens) =
-            fixture_getGrainTokensAndDebts(tokens, deployedContracts.protocolDataProvider);
+        aTokens = fixture_getATokens(tokens, deployedContracts.protocolDataProvider);
+        variableDebtTokens = fixture_getVarDebtTokens(tokens, deployedContracts.protocolDataProvider);
         mockedVaults = fixture_deployErc4626Mocks(tokens, address(deployedContracts.treasury));
         erc20Tokens = fixture_getErc20Tokens(tokens);
         fixture_transferTokensToTestContract(erc20Tokens, tokensWhales, address(this));
@@ -46,7 +47,7 @@ contract DefaultReserveInterestRateStrategyTest is Common {
             (,,,, reserveFactors[idx],,,,) =
                 deployedContracts.protocolDataProvider.getReserveConfigurationData(address(erc20Tokens[idx]), false);
             (currentLiquidityRate, currentVariableBorrowRate) = deployedContracts.stableStrategy.calculateInterestRates(
-                address(erc20Tokens[idx]), address(grainTokens[idx]), 0, 0, 0, reserveFactors[idx]
+                address(erc20Tokens[idx]), address(aTokens[idx]), 0, 0, 0, reserveFactors[idx]
             );
             assertEq(currentLiquidityRate, 0);
             assertEq(currentVariableBorrowRate, 0);
@@ -62,7 +63,7 @@ contract DefaultReserveInterestRateStrategyTest is Common {
                 deployedContracts.protocolDataProvider.getReserveConfigurationData(address(erc20Tokens[idx]), false);
             (currentLiquidityRate, currentVariableBorrowRate) = deployedContracts.stableStrategy.calculateInterestRates(
                 address(erc20Tokens[idx]),
-                address(grainTokens[idx]),
+                address(aTokens[idx]),
                 200000000000000000,
                 0,
                 800000000000000000,
@@ -70,12 +71,9 @@ contract DefaultReserveInterestRateStrategyTest is Common {
             );
             uint256 baseVariableBorrowRate = deployedContracts.stableStrategy.baseVariableBorrowRate();
             uint256 variableRateSlope1 = deployedContracts.stableStrategy.variableRateSlope1();
-            console.log("baseVariableBorrowRate: ", baseVariableBorrowRate);
-            console.log("variableRateSlope1: ", variableRateSlope1);
             uint256 expectedVariableRate = baseVariableBorrowRate + variableRateSlope1;
             uint256 value = expectedVariableRate * 80 / 100;
             uint256 percentage = PERCENTAGE_FACTOR - reserveFactors[idx];
-            console.log("percentage: ", percentage);
             uint256 expectedLiquidityRate = (value * percentage + 5000) / PERCENTAGE_FACTOR;
 
             assertEq(currentLiquidityRate, expectedLiquidityRate);
@@ -91,18 +89,14 @@ contract DefaultReserveInterestRateStrategyTest is Common {
             (,,,, reserveFactors[idx],,,,) =
                 deployedContracts.protocolDataProvider.getReserveConfigurationData(address(erc20Tokens[idx]), false);
             (currentLiquidityRate, currentVariableBorrowRate) = deployedContracts.stableStrategy.calculateInterestRates(
-                address(erc20Tokens[idx]), address(grainTokens[idx]), 0, 0, 800000000000000000, reserveFactors[idx]
+                address(erc20Tokens[idx]), address(aTokens[idx]), 0, 0, 800000000000000000, reserveFactors[idx]
             );
             uint256 baseVariableBorrowRate = deployedContracts.stableStrategy.baseVariableBorrowRate();
             uint256 variableRateSlope1 = deployedContracts.stableStrategy.variableRateSlope1();
             uint256 variableRateSlope2 = deployedContracts.stableStrategy.variableRateSlope2();
-            console.log("baseVariableBorrowRate: ", baseVariableBorrowRate);
-            console.log("variableRateSlope1: ", variableRateSlope1);
-            console.log("variableRateSlope2: ", variableRateSlope2);
             uint256 expectedVariableRate = baseVariableBorrowRate + variableRateSlope1 + variableRateSlope2;
             uint256 value = expectedVariableRate;
             uint256 percentage = PERCENTAGE_FACTOR - reserveFactors[idx];
-            console.log("percentage: ", percentage);
             uint256 expectedLiquidityRate = (value * percentage + 5000) / PERCENTAGE_FACTOR;
 
             assertEq(currentLiquidityRate, expectedLiquidityRate);

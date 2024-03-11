@@ -40,6 +40,7 @@ import "contracts/mocks/dependencies/IExternalContract.sol";
 contract Common is Test {
     // Structures
     struct ConfigAddresses {
+        address protocolDataProvider;
         address stableStrategy;
         address volatileStrategy;
         address treasury;
@@ -105,8 +106,9 @@ contract Common is Test {
     string marketId = "Granary Genesis Market";
 
     ERC20 public weth = ERC20(WETH);
+    ERC20 public dai = ERC20(DAI);
 
-    bool[] reserveTypes = [false, false, false];
+    bool[] reserveTypes = [false, false, false, false];
 
     // MockAggregator public usdcPriceFeed;
     // MockAggregator public wbtcPriceFeed;
@@ -118,17 +120,18 @@ contract Common is Test {
     address public validationLogic;
 
     // StableAndVariableTokensHelper public stableAndVariableTokensHelper;
-    AToken public aToken;
-    ATokenERC6909 public aTokenErc6909;
-    VariableDebtToken public variableDebtToken;
     Oracle public oracle;
 
     UiPoolDataProviderV2 public uiPoolDataProviderV2;
     WETHGateway public wETHGateway;
+    AToken public aToken;
+    VariableDebtToken public variableDebtToken;
+    ATokenERC6909 public aTokenErc6909;
 
     LendingPoolCollateralManager public lendingPoolCollateralManager;
-    AToken[] public grainTokens;
+    AToken[] public aTokens;
     VariableDebtToken[] public variableDebtTokens;
+    ATokenERC6909[] public aTokensErc6909;
 
     MockERC4626[] public mockedVaults;
 
@@ -181,6 +184,7 @@ contract Common is Test {
         new ATokensAndRatesHelper(payable(lendingPoolProxyAddress), address(deployedContracts.lendingPoolAddressesProvider), lendingPoolConfiguratorProxyAddress);
 
         aToken = new AToken();
+        aTokenErc6909 = new ATokenERC6909();
         variableDebtToken = new VariableDebtToken();
         // stableDebtToken = new StableDebtToken();
         fixture_deployMocks(address(deployedContracts.treasury));
@@ -214,7 +218,7 @@ contract Common is Test {
 
         /* Prices to be changed here */
         ERC20[] memory erc20tokens = fixture_getErc20Tokens(tokens);
-        int256[] memory prices = new int256[](4);
+        int256[] memory prices = new int256[](4); // TODO 4
         // All chainlink price feeds have 8 decimals
         prices[0] = int256(1 * 10 ** PRICE_FEED_DECIMALS); // USDC
         prices[1] = int256(67_000 * 10 ** PRICE_FEED_DECIMALS); // WBTC
@@ -234,35 +238,37 @@ contract Common is Test {
 
     function fixture_configureProtocol(
         address ledingPool,
+        address _aToken,
         ConfigAddresses memory configAddresses,
         LendingPoolConfigurator lendingPoolConfiguratorProxy,
-        LendingPoolAddressesProvider lendingPoolAddressesProvider,
-        ProtocolDataProvider protocolDataProvider
+        LendingPoolAddressesProvider lendingPoolAddressesProvider
     ) public {
-        fixture_configureReserves(configAddresses, lendingPoolConfiguratorProxy, lendingPoolAddressesProvider);
-
+        fixture_configureReserves(configAddresses, lendingPoolConfiguratorProxy, lendingPoolAddressesProvider, _aToken);
         lendingPoolAddressesProvider.setLendingPoolCollateralManager(address(lendingPoolCollateralManager));
         wETHGateway.authorizeLendingPool(ledingPool);
 
         vm.prank(admin);
         lendingPoolConfiguratorProxy.setPoolPause(false);
 
-        // (grainTokens, variableDebtTokens) = fixture_getGrainTokensAndDebts(tokens, protocolDataProvider);
+        aTokens = fixture_getATokens(tokens, ProtocolDataProvider(configAddresses.protocolDataProvider));
+        variableDebtTokens =
+            fixture_getVarDebtTokens(tokens, ProtocolDataProvider(configAddresses.protocolDataProvider));
     }
 
     function fixture_configureReserves(
         ConfigAddresses memory configAddresses,
         LendingPoolConfigurator lendingPoolConfigurator,
-        LendingPoolAddressesProvider lendingPoolAddressesProvider
+        LendingPoolAddressesProvider lendingPoolAddressesProvider,
+        address aToken
     ) public {
         ILendingPoolConfigurator.InitReserveInput[] memory initInputParams =
-            new ILendingPoolConfigurator.InitReserveInput[](3);
+            new ILendingPoolConfigurator.InitReserveInput[](4);
         ATokensAndRatesHelper.ConfigureReserveInput[] memory inputConfigParams =
-            new ATokensAndRatesHelper.ConfigureReserveInput[](3);
+            new ATokensAndRatesHelper.ConfigureReserveInput[](4);
         // make it more universal
         initInputParams[0] = (
             ILendingPoolConfigurator.InitReserveInput({
-                aTokenImpl: address(aToken),
+                aTokenImpl: aToken,
                 variableDebtTokenImpl: address(variableDebtToken),
                 underlyingAssetDecimals: 6,
                 interestRateStrategyAddress: configAddresses.stableStrategy,
@@ -280,7 +286,7 @@ contract Common is Test {
         );
         initInputParams[1] = (
             ILendingPoolConfigurator.InitReserveInput({
-                aTokenImpl: address(aToken),
+                aTokenImpl: aToken,
                 variableDebtTokenImpl: address(variableDebtToken),
                 underlyingAssetDecimals: 8,
                 interestRateStrategyAddress: configAddresses.volatileStrategy,
@@ -298,7 +304,7 @@ contract Common is Test {
         );
         initInputParams[2] = (
             ILendingPoolConfigurator.InitReserveInput({
-                aTokenImpl: address(aToken),
+                aTokenImpl: aToken,
                 variableDebtTokenImpl: address(variableDebtToken),
                 underlyingAssetDecimals: 18,
                 interestRateStrategyAddress: configAddresses.volatileStrategy,
@@ -311,6 +317,24 @@ contract Common is Test {
                 aTokenSymbol: "grainETH",
                 variableDebtTokenName: "Granary variable debt bearing ETH",
                 variableDebtTokenSymbol: "variableDebtETH",
+                params: "0x10"
+            })
+        );
+        initInputParams[3] = (
+            ILendingPoolConfigurator.InitReserveInput({
+                aTokenImpl: aToken,
+                variableDebtTokenImpl: address(variableDebtToken),
+                underlyingAssetDecimals: 18,
+                interestRateStrategyAddress: configAddresses.volatileStrategy,
+                underlyingAsset: tokens[3],
+                reserveType: reserveTypes[3],
+                treasury: configAddresses.treasury,
+                incentivesController: configAddresses.rewarder,
+                underlyingAssetName: "DAI",
+                aTokenName: "Granary DAI",
+                aTokenSymbol: "grainDAI",
+                variableDebtTokenName: "Granary variable debt bearing DAI",
+                variableDebtTokenSymbol: "variableDebtDAI",
                 params: "0x10"
             })
         );
@@ -353,42 +377,62 @@ contract Common is Test {
                 borrowingEnabled: true
             })
         );
+        // DAI
+        inputConfigParams[3] = (
+            ATokensAndRatesHelper.ConfigureReserveInput({
+                asset: tokens[3],
+                reserveType: reserveTypes[3],
+                baseLTV: 8000,
+                liquidationThreshold: 8500,
+                liquidationBonus: 10500,
+                reserveFactor: 1500,
+                borrowingEnabled: true
+            })
+        );
         lendingPoolAddressesProvider.setPoolAdmin(configAddresses.aTokensAndRatesHelper);
         ATokensAndRatesHelper(configAddresses.aTokensAndRatesHelper).configureReserves(inputConfigParams);
         lendingPoolAddressesProvider.setPoolAdmin(admin);
     }
 
-    function fixture_getGrainTokensAndDebts(address[] memory _tokens, ProtocolDataProvider protocolDataProvider)
+    function fixture_getATokens(address[] memory _tokens, ProtocolDataProvider protocolDataProvider)
         public
         view
-        returns (AToken[] memory _grainTokens, VariableDebtToken[] memory _varDebtTokens)
+        returns (AToken[] memory _aTokens)
     {
-        _grainTokens = new AToken[](_tokens.length);
+        _aTokens = new AToken[](_tokens.length);
+        for (uint32 idx = 0; idx < _tokens.length; idx++) {
+            console.log("Index: ", idx);
+            (address _aTokenAddress,) = protocolDataProvider.getReserveTokensAddresses(_tokens[idx], false);
+            console.log("Atoken address", _aTokenAddress);
+            _aTokens[idx] = AToken(_aTokenAddress);
+        }
+    }
+
+    function fixture_getVarDebtTokens(address[] memory _tokens, ProtocolDataProvider protocolDataProvider)
+        public
+        view
+        returns (VariableDebtToken[] memory _varDebtTokens)
+    {
         _varDebtTokens = new VariableDebtToken[](_tokens.length);
         for (uint32 idx = 0; idx < _tokens.length; idx++) {
             console.log("Index: ", idx);
-            (address _aTokenAddress, address _variableDebtToken) =
-                protocolDataProvider.getReserveTokensAddresses(_tokens[idx], false);
-            console.log("Atoken address", _aTokenAddress);
-            _grainTokens[idx] = AToken(_aTokenAddress);
+            (, address _variableDebtToken) = protocolDataProvider.getReserveTokensAddresses(_tokens[idx], false);
+            console.log("Atoken address", _variableDebtToken);
             _varDebtTokens[idx] = VariableDebtToken(_variableDebtToken);
         }
     }
 
-    function fixture_getGrainTokensErc6909AndDebts(address[] memory _tokens, ProtocolDataProvider protocolDataProvider)
+    function fixture_getErc6909Tokens(address[] memory _tokens, ProtocolDataProvider protocolDataProvider)
         public
         view
-        returns (ATokenERC6909[] memory _grainTokens, VariableDebtToken[] memory _varDebtTokens)
+        returns (ATokenERC6909[] memory _erc6909Tokens)
     {
-        _grainTokens = new ATokenERC6909[](_tokens.length);
-        _varDebtTokens = new VariableDebtToken[](_tokens.length);
+        _erc6909Tokens = new ATokenERC6909[](_tokens.length);
         for (uint32 idx = 0; idx < _tokens.length; idx++) {
             console.log("Index: ", idx);
-            (address _aTokenAddress, address _variableDebtToken) =
-                protocolDataProvider.getReserveTokensAddresses(_tokens[idx], false);
-            console.log("Atoken address", _aTokenAddress);
-            _grainTokens[idx] = ATokenERC6909(_aTokenAddress);
-            _varDebtTokens[idx] = VariableDebtToken(_variableDebtToken);
+            (address _erc6909TokenAddress,) = protocolDataProvider.getReserveTokensAddresses(_tokens[idx], false);
+            console.log("Atoken address", _erc6909TokenAddress);
+            _erc6909Tokens[idx] = ATokenERC6909(_erc6909TokenAddress);
         }
     }
 
@@ -452,35 +496,37 @@ contract Common is Test {
         return borrowTokenMaxAmount;
     }
 
-    function fixture_deployMiniPoolSetup(
-        address _lendingPoolAddressesProvider,
-        address _lendingPool
-    ) public returns (DeployedMiniPoolContracts memory) {
+    function fixture_deployMiniPoolSetup(address _lendingPoolAddressesProvider, address _lendingPool)
+        public
+        returns (DeployedMiniPoolContracts memory)
+    {
         DeployedMiniPoolContracts memory deployedMiniPoolContracts;
         deployedMiniPoolContracts.miniPoolImpl = new MiniPool();
-        deployedMiniPoolContracts.miniPoolAddressesProvider = new MiniPoolAddressesProvider(ILendingPoolAddressesProvider(_lendingPoolAddressesProvider));
+        deployedMiniPoolContracts.miniPoolAddressesProvider =
+            new MiniPoolAddressesProvider(ILendingPoolAddressesProvider(_lendingPoolAddressesProvider));
         deployedMiniPoolContracts.AToken6909Impl = new ATokenERC6909();
         deployedMiniPoolContracts.flowLimiter = new flowLimiter(
             ILendingPoolAddressesProvider(_lendingPoolAddressesProvider), 
             IMiniPoolAddressesProvider(address(deployedMiniPoolContracts.miniPoolAddressesProvider)), 
             ILendingPool(_lendingPool));
         address miniPoolConfigIMPL = address(new MiniPoolConfigurator());
-        deployedMiniPoolContracts.miniPoolAddressesProvider.
-            setMiniPoolConfigurator(miniPoolConfigIMPL);
-        deployedMiniPoolContracts.miniPoolConfigurator = MiniPoolConfigurator(deployedMiniPoolContracts.miniPoolAddressesProvider.
-            getMiniPoolConfigurator());
+        deployedMiniPoolContracts.miniPoolAddressesProvider.setMiniPoolConfigurator(miniPoolConfigIMPL);
+        deployedMiniPoolContracts.miniPoolConfigurator =
+            MiniPoolConfigurator(deployedMiniPoolContracts.miniPoolAddressesProvider.getMiniPoolConfigurator());
 
-        deployedMiniPoolContracts.miniPoolAddressesProvider
-            .setMiniPoolImpl(address(deployedMiniPoolContracts.miniPoolImpl));
-        deployedMiniPoolContracts.miniPoolAddressesProvider
-            .setAToken6909Impl(address(deployedMiniPoolContracts.AToken6909Impl));
+        deployedMiniPoolContracts.miniPoolAddressesProvider.setMiniPoolImpl(
+            address(deployedMiniPoolContracts.miniPoolImpl)
+        );
+        deployedMiniPoolContracts.miniPoolAddressesProvider.setAToken6909Impl(
+            address(deployedMiniPoolContracts.AToken6909Impl)
+        );
 
-        ILendingPoolAddressesProvider(_lendingPoolAddressesProvider).setMiniPoolAddressesProvider(address(deployedMiniPoolContracts.miniPoolAddressesProvider));
-        ILendingPoolAddressesProvider(_lendingPoolAddressesProvider).setFlowLimiter(address(deployedMiniPoolContracts.flowLimiter));
+        ILendingPoolAddressesProvider(_lendingPoolAddressesProvider).setMiniPoolAddressesProvider(
+            address(deployedMiniPoolContracts.miniPoolAddressesProvider)
+        );
+        ILendingPoolAddressesProvider(_lendingPoolAddressesProvider).setFlowLimiter(
+            address(deployedMiniPoolContracts.flowLimiter)
+        );
         return deployedMiniPoolContracts;
     }
-
-    
-
-
 }

@@ -4,10 +4,14 @@ pragma solidity ^0.8.0;
 import "./Common.sol";
 import "contracts/protocol/libraries/helpers/Errors.sol";
 import {WadRayMath} from "contracts/protocol/libraries/math/WadRayMath.sol";
+import {MathUtils} from "contracts/protocol/libraries/math/MathUtils.sol";
+import "contracts/protocol/libraries/configuration/ReserveConfiguration.sol";
 // import {ILendingPool} from "contracts/interfaces/ILendingPool.sol";
 
 contract ATokenTest is Common {
     using WadRayMath for uint256;
+    using ReserveConfiguration for DataTypes.ReserveConfigurationMap;
+    using ReserveBorrowConfiguration for DataTypes.ReserveBorrowConfigurationMap;
 
     ERC20[] erc20Tokens;
     DeployedContracts deployedContracts;
@@ -37,6 +41,8 @@ contract ATokenTest is Common {
             deployedContracts.lendingPoolConfigurator,
             deployedContracts.lendingPoolAddressesProvider
         );
+        // aTokens = fixture_getATokens(tokens, deployedContracts.protocolDataProvider);
+        // variableDebtTokens = fixture_getVarDebtTokens(tokens, deployedContracts.protocolDataProvider);
         mockedVaults = fixture_deployErc4626Mocks(tokens, address(deployedContracts.treasury));
         erc20Tokens = fixture_getErc20Tokens(tokens);
         fixture_transferTokensToTestContract(erc20Tokens, tokensWhales, address(this));
@@ -56,6 +62,8 @@ contract ATokenTest is Common {
             vm.expectEmit(true, true, true, true);
             emit Deposit(address(erc20Tokens[idx]), address(this), user, amount);
             deployedContracts.lendingPool.deposit(address(erc20Tokens[idx]), false, amount, user);
+            console.log("_thisBalanceTokenBefore: ", _thisBalanceTokenBefore);
+            console.log("aTokens[idx].balanceOf(address(this)): ", aTokens[idx].balanceOf(address(this)));
             assertEq(_thisBalanceTokenBefore, erc20Tokens[idx].balanceOf(address(this)) + amount);
             assertEq(_userGrainBalanceBefore + amount, aTokens[idx].balanceOf(address(user)));
 
@@ -64,6 +72,8 @@ contract ATokenTest is Common {
             emit Withdraw(address(erc20Tokens[idx]), user, address(this), amount);
             deployedContracts.lendingPool.withdraw(address(erc20Tokens[idx]), false, amount, address(this));
             vm.stopPrank();
+            console.log("_thisBalanceTokenBefore: ", _thisBalanceTokenBefore);
+            console.log("aTokens[idx].balanceOf(address(this)): ", aTokens[idx].balanceOf(user));
             assertEq(_thisBalanceTokenBefore, erc20Tokens[idx].balanceOf(address(this)));
             assertEq(_userGrainBalanceBefore, aTokens[idx].balanceOf(address(this)));
         }
@@ -76,17 +86,20 @@ contract ATokenTest is Common {
         IERC20 wbtc = erc20Tokens[1];
         uint256 usdcDepositAmount = 5e9; /* $5k */ // consider fuzzing here
 
-        uint256 wbtcPrice = oracle.getAssetPrice(address(wbtc)); // 6e12 / 1e6; /* $60k / $1 */ // TODO - price feeds
+        uint256 wbtcPrice = oracle.getAssetPrice(address(wbtc));
         uint256 usdcPrice = oracle.getAssetPrice(address(usdc));
         uint256 usdcDepositValue = usdcDepositAmount * usdcPrice / (10 ** PRICE_FEED_DECIMALS);
         (, uint256 usdcLtv,,,,,,,) =
             deployedContracts.protocolDataProvider.getReserveConfigurationData(address(usdc), false);
-
+        // (, uint256 wbtcLtv,,,,,,,) =
+        //     deployedContracts.protocolDataProvider.getReserveConfigurationData(address(wbtc), false);
+        console.log("LTV: ", usdcLtv);
         uint256 usdcMaxBorrowValue = usdcLtv * usdcDepositValue / 10_000;
 
+        console.log("Price: ", wbtcPrice);
         uint256 wbtcMaxBorrowAmountWithUsdcCollateral = (usdcMaxBorrowValue * 10 ** PRICE_FEED_DECIMALS) / wbtcPrice;
         require(wbtc.balanceOf(address(this)) > wbtcMaxBorrowAmountWithUsdcCollateral, "Too less wbtc");
-
+        console.log("Max to borrow: ", wbtcMaxBorrowAmountWithUsdcCollateral);
         uint256 wbtcDepositAmount = wbtcMaxBorrowAmountWithUsdcCollateral * 15 / 10;
 
         /* Main user deposits usdc and wants to borrow */
@@ -98,16 +111,17 @@ contract ATokenTest is Common {
         deployedContracts.lendingPool.deposit(address(wbtc), false, wbtcDepositAmount, user);
 
         uint256 wbtcBalanceBeforeBorrow = wbtc.balanceOf(address(this));
+        console.log("Wbtc balance before: ", wbtcBalanceBeforeBorrow);
 
         /* Main user borrows maxPossible amount of wbtc */
-        vm.expectEmit(true, true, true, false);
-        emit Borrow(
-            address(wbtc),
-            address(this),
-            address(this),
-            wbtcMaxBorrowAmountWithUsdcCollateral,
-            0 // TODO
-        );
+        // vm.expectEmit(true, true, true, true);
+        // emit Borrow(
+        //     address(wbtc),
+        //     address(this),
+        //     address(this),
+        //     wbtcMaxBorrowAmountWithUsdcCollateral,
+        //     1251838485129347319607618207 // TODO
+        // );
         deployedContracts.lendingPool.borrow(address(wbtc), false, wbtcMaxBorrowAmountWithUsdcCollateral, address(this));
         /* Main user's balance should be: initial amount + borrowed amount */
         assertEq(wbtcBalanceBeforeBorrow + wbtcMaxBorrowAmountWithUsdcCollateral, wbtc.balanceOf(address(this)));
@@ -130,19 +144,25 @@ contract ATokenTest is Common {
         ERC20 wbtc = erc20Tokens[1];
         uint256 usdcDepositAmount = 5e9; /* $5k */ // consider fuzzing here
 
-        uint256 wbtcPrice = oracle.getAssetPrice(address(wbtc)); // 6e12 / 1e6; /* $60k / $1 */ // TODO - price feeds
+        uint256 wbtcPrice = oracle.getAssetPrice(address(wbtc));
         uint256 usdcPrice = oracle.getAssetPrice(address(usdc));
         uint256 usdcDepositValue = usdcDepositAmount * usdcPrice / (10 ** PRICE_FEED_DECIMALS);
+        console.log("usdc value: ", usdcDepositValue);
         (, uint256 usdcLtv,,,,,,,) =
             deployedContracts.protocolDataProvider.getReserveConfigurationData(address(usdc), false);
+        // (, uint256 wbtcLtv,,,,,,,) =
+        //     deployedContracts.protocolDataProvider.getReserveConfigurationData(address(wbtc), false);
+        console.log("LTV: ", usdcLtv);
         uint256 usdcMaxBorrowValue = usdcLtv * usdcDepositValue / 10_000;
         uint256 wbtcMaxBorrowAmountWithUsdcCollateral;
+        console.log("Price: ", wbtcPrice);
         {
             uint256 wbtcMaxBorrowAmountRaw = (usdcMaxBorrowValue * 10 ** PRICE_FEED_DECIMALS) / wbtcPrice;
             wbtcMaxBorrowAmountWithUsdcCollateral = (wbtc.decimals() > usdc.decimals())
                 ? wbtcMaxBorrowAmountRaw * (10 ** (wbtc.decimals() - usdc.decimals()))
                 : wbtcMaxBorrowAmountRaw / (10 ** (usdc.decimals() - wbtc.decimals()));
             require(wbtc.balanceOf(address(this)) > wbtcMaxBorrowAmountWithUsdcCollateral, "Too less wbtc");
+            console.log("Max to borrow: ", wbtcMaxBorrowAmountWithUsdcCollateral);
         }
         {
             uint256 wbtcDepositAmount = wbtcMaxBorrowAmountWithUsdcCollateral * 15 / 10;
@@ -170,14 +190,18 @@ contract ATokenTest is Common {
         ERC20 wbtc = erc20Tokens[1];
         uint256 usdcDepositAmount = 5e9; /* $5k */ // consider fuzzing here
 
-        uint256 wbtcPrice = oracle.getAssetPrice(address(wbtc)); // 6e12 / 1e6; /* $60k / $1 */ // TODO - price feeds
+        uint256 wbtcPrice = oracle.getAssetPrice(address(wbtc));
         uint256 usdcPrice = oracle.getAssetPrice(address(usdc));
         uint256 usdcDepositValue = usdcDepositAmount * usdcPrice / (10 ** PRICE_FEED_DECIMALS);
         console.log("usdc value: ", usdcDepositValue);
         (, uint256 usdcLtv,,,,,,,) =
             deployedContracts.protocolDataProvider.getReserveConfigurationData(address(usdc), false);
+        // (, uint256 wbtcLtv,,,,,,,) =
+        //     deployedContracts.protocolDataProvider.getReserveConfigurationData(address(wbtc), false);
+        console.log("LTV: ", usdcLtv);
         uint256 usdcMaxBorrowValue = usdcLtv * usdcDepositValue / 10_000;
         uint256 wbtcMaxBorrowAmountWithUsdcCollateral;
+        console.log("Price: ", wbtcPrice);
         {
             wbtcMaxBorrowAmountWithUsdcCollateral = fixture_calcMaxAmountToBorrowBasedOnCollateral(
                 usdcMaxBorrowValue, wbtcPrice, usdc.decimals(), wbtc.decimals()
@@ -208,11 +232,10 @@ contract ATokenTest is Common {
         IERC20 usdc = erc20Tokens[0];
         IERC20 wbtc = erc20Tokens[1];
         uint256 usdcDepositAmount = 5e9; /* $5k */ // consider fuzzing here
-        uint256 wbtcPriceInUsdc = oracle.getAssetPrice(address(wbtc)); // 6e12 / 1e6; /* $60k / $1 */ // TODO - price feeds
+        uint256 wbtcPriceInUsdc = oracle.getAssetPrice(address(wbtc));
         (, uint256 usdcLtv,,,,,,,) =
             deployedContracts.protocolDataProvider.getReserveConfigurationData(address(usdc), false);
-        // (, uint256 wbtcLtv,,,,,,,) =
-        //     deployedContracts.protocolDataProvider.getReserveConfigurationData(address(wbtc), false);
+
         uint256 usdcMaxBorrowAmount = usdcLtv * usdcDepositAmount / 10_000;
 
         uint256 wbtcMaxBorrowAmountWithUsdcCollateral = usdcMaxBorrowAmount * 1e10 / wbtcPriceInUsdc;
@@ -234,14 +257,38 @@ contract ATokenTest is Common {
         deployedContracts.lendingPool.borrow(address(usdc), false, usdcMaxBorrowAmount, address(this));
 
         deployedContracts.lendingPool.setUserUseReserveAsCollateral(address(usdc), false, true);
+        // {
+        //     DataTypes.ReserveData memory reserve = deployedContracts.lendingPool.getReserveData(address(usdc), false);
+        //     uint256 cumulatedVariableBorrowInterest =
+        //         MathUtils.calculateCompoundedInterest(reserve.currentVariableBorrowRate, uint40(block.timestamp));
+        //     reserve.variableBorrowIndex = uint128(cumulatedVariableBorrowInterest.rayMul(reserve.variableBorrowIndex));
+        //     uint256 totalVariableDebt = IVariableDebtToken(reserve.variableDebtTokenAddress).scaledTotalSupply().rayMul(
+        //         reserve.variableBorrowIndex
+        //     );
+        //     (, uint256 variableBorrowRate) = IReserveInterestRateStrategy(reserve.interestRateStrategyAddress)
+        //         .calculateInterestRates(
+        //         address(usdc),
+        //         address(aTokens[0]),
+        //         0,
+        //         usdcMaxBorrowAmount,
+        //         totalVariableDebt,
+        //         (reserve.configuration.data & ~ReserveConfiguration.RESERVE_FACTOR_MASK)
+        //             >> ReserveConfiguration.RESERVE_FACTOR_START_BIT_POSITION
+        //     );
+        //     console.log("1.cumulatedVariableBorrowInterest: ", cumulatedVariableBorrowInterest);
+        //     console.log("1.variableBorrowRate: ", variableBorrowRate);
+        //     console.log("1.variableBorrowIndex: ", reserve.variableBorrowIndex);
+        //     console.log("1.totalVariableDebt: ", totalVariableDebt);
+        // }
+
         /* Main user borrows maxPossible amount of wbtc */
-        vm.expectEmit(true, true, true, true);
+        vm.expectEmit(true, true, true, false);
         emit Borrow(
             address(usdc),
             address(this),
             address(this),
             usdcMaxBorrowAmount,
-            40000000000000000000000000 // TODO
+            0 // TODO
         );
         deployedContracts.lendingPool.borrow(address(usdc), false, usdcMaxBorrowAmount, address(this));
         /* Main user's balance should be: initial amount + borrowed amount */

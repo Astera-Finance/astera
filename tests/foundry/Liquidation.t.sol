@@ -88,21 +88,22 @@ contract LiquidationTest is Common {
         assertEq(vm.activeFork(), opFork);
         deployedContracts = fixture_deployProtocol();
         configAddresses = ConfigAddresses(
+            address(deployedContracts.protocolDataProvider),
             address(deployedContracts.stableStrategy),
             address(deployedContracts.volatileStrategy),
             address(deployedContracts.treasury),
             address(deployedContracts.rewarder),
             address(deployedContracts.aTokensAndRatesHelper)
         );
+
         fixture_configureProtocol(
             address(deployedContracts.lendingPool),
+            address(aToken),
             configAddresses,
             deployedContracts.lendingPoolConfigurator,
-            deployedContracts.lendingPoolAddressesProvider,
-            deployedContracts.protocolDataProvider
+            deployedContracts.lendingPoolAddressesProvider
         );
-        (grainTokens, variableDebtTokens) =
-            fixture_getGrainTokensAndDebts(tokens, deployedContracts.protocolDataProvider);
+
         mockedVaults = fixture_deployErc4626Mocks(tokens, address(deployedContracts.treasury));
         erc20Tokens = fixture_getErc20Tokens(tokens);
         fixture_transferTokensToTestContract(erc20Tokens, tokensWhales, address(this));
@@ -114,7 +115,7 @@ contract LiquidationTest is Common {
         IERC20 usdc = erc20Tokens[0];
         IERC20 wbtc = erc20Tokens[1];
         uint256 usdcDepositAmount = 5e9; /* $5k */ // consider fuzzing here
-        uint256 wbtcPriceInUsdc = oracle.getAssetPrice(address(wbtc)); // 6e12 / 1e6; /* $60k / $1 */ // TODO - price feeds
+        uint256 wbtcPriceInUsdc = oracle.getAssetPrice(address(wbtc));
         (, uint256 usdcLtv,,,,,,,) =
             deployedContracts.protocolDataProvider.getReserveConfigurationData(address(usdc), false);
 
@@ -157,7 +158,7 @@ contract LiquidationTest is Common {
     //     ERC20 usdc = erc20Tokens[0];
     //     ERC20 wbtc = ERC20(erc20Tokens[1]);
     //     uint256 usdcDepositAmount = 5e9; /* $5k */ // consider fuzzing here
-    //     uint256 wbtcPriceInUsdc = oracle.getAssetPrice(address(wbtc)); // 6e12 / 1e6; /* $60k / $1 */ // TODO - price feeds
+    //     uint256 wbtcPriceInUsdc = oracle.getAssetPrice(address(wbtc));
     //     {
     //         (, uint256 usdcLtv,,,,,,,) =
     //             deployedContracts.protocolDataProvider.getReserveConfigurationData(address(usdc), false);
@@ -346,7 +347,7 @@ contract LiquidationTest is Common {
         ERC20 usdc = erc20Tokens[0];
         ERC20 wbtc = ERC20(erc20Tokens[1]);
 
-        uint256 wbtcPrice = oracle.getAssetPrice(address(wbtc)); // 6e12 / 1e6; /* $60k / $1 */ // TODO - price feeds
+        uint256 wbtcPrice = oracle.getAssetPrice(address(wbtc));
         uint256 usdcPrice = oracle.getAssetPrice(address(usdc));
         {
             uint256 usdcDepositAmount = 5e9; /* $5k */ // consider fuzzing here
@@ -403,11 +404,12 @@ contract LiquidationTest is Common {
             uint256 newPrice = (usdcPrice - usdcPrice * priceDecrease / 10_000);
             console.log("Price: ", newPrice);
 
-            int256[] memory prices = new int256[](3);
+            int256[] memory prices = new int256[](4);
             prices[0] = int256(newPrice);
             prices[1] = int256(oracle.getAssetPrice(address(wbtc)));
             prices[2] = int256(oracle.getAssetPrice(address(weth)));
-            address[] memory aggregators = new address[](3);
+            prices[3] = int256(oracle.getAssetPrice(address(dai)));
+            address[] memory aggregators = new address[](4);
             (, aggregators) = fixture_getTokenPriceFeeds(erc20Tokens, prices);
 
             oracle.setAssetSources(tokens, aggregators);
@@ -432,8 +434,6 @@ contract LiquidationTest is Common {
         {
             (, uint256 debtToCover, uint256 _scaledVariableDebt,,) =
                 deployedContracts.protocolDataProvider.getUserReserveData(address(wbtc), false, address(this));
-            console.log(">>>>> DEBT TO COVER: ", debtToCover);
-            // vm.expectRevert(bytes(Errors.LPCM_HEALTH_FACTOR_NOT_BELOW_THRESHOLD));
             amountToLiquidate = debtToCover / 2;
             scaledVariableDebt = _scaledVariableDebt;
         }
@@ -466,10 +466,8 @@ contract LiquidationTest is Common {
             expectedCollateralLiquidated = wbtcPrice * (amountToLiquidate * liquidationBonus / 10_000)
                 * 10 ** usdc.decimals() / (usdcPrice * 10 ** wbtc.decimals());
         }
-        console.log("Before fixture: ");
         uint256 variableDebtBeforeTx =
             fixture_calcExpectedVariableDebtTokenBalance(wbtcReserveParamsBefore, scaledVariableDebt, block.timestamp);
-        console.log("After fixture variableDebtBeforeTx: ", variableDebtBeforeTx);
         {
             (,,,,, uint256 healthFactor) = deployedContracts.lendingPool.getUserAccountData(address(this));
             console.log("AFTER LIQUIDATION: ");

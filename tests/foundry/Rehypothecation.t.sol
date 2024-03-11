@@ -78,7 +78,9 @@
 
 //         lendingPoolAddressesProviderRegistry = new LendingPoolAddressesProviderRegistry();
 //         lendingPoolAddressesProvider = new LendingPoolAddressesProvider(marketId);
-//         lendingPoolAddressesProviderRegistry.registerAddressesProvider(address(lendingPoolAddressesProvider), providerId);
+//         lendingPoolAddressesProviderRegistry.registerAddressesProvider(
+//             address(lendingPoolAddressesProvider), providerId
+//         );
 //         lendingPoolAddressesProvider.setPoolAdmin(admin);
 //         lendingPoolAddressesProvider.setEmergencyAdmin(admin);
 
@@ -101,7 +103,8 @@
 //         lendingPoolConfiguratorProxy.setPoolPause(true);
 
 //         // stableAndVariableTokensHelper = new StableAndVariableTokensHelper(lendingPoolProxyAddress, address(lendingPoolAddressesProvider));
-//         aTokensAndRatesHelper = new ATokensAndRatesHelper(payable(lendingPoolProxyAddress), address(lendingPoolAddressesProvider), lendingPoolConfiguratorProxyAddress);
+//         aTokensAndRatesHelper =
+//         new ATokensAndRatesHelper(payable(lendingPoolProxyAddress), address(lendingPoolAddressesProvider), lendingPoolConfiguratorProxyAddress);
 
 //         aToken = new AToken();
 //         variableDebtToken = new VariableDebtToken();
@@ -126,7 +129,8 @@
 //             volStrat[3]
 //         );
 
-//         initInputParams.push(ILendingPoolConfigurator.InitReserveInput({
+//         initInputParams.push(
+//             ILendingPoolConfigurator.InitReserveInput({
 //                 aTokenImpl: address(aToken),
 //                 variableDebtTokenImpl: address(variableDebtToken),
 //                 underlyingAssetDecimals: 6,
@@ -135,14 +139,16 @@
 //                 reserveType: reserveTypes[0],
 //                 treasury: address(treasury),
 //                 incentivesController: address(rewarder),
-//                 underlyingAssetName: 'USDC',
-//                 aTokenName: 'Granary USDC',
-//                 aTokenSymbol: 'grainUSDC',
-//                 variableDebtTokenName: 'Granary variable debt bearing USDC',
-//                 variableDebtTokenSymbol: 'variableDebtUSDC',
-//                 params: '0x10'
-//             }));
-//         initInputParams.push(ILendingPoolConfigurator.InitReserveInput({
+//                 underlyingAssetName: "USDC",
+//                 aTokenName: "Granary USDC",
+//                 aTokenSymbol: "grainUSDC",
+//                 variableDebtTokenName: "Granary variable debt bearing USDC",
+//                 variableDebtTokenSymbol: "variableDebtUSDC",
+//                 params: "0x10"
+//             })
+//         );
+//         initInputParams.push(
+//             ILendingPoolConfigurator.InitReserveInput({
 //                 aTokenImpl: address(aToken),
 //                 variableDebtTokenImpl: address(variableDebtToken),
 //                 underlyingAssetDecimals: 8,
@@ -151,14 +157,16 @@
 //                 reserveType: reserveTypes[1],
 //                 treasury: address(treasury),
 //                 incentivesController: address(rewarder),
-//                 underlyingAssetName: 'WBTC',
-//                 aTokenName: 'Granary WBTC',
-//                 aTokenSymbol: 'grainWBTC',
-//                 variableDebtTokenName: 'Granary variable debt bearing WBTC',
-//                 variableDebtTokenSymbol: 'variableDebtWBTC',
-//                 params: '0x10'
-//             }));
-//         initInputParams.push(ILendingPoolConfigurator.InitReserveInput({
+//                 underlyingAssetName: "WBTC",
+//                 aTokenName: "Granary WBTC",
+//                 aTokenSymbol: "grainWBTC",
+//                 variableDebtTokenName: "Granary variable debt bearing WBTC",
+//                 variableDebtTokenSymbol: "variableDebtWBTC",
+//                 params: "0x10"
+//             })
+//         );
+//         initInputParams.push(
+//             ILendingPoolConfigurator.InitReserveInput({
 //                 aTokenImpl: address(aToken),
 //                 variableDebtTokenImpl: address(variableDebtToken),
 //                 underlyingAssetDecimals: 18,
@@ -167,45 +175,52 @@
 //                 reserveType: reserveTypes[2],
 //                 treasury: address(treasury),
 //                 incentivesController: address(rewarder),
-//                 underlyingAssetName: 'ETH',
-//                 aTokenName: 'Granary ETH',
-//                 aTokenSymbol: 'grainETH',
-//                 variableDebtTokenName: 'Granary variable debt bearing ETH',
-//                 variableDebtTokenSymbol: 'variableDebtETH',
-//                 params: '0x10'
-//             }));
+//                 underlyingAssetName: "ETH",
+//                 aTokenName: "Granary ETH",
+//                 aTokenSymbol: "grainETH",
+//                 variableDebtTokenName: "Granary variable debt bearing ETH",
+//                 variableDebtTokenSymbol: "variableDebtETH",
+//                 params: "0x10"
+//             })
+//         );
 //         vm.prank(admin);
 //         lendingPoolConfiguratorProxy.batchInitReserve(initInputParams);
 
-//         inputConfigParams.push(ATokensAndRatesHelper.ConfigureReserveInput({
-//             asset: tokens[0],
-//             reserveType: reserveTypes[0],
-//             baseLTV: 8000,
-//             liquidationThreshold: 8500,
-//             liquidationBonus: 10500,
-//             reserveFactor: 1500,
-//             borrowingEnabled: true
-//         }));
+//         inputConfigParams.push(
+//             ATokensAndRatesHelper.ConfigureReserveInput({
+//                 asset: tokens[0],
+//                 reserveType: reserveTypes[0],
+//                 baseLTV: 8000,
+//                 liquidationThreshold: 8500,
+//                 liquidationBonus: 10500,
+//                 reserveFactor: 1500,
+//                 borrowingEnabled: true
+//             })
+//         );
 
-//         inputConfigParams.push(ATokensAndRatesHelper.ConfigureReserveInput({
-//             asset: tokens[1],
-//             reserveType: reserveTypes[1],
-//             baseLTV: 8000,
-//             liquidationThreshold: 8500,
-//             liquidationBonus: 10500,
-//             reserveFactor: 1500,
-//             borrowingEnabled: true
-//         }));
+//         inputConfigParams.push(
+//             ATokensAndRatesHelper.ConfigureReserveInput({
+//                 asset: tokens[1],
+//                 reserveType: reserveTypes[1],
+//                 baseLTV: 8000,
+//                 liquidationThreshold: 8500,
+//                 liquidationBonus: 10500,
+//                 reserveFactor: 1500,
+//                 borrowingEnabled: true
+//             })
+//         );
 
-//         inputConfigParams.push(ATokensAndRatesHelper.ConfigureReserveInput({
-//             asset: tokens[2],
-//             reserveType: reserveTypes[2],
-//             baseLTV: 8000,
-//             liquidationThreshold: 8500,
-//             liquidationBonus: 10500,
-//             reserveFactor: 1500,
-//             borrowingEnabled: true
-//         }));
+//         inputConfigParams.push(
+//             ATokensAndRatesHelper.ConfigureReserveInput({
+//                 asset: tokens[2],
+//                 reserveType: reserveTypes[2],
+//                 baseLTV: 8000,
+//                 liquidationThreshold: 8500,
+//                 liquidationBonus: 10500,
+//                 reserveFactor: 1500,
+//                 borrowingEnabled: true
+//             })
+//         );
 
 //         lendingPoolAddressesProvider.setPoolAdmin(address(aTokensAndRatesHelper));
 //         aTokensAndRatesHelper.configureReserves(inputConfigParams);
@@ -215,21 +230,23 @@
 //         lendingPoolAddressesProvider.setLendingPoolCollateralManager(address(lendingPoolCollateralManager));
 //         wETHGateway.authorizeLendingPool(lendingPoolProxyAddress);
 
-//         (address USDCATokenAddress, address USDCVariableDebtToken) = protocolDataProvider.getReserveTokensAddresses(address(usdc), false);
+//         (address USDCATokenAddress, address USDCVariableDebtToken) =
+//             protocolDataProvider.getReserveTokensAddresses(address(usdc), false);
 //         grainUSDC = AToken(USDCATokenAddress);
 //         variableDebtUSDC = VariableDebtToken(USDCVariableDebtToken);
 
-//         (address WBTCATokenAddress, address WBTCVariableDebtTokenAddress) = protocolDataProvider.getReserveTokensAddresses(address(wbtc), false);
+//         (address WBTCATokenAddress, address WBTCVariableDebtTokenAddress) =
+//             protocolDataProvider.getReserveTokensAddresses(address(wbtc), false);
 //         grainWBTC = AToken(WBTCATokenAddress);
 //         variableDebtWBTC = VariableDebtToken(WBTCVariableDebtTokenAddress);
 
-//         (address ETHATokenAddress, address ETHVariableDebtTokenAddress) = protocolDataProvider.getReserveTokensAddresses(address(weth), false);
+//         (address ETHATokenAddress, address ETHVariableDebtTokenAddress) =
+//             protocolDataProvider.getReserveTokensAddresses(address(weth), false);
 //         grainETH = AToken(ETHATokenAddress);
 //         variableDebtETH = VariableDebtToken(ETHVariableDebtTokenAddress);
 
 //         vm.prank(admin);
 //         lendingPoolConfiguratorProxy.setPoolPause(false);
-
 //     }
 
 //     function testRebalance() public {
@@ -257,7 +274,7 @@
 //         vm.stopPrank();
 
 //         uint256 remainingPct = 10000 - (grainUSDC.farmingPct());
-//         assertEq(usdc.balanceOf(address(grainUSDC)), usdcDepositSize * remainingPct / 10000 );
+//         assertEq(usdc.balanceOf(address(grainUSDC)), usdcDepositSize * remainingPct / 10000);
 //         assertEq(grainUSDC.getTotalManagedAssets(), usdcDepositSize);
 //     }
 
@@ -272,10 +289,11 @@
 //         vm.stopPrank();
 //         vm.startPrank(admin);
 //         MockERC4626 usdcMockERC4626 = MockERC4626(deployMockErc4626(address(usdc)));
-//         vm.label(address(usdcMockERC4626),"usdcMockERC4626");
+//         vm.label(address(usdcMockERC4626), "usdcMockERC4626");
 //         ExternalContract externalContract = new ExternalContract(address(usdc));
-//         ReaperStrategy usdcReaperStrategy = new ReaperStrategy(address(usdcMockERC4626), address(usdc), address(externalContract));
-//         vm.label(address(usdcReaperStrategy),"strategy");
+//         ReaperStrategy usdcReaperStrategy =
+//             new ReaperStrategy(address(usdcMockERC4626), address(usdc), address(externalContract));
+//         vm.label(address(usdcReaperStrategy), "strategy");
 //         lendingPoolConfiguratorProxy.setVault(address(grainUSDC), address(usdcMockERC4626));
 //         lendingPoolConfiguratorProxy.setFarmingPct(address(grainUSDC), 2000);
 //         lendingPoolConfiguratorProxy.setClaimingThreshold(address(grainUSDC), 1e6);
@@ -302,6 +320,4 @@
 //         uint8 decimals = ERC20(token).decimals();
 //         mockERC4626 = address(new MockERC4626(token,'Mock ERC4626', 'mock', 1e27, address(treasury)));
 //     }
-
-
 // }

@@ -51,6 +51,7 @@ contract LendingPoolConfiguratorTest is Common {
         assertEq(vm.activeFork(), opFork);
         deployedContracts = fixture_deployProtocol();
         configAddresses = ConfigAddresses(
+            address(deployedContracts.protocolDataProvider),
             address(deployedContracts.stableStrategy),
             address(deployedContracts.volatileStrategy),
             address(deployedContracts.treasury),
@@ -59,13 +60,12 @@ contract LendingPoolConfiguratorTest is Common {
         );
         fixture_configureProtocol(
             address(deployedContracts.lendingPool),
+            address(aToken),
             configAddresses,
             deployedContracts.lendingPoolConfigurator,
-            deployedContracts.lendingPoolAddressesProvider,
-            deployedContracts.protocolDataProvider
+            deployedContracts.lendingPoolAddressesProvider
         );
-        (grainTokens, variableDebtTokens) =
-            fixture_getGrainTokensAndDebts(tokens, deployedContracts.protocolDataProvider);
+
         mockedVaults = fixture_deployErc4626Mocks(tokens, address(deployedContracts.treasury));
         erc20Tokens = fixture_getErc20Tokens(tokens);
         // fixture_transferTokensToTestContract(erc20Tokens, tokensWhales, address(this));
@@ -168,7 +168,7 @@ contract LendingPoolConfiguratorTest is Common {
     }
 
     function testPoolInteractions(uint256 farmingPct, uint256 claimingThreshold) public {
-        address aTokenAddress = address(grainTokens[0]);
+        address aTokenAddress = address(aTokens[0]);
 
         address lendingPoolAddr = address(deployedContracts.lendingPool);
 
