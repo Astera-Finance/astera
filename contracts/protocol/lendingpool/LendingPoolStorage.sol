@@ -21,6 +21,8 @@ contract LendingPoolStorage {
   // the list of the available reserves, structured as a mapping for gas savings reasons
   mapping(uint256 => DataTypes.ReserveReference) internal _reservesList;
 
+  mapping(address => bool) internal _miniPoolsWithActiveLoans;
+
   //      userAddr -> loanID -> LoanInfo
   mapping(address => mapping(uint256 => DataTypes.LoanInfo)) internal _userLoanInfo;
   //      userAddr -> numLoanIds (max uint8)

@@ -281,35 +281,7 @@ contract MiniPool is VersionedInitializable, IMiniPool, MiniPoolStorage {
       _reserves,
       _usersConfig
     );
-    DataTypes.MiniPoolReserveData storage reserve = _reserves[asset];
-    repayVars memory vars;
-    vars.aTokenAddress = reserve.aTokenAddress;
-    if(IAERC6909(reserve.aTokenAddress).isTranche(reserve.aTokenID)){
-      vars.underlyingAsset = IAToken(asset).UNDERLYING_ASSET_ADDRESS();
-      if(_lendingPoolDebt[vars.underlyingAsset] != 0){
-        MiniPoolWithdrawLogic.
-        internalWithdraw(
-          MiniPoolWithdrawLogic.withdrawParams(
-            asset, 
-            reserveType, 
-            amount, 
-            address(this), 
-            _reservesCount
-          ),
-          _reserves,
-          _usersConfig,
-          _reservesList,
-          _addressesProvider
-        );
-        
-        IERC20(asset).approve(_addressesProvider.getLendingPool(), amount);
-        
-        ILendingPool(_addressesProvider.getLendingPool()).
-          repayWithATokens(vars.underlyingAsset, reserveType, amount, address(this));
-
-        pokeInterestRate(asset, reserveType);
-      }
-    }
+    _repayLendingPool(asset, reserveType, amount);
     
 
   }
@@ -380,6 +352,43 @@ contract MiniPool is VersionedInitializable, IMiniPool, MiniPoolStorage {
         address(_addressesProvider)
       )
     );
+    _repayLendingPool(debtAsset, debtAssetType, debtToCover);
+  }
+
+  function _repayLendingPool(
+    address asset,
+    bool reserveType,
+    uint256 amount
+  ) internal {
+    DataTypes.MiniPoolReserveData storage reserve = _reserves[asset];
+    repayVars memory vars;
+    vars.aTokenAddress = reserve.aTokenAddress;
+    if(IAERC6909(reserve.aTokenAddress).isTranche(reserve.aTokenID)){
+      vars.underlyingAsset = IAToken(asset).UNDERLYING_ASSET_ADDRESS();
+      if(_lendingPoolDebt[vars.underlyingAsset] != 0){
+        MiniPoolWithdrawLogic.
+        internalWithdraw(
+          MiniPoolWithdrawLogic.withdrawParams(
+            asset, 
+            reserveType, 
+            amount, 
+            address(this), 
+            _reservesCount
+          ),
+          _reserves,
+          _usersConfig,
+          _reservesList,
+          _addressesProvider
+        );
+        amount = IERC20(asset).balanceOf(address(this));
+        IERC20(asset).approve(_addressesProvider.getLendingPool(), amount);
+        
+        ILendingPool(_addressesProvider.getLendingPool()).
+          repayWithATokens(vars.underlyingAsset, reserveType, amount, address(this));
+
+        pokeInterestRate(asset, reserveType);
+      }
+    }
   }
 
   struct FlashLoanLocalVars {

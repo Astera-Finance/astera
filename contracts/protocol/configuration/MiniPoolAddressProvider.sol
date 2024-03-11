@@ -41,7 +41,6 @@ contract MiniPoolAddressesProvider is Ownable{
     _addresses[LENDING_POOL] = provider.getLendingPool();
     _addresses[POOL_ADMIN] = provider.getPoolAdmin();
     _addresses[EMERGENCY_ADMIN] = provider.getEmergencyAdmin();
-    _addresses[LENDING_POOL_COLLATERAL_MANAGER] = provider.getLendingPoolCollateralManager();
     _addresses[PRICE_ORACLE] = provider.getPriceOracle();
   }
 
@@ -154,6 +153,10 @@ contract MiniPoolAddressesProvider is Ownable{
 
   function setMiniPoolConfigurator(address configuratorIMPL) external onlyOwner {
     _updateImpl(MINI_POOL_CONFIGURATOR, configuratorIMPL);
+  }
+
+  function setMiniPoolCollateralManager(address collateralManager) external onlyOwner {
+    _addresses[LENDING_POOL_COLLATERAL_MANAGER] = collateralManager;
   }
 
 

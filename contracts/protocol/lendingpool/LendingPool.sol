@@ -300,6 +300,9 @@ contract LendingPool is VersionedInitializable, ILendingPool, LendingPoolStorage
     uint256 debtToCover,
     bool receiveAToken
   ) external override whenNotPaused {
+    if(_miniPoolsWithActiveLoans[user]){
+      revert();
+    }
     LiquidationLogic.liquidationCall(
       LiquidationLogic.liquidationCallParams(
         collateralAsset,
@@ -385,6 +388,7 @@ contract LendingPool is VersionedInitializable, ILendingPool, LendingPoolStorage
         ),
         _reserves
     );
+    _miniPoolsWithActiveLoans[miniPoolAddress] = true;
   }
 
   /**
@@ -735,6 +739,7 @@ contract LendingPool is VersionedInitializable, ILendingPool, LendingPoolStorage
 
   function setRewarderForReserve(address asset, bool reserveType, address rewarder) external override onlyLendingPoolConfigurator {
     IAToken(_reserves[asset][reserveType].aTokenAddress).setIncentivesController(rewarder);
+    IVariableDebtToken(_reserves[asset][reserveType].variableDebtTokenAddress).setIncentivesController(rewarder);
   }
 
   function setTreasury(address asset, bool reserveType, address treasury) external override onlyLendingPoolConfigurator {

@@ -177,7 +177,7 @@ contract ATokenERC6909 is IncentivizedERC6909(), VersionedInitializable {
           uint256 fromBalanceBefore = super.balanceOf(msg.sender, id).rayMul(index);
           uint256 toBalanceBefore = super.balanceOf(to, id).rayMul(index);
 
-          super.transfer(to, id, amount);
+          super.transfer(to, id, amount.rayDiv(index));
 
           POOL.finalizeTransfer(
             _underlyingAssetAddresses[id],
@@ -189,7 +189,8 @@ contract ATokenERC6909 is IncentivizedERC6909(), VersionedInitializable {
             toBalanceBefore
           );
 
-        }else{
+        }
+        else{
           super.transfer(to, id, amount);
         }
     }
@@ -207,7 +208,7 @@ contract ATokenERC6909 is IncentivizedERC6909(), VersionedInitializable {
           uint256 fromBalanceBefore = super.balanceOf(from, id).rayMul(index);
           uint256 toBalanceBefore = super.balanceOf(to, id).rayMul(index);
 
-          super.transferFrom(from,to, id, amount);
+          super.transferFrom(from,to, id, amount.rayDiv(index));
 
           POOL.finalizeTransfer(
             _underlyingAssetAddresses[id],
@@ -219,7 +220,8 @@ contract ATokenERC6909 is IncentivizedERC6909(), VersionedInitializable {
             toBalanceBefore
           );
 
-        }else{
+        }
+        else{
           super.transferFrom(from, to, id, amount);
         }
     }
@@ -232,7 +234,7 @@ contract ATokenERC6909 is IncentivizedERC6909(), VersionedInitializable {
 
     function getIndexForOverlyingAsset(uint256 id) public view returns (uint256 index) {
         uint256 underlyingIndex = getIndexForUnderlyingAsset(_underlyingAssetAddresses[id]);
-        index = 1e27;
+        index = POOL.getReserveNormalizedIncome(_underlyingAssetAddresses[id], true);
         index = index.rayMul(underlyingIndex).rayDiv(1E27);
     }
 
@@ -384,6 +386,26 @@ contract ATokenERC6909 is IncentivizedERC6909(), VersionedInitializable {
 
   function isTranche(uint256 id) public view returns (bool) {
     return _isTranche[id];
+  }
+
+  function transferOnLiquidation(
+    address from,
+    address to,
+    uint256 id,
+    uint256 amount
+  ) external {
+    require(msg.sender == address(POOL), Errors.CT_CALLER_MUST_BE_LENDING_POOL);
+    _transferForLiquidation(from, to, id, amount);
+  }
+
+  function _transferForLiquidation(address from, address to, uint256 id, uint256 amount) internal  {
+     if(isAToken(id)){
+        address underlyingAsset = _underlyingAssetAddresses[id];
+
+        uint256 index = POOL.getReserveNormalizedIncome(underlyingAsset, true);
+
+        super._transfer(address(0), from, to, id, amount.rayDiv(index));
+      }
   }
 
 

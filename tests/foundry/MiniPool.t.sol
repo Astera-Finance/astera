@@ -5,6 +5,8 @@ import "./Common.sol";
 import "contracts/protocol/libraries/helpers/Errors.sol";
 import {WadRayMath} from "contracts/protocol/libraries/math/WadRayMath.sol";
 import "contracts/protocol/lendingpool/minipool/MiniPoolDefaultReserveInterestRate.sol";
+import "contracts/mocks/oracle/PriceOracle.sol";
+import "contracts/protocol/lendingpool/minipool/MiniPoolCollateralManager.sol";
 
 import "forge-std/StdUtils.sol";
 // import {ILendingPool} from "contracts/interfaces/ILendingPool.sol";
@@ -383,17 +385,87 @@ contract MiniPoolTest is Common {
         DataTypes.MiniPoolReserveData memory mpReserveData = IMiniPool(vars.mp).getReserveData(address(grainTokens[0]), false);
         uint128 mpCurrentLiquidityRate = mpReserveData.currentLiquidityRate;
         uint128 mpCurrentVariableBorrowRate = mpReserveData.currentVariableBorrowRate;
-        assertGe(mpCurrentVariableBorrowRate, delta );
+        assertGe(mpCurrentVariableBorrowRate, delta);
 
 
         IERC20(vars.grainUSDC).approve(address(vars.mp), vars.amount*94);
         IMiniPool(vars.mp).repay(address(vars.grainUSDC),false, vars.amount*94, vars.user); // 47000 USDC
 
-
-
         assertEq(vars.debtUSDC.balanceOf(vars.mp), 0);
 
-
-
     }
+
+    function testLiquidations() public {
+        flowLimiterTestLocalVars memory vars;
+        vars.user = makeAddr("user");
+        vars.mpId = 0;
+        vars.mp = miniPoolContracts.miniPoolAddressesProvider.getMiniPool(vars.mpId);
+        vm.label(vars.mp, "MiniPool");
+        vars.ATOKEN = IAERC6909(miniPoolContracts.miniPoolAddressesProvider.getMiniPoolToAERC6909(vars.mp));
+        vm.label(address(vars.ATOKEN), "ATOKEN");
+
+        vars.whaleUser = makeAddr("whaleUser");
+
+        vars.usdcWhale = 0xacD03D601e5bB1B275Bb94076fF46ED9D753435A;
+        vm.label(vars.usdcWhale, "Whale");
+        vars.daiWhale = 0xD28843E10C3795E51A6e574378f8698aFe803029;
+        vm.label(vars.daiWhale, "DaiWhale");
+
+
+        vars.usdc = erc20Tokens[0];
+        vars.grainUSDC = grainTokens[0];
+        vars.debtUSDC = variableDebtTokens[0];
+        vars.amount = 5E8; //bound(amount, 1E6, 1E13); /* $500 */ // consider fuzzing here
+        uint256 usdcAID = 1000;
+        // uint256 usdcDID = 2000;
+        // uint256 daiAID = 1128;
+        // uint256 daiDID = 2128;
+        vars.dai = IERC20(0xDA10009cBd5D07dd0CeCc66161FC93D7c9000da1);
+        
+        vm.prank(vars.usdcWhale);
+        vars.usdc.transfer(vars.whaleUser, vars.amount*1000);
+
+        console.log("whale balance: ", vars.dai.balanceOf(vars.daiWhale)/(10**18));
+        vm.prank(vars.daiWhale);
+        vars.dai.transfer(vars.user, vars.amount*1E14); // 50000 DAI
+
+        vm.startPrank(vars.whaleUser);
+        vars.usdc.approve(address(deployedContracts.lendingPool), vars.amount*1000); //500000 USDC
+        deployedContracts.lendingPool.deposit(address(vars.usdc), false, vars.amount*1000, vars.whaleUser);
+        vm.stopPrank();
+        
+        vm.startPrank(vars.user);
+        vars.dai.approve(address(vars.mp), vars.amount*1E14);
+        console.log("User balance: ", vars.dai.balanceOf(vars.user)/(10**18));
+        console.log("User depositAmount: ", vars.amount*1E14/(10**18));
+        IMiniPool(vars.mp).deposit(address(vars.dai), true, vars.amount*1E14, vars.user);
+        vm.stopPrank();
+
+        vars.flowLimiter = address(miniPoolContracts.flowLimiter);
+
+        vm.prank(address(miniPoolContracts.miniPoolAddressesProvider));
+        miniPoolContracts.flowLimiter.setFlowLimit(address(vars.usdc), vars.mp, vars.amount*100);// 50000 USDC
+
+        vm.prank(vars.user);
+        IMiniPool(vars.mp).borrow(address(vars.grainUSDC),false, vars.amount*94, vars.user); // 47000 USDC
+
+        address usdcSource = oracle.getSourceOfAsset(address(vars.usdc));
+        console.log("USDC Source: ", usdcSource);
+        MockAggregator agg = MockAggregator(usdcSource);
+        agg.setLastAnswer(1.05E8);
+
+        (,,,,,
+      uint256 healthFactor) = IMiniPool(vars.mp).getUserAccountData(vars.user);
+
+        console.log("User healthFactor: ", healthFactor/(10**18));
+        address MPCM = address(new MiniPoolCollateralManager());
+        vm.prank(miniPoolContracts.miniPoolAddressesProvider.owner());
+        miniPoolContracts.miniPoolAddressesProvider.setMiniPoolCollateralManager(MPCM);
+        
+        vm.startPrank(vars.whaleUser);
+        vars.grainUSDC.approve(address(vars.mp), vars.amount*94);
+        IMiniPool(vars.mp).liquidationCall(address(vars.dai), true, address(vars.grainUSDC) , false, vars.user, type(uint256).max, true);
+    }
+
+
 }

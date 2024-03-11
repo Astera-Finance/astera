@@ -3,6 +3,7 @@ pragma solidity ^0.8.23;
 
 import {SafeMath} from '../../../../dependencies/openzeppelin/contracts/SafeMath.sol';
 import {IAERC6909} from '../../../../interfaces/IAERC6909.sol';
+import {IERC20} from '../../../../dependencies/openzeppelin/contracts/IERC20.sol';
 import {IMiniPoolAddressesProvider} from '../../../../interfaces/IMiniPoolAddressesProvider.sol';
 import {SafeERC20} from '../../../../dependencies/openzeppelin/contracts/SafeERC20.sol';
 import {IReserveInterestRateStrategy} from '../../../../interfaces/IReserveInterestRateStrategy.sol';
@@ -170,6 +171,10 @@ library MiniPoolWithdrawLogic {
         if (params.amount == type(uint256).max) {
             localVars.amountToWithdraw = localVars.userBalance;
         }
+        uint256 availableLiquidity = IERC20(params.asset).balanceOf(localVars.aToken);
+        if(localVars.amountToWithdraw > availableLiquidity) {
+            localVars.amountToWithdraw = availableLiquidity;
+        }
         }
         MiniPoolValidationLogic.validateWithdraw(
             MiniPoolValidationLogic.ValidateWithdrawParams(
@@ -184,7 +189,6 @@ library MiniPoolWithdrawLogic {
             usersConfig[address(this)],
             reserves
         );
-
         reserve.updateState();
 
         reserve.updateInterestRates(params.asset, 0, localVars.amountToWithdraw);
