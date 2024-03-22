@@ -282,6 +282,7 @@ contract MiniPool is VersionedInitializable, IMiniPool, MiniPoolStorage {
       _usersConfig
     );
     _repayLendingPool(asset, reserveType, amount);
+    return repayAmount;
     
 
   }
