@@ -7,7 +7,7 @@ import {IAERC6909} from '../../../interfaces/IAERC6909.sol';
 import {IERC20} from '../../../dependencies/openzeppelin/contracts/IERC20.sol';
 import {SafeERC20} from '../../../dependencies/openzeppelin/contracts/SafeERC20.sol';
 import {IMiniPoolAddressesProvider} from '../../../interfaces/IMiniPoolAddressesProvider.sol';
-
+import {IFlowLimiter} from '../../../interfaces/IFlowLimiter.sol';
 import {ILendingPoolAddressesProvider} from '../../../interfaces/ILendingPoolAddressesProvider.sol';
 import {IAToken} from '../../../interfaces/IAToken.sol';
 import {IVariableDebtToken} from '../../../interfaces/IVariableDebtToken.sol';
@@ -203,7 +203,6 @@ contract MiniPool is VersionedInitializable, IMiniPool, MiniPoolStorage {
         );
      
         vars.amountRecieved = IERC20(underlying).balanceOf(address(this));
-        _lendingPoolDebt[(underlying)] = _lendingPoolDebt[(underlying)].add(vars.amountRecieved);
 
         IERC20(underlying).approve(vars.LendingPool, vars.amountRecieved);
         ILendingPool(vars.LendingPool).deposit(underlying, reserveType, vars.amountRecieved, address(this));
@@ -250,6 +249,7 @@ contract MiniPool is VersionedInitializable, IMiniPool, MiniPoolStorage {
     uint256 repayAmount;
     address aTokenAddress;
     address underlyingAsset;
+    uint256 underlyingDebt;
   }
 
   /**
@@ -281,7 +281,7 @@ contract MiniPool is VersionedInitializable, IMiniPool, MiniPoolStorage {
       _reserves,
       _usersConfig
     );
-    _repayLendingPool(asset, reserveType, amount);
+    _repayLendingPool(asset, reserveType, repayAmount);
     
 
   }
@@ -365,7 +365,11 @@ contract MiniPool is VersionedInitializable, IMiniPool, MiniPoolStorage {
     vars.aTokenAddress = reserve.aTokenAddress;
     if(IAERC6909(reserve.aTokenAddress).isTranche(reserve.aTokenID)){
       vars.underlyingAsset = IAToken(asset).UNDERLYING_ASSET_ADDRESS();
-      if(_lendingPoolDebt[vars.underlyingAsset] != 0){
+      vars.underlyingDebt = getCurrentLendingPoolDebt(vars.underlyingAsset, reserveType);
+      if(vars.underlyingDebt != 0){
+        if(vars.underlyingDebt < amount){
+          amount = vars.underlyingDebt;
+        }
         MiniPoolWithdrawLogic.
         internalWithdraw(
           MiniPoolWithdrawLogic.withdrawParams(
@@ -760,5 +764,9 @@ contract MiniPool is VersionedInitializable, IMiniPool, MiniPoolStorage {
     if(_lendingPoolDebt[asset] != 0){
       _reserves[asset].updateInterestRatesAugmented(asset,0,0,_addressesProvider,reserveType);
     }
+  }
+
+  function getCurrentLendingPoolDebt(address asset, bool reserveType) public view returns(uint256){
+    return IFlowLimiter(_addressesProvider.getFlowLimiter()).currentFlow(asset, reserveType, address(this));
   }
 }
