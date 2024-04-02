@@ -40,7 +40,7 @@ library MiniPoolValidationLogic {
   function validateDeposit(DataTypes.MiniPoolReserveData storage reserve, uint256 amount) external view {
     (bool isActive, bool isFrozen, ) = reserve.configuration.getFlags();
     uint256 depositCapExponent = reserve.configuration.getDepositCap();
-    uint256 depositCap = depositCapExponent != 0 ? 2 ** (depositCapExponent) : type(uint256).max;
+    uint256 depositCap = depositCapExponent != 0 ? 10 ** (depositCapExponent) : type(uint256).max;
     uint256 total = IAERC6909(reserve.aTokenAddress).totalSupply(reserve.aTokenID);
     uint256 newTotal = total + amount;
     require(amount != 0, Errors.VL_INVALID_AMOUNT);
