@@ -44,7 +44,7 @@ contract flowLimiter {
         return miniPoolMaxDebt[asset][miniPool];
     }
 
-    function currentFlow(address asset, bool reserveType, IMiniPool miniPool) external view returns (uint256) {
+    function currentFlow(address asset, bool reserveType, address miniPool) external view returns (uint256) {
         return IERC20(lendingPool.getReserveData(asset,reserveType).variableDebtTokenAddress).balanceOf(address(miniPool));
     }
 

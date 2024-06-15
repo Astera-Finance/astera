@@ -231,7 +231,7 @@ contract MiniPoolTest is Common {
         vm.label(address(ATOKEN), "ATOKEN");
         require(ATOKEN.balanceOf(user, 1000) > 0, "No balance");
 
-        IMiniPool(mp).borrow(address(aTokens[0]), true, 500e6, user);
+        IMiniPool(mp).borrow(address(aTokens[0]), false, 500e6, user);
         uint256 userBalance = aTokens[0].balanceOf(user);
         require(userBalance > 0, "No balance");
         console.log("User balance: ", userBalance);
@@ -258,7 +258,7 @@ contract MiniPoolTest is Common {
             console.log("User data: healthFactor ", healthFactor);
         }
         IERC20(aTokens[0]).approve(address(mp), 500e6);
-        IMiniPool(mp).repay(address(aTokens[0]), true, 500e6, user);
+        IMiniPool(mp).repay(address(aTokens[0]), false, 500e6, user);
         console.log("User balance: ", aTokens[0].balanceOf(user));
         console.log("ATOKEN balance: ", ATOKEN.balanceOf(user, 2000));
     }
