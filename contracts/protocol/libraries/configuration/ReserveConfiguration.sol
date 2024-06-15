@@ -35,7 +35,9 @@ library ReserveConfiguration {
   uint256 constant MAX_VALID_LIQUIDATION_BONUS = 65535;
   uint256 constant MAX_VALID_DECIMALS = 255;
   uint256 constant MAX_VALID_RESERVE_FACTOR = 65535;
-  uint256 constant MAX_VALID_DEPOSIT_CAP = 50;
+
+  uint256 constant MAX_VALID_DEPOSIT_CAP = 255;
+
 
   /**
    * @dev Sets the Loan to Value of the reserve
