@@ -47,6 +47,14 @@ interface IAToken is IERC20, IScaledBalanceToken, IInitializableAToken {
   event BalanceTransfer(address indexed from, address indexed to, uint256 value, uint256 index);
 
   /**
+   * @dev Emitted during the rebalance action
+   * @param vault The vault that is being interacted with
+   * @param amountToWithdraw The amount of asset that needs to be free after the rebalance
+   * @param netAssetMovement The amount of asset being deposited into (if positive) or withdrawn from (if negative) the vault
+   **/
+  event Rebalance(address indexed vault, uint256 amountToWithdraw, int256 netAssetMovement);
+
+  /**
    * @dev Burns aTokens from `user` and sends the equivalent amount of underlying to `receiverOfUnderlying`
    * @param user The owner of the aTokens, getting them burned
    * @param receiverOfUnderlying The address that will receive the underlying

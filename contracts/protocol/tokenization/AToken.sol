@@ -482,6 +482,8 @@ contract AToken is
         IERC20(_underlyingAsset).safeTransfer(profitHandler, profit);
       }
     }
+
+    emit Rebalance(address(vault), _amountToWithdraw, netAssetMovement);
   }
 
   function setFarmingPct(uint256 _farmingPct) external onlyLendingPool override {
