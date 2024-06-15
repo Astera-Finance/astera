@@ -330,12 +330,12 @@ contract ATokenERC6909 is IncentivizedERC6909(), VersionedInitializable {
       previousBalance = super.balanceOf(onBehalfOf, id);
       uint256 amountScaled = amount.rayDiv(index);
       require(amountScaled != 0, Errors.CT_INVALID_MINT_AMOUNT);
-      _mint(user, id, amountScaled);
+      _mint(onBehalfOf, id, amountScaled);
     } else {
-      previousBalance = super.balanceOf(user, id);
+      previousBalance = super.balanceOf(onBehalfOf, id);
       uint256 amountScaled = amount.rayDiv(index);
       require(amountScaled != 0, Errors.CT_INVALID_MINT_AMOUNT);
-      _mint(user, id, amountScaled);
+      _mint(onBehalfOf, id, amountScaled);
     }
 
     return previousBalance == 0;
