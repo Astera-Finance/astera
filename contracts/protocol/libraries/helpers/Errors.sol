@@ -101,6 +101,10 @@ library Errors {
   string public constant AT_INVALID_AMOUNT = '86';
   string public constant AT_VAULT_ALREADY_INITIALIZED = '87';
   string public constant AT_VL_INVALID_ATOKEN_PARAMS = '88';
+  string public constant AT_INVALID_ATOKEN_ID = '89';
+
+  string public constant LP_CALLER_NOT_MINIPOOL = '90';
+
 
 
   enum CollateralManagerErrors {

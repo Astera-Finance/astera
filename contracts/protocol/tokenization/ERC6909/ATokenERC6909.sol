@@ -73,6 +73,7 @@ contract ATokenERC6909 is IncentivizedERC6909(), VersionedInitializable {
     require(bytes(name).length != 0);
     require(bytes(symbol).length != 0);
     require(decimals != 0);
+    require(id < DebtTokenAddressableIDs, Errors.AT_INVALID_ATOKEN_ID);
     _setName(id, string.concat('Granary Interest Bearing ', name));
     _setSymbol(id, string.concat('grain',symbol));
     _setDecimals(id, decimals);
@@ -99,7 +100,7 @@ contract ATokenERC6909 is IncentivizedERC6909(), VersionedInitializable {
     string memory symbol,
     uint8 decimals
   ) external returns (uint256 aTokenID, uint256 debtTokenID, bool isTranche){
-    //require(msg.sender == address(_addressesProvider.getMiniPoolConfigurator()), "Must Be Provider");
+    require(msg.sender == address(_addressesProvider.getMiniPoolConfigurator()), Errors.LP_CALLER_NOT_LENDING_POOL_CONFIGURATOR);
     (aTokenID,  debtTokenID, isTranche) = getIdForUnderlying(underlyingAsset);
     if(isTranche) {
       _totalTrancheTokens++;
