@@ -1,6 +1,5 @@
 // SPDX-License-Identifier: agpl-3.0
-pragma solidity 0.6.12;
-pragma experimental ABIEncoderV2;
+pragma solidity ^0.8.20;
 
 import {LendingPool} from '../protocol/lendingpool/LendingPool.sol';
 import {
@@ -22,16 +21,16 @@ contract ATokensAndRatesHelper is Ownable {
 
   struct InitDeploymentInput {
     address asset;
-    uint256[6] rates;
+    uint256[4] rates;
   }
 
   struct ConfigureReserveInput {
     address asset;
+    bool reserveType;
     uint256 baseLTV;
     uint256 liquidationThreshold;
     uint256 liquidationBonus;
     uint256 reserveFactor;
-    bool stableBorrowingEnabled;
     bool borrowingEnabled;
   }
 
@@ -39,7 +38,7 @@ contract ATokensAndRatesHelper is Ownable {
     address payable _pool,
     address _addressesProvider,
     address _poolConfigurator
-  ) public {
+  ) Ownable(msg.sender) {
     pool = _pool;
     addressesProvider = _addressesProvider;
     poolConfigurator = _poolConfigurator;
@@ -55,9 +54,7 @@ contract ATokensAndRatesHelper is Ownable {
             inputParams[i].rates[0],
             inputParams[i].rates[1],
             inputParams[i].rates[2],
-            inputParams[i].rates[3],
-            inputParams[i].rates[4],
-            inputParams[i].rates[5]
+            inputParams[i].rates[3]
           )
         )
       );
@@ -69,6 +66,7 @@ contract ATokensAndRatesHelper is Ownable {
     for (uint256 i = 0; i < inputParams.length; i++) {
       configurator.configureReserveAsCollateral(
         inputParams[i].asset,
+        inputParams[i].reserveType,
         inputParams[i].baseLTV,
         inputParams[i].liquidationThreshold,
         inputParams[i].liquidationBonus
@@ -77,10 +75,10 @@ contract ATokensAndRatesHelper is Ownable {
       if (inputParams[i].borrowingEnabled) {
         configurator.enableBorrowingOnReserve(
           inputParams[i].asset,
-          inputParams[i].stableBorrowingEnabled
+          inputParams[i].reserveType
         );
       }
-      configurator.setReserveFactor(inputParams[i].asset, inputParams[i].reserveFactor);
+      configurator.setReserveFactor(inputParams[i].asset, inputParams[i].reserveType, inputParams[i].reserveFactor);
     }
   }
 }

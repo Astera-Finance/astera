@@ -1,14 +1,13 @@
 // SPDX-License-Identifier: agpl-3.0
-pragma solidity 0.6.12;
+pragma solidity ^0.8.23;
 
 import {SafeMath} from '../../dependencies/openzeppelin/contracts//SafeMath.sol';
 import {IERC20} from '../../dependencies/openzeppelin/contracts//IERC20.sol';
 import {IAToken} from '../../interfaces/IAToken.sol';
-import {IStableDebtToken} from '../../interfaces/IStableDebtToken.sol';
 import {IVariableDebtToken} from '../../interfaces/IVariableDebtToken.sol';
 import {IPriceOracleGetter} from '../../interfaces/IPriceOracleGetter.sol';
 import {ILendingPoolCollateralManager} from '../../interfaces/ILendingPoolCollateralManager.sol';
-import {VersionedInitializable} from '../libraries/aave-upgradeability/VersionedInitializable.sol';
+import {VersionedInitializable} from '../libraries/upgradeability/VersionedInitializable.sol';
 import {GenericLogic} from '../libraries/logic/GenericLogic.sol';
 import {Helpers} from '../libraries/helpers/Helpers.sol';
 import {WadRayMath} from '../libraries/math/WadRayMath.sol';
@@ -16,6 +15,9 @@ import {PercentageMath} from '../libraries/math/PercentageMath.sol';
 import {SafeERC20} from '../../dependencies/openzeppelin/contracts/SafeERC20.sol';
 import {Errors} from '../libraries/helpers/Errors.sol';
 import {ValidationLogic} from '../libraries/logic/ValidationLogic.sol';
+import {UserConfiguration} from '../libraries/configuration/UserConfiguration.sol';
+import {ReserveConfiguration} from '../libraries/configuration/ReserveConfiguration.sol';
+import {ReserveLogic} from '../libraries/logic/ReserveLogic.sol';
 import {DataTypes} from '../libraries/types/DataTypes.sol';
 import {LendingPoolStorage} from './LendingPoolStorage.sol';
 
@@ -35,18 +37,19 @@ contract LendingPoolCollateralManager is
   using SafeMath for uint256;
   using WadRayMath for uint256;
   using PercentageMath for uint256;
+  using ReserveLogic for DataTypes.ReserveData;
+  using ReserveConfiguration for DataTypes.ReserveConfigurationMap;
+  using UserConfiguration for DataTypes.UserConfigurationMap;
 
   uint256 internal constant LIQUIDATION_CLOSE_FACTOR_PERCENT = 5000;
 
   struct LiquidationCallLocalVars {
     uint256 userCollateralBalance;
-    uint256 userStableDebt;
     uint256 userVariableDebt;
     uint256 maxLiquidatableDebt;
     uint256 actualDebtToLiquidate;
     uint256 liquidationRatio;
     uint256 maxAmountCollateralToLiquidate;
-    uint256 userStableRate;
     uint256 maxCollateralToLiquidate;
     uint256 debtAmountNeeded;
     uint256 healthFactor;
@@ -80,13 +83,15 @@ contract LendingPoolCollateralManager is
    **/
   function liquidationCall(
     address collateralAsset,
+    bool collateralReserveType,
     address debtAsset,
+    bool debtReserveType,
     address user,
     uint256 debtToCover,
     bool receiveAToken
   ) external override returns (uint256, string memory) {
-    DataTypes.ReserveData storage collateralReserve = _reserves[collateralAsset];
-    DataTypes.ReserveData storage debtReserve = _reserves[debtAsset];
+    DataTypes.ReserveData storage collateralReserve = _reserves[collateralAsset][collateralReserveType];
+    DataTypes.ReserveData storage debtReserve = _reserves[debtAsset][debtReserveType];
     DataTypes.UserConfigurationMap storage userConfig = _usersConfig[user];
 
     LiquidationCallLocalVars memory vars;
@@ -100,14 +105,13 @@ contract LendingPoolCollateralManager is
       _addressesProvider.getPriceOracle()
     );
 
-    (vars.userStableDebt, vars.userVariableDebt) = Helpers.getUserCurrentDebt(user, debtReserve);
+    (vars.userVariableDebt) = Helpers.getUserCurrentDebt(user, debtReserve);
 
     (vars.errorCode, vars.errorMsg) = ValidationLogic.validateLiquidationCall(
       collateralReserve,
       debtReserve,
       userConfig,
       vars.healthFactor,
-      vars.userStableDebt,
       vars.userVariableDebt
     );
 
@@ -119,9 +123,7 @@ contract LendingPoolCollateralManager is
 
     vars.userCollateralBalance = vars.collateralAtoken.balanceOf(user);
 
-    vars.maxLiquidatableDebt = vars.userStableDebt.add(vars.userVariableDebt).percentMul(
-      LIQUIDATION_CLOSE_FACTOR_PERCENT
-    );
+    vars.maxLiquidatableDebt = vars.userVariableDebt.percentMul(LIQUIDATION_CLOSE_FACTOR_PERCENT);
 
     vars.actualDebtToLiquidate = debtToCover > vars.maxLiquidatableDebt
       ? vars.maxLiquidatableDebt
@@ -151,7 +153,7 @@ contract LendingPoolCollateralManager is
     // collateral reserve
     if (!receiveAToken) {
       uint256 currentAvailableCollateral =
-        IERC20(collateralAsset).balanceOf(address(vars.collateralAtoken));
+        IAToken(vars.collateralAtoken).getTotalManagedAssets();
       if (currentAvailableCollateral < vars.maxCollateralToLiquidate) {
         return (
           uint256(Errors.CollateralManagerErrors.NOT_ENOUGH_LIQUIDITY),
@@ -169,17 +171,10 @@ contract LendingPoolCollateralManager is
         debtReserve.variableBorrowIndex
       );
     } else {
-      // If the user doesn't have variable debt, no need to try to burn variable debt tokens
-      if (vars.userVariableDebt > 0) {
-        IVariableDebtToken(debtReserve.variableDebtTokenAddress).burn(
-          user,
-          vars.userVariableDebt,
-          debtReserve.variableBorrowIndex
-        );
-      }
-      IStableDebtToken(debtReserve.stableDebtTokenAddress).burn(
+      IVariableDebtToken(debtReserve.variableDebtTokenAddress).burn(
         user,
-        vars.actualDebtToLiquidate.sub(vars.userVariableDebt)
+        vars.userVariableDebt,
+        debtReserve.variableBorrowIndex
       );
     }
 

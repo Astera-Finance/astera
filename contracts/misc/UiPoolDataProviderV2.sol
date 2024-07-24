@@ -1,15 +1,13 @@
 // SPDX-License-Identifier: agpl-3.0
-pragma solidity 0.6.12;
-pragma experimental ABIEncoderV2;
+pragma solidity ^0.8.23;
 
 import {IERC20Detailed} from '../dependencies/openzeppelin/contracts/IERC20Detailed.sol';
 import {ILendingPoolAddressesProvider} from '../interfaces/ILendingPoolAddressesProvider.sol';
 import {IUiPoolDataProviderV2} from './interfaces/IUiPoolDataProviderV2.sol';
 import {ILendingPool} from '../interfaces/ILendingPool.sol';
-import {IAaveOracle} from './interfaces/IAaveOracle.sol';
+import {IOracle} from './interfaces/IOracle.sol';
 import {IAToken} from '../interfaces/IAToken.sol';
 import {IVariableDebtToken} from '../interfaces/IVariableDebtToken.sol';
-import {IStableDebtToken} from '../interfaces/IStableDebtToken.sol';
 import {WadRayMath} from '../protocol/libraries/math/WadRayMath.sol';
 import {ReserveConfiguration} from '../protocol/libraries/configuration/ReserveConfiguration.sol';
 import {UserConfiguration} from '../protocol/libraries/configuration/UserConfiguration.sol';
@@ -41,16 +39,12 @@ contract UiPoolDataProviderV2 is IUiPoolDataProviderV2 {
     view
     returns (
       uint256,
-      uint256,
-      uint256,
       uint256
     )
   {
     return (
       interestRateStrategy.variableRateSlope1(),
-      interestRateStrategy.variableRateSlope2(),
-      interestRateStrategy.stableRateSlope1(),
-      interestRateStrategy.stableRateSlope2()
+      interestRateStrategy.variableRateSlope2()
     );
   }
 
@@ -58,10 +52,13 @@ contract UiPoolDataProviderV2 is IUiPoolDataProviderV2 {
     public
     view
     override
-    returns (address[] memory)
+    returns (address[] memory, bool[] memory)
   {
     ILendingPool lendingPool = ILendingPool(provider.getLendingPool());
-    return lendingPool.getReservesList();
+    address[] memory reserves = new address[](lendingPool.getReservesCount());
+    bool[] memory reservesTypes = new bool[](lendingPool.getReservesCount());
+    (reserves, reservesTypes) = lendingPool.getReservesList();
+    return (reserves, reservesTypes);
   }
 
   function getReservesData(ILendingPoolAddressesProvider provider)
@@ -70,42 +67,36 @@ contract UiPoolDataProviderV2 is IUiPoolDataProviderV2 {
     override
     returns (AggregatedReserveData[] memory, BaseCurrencyInfo memory)
   {
-    IAaveOracle oracle = IAaveOracle(provider.getPriceOracle());
+    IOracle oracle = IOracle(provider.getPriceOracle());
     ILendingPool lendingPool = ILendingPool(provider.getLendingPool());
-    address[] memory reserves = lendingPool.getReservesList();
+    address[] memory reserves = new address[](lendingPool.getReservesCount());
+    bool[] memory reservesTypes = new bool[](lendingPool.getReservesCount());
+    (reserves, reservesTypes) = lendingPool.getReservesList();
     AggregatedReserveData[] memory reservesData = new AggregatedReserveData[](reserves.length);
 
     for (uint256 i = 0; i < reserves.length; i++) {
       AggregatedReserveData memory reserveData = reservesData[i];
       reserveData.underlyingAsset = reserves[i];
+      reserveData.reserveType = reservesTypes[i];
 
       // reserve current state
       DataTypes.ReserveData memory baseData = lendingPool.getReserveData(
-        reserveData.underlyingAsset
+        reserveData.underlyingAsset,
+        reserveData.reserveType
       );
       reserveData.liquidityIndex = baseData.liquidityIndex;
       reserveData.variableBorrowIndex = baseData.variableBorrowIndex;
       reserveData.liquidityRate = baseData.currentLiquidityRate;
       reserveData.variableBorrowRate = baseData.currentVariableBorrowRate;
-      reserveData.stableBorrowRate = baseData.currentStableBorrowRate;
       reserveData.lastUpdateTimestamp = baseData.lastUpdateTimestamp;
       reserveData.aTokenAddress = baseData.aTokenAddress;
-      reserveData.stableDebtTokenAddress = baseData.stableDebtTokenAddress;
       reserveData.variableDebtTokenAddress = baseData.variableDebtTokenAddress;
       reserveData.interestRateStrategyAddress = baseData.interestRateStrategyAddress;
       reserveData.priceInMarketReferenceCurrency = oracle.getAssetPrice(
         reserveData.underlyingAsset
       );
 
-      reserveData.availableLiquidity = IERC20Detailed(reserveData.underlyingAsset).balanceOf(
-        reserveData.aTokenAddress
-      );
-      (
-        reserveData.totalPrincipalStableDebt,
-        ,
-        reserveData.averageStableRate,
-        reserveData.stableDebtLastUpdateTimestamp
-      ) = IStableDebtToken(reserveData.stableDebtTokenAddress).getSupplyData();
+      reserveData.availableLiquidity = IAToken(reserveData.aTokenAddress).getTotalManagedAssets();
       reserveData.totalScaledVariableDebt = IVariableDebtToken(reserveData.variableDebtTokenAddress)
         .scaledTotalSupply();
 
@@ -126,15 +117,12 @@ contract UiPoolDataProviderV2 is IUiPoolDataProviderV2 {
       (
         reserveData.isActive,
         reserveData.isFrozen,
-        reserveData.borrowingEnabled,
-        reserveData.stableBorrowRateEnabled
+        reserveData.borrowingEnabled
       ) = baseData.configuration.getFlagsMemory();
       reserveData.usageAsCollateralEnabled = reserveData.baseLTVasCollateral != 0;
       (
         reserveData.variableRateSlope1,
-        reserveData.variableRateSlope2,
-        reserveData.stableRateSlope1,
-        reserveData.stableRateSlope2
+        reserveData.variableRateSlope2
       ) = getInterestRateStrategySlopes(
         DefaultReserveInterestRateStrategy(reserveData.interestRateStrategyAddress)
       );
@@ -175,7 +163,9 @@ contract UiPoolDataProviderV2 is IUiPoolDataProviderV2 {
     returns (UserReserveData[] memory)
   {
     ILendingPool lendingPool = ILendingPool(provider.getLendingPool());
-    address[] memory reserves = lendingPool.getReservesList();
+    address[] memory reserves = new address[](lendingPool.getReservesCount());
+    bool[] memory reservesTypes = new bool[](lendingPool.getReservesCount());
+    (reserves, reservesTypes) = lendingPool.getReservesList();
     DataTypes.UserConfigurationMap memory userConfig = lendingPool.getUserConfiguration(user);
 
     UserReserveData[] memory userReservesData = new UserReserveData[](
@@ -183,10 +173,11 @@ contract UiPoolDataProviderV2 is IUiPoolDataProviderV2 {
     );
 
     for (uint256 i = 0; i < reserves.length; i++) {
-      DataTypes.ReserveData memory baseData = lendingPool.getReserveData(reserves[i]);
+      DataTypes.ReserveData memory baseData = lendingPool.getReserveData(reserves[i], reservesTypes[i]);
 
       // user reserve data
       userReservesData[i].underlyingAsset = reserves[i];
+      userReservesData[i].reserveType = reservesTypes[i];
       userReservesData[i].scaledATokenBalance = IAToken(baseData.aTokenAddress).scaledBalanceOf(
         user
       );
@@ -196,15 +187,6 @@ contract UiPoolDataProviderV2 is IUiPoolDataProviderV2 {
         userReservesData[i].scaledVariableDebt = IVariableDebtToken(
           baseData.variableDebtTokenAddress
         ).scaledBalanceOf(user);
-        userReservesData[i].principalStableDebt = IStableDebtToken(baseData.stableDebtTokenAddress)
-          .principalBalanceOf(user);
-        if (userReservesData[i].principalStableDebt != 0) {
-          userReservesData[i].stableBorrowRate = IStableDebtToken(baseData.stableDebtTokenAddress)
-            .getUserStableRate(user);
-          userReservesData[i].stableBorrowLastUpdateTimestamp = IStableDebtToken(
-            baseData.stableDebtTokenAddress
-          ).getUserLastUpdated(user);
-        }
       }
     }
 

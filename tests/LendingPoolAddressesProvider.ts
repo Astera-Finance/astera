@@ -1,250 +1,258 @@
-import { expect } from "chai";
-import hre from "hardhat";
-import { Wallet, utils } from "ethers"; 
+import { ethers } from 'hardhat';
+import { expect } from 'chai';
+import { Wallet, utils } from 'ethers';
 import {
-  deployLendingPoolAddressesProvider,
+  deployProvider,
   deployLendingPool,
-  deployLendingPoolConfigurator,
-  deployLendingPoolCollateralManager
-} from "./helpers/test-helpers";
+  deployConfigurator,
+  deployCollateralManager,
+} from './helpers/test-helpers.ts';
 
-describe("LendingPoolAddressesProvider", function () {
-  const marketId = "Granary Genesis Market";
+describe('LendingPoolAddressesProvider', function () {
+  let owner;
+  let addr1;
+  const marketId = 'Granary Genesis Market';
 
-  it("getMarketId", async function () {
-    const lendingPoolAddressesProvider = await deployLendingPoolAddressesProvider(marketId);
-    expect(await lendingPoolAddressesProvider.getMarketId()).to.equal(marketId);
+  it('getMarketId', async function () {
+    const provider = await deployProvider(marketId);
+    expect(await provider.getMarketId()).to.equal(marketId);
   });
 
-  it("setMarketId", async function () {
-    const defaultMarketId = "Granary Genesis Market";
-    const newMarketId = "Granary Halo Market";
+  it('setMarketId', async function () {
+    const defaultMarketId = 'Granary Genesis Market';
+    const newMarketId = 'Granary Halo Market';
 
-    const lendingPoolAddressesProvider = await deployLendingPoolAddressesProvider(defaultMarketId);
-    expect(await lendingPoolAddressesProvider.getMarketId()).to.equal(defaultMarketId);
+    const provider = await deployProvider(defaultMarketId);
+    expect(await provider.getMarketId()).to.equal(defaultMarketId);
 
-    const tx = await lendingPoolAddressesProvider.setMarketId(newMarketId);
+    const tx = await provider.setMarketId(newMarketId);
     const receipt = await tx.wait();
-    expect(receipt.events[0].event).to.equal("MarketIdSet");
+    expect(receipt.events[0].event).to.equal('MarketIdSet');
     expect(receipt.events[0].args?.newMarketId).to.equal(newMarketId);
-    expect(await lendingPoolAddressesProvider.getMarketId()).to.equal(newMarketId);
+    expect(await provider.getMarketId()).to.equal(newMarketId);
   });
 
-  it("setAddressAsProxy", async function () {
+  it('setAddressAsProxy', async function () {
     const proxiedAddressId = utils.keccak256(utils.toUtf8Bytes('RANDOM_PROXIED'));
 
-    const lendingPoolAddressesProvider = await deployLendingPoolAddressesProvider(marketId);
+    const provider = await deployProvider(marketId);
     const lendingPool = await deployLendingPool();
 
-    const tx = await lendingPoolAddressesProvider.setAddressAsProxy(proxiedAddressId, lendingPool.address);
+    const tx = await provider.setAddressAsProxy(
+      proxiedAddressId,
+      lendingPool.lendingPool.address,
+    );
     const receipt = await tx.wait();
-    expect(receipt.events[0].event).to.equal("ProxyCreated");
-    expect(receipt.events[1].event).to.equal("AddressSet");
+    expect(receipt.events[0].event).to.equal('ProxyCreated');
+    expect(receipt.events[1].event).to.equal('AddressSet');
     expect(receipt.events[1].args?.id).to.equal(proxiedAddressId);
-    expect(receipt.events[1].args?.newAddress).to.equal(lendingPool.address);
+    expect(receipt.events[1].args?.newAddress).to.equal(lendingPool.lendingPool.address);
     expect(receipt.events[1].args?.hasProxy).to.equal(true);
   });
 
-  it("setAddress", async function () {
-    const nonProxiedAddressId = utils.keccak256(utils.toUtf8Bytes('RANDOM_NON_PROXIED'));;
+  it('setAddress', async function () {
+    const nonProxiedAddressId = utils.keccak256(utils.toUtf8Bytes('RANDOM_NON_PROXIED'));
     const mockAddress = Wallet.createRandom().address;
 
-    const lendingPoolAddressesProvider = await deployLendingPoolAddressesProvider(marketId);
+    const provider = await deployProvider(marketId);
 
-    const tx = await lendingPoolAddressesProvider.setAddress(nonProxiedAddressId, mockAddress);
+    const tx = await provider.setAddress(nonProxiedAddressId, mockAddress);
     const receipt = await tx.wait();
-    expect(receipt.events[0].event).to.equal("AddressSet");
+    expect(receipt.events[0].event).to.equal('AddressSet');
     expect(receipt.events[0].args?.id).to.equal(nonProxiedAddressId);
     expect(receipt.events[0].args?.newAddress).to.equal(mockAddress);
     expect(receipt.events[0].args?.hasProxy).to.equal(false);
     expect(mockAddress.toLowerCase()).to.equal(
-    	(await lendingPoolAddressesProvider.getAddress(nonProxiedAddressId)).toLowerCase()
-	);
+      (await provider.getAddress(nonProxiedAddressId)).toLowerCase(),
+    );
   });
 
-  it("getAddress", async function () {
-    const nonProxiedAddressId = utils.keccak256(utils.toUtf8Bytes('RANDOM_NON_PROXIED'));;
+  it('getAddress', async function () {
+    const nonProxiedAddressId = utils.keccak256(utils.toUtf8Bytes('RANDOM_NON_PROXIED'));
     const mockAddress = Wallet.createRandom().address;
 
-    const lendingPoolAddressesProvider = await deployLendingPoolAddressesProvider(marketId);
+    const provider = await deployProvider(marketId);
 
-    await lendingPoolAddressesProvider.setAddress(nonProxiedAddressId, mockAddress);
-    expect(await lendingPoolAddressesProvider.getAddress(nonProxiedAddressId)).to.equal(mockAddress);
+    await provider.setAddress(nonProxiedAddressId, mockAddress);
+    expect(
+      await provider.getAddress(nonProxiedAddressId),
+    ).to.equal(mockAddress);
   });
 
-  it("getLendingPool", async function () {
-    const lendingPoolAddressesProvider = await deployLendingPoolAddressesProvider(marketId);
+  it('getLendingPool', async function () {
+    const provider = await deployProvider(marketId);
     const lendingPool = await deployLendingPool();
 
-    const tx = await lendingPoolAddressesProvider.setLendingPoolImpl(lendingPool.address);
+    const tx = await provider.setLendingPoolImpl(lendingPool.lendingPool.address);
     const receipt = await tx.wait();
-    expect(await lendingPoolAddressesProvider.getLendingPool()).to.equal(receipt.events[0].args?.newAddress);
+    expect(
+      await provider.getLendingPool(),
+    ).to.equal(receipt.events[0].args?.newAddress);
   });
 
-  it("setLendingPoolImpl", async function () {
-    const lendingPoolAddressesProvider = await deployLendingPoolAddressesProvider(marketId);
+  it('setLendingPoolImpl', async function () {
+    const provider = await deployProvider(marketId);
     const lendingPool = await deployLendingPool();
 
-    const tx = await lendingPoolAddressesProvider.setLendingPoolImpl(lendingPool.address);
+    const tx = await provider.setLendingPoolImpl(lendingPool.lendingPool.address);
     const receipt = await tx.wait();
-    expect(receipt.events[0].event).to.equal("ProxyCreated");
-    expect(receipt.events[1].event).to.equal("LendingPoolUpdated");
-    expect(receipt.events[1].args?.newAddress).to.equal(lendingPool.address);
+    expect(receipt.events[0].event).to.equal('ProxyCreated');
+    expect(receipt.events[1].event).to.equal('LendingPoolUpdated');
+    expect(receipt.events[1].args?.newAddress).to.equal(lendingPool.lendingPool.address);
   });
 
-  it("getLendingPoolConfigurator", async function () {
-    const lendingPoolAddressesProvider = await deployLendingPoolAddressesProvider(marketId);
-    const lendingPoolConfigurator = await deployLendingPoolConfigurator();
+  it('getLendingPoolConfigurator', async function () {
+    const provider = await deployProvider(marketId);
+    const configurator = await deployConfigurator();
 
-    const tx = await lendingPoolAddressesProvider.setLendingPoolConfiguratorImpl(lendingPoolConfigurator.address);
+    const tx = await provider.setLendingPoolConfiguratorImpl(
+      configurator.address,
+    );
     const receipt = await tx.wait();
-    expect(await lendingPoolAddressesProvider.getLendingPoolConfigurator()).to.equal(receipt.events[0].args?.newAddress);
+    expect(
+      await provider.getLendingPoolConfigurator(),
+    ).to.equal(receipt.events[0].args?.newAddress);
   });
 
-  it("setLendingPoolConfiguratorImpl", async function () {
-    const lendingPoolAddressesProvider = await deployLendingPoolAddressesProvider(marketId);
-    const lendingPoolConfigurator = await deployLendingPoolConfigurator();
+  it('setLendingPoolConfiguratorImpl', async function () {
+    const provider = await deployProvider(marketId);
+    const configurator = await deployConfigurator();
 
-    const tx = await lendingPoolAddressesProvider.setLendingPoolConfiguratorImpl(lendingPoolConfigurator.address);
+    const tx = await provider.setLendingPoolConfiguratorImpl(
+      configurator.address,
+    );
     const receipt = await tx.wait();
-    expect(receipt.events[0].event).to.equal("ProxyCreated");
-    expect(receipt.events[1].event).to.equal("LendingPoolConfiguratorUpdated");
-    expect(receipt.events[1].args?.newAddress).to.equal(lendingPoolConfigurator.address);
+    expect(receipt.events[0].event).to.equal('ProxyCreated');
+    expect(receipt.events[1].event).to.equal('LendingPoolConfiguratorUpdated');
+    expect(receipt.events[1].args?.newAddress).to.equal(configurator.address);
   });
 
-  it("getLendingPoolCollateralManager", async function () {
-    const lendingPoolAddressesProvider = await deployLendingPoolAddressesProvider(marketId);
-    const lendingPoolCollateralManager = await deployLendingPoolCollateralManager();
+  it('getLendingPoolCollateralManager', async function () {
+    const provider = await deployProvider(marketId);
+    const lendingPoolCollateralManager = await deployCollateralManager();
 
-    const tx = await lendingPoolAddressesProvider.setLendingPoolCollateralManager(lendingPoolCollateralManager.address);
+    const tx = await provider.setLendingPoolCollateralManager(
+      lendingPoolCollateralManager.address,
+    );
     const receipt = await tx.wait();
-    expect(await lendingPoolAddressesProvider.getLendingPoolCollateralManager()).to.equal(receipt.events[0].args?.newAddress);
+    expect(
+      await provider.getLendingPoolCollateralManager(),
+    ).to.equal(receipt.events[0].args?.newAddress);
   });
 
-  it("setLendingPoolCollateralManager", async function () {
-    const lendingPoolAddressesProvider = await deployLendingPoolAddressesProvider(marketId);
-    const lendingPoolCollateralManager = await deployLendingPoolCollateralManager();
+  it('setLendingPoolCollateralManager', async function () {
+    const provider = await deployProvider(marketId);
+    const lendingPoolCollateralManager = await deployCollateralManager();
 
-    const tx = await lendingPoolAddressesProvider.setLendingPoolCollateralManager(lendingPoolCollateralManager.address);
+    const tx = await provider.setLendingPoolCollateralManager(
+      lendingPoolCollateralManager.address,
+    );
     const receipt = await tx.wait();
-    expect(receipt.events[0].event).to.equal("LendingPoolCollateralManagerUpdated");
+    expect(receipt.events[0].event).to.equal('LendingPoolCollateralManagerUpdated');
     expect(receipt.events[0].args?.newAddress).to.equal(lendingPoolCollateralManager.address);
   });
 
-  it("getPoolAdmin", async function () {
+  it('getPoolAdmin', async function () {
     const mockAddress = Wallet.createRandom().address;
 
-    const lendingPoolAddressesProvider = await deployLendingPoolAddressesProvider(marketId);
+    const provider = await deployProvider(marketId);
 
-    const tx = await lendingPoolAddressesProvider.setPoolAdmin(mockAddress);
+    const tx = await provider.setPoolAdmin(mockAddress);
     const receipt = await tx.wait();
-    expect(await lendingPoolAddressesProvider.getPoolAdmin()).to.equal(receipt.events[0].args?.newAddress);
+    expect(
+      await provider.getPoolAdmin(),
+    ).to.equal(receipt.events[0].args?.newAddress);
   });
 
-  it("setPoolAdmin", async function () {
+  it('setPoolAdmin', async function () {
     const mockAddress = Wallet.createRandom().address;
 
-    const lendingPoolAddressesProvider = await deployLendingPoolAddressesProvider(marketId);
+    const provider = await deployProvider(marketId);
 
-    const tx = await lendingPoolAddressesProvider.setPoolAdmin(mockAddress);
+    const tx = await provider.setPoolAdmin(mockAddress);
     const receipt = await tx.wait();
-    expect(receipt.events[0].event).to.equal("ConfigurationAdminUpdated");
+    expect(receipt.events[0].event).to.equal('ConfigurationAdminUpdated');
     expect(receipt.events[0].args?.newAddress).to.equal(mockAddress);
   });
 
-  it("getEmergencyAdmin", async function () {
+  it('getEmergencyAdmin', async function () {
     const mockAddress = Wallet.createRandom().address;
 
-    const lendingPoolAddressesProvider = await deployLendingPoolAddressesProvider(marketId);
+    const provider = await deployProvider(marketId);
 
-    const tx = await lendingPoolAddressesProvider.setEmergencyAdmin(mockAddress);
+    const tx = await provider.setEmergencyAdmin(mockAddress);
     const receipt = await tx.wait();
-    expect(await lendingPoolAddressesProvider.getEmergencyAdmin()).to.equal(receipt.events[0].args?.newAddress);
+    expect(
+      await provider.getEmergencyAdmin(),
+    ).to.equal(receipt.events[0].args?.newAddress);
   });
 
-  it("setEmergencyAdmin", async function () {
+  it('setEmergencyAdmin', async function () {
     const mockAddress = Wallet.createRandom().address;
 
-    const lendingPoolAddressesProvider = await deployLendingPoolAddressesProvider(marketId);
+    const provider = await deployProvider(marketId);
 
-    const tx = await lendingPoolAddressesProvider.setEmergencyAdmin(mockAddress);
+    const tx = await provider.setEmergencyAdmin(mockAddress);
     const receipt = await tx.wait();
-    expect(receipt.events[0].event).to.equal("EmergencyAdminUpdated");
+    expect(receipt.events[0].event).to.equal('EmergencyAdminUpdated');
     expect(receipt.events[0].args?.newAddress).to.equal(mockAddress);
   });
 
-  it("getPriceOracle", async function () {
+  it('getPriceOracle', async function () {
     const mockPriceOracle = Wallet.createRandom().address;
 
-    const lendingPoolAddressesProvider = await deployLendingPoolAddressesProvider(marketId);
+    const provider = await deployProvider(marketId);
 
-    const tx = await lendingPoolAddressesProvider.setPriceOracle(mockPriceOracle);
+    const tx = await provider.setPriceOracle(mockPriceOracle);
     const receipt = await tx.wait();
-    expect(await lendingPoolAddressesProvider.getPriceOracle()).to.equal(receipt.events[0].args?.newAddress);
+    expect(
+      await provider.getPriceOracle(),
+    ).to.equal(receipt.events[0].args?.newAddress);
   });
 
-  it("setPriceOracle", async function () {
+  it('setPriceOracle', async function () {
     const mockPriceOracle = Wallet.createRandom().address;
 
-    const lendingPoolAddressesProvider = await deployLendingPoolAddressesProvider(marketId);
+    const provider = await deployProvider(marketId);
 
-    const tx = await lendingPoolAddressesProvider.setPriceOracle(mockPriceOracle);
+    const tx = await provider.setPriceOracle(mockPriceOracle);
     const receipt = await tx.wait();
-    expect(receipt.events[0].event).to.equal("PriceOracleUpdated");
+    expect(receipt.events[0].event).to.equal('PriceOracleUpdated');
     expect(receipt.events[0].args?.newAddress).to.equal(mockPriceOracle);
   });
-
-  it("getLendingRateOracle", async function () {
-    const mockLendingRateOracle = Wallet.createRandom().address;
-
-    const lendingPoolAddressesProvider = await deployLendingPoolAddressesProvider(marketId);
-
-    const tx = await lendingPoolAddressesProvider.setLendingRateOracle(mockLendingRateOracle);
-    const receipt = await tx.wait();
-    expect(await lendingPoolAddressesProvider.getLendingRateOracle()).to.equal(receipt.events[0].args?.newAddress);
-  });
-
-  it("setLendingRateOracle", async function () {
-    const mockLendingRateOracle = Wallet.createRandom().address;
-
-    const lendingPoolAddressesProvider = await deployLendingPoolAddressesProvider(marketId);
-
-    const tx = await lendingPoolAddressesProvider.setLendingRateOracle(mockLendingRateOracle);
-    const receipt = await tx.wait();
-    expect(receipt.events[0].event).to.equal("LendingRateOracleUpdated");
-    expect(receipt.events[0].args?.newAddress).to.equal(mockLendingRateOracle);
-  });
-
-  it("onlyOwner modifier", async function () {
-    let owner, account0;
-    [owner, account0] = await ethers.getSigners();
+  it('onlyOwner modifier', async function () {
+    [owner, addr1] = await ethers.getSigners();
 
     const mockAddress = Wallet.createRandom().address;
 
-    const lendingPoolAddressesProvider = await deployLendingPoolAddressesProvider(marketId);
-    await lendingPoolAddressesProvider.transferOwnership(account0.address);
+    const provider = await deployProvider(marketId);
+    await provider.transferOwnership(addr1.address);
 
     for (const contractFunction of [
-      lendingPoolAddressesProvider.setMarketId,
-      lendingPoolAddressesProvider.setLendingPoolImpl,
-      lendingPoolAddressesProvider.setLendingPoolConfiguratorImpl,
-      lendingPoolAddressesProvider.setLendingPoolCollateralManager,
-      lendingPoolAddressesProvider.setPoolAdmin,
-      lendingPoolAddressesProvider.setPriceOracle,
-      lendingPoolAddressesProvider.setLendingRateOracle,
+      provider.setMarketId,
+      provider.setLendingPoolImpl,
+      provider.setLendingPoolConfiguratorImpl,
+      provider.setLendingPoolCollateralManager,
+      provider.setPoolAdmin,
+      provider.setPriceOracle
     ]) {
-      await expect(contractFunction(mockAddress)).to.be.revertedWith("Ownable: caller is not the owner");
+      await expect(
+        contractFunction(mockAddress),
+      ).to.be.revertedWithCustomError(provider,'OwnableUnauthorizedAccount');
     }
 
     await expect(
-      lendingPoolAddressesProvider.setAddress(utils.keccak256(utils.toUtf8Bytes('RANDOM_ID')), mockAddress)
-    ).to.be.revertedWith("Ownable: caller is not the owner");
+      provider.setAddress(
+        utils.keccak256(utils.toUtf8Bytes('RANDOM_ID')),
+        mockAddress,
+      ),
+    ).to.be.revertedWithCustomError(provider,'OwnableUnauthorizedAccount');
 
     await expect(
-      lendingPoolAddressesProvider.setAddressAsProxy(
+      provider.setAddressAsProxy(
         utils.keccak256(utils.toUtf8Bytes('RANDOM_ID')),
-        mockAddress
-      )
-    ).to.be.revertedWith("Ownable: caller is not the owner");
+        mockAddress,
+      ),
+    ).to.be.revertedWithCustomError(provider,'OwnableUnauthorizedAccount');
   });
 });

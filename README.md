@@ -9,7 +9,10 @@
 1. run 'npm i' in project root
 2. remove '.example' suffix from .env.example and hardhat.config.ts.example
 3. run 'yarn compile' or 'npm run compile'
-4. run 'yarn tets' or 'npm run test'
+4. run 'yarn test' or 'npm run test'
+5. to see test coverage, run 'yarn coverage' or 'npm run coverage'
+
+Note: Node LTS is recommended (18.12.1)
 ```
 ## Features
 ### Committed
@@ -27,3 +30,6 @@
 
 ### Time Permitting
 - [ ] Automated Buybacks
+
+### Test
+ Run "forge test -vvvv --via-ir" to test with forge

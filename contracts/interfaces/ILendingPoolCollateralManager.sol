@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: agpl-3.0
-pragma solidity 0.6.12;
+pragma solidity ^0.8.23;
 
 /**
  * @title ILendingPoolCollateralManager
@@ -52,7 +52,9 @@ interface ILendingPoolCollateralManager {
    **/
   function liquidationCall(
     address collateral,
+    bool collateralReserveType,
     address principal,
+    bool debtReserveType,
     address user,
     uint256 debtToCover,
     bool receiveAToken

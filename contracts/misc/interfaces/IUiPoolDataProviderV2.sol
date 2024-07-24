@@ -1,12 +1,12 @@
 // SPDX-License-Identifier: agpl-3.0
-pragma solidity 0.6.12;
-pragma experimental ABIEncoderV2;
+pragma solidity ^0.8.23;
 
 import {ILendingPoolAddressesProvider} from '../../interfaces/ILendingPoolAddressesProvider.sol';
 
 interface IUiPoolDataProviderV2 {
   struct AggregatedReserveData {
     address underlyingAsset;
+    bool reserveType;
     string name;
     string symbol;
     uint256 decimals;
@@ -45,6 +45,7 @@ interface IUiPoolDataProviderV2 {
 
   struct UserReserveData {
     address underlyingAsset;
+    bool reserveType;
     uint256 scaledATokenBalance;
     bool usageAsCollateralEnabledOnUser;
     uint256 stableBorrowRate;
@@ -63,7 +64,7 @@ interface IUiPoolDataProviderV2 {
   function getReservesList(ILendingPoolAddressesProvider provider)
     external
     view
-    returns (address[] memory);
+    returns (address[] memory, bool[] memory);
 
   function getReservesData(ILendingPoolAddressesProvider provider)
     external

@@ -1,11 +1,11 @@
 // SPDX-License-Identifier: agpl-3.0
-pragma solidity 0.6.12;
+pragma solidity ^0.8.23;
 
 import {Context} from '../../dependencies/openzeppelin/contracts/Context.sol';
 import {IERC20} from '../../dependencies/openzeppelin/contracts/IERC20.sol';
 import {IERC20Detailed} from '../../dependencies/openzeppelin/contracts/IERC20Detailed.sol';
 import {SafeMath} from '../../dependencies/openzeppelin/contracts/SafeMath.sol';
-import {IAaveIncentivesController} from '../../interfaces/IAaveIncentivesController.sol';
+import {IRewarder} from '../../interfaces/IRewarder.sol';
 
 /**
  * @title ERC20
@@ -27,7 +27,7 @@ abstract contract IncentivizedERC20 is Context, IERC20, IERC20Detailed {
     string memory name,
     string memory symbol,
     uint8 decimals
-  ) public {
+  ) {
     _name = name;
     _symbol = symbol;
     _decimals = decimals;
@@ -72,7 +72,7 @@ abstract contract IncentivizedERC20 is Context, IERC20, IERC20Detailed {
    * @return Abstract function implemented by the child aToken/debtToken. 
    * Done this way in order to not break compatibility with previous versions of aTokens/debtTokens
    **/
-  function _getIncentivesController() internal view virtual returns(IAaveIncentivesController);
+  function _getIncentivesController() internal view virtual returns(IRewarder);
 
   /**
    * @dev Executes a transfer of tokens from _msgSender() to recipient

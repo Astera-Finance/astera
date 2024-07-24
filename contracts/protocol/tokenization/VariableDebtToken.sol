@@ -1,12 +1,12 @@
 // SPDX-License-Identifier: agpl-3.0
-pragma solidity 0.6.12;
+pragma solidity ^0.8.23;
 
 import {IVariableDebtToken} from '../../interfaces/IVariableDebtToken.sol';
 import {WadRayMath} from '../libraries/math/WadRayMath.sol';
 import {Errors} from '../libraries/helpers/Errors.sol';
 import {DebtTokenBase} from './base/DebtTokenBase.sol';
 import {ILendingPool} from '../../interfaces/ILendingPool.sol';
-import {IAaveIncentivesController} from '../../interfaces/IAaveIncentivesController.sol';
+import {IRewarder} from '../../interfaces/IRewarder.sol';
 
 /**
  * @title VariableDebtToken
@@ -21,7 +21,8 @@ contract VariableDebtToken is DebtTokenBase, IVariableDebtToken {
 
   ILendingPool internal _pool;
   address internal _underlyingAsset;
-  IAaveIncentivesController internal _incentivesController;
+  bool internal _reserveType;
+  IRewarder internal _incentivesController;
 
   /**
    * @dev Initializes the debt token.
@@ -35,7 +36,7 @@ contract VariableDebtToken is DebtTokenBase, IVariableDebtToken {
   function initialize(
     ILendingPool pool,
     address underlyingAsset,
-    IAaveIncentivesController incentivesController,
+    IRewarder incentivesController,
     uint8 debtTokenDecimals,
     string memory debtTokenName,
     string memory debtTokenSymbol,
@@ -61,7 +62,7 @@ contract VariableDebtToken is DebtTokenBase, IVariableDebtToken {
   }
 
   /**
-   * @dev Gets the revision of the stable debt token implementation
+   * @dev Gets the revision of the variable debt token implementation
    * @return The debt token implementation revision
    **/
   function getRevision() internal pure virtual override returns (uint256) {
@@ -79,7 +80,7 @@ contract VariableDebtToken is DebtTokenBase, IVariableDebtToken {
       return 0;
     }
 
-    return scaledBalance.rayMul(_pool.getReserveNormalizedVariableDebt(_underlyingAsset));
+    return scaledBalance.rayMul(_pool.getReserveNormalizedVariableDebt(_underlyingAsset, _reserveType));
   }
 
   /**
@@ -148,7 +149,7 @@ contract VariableDebtToken is DebtTokenBase, IVariableDebtToken {
    * @return The total supply
    **/
   function totalSupply() public view virtual override returns (uint256) {
-    return super.totalSupply().rayMul(_pool.getReserveNormalizedVariableDebt(_underlyingAsset));
+    return super.totalSupply().rayMul(_pool.getReserveNormalizedVariableDebt(_underlyingAsset, _reserveType));
   }
 
   /**
@@ -184,7 +185,7 @@ contract VariableDebtToken is DebtTokenBase, IVariableDebtToken {
   /**
    * @dev Returns the address of the incentives controller contract
    **/
-  function getIncentivesController() external view override returns (IAaveIncentivesController) {
+  function getIncentivesController() external view override returns (IRewarder) {
     return _getIncentivesController();
   }
 
@@ -195,7 +196,7 @@ contract VariableDebtToken is DebtTokenBase, IVariableDebtToken {
     return _pool;
   }
 
-  function _getIncentivesController() internal view override returns (IAaveIncentivesController) {
+  function _getIncentivesController() internal view override returns (IRewarder) {
     return _incentivesController;
   }
 
@@ -205,5 +206,10 @@ contract VariableDebtToken is DebtTokenBase, IVariableDebtToken {
 
   function _getLendingPool() internal view override returns (ILendingPool) {
     return _pool;
+  }
+
+  function setIncentivesController(address newController) external override onlyLendingPool {
+    require(newController != address(0), "INVALID_CONTROLLER");
+    _incentivesController = IRewarder(newController);
   }
 }

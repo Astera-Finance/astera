@@ -1,10 +1,10 @@
 // SPDX-License-Identifier: agpl-3.0
-pragma solidity 0.6.12;
+pragma solidity ^0.8.20;
 
 import {IERC20} from '../dependencies/openzeppelin/contracts/IERC20.sol';
 import {IScaledBalanceToken} from './IScaledBalanceToken.sol';
 import {IInitializableAToken} from './IInitializableAToken.sol';
-import {IAaveIncentivesController} from './IAaveIncentivesController.sol';
+import {IRewarder} from './IRewarder.sol';
 
 interface IAToken is IERC20, IScaledBalanceToken, IInitializableAToken {
   /**
@@ -45,6 +45,14 @@ interface IAToken is IERC20, IScaledBalanceToken, IInitializableAToken {
    * @param index The new liquidity index of the reserve
    **/
   event BalanceTransfer(address indexed from, address indexed to, uint256 value, uint256 index);
+
+  /**
+   * @dev Emitted during the rebalance action
+   * @param vault The vault that is being interacted with
+   * @param amountToWithdraw The amount of asset that needs to be free after the rebalance
+   * @param netAssetMovement The amount of asset being deposited into (if positive) or withdrawn from (if negative) the vault
+   **/
+  event Rebalance(address indexed vault, uint256 amountToWithdraw, int256 netAssetMovement);
 
   /**
    * @dev Burns aTokens from `user` and sends the equivalent amount of underlying to `receiverOfUnderlying`
@@ -98,10 +106,33 @@ interface IAToken is IERC20, IScaledBalanceToken, IInitializableAToken {
   /**
    * @dev Returns the address of the incentives controller contract
    **/
-  function getIncentivesController() external view returns (IAaveIncentivesController);
+  function getIncentivesController() external view returns (IRewarder);
 
   /**
    * @dev Returns the address of the underlying asset of this aToken (E.g. WETH for aWETH)
    **/
   function UNDERLYING_ASSET_ADDRESS() external view returns (address);
+
+  /**
+   * @dev Returns the total balance of underlying asset of this token, including balance lent to a vault
+   **/
+  function getTotalManagedAssets() external view returns(uint256);
+
+  function setFarmingPct(uint256 _farmingPct) external;
+
+  function setClaimingThreshold(uint256 _claimingThreshold) external;
+
+  function setFarmingPctDrift(uint256 _farmingPctDrift) external;
+
+  function setProfitHandler(address _profitHandler) external;
+
+  function setVault(address _vault) external;
+
+  function setTreasury(address _treasury) external;
+
+  function setIncentivesController(address _incentivesController) external;
+
+  function rebalance() external;
+
+  function getPool() external view returns (address);
 }

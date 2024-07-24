@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: agpl-3.0
-pragma solidity 0.6.12;
+pragma solidity ^0.8.23;
 
 /**
  * @title LendingPoolAddressesProvider contract
@@ -16,7 +16,6 @@ interface ILendingPoolAddressesProvider {
   event LendingPoolConfiguratorUpdated(address indexed newAddress);
   event LendingPoolCollateralManagerUpdated(address indexed newAddress);
   event PriceOracleUpdated(address indexed newAddress);
-  event LendingRateOracleUpdated(address indexed newAddress);
   event ProxyCreated(bytes32 id, address indexed newAddress);
   event AddressSet(bytes32 id, address indexed newAddress, bool hasProxy);
 
@@ -54,7 +53,13 @@ interface ILendingPoolAddressesProvider {
 
   function setPriceOracle(address priceOracle) external;
 
-  function getLendingRateOracle() external view returns (address);
+  function getMiniPoolAddressesProvider() external view returns (address);
 
-  function setLendingRateOracle(address lendingRateOracle) external;
+  function setMiniPoolAddressesProvider(address provider) external;
+
+  function getFlowLimiter() external view returns (address);
+
+  function setFlowLimiter(address flowLimiter) external;
+
+  
 }

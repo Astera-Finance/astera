@@ -1,11 +1,11 @@
 // SPDX-License-Identifier: agpl-3.0
-pragma solidity 0.6.12;
+pragma solidity ^0.8.23;
 
 import {Ownable} from '../../dependencies/openzeppelin/contracts/Ownable.sol';
 
 // Prettier ignore to prevent buidler flatter bug
 // prettier-ignore
-import {InitializableImmutableAdminUpgradeabilityProxy} from '../libraries/aave-upgradeability/InitializableImmutableAdminUpgradeabilityProxy.sol';
+import {InitializableImmutableAdminUpgradeabilityProxy} from '../libraries/upgradeability/InitializableImmutableAdminUpgradeabilityProxy.sol';
 
 import {ILendingPoolAddressesProvider} from '../../interfaces/ILendingPoolAddressesProvider.sol';
 
@@ -26,9 +26,10 @@ contract LendingPoolAddressesProvider is Ownable, ILendingPoolAddressesProvider 
   bytes32 private constant EMERGENCY_ADMIN = 'EMERGENCY_ADMIN';
   bytes32 private constant LENDING_POOL_COLLATERAL_MANAGER = 'COLLATERAL_MANAGER';
   bytes32 private constant PRICE_ORACLE = 'PRICE_ORACLE';
-  bytes32 private constant LENDING_RATE_ORACLE = 'LENDING_RATE_ORACLE';
+  bytes32 private constant MINIPOOL_ADDRESSES_PROVIDER = 'MINIPOOL_ADDRESSES_PROVIDER';
+  bytes32 private constant FLOW_LIMITER = 'FLOW_LIMITER';
 
-  constructor(string memory marketId) public {
+  constructor(string memory marketId) public Ownable(msg.sender) {
     _setMarketId(marketId);
   }
 
@@ -173,15 +174,6 @@ contract LendingPoolAddressesProvider is Ownable, ILendingPoolAddressesProvider 
     emit PriceOracleUpdated(priceOracle);
   }
 
-  function getLendingRateOracle() external view override returns (address) {
-    return getAddress(LENDING_RATE_ORACLE);
-  }
-
-  function setLendingRateOracle(address lendingRateOracle) external override onlyOwner {
-    _addresses[LENDING_RATE_ORACLE] = lendingRateOracle;
-    emit LendingRateOracleUpdated(lendingRateOracle);
-  }
-
   /**
    * @dev Internal function to update the implementation of a specific proxied component of the protocol
    * - If there is no proxy registered in the given `id`, it creates the proxy setting `newAdress`
@@ -211,5 +203,21 @@ contract LendingPoolAddressesProvider is Ownable, ILendingPoolAddressesProvider 
   function _setMarketId(string memory marketId) internal {
     _marketId = marketId;
     emit MarketIdSet(marketId);
+  }
+
+  function getMiniPoolAddressesProvider() external view override returns (address) {
+    return getAddress(MINIPOOL_ADDRESSES_PROVIDER);
+  }
+
+  function setMiniPoolAddressesProvider(address provider) external override onlyOwner {
+    _addresses[MINIPOOL_ADDRESSES_PROVIDER] = provider;
+  }
+
+  function getFlowLimiter() external view override returns (address) {
+    return getAddress(FLOW_LIMITER);
+  }
+
+  function setFlowLimiter(address flowLimiter) external override onlyOwner {
+    _addresses[FLOW_LIMITER] = flowLimiter;
   }
 }
