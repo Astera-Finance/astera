@@ -1,0 +1,728 @@
+// SPDX-License-Identifier: BUSL-1.1
+pragma solidity ^0.8.0;
+
+import "./Common.sol";
+import "contracts/protocol/libraries/helpers/Errors.sol";
+import {WadRayMath} from "contracts/protocol/libraries/math/WadRayMath.sol";
+
+contract ATokenErc6909Test is Common {
+    using WadRayMath for uint256;
+
+    struct TestParams {
+        uint256 id;
+        uint256 nrOfIterations;
+        address user;
+    }
+
+    ERC20[] erc20Tokens;
+    DeployedContracts deployedContracts;
+    DeployedMiniPoolContracts miniPoolContracts;
+
+    ConfigAddresses configAddresses;
+    IAERC6909 aErc6909Token;
+    address miniPool;
+
+    function setUp() public {
+        opFork = vm.createSelectFork(RPC, FORK_BLOCK);
+        assertEq(vm.activeFork(), opFork);
+        deployedContracts = fixture_deployProtocol();
+        configAddresses = ConfigAddresses(
+            address(deployedContracts.protocolDataProvider),
+            address(deployedContracts.stableStrategy),
+            address(deployedContracts.volatileStrategy),
+            address(deployedContracts.treasury),
+            address(deployedContracts.rewarder),
+            address(deployedContracts.aTokensAndRatesHelper)
+        );
+        fixture_configureProtocol(
+            address(deployedContracts.lendingPool),
+            address(aToken),
+            configAddresses,
+            deployedContracts.lendingPoolConfigurator,
+            deployedContracts.lendingPoolAddressesProvider
+        );
+        mockedVaults = fixture_deployErc4626Mocks(tokens, address(deployedContracts.treasury));
+        erc20Tokens = fixture_getErc20Tokens(tokens);
+        fixture_transferTokensToTestContract(erc20Tokens, 100_000 ether, address(this));
+        miniPoolContracts = fixture_deployMiniPoolSetup(
+            address(deployedContracts.lendingPoolAddressesProvider), address(deployedContracts.lendingPool)
+        );
+
+        address[] memory reserves = new address[](2 * tokens.length);
+        for (uint8 idx = 0; idx < (2 * tokens.length); idx++) {
+            console.log(idx);
+            if (idx < tokens.length) {
+                reserves[idx] = tokens[idx];
+            } else {
+                reserves[idx] = address(aTokens[idx - tokens.length]);
+            }
+        }
+
+        miniPool = fixture_configureMiniPoolReserves(reserves, configAddresses, miniPoolContracts);
+        vm.label(miniPool, "MiniPool");
+
+        aErc6909Token = IAERC6909(miniPoolContracts.miniPoolAddressesProvider.getMiniPoolToAERC6909(miniPool));
+    }
+
+    function testAccessControl_NotLiquidityPool() public {
+        address addr = makeAddr("RandomAddress");
+        for (uint32 idx = 0; idx < aTokens.length; idx++) {
+            vm.expectRevert(bytes(Errors.CT_CALLER_MUST_BE_LENDING_POOL));
+            aErc6909Token.mint(address(this), address(this), 1, 1, 1);
+            vm.expectRevert(bytes(Errors.CT_CALLER_MUST_BE_LENDING_POOL));
+            aErc6909Token.mintToTreasury(1, 1, 1);
+            vm.expectRevert(bytes(Errors.CT_CALLER_MUST_BE_LENDING_POOL));
+            aErc6909Token.burn(admin, admin, 1, 1, 1);
+            vm.expectRevert(bytes(Errors.CT_CALLER_MUST_BE_LENDING_POOL));
+            aErc6909Token.transferOnLiquidation(admin, addr, 0, 1);
+            vm.expectRevert(bytes(Errors.CT_CALLER_MUST_BE_LENDING_POOL));
+            aErc6909Token.setIncentivesController(IRewarder(addr));
+            vm.expectRevert(bytes(Errors.CT_CALLER_MUST_BE_LENDING_POOL));
+            aErc6909Token.setPool(IMiniPool(addr));
+            vm.expectRevert(bytes(Errors.CT_CALLER_MUST_BE_LENDING_POOL));
+            aErc6909Token.setUnderlyingAsset(11, addr);
+            vm.expectRevert(bytes(Errors.CT_CALLER_MUST_BE_LENDING_POOL));
+            aErc6909Token.transferUnderlyingTo(addr, 11, 1);
+            vm.expectRevert(bytes(Errors.CT_CALLER_MUST_BE_LENDING_POOL));
+            aErc6909Token.mintToTreasury(1, 11, 1);
+        }
+    }
+
+    function testErc6909Minting_AToken(uint256 maxValToMint, uint256 index, uint256 offset) public {
+        uint8 nrOfIterations = 20;
+
+        /* Fuzz vector creation */
+        maxValToMint = bound(maxValToMint, nrOfIterations * 10, 20_000_000);
+        //maxValToMint = 10000;
+        offset = bound(offset, 0, tokens.length - 1);
+        uint256 id = 1000 + offset;
+
+        //index = 1e27;
+        // Below index values generates issues !
+        // index = 2 * 1e27;
+        index = bound(index, 1e27, 10e27); // assume index increases in time as the interest accumulates
+        vm.assume(maxValToMint.rayDiv(index) > 0);
+
+        uint256 granuality = maxValToMint / nrOfIterations;
+        vm.assume(granuality.rayDiv(index) > 0);
+        vm.assume(maxValToMint % granuality == 0); // accept only multiplicity of {nrOfIterations}
+        // maxValToMint = maxValToMint - (maxValToMint % granuality);
+        vm.startPrank(miniPool);
+        console.log("Balance before: ", aErc6909Token.balanceOf(address(this), id));
+
+        /* Additiveness check */
+        for (uint256 cnt = 0; cnt < maxValToMint; cnt += granuality) {
+            console.log("granuality: ", granuality);
+            aErc6909Token.mint(address(this), address(this), id, granuality, index);
+        }
+        //assertGe(maxValToMint.rayDiv(index), aErc6909Token.balanceOf(address(this), id)); @audit ISSUE
+        assertApproxEqAbs(aErc6909Token.balanceOf(address(this), id), maxValToMint.rayDiv(index), nrOfIterations / 2);
+        console.log("Minting: ", maxValToMint.rayDiv(index));
+        aErc6909Token.mint(address(this), address(this), id, maxValToMint, index);
+        console.log("aErc6909Token.balanceOf(address(this): ", aErc6909Token.balanceOf(address(this), id));
+        assertApproxEqAbs(
+            aErc6909Token.balanceOf(address(this), id), 2 * maxValToMint.rayDiv(index), nrOfIterations / 2
+        );
+        console.log("current id %s", id);
+        console.log("Total supply: ", aErc6909Token.scaledTotalSupply(id));
+        assertApproxEqAbs(aErc6909Token.scaledTotalSupply(id), 2 * maxValToMint.rayDiv(index), nrOfIterations / 2);
+
+        vm.stopPrank();
+    }
+
+    function testErc6909Minting_Token(uint256 maxValToMint, uint256 index, uint256 offset) public {
+        uint8 nrOfIterations = 20;
+
+        /* Fuzz vector creation */
+        maxValToMint = bound(maxValToMint, nrOfIterations * 10, 20_000_000);
+        //maxValToMint = 10000;
+        offset = bound(offset, 0, tokens.length - 1);
+        uint256 id = 1128 + offset;
+
+        //index = 1e27;
+        // Below index values generates issues !
+        // index = 2 * 1e27;
+        index = bound(index, 1e27, 10e27); // assume index increases in time as the interest accumulates
+        vm.assume(maxValToMint.rayDiv(index) > 0);
+
+        uint256 granuality = maxValToMint / nrOfIterations;
+        vm.assume(granuality.rayDiv(index) > 0);
+        vm.assume(maxValToMint % granuality == 0); // accept only multiplicity of {nrOfIterations}
+        // maxValToMint = maxValToMint - (maxValToMint % granuality);
+        vm.startPrank(miniPool);
+        console.log("Balance before: ", aErc6909Token.balanceOf(address(this), id));
+
+        /* Additiveness check */
+        for (uint256 cnt = 0; cnt < maxValToMint; cnt += granuality) {
+            console.log("granuality: ", granuality);
+            aErc6909Token.mint(address(this), address(this), id, granuality, index);
+        }
+        //assertGe(maxValToMint.rayDiv(index), aErc6909Token.balanceOf(address(this), id)); @audit ISSUE
+        assertApproxEqAbs(aErc6909Token.balanceOf(address(this), id), maxValToMint.rayDiv(index), nrOfIterations / 2);
+        console.log("Minting: ", maxValToMint.rayDiv(index));
+        aErc6909Token.mint(address(this), address(this), id, maxValToMint, index);
+        console.log("aErc6909Token.balanceOf(address(this): ", aErc6909Token.balanceOf(address(this), id));
+        assertApproxEqAbs(
+            aErc6909Token.balanceOf(address(this), id), 2 * maxValToMint.rayDiv(index), nrOfIterations / 2
+        );
+        console.log("current id %s", id);
+        console.log("Total supply: ", aErc6909Token.totalSupply(id));
+        assertApproxEqAbs(aErc6909Token.totalSupply(id), 2 * maxValToMint.rayDiv(index), nrOfIterations / 2);
+
+        vm.stopPrank();
+    }
+
+    function testErc6909Minting_DebtToken(uint256 maxValToMint, uint256 index, uint256 offset) public {
+        uint8 nrOfIterations = 20;
+
+        /* Fuzz vector creation */
+        maxValToMint = bound(maxValToMint, nrOfIterations * 10, 20_000_000);
+        offset = bound(offset, 0, tokens.length - 1);
+        uint256 id = 2000 + offset;
+
+        //index = 1e27;
+        // Below index values generates issues !
+        // index = 2 * 1e27;
+        index = bound(index, 1e27, 10e27); // assume index increases in time as the interest accumulates
+        vm.assume(maxValToMint.rayDiv(index) > 0);
+
+        uint256 granuality = maxValToMint / nrOfIterations;
+        vm.assume(maxValToMint % granuality == 0); // accept only multiplicity of {nrOfIterations}
+        // maxValToMint = maxValToMint - (maxValToMint % granuality);
+        vm.startPrank(miniPool);
+        console.log("Balance before: ", aErc6909Token.balanceOf(address(this), id));
+
+        /* Additiveness check */
+        for (uint256 cnt = 0; cnt < maxValToMint; cnt += granuality) {
+            // console.log("granuality: ", granuality);
+            aErc6909Token.approveDelegation(address(this), id, granuality);
+            console.log("Allowance: ", aErc6909Token.borrowAllowances(address(this), miniPool, id));
+            assertEq(aErc6909Token.borrowAllowances(miniPool, address(this), id), granuality);
+            aErc6909Token.mint(address(this), miniPool, id, granuality, index);
+        }
+        assertApproxEqAbs(aErc6909Token.balanceOf(address(this), id), maxValToMint.rayDiv(index), nrOfIterations / 2);
+        console.log("Minting: ", maxValToMint.rayDiv(index));
+        aErc6909Token.approveDelegation(address(this), id, maxValToMint);
+        assertEq(aErc6909Token.borrowAllowances(miniPool, address(this), id), maxValToMint);
+        aErc6909Token.mint(address(this), miniPool, id, maxValToMint, index);
+        console.log("aErc6909Token.balanceOf(address(this): ", aErc6909Token.balanceOf(address(this), id));
+        assertApproxEqAbs(
+            aErc6909Token.balanceOf(address(this), id), 2 * maxValToMint.rayDiv(index), nrOfIterations / 2
+        );
+        assertEq(aErc6909Token.borrowAllowances(miniPool, address(this), id), 0);
+        console.log("Total supply: ", aErc6909Token.scaledTotalSupply(id));
+        assertApproxEqAbs(aErc6909Token.scaledTotalSupply(id), 2 * maxValToMint.rayDiv(index), nrOfIterations / 2);
+
+        vm.stopPrank();
+    }
+
+    /* mintToTreasury */
+    function testErc6909MintingToTreasury_AToken(uint256 maxValToMint, uint256 index, uint256 offset) public {
+        uint8 nrOfIterations = 20;
+
+        /* Fuzz vector creation */
+        maxValToMint = bound(maxValToMint, nrOfIterations * 10, 20_000_000);
+        offset = bound(offset, 0, tokens.length - 1);
+        //index = 1e27;
+        uint256 id = 1000 + offset;
+        // Below index values generates issues !
+        // index = 2 * 1e27;
+        index = bound(index, 1e27, 10e27); // assume index increases in time as the interest accumulates
+        vm.assume(maxValToMint.rayDiv(index) > 0);
+
+        address treasury = miniPoolContracts.miniPoolAddressesProvider.getMiniPoolTreasury(0);
+        uint256 granuality = maxValToMint / nrOfIterations;
+        vm.assume(maxValToMint % granuality == 0); // accept only multiplicity of {nrOfIterations}
+        // maxValToMint = maxValToMint - (maxValToMint % granuality);
+        vm.startPrank(miniPool);
+        console.log("Balance before: ", aErc6909Token.balanceOf(treasury, id));
+
+        /* Additiveness check */
+        for (uint256 cnt = 0; cnt < maxValToMint; cnt += granuality) {
+            console.log("granuality: ", granuality);
+            aErc6909Token.mintToTreasury(id, granuality, index);
+        }
+        assertApproxEqAbs(aErc6909Token.balanceOf(treasury, id), maxValToMint.rayDiv(index), nrOfIterations / 2);
+        console.log("Minting: ", maxValToMint.rayDiv(index));
+        aErc6909Token.mintToTreasury(id, maxValToMint, index);
+        console.log("aErc6909Token.balanceOf(treasury: ", aErc6909Token.balanceOf(treasury, id));
+        assertApproxEqAbs(aErc6909Token.balanceOf(treasury, id), 2 * maxValToMint.rayDiv(index), nrOfIterations / 2);
+
+        console.log("Total supply: ", aErc6909Token.scaledTotalSupply(id));
+        assertEq(aErc6909Token.scaledTotalSupply(id), 2 * maxValToMint.rayDiv(index)); // @issue: FAILS HERE - total supply is not considered
+
+        vm.stopPrank();
+    }
+
+    function testBurningErc6909_ATokens(uint256 maxValToBurn, uint256 timeDiff, uint256 offset) public {
+        uint8 nrOfIterations = 20;
+        /* Fuzz vector creation */
+        offset = bound(offset, 0, tokens.length - 1);
+        uint256 id = 1000 + offset;
+        TokenParams memory tokenParams = TokenParams(erc20Tokens[offset], aTokens[offset], 0);
+        maxValToBurn = bound(
+            maxValToBurn,
+            nrOfIterations * 10 ** (tokenParams.token.decimals() - 2),
+            tokenParams.token.balanceOf(address(this)) / 4
+        );
+        timeDiff = bound(timeDiff, 0 days, 10000 days);
+        timeDiff = 100 days;
+        uint256 index = 1e27;
+        vm.assume(maxValToBurn.rayMul(index) > 0);
+
+        uint256 granuality = maxValToBurn / nrOfIterations;
+        vm.assume(maxValToBurn % granuality == 0); // accept only multiplicity of {nrOfIterations}
+
+        console.log(
+            "1. aErc6909Token before deposit to the lending pool %s ",
+            IERC20(aErc6909Token.getUnderlyingAsset(id)).balanceOf(address(aErc6909Token))
+        );
+        console.log(
+            "1. underlyingToken before deposit to the lending pool %s ",
+            tokenParams.token.balanceOf(address(tokenParams.aToken))
+        );
+
+        tokenParams.token.approve(address(deployedContracts.lendingPool), 3 * maxValToBurn);
+        deployedContracts.lendingPool.deposit(address(tokenParams.token), true, 3 * maxValToBurn, address(this));
+
+        console.log(
+            "2. aErc6909Token before deposit to the mini pool %s ",
+            IERC20(aErc6909Token.getUnderlyingAsset(id)).balanceOf(address(aErc6909Token))
+        );
+        console.log(
+            "2. underlyingToken before deposit to the mini pool %s ",
+            tokenParams.token.balanceOf(address(tokenParams.aToken))
+        );
+
+        tokenParams.aToken.approve(miniPool, 3 * maxValToBurn);
+        IMiniPool(miniPool).deposit(address(tokenParams.aToken), true, 3 * maxValToBurn, address(this));
+        console.log(
+            "3. aErc6909Token after deposit %s ",
+            IERC20(aErc6909Token.getUnderlyingAsset(id)).balanceOf(address(aErc6909Token))
+        );
+        console.log("3. underlyingToken after deposit %s ", tokenParams.token.balanceOf(address(tokenParams.aToken)));
+
+        IMiniPool(miniPool).borrow(address(tokenParams.aToken), true, maxValToBurn, address(this));
+        skip(timeDiff);
+        index = IMiniPool(miniPool).getReserveNormalizedIncome(address(tokenParams.aToken), true);
+        console.log(">>>Index: ", index);
+        assertApproxEqAbs(
+            aErc6909Token.balanceOf(address(this), id), 3 * maxValToBurn.rayMul(index), nrOfIterations / 2
+        );
+        console.log(
+            "3.5. aErc6909Token after deposit %s ",
+            IERC20(aErc6909Token.getUnderlyingAsset(id)).balanceOf(address(aErc6909Token))
+        );
+        console.log("3.5. underlyingToken after deposit %s ", tokenParams.token.balanceOf(address(tokenParams.aToken)));
+
+        vm.startPrank(miniPool);
+        uint256 initialAmountOfUnderlying = IERC20(aErc6909Token.getUnderlyingAsset(id)).balanceOf(address(this));
+        /* Additiveness check */
+        console.log(
+            "1. Token balance %s and ABalance %s - burn 1 time",
+            IERC20(aErc6909Token.getUnderlyingAsset(id)).balanceOf(address(aErc6909Token)),
+            aErc6909Token.balanceOf(address(this), id)
+        );
+        for (uint256 cnt = 0; cnt < maxValToBurn; cnt += granuality) {
+            console.log(
+                "Granual: %s vs %s",
+                aErc6909Token.balanceOf(address(this), id),
+                3 * maxValToBurn.rayMul(index) - cnt.rayDiv(index)
+            );
+            console.log("Granuality: ", granuality);
+            console.log("Granuality cumulated: ", cnt.rayDiv(index));
+            aErc6909Token.burn(address(this), address(this), id, granuality, index);
+        }
+        console.log("rayMul ", maxValToBurn.rayMul(index));
+        console.log("rayDiv ", maxValToBurn.rayDiv(index));
+        // console.log("aErc6909Token burns ballance shall be 2 * {maxValToBurn} adjusted with {index}");
+        // console.log("%s vs %s", aErc6909Token.balanceOf(address(this), id), 3 * maxValToBurn.rayMul(index) - maxValToBurn.rayDiv(index));
+        // assertApproxEqAbs(aErc6909Token.balanceOf(address(this), id), 3 * maxValToBurn.rayMul(index) - maxValToBurn.rayDiv(index), nrOfIterations);
+        console.log("UnderlyingAsset partial burns ballance shall be {maxValToBurn} adjusted with {index}");
+        console.log(
+            "%s vs %s",
+            IERC20(aErc6909Token.getUnderlyingAsset(id)).balanceOf(address(this)),
+            initialAmountOfUnderlying + maxValToBurn
+        );
+        assertEq(
+            IERC20(aErc6909Token.getUnderlyingAsset(id)).balanceOf(address(this)),
+            initialAmountOfUnderlying + maxValToBurn
+        );
+
+        initialAmountOfUnderlying = IERC20(aErc6909Token.getUnderlyingAsset(id)).balanceOf(address(this));
+        console.log(
+            "2. Token balance %s and ABalance %s - burn 2 time",
+            IERC20(aErc6909Token.getUnderlyingAsset(id)).balanceOf(address(aErc6909Token)),
+            aErc6909Token.balanceOf(address(this), id)
+        );
+        aErc6909Token.burn(address(this), address(this), id, maxValToBurn, index);
+        console.log("After single burn balance shall be {maxValToBurn} adjusted with {index}");
+        console.log(
+            "%s vs %s",
+            IERC20(aErc6909Token.getUnderlyingAsset(id)).balanceOf(address(this)),
+            initialAmountOfUnderlying + maxValToBurn
+        );
+        assertApproxEqAbs(
+            IERC20(aErc6909Token.getUnderlyingAsset(id)).balanceOf(address(this)),
+            initialAmountOfUnderlying + maxValToBurn,
+            nrOfIterations
+        );
+
+        // console.log("Underlying asset shall be returned");
+        // assertEq(IERC20(aErc6909Token.getUnderlyingAsset(id)).balanceOf(address(this)), 3 * maxValToBurn);
+        console.log("Total supply shall be zero after 3 burning burning");
+        assertEq(aErc6909Token.totalSupply(id), 0);
+        console.log("Cannot burn 3rd time because it is not available (borrowed)");
+        vm.expectRevert();
+        aErc6909Token.burn(address(this), address(this), id, maxValToBurn, index);
+
+        vm.stopPrank();
+    }
+
+    function testErc6909TransferFrom_AToken(uint256 valToTransfer, uint256 offset, uint256 timeDiff) public {
+        /* Fuzz vector creation */
+        timeDiff = bound(timeDiff, 0 days, 10000 days);
+        offset = bound(offset, 0, tokens.length - 3);
+        TestParams memory testParams = TestParams(1000 + offset, 20, makeAddr("User"));
+        valToTransfer = bound(valToTransfer, testParams.nrOfIterations * 10, 10_000_000);
+        uint256 index = 1e27;
+        TokenParams memory tokenParams = TokenParams(erc20Tokens[offset], aTokens[offset], 0);
+
+        uint256 granuality = valToTransfer / testParams.nrOfIterations;
+        vm.assume(valToTransfer % granuality == 0); // accept only multiplicity of {nrOfIterations}
+
+        tokenParams.token.approve(address(deployedContracts.lendingPool), 4 * valToTransfer);
+        deployedContracts.lendingPool.deposit(address(tokenParams.token), true, 4 * valToTransfer, address(this));
+
+        console.log(
+            "2. aErc6909Token before deposit to the mini pool %s ",
+            IERC20(aErc6909Token.getUnderlyingAsset(testParams.id)).balanceOf(address(aErc6909Token))
+        );
+        console.log(
+            "2. underlyingToken before deposit to the mini pool %s ",
+            tokenParams.token.balanceOf(address(tokenParams.aToken))
+        );
+
+        tokenParams.aToken.approve(miniPool, 4 * valToTransfer);
+        IMiniPool(miniPool).deposit(address(tokenParams.aToken), true, 4 * valToTransfer, address(this));
+        console.log(
+            "3. aErc6909Token after deposit %s ",
+            IERC20(aErc6909Token.getUnderlyingAsset(testParams.id)).balanceOf(address(aErc6909Token))
+        );
+        console.log("3. underlyingToken after deposit %s ", tokenParams.token.balanceOf(address(tokenParams.aToken)));
+
+        IMiniPool(miniPool).borrow(address(tokenParams.aToken), true, valToTransfer, address(this));
+        vm.startPrank(miniPool);
+        console.log("Balance before: ", aErc6909Token.balanceOf(address(this), testParams.id));
+
+        // console.log("aErc6909Token.balanceOf(address(this): ", aErc6909Token.balanceOf(address(this), id));
+        assertApproxEqAbs(
+            aErc6909Token.balanceOf(address(this), testParams.id),
+            4 * valToTransfer.rayDiv(index),
+            testParams.nrOfIterations / 2
+        );
+        uint256 initialTotalSupply = aErc6909Token.scaledTotalSupply(testParams.id);
+        assertEq(initialTotalSupply, 4 * valToTransfer.rayDiv(index));
+        vm.stopPrank();
+
+        skip(timeDiff); // @issue when there is a different index due to value appreciation during time, the transfer is not proper
+        index = IMiniPool(miniPool).getReserveNormalizedIncome(address(tokenParams.aToken), true);
+        console.log("Choosen index: ", index);
+
+        /* Additiveness check */
+        uint256 initialUserBalance = aErc6909Token.balanceOf(testParams.user, testParams.id);
+        uint256 initialThisBalance = aErc6909Token.balanceOf(address(this), testParams.id);
+
+        aErc6909Token.approve(testParams.user, testParams.id, type(uint256).max);
+        for (uint256 cnt = 0; cnt < valToTransfer; cnt += granuality) {
+            // console.log("from", address(this));
+            // console.log("to", testParams.user);
+            // console.log("id", testParams.id);
+            // console.log("cnt", cnt);
+            console.log("1. Balance aErc6909Token: ", aErc6909Token.balanceOf(address(testParams.user), testParams.id));
+            console.log("1. Balance aErc6909Token: ", aErc6909Token.balanceOf(address(this), testParams.id));
+            console.log(
+                "1.1. User's balance aErc6909Token: ", aErc6909Token.balanceOf(address(testParams.user), testParams.id)
+            );
+            console.log("Granuality: ", granuality);
+            console.log("Granuality scaled: ", granuality.rayDiv(index));
+
+            vm.prank(testParams.user);
+            aErc6909Token.transferFrom(address(this), testParams.user, testParams.id, granuality);
+        }
+        console.log(
+            "Check balance of user.. %s vs %s",
+            aErc6909Token.balanceOf(testParams.user, testParams.id),
+            initialUserBalance + valToTransfer.rayDiv(index)
+        );
+        assertApproxEqAbs(
+            aErc6909Token.balanceOf(testParams.user, testParams.id),
+            initialUserBalance + valToTransfer.rayDiv(index),
+            testParams.nrOfIterations / 2
+        );
+        //@issue: address(this) seems to have less balance than expected after transferFrom - take a look and explain
+        console.log(
+            "Check balance of this.. %s vs %s",
+            aErc6909Token.balanceOf(address(this), testParams.id),
+            initialThisBalance - valToTransfer.rayDiv(index)
+        );
+        assertApproxEqAbs(
+            aErc6909Token.balanceOf(address(this), testParams.id),
+            initialThisBalance - valToTransfer.rayDiv(index),
+            testParams.nrOfIterations / 2
+        );
+        console.log("2. Balance aErc6909Token: ", aErc6909Token.balanceOf(address(testParams.user), testParams.id));
+        console.log("2. Balance aErc6909Token: ", aErc6909Token.balanceOf(address(this), testParams.id));
+
+        initialUserBalance = aErc6909Token.balanceOf(testParams.user, testParams.id);
+        initialThisBalance = aErc6909Token.balanceOf(address(this), testParams.id);
+        vm.prank(testParams.user);
+        aErc6909Token.transferFrom(address(this), testParams.user, testParams.id, valToTransfer);
+        console.log("3. Balance aErc6909Token: ", aErc6909Token.balanceOf(address(testParams.user), testParams.id));
+        console.log("3. Balance aErc6909Token: ", aErc6909Token.balanceOf(address(this), testParams.id));
+        console.log(
+            "Check balance of user.. %s vs %s",
+            aErc6909Token.balanceOf(testParams.user, testParams.id),
+            initialUserBalance + valToTransfer.rayDiv(index)
+        );
+        assertApproxEqAbs(
+            aErc6909Token.balanceOf(testParams.user, testParams.id),
+            initialUserBalance + valToTransfer.rayDiv(index),
+            testParams.nrOfIterations / 2
+        );
+        console.log(
+            "Check balance of this.. %s vs %s",
+            aErc6909Token.balanceOf(address(this), testParams.id),
+            initialThisBalance - valToTransfer.rayDiv(index)
+        );
+        assertApproxEqAbs(
+            aErc6909Token.balanceOf(address(this), testParams.id),
+            initialThisBalance - valToTransfer.rayDiv(index),
+            testParams.nrOfIterations / 2
+        );
+
+        assertEq(initialTotalSupply, aErc6909Token.scaledTotalSupply(testParams.id));
+    }
+
+    function testErc6909Transfer_AToken(uint256 valToTransfer, uint256 offset, uint256 index) public {
+        uint8 nrOfIterations = 20;
+        address user = makeAddr("User");
+        /* Fuzz vector creation */
+        offset = bound(offset, 0, tokens.length - 1);
+        uint256 id = 1000 + offset;
+        valToTransfer = bound(valToTransfer, nrOfIterations * 10, 20_000_000);
+        index = 1e27;
+        // index = bound(index, 1e27, UINT256_MAX); // assume index increases in time as the interest accumulates
+
+        vm.assume(valToTransfer.rayDiv(index) > 0);
+
+        uint256 granuality = valToTransfer / nrOfIterations;
+        vm.assume(valToTransfer % granuality == 0); // accept only multiplicity of {nrOfIterations}
+        // maxValToMint = maxValToMint - (maxValToMint % granuality);
+        vm.startPrank(miniPool);
+        console.log("Balance before: ", aErc6909Token.balanceOf(address(this), id));
+
+        console.log("Minting: ", valToTransfer.rayDiv(index));
+        aErc6909Token.mint(address(this), address(this), id, 2 * valToTransfer, index);
+        console.log("aErc6909Token.balanceOf(address(this): ", aErc6909Token.balanceOf(address(this), id));
+        assertApproxEqAbs(
+            aErc6909Token.balanceOf(address(this), id), 2 * valToTransfer.rayDiv(index), nrOfIterations / 2
+        );
+
+        uint256 initialTotalSupply = aErc6909Token.scaledTotalSupply(id);
+        assertApproxEqAbs(initialTotalSupply, 2 * valToTransfer.rayDiv(index), nrOfIterations / 2);
+        vm.stopPrank();
+
+        /* Additiveness check */
+        uint256 initialUserBalance = aErc6909Token.balanceOf(user, id);
+        uint256 initialThisBalance = aErc6909Token.balanceOf(address(this), id);
+        for (uint256 cnt = 0; cnt < valToTransfer; cnt += granuality) {
+            aErc6909Token.transfer(user, id, granuality);
+        }
+        assertEq(aErc6909Token.balanceOf(user, id), initialUserBalance + valToTransfer);
+        assertEq(aErc6909Token.balanceOf(address(this), id), initialThisBalance - valToTransfer);
+
+        aErc6909Token.transfer(user, id, valToTransfer);
+        assertEq(aErc6909Token.balanceOf(user, id), initialUserBalance + (2 * valToTransfer));
+        assertEq(aErc6909Token.balanceOf(address(this), id), initialThisBalance - (2 * valToTransfer));
+
+        assertEq(initialTotalSupply, aErc6909Token.scaledTotalSupply(id));
+    }
+
+    /* transferUnderlyingTo */
+    function testErc6909TransferUnderlyingTo_AToken(uint256 valToTransfer, uint256 offset, uint256 index) public {
+        uint8 nrOfIterations = 20;
+        address user = makeAddr("User");
+
+        /* Fuzz vector creation */
+        offset = bound(offset, 0, tokens.length - 1);
+        uint256 id = 1000 + offset;
+        ERC20 underlyingToken = erc20Tokens[offset];
+        IERC20 grainUnderlyingToken = IERC20(aTokens[offset]);
+        valToTransfer = bound(valToTransfer, nrOfIterations * 10, 20_000_000);
+        // index = 1e27;
+        index = bound(index, 1e27, 10e27); // assume index increases in time as the interest accumulates
+
+        vm.assume(valToTransfer.rayDiv(index) > 0);
+
+        uint256 granuality = valToTransfer / nrOfIterations;
+        vm.assume(valToTransfer % granuality == 0); // accept only multiplicity of {nrOfIterations}
+        // maxValToMint = maxValToMint - (maxValToMint % granuality);
+
+        console.log(
+            "1. aErc6909Token before deposit to the lending pool %s ",
+            IERC20(aErc6909Token.getUnderlyingAsset(id)).balanceOf(address(aErc6909Token))
+        );
+        console.log(
+            "1. underlyingToken before deposit to the lending pool %s ",
+            underlyingToken.balanceOf(address(grainUnderlyingToken))
+        );
+
+        underlyingToken.approve(address(deployedContracts.lendingPool), 3 * valToTransfer);
+        deployedContracts.lendingPool.deposit(address(underlyingToken), true, 3 * valToTransfer, address(this));
+
+        console.log(
+            "2. aErc6909Token before deposit to the mini pool %s ",
+            IERC20(aErc6909Token.getUnderlyingAsset(id)).balanceOf(address(aErc6909Token))
+        );
+        console.log(
+            "2. underlyingToken before deposit to the mini pool %s ",
+            underlyingToken.balanceOf(address(grainUnderlyingToken))
+        );
+
+        grainUnderlyingToken.approve(miniPool, 3 * valToTransfer);
+        IMiniPool(miniPool).deposit(address(grainUnderlyingToken), true, 3 * valToTransfer, address(this));
+        console.log(
+            "3. aErc6909Token after deposit %s ",
+            IERC20(aErc6909Token.getUnderlyingAsset(id)).balanceOf(address(aErc6909Token))
+        );
+        console.log("3. underlyingToken after deposit %s ", underlyingToken.balanceOf(address(grainUnderlyingToken)));
+
+        vm.startPrank(miniPool);
+        /* Additiveness check */
+        uint256 initialUserBalance = IERC20(aErc6909Token.getUnderlyingAsset(id)).balanceOf(user);
+        uint256 initialThisBalance = IERC20(aErc6909Token.getUnderlyingAsset(id)).balanceOf(address(aErc6909Token));
+        console.log("Initial token balance: ", initialThisBalance);
+
+        uint256 initialTotalSupply = aErc6909Token.scaledTotalSupply(id);
+        // assertEq(initialTotalSupply, 3 * valToTransfer.rayDiv(index)); // TODO ??
+
+        for (uint256 cnt = 0; cnt < valToTransfer; cnt += granuality) {
+            aErc6909Token.transferUnderlyingTo(user, id, granuality);
+        }
+        assertEq(IERC20(aErc6909Token.getUnderlyingAsset(id)).balanceOf(user), initialUserBalance + valToTransfer);
+        assertEq(
+            IERC20(aErc6909Token.getUnderlyingAsset(id)).balanceOf(address(aErc6909Token)),
+            initialThisBalance - valToTransfer
+        );
+        console.log("Single mint");
+        aErc6909Token.transferUnderlyingTo(user, id, valToTransfer);
+        console.log("Assertions");
+        assertEq(IERC20(aErc6909Token.getUnderlyingAsset(id)).balanceOf(user), initialUserBalance + (2 * valToTransfer));
+        assertEq(
+            IERC20(aErc6909Token.getUnderlyingAsset(id)).balanceOf(address(aErc6909Token)),
+            initialThisBalance - (2 * valToTransfer)
+        );
+        assertEq(initialTotalSupply, aErc6909Token.scaledTotalSupply(id));
+        vm.stopPrank();
+    }
+
+    // Note: isAToken and _determineIfAToken -> the same output
+
+    /* transferOnLiquidation */
+    function testErc6909TransferOnLiquidation_AToken(uint256 valToTransfer, uint256 offset, uint256 index) public {
+        uint8 nrOfIterations = 20;
+        address user = makeAddr("User");
+        /* Fuzz vector creation */
+        //offset = bound(offset, 0, (2 * tokens.length) - 1);
+        offset = bound(offset, 0, tokens.length - 3);
+        // offset = 1;
+        TokenParams memory tokenParams = TokenParams(erc20Tokens[offset], aTokens[offset], 0);
+        uint256 id = 1000 + offset;
+        valToTransfer = bound(valToTransfer, nrOfIterations, 20_000_000);
+        index = 1e27;
+        // index = bound(index, 1e27, UINT256_MAX); // assume index increases in time as the interest accumulates
+
+        vm.assume(valToTransfer.rayDiv(index) > 0);
+
+        uint256 granuality = valToTransfer / nrOfIterations;
+        vm.assume(valToTransfer % granuality == 0); // accept only multiplicity of {nrOfIterations}
+        // maxValToMint = maxValToMint - (maxValToMint % granuality);
+
+        console.log(
+            "1. aErc6909Token before deposit to the lending pool %s ",
+            IERC20(aErc6909Token.getUnderlyingAsset(id)).balanceOf(address(aErc6909Token))
+        );
+        console.log(
+            "1. underlyingToken before deposit to the lending pool %s ",
+            tokenParams.token.balanceOf(address(tokenParams.aToken))
+        );
+
+        tokenParams.token.approve(address(deployedContracts.lendingPool), 3 * valToTransfer);
+        deployedContracts.lendingPool.deposit(address(tokenParams.token), true, 3 * valToTransfer, address(this));
+
+        console.log(
+            "2. aErc6909Token before deposit to the mini pool %s ",
+            IERC20(aErc6909Token.getUnderlyingAsset(id)).balanceOf(address(aErc6909Token))
+        );
+        console.log(
+            "2. underlyingToken before deposit to the mini pool %s ",
+            tokenParams.token.balanceOf(address(tokenParams.aToken))
+        );
+
+        tokenParams.aToken.approve(miniPool, 3 * valToTransfer);
+        IMiniPool(miniPool).deposit(address(tokenParams.aToken), true, 3 * valToTransfer, address(this));
+        console.log(
+            "3. aErc6909Token after deposit %s ",
+            IERC20(aErc6909Token.getUnderlyingAsset(id)).balanceOf(address(aErc6909Token))
+        );
+        console.log("3. underlyingToken after deposit %s ", tokenParams.token.balanceOf(address(tokenParams.aToken)));
+        index = IMiniPool(miniPool).getReserveNormalizedIncome(address(tokenParams.aToken), true);
+        console.log("_____ index: ", index);
+        IMiniPool(miniPool).borrow(address(tokenParams.aToken), true, valToTransfer, address(this));
+
+        index = IMiniPool(miniPool).getReserveNormalizedIncome(address(tokenParams.aToken), true);
+        console.log("______ index: ", index);
+        //skip(timeDiff); // @issue when there is a different index due to value appreciation during time, the burning is not proper
+        //index = IMiniPool(miniPool).getReserveNormalizedIncome(address(grainUnderlyingToken), false);
+
+        vm.startPrank(miniPool);
+
+        /* Additiveness check */
+        uint256 initialUserBalance = aErc6909Token.balanceOf(user, id);
+        uint256 initialThisBalance = aErc6909Token.balanceOf(address(this), id);
+        uint256 initialTotalSupply = aErc6909Token.scaledTotalSupply(id);
+        assertEq(initialTotalSupply, 3 * valToTransfer.rayDiv(index));
+
+        for (uint256 cnt = 0; cnt < valToTransfer; cnt += granuality) {
+            console.log("Transfer on liquidation: %s", cnt);
+            aErc6909Token.transferOnLiquidation(address(this), user, id, granuality);
+        }
+        assertEq(aErc6909Token.balanceOf(user, id), initialUserBalance + valToTransfer);
+        assertEq(aErc6909Token.balanceOf(address(this), id), initialThisBalance - valToTransfer);
+        console.log("Single transfer on liquidation: %s");
+        aErc6909Token.transferOnLiquidation(address(this), user, id, valToTransfer);
+        assertEq(aErc6909Token.balanceOf(user, id), initialUserBalance + (2 * valToTransfer));
+        assertEq(aErc6909Token.balanceOf(address(this), id), initialThisBalance - (2 * valToTransfer));
+        vm.stopPrank();
+        assertEq(initialTotalSupply, aErc6909Token.scaledTotalSupply(id));
+    }
+
+    function testErc6909Initialize() public {
+        DeployedMiniPoolContracts memory internalMiniPoolContracts = fixture_deployMiniPoolSetup(
+            address(deployedContracts.lendingPoolAddressesProvider), address(deployedContracts.lendingPool)
+        );
+        internalMiniPoolContracts.miniPoolAddressesProvider.deployMiniPool();
+        address[] memory reserves = new address[](1);
+        reserves[0] = tokens[0];
+
+        miniPool = fixture_configureMiniPoolReserves(reserves, configAddresses, miniPoolContracts);
+        vm.label(miniPool, "MiniPool");
+
+        IAERC6909 internalAErc6909Token =
+            IAERC6909(miniPoolContracts.miniPoolAddressesProvider.getMiniPoolToAERC6909(miniPool));
+
+        vm.expectRevert(bytes("Contract instance has already been initialized"));
+        internalAErc6909Token.initialize(address(miniPoolContracts.miniPoolAddressesProvider), 0);
+    }
+}

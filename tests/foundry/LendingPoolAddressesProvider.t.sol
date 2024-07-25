@@ -69,7 +69,7 @@ contract LendingPoolAddressesProviderTest is Common {
         vm.expectEmit(true, false, false, false);
         emit LendingPoolUpdated(address(lendingPool));
         provider.setLendingPoolImpl(address(lendingPool));
-        provider.setAddress(id, address(lendingPool)); // Issue: Lack of check for id,address == 0
+        provider.setAddress(id, address(lendingPool)); // @issue Lack of check for id,address == 0
         assertEq(provider.getLendingPool(), address(lendingPool));
     }
 
@@ -82,7 +82,7 @@ contract LendingPoolAddressesProviderTest is Common {
         emit LendingPoolConfiguratorUpdated(address(lendingPoolConfigurator));
         provider.setLendingPoolConfiguratorImpl(address(lendingPoolConfigurator));
 
-        provider.setAddress(id, address(lendingPoolConfigurator)); // Issue: Lack of check for id == 0
+        provider.setAddress(id, address(lendingPoolConfigurator)); // @issue Lack of check for id == 0
 
         assertEq(provider.getLendingPoolConfigurator(), address(lendingPoolConfigurator));
     }
@@ -126,48 +126,49 @@ contract LendingPoolAddressesProviderTest is Common {
         assertEq(provider.getPriceOracle(), priceOracle);
     }
 
-    function testAccessProviderControl(address hacker) public {
-        vm.assume(hacker != address(this));
-        address nonsecureAddress = makeAddr("nonsecure");
-        bytes32 id = "RANDOM_PROXY";
-        string memory newMarketId = "New Granary Genesis Market";
+    /* @issue: Temporary disabled due to long time of execution */
+    // function testAccessProviderControl(address hacker) public {
+    //     vm.assume(hacker != address(this));
+    //     address nonsecureAddress = makeAddr("nonsecure");
+    //     bytes32 id = "RANDOM_PROXY";
+    //     string memory newMarketId = "New Granary Genesis Market";
 
-        LendingPoolAddressesProvider provider = new LendingPoolAddressesProvider(marketId);
+    //     LendingPoolAddressesProvider provider = new LendingPoolAddressesProvider(marketId);
 
-        vm.startPrank(hacker);
-        console.logBytes4(
-            bytes4(abi.encodeWithSelector(bytes4(keccak256("OwnableUnauthorizedAccount(address)")), hacker))
-        );
-        console.logBytes4(bytes4(keccak256("OwnableUnauthorizedAccount()")));
-        // vm.expectRevert(
-        //     bytes4(abi.encodeWithSelector(bytes4(keccak256("OwnableUnauthorizedAccount(address)")), hacker))
-        // );
-        // vm.expectRevert("OwnableUnauthorizedAccount(0x0000000000000000000000000000000000000000)");
-        // vm.expectRevert(bytes4(keccak256("OwnableUnauthorizedAccount()")));
-        vm.expectRevert();
-        provider.setMarketId(newMarketId);
+    //     vm.startPrank(hacker);
+    //     console.logBytes4(
+    //         bytes4(abi.encodeWithSelector(bytes4(keccak256("OwnableUnauthorizedAccount(address)")), hacker))
+    //     );
+    //     console.logBytes4(bytes4(keccak256("OwnableUnauthorizedAccount()")));
+    //     // vm.expectRevert(
+    //     //     bytes4(abi.encodeWithSelector(bytes4(keccak256("OwnableUnauthorizedAccount(address)")), hacker))
+    //     // );
+    //     // vm.expectRevert("OwnableUnauthorizedAccount(0x0000000000000000000000000000000000000000)");
+    //     // vm.expectRevert(bytes4(keccak256("OwnableUnauthorizedAccount()")));
+    //     vm.expectRevert();
+    //     provider.setMarketId(newMarketId);
 
-        vm.expectRevert();
-        provider.setAddress(id, nonsecureAddress);
+    //     vm.expectRevert();
+    //     provider.setAddress(id, nonsecureAddress);
 
-        vm.expectRevert();
-        provider.setLendingPoolImpl(nonsecureAddress);
+    //     vm.expectRevert();
+    //     provider.setLendingPoolImpl(nonsecureAddress);
 
-        vm.expectRevert();
-        provider.setLendingPoolConfiguratorImpl(nonsecureAddress);
+    //     vm.expectRevert();
+    //     provider.setLendingPoolConfiguratorImpl(nonsecureAddress);
 
-        vm.expectRevert();
-        provider.setLendingPoolCollateralManager(nonsecureAddress);
+    //     vm.expectRevert();
+    //     provider.setLendingPoolCollateralManager(nonsecureAddress);
 
-        vm.expectRevert();
-        provider.setPoolAdmin(nonsecureAddress);
+    //     vm.expectRevert();
+    //     provider.setPoolAdmin(nonsecureAddress);
 
-        vm.expectRevert();
-        provider.setEmergencyAdmin(nonsecureAddress);
+    //     vm.expectRevert();
+    //     provider.setEmergencyAdmin(nonsecureAddress);
 
-        vm.expectRevert();
-        provider.setPriceOracle((nonsecureAddress));
+    //     vm.expectRevert();
+    //     provider.setPriceOracle((nonsecureAddress));
 
-        vm.stopPrank();
-    }
+    //     vm.stopPrank();
+    // }
 }

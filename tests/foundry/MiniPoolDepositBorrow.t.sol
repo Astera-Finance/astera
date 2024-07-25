@@ -1,0 +1,444 @@
+// SPDX-License-Identifier: BUSL-1.1
+pragma solidity ^0.8.0;
+
+import "./Common.sol";
+import "contracts/protocol/libraries/helpers/Errors.sol";
+import {WadRayMath} from "contracts/protocol/libraries/math/WadRayMath.sol";
+import {PercentageMath} from "contracts/protocol/libraries/math/PercentageMath.sol";
+import {ReserveConfiguration} from "contracts/protocol/libraries/configuration/ReserveConfiguration.sol";
+
+import "forge-std/StdUtils.sol";
+// import {ILendingPool} from "contracts/interfaces/ILendingPool.sol";
+
+contract MiniPoolDepositBorrowTest is Common {
+    event ReserveUsedAsCollateralDisabled(address indexed reserve, address indexed user);
+
+    using WadRayMath for uint256;
+    using PercentageMath for uint256;
+    using ReserveConfiguration for DataTypes.ReserveConfigurationMap;
+
+    ERC20[] erc20Tokens;
+    DeployedContracts deployedContracts;
+    DeployedMiniPoolContracts miniPoolContracts;
+
+    ConfigAddresses configAddresses;
+    address aTokensErc6909Addr;
+    address miniPool;
+
+    uint256[] grainTokenIds = [1000, 1001, 1002, 1003];
+    uint256[] tokenIds = [1128, 1129, 1130, 1131];
+
+    event Deposit(address indexed reserve, address user, address indexed onBehalfOf, uint256 amount);
+    event Borrow(address indexed reserve, address user, address indexed onBehalfOf, uint256 amount, uint256 borrowRate);
+
+    function fixture_MiniPoolDeposit(uint256 amount, uint256 offset, address user, TokenParams memory tokenParams)
+        public
+    {
+        /* Fuzz vector creation */
+        offset = bound(offset, 0, tokens.length - 1);
+        console.log("[deposit]Offset: ", offset);
+        uint256 tokenId = 1128 + offset;
+        uint256 aTokenId = 1000 + offset;
+
+        IAERC6909 aErc6909Token = IAERC6909(miniPoolContracts.miniPoolAddressesProvider.getMiniPoolToAERC6909(miniPool));
+        vm.label(address(aErc6909Token), "aErc6909Token");
+
+        tokenParams.token.transfer(user, 2 * amount);
+
+        /* User deposits tokens to the main lending pool and gets lending pool's aTokens*/
+        vm.startPrank(user);
+        uint256 initialSupply = aErc6909Token.scaledTotalSupply(tokenId);
+        {
+            uint256 initialTokenBalance = tokenParams.token.balanceOf(user);
+            uint256 initialATokenBalance = tokenParams.aToken.balanceOf(user);
+            tokenParams.token.approve(address(deployedContracts.lendingPool), amount);
+            deployedContracts.lendingPool.deposit(address(tokenParams.token), true, amount, user);
+            console.log("User token balance shall be {initialTokenBalance - amount}");
+            assertEq(tokenParams.token.balanceOf(user), initialTokenBalance - amount);
+            console.log("User grain token balance shall be {initialATokenBalance + amount}");
+            assertEq(tokenParams.aToken.balanceOf(user), initialATokenBalance + amount);
+        }
+        /* User deposits lending pool's aTokens to the mini pool and 
+        gets mini pool's aTokens */
+        {
+            uint256 grainTokenUserBalance = aErc6909Token.balanceOf(user, aTokenId);
+
+            uint256 grainToken6909Balance = aErc6909Token.scaledTotalSupply(aTokenId);
+            uint256 grainTokenDepositAmount = tokenParams.aToken.balanceOf(user);
+            console.log("Balance amount: ", amount);
+            console.log("Balance grainAmount: ", grainTokenDepositAmount);
+            tokenParams.aToken.approve(address(miniPool), amount);
+            IMiniPool(miniPool).deposit(address(tokenParams.aToken), true, amount, user);
+            console.log("User AToken balance shall be less by {amount}");
+            assertEq(grainTokenDepositAmount - amount, tokenParams.aToken.balanceOf(user));
+            console.log("User grain token 6909 balance shall be initial balance + amount");
+            assertEq(grainToken6909Balance + amount, aErc6909Token.scaledTotalSupply(aTokenId));
+            assertEq(grainTokenUserBalance + amount, aErc6909Token.balanceOf(user, aTokenId));
+        }
+        {
+            /* User deposits tokens to the mini pool and 
+            gets mini pool's aTokens */
+            uint256 tokenUserBalance = aErc6909Token.balanceOf(user, tokenId);
+            uint256 tokenBalance = tokenParams.token.balanceOf(user);
+            tokenParams.token.approve(address(miniPool), amount);
+            console.log("User balance after: ", tokenBalance);
+            IMiniPool(miniPool).deposit(address(tokenParams.token), true, amount, user);
+            assertEq(tokenBalance - amount, tokenParams.token.balanceOf(user));
+            assertEq(tokenUserBalance + amount, aErc6909Token.balanceOf(user, tokenId));
+        }
+        {
+            (uint256 totalCollateralETH,,,,,) = IMiniPool(miniPool).getUserAccountData(user);
+            assertGt(totalCollateralETH, 0);
+        }
+        vm.stopPrank();
+
+        console.log("Scaled totalSupply...");
+        console.log("Address: ", address(aErc6909Token));
+
+        uint256 aErc6909TokenBalance = aErc6909Token.scaledTotalSupply(tokenId);
+        assertEq(aErc6909TokenBalance, initialSupply + amount);
+    }
+
+    struct Balances {
+        uint256 debtToken;
+        uint256 token;
+        uint256 totalSupply;
+    }
+
+    function fixture_miniPoolBorrow(
+        uint256 amount,
+        uint256 collateralOffset,
+        uint256 borrowOffset,
+        TokenParams memory collateralTokenParams,
+        TokenParams memory borrowTokenParams,
+        address user
+    ) public {
+        IAERC6909 aErc6909Token = IAERC6909(miniPoolContracts.miniPoolAddressesProvider.getMiniPoolToAERC6909(miniPool));
+        vm.label(address(aErc6909Token), "aErc6909Token");
+        vm.label(address(collateralTokenParams.aToken), "aToken");
+        vm.label(address(collateralTokenParams.token), "token");
+
+        /* Test depositing */
+        uint256 minNrOfTokens;
+        {
+            (, uint256 collateralTokenLtv,,,,,,,) = deployedContracts.protocolDataProvider.getReserveConfigurationData(
+                address(collateralTokenParams.token), true
+            );
+            console.log("collateralTokenLtv: ", collateralTokenLtv);
+            uint256 borrowTokenInUsd =
+                (amount * borrowTokenParams.price * 10_000) / ((10 ** PRICE_FEED_DECIMALS) * collateralTokenLtv);
+            console.log("borrowTokenInUsd: ", borrowTokenInUsd);
+            console.log("collateralTokenParams.price", collateralTokenParams.price);
+            console.log("borrowTokenParams.price", borrowTokenParams.price);
+            uint256 borrowTokenRay = borrowTokenInUsd.rayDiv(collateralTokenParams.price);
+            uint256 borrowTokenInCollateralToken = fixture_preciseConvertWithDecimals(
+                borrowTokenRay, borrowTokenParams.token.decimals(), collateralTokenParams.token.decimals()
+            );
+            console.log("borrowTokenInCollateralToken: ", borrowTokenInCollateralToken);
+            console.log(
+                "collateralTokenParams.token.balanceOf(address(this)): ",
+                collateralTokenParams.token.balanceOf(address(this))
+            );
+            minNrOfTokens = (borrowTokenInCollateralToken > collateralTokenParams.token.balanceOf(address(this)) / 4)
+                ? (collateralTokenParams.token.balanceOf(address(this)) / 4)
+                : borrowTokenInCollateralToken;
+            console.log(
+                "min nr of collateral in usd: ",
+                (borrowTokenInCollateralToken * collateralTokenParams.price) / (10 ** PRICE_FEED_DECIMALS)
+            );
+        }
+        {
+            /* Sb deposits tokens which will be borrowed */
+            address liquidityProvider = makeAddr("liquidityProvider");
+            console.log(
+                "Deposit borrowTokens: %s with balance: %s",
+                2 * amount,
+                borrowTokenParams.token.balanceOf(address(this))
+            );
+            fixture_MiniPoolDeposit(amount, borrowOffset, liquidityProvider, borrowTokenParams);
+
+            /* User deposits collateral */
+            uint256 tokenId = 1128 + collateralOffset;
+            uint256 aTokenId = 1000 + collateralOffset;
+            console.log(
+                "Deposit collateral: %s with balance: %s",
+                minNrOfTokens,
+                collateralTokenParams.token.balanceOf(address(this))
+            );
+            fixture_MiniPoolDeposit(minNrOfTokens, collateralOffset, user, collateralTokenParams);
+            require(aErc6909Token.balanceOf(user, tokenId) > 0, "No token balance");
+            require(aErc6909Token.balanceOf(user, aTokenId) > 0, "No aToken balance");
+            console.log("Token balance:", aErc6909Token.balanceOf(user, tokenId));
+            console.log("aToken Balance: ", aErc6909Token.balanceOf(user, aTokenId));
+            console.log(
+                "Underlying token balance:",
+                collateralTokenParams.token.balanceOf(address(collateralTokenParams.aToken))
+            );
+        }
+
+        /* Test borrowing */
+        vm.startPrank(user);
+        (,,,,, uint256 healthFactorBefore) = IMiniPool(miniPool).getUserAccountData(user);
+
+        Balances memory balances;
+        {
+            balances.totalSupply = aErc6909Token.scaledTotalSupply(2000 + borrowOffset);
+            balances.debtToken = aErc6909Token.balanceOf(user, 2000 + borrowOffset);
+            balances.token = borrowTokenParams.aToken.balanceOf(user);
+            IMiniPool(miniPool).borrow(address(borrowTokenParams.aToken), true, amount, user);
+            console.log("Total supply of debtAToken must be greater than before borrow");
+            assertEq(aErc6909Token.scaledTotalSupply(2000 + borrowOffset), balances.totalSupply + amount);
+            console.log("Balance of debtAToken must be greater than before borrow");
+            assertEq(aErc6909Token.balanceOf(user, 2000 + borrowOffset), balances.debtToken + amount);
+            console.log("Balance of AToken must be greater than before borrow");
+            assertEq(borrowTokenParams.aToken.balanceOf(user), balances.token + amount);
+        }
+
+        {
+            balances.totalSupply = aErc6909Token.scaledTotalSupply(2128 + borrowOffset);
+            balances.debtToken = aErc6909Token.balanceOf(user, 2128 + borrowOffset);
+            balances.token = borrowTokenParams.token.balanceOf(user);
+            IMiniPool(miniPool).borrow(address(borrowTokenParams.token), true, amount, user);
+            console.log("Balance of debtToken must be greater than before borrow");
+            assertEq(aErc6909Token.scaledTotalSupply(2128 + borrowOffset), balances.totalSupply + amount);
+            console.log("Balance of debtToken must be greater than before borrow");
+            assertEq(aErc6909Token.balanceOf(user, 2128 + borrowOffset), balances.debtToken + amount);
+            console.log("Balance of token must be greater than before borrow");
+            assertEq(borrowTokenParams.token.balanceOf(user), balances.token + amount);
+        }
+
+        (,,,,, uint256 healthFactorAfter) = IMiniPool(miniPool).getUserAccountData(user);
+        console.log("HealthFactor must be less than before borrows %s vs %s", healthFactorBefore, healthFactorAfter);
+        console.log("Health factor at the end: ", healthFactorAfter);
+        assertGt(healthFactorBefore, healthFactorAfter);
+        vm.stopPrank();
+    }
+
+    function fixture_miniPoolBorrowWithFlowFromLendingPool(
+        uint256 amount,
+        uint256 borrowOffset,
+        TokenParams memory collateralTokenParams,
+        TokenParams memory borrowTokenParams,
+        address user
+    ) public {
+        IAERC6909 aErc6909Token = IAERC6909(miniPoolContracts.miniPoolAddressesProvider.getMiniPoolToAERC6909(miniPool));
+        vm.label(address(aErc6909Token), "aErc6909Token");
+        vm.label(address(collateralTokenParams.aToken), "aToken");
+        vm.label(address(collateralTokenParams.token), "token");
+
+        /* Test depositing */
+        uint256 minNrOfTokens;
+        {
+            (, uint256 collateralTokenLtv,,,,,,,) = deployedContracts.protocolDataProvider.getReserveConfigurationData(
+                address(collateralTokenParams.token), true
+            );
+            console.log("collateralTokenLtv: ", collateralTokenLtv);
+            uint256 borrowTokenInUsd =
+                (amount * borrowTokenParams.price * 10000) / ((10 ** PRICE_FEED_DECIMALS) * collateralTokenLtv);
+            uint256 borrowTokenRay = borrowTokenInUsd.rayDiv(collateralTokenParams.price);
+            uint256 borrowTokenInCollateralToken = fixture_preciseConvertWithDecimals(
+                borrowTokenRay, borrowTokenParams.token.decimals(), collateralTokenParams.token.decimals()
+            );
+            console.log(
+                "collateral balance in borrow token %s vs collateral balance %s",
+                borrowTokenInCollateralToken,
+                collateralTokenParams.token.balanceOf(address(this))
+            );
+            minNrOfTokens = (borrowTokenInCollateralToken > collateralTokenParams.token.balanceOf(address(this)) / 4)
+                ? (collateralTokenParams.token.balanceOf(address(this)) / 4)
+                : borrowTokenInCollateralToken;
+            console.log("minNrOfTokens: ", minNrOfTokens);
+            console.log("borrowTokenInCollateralToken: ", borrowTokenInCollateralToken);
+            console.log(
+                "collateralTokenParams.token.balanceOf(address(this)) / 4: ",
+                collateralTokenParams.token.balanceOf(address(this)) / 4
+            );
+        }
+        {
+            /* Sb deposits tokens which will be borrowed */
+            address liquidityProvider = makeAddr("liquidityProvider");
+            borrowTokenParams.token.approve(address(deployedContracts.lendingPool), amount);
+
+            deployedContracts.lendingPool.deposit(address(borrowTokenParams.token), true, amount, liquidityProvider);
+        }
+
+        console.log("Choosen amount: ", amount);
+
+        {
+            vm.startPrank(address(miniPoolContracts.miniPoolAddressesProvider));
+            console.log("address of asset:", address(borrowTokenParams.aToken));
+            uint256 currentFlow =
+                miniPoolContracts.flowLimiter.currentFlow(address(borrowTokenParams.token), true, miniPool);
+            miniPoolContracts.flowLimiter.setFlowLimit(address(borrowTokenParams.token), miniPool, currentFlow + amount);
+            console.log(
+                "FlowLimiter results",
+                miniPoolContracts.flowLimiter.getFlowLimit(address(borrowTokenParams.token), miniPool)
+            );
+            vm.stopPrank();
+        }
+
+        /* User deposits tokens to mini pool and gets aTokens*/
+        collateralTokenParams.token.transfer(user, minNrOfTokens);
+
+        vm.startPrank(user);
+        console.log("Address1: %s Address2: %s", address(miniPoolContracts.miniPoolImpl), miniPool);
+        collateralTokenParams.token.approve(miniPool, minNrOfTokens);
+        console.log(
+            "minNrOfTokens %s vs balance of tokens %s",
+            minNrOfTokens,
+            collateralTokenParams.token.balanceOf(address(this))
+        );
+        IMiniPool(miniPool).deposit(address(collateralTokenParams.token), true, minNrOfTokens, user);
+
+        (,,,,, uint256 healthFactorBefore) = IMiniPool(miniPool).getUserAccountData(user);
+        Balances memory balances;
+
+        balances.totalSupply = aErc6909Token.scaledTotalSupply(2000 + borrowOffset);
+        balances.debtToken = aErc6909Token.balanceOf(user, 2000 + borrowOffset);
+        balances.token = borrowTokenParams.aToken.balanceOf(user);
+        IMiniPool(miniPool).borrow(address(borrowTokenParams.aToken), true, amount, user);
+        console.log("Total supply of debtAToken must be greater than before borrow");
+        assertEq(aErc6909Token.scaledTotalSupply(2000 + borrowOffset), balances.totalSupply + amount);
+        console.log("Balance of debtAToken must be greater than before borrow");
+        assertEq(aErc6909Token.balanceOf(user, 2000 + borrowOffset), balances.debtToken + amount);
+        console.log("Balance of AToken must be greater than before borrow");
+        assertEq(borrowTokenParams.aToken.balanceOf(user), balances.token + amount);
+
+        // skip(36000);
+        // {
+        //     (
+        //         uint256 totalCollateralETH,
+        //         uint256 totalDebtETH,
+        //         uint256 availableBorrowsETH,
+        //         uint256 currentLiquidationThreshold,
+        //         uint256 ltv,
+        //         uint256 healthFactor
+        //     ) = IMiniPool(miniPool).getUserAccountData(user);
+        //     console.log("User data: totalCollateralETH ", totalCollateralETH);
+        //     console.log("User data: totalDebtETH ", totalDebtETH);
+        //     console.log("User data: availableBorrowsETH ", availableBorrowsETH);
+        //     console.log("User data: currentLiquidationThreshold ", currentLiquidationThreshold);
+        //     console.log("User data: ltv ", ltv);
+        //     console.log("User data: healthFactor ", healthFactor);
+        // }
+        (,,,,, uint256 healthFactorAfter) = IMiniPool(miniPool).getUserAccountData(user);
+        console.log("HealthFactor before borrow must be greater than after");
+        assertGt(healthFactorBefore, healthFactorAfter);
+
+        vm.stopPrank();
+    }
+
+    function setUp() public {
+        opFork = vm.createSelectFork(RPC, FORK_BLOCK);
+        assertEq(vm.activeFork(), opFork);
+        deployedContracts = fixture_deployProtocol();
+        configAddresses = ConfigAddresses(
+            address(deployedContracts.protocolDataProvider),
+            address(deployedContracts.stableStrategy),
+            address(deployedContracts.volatileStrategy),
+            address(deployedContracts.treasury),
+            address(deployedContracts.rewarder),
+            address(deployedContracts.aTokensAndRatesHelper)
+        );
+        fixture_configureProtocol(
+            address(deployedContracts.lendingPool),
+            address(aToken),
+            configAddresses,
+            deployedContracts.lendingPoolConfigurator,
+            deployedContracts.lendingPoolAddressesProvider
+        );
+        mockedVaults = fixture_deployErc4626Mocks(tokens, address(deployedContracts.treasury));
+        erc20Tokens = fixture_getErc20Tokens(tokens);
+        fixture_transferTokensToTestContract(erc20Tokens, 1_000_000 ether, address(this));
+        miniPoolContracts = fixture_deployMiniPoolSetup(
+            address(deployedContracts.lendingPoolAddressesProvider), address(deployedContracts.lendingPool)
+        );
+
+        address[] memory reserves = new address[](2 * tokens.length);
+        for (uint8 idx = 0; idx < (2 * tokens.length); idx++) {
+            console.log(idx);
+            if (idx < tokens.length) {
+                reserves[idx] = tokens[idx];
+            } else {
+                reserves[idx] = address(aTokens[idx - tokens.length]);
+            }
+        }
+
+        miniPool = fixture_configureMiniPoolReserves(reserves, configAddresses, miniPoolContracts);
+        vm.label(miniPool, "MiniPool");
+    }
+
+    function testMiniPoolDeposits(uint256 amount, uint256 offset) public {
+        /* Fuzz vector creation */
+        address user = makeAddr("user");
+        offset = bound(offset, 0, tokens.length - 1);
+        TokenParams memory tokenParams = TokenParams(erc20Tokens[offset], aTokens[offset], 0);
+
+        /* Assumptions */
+        vm.assume(amount <= tokenParams.token.balanceOf(address(this)) / 2);
+        vm.assume(amount > 10 ** tokenParams.token.decimals() / 100);
+
+        /* Deposit tests */
+        fixture_MiniPoolDeposit(amount, offset, user, tokenParams);
+    }
+
+    // function testMiniPoolDepositsNew() public {
+    //     address user = makeAddr("user");
+    //     uint256 usdcId = 1128;
+    //     uint256 grainUsdcId = 1000;
+    //     IAERC6909 aErc6909Token = IAERC6909(miniPoolContracts.miniPoolAddressesProvider.getMiniPoolToAERC6909(miniPool));
+    //     vm.label(address(aErc6909Token), "aErc6909Token");
+    //     IERC20 usdc = erc20Tokens[0];
+    //     IERC20 grainUsdc = aTokens[0];
+    //     uint256 amount = 5e8; //bound(amount, 1E6, 1E13); /* $5k */ // consider fuzzing here
+
+    //     uint256 grainUsdc6909balance = aErc6909Token.scaledTotalSupply(grainUsdcId);
+    //     uint256 usdc6909balance = aErc6909Token.scaledTotalSupply(usdcId);
+    //     fixture_miniPoolDeposit(address(usdc), address(grainUsdc), amount, amount);
+    //     console.log("User grain 6909 USDC balance shall be initial balance + amount");
+    //     assertEq(grainUsdc6909balance + amount, aErc6909Token.scaledTotalSupply(grainUsdcId));
+    //     console.log("User 6909 USDC balance shall be 0");
+    //     assertEq(usdc6909balance, aErc6909Token.scaledTotalSupply(usdcId));
+    // }
+
+    function testMiniPoolNormalBorrow(uint256 amount, uint256 collateralOffset, uint256 borrowOffset) public {
+        /**
+         * Preconditions:
+         * 1. Reserves in MiniPool must be configured
+         * Test Scenario:
+         * 1. User adds token as collateral into the miniPool
+         * 2. User borrows token
+         * Invariants:
+         * 1. Balance of debtToken for user in IERC6909 standard increased
+         * 2. Total supply of debtToken shall increase
+         * 3. Health of user's position shall decrease
+         * 4. User shall have borrowed assets
+         *
+         */
+
+        /* Fuzz vectors */
+        collateralOffset = bound(collateralOffset, 0, tokens.length - 1);
+        borrowOffset = bound(borrowOffset, 0, tokens.length - 1);
+        console.log("[collateral]Offset: ", collateralOffset);
+        console.log("[borrow]Offset: ", borrowOffset);
+
+        /* Test vars */
+        address user = makeAddr("user");
+        TokenParams memory collateralTokenParams = TokenParams(
+            erc20Tokens[collateralOffset],
+            aTokens[collateralOffset],
+            oracle.getAssetPrice(address(erc20Tokens[collateralOffset]))
+        );
+        TokenParams memory borrowTokenParams = TokenParams(
+            erc20Tokens[borrowOffset], aTokens[borrowOffset], oracle.getAssetPrice(address(erc20Tokens[borrowOffset]))
+        );
+        /* Assumptions */
+        amount = bound(
+            amount,
+            10 ** (borrowTokenParams.token.decimals() - 2),
+            borrowTokenParams.token.balanceOf(address(this)) / 10
+        );
+
+        fixture_miniPoolBorrow(amount, collateralOffset, borrowOffset, collateralTokenParams, borrowTokenParams, user);
+    }
+}

@@ -33,7 +33,7 @@ contract OracleTest is Common {
         );
         mockedVaults = fixture_deployErc4626Mocks(tokens, address(deployedContracts.treasury));
         erc20Tokens = fixture_getErc20Tokens(tokens);
-        fixture_transferTokensToTestContract(erc20Tokens, tokensWhales, address(this));
+        fixture_transferTokensToTestContract(erc20Tokens, 100_000 ether, address(this));
     }
 
     function testSetFallbackOracle() public {
