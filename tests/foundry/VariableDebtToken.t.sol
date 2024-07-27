@@ -34,7 +34,7 @@ contract VariableDebtTokenTest is Common {
         variableDebtTokens = fixture_getVarDebtTokens(tokens, deployedContracts.protocolDataProvider);
         mockedVaults = fixture_deployErc4626Mocks(tokens, address(deployedContracts.treasury));
         erc20Tokens = fixture_getErc20Tokens(tokens);
-        fixture_transferTokensToTestContract(erc20Tokens, tokensWhales, address(this));
+        fixture_transferTokensToTestContract(erc20Tokens, 100_000 ether, address(this));
     }
 
     function testAccessControl() public {
@@ -46,7 +46,7 @@ contract VariableDebtTokenTest is Common {
         }
     }
 
-    function testMintingAndBurningVAriableDebtTokens(uint256 maxValToMintAndBurn) public {
+    function testMintingAndBurningVariableDebtTokens(uint256 maxValToMintAndBurn) public {
         uint8 nrOfIterations = 20;
         maxValToMintAndBurn = bound(maxValToMintAndBurn, nrOfIterations, 20_000_000);
 
@@ -73,5 +73,28 @@ contract VariableDebtTokenTest is Common {
             assertEq(variableDebtTokens[idx].totalSupply(), 0);
         }
         vm.stopPrank();
+    }
+
+    function testBalanceAfterBorrow(uint256 maxValToDeposit) public {
+        uint8 nrOfIterations = 20;
+        maxValToDeposit = bound(maxValToDeposit, nrOfIterations, 2_000_000);
+
+        for (uint32 idx = 0; idx < variableDebtTokens.length; idx++) {
+            /* Minting tests with additiveness */
+            erc20Tokens[idx].approve(address(deployedContracts.lendingPool), maxValToDeposit);
+            deployedContracts.lendingPool.deposit(address(erc20Tokens[idx]), true, maxValToDeposit, address(this));
+
+            assertEq(variableDebtTokens[idx].balanceOf(address(this)), 0);
+            assertEq(variableDebtTokens[idx].totalSupply(), 0);
+
+            /* Burning tests with additiveness */
+            (, uint256 currentAssetLtv,,,,,,,) =
+                deployedContracts.protocolDataProvider.getReserveConfigurationData(address(erc20Tokens[idx]), true);
+
+            uint256 amountToBorrowRaw = maxValToDeposit * currentAssetLtv / 10_000;
+            deployedContracts.lendingPool.borrow(address(erc20Tokens[idx]), true, amountToBorrowRaw, address(this));
+            assertEq(variableDebtTokens[idx].balanceOf(address(this)), amountToBorrowRaw);
+            assertEq(variableDebtTokens[idx].totalSupply(), amountToBorrowRaw);
+        }
     }
 }

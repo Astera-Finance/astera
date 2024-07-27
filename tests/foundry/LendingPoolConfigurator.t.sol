@@ -68,15 +68,27 @@ contract LendingPoolConfiguratorTest is Common {
 
         mockedVaults = fixture_deployErc4626Mocks(tokens, address(deployedContracts.treasury));
         erc20Tokens = fixture_getErc20Tokens(tokens);
-        // fixture_transferTokensToTestContract(erc20Tokens, tokensWhales, address(this));
+        // fixture_transferTokensToTestContract(erc20Tokens, 100_000 ether, address(this));
+    }
+
+    function testDisableBorrowingOnReserve() public {
+        for (uint32 idx; idx < erc20Tokens.length; idx++) {
+            vm.expectEmit(true, false, false, true);
+            emit BorrowingDisabledOnReserve(address(erc20Tokens[idx]), true);
+            vm.prank(admin);
+            deployedContracts.lendingPoolConfigurator.disableBorrowingOnReserve(address(erc20Tokens[idx]), true);
+            // DataTypes.ReserveConfigurationMap memory currentConfig =
+            //     deployedContracts.lendingPool.getConfiguration(address(erc20Tokens[idx]), false);
+            // assertEq(currentConfig.getReserveFactor(), validReserveFactor);
+        }
     }
 
     function testActivateReserve() public {
         for (uint32 idx; idx < erc20Tokens.length; idx++) {
             vm.expectEmit(true, false, false, true);
-            emit ReserveActivated(address(erc20Tokens[idx]), false);
+            emit ReserveActivated(address(erc20Tokens[idx]), true);
             vm.prank(admin);
-            deployedContracts.lendingPoolConfigurator.activateReserve(address(erc20Tokens[idx]), false);
+            deployedContracts.lendingPoolConfigurator.activateReserve(address(erc20Tokens[idx]), true);
             // DataTypes.ReserveConfigurationMap memory currentConfig =
             //     deployedContracts.lendingPool.getConfiguration(address(erc20Tokens[idx]), false);
             // assertEq(currentConfig.getReserveFactor(), validReserveFactor);
@@ -86,9 +98,9 @@ contract LendingPoolConfiguratorTest is Common {
     function testDeactivateReserve() public {
         for (uint32 idx; idx < erc20Tokens.length; idx++) {
             vm.expectEmit(true, false, false, true);
-            emit ReserveDeactivated(address(erc20Tokens[idx]), false);
+            emit ReserveDeactivated(address(erc20Tokens[idx]), true);
             vm.prank(admin);
-            deployedContracts.lendingPoolConfigurator.deactivateReserve(address(erc20Tokens[idx]), false);
+            deployedContracts.lendingPoolConfigurator.deactivateReserve(address(erc20Tokens[idx]), true);
             // DataTypes.ReserveConfigurationMap memory currentConfig =
             //     deployedContracts.lendingPool.getConfiguration(address(erc20Tokens[idx]), false);
             // assertEq(currentConfig.getReserveFactor(), validReserveFactor);
@@ -98,9 +110,9 @@ contract LendingPoolConfiguratorTest is Common {
     function testFreezeReserve() public {
         for (uint32 idx; idx < erc20Tokens.length; idx++) {
             vm.expectEmit(true, false, false, true);
-            emit ReserveFrozen(address(erc20Tokens[idx]), false);
+            emit ReserveFrozen(address(erc20Tokens[idx]), true);
             vm.prank(admin);
-            deployedContracts.lendingPoolConfigurator.freezeReserve(address(erc20Tokens[idx]), false);
+            deployedContracts.lendingPoolConfigurator.freezeReserve(address(erc20Tokens[idx]), true);
             // DataTypes.ReserveConfigurationMap memory currentConfig =
             //     deployedContracts.lendingPool.getConfiguration(address(erc20Tokens[idx]), false);
             // assertEq(currentConfig.getReserveFactor(), validReserveFactor);
@@ -110,9 +122,9 @@ contract LendingPoolConfiguratorTest is Common {
     function testUnfreezeReserve() public {
         for (uint32 idx; idx < erc20Tokens.length; idx++) {
             vm.expectEmit(true, false, false, true);
-            emit ReserveUnfrozen(address(erc20Tokens[idx]), false);
+            emit ReserveUnfrozen(address(erc20Tokens[idx]), true);
             vm.prank(admin);
-            deployedContracts.lendingPoolConfigurator.unfreezeReserve(address(erc20Tokens[idx]), false);
+            deployedContracts.lendingPoolConfigurator.unfreezeReserve(address(erc20Tokens[idx]), true);
             // DataTypes.ReserveConfigurationMap memory currentConfig =
             //     deployedContracts.lendingPool.getConfiguration(address(erc20Tokens[idx]), false);
             // assertEq(currentConfig.getReserveFactor(), validReserveFactor);
@@ -123,10 +135,10 @@ contract LendingPoolConfiguratorTest is Common {
         validReserveFactor = bound(validReserveFactor, 0, MAX_VALID_RESERVE_FACTOR);
         for (uint32 idx; idx < erc20Tokens.length; idx++) {
             vm.expectEmit(true, false, false, false);
-            emit ReserveFactorChanged(address(erc20Tokens[idx]), false, validReserveFactor);
+            emit ReserveFactorChanged(address(erc20Tokens[idx]), true, validReserveFactor);
             vm.prank(admin);
             deployedContracts.lendingPoolConfigurator.setReserveFactor(
-                address(erc20Tokens[idx]), false, validReserveFactor
+                address(erc20Tokens[idx]), true, validReserveFactor
             );
             // DataTypes.ReserveConfigurationMap memory currentConfig =
             //     deployedContracts.lendingPool.getConfiguration(address(erc20Tokens[idx]), false);
@@ -140,7 +152,7 @@ contract LendingPoolConfiguratorTest is Common {
             vm.expectRevert(bytes(Errors.RC_INVALID_RESERVE_FACTOR));
             vm.prank(admin);
             deployedContracts.lendingPoolConfigurator.setReserveFactor(
-                address(erc20Tokens[idx]), false, invalidReserveFactor
+                address(erc20Tokens[idx]), true, invalidReserveFactor
             );
         }
     }
@@ -149,9 +161,9 @@ contract LendingPoolConfiguratorTest is Common {
         validDepositCap = bound(validDepositCap, 0, MAX_VALID_DEPOSIT_CAP);
         for (uint32 idx; idx < erc20Tokens.length; idx++) {
             vm.expectEmit(true, false, false, false);
-            emit ReserveDepositCapChanged(address(erc20Tokens[idx]), false, validDepositCap);
+            emit ReserveDepositCapChanged(address(erc20Tokens[idx]), true, validDepositCap);
             vm.prank(admin);
-            deployedContracts.lendingPoolConfigurator.setDepositCap(address(erc20Tokens[idx]), false, validDepositCap);
+            deployedContracts.lendingPoolConfigurator.setDepositCap(address(erc20Tokens[idx]), true, validDepositCap);
             // DataTypes.ReserveConfigurationMap memory currentConfig =
             //     deployedContracts.lendingPool.getConfiguration(address(erc20Tokens[idx]), false);
             // assertEq(currentConfig.getReserveFactor(), validReserveFactor);

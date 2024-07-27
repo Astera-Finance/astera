@@ -12,7 +12,7 @@ contract LendingPoolAddressesProviderRegistryTest is Common {
     event AddressesProviderUnregistered(address indexed newAddress);
 
     function testRegisteringAndReadingAddresses(uint256 id) public {
-        // _addressesProviders[provider] = id; // Issue: should Id be only one per provider ?
+        // _addressesProviders[provider] = id; // @issue should Id be only one per provider ?
         address randomAddress = makeAddr("RandomAddr");
         id = bound(id, 1, type(uint256).max);
         LendingPoolAddressesProviderRegistry lendingPoolAddressesProviderRegistry =
@@ -51,7 +51,7 @@ contract LendingPoolAddressesProviderRegistryTest is Common {
 
         addressesProvidersList = lendingPoolAddressesProviderRegistry.getAddressesProvidersList();
 
-        // Issue: There is no removal from list here
+        // @issue There is no removal from list here
         // assertEq(addressesProvidersList.length, 1); // violated
         // assertEq(addressesProvidersList[0], randomAddress2); // violated
 
@@ -60,4 +60,5 @@ contract LendingPoolAddressesProviderRegistryTest is Common {
         obtainedId = lendingPoolAddressesProviderRegistry.getAddressesProviderIdByAddress(randomAddress2);
         assertEq(obtainedId, id);
     }
+
 }

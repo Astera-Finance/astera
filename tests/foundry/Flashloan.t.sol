@@ -42,7 +42,7 @@ contract FlashloanTest is Common {
 
         mockedVaults = fixture_deployErc4626Mocks(tokens, address(deployedContracts.treasury));
         erc20Tokens = fixture_getErc20Tokens(tokens);
-        fixture_transferTokensToTestContract(erc20Tokens, tokensWhales, address(this));
+        fixture_transferTokensToTestContract(erc20Tokens, 100_000 ether, address(this));
     }
 
     function executeOperation(
@@ -87,8 +87,8 @@ contract FlashloanTest is Common {
         for (uint32 idx = 0; idx < tokens.length; idx++) {
             uint256 amountToDeposit = IERC20(tokens[idx]).balanceOf(address(this)) / 2;
             erc20Tokens[idx].approve(address(deployedContracts.lendingPool), amountToDeposit);
-            deployedContracts.lendingPool.deposit(address(erc20Tokens[idx]), false, amountToDeposit, address(this));
-            reserveTypes[idx] = false;
+            deployedContracts.lendingPool.deposit(address(erc20Tokens[idx]), true, amountToDeposit, address(this));
+            reserveTypes[idx] = true;
             tokenAddresses[idx] = address(erc20Tokens[idx]);
             amounts[idx] = IERC20(tokens[idx]).balanceOf(address(this)) / 2;
             modes[idx] = 0;
@@ -116,8 +116,8 @@ contract FlashloanTest is Common {
         for (uint32 idx = 0; idx < tokens.length; idx++) {
             uint256 amountToDeposit = IERC20(tokens[idx]).balanceOf(address(this)) / 2;
             erc20Tokens[idx].approve(address(deployedContracts.lendingPool), amountToDeposit);
-            deployedContracts.lendingPool.deposit(address(erc20Tokens[idx]), false, amountToDeposit, address(this));
-            reserveTypes[idx] = false;
+            deployedContracts.lendingPool.deposit(address(erc20Tokens[idx]), true, amountToDeposit, address(this));
+            reserveTypes[idx] = true;
             tokenAddresses[idx] = address(erc20Tokens[idx]);
             amounts[idx] = IERC20(tokens[idx]).balanceOf(address(this)) / 2;
             modes[idx] = 0;
@@ -141,8 +141,8 @@ contract FlashloanTest is Common {
         for (uint32 idx = 0; idx < tokens.length; idx++) {
             uint256 amountToDeposit = IERC20(tokens[idx]).balanceOf(address(this)) / 2;
             erc20Tokens[idx].approve(address(deployedContracts.lendingPool), amountToDeposit);
-            deployedContracts.lendingPool.deposit(address(erc20Tokens[idx]), false, amountToDeposit, address(this));
-            reserveTypes[idx] = false;
+            deployedContracts.lendingPool.deposit(address(erc20Tokens[idx]), true, amountToDeposit, address(this));
+            reserveTypes[idx] = true;
             tokenAddresses[idx] = address(erc20Tokens[idx]);
             amounts[idx] = IERC20(tokens[idx]).balanceOf(address(this)) / 2;
             modes[idx] = 0;

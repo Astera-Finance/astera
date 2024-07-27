@@ -247,7 +247,8 @@ library MiniPoolValidationLogic {
     uint256 reservesCount,
     address oracle
   ) external view {
-    uint256 underlyingBalance = IERC20(reserve.aTokenAddress).balanceOf(msg.sender);
+    //@issue: balanceOf shall be on IAERC6909 instead IERC20
+    uint256 underlyingBalance = IAERC6909(reserve.aTokenAddress).balanceOf(msg.sender, reserve.aTokenID);
 
     require(underlyingBalance > 0, Errors.VL_UNDERLYING_BALANCE_NOT_GREATER_THAN_0);
 

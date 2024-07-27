@@ -50,6 +50,8 @@ contract VariableDebtToken is DebtTokenBase, IVariableDebtToken {
     _underlyingAsset = underlyingAsset;
     _incentivesController = incentivesController;
 
+    _reserveType = true; // @issue was always false, make it configurable or always true ?
+
     emit Initialized(
       underlyingAsset,
       address(pool),
