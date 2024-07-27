@@ -1,5 +1,5 @@
-# Granary V2 Protocol
-[INTERNAL ONLY] For the development of Granary V2 Protocol Features.
+# Cod3x Lend Protocol
+[INTERNAL ONLY] For the development of Cod3x Lend Protocol Features.
 
 *(Please create branches for each of the below features -- do not merge to master)*
 
