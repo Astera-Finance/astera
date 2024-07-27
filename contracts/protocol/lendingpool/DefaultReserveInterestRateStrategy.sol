@@ -142,7 +142,6 @@ contract DefaultReserveInterestRateStrategy is IReserveInterestRateStrategy {
   )
     public
     view
-    override
     returns (
       uint256,
       uint256

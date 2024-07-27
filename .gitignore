@@ -18,3 +18,6 @@ artifacts
 forge-cache
 out
 cache_forge
+
+pyenv
+datas/
