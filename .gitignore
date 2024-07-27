@@ -9,15 +9,23 @@ inspo
 package-lock.json
 providers.json
 
-#Hardhat files
+# Hardhat
 hardhat.config.ts
 cache
 artifacts
 
-#Forge files
+# Forge
 forge-cache
 out
 cache_forge
 
+# Python
 pyenv
 datas/
+
+# Echidna
+corpus/
+**/crytic-compile
+**/crytic-export
+**/corpus
+cache_forge
