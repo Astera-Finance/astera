@@ -3,12 +3,26 @@
 
 *(Please create branches for each of the below features -- do not merge to master)*
 
-## Setup
+## Quick start
 
-```sh
+### Env setup
+```bash
+mv .env.example .env
+```
+Fill your `RPC_PROVIDER` in the `.env`.
+
+### Foundry
+```bash
 forge install
 forge test
 ```
+
+### Echidna
+```bash
+forge install
+echidna tests/echidna/PropertiesMain.sol --contract PropertiesMain --config tests/echidna/config/config1_fast.yaml
+```
+
 
 ## Typing conventions
 
