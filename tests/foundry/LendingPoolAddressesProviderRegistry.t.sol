@@ -17,7 +17,8 @@ contract LendingPoolAddressesProviderRegistryTest is Common {
         id = bound(id, 1, type(uint256).max);
         LendingPoolAddressesProviderRegistry lendingPoolAddressesProviderRegistry =
             new LendingPoolAddressesProviderRegistry();
-        address[] memory addressesProvidersList = lendingPoolAddressesProviderRegistry.getAddressesProvidersList();
+        address[] memory addressesProvidersList =
+            lendingPoolAddressesProviderRegistry.getAddressesProvidersList();
         assertEq(addressesProvidersList.length, 0);
 
         vm.expectEmit(true, false, false, false);
@@ -39,7 +40,8 @@ contract LendingPoolAddressesProviderRegistryTest is Common {
         id = bound(id, 1, type(uint256).max);
         LendingPoolAddressesProviderRegistry lendingPoolAddressesProviderRegistry =
             new LendingPoolAddressesProviderRegistry();
-        address[] memory addressesProvidersList = lendingPoolAddressesProviderRegistry.getAddressesProvidersList();
+        address[] memory addressesProvidersList =
+            lendingPoolAddressesProviderRegistry.getAddressesProvidersList();
         assertEq(addressesProvidersList.length, 0);
 
         lendingPoolAddressesProviderRegistry.registerAddressesProvider(randomAddress1, id);
@@ -55,10 +57,11 @@ contract LendingPoolAddressesProviderRegistryTest is Common {
         // assertEq(addressesProvidersList.length, 1); // violated
         // assertEq(addressesProvidersList[0], randomAddress2); // violated
 
-        uint256 obtainedId = lendingPoolAddressesProviderRegistry.getAddressesProviderIdByAddress(randomAddress1);
+        uint256 obtainedId =
+            lendingPoolAddressesProviderRegistry.getAddressesProviderIdByAddress(randomAddress1);
         assertEq(obtainedId, 0);
-        obtainedId = lendingPoolAddressesProviderRegistry.getAddressesProviderIdByAddress(randomAddress2);
+        obtainedId =
+            lendingPoolAddressesProviderRegistry.getAddressesProviderIdByAddress(randomAddress2);
         assertEq(obtainedId, id);
     }
-
 }

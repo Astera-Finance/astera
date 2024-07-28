@@ -5,7 +5,8 @@ pragma solidity ^0.8.20;
  * @title IDelegationToken
  * @dev Implements an interface for tokens with delegation COMP/UNI compatible
  * @author Aave
- **/
+ *
+ */
 interface IDelegationToken {
-  function delegate(address delegatee) external;
+    function delegate(address delegatee) external;
 }

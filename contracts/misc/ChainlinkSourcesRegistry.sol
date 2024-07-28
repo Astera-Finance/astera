@@ -1,21 +1,23 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.23;
 
-import {Ownable} from '../dependencies/openzeppelin/contracts/Ownable.sol';
+import {Ownable} from "../dependencies/openzeppelin/contracts/Ownable.sol";
 
 contract ChainlinkSourcesRegistry is Ownable {
-  /// @dev Mapping of current stored asset => underlying Chainlink aggregator
-  mapping (address => address) public aggregatorsOfAssets;
-  
-  event AggregatorUpdated(address token, address aggregator);
+    /// @dev Mapping of current stored asset => underlying Chainlink aggregator
+    mapping(address => address) public aggregatorsOfAssets;
 
-  constructor() public Ownable(msg.sender) {}
+    event AggregatorUpdated(address token, address aggregator);
 
-    
-  function updateAggregators(address[] memory assets, address[] memory aggregators) external onlyOwner {    
-    for(uint256 i = 0; i < assets.length; i++) {
-      aggregatorsOfAssets[assets[i]] = aggregators[i];
-      emit AggregatorUpdated(assets[i], aggregators[i]);
+    constructor() public Ownable(msg.sender) {}
+
+    function updateAggregators(address[] memory assets, address[] memory aggregators)
+        external
+        onlyOwner
+    {
+        for (uint256 i = 0; i < assets.length; i++) {
+            aggregatorsOfAssets[assets[i]] = aggregators[i];
+            emit AggregatorUpdated(assets[i], aggregators[i]);
+        }
     }
-  }
 }

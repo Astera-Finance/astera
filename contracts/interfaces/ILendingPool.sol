@@ -1,425 +1,437 @@
 // SPDX-License-Identifier: agpl-3.0
 pragma solidity ^0.8.23;
 
-import {ILendingPoolAddressesProvider} from './ILendingPoolAddressesProvider.sol';
-import {DataTypes} from '../protocol/libraries/types/DataTypes.sol';
+import {ILendingPoolAddressesProvider} from "./ILendingPoolAddressesProvider.sol";
+import {DataTypes} from "../protocol/libraries/types/DataTypes.sol";
 
 interface ILendingPool {
-  /**
-   * @dev Emitted on deposit()
-   * @param reserve The address of the underlying asset of the reserve
-   * @param user The address initiating the deposit
-   * @param onBehalfOf The beneficiary of the deposit, receiving the aTokens
-   * @param amount The amount deposited
-   **/
-  event Deposit(
-    address indexed reserve,
-    address user,
-    address indexed onBehalfOf,
-    uint256 amount
-  );
-
-  /**
-   * @dev Emitted on withdraw()
-   * @param reserve The address of the underlyng asset being withdrawn
-   * @param user The address initiating the withdrawal, owner of aTokens
-   * @param to Address that will receive the underlying
-   * @param amount The amount to be withdrawn
-   **/
-  event Withdraw(address indexed reserve, address indexed user, address indexed to, uint256 amount);
-
-  /**
-   * @dev Emitted on borrow() and flashLoan() when debt needs to be opened
-   * @param reserve The address of the underlying asset being borrowed
-   * @param user The address of the user initiating the borrow(), receiving the funds on borrow() or just
-   * initiator of the transaction on flashLoan()
-   * @param onBehalfOf The address that will be getting the debt
-   * @param amount The amount borrowed out
-   * @param borrowRate The numeric rate at which the user has borrowed
-   **/
-  event Borrow(
-    address indexed reserve,
-    address user,
-    address indexed onBehalfOf,
-    uint256 amount,
-    uint256 borrowRate
-  );
-
-  /**
-   * @dev Emitted on repay()
-   * @param reserve The address of the underlying asset of the reserve
-   * @param user The beneficiary of the repayment, getting his debt reduced
-   * @param repayer The address of the user initiating the repay(), providing the funds
-   * @param amount The amount repaid
-   **/
-  event Repay(
-    address indexed reserve,
-    address indexed user,
-    address indexed repayer,
-    uint256 amount
-  );
-
-  /**
-   * @dev Emitted on setUserUseReserveAsCollateral()
-   * @param reserve The address of the underlying asset of the reserve
-   * @param user The address of the user enabling the usage as collateral
-   **/
-  event ReserveUsedAsCollateralEnabled(address indexed reserve, address indexed user);
-
-  /**
-   * @dev Emitted on setUserUseReserveAsCollateral()
-   * @param reserve The address of the underlying asset of the reserve
-   * @param user The address of the user enabling the usage as collateral
-   **/
-  event ReserveUsedAsCollateralDisabled(address indexed reserve, address indexed user);
-
-  /**
-   * @dev Emitted on flashLoan()
-   * @param target The address of the flash loan receiver contract
-   * @param initiator The address initiating the flash loan
-   * @param asset The address of the asset being flash borrowed
-   * @param amount The amount flash borrowed
-   * @param premium The fee flash borrowed
-   **/
-  event FlashLoan(
-    address indexed target,
-    address indexed initiator,
-    address indexed asset,
-    uint256 amount,
-    uint256 premium
-  );
-
-  /**
-   * @dev Emitted when the pause is triggered.
-   */
-  event Paused();
-
-  /**
-   * @dev Emitted when the pause is lifted.
-   */
-  event Unpaused();
-
-  /**
-   * @dev Emitted when a borrower is liquidated. This event is emitted by the LendingPool via
-   * LendingPoolCollateral manager using a DELEGATECALL
-   * This allows to have the events in the generated ABI for LendingPool.
-   * @param collateralAsset The address of the underlying asset used as collateral, to receive as result of the liquidation
-   * @param debtAsset The address of the underlying borrowed asset to be repaid with the liquidation
-   * @param user The address of the borrower getting liquidated
-   * @param debtToCover The debt amount of borrowed `asset` the liquidator wants to cover
-   * @param liquidatedCollateralAmount The amount of collateral received by the liiquidator
-   * @param liquidator The address of the liquidator
-   * @param receiveAToken `true` if the liquidators wants to receive the collateral aTokens, `false` if he wants
-   * to receive the underlying collateral asset directly
-   **/
-  event LiquidationCall(
-    address indexed collateralAsset,
-    address indexed debtAsset,
-    address indexed user,
-    uint256 debtToCover,
-    uint256 liquidatedCollateralAmount,
-    address liquidator,
-    bool receiveAToken
-  );
-
-  /**
-   * @dev Emitted when the state of a reserve is updated. NOTE: This event is actually declared
-   * in the ReserveLogic library and emitted in the updateInterestRates() function. Since the function is internal,
-   * the event will actually be fired by the LendingPool contract. The event is therefore replicated here so it
-   * gets added to the LendingPool ABI
-   * @param reserve The address of the underlying asset of the reserve
-   * @param liquidityRate The new liquidity rate
-   * @param variableBorrowRate The new variable borrow rate
-   * @param liquidityIndex The new liquidity index
-   * @param variableBorrowIndex The new variable borrow index
-   **/
-  event ReserveDataUpdated(
-    address indexed reserve,
-    uint256 liquidityRate,
-    uint256 variableBorrowRate,
-    uint256 liquidityIndex,
-    uint256 variableBorrowIndex
-  );
-
-  /**
-   * @dev Deposits an `amount` of underlying asset into the reserve, receiving in return overlying aTokens.
-   * - E.g. User deposits 100 USDC and gets in return 100 aUSDC
-   * @param asset The address of the underlying asset to deposit
-   * @param amount The amount to be deposited
-   * @param onBehalfOf The address that will receive the aTokens, same as msg.sender if the user
-   *   wants to receive them on his own wallet, or a different address if the beneficiary of aTokens
-   *   is a different wallet
-   **/
-  function deposit(
-    address asset,
-    bool reserveType,
-    uint256 amount,
-    address onBehalfOf
-  ) external;
-
-  /**
-   * @dev Withdraws an `amount` of underlying asset from the reserve, burning the equivalent aTokens owned
-   * E.g. User has 100 aUSDC, calls withdraw() and receives 100 USDC, burning the 100 aUSDC
-   * @param asset The address of the underlying asset to withdraw
-   * @param reserveType Whether the reserve is boosted by a vault
-   * @param amount The underlying amount to be withdrawn
-   *   - Send the value type(uint256).max in order to withdraw the whole aToken balance
-   * @param to Address that will receive the underlying, same as msg.sender if the user
-   *   wants to receive it on his own wallet, or a different address if the beneficiary is a
-   *   different wallet
-   * @return The final amount withdrawn
-   **/
-  function withdraw(
-    address asset,
-    bool reserveType,
-    uint256 amount,
-    address to
-  ) external returns (uint256);
-
-  /**
-   * @dev Allows users to borrow a specific `amount` of the reserve underlying asset, provided that the borrower
-   * already deposited enough collateral, or he was given enough allowance by a credit delegator on the
-   * VariableDebtToken
-   * - E.g. User borrows 100 USDC passing as `onBehalfOf` his own address, receiving the 100 USDC in his wallet
-   *   and 100 variable debt tokens
-   * @param asset The address of the underlying asset to borrow
-   * @param amount The amount to be borrowed
-   * @param onBehalfOf Address of the user who will receive the debt. Should be the address of the borrower itself
-   * calling the function if he wants to borrow against his own collateral, or the address of the credit delegator
-   * if he has been given credit delegation allowance
-   **/
-  function borrow(
-    address asset,
-    bool reserveType,
-    uint256 amount,
-    address onBehalfOf
-  ) external;
-
-  /**
-   * @notice Repays a borrowed `amount` on a specific reserve, burning the equivalent debt tokens owned
-   * - E.g. User repays 100 USDC, burning 100 variable debt tokens of the `onBehalfOf` address
-   * @param asset The address of the borrowed underlying asset previously borrowed
-   * @param reserveType Whether the reserve is boosted by a vault
-   * @param amount The amount to repay
-   * - Send the value type(uint256).max in order to repay the whole debt for `asset`
-   * @param onBehalfOf Address of the user who will get his debt reduced/removed. Should be the address of the
-   * user calling the function if he wants to reduce/remove his own debt, or the address of any other
-   * other borrower whose debt should be removed
-   * @return The final amount repaid
-   **/
-  function repay(
-    address asset,
-    bool reserveType,
-    uint256 amount,
-    address onBehalfOf
-  ) external returns (uint256);
-
-  /**
-   * @dev Allows depositors to enable/disable a specific deposited asset as collateral
-   * @param asset The address of the underlying asset deposited
-   * @param reserveType Whether the reserve is boosted by a vault
-   * @param useAsCollateral `true` if the user wants to use the deposit as collateral, `false` otherwise
-   **/
-  function setUserUseReserveAsCollateral(address asset, bool reserveType, bool useAsCollateral) external;
-
-  /**
-   * @dev Function to liquidate a non-healthy position collateral-wise, with Health Factor below 1
-   * - The caller (liquidator) covers `debtToCover` amount of debt of the user getting liquidated, and receives
-   *   a proportionally amount of the `collateralAsset` plus a bonus to cover market risk
-   * @param collateralAsset The address of the underlying asset used as collateral, to receive as result of the liquidation
-   * @param debtAsset The address of the underlying borrowed asset to be repaid with the liquidation
-   * @param user The address of the borrower getting liquidated
-   * @param debtToCover The debt amount of borrowed `asset` the liquidator wants to cover
-   * @param receiveAToken `true` if the liquidators wants to receive the collateral aTokens, `false` if he wants
-   * to receive the underlying collateral asset directly
-   **/
-  function liquidationCall(
-    address collateralAsset,
-    bool collateralAssetType,
-    address debtAsset,
-    bool debtAssetType,
-    address user,
-    uint256 debtToCover,
-    bool receiveAToken
-  ) external;
-
-  /**
-   * @param receiverAddress The address of the contract receiving the funds, implementing the IFlashLoanReceiver interface
-   * @param assets The addresses of the assets being flash-borrowed
-   * @param amounts The amounts amounts being flash-borrowed
-   * @param onBehalfOf The address that will receive the debt
-   **/
-  struct FlashLoanParams {
-    address receiverAddress;
-    address[] assets;
-    bool[] reserveTypes;
-    address onBehalfOf;
-  }
-
-  /**
-   * @dev Allows smartcontracts to access the liquidity of the pool within one transaction,
-   * as long as the amount taken plus a fee is returned.
-   * IMPORTANT There are security concerns for developers of flashloan receiver contracts that must be kept into consideration.
-   * For further details please visit https://developers.aave.com
-   * @param flashLoanParams struct containing receiverAddress, onBehalfOf
-   * @param modes Types of the debt to open if the flash loan is not returned:
-   *   0 -> Don't open any debt, just revert if funds can't be transferred from the receiver
-   *   2 -> Open debt at variable rate for the value of the amount flash-borrowed to the `onBehalfOf` address
-   * @param params Variadic packed params to pass to the receiver as extra information
-   **/
-  function flashLoan(
-    FlashLoanParams memory flashLoanParams,
-    uint256[] calldata amounts,
-    uint256[] calldata modes,
-    bytes calldata params
-  ) external;
-
-  /**
-   * @dev Returns the user account data across all the reserves
-   * @param user The address of the user
-   * @return totalCollateralETH the total collateral in ETH of the user
-   * @return totalDebtETH the total debt in ETH of the user
-   * @return availableBorrowsETH the borrowing power left of the user
-   * @return currentLiquidationThreshold the liquidation threshold of the user
-   * @return ltv the loan to value of the user
-   * @return healthFactor the current health factor of the user
-   **/
-  function getUserAccountData(address user)
-    external
-    view
-    returns (
-      uint256 totalCollateralETH,
-      uint256 totalDebtETH,
-      uint256 availableBorrowsETH,
-      uint256 currentLiquidationThreshold,
-      uint256 ltv,
-      uint256 healthFactor
+    /**
+     * @dev Emitted on deposit()
+     * @param reserve The address of the underlying asset of the reserve
+     * @param user The address initiating the deposit
+     * @param onBehalfOf The beneficiary of the deposit, receiving the aTokens
+     * @param amount The amount deposited
+     *
+     */
+    event Deposit(
+        address indexed reserve, address user, address indexed onBehalfOf, uint256 amount
     );
 
-  function initReserve(
-    address reserve,
-    bool reserveType,
-    address aTokenAddress,
-    address variableDebtAddress,
-    address interestRateStrategyAddress
-  ) external;
+    /**
+     * @dev Emitted on withdraw()
+     * @param reserve The address of the underlyng asset being withdrawn
+     * @param user The address initiating the withdrawal, owner of aTokens
+     * @param to Address that will receive the underlying
+     * @param amount The amount to be withdrawn
+     *
+     */
+    event Withdraw(
+        address indexed reserve, address indexed user, address indexed to, uint256 amount
+    );
 
-  function setReserveInterestRateStrategyAddress(address reserve, bool reserveType, address rateStrategyAddress)
-    external;
+    /**
+     * @dev Emitted on borrow() and flashLoan() when debt needs to be opened
+     * @param reserve The address of the underlying asset being borrowed
+     * @param user The address of the user initiating the borrow(), receiving the funds on borrow() or just
+     * initiator of the transaction on flashLoan()
+     * @param onBehalfOf The address that will be getting the debt
+     * @param amount The amount borrowed out
+     * @param borrowRate The numeric rate at which the user has borrowed
+     *
+     */
+    event Borrow(
+        address indexed reserve,
+        address user,
+        address indexed onBehalfOf,
+        uint256 amount,
+        uint256 borrowRate
+    );
 
-  function setConfiguration(address reserve, bool reserveType, uint256 configuration) external;
+    /**
+     * @dev Emitted on repay()
+     * @param reserve The address of the underlying asset of the reserve
+     * @param user The beneficiary of the repayment, getting his debt reduced
+     * @param repayer The address of the user initiating the repay(), providing the funds
+     * @param amount The amount repaid
+     *
+     */
+    event Repay(
+        address indexed reserve, address indexed user, address indexed repayer, uint256 amount
+    );
 
-  /**
-   * @dev Returns the configuration of the reserve
-   * @param asset The address of the underlying asset of the reserve
-   * @param reserveType Whether the reserve is boosted by a vault
-   * @return The configuration of the reserve
-   **/
-  function getConfiguration(address asset, bool reserveType)
-    external
-    view
-    returns (DataTypes.ReserveConfigurationMap memory);
+    /**
+     * @dev Emitted on setUserUseReserveAsCollateral()
+     * @param reserve The address of the underlying asset of the reserve
+     * @param user The address of the user enabling the usage as collateral
+     *
+     */
+    event ReserveUsedAsCollateralEnabled(address indexed reserve, address indexed user);
 
-  function setBorrowConfiguration(address reserve, bool reserveType, uint256 borrowConfiguration) external;
+    /**
+     * @dev Emitted on setUserUseReserveAsCollateral()
+     * @param reserve The address of the underlying asset of the reserve
+     * @param user The address of the user enabling the usage as collateral
+     *
+     */
+    event ReserveUsedAsCollateralDisabled(address indexed reserve, address indexed user);
 
-  /**
-   * @dev Returns the borrow configuration of the reserve
-   * @param asset The address of the underlying asset of the reserve
-   * @param reserveType The type of the reserve
-   * @return The borrow configuration of the reserve
-   **/
-  function getBorrowConfiguration(address asset, bool reserveType)
-    external
-    view
-    returns (DataTypes.ReserveBorrowConfigurationMap memory);
+    /**
+     * @dev Emitted on flashLoan()
+     * @param target The address of the flash loan receiver contract
+     * @param initiator The address initiating the flash loan
+     * @param asset The address of the asset being flash borrowed
+     * @param amount The amount flash borrowed
+     * @param premium The fee flash borrowed
+     *
+     */
+    event FlashLoan(
+        address indexed target,
+        address indexed initiator,
+        address indexed asset,
+        uint256 amount,
+        uint256 premium
+    );
 
-  /**
-   * @dev Returns the configuration of the user across all the reserves
-   * @param user The user address
-   * @return The configuration of the user
-   **/
-  function getUserConfiguration(address user)
-    external
-    view
-    returns (DataTypes.UserConfigurationMap memory);
+    /**
+     * @dev Emitted when the pause is triggered.
+     */
+    event Paused();
 
-  /**
-   * @dev Returns the normalized income normalized income of the reserve
-   * @param asset The address of the underlying asset of the reserve
-   * @param reserveType Whether the reserve is boosted by a vault
-   * @return The reserve's normalized income
-   */
-  function getReserveNormalizedIncome(address asset, bool reserveType) external view returns (uint256);
+    /**
+     * @dev Emitted when the pause is lifted.
+     */
+    event Unpaused();
 
-  /**
-   * @dev Returns the normalized variable debt per unit of asset
-   * @param asset The address of the underlying asset of the reserve
-   * @param reserveType Whether the reserve is boosted by a vault
-   * @return The reserve normalized variable debt
-   */
-  function getReserveNormalizedVariableDebt(address asset, bool reserveType) external view returns (uint256);
+    /**
+     * @dev Emitted when a borrower is liquidated. This event is emitted by the LendingPool via
+     * LendingPoolCollateral manager using a DELEGATECALL
+     * This allows to have the events in the generated ABI for LendingPool.
+     * @param collateralAsset The address of the underlying asset used as collateral, to receive as result of the liquidation
+     * @param debtAsset The address of the underlying borrowed asset to be repaid with the liquidation
+     * @param user The address of the borrower getting liquidated
+     * @param debtToCover The debt amount of borrowed `asset` the liquidator wants to cover
+     * @param liquidatedCollateralAmount The amount of collateral received by the liiquidator
+     * @param liquidator The address of the liquidator
+     * @param receiveAToken `true` if the liquidators wants to receive the collateral aTokens, `false` if he wants
+     * to receive the underlying collateral asset directly
+     *
+     */
+    event LiquidationCall(
+        address indexed collateralAsset,
+        address indexed debtAsset,
+        address indexed user,
+        uint256 debtToCover,
+        uint256 liquidatedCollateralAmount,
+        address liquidator,
+        bool receiveAToken
+    );
 
-  /**
-   * @dev Returns the state and configuration of the reserve
-   * @param asset The address of the underlying asset of the reserve
-   * @param reserveType Whether the reserve is boosted by a vault
-   * @return The state of the reserve
-   **/
-  function getReserveData(address asset, bool reserveType) external view returns (DataTypes.ReserveData memory);
+    /**
+     * @dev Emitted when the state of a reserve is updated. NOTE: This event is actually declared
+     * in the ReserveLogic library and emitted in the updateInterestRates() function. Since the function is internal,
+     * the event will actually be fired by the LendingPool contract. The event is therefore replicated here so it
+     * gets added to the LendingPool ABI
+     * @param reserve The address of the underlying asset of the reserve
+     * @param liquidityRate The new liquidity rate
+     * @param variableBorrowRate The new variable borrow rate
+     * @param liquidityIndex The new liquidity index
+     * @param variableBorrowIndex The new variable borrow index
+     *
+     */
+    event ReserveDataUpdated(
+        address indexed reserve,
+        uint256 liquidityRate,
+        uint256 variableBorrowRate,
+        uint256 liquidityIndex,
+        uint256 variableBorrowIndex
+    );
 
-  function finalizeTransfer(
-    address asset,
-    bool reserveType,
-    address from,
-    address to,
-    uint256 amount,
-    uint256 balanceFromAfter,
-    uint256 balanceToBefore
-  ) external;
+    /**
+     * @dev Deposits an `amount` of underlying asset into the reserve, receiving in return overlying aTokens.
+     * - E.g. User deposits 100 USDC and gets in return 100 aUSDC
+     * @param asset The address of the underlying asset to deposit
+     * @param amount The amount to be deposited
+     * @param onBehalfOf The address that will receive the aTokens, same as msg.sender if the user
+     *   wants to receive them on his own wallet, or a different address if the beneficiary of aTokens
+     *   is a different wallet
+     *
+     */
+    function deposit(address asset, bool reserveType, uint256 amount, address onBehalfOf)
+        external;
 
-  function getReservesList() external view returns (address[] memory, bool[] memory);
-  function getReservesCount() external view returns (uint256);
+    /**
+     * @dev Withdraws an `amount` of underlying asset from the reserve, burning the equivalent aTokens owned
+     * E.g. User has 100 aUSDC, calls withdraw() and receives 100 USDC, burning the 100 aUSDC
+     * @param asset The address of the underlying asset to withdraw
+     * @param reserveType Whether the reserve is boosted by a vault
+     * @param amount The underlying amount to be withdrawn
+     *   - Send the value type(uint256).max in order to withdraw the whole aToken balance
+     * @param to Address that will receive the underlying, same as msg.sender if the user
+     *   wants to receive it on his own wallet, or a different address if the beneficiary is a
+     *   different wallet
+     * @return The final amount withdrawn
+     *
+     */
+    function withdraw(address asset, bool reserveType, uint256 amount, address to)
+        external
+        returns (uint256);
 
-  function getAddressesProvider() external view returns (ILendingPoolAddressesProvider);
+    /**
+     * @dev Allows users to borrow a specific `amount` of the reserve underlying asset, provided that the borrower
+     * already deposited enough collateral, or he was given enough allowance by a credit delegator on the
+     * VariableDebtToken
+     * - E.g. User borrows 100 USDC passing as `onBehalfOf` his own address, receiving the 100 USDC in his wallet
+     *   and 100 variable debt tokens
+     * @param asset The address of the underlying asset to borrow
+     * @param amount The amount to be borrowed
+     * @param onBehalfOf Address of the user who will receive the debt. Should be the address of the borrower itself
+     * calling the function if he wants to borrow against his own collateral, or the address of the credit delegator
+     * if he has been given credit delegation allowance
+     *
+     */
+    function borrow(address asset, bool reserveType, uint256 amount, address onBehalfOf) external;
 
-  function MAX_NUMBER_RESERVES() external view returns (uint256);
+    /**
+     * @notice Repays a borrowed `amount` on a specific reserve, burning the equivalent debt tokens owned
+     * - E.g. User repays 100 USDC, burning 100 variable debt tokens of the `onBehalfOf` address
+     * @param asset The address of the borrowed underlying asset previously borrowed
+     * @param reserveType Whether the reserve is boosted by a vault
+     * @param amount The amount to repay
+     * - Send the value type(uint256).max in order to repay the whole debt for `asset`
+     * @param onBehalfOf Address of the user who will get his debt reduced/removed. Should be the address of the
+     * user calling the function if he wants to reduce/remove his own debt, or the address of any other
+     * other borrower whose debt should be removed
+     * @return The final amount repaid
+     *
+     */
+    function repay(address asset, bool reserveType, uint256 amount, address onBehalfOf)
+        external
+        returns (uint256);
 
-  function setPause(bool val) external;
+    /**
+     * @dev Allows depositors to enable/disable a specific deposited asset as collateral
+     * @param asset The address of the underlying asset deposited
+     * @param reserveType Whether the reserve is boosted by a vault
+     * @param useAsCollateral `true` if the user wants to use the deposit as collateral, `false` otherwise
+     *
+     */
+    function setUserUseReserveAsCollateral(address asset, bool reserveType, bool useAsCollateral)
+        external;
 
-  function paused() external view returns (bool);
+    /**
+     * @dev Function to liquidate a non-healthy position collateral-wise, with Health Factor below 1
+     * - The caller (liquidator) covers `debtToCover` amount of debt of the user getting liquidated, and receives
+     *   a proportionally amount of the `collateralAsset` plus a bonus to cover market risk
+     * @param collateralAsset The address of the underlying asset used as collateral, to receive as result of the liquidation
+     * @param debtAsset The address of the underlying borrowed asset to be repaid with the liquidation
+     * @param user The address of the borrower getting liquidated
+     * @param debtToCover The debt amount of borrowed `asset` the liquidator wants to cover
+     * @param receiveAToken `true` if the liquidators wants to receive the collateral aTokens, `false` if he wants
+     * to receive the underlying collateral asset directly
+     *
+     */
+    function liquidationCall(
+        address collateralAsset,
+        bool collateralAssetType,
+        address debtAsset,
+        bool debtAssetType,
+        address user,
+        uint256 debtToCover,
+        bool receiveAToken
+    ) external;
 
-  function setFarmingPct(address aTokenAddress, uint256 farmingPct) external;
+    /**
+     * @param receiverAddress The address of the contract receiving the funds, implementing the IFlashLoanReceiver interface
+     * @param assets The addresses of the assets being flash-borrowed
+     * @param amounts The amounts amounts being flash-borrowed
+     * @param onBehalfOf The address that will receive the debt
+     *
+     */
+    struct FlashLoanParams {
+        address receiverAddress;
+        address[] assets;
+        bool[] reserveTypes;
+        address onBehalfOf;
+    }
 
-  function setClaimingThreshold(address aTokenAddress, uint256 claimingThreshold) external;
+    /**
+     * @dev Allows smartcontracts to access the liquidity of the pool within one transaction,
+     * as long as the amount taken plus a fee is returned.
+     * IMPORTANT There are security concerns for developers of flashloan receiver contracts that must be kept into consideration.
+     * For further details please visit https://developers.aave.com
+     * @param flashLoanParams struct containing receiverAddress, onBehalfOf
+     * @param modes Types of the debt to open if the flash loan is not returned:
+     *   0 -> Don't open any debt, just revert if funds can't be transferred from the receiver
+     *   2 -> Open debt at variable rate for the value of the amount flash-borrowed to the `onBehalfOf` address
+     * @param params Variadic packed params to pass to the receiver as extra information
+     *
+     */
+    function flashLoan(
+        FlashLoanParams memory flashLoanParams,
+        uint256[] calldata amounts,
+        uint256[] calldata modes,
+        bytes calldata params
+    ) external;
 
-  function setFarmingPctDrift(address aTokenAddress, uint256 _farmingPctDrift) external;
+    /**
+     * @dev Returns the user account data across all the reserves
+     * @param user The address of the user
+     * @return totalCollateralETH the total collateral in ETH of the user
+     * @return totalDebtETH the total debt in ETH of the user
+     * @return availableBorrowsETH the borrowing power left of the user
+     * @return currentLiquidationThreshold the liquidation threshold of the user
+     * @return ltv the loan to value of the user
+     * @return healthFactor the current health factor of the user
+     *
+     */
+    function getUserAccountData(address user)
+        external
+        view
+        returns (
+            uint256 totalCollateralETH,
+            uint256 totalDebtETH,
+            uint256 availableBorrowsETH,
+            uint256 currentLiquidationThreshold,
+            uint256 ltv,
+            uint256 healthFactor
+        );
 
-  function setProfitHandler(address aTokenAddress, address _profitHandler) external;
+    function initReserve(
+        address reserve,
+        bool reserveType,
+        address aTokenAddress,
+        address variableDebtAddress,
+        address interestRateStrategyAddress
+    ) external;
 
-  function setVault(address aTokenAddress, address _vault) external;
+    function setReserveInterestRateStrategyAddress(
+        address reserve,
+        bool reserveType,
+        address rateStrategyAddress
+    ) external;
 
-  function rebalance(address aTokenAddress) external;
-  
-  function getTotalManagedAssets(address aTokenAddres) external view returns (uint256);
+    function setConfiguration(address reserve, bool reserveType, uint256 configuration) external;
 
-  function updateFlashLoanFee(uint256 flashLoanPremiumTotal) external;
-  function setRewarderForReserve(address asset, bool reserveType, address rewarder) external;
-  function setTreasury(address asset, bool reserveType, address treasury) external;
+    /**
+     * @dev Returns the configuration of the reserve
+     * @param asset The address of the underlying asset of the reserve
+     * @param reserveType Whether the reserve is boosted by a vault
+     * @return The configuration of the reserve
+     *
+     */
+    function getConfiguration(address asset, bool reserveType)
+        external
+        view
+        returns (DataTypes.ReserveConfigurationMap memory);
 
+    function setBorrowConfiguration(address reserve, bool reserveType, uint256 borrowConfiguration)
+        external;
 
+    /**
+     * @dev Returns the borrow configuration of the reserve
+     * @param asset The address of the underlying asset of the reserve
+     * @param reserveType The type of the reserve
+     * @return The borrow configuration of the reserve
+     *
+     */
+    function getBorrowConfiguration(address asset, bool reserveType)
+        external
+        view
+        returns (DataTypes.ReserveBorrowConfigurationMap memory);
 
-  function miniPoolBorrow(
-    address asset,
-    bool reserveType,
-    uint256 amount,
-    address miniPoolAddress,
-    address aTokenAddress
-  ) external;
+    /**
+     * @dev Returns the configuration of the user across all the reserves
+     * @param user The user address
+     * @return The configuration of the user
+     *
+     */
+    function getUserConfiguration(address user)
+        external
+        view
+        returns (DataTypes.UserConfigurationMap memory);
 
-   function repayWithATokens(
-    address asset,
-    bool reserveType,
-    uint256 amount,
-    address onBehalfOf
-  ) external returns (uint256);
+    /**
+     * @dev Returns the normalized income normalized income of the reserve
+     * @param asset The address of the underlying asset of the reserve
+     * @param reserveType Whether the reserve is boosted by a vault
+     * @return The reserve's normalized income
+     */
+    function getReserveNormalizedIncome(address asset, bool reserveType)
+        external
+        view
+        returns (uint256);
+
+    /**
+     * @dev Returns the normalized variable debt per unit of asset
+     * @param asset The address of the underlying asset of the reserve
+     * @param reserveType Whether the reserve is boosted by a vault
+     * @return The reserve normalized variable debt
+     */
+    function getReserveNormalizedVariableDebt(address asset, bool reserveType)
+        external
+        view
+        returns (uint256);
+
+    /**
+     * @dev Returns the state and configuration of the reserve
+     * @param asset The address of the underlying asset of the reserve
+     * @param reserveType Whether the reserve is boosted by a vault
+     * @return The state of the reserve
+     *
+     */
+    function getReserveData(address asset, bool reserveType)
+        external
+        view
+        returns (DataTypes.ReserveData memory);
+
+    function finalizeTransfer(
+        address asset,
+        bool reserveType,
+        address from,
+        address to,
+        uint256 amount,
+        uint256 balanceFromAfter,
+        uint256 balanceToBefore
+    ) external;
+
+    function getReservesList() external view returns (address[] memory, bool[] memory);
+    function getReservesCount() external view returns (uint256);
+
+    function getAddressesProvider() external view returns (ILendingPoolAddressesProvider);
+
+    function MAX_NUMBER_RESERVES() external view returns (uint256);
+
+    function setPause(bool val) external;
+
+    function paused() external view returns (bool);
+
+    function setFarmingPct(address aTokenAddress, uint256 farmingPct) external;
+
+    function setClaimingThreshold(address aTokenAddress, uint256 claimingThreshold) external;
+
+    function setFarmingPctDrift(address aTokenAddress, uint256 _farmingPctDrift) external;
+
+    function setProfitHandler(address aTokenAddress, address _profitHandler) external;
+
+    function setVault(address aTokenAddress, address _vault) external;
+
+    function rebalance(address aTokenAddress) external;
+
+    function getTotalManagedAssets(address aTokenAddres) external view returns (uint256);
+
+    function updateFlashLoanFee(uint256 flashLoanPremiumTotal) external;
+    function setRewarderForReserve(address asset, bool reserveType, address rewarder) external;
+    function setTreasury(address asset, bool reserveType, address treasury) external;
+
+    function miniPoolBorrow(
+        address asset,
+        bool reserveType,
+        uint256 amount,
+        address miniPoolAddress,
+        address aTokenAddress
+    ) external;
+
+    function repayWithATokens(address asset, bool reserveType, uint256 amount, address onBehalfOf)
+        external
+        returns (uint256);
 }

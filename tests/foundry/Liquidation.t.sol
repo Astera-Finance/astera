@@ -12,7 +12,6 @@ contract LiquidationTest is Common {
     DeployedContracts deployedContracts;
     ConfigAddresses configAddresses;
 
-
     function setUp() public {
         opFork = vm.createSelectFork(RPC, FORK_BLOCK);
         assertEq(vm.activeFork(), opFork);
@@ -56,9 +55,13 @@ contract LiquidationTest is Common {
         {
             // uint256 wbtcMaxBorrowAmountRaw = (usdcMaxBorrowValue * 10 ** PRICE_FEED_DECIMALS) / wbtcPrice;
             uint256 wbtcMaxBorrowAmountRay = usdcMaxBorrowValue.rayDiv(wbtcPrice);
-            wbtcMaxBorrowAmountWithUsdcCollateral =
-                fixture_preciseConvertWithDecimals(wbtcMaxBorrowAmountRay, usdc.decimals(), wbtc.decimals());
-            require(wbtc.balanceOf(address(this)) > wbtcMaxBorrowAmountWithUsdcCollateral, "Too less wbtc");
+            wbtcMaxBorrowAmountWithUsdcCollateral = fixture_preciseConvertWithDecimals(
+                wbtcMaxBorrowAmountRay, usdc.decimals(), wbtc.decimals()
+            );
+            require(
+                wbtc.balanceOf(address(this)) > wbtcMaxBorrowAmountWithUsdcCollateral,
+                "Too less wbtc"
+            );
         }
         uint256 wbtcDepositAmount = wbtc.balanceOf(address(this));
 
@@ -74,10 +77,13 @@ contract LiquidationTest is Common {
         console.log("Wbtc balance before: ", wbtcBalanceBeforeBorrow);
 
         /* Main user borrows maxPossible amount of wbtc */
-        deployedContracts.lendingPool.borrow(address(wbtc), true, wbtcMaxBorrowAmountWithUsdcCollateral, address(this));
+        deployedContracts.lendingPool.borrow(
+            address(wbtc), true, wbtcMaxBorrowAmountWithUsdcCollateral, address(this)
+        );
 
-        (, uint256 debtToCover,,,) =
-            deployedContracts.protocolDataProvider.getUserReserveData(address(usdc), true, address(this));
+        (, uint256 debtToCover,,,) = deployedContracts.protocolDataProvider.getUserReserveData(
+            address(usdc), true, address(this)
+        );
 
         vm.expectRevert(bytes(Errors.LPCM_HEALTH_FACTOR_NOT_BELOW_THRESHOLD));
         deployedContracts.lendingPool.liquidationCall(
@@ -93,20 +99,27 @@ contract LiquidationTest is Common {
         uint256 usdcPrice = oracle.getAssetPrice(address(usdc));
         {
             uint256 usdcDepositAmount = 5e9; /* $5k */ // consider fuzzing here
-            (, uint256 usdcLtv,,,,,,,) =
-                deployedContracts.protocolDataProvider.getReserveConfigurationData(address(usdc), true);
+            (, uint256 usdcLtv,,,,,,,) = deployedContracts
+                .protocolDataProvider
+                .getReserveConfigurationData(address(usdc), true);
 
             uint256 usdcMaxBorrowAmount = usdcLtv * usdcDepositAmount / 10_000;
 
             uint256 wbtcMaxToBorrowRay = usdcMaxBorrowAmount.rayDiv(wbtcPrice);
-            uint256 wbtcMaxBorrowAmountWithUsdcCollateral =
-                fixture_preciseConvertWithDecimals(wbtcMaxToBorrowRay, usdc.decimals(), wbtc.decimals());
-            require(wbtc.balanceOf(address(this)) > wbtcMaxBorrowAmountWithUsdcCollateral, "Too less wbtc");
+            uint256 wbtcMaxBorrowAmountWithUsdcCollateral = fixture_preciseConvertWithDecimals(
+                wbtcMaxToBorrowRay, usdc.decimals(), wbtc.decimals()
+            );
+            require(
+                wbtc.balanceOf(address(this)) > wbtcMaxBorrowAmountWithUsdcCollateral,
+                "Too less wbtc"
+            );
             uint256 wbtcDepositAmount = wbtc.balanceOf(address(this)) / 2;
 
             /* Main user deposits usdc and wants to borrow */
             usdc.approve(address(deployedContracts.lendingPool), usdcDepositAmount);
-            deployedContracts.lendingPool.deposit(address(usdc), true, usdcDepositAmount, address(this));
+            deployedContracts.lendingPool.deposit(
+                address(usdc), true, usdcDepositAmount, address(this)
+            );
 
             /* Other user deposits wbtc thanks to that there is enaugh funds to borrow */
             {
@@ -120,7 +133,8 @@ contract LiquidationTest is Common {
             );
         }
         {
-            (,,,,, uint256 healthFactor) = deployedContracts.lendingPool.getUserAccountData(address(this));
+            (,,,,, uint256 healthFactor) =
+                deployedContracts.lendingPool.getUserAccountData(address(this));
             assertGe(healthFactor, 1 ether);
         }
 
@@ -141,10 +155,13 @@ contract LiquidationTest is Common {
             wbtcPrice = newPrice;
         }
 
-        ReserveDataParams memory wbtcReserveParamsBefore = fixture_getReserveData(address(wbtc), deployedContracts.protocolDataProvider);
-        ReserveDataParams memory usdcReserveParamsBefore = fixture_getReserveData(address(usdc), deployedContracts.protocolDataProvider);
+        ReserveDataParams memory wbtcReserveParamsBefore =
+            fixture_getReserveData(address(wbtc), deployedContracts.protocolDataProvider);
+        ReserveDataParams memory usdcReserveParamsBefore =
+            fixture_getReserveData(address(usdc), deployedContracts.protocolDataProvider);
         {
-            (,,,,, uint256 healthFactor) = deployedContracts.lendingPool.getUserAccountData(address(this));
+            (,,,,, uint256 healthFactor) =
+                deployedContracts.lendingPool.getUserAccountData(address(this));
             assertLt(healthFactor, 1 ether);
         }
 
@@ -154,8 +171,9 @@ contract LiquidationTest is Common {
         uint256 amountToLiquidate;
         uint256 scaledVariableDebt;
         {
-            (, uint256 debtToCover, uint256 _scaledVariableDebt,,) =
-                deployedContracts.protocolDataProvider.getUserReserveData(address(wbtc), true, address(this));
+            (, uint256 debtToCover, uint256 _scaledVariableDebt,,) = deployedContracts
+                .protocolDataProvider
+                .getUserReserveData(address(wbtc), true, address(this));
             amountToLiquidate = debtToCover / 2; // maximum possible liquidation amount
             scaledVariableDebt = _scaledVariableDebt;
         }
@@ -174,33 +192,39 @@ contract LiquidationTest is Common {
         /**
          * LIQUIDATION PROCESS - END ***********
          */
-        ReserveDataParams memory wbtcReserveParamsAfter = fixture_getReserveData(address(wbtc), deployedContracts.protocolDataProvider);
-        ReserveDataParams memory usdcReserveParamsAfter = fixture_getReserveData(address(usdc), deployedContracts.protocolDataProvider);
+        ReserveDataParams memory wbtcReserveParamsAfter =
+            fixture_getReserveData(address(wbtc), deployedContracts.protocolDataProvider);
+        ReserveDataParams memory usdcReserveParamsAfter =
+            fixture_getReserveData(address(usdc), deployedContracts.protocolDataProvider);
         uint256 expectedCollateralLiquidated;
 
         {
-            (,,, uint256 liquidationBonus,,,,,) =
-                deployedContracts.protocolDataProvider.getReserveConfigurationData(address(usdc), true);
+            (,,, uint256 liquidationBonus,,,,,) = deployedContracts
+                .protocolDataProvider
+                .getReserveConfigurationData(address(usdc), true);
 
-            expectedCollateralLiquidated = wbtcPrice * (amountToLiquidate * liquidationBonus / 10_000)
-                * 10 ** usdc.decimals() / (usdcPrice * 10 ** wbtc.decimals());
+            expectedCollateralLiquidated = wbtcPrice
+                * (amountToLiquidate * liquidationBonus / 10_000) * 10 ** usdc.decimals()
+                / (usdcPrice * 10 ** wbtc.decimals());
         }
-        uint256 variableDebtBeforeTx =
-            fixture_calcExpectedVariableDebtTokenBalance(
-                wbtcReserveParamsBefore.variableBorrowRate, 
-                wbtcReserveParamsBefore.variableBorrowIndex, 
-                wbtcReserveParamsBefore.lastUpdateTimestamp, 
-                scaledVariableDebt, 
-                block.timestamp);
+        uint256 variableDebtBeforeTx = fixture_calcExpectedVariableDebtTokenBalance(
+            wbtcReserveParamsBefore.variableBorrowRate,
+            wbtcReserveParamsBefore.variableBorrowIndex,
+            wbtcReserveParamsBefore.lastUpdateTimestamp,
+            scaledVariableDebt,
+            block.timestamp
+        );
         {
-            (,,,,, uint256 healthFactor) = deployedContracts.lendingPool.getUserAccountData(address(this));
+            (,,,,, uint256 healthFactor) =
+                deployedContracts.lendingPool.getUserAccountData(address(this));
             // console.log("AFTER LIQUIDATION: ");
             // console.log("healthFactor: ", healthFactor);
             assertGt(healthFactor, 1 ether);
         }
 
-        (, uint256 currentVariableDebt,,,) =
-            deployedContracts.protocolDataProvider.getUserReserveData(address(wbtc), true, address(this));
+        (, uint256 currentVariableDebt,,,) = deployedContracts
+            .protocolDataProvider
+            .getUserReserveData(address(wbtc), true, address(this));
 
         assertApproxEqRel(currentVariableDebt, variableDebtBeforeTx - amountToLiquidate, 0.01e18);
         assertApproxEqRel(
@@ -216,8 +240,9 @@ contract LiquidationTest is Common {
             0.01e18
         );
         {
-            (,,,, bool usageAsCollateralEnabled) =
-                deployedContracts.protocolDataProvider.getUserReserveData(address(usdc), true, address(this));
+            (,,,, bool usageAsCollateralEnabled) = deployedContracts
+                .protocolDataProvider
+                .getUserReserveData(address(usdc), true, address(this));
             assertEq(usageAsCollateralEnabled, true);
         }
     }
@@ -232,25 +257,33 @@ contract LiquidationTest is Common {
             uint256 usdcDepositAmount = 5e9; /* $5k */ // consider fuzzing here
             uint256 usdcMaxBorrowValue;
             {
-                uint256 usdcDepositValue = usdcDepositAmount * usdcPrice / (10 ** PRICE_FEED_DECIMALS);
-                (, uint256 usdcLtv,,,,,,,) =
-                    deployedContracts.protocolDataProvider.getReserveConfigurationData(address(usdc), true);
+                uint256 usdcDepositValue =
+                    usdcDepositAmount * usdcPrice / (10 ** PRICE_FEED_DECIMALS);
+                (, uint256 usdcLtv,,,,,,,) = deployedContracts
+                    .protocolDataProvider
+                    .getReserveConfigurationData(address(usdc), true);
 
                 usdcMaxBorrowValue = usdcLtv * usdcDepositValue / 10_000;
             }
 
             uint256 wbtcMaxToBorrowRay = usdcMaxBorrowValue.rayDiv(wbtcPrice);
-            uint256 wbtcMaxBorrowAmountWithUsdcCollateral =
-                fixture_preciseConvertWithDecimals(wbtcMaxToBorrowRay, usdc.decimals(), wbtc.decimals());
+            uint256 wbtcMaxBorrowAmountWithUsdcCollateral = fixture_preciseConvertWithDecimals(
+                wbtcMaxToBorrowRay, usdc.decimals(), wbtc.decimals()
+            );
             // console.log("Max to borrow: ", wbtcMaxBorrowAmountWithUsdcCollateral);
             // console.log("Balance: ", wbtc.balanceOf(address(this)));
-            require(wbtc.balanceOf(address(this)) > wbtcMaxBorrowAmountWithUsdcCollateral, "Too less wbtc");
+            require(
+                wbtc.balanceOf(address(this)) > wbtcMaxBorrowAmountWithUsdcCollateral,
+                "Too less wbtc"
+            );
 
             uint256 wbtcDepositAmount = wbtcMaxBorrowAmountWithUsdcCollateral * 15 / 10; // *1,5
 
             /* Main user deposits usdc and wants to borrow */
             usdc.approve(address(deployedContracts.lendingPool), usdcDepositAmount);
-            deployedContracts.lendingPool.deposit(address(usdc), true, usdcDepositAmount, address(this));
+            deployedContracts.lendingPool.deposit(
+                address(usdc), true, usdcDepositAmount, address(this)
+            );
 
             /* Other user deposits wbtc, thanks to that there is enough funds to borrow */
             address user = makeAddr("user");
@@ -263,7 +296,8 @@ contract LiquidationTest is Common {
             );
         }
         {
-            (,,,,, uint256 healthFactor) = deployedContracts.lendingPool.getUserAccountData(address(this));
+            (,,,,, uint256 healthFactor) =
+                deployedContracts.lendingPool.getUserAccountData(address(this));
             // console.log("BEFORE: ");
             // console.log("healthFactor: ", healthFactor);
             assertGe(healthFactor, 1 ether);
@@ -289,10 +323,13 @@ contract LiquidationTest is Common {
             usdcPrice = newUsdcPrice;
         }
 
-        ReserveDataParams memory wbtcReserveParamsBefore = fixture_getReserveData(address(wbtc), deployedContracts.protocolDataProvider);
-        ReserveDataParams memory usdcReserveParamsBefore = fixture_getReserveData(address(usdc), deployedContracts.protocolDataProvider);
+        ReserveDataParams memory wbtcReserveParamsBefore =
+            fixture_getReserveData(address(wbtc), deployedContracts.protocolDataProvider);
+        ReserveDataParams memory usdcReserveParamsBefore =
+            fixture_getReserveData(address(usdc), deployedContracts.protocolDataProvider);
         {
-            (,,,,, uint256 healthFactor) = deployedContracts.lendingPool.getUserAccountData(address(this));
+            (,,,,, uint256 healthFactor) =
+                deployedContracts.lendingPool.getUserAccountData(address(this));
             // console.log("AFTER PRICE CHANGE: ");
             // console.log("healthFactor: ", healthFactor);
             assertLt(healthFactor, 1 ether);
@@ -305,8 +342,9 @@ contract LiquidationTest is Common {
         uint256 scaledVariableDebt;
 
         {
-            (, uint256 debtToCover, uint256 _scaledVariableDebt,,) =
-                deployedContracts.protocolDataProvider.getUserReserveData(address(wbtc), true, address(this));
+            (, uint256 debtToCover, uint256 _scaledVariableDebt,,) = deployedContracts
+                .protocolDataProvider
+                .getUserReserveData(address(wbtc), true, address(this));
             amountToLiquidate = debtToCover / 2; // maximum possible liquidation amount
             scaledVariableDebt = _scaledVariableDebt;
         }
@@ -325,29 +363,35 @@ contract LiquidationTest is Common {
         /**
          * LIQUIDATION PROCESS - END ***********
          */
-        ReserveDataParams memory wbtcReserveParamsAfter = fixture_getReserveData(address(wbtc), deployedContracts.protocolDataProvider);
-        ReserveDataParams memory usdcReserveParamsAfter = fixture_getReserveData(address(usdc), deployedContracts.protocolDataProvider);
+        ReserveDataParams memory wbtcReserveParamsAfter =
+            fixture_getReserveData(address(wbtc), deployedContracts.protocolDataProvider);
+        ReserveDataParams memory usdcReserveParamsAfter =
+            fixture_getReserveData(address(usdc), deployedContracts.protocolDataProvider);
         uint256 expectedCollateralLiquidated;
 
-        (, uint256 currentVariableDebt,,,) =
-            deployedContracts.protocolDataProvider.getUserReserveData(address(wbtc), true, address(this));
+        (, uint256 currentVariableDebt,,,) = deployedContracts
+            .protocolDataProvider
+            .getUserReserveData(address(wbtc), true, address(this));
 
         {
-            (,,, uint256 liquidationBonus,,,,,) =
-                deployedContracts.protocolDataProvider.getReserveConfigurationData(address(usdc), true);
+            (,,, uint256 liquidationBonus,,,,,) = deployedContracts
+                .protocolDataProvider
+                .getReserveConfigurationData(address(usdc), true);
 
-            expectedCollateralLiquidated = wbtcPrice * (amountToLiquidate * liquidationBonus / 10_000)
-                * 10 ** usdc.decimals() / (usdcPrice * 10 ** wbtc.decimals());
+            expectedCollateralLiquidated = wbtcPrice
+                * (amountToLiquidate * liquidationBonus / 10_000) * 10 ** usdc.decimals()
+                / (usdcPrice * 10 ** wbtc.decimals());
         }
-        uint256 variableDebtBeforeTx =
-                fixture_calcExpectedVariableDebtTokenBalance(
-                    wbtcReserveParamsBefore.variableBorrowRate, 
-                    wbtcReserveParamsBefore.variableBorrowIndex, 
-                    wbtcReserveParamsBefore.lastUpdateTimestamp, 
-                    scaledVariableDebt, 
-                    block.timestamp);
+        uint256 variableDebtBeforeTx = fixture_calcExpectedVariableDebtTokenBalance(
+            wbtcReserveParamsBefore.variableBorrowRate,
+            wbtcReserveParamsBefore.variableBorrowIndex,
+            wbtcReserveParamsBefore.lastUpdateTimestamp,
+            scaledVariableDebt,
+            block.timestamp
+        );
         {
-            (,,,,, uint256 healthFactor) = deployedContracts.lendingPool.getUserAccountData(address(this));
+            (,,,,, uint256 healthFactor) =
+                deployedContracts.lendingPool.getUserAccountData(address(this));
             // console.log("AFTER LIQUIDATION: ");
             // console.log("healthFactor: ", healthFactor);
             assertGt(healthFactor, 1 ether);
@@ -372,8 +416,9 @@ contract LiquidationTest is Common {
             0.01e18
         );
         {
-            (,,,, bool usageAsCollateralEnabled) =
-                deployedContracts.protocolDataProvider.getUserReserveData(address(usdc), true, address(this));
+            (,,,, bool usageAsCollateralEnabled) = deployedContracts
+                .protocolDataProvider
+                .getUserReserveData(address(usdc), true, address(this));
             assertEq(usageAsCollateralEnabled, true);
         }
     }

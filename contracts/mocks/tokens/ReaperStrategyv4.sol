@@ -7,9 +7,7 @@ import {IVault} from "../dependencies/IVault.sol";
 import {SafeERC20} from "../dependencies/SafeERC20.sol";
 import {IERC20} from "../dependencies/IERC20.sol";
 
-abstract contract ReaperBaseStrategyv4 is
-    IStrategy
-{
+abstract contract ReaperBaseStrategyv4 is IStrategy {
     using SafeERC20 for IERC20;
 
     uint256 public constant PERCENT_DIVISOR = 10_000;
@@ -32,11 +30,7 @@ abstract contract ReaperBaseStrategyv4 is
     /// @custom:oz-upgrades-unsafe-allow constructor
     // constructor() initializer {}
 
-    function __ReaperBaseStrategy_init(
-        address _vault,
-        address _want
-    ) internal {
-
+    function __ReaperBaseStrategy_init(address _vault, address _want) internal {
         vault = _vault;
         want = _want;
         IERC20(want).forceApprove(vault, type(uint256).max);

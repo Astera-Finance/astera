@@ -1,13 +1,14 @@
 // SPDX-License-Identifier: agpl-3.0
 pragma solidity ^0.8.20;
 
-import {ERC20} from '../../dependencies/openzeppelin/contracts/ERC20.sol';
-import {IERC20} from '../../dependencies/openzeppelin/contracts/IERC20.sol';
+import {ERC20} from "../../dependencies/openzeppelin/contracts/ERC20.sol";
+import {IERC20} from "../../dependencies/openzeppelin/contracts/IERC20.sol";
 // import {IERC4626} from '../../interfaces/IERC4626.sol';
-import {IERC20Metadata} from "../../../contracts/dependencies/openzeppelin/contracts/IERC20Metadata.sol";
+import {IERC20Metadata} from
+    "../../../contracts/dependencies/openzeppelin/contracts/IERC20Metadata.sol";
 import {SafeERC20} from "../../../contracts/dependencies/openzeppelin/contracts/SafeERC20.sol";
-import {IStrategy} from '../dependencies/IStrategy.sol';
-import {IERC4626Events} from './IERC4626Events.sol';
+import {IStrategy} from "../dependencies/IStrategy.sol";
+import {IERC4626Events} from "./IERC4626Events.sol";
 
 /**
  * @title MockERC4626
@@ -27,7 +28,7 @@ contract MockERC4626 is ERC20, IERC4626Events {
     }
 
     mapping(address => StrategyParams) public strategies;
-    
+
     // Ordering that `withdraw` uses to determine which strategies to pull funds from
     address[] public withdrawalQueue;
 
@@ -161,7 +162,6 @@ contract MockERC4626 is ERC20, IERC4626Events {
      * @param _strategy The strategy to revoke.
      */
     function revokeStrategy(address _strategy) external {
-
         if (strategies[_strategy].allocBPS == 0) {
             return;
         }
@@ -197,7 +197,9 @@ contract MockERC4626 is ERC20, IERC4626Events {
             }
 
             uint256 available = stratMaxAllocation - stratCurrentAllocation;
-            available = available > (vaultMaxAllocation - vaultCurrentAllocation) ? (vaultMaxAllocation - vaultCurrentAllocation) : available;
+            available = available > (vaultMaxAllocation - vaultCurrentAllocation)
+                ? (vaultMaxAllocation - vaultCurrentAllocation)
+                : available;
             available = available > totalIdle ? totalIdle : available;
 
             return int256(available);
@@ -247,7 +249,9 @@ contract MockERC4626 is ERC20, IERC4626Events {
      * Returns an uint256 with 18 decimals of how much underlying asset one vault share represents.
      */
     function getPricePerFullShare() public view returns (uint256) {
-        return totalSupply() == 0 ? 10 ** decimals() : (_freeFunds() * 10 ** decimals()) / totalSupply();
+        return totalSupply() == 0
+            ? 10 ** decimals()
+            : (_freeFunds() * 10 ** decimals()) / totalSupply();
     }
 
     /**
@@ -352,7 +356,8 @@ contract MockERC4626 is ERC20, IERC4626Events {
             }
 
             require(
-                totalLoss <= ((value + totalLoss) * withdrawMaxLoss) / PERCENT_DIVISOR, "Withdraw loss exceeds slippage"
+                totalLoss <= ((value + totalLoss) * withdrawMaxLoss) / PERCENT_DIVISOR,
+                "Withdraw loss exceeds slippage"
             );
         }
 
@@ -389,7 +394,8 @@ contract MockERC4626 is ERC20, IERC4626Events {
         if (totalAllocBPS != 0) {
             // reduce strat's allocBPS proportional to loss
             uint256 lossProportion = (loss * totalAllocBPS) / totalAllocated;
-            uint256 bpsChange = lossProportion > stratParams.allocBPS ? stratParams.allocBPS : lossProportion;
+            uint256 bpsChange =
+                lossProportion > stratParams.allocBPS ? stratParams.allocBPS : lossProportion;
 
             // If the loss is too small, bpsChange will be 0
             if (bpsChange != 0) {
@@ -479,7 +485,9 @@ contract MockERC4626 is ERC20, IERC4626Events {
             token.safeTransfer(vars.stratAddr, vars.credit - vars.freeWantInStrat);
         } else if (vars.credit < vars.freeWantInStrat) {
             totalIdle += (vars.freeWantInStrat - vars.credit);
-            token.safeTransferFrom(vars.stratAddr, address(this), vars.freeWantInStrat - vars.credit);
+            token.safeTransferFrom(
+                vars.stratAddr, address(this), vars.freeWantInStrat - vars.credit
+            );
         }
 
         // Profit is locked and gradually released per block
@@ -580,7 +588,6 @@ contract MockERC4626 is ERC20, IERC4626Events {
      * @param _token address of the token to rescue.
      */
     function inCaseTokensGetStuck(address _token) external {
-
         uint256 amount = IERC20(_token).balanceOf(address(this));
         if (_token == address(token)) {
             amount -= totalIdle;

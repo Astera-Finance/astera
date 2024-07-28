@@ -31,7 +31,8 @@ contract VariableDebtTokenTest is Common {
             deployedContracts.lendingPoolConfigurator,
             deployedContracts.lendingPoolAddressesProvider
         );
-        variableDebtTokens = fixture_getVarDebtTokens(tokens, deployedContracts.protocolDataProvider);
+        variableDebtTokens =
+            fixture_getVarDebtTokens(tokens, deployedContracts.protocolDataProvider);
         mockedVaults = fixture_deployErc4626Mocks(tokens, address(deployedContracts.treasury));
         erc20Tokens = fixture_getErc20Tokens(tokens);
         fixture_transferTokensToTestContract(erc20Tokens, 100_000 ether, address(this));
@@ -58,16 +59,22 @@ contract VariableDebtTokenTest is Common {
             for (uint256 cnt = 0; cnt < maxValToMintAndBurn; cnt += granuality) {
                 variableDebtTokens[idx].mint(address(this), address(this), granuality, 1);
             }
-            assertEq(variableDebtTokens[idx].balanceOf(address(this)), maxValToMintAndBurn.rayDiv(1));
+            assertEq(
+                variableDebtTokens[idx].balanceOf(address(this)), maxValToMintAndBurn.rayDiv(1)
+            );
             variableDebtTokens[idx].mint(address(this), address(this), maxValToMintAndBurn, 1);
-            assertEq(variableDebtTokens[idx].balanceOf(address(this)), 2 * maxValToMintAndBurn.rayDiv(1));
+            assertEq(
+                variableDebtTokens[idx].balanceOf(address(this)), 2 * maxValToMintAndBurn.rayDiv(1)
+            );
             assertEq(variableDebtTokens[idx].totalSupply(), 2 * maxValToMintAndBurn.rayDiv(1));
 
             /* Burning tests with additiveness */
             for (uint256 cnt = 0; cnt < maxValToMintAndBurn; cnt += granuality) {
                 variableDebtTokens[idx].burn(address(this), granuality, 1);
             }
-            assertEq(variableDebtTokens[idx].balanceOf(address(this)), maxValToMintAndBurn.rayDiv(1));
+            assertEq(
+                variableDebtTokens[idx].balanceOf(address(this)), maxValToMintAndBurn.rayDiv(1)
+            );
             variableDebtTokens[idx].burn(address(this), maxValToMintAndBurn, 1);
             assertEq(variableDebtTokens[idx].balanceOf(address(this)), 0);
             assertEq(variableDebtTokens[idx].totalSupply(), 0);
@@ -82,17 +89,22 @@ contract VariableDebtTokenTest is Common {
         for (uint32 idx = 0; idx < variableDebtTokens.length; idx++) {
             /* Minting tests with additiveness */
             erc20Tokens[idx].approve(address(deployedContracts.lendingPool), maxValToDeposit);
-            deployedContracts.lendingPool.deposit(address(erc20Tokens[idx]), true, maxValToDeposit, address(this));
+            deployedContracts.lendingPool.deposit(
+                address(erc20Tokens[idx]), true, maxValToDeposit, address(this)
+            );
 
             assertEq(variableDebtTokens[idx].balanceOf(address(this)), 0);
             assertEq(variableDebtTokens[idx].totalSupply(), 0);
 
             /* Burning tests with additiveness */
-            (, uint256 currentAssetLtv,,,,,,,) =
-                deployedContracts.protocolDataProvider.getReserveConfigurationData(address(erc20Tokens[idx]), true);
+            (, uint256 currentAssetLtv,,,,,,,) = deployedContracts
+                .protocolDataProvider
+                .getReserveConfigurationData(address(erc20Tokens[idx]), true);
 
             uint256 amountToBorrowRaw = maxValToDeposit * currentAssetLtv / 10_000;
-            deployedContracts.lendingPool.borrow(address(erc20Tokens[idx]), true, amountToBorrowRaw, address(this));
+            deployedContracts.lendingPool.borrow(
+                address(erc20Tokens[idx]), true, amountToBorrowRaw, address(this)
+            );
             assertEq(variableDebtTokens[idx].balanceOf(address(this)), amountToBorrowRaw);
             assertEq(variableDebtTokens[idx].totalSupply(), amountToBorrowRaw);
         }

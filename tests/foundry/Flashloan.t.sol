@@ -10,7 +10,11 @@ contract FlashloanTest is Common {
     using WadRayMath for uint256;
 
     event FlashLoan(
-        address indexed target, address indexed initiator, address indexed asset, uint256 amount, uint256 premium
+        address indexed target,
+        address indexed initiator,
+        address indexed asset,
+        uint256 amount,
+        uint256 premium
     );
 
     ERC20[] erc20Tokens;
@@ -60,7 +64,9 @@ contract FlashloanTest is Common {
                 totalAmountsToPay[idx] = amounts[idx] + premiums[idx];
                 assertEq(balancesBefore[idx] + amounts[idx], IERC20(assets[idx]).balanceOf(sender));
                 assertEq(assets[idx], tokens[idx]);
-                IERC20(assets[idx]).approve(address(deployedContracts.lendingPool), totalAmountsToPay[idx]);
+                IERC20(assets[idx]).approve(
+                    address(deployedContracts.lendingPool), totalAmountsToPay[idx]
+                );
             }
             assertEq(sender, address(this));
             return true;
@@ -68,7 +74,9 @@ contract FlashloanTest is Common {
             for (uint32 idx = 0; idx < tokens.length; idx++) {
                 console.log("[In] Premium: ", premiums[idx]);
                 totalAmountsToPay[idx] = amounts[idx] + premiums[idx];
-                assertEq(balancesBefore[idx] + amounts[idx], IERC20(assets[idx]).balanceOf(address(this)));
+                assertEq(
+                    balancesBefore[idx] + amounts[idx], IERC20(assets[idx]).balanceOf(address(this))
+                );
                 assertEq(assets[idx], tokens[idx]);
             }
             return true;
@@ -87,7 +95,9 @@ contract FlashloanTest is Common {
         for (uint32 idx = 0; idx < tokens.length; idx++) {
             uint256 amountToDeposit = IERC20(tokens[idx]).balanceOf(address(this)) / 2;
             erc20Tokens[idx].approve(address(deployedContracts.lendingPool), amountToDeposit);
-            deployedContracts.lendingPool.deposit(address(erc20Tokens[idx]), true, amountToDeposit, address(this));
+            deployedContracts.lendingPool.deposit(
+                address(erc20Tokens[idx]), true, amountToDeposit, address(this)
+            );
             reserveTypes[idx] = true;
             tokenAddresses[idx] = address(erc20Tokens[idx]);
             amounts[idx] = IERC20(tokens[idx]).balanceOf(address(this)) / 2;
@@ -116,7 +126,9 @@ contract FlashloanTest is Common {
         for (uint32 idx = 0; idx < tokens.length; idx++) {
             uint256 amountToDeposit = IERC20(tokens[idx]).balanceOf(address(this)) / 2;
             erc20Tokens[idx].approve(address(deployedContracts.lendingPool), amountToDeposit);
-            deployedContracts.lendingPool.deposit(address(erc20Tokens[idx]), true, amountToDeposit, address(this));
+            deployedContracts.lendingPool.deposit(
+                address(erc20Tokens[idx]), true, amountToDeposit, address(this)
+            );
             reserveTypes[idx] = true;
             tokenAddresses[idx] = address(erc20Tokens[idx]);
             amounts[idx] = IERC20(tokens[idx]).balanceOf(address(this)) / 2;
@@ -141,7 +153,9 @@ contract FlashloanTest is Common {
         for (uint32 idx = 0; idx < tokens.length; idx++) {
             uint256 amountToDeposit = IERC20(tokens[idx]).balanceOf(address(this)) / 2;
             erc20Tokens[idx].approve(address(deployedContracts.lendingPool), amountToDeposit);
-            deployedContracts.lendingPool.deposit(address(erc20Tokens[idx]), true, amountToDeposit, address(this));
+            deployedContracts.lendingPool.deposit(
+                address(erc20Tokens[idx]), true, amountToDeposit, address(this)
+            );
             reserveTypes[idx] = true;
             tokenAddresses[idx] = address(erc20Tokens[idx]);
             amounts[idx] = IERC20(tokens[idx]).balanceOf(address(this)) / 2;

@@ -10,8 +10,6 @@ import "contracts/protocol/libraries/helpers/Errors.sol";
 import "forge-std/StdUtils.sol";
 // import {ILendingPool} from "contracts/interfaces/ILendingPool.sol";
 
-
-
 contract MiniPoolAddressProvider is Common {
     ERC20[] erc20Tokens;
     DeployedContracts deployedContracts;
@@ -47,7 +45,8 @@ contract MiniPoolAddressProvider is Common {
         erc20Tokens = fixture_getErc20Tokens(tokens);
         fixture_transferTokensToTestContract(erc20Tokens, 1_000_000 ether, address(this));
         miniPoolContracts = fixture_deployMiniPoolSetup(
-            address(deployedContracts.lendingPoolAddressesProvider), address(deployedContracts.lendingPool)
+            address(deployedContracts.lendingPoolAddressesProvider),
+            address(deployedContracts.lendingPool)
         );
 
         address[] memory reserves = new address[](2 * tokens.length);
@@ -62,23 +61,29 @@ contract MiniPoolAddressProvider is Common {
 
         miniPool = fixture_configureMiniPoolReserves(reserves, configAddresses, miniPoolContracts);
         vm.label(miniPool, "MiniPool");
-
     }
 
-
-    function testSetMiniPoolConfigurator() public{
-        MiniPoolAddressesProvider miniPoolAddressesProvider =
-            new MiniPoolAddressesProvider(ILendingPoolAddressesProvider(address(deployedContracts.lendingPoolAddressesProvider)));
+    function testSetMiniPoolConfigurator() public {
+        MiniPoolAddressesProvider miniPoolAddressesProvider = new MiniPoolAddressesProvider(
+            ILendingPoolAddressesProvider(address(deployedContracts.lendingPoolAddressesProvider))
+        );
         address miniPoolConfigIMPL = address(new MiniPoolConfigurator());
         console.log("1. MiniPoolConfigurator", miniPoolAddressesProvider.getMiniPoolConfigurator());
-        //@issue: MiniPoolConfiurator is not set during initialization and cannot be updated 
+        //@issue: MiniPoolConfiurator is not set during initialization and cannot be updated
         miniPoolAddressesProvider.setMiniPoolConfigurator(address(miniPoolConfigIMPL));
         console.log("1. MiniPoolConfigurator", miniPoolAddressesProvider.getMiniPoolConfigurator());
 
-        console.log("2. MiniPoolConfigurator", miniPoolContracts.miniPoolAddressesProvider.getMiniPoolConfigurator());
-        miniPoolContracts.miniPoolAddressesProvider.setMiniPoolConfigurator(address(miniPoolConfigIMPL));
-        console.log("2. MiniPoolConfigurator", miniPoolContracts.miniPoolAddressesProvider.getMiniPoolConfigurator());
+        console.log(
+            "2. MiniPoolConfigurator",
+            miniPoolContracts.miniPoolAddressesProvider.getMiniPoolConfigurator()
+        );
+        miniPoolContracts.miniPoolAddressesProvider.setMiniPoolConfigurator(
+            address(miniPoolConfigIMPL)
+        );
+        console.log(
+            "2. MiniPoolConfigurator",
+            miniPoolContracts.miniPoolAddressesProvider.getMiniPoolConfigurator()
+        );
         // miniPoolContracts.miniPoolAddressesProvider.setMiniPoolConfigurator(randomAddress);
-
     }
 }

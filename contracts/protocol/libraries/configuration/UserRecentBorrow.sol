@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: agpl-3.0
 pragma solidity ^0.8.23;
 
-import {Errors} from '../helpers/Errors.sol';
-import {DataTypes} from '../types/DataTypes.sol';
+import {Errors} from "../helpers/Errors.sol";
+import {DataTypes} from "../types/DataTypes.sol";
 
 /**
  * @title UserRecentBorrow library
@@ -26,35 +26,60 @@ library UserRecentBorrow {
     uint256 constant MAX_VALID_LIQUIDATION_THRESHOLD = 65535;
     uint256 constant MAX_VALID_TIMESTAMP = 281474976710655;
 
-    function setAverageLtv(DataTypes.UserRecentBorrowMap memory self, uint256 averageLtv) internal pure {
-        require (averageLtv <= MAX_VALID_LTV, Errors.RC_INVALID_LTV);
+    function setAverageLtv(DataTypes.UserRecentBorrowMap memory self, uint256 averageLtv)
+        internal
+        pure
+    {
+        require(averageLtv <= MAX_VALID_LTV, Errors.RC_INVALID_LTV);
 
         self.data = (self.data & AVERAGE_LTV_MASK) | averageLtv;
     }
 
-    function getAverageLtv(DataTypes.UserRecentBorrowMap storage self) internal view returns (uint256) {
+    function getAverageLtv(DataTypes.UserRecentBorrowMap storage self)
+        internal
+        view
+        returns (uint256)
+    {
         return self.data & ~AVERAGE_LTV_MASK;
     }
 
-    function setAverageLiquidationThreshold(DataTypes.UserRecentBorrowMap memory self, uint256 averageLiquidationThreshold) internal pure {
-        require (averageLiquidationThreshold <= MAX_VALID_LIQUIDATION_THRESHOLD, Errors.RC_INVALID_LIQ_THRESHOLD);
+    function setAverageLiquidationThreshold(
+        DataTypes.UserRecentBorrowMap memory self,
+        uint256 averageLiquidationThreshold
+    ) internal pure {
+        require(
+            averageLiquidationThreshold <= MAX_VALID_LIQUIDATION_THRESHOLD,
+            Errors.RC_INVALID_LIQ_THRESHOLD
+        );
 
-        self.data = (self.data & AVERAGE_LIQUIDATION_THRESHOLD_MASK) |
-            (averageLiquidationThreshold << AVERAGE_LIQUIDATION_THRESHOLD_START_BIT_POSITION);
+        self.data = (self.data & AVERAGE_LIQUIDATION_THRESHOLD_MASK)
+            | (averageLiquidationThreshold << AVERAGE_LIQUIDATION_THRESHOLD_START_BIT_POSITION);
     }
 
-    function getAverageLiquidationThreshold(DataTypes.UserRecentBorrowMap storage self) internal view returns (uint256) {
-        return (self.data & ~AVERAGE_LIQUIDATION_THRESHOLD_MASK) >> AVERAGE_LIQUIDATION_THRESHOLD_START_BIT_POSITION;
+    function getAverageLiquidationThreshold(DataTypes.UserRecentBorrowMap storage self)
+        internal
+        view
+        returns (uint256)
+    {
+        return (self.data & ~AVERAGE_LIQUIDATION_THRESHOLD_MASK)
+            >> AVERAGE_LIQUIDATION_THRESHOLD_START_BIT_POSITION;
     }
 
-    function setTimestamp(DataTypes.UserRecentBorrowMap memory self, uint256 averageTimestamp) internal pure {
-        require (averageTimestamp <= MAX_VALID_TIMESTAMP, Errors.UB_INVALID_TIMESTAMP);
+    function setTimestamp(DataTypes.UserRecentBorrowMap memory self, uint256 averageTimestamp)
+        internal
+        pure
+    {
+        require(averageTimestamp <= MAX_VALID_TIMESTAMP, Errors.UB_INVALID_TIMESTAMP);
 
-        self.data = (self.data & TIMESTAMP_MASK) |
-            (averageTimestamp << TIMESTAMP_START_BIT_POSITION);
+        self.data =
+            (self.data & TIMESTAMP_MASK) | (averageTimestamp << TIMESTAMP_START_BIT_POSITION);
     }
 
-    function getTimestamp(DataTypes.UserRecentBorrowMap storage self) internal view returns (uint256) {
+    function getTimestamp(DataTypes.UserRecentBorrowMap storage self)
+        internal
+        view
+        returns (uint256)
+    {
         return (self.data & ~TIMESTAMP_MASK) >> TIMESTAMP_START_BIT_POSITION;
     }
 }
