@@ -49,7 +49,7 @@ library MiniPoolDepositLogic {
         mapping(address => DataTypes.MiniPoolReserveData) storage _reserves,
         mapping(address => DataTypes.UserConfigurationMap) storage _usersConfig,
         IMiniPoolAddressesProvider _addressesProvider
-    ) external {
+    ) internal {
         DataTypes.MiniPoolReserveData storage reserve = _reserves[params.asset];
 
         MiniPoolValidationLogic.validateDeposit(reserve, params.amount);
@@ -78,7 +78,7 @@ library MiniPoolDepositLogic {
         mapping(address => DataTypes.MiniPoolReserveData) storage _reserves,
         mapping(address => DataTypes.UserConfigurationMap) storage _usersConfig,
         IMiniPoolAddressesProvider _addressesProvider
-    ) external {
+    ) internal {
         DataTypes.MiniPoolReserveData storage reserve = _reserves[params.asset];
 
         MiniPoolValidationLogic.validateDeposit(reserve, params.amount);

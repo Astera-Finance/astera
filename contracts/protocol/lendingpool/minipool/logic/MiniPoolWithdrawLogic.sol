@@ -58,7 +58,7 @@ library MiniPoolWithdrawLogic {
         mapping(address => DataTypes.UserConfigurationMap) storage usersConfig,
         mapping(uint256 => DataTypes.ReserveReference) storage reserves,
         IMiniPoolAddressesProvider addressesProvider
-    ) external returns (uint256) {
+    ) internal returns (uint256) {
         DataTypes.MiniPoolReserveData storage reserve = reservesData[params.asset];
         withdrawLocalVars memory localVars;
 
@@ -123,7 +123,7 @@ library MiniPoolWithdrawLogic {
         mapping(address => DataTypes.UserConfigurationMap) storage usersConfig,
         mapping(uint256 => DataTypes.ReserveReference) storage reservesList,
         IMiniPoolAddressesProvider addressesProvider
-    ) external {
+    ) internal {
         require(
             msg.sender == reserves[params.asset].aTokenAddress, Errors.LP_CALLER_MUST_BE_AN_ATOKEN
         );
@@ -160,7 +160,7 @@ library MiniPoolWithdrawLogic {
         mapping(address => DataTypes.UserConfigurationMap) storage usersConfig,
         mapping(uint256 => DataTypes.ReserveReference) storage reserves,
         IMiniPoolAddressesProvider addressesProvider
-    ) external returns (uint256) {
+    ) internal returns (uint256) {
         DataTypes.MiniPoolReserveData storage reserve = reservesData[params.asset];
         withdrawLocalVars memory localVars;
 

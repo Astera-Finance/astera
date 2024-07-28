@@ -31,7 +31,7 @@ contract LendingPoolAddressesProvider is Ownable, ILendingPoolAddressesProvider 
     bytes32 private constant MINIPOOL_ADDRESSES_PROVIDER = "MINIPOOL_ADDRESSES_PROVIDER";
     bytes32 private constant FLOW_LIMITER = "FLOW_LIMITER";
 
-    constructor(string memory marketId) public Ownable(msg.sender) {
+    constructor(string memory marketId) Ownable(msg.sender) {
         _setMarketId(marketId);
     }
 

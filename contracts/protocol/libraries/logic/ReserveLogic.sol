@@ -168,7 +168,7 @@ library ReserveLogic {
         address aTokenAddress,
         address variableDebtTokenAddress,
         address interestRateStrategyAddress
-    ) external {
+    ) internal {
         require(reserve.aTokenAddress == address(0), Errors.RL_RESERVE_ALREADY_INITIALIZED);
 
         reserve.liquidityIndex = uint128(WadRayMath.ray());

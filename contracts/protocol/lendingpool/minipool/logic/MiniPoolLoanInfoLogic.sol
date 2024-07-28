@@ -75,7 +75,7 @@ library MiniPoolLoanInfoLogic {
         mapping(address => uint8) storage _userLoanInfoCount,
         mapping(address => mapping(bool => DataTypes.ReserveData)) storage _reserves,
         updateLoanDataParams memory params
-    ) external returns (bool) {
+    ) internal returns (bool) {
         updateLoanDataLocalVars memory vars;
         if (params.updateLoan) {
             vars.i = 0;
@@ -139,7 +139,7 @@ library MiniPoolLoanInfoLogic {
     function getReserveIdByAddress(
         mapping(address => mapping(bool => DataTypes.ReserveData)) storage _reserves,
         address asset
-    ) public view returns (uint8) {
+    ) internal view returns (uint8) {
         return _reserves[asset][false].id;
     }
 }

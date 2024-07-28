@@ -16,7 +16,7 @@ library LiquidationLogic {
         address _addressesProvider;
     }
 
-    function liquidationCall(liquidationCallParams memory params) external {
+    function liquidationCall(liquidationCallParams memory params) internal {
         address collateralManager = ILendingPoolAddressesProvider(params._addressesProvider)
             .getLendingPoolCollateralManager();
 

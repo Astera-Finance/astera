@@ -58,11 +58,11 @@ library GenericLogic {
         address user,
         uint256 amount,
         mapping(address => mapping(bool => DataTypes.ReserveData)) storage reservesData,
-        DataTypes.UserConfigurationMap calldata userConfig,
+        DataTypes.UserConfigurationMap storage userConfig,
         mapping(uint256 => DataTypes.ReserveReference) storage reserves,
         uint256 reservesCount,
         address oracle
-    ) external view returns (bool) {
+    ) internal view returns (bool) {
         if (
             !userConfig.isBorrowingAny()
                 || !userConfig.isUsingAsCollateral(reservesData[asset][reserveType].id)

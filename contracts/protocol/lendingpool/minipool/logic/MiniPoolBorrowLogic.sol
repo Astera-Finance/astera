@@ -253,7 +253,7 @@ library MiniPoolBorrowLogic {
         mapping(uint256 => DataTypes.ReserveReference) storage reservesList,
         mapping(address => DataTypes.UserConfigurationMap) storage usersConfig,
         mapping(address => DataTypes.UserRecentBorrowMap) storage _usersRecentBorrow
-    ) public {
+    ) internal {
         DataTypes.MiniPoolReserveData storage reserve = reserves[vars.asset];
         require(reserve.configuration.getActive(), Errors.VL_NO_ACTIVE_RESERVE);
 
@@ -350,7 +350,7 @@ library MiniPoolBorrowLogic {
         repayParams memory params,
         mapping(address => DataTypes.MiniPoolReserveData) storage _reserves,
         mapping(address => DataTypes.UserConfigurationMap) storage _usersConfig
-    ) external returns (uint256) {
+    ) internal returns (uint256) {
         DataTypes.MiniPoolReserveData storage reserve = _reserves[params.asset];
 
         (uint256 variableDebt) = Helpers.getUserCurrentDebt(params.onBehalfOf, reserve);

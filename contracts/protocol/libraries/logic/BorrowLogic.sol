@@ -241,7 +241,7 @@ library BorrowLogic {
         mapping(uint256 => DataTypes.ReserveReference) storage reservesList,
         mapping(address => DataTypes.UserConfigurationMap) storage usersConfig,
         mapping(address => DataTypes.UserRecentBorrowMap) storage _usersRecentBorrow
-    ) public {
+    ) internal {
         DataTypes.ReserveData storage reserve = reserves[vars.asset][vars.reserveType];
         require(reserve.configuration.getActive(), Errors.VL_NO_ACTIVE_RESERVE);
 
@@ -324,7 +324,7 @@ library BorrowLogic {
         repayParams memory params,
         mapping(address => mapping(bool => DataTypes.ReserveData)) storage _reserves,
         mapping(address => DataTypes.UserConfigurationMap) storage _usersConfig
-    ) external returns (uint256) {
+    ) internal returns (uint256) {
         DataTypes.ReserveData storage reserve = _reserves[params.asset][params.reserveType];
 
         (uint256 variableDebt) = Helpers.getUserCurrentDebt(params.onBehalfOf, reserve);
@@ -363,7 +363,7 @@ library BorrowLogic {
         repayParams memory params,
         mapping(address => mapping(bool => DataTypes.ReserveData)) storage _reserves,
         mapping(address => DataTypes.UserConfigurationMap) storage _usersConfig
-    ) external returns (uint256) {
+    ) internal returns (uint256) {
         DataTypes.ReserveData storage reserve = _reserves[params.asset][params.reserveType];
 
         (uint256 variableDebt) = Helpers.getUserCurrentDebt(params.onBehalfOf, reserve);
@@ -409,7 +409,7 @@ library BorrowLogic {
     function executeMiniPoolBorrow(
         ExecuteMiniPoolBorrowParams memory params,
         mapping(address => mapping(bool => DataTypes.ReserveData)) storage reserves
-    ) external {
+    ) internal {
         IFlowLimiter flowLimiter = IFlowLimiter(params.addressesProvider.getFlowLimiter());
         DataTypes.ReserveData storage reserve = reserves[params.asset][params.reserveType];
         require(reserve.configuration.getActive(), Errors.VL_NO_ACTIVE_RESERVE);

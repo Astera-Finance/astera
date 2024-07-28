@@ -40,7 +40,7 @@ contract Oracle is IPriceOracleGetter, Ownable {
         address fallbackOracle,
         address baseCurrency,
         uint256 baseCurrencyUnit
-    ) public Ownable(msg.sender) {
+    ) Ownable(msg.sender) {
         _setFallbackOracle(fallbackOracle);
         _setAssetsSources(assets, sources);
         BASE_CURRENCY = baseCurrency;

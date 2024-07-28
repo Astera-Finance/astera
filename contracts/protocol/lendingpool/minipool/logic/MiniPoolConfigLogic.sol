@@ -28,7 +28,7 @@ import {MiniPoolValidationLogic} from "./MiniPoolValidationLogic.sol";
 library MiniPoolConfigLogic {
 /*
     function setUserUseReserveAsCollateral(address asset, bool reserveType, bool useAsCollateral)
-    external
+    internal
     override
     whenNotPaused
   {

@@ -9,7 +9,7 @@ contract ChainlinkSourcesRegistry is Ownable {
 
     event AggregatorUpdated(address token, address aggregator);
 
-    constructor() public Ownable(msg.sender) {}
+    constructor() Ownable(msg.sender) {}
 
     function updateAggregators(address[] memory assets, address[] memory aggregators)
         external

@@ -36,7 +36,7 @@ library ValidationLogic {
      * @param reserve The reserve object on which the user is depositing
      * @param amount The amount to be deposited
      */
-    function validateDeposit(DataTypes.ReserveData storage reserve, uint256 amount) external view {
+    function validateDeposit(DataTypes.ReserveData storage reserve, uint256 amount) internal view {
         (bool isActive, bool isFrozen,) = reserve.configuration.getFlags();
         uint256 depositCapExponent = reserve.configuration.getDepositCap();
         uint256 depositCap =
@@ -74,7 +74,7 @@ library ValidationLogic {
         mapping(address => mapping(bool => DataTypes.ReserveData)) storage reservesData,
         DataTypes.UserConfigurationMap storage userConfig,
         mapping(uint256 => DataTypes.ReserveReference) storage reserves
-    ) external view {
+    ) internal view {
         require(validateParams.amount != 0, Errors.VL_INVALID_AMOUNT);
         require(
             validateParams.amount <= validateParams.userBalance,
@@ -154,7 +154,7 @@ library ValidationLogic {
         DataTypes.UserConfigurationMap storage userConfig,
         mapping(uint256 => DataTypes.ReserveReference) storage reserves,
         DataTypes.UserRecentBorrowMap storage userRecentBorrow
-    ) external view {
+    ) internal view {
         ValidateBorrowLocalVars memory vars;
         BorrowLogic.CalculateUserAccountDataVolatileParams memory params;
         params.user = validateParams.userAddress;
@@ -208,7 +208,7 @@ library ValidationLogic {
         uint256 amountSent,
         address onBehalfOf,
         uint256 variableDebt
-    ) external view {
+    ) internal view {
         bool isActive = reserve.configuration.getActive();
 
         require(isActive, Errors.VL_NO_ACTIVE_RESERVE);
@@ -242,7 +242,7 @@ library ValidationLogic {
         mapping(uint256 => DataTypes.ReserveReference) storage reserves,
         uint256 reservesCount,
         address oracle
-    ) external view {
+    ) internal view {
         uint256 underlyingBalance = IERC20(reserve.aTokenAddress).balanceOf(msg.sender);
 
         require(underlyingBalance > 0, Errors.VL_UNDERLYING_BALANCE_NOT_GREATER_THAN_0);

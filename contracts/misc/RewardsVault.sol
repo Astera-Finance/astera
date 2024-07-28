@@ -20,7 +20,7 @@ contract RewardsVault is Ownable {
         address incentivesController,
         ILendingPoolAddressesProvider provider,
         address rewardToken
-    ) public Ownable(msg.sender) {
+    ) Ownable(msg.sender) {
         INCENTIVES_CONTROLLER = incentivesController;
         ADDRESSES_PROVIDER = provider;
         REWARD_TOKEN = rewardToken;

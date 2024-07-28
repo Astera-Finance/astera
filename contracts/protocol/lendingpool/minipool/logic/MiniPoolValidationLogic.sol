@@ -38,7 +38,7 @@ library MiniPoolValidationLogic {
      * @param amount The amount to be deposited
      */
     function validateDeposit(DataTypes.MiniPoolReserveData storage reserve, uint256 amount)
-        external
+        internal
         view
     {
         (bool isActive, bool isFrozen,) = reserve.configuration.getFlags();
@@ -78,7 +78,7 @@ library MiniPoolValidationLogic {
         mapping(address => DataTypes.MiniPoolReserveData) storage reservesData,
         DataTypes.UserConfigurationMap storage userConfig,
         mapping(uint256 => DataTypes.ReserveReference) storage reserves
-    ) external view {
+    ) internal view {
         require(validateParams.amount != 0, Errors.VL_INVALID_AMOUNT);
         require(
             validateParams.amount <= validateParams.userBalance,
@@ -156,7 +156,7 @@ library MiniPoolValidationLogic {
         DataTypes.UserConfigurationMap storage userConfig,
         mapping(uint256 => DataTypes.ReserveReference) storage reserves,
         DataTypes.UserRecentBorrowMap storage userRecentBorrow
-    ) external view {
+    ) internal view {
         ValidateBorrowLocalVars memory vars;
         MiniPoolBorrowLogic.CalculateUserAccountDataVolatileParams memory params;
         params.user = validateParams.userAddress;
@@ -210,7 +210,7 @@ library MiniPoolValidationLogic {
         uint256 amountSent,
         address onBehalfOf,
         uint256 variableDebt
-    ) external view {
+    ) internal view {
         bool isActive = reserve.configuration.getActive();
 
         require(isActive, Errors.VL_NO_ACTIVE_RESERVE);
@@ -244,7 +244,7 @@ library MiniPoolValidationLogic {
         mapping(uint256 => DataTypes.ReserveReference) storage reserves,
         uint256 reservesCount,
         address oracle
-    ) external view {
+    ) internal view {
         //@issue: balanceOf shall be on IAERC6909 instead IERC20
         uint256 underlyingBalance =
             IAERC6909(reserve.aTokenAddress).balanceOf(msg.sender, reserve.aTokenID);

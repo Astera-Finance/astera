@@ -30,7 +30,7 @@ contract UiPoolDataProviderV2 is IUiPoolDataProviderV2 {
     constructor(
         IChainlinkAggregator _networkBaseTokenPriceInUsdProxyAggregator,
         IChainlinkAggregator _marketReferenceCurrencyPriceInUsdProxyAggregator
-    ) public {
+    ) {
         networkBaseTokenPriceInUsdProxyAggregator = _networkBaseTokenPriceInUsdProxyAggregator;
         marketReferenceCurrencyPriceInUsdProxyAggregator =
             _marketReferenceCurrencyPriceInUsdProxyAggregator;

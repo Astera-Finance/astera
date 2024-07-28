@@ -26,7 +26,7 @@ import {ValidationLogic} from "./ValidationLogic.sol";
 library ConfigLogic {
 /*
     function setUserUseReserveAsCollateral(address asset, bool reserveType, bool useAsCollateral)
-    external
+    internal
     override
     whenNotPaused
   {

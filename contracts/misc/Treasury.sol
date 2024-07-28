@@ -20,7 +20,7 @@ contract Treasury is Ownable {
         _;
     }
 
-    constructor(ILendingPoolAddressesProvider provider) public Ownable(msg.sender) {
+    constructor(ILendingPoolAddressesProvider provider) Ownable(msg.sender) {
         ADDRESSES_PROVIDER = provider;
         LENDING_POOL = ILendingPool(ADDRESSES_PROVIDER.getLendingPool());
         multisig = _msgSender();

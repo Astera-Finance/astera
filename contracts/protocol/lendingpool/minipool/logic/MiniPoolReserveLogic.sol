@@ -174,7 +174,7 @@ library MiniPoolReserveLogic {
         uint256 aTokenID,
         uint256 variableDebtTokenID,
         address interestRateStrategyAddress
-    ) external {
+    ) internal {
         require(
             aTokenAddress.getUnderlyingAsset(reserve.aTokenID) == address(0),
             Errors.RL_RESERVE_ALREADY_INITIALIZED

@@ -60,11 +60,11 @@ library MiniPoolGenericLogic {
         address user,
         uint256 amount,
         mapping(address => DataTypes.MiniPoolReserveData) storage reservesData,
-        DataTypes.UserConfigurationMap calldata userConfig,
+        DataTypes.UserConfigurationMap storage userConfig,
         mapping(uint256 => DataTypes.ReserveReference) storage reserves,
         uint256 reservesCount,
         address oracle
-    ) external view returns (bool) {
+    ) internal view returns (bool) {
         if (!userConfig.isBorrowingAny() || !userConfig.isUsingAsCollateral(reservesData[asset].id))
         {
             return true;

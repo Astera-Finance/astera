@@ -23,7 +23,7 @@ contract WETHGateway is IWETHGateway, Ownable {
      * @param weth Address of the Wrapped Ether contract
      *
      */
-    constructor(address weth) public Ownable(msg.sender) {
+    constructor(address weth) Ownable(msg.sender) {
         WETH = IWETH(weth);
     }
 
