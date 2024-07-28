@@ -4,7 +4,7 @@ Echidna is a program designed for fuzzing/property-based testing of Ethereum sma
 
 ```sh
 yarn
-echidna tests/echidna/GranaryPropertiesMain.sol --contract GranaryPropertiesMain --config tests/echidna/config/config1_fast.yaml
+echidna tests/echidna/PropertiesMain.sol --contract PropertiesMain --config tests/echidna/config/config1_fast.yaml
 ```
 
 You can fine in `/echidna` 3 config files to run the fuzzer:
@@ -104,7 +104,7 @@ You can fine in `/echidna` 3 config files to run the fuzzer:
 
 ## Admin entry points
 
-✚ : GranaryV2 add
+✚ : Cod3x Lend add
 
 ### LendingPoolAddressesProvider
 

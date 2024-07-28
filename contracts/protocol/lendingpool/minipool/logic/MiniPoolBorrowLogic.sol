@@ -25,7 +25,7 @@ import {Helpers} from "../../../libraries/helpers/Helpers.sol";
 
 /**
  * @title BorrowLogic library
- * @author Granary
+ * @author Cod3x
  * @notice Implements functions to validate actions related to borrowing
  */
 library MiniPoolBorrowLogic {

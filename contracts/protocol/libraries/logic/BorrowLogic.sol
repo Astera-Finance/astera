@@ -25,7 +25,7 @@ import {IFlowLimiter} from "../../../interfaces/IFlowLimiter.sol";
 
 /**
  * @title BorrowLogic library
- * @author Granary
+ * @author Cod3x
  * @notice Implements functions to validate actions related to borrowing
  */
 library BorrowLogic {

@@ -1,10 +1,10 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.13;
 
-import "../GranaryPropertiesBase.sol";
+import "../PropertiesBase.sol";
 import "../util/Hevm.sol";
 
-contract ATokenProp is GranaryPropertiesBase {
+contract ATokenProp is PropertiesBase {
     constructor() {}
 
     // --------------------- state updates ---------------------

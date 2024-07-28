@@ -9,7 +9,7 @@ import {ERC6909} from "../../../dependencies/solady/ERC6909.sol";
 /**
  * @title ERC6909
  * @notice Basic ERC6909 implementation
- * @author Granary, inspired by the Solady ERC6909 implementation and AAVEs incentivized ERC20
+ * @author Cod3x, inspired by the Solady ERC6909 implementation and AAVEs incentivized ERC20
  *
  */
 abstract contract IncentivizedERC6909 is Context, ERC6909 {

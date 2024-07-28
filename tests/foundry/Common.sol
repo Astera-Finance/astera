@@ -164,7 +164,7 @@ contract Common is Test {
     bool[] reserveTypes = [true, true, true, true];
     // Protocol deployment variables
     uint256 providerId = 1;
-    string marketId = "Granary Genesis Market";
+    string marketId = "Cod3x Lend Genesis Market";
     uint256 cntr;
 
     ERC20 public weth = ERC20(WETH);
@@ -260,7 +260,6 @@ contract Common is Test {
             address(deployedContracts.lendingPoolAddressesProvider.getLendingPool());
         deployedContracts.lendingPool = LendingPool(lendingPoolProxyAddress);
         deployedContracts.treasury = new Treasury(deployedContracts.lendingPoolAddressesProvider);
-        // granaryTreasury = new GranaryTreasury(ILendingPoolAddressesProvider(lendingPoolAddressesProvider));
 
         lendingPoolConfigurator = new LendingPoolConfigurator();
         deployedContracts.lendingPoolAddressesProvider.setLendingPoolConfiguratorImpl(
@@ -381,9 +380,9 @@ contract Common is Test {
                 treasury: configAddresses.treasury,
                 incentivesController: configAddresses.rewarder,
                 underlyingAssetName: tmpSymbol,
-                aTokenName: string.concat("Granary ", tmpSymbol),
-                aTokenSymbol: string.concat("grain", tmpSymbol),
-                variableDebtTokenName: string.concat("Granary variable debt bearing ", tmpSymbol),
+                aTokenName: string.concat("Cod3x Lend ", tmpSymbol),
+                aTokenSymbol: string.concat("cl", tmpSymbol),
+                variableDebtTokenName: string.concat("Cod3x Lend variable debt bearing ", tmpSymbol),
                 variableDebtTokenSymbol: string.concat("variableDebt", tmpSymbol),
                 params: "0x10"
             });

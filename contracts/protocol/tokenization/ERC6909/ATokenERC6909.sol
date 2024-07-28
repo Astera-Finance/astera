@@ -66,7 +66,7 @@ contract ATokenERC6909 is IncentivizedERC6909, VersionedInitializable {
         require(bytes(symbol).length != 0);
         require(decimals != 0);
         require(id < DebtTokenAddressableIDs, Errors.AT_INVALID_ATOKEN_ID);
-        _setName(id, string.concat("Granary Interest Bearing ", name));
+        _setName(id, string.concat("Cod3x Lend Interest Bearing ", name));
         _setSymbol(id, string.concat("grain", symbol));
         _setDecimals(id, decimals);
         _setUnderlyingAsset(id, underlyingAsset);

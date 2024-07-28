@@ -1,6 +1,4 @@
 // SPDX-License-Identifier: UNLICENSED
-// FILEPATH: /Users/goobis/granary-v2/contracts/protocol/lendingpool/minipool/FlowLimiter.sol
-
 pragma solidity ^0.8.23;
 
 import {ILendingPoolAddressesProvider} from "../../../interfaces/ILendingPoolAddressesProvider.sol";

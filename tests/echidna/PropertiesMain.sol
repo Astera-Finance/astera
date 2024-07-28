@@ -9,7 +9,7 @@ import "./properties/MiniPoolProp.sol";
 
 // Users are defined in users
 // Admin is address(this)
-contract GranaryPropertiesMain is
+contract PropertiesMain is
     ATokenERC6909Prop,
     ATokenProp,
     DebtTokenProp,

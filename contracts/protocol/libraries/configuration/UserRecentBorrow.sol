@@ -6,7 +6,7 @@ import {DataTypes} from "../types/DataTypes.sol";
 
 /**
  * @title UserRecentBorrow library
- * @author Granary
+ * @author Cod3x
  * @notice Implements the bitmap logic to handle data about a user's most recent borrow
  */
 library UserRecentBorrow {

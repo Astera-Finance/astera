@@ -17,7 +17,7 @@ import {DataTypes} from "../types/DataTypes.sol";
 
 /**
  * @title LoanInfoLogic library
- * @author Granary
+ * @author Cod3x
  * @notice Implements the logic to save information of Loans
  */
 library LoanInfoLogic {

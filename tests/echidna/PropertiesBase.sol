@@ -62,7 +62,7 @@ import "contracts/protocol/libraries/logic/ValidationLogic.sol";
 
 // Users are defined in users
 // Admin is address(this)
-contract GranaryPropertiesBase is PropertiesAsserts, MarketParams {
+contract PropertiesBase is PropertiesAsserts, MarketParams {
     // config -----------
     uint internal totalNbUsers = 4;
     uint internal totalNbTokens = 4;

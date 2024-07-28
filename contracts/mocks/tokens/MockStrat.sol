@@ -9,7 +9,7 @@ import {SafeERC20} from "../../../contracts/dependencies/openzeppelin/contracts/
 import {IERC20} from "../../../contracts/dependencies/openzeppelin/contracts/IERC20.sol";
 
 /**
- * @dev This strategy will deposit and leverage a token on Granary to maximize yield
+ * @dev This strategy will deposit and leverage a token on Cod3x Lend to maximize yield
  */
 contract ReaperStrategy is ReaperBaseStrategyv4 {
     using SafeERC20 for IERC20;
