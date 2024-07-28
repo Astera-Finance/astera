@@ -15,7 +15,6 @@ Install [Foundry](https://github.com/foundry-rs/foundry).
 Install [Python](https://www.python.org/downloads/).
 
 ```sh
-yarn
 forge install
 mv .env.example .env
 ```

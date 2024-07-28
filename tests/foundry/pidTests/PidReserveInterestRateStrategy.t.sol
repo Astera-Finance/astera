@@ -6,7 +6,7 @@ import "contracts/protocol/libraries/helpers/Errors.sol";
 import {WadRayMath} from "contracts/protocol/libraries/math/WadRayMath.sol";
 import "contracts/protocol/lendingpool/InterestRateStrategies/PidReserveInterestRateStrategy.sol";
 import "contracts/protocol/lendingpool/InterestRateStrategies/PiReserveInterestRateStrategy.sol";
-import "node_modules/@openzeppelin/contracts/utils/Strings.sol";
+import "openzeppelin-contracts/contracts/utils/Strings.sol";
 
 contract PidReserveInterestRateStrategyTest is Common {
     using WadRayMath for uint256;
