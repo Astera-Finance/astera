@@ -37,16 +37,6 @@ contract ATokenERC6909 is IncentivizedERC6909, VersionedInitializable {
         uint256 indexed id, string name, string symbol, uint8 decimals, address underlyingAsset
     );
 
-    /**
-     *
-     * @dev Mapping of the underlying asset address to the aToken id
-     * @param underlyingAssetAddresses The address of the underlying asset
-     * @param id The id of the aToken
-     * @notice while the underlying asset address here is the actual asset underlying,
-     * (i.e. USDC) the aToken here is double nested and what is actually deposited is aTokens from the general Pool
-     * (i.e. aUSDC) this allows for double rate incentives / penalties on lending
-     * You can think of it is a nested aToken
-     */
     mapping(uint256 => address) private _underlyingAssetAddresses;
     mapping(uint256 => bool) private _isTranche;
     uint256 private _minipoolId;
