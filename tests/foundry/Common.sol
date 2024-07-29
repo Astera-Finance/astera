@@ -164,7 +164,7 @@ contract Common is Test {
     bool[] reserveTypes = [true, true, true, true];
     // Protocol deployment variables
     uint256 providerId = 1;
-    string marketId = "Granary Genesis Market";
+    string marketId = "Cod3x Lend Genesis Market";
     uint256 cntr;
 
     ERC20 public weth = ERC20(WETH);
@@ -203,7 +203,7 @@ contract Common is Test {
 
         uint256 temp = value;
         uint256 digits;
-        
+
         // Calculate the number of digits
         while (temp != 0) {
             digits++;
@@ -211,7 +211,7 @@ contract Common is Test {
         }
 
         bytes memory buffer = new bytes(digits);
-        
+
         // Fill the buffer with the digits in reverse order
         while (value != 0) {
             digits -= 1;
@@ -239,7 +239,8 @@ contract Common is Test {
         //     anotherAddress := create(0, add(bytecode, 0x20), mload(bytecode))
         // }
         deployedContracts.rewarder = new Rewarder();
-        deployedContracts.lendingPoolAddressesProviderRegistry = new LendingPoolAddressesProviderRegistry();
+        deployedContracts.lendingPoolAddressesProviderRegistry =
+            new LendingPoolAddressesProviderRegistry();
         deployedContracts.lendingPoolAddressesProvider = new LendingPoolAddressesProvider(marketId);
         deployedContracts.lendingPoolAddressesProviderRegistry.registerAddressesProvider(
             address(deployedContracts.lendingPoolAddressesProvider), providerId
@@ -251,18 +252,23 @@ contract Common is Test {
         // genericLogic = address(new GenericLogic());
         // validationLogic = address(new ValidationLogic());
         lendingPool = new LendingPool();
-        lendingPool.initialize(ILendingPoolAddressesProvider(deployedContracts.lendingPoolAddressesProvider));
+        lendingPool.initialize(
+            ILendingPoolAddressesProvider(deployedContracts.lendingPoolAddressesProvider)
+        );
         deployedContracts.lendingPoolAddressesProvider.setLendingPoolImpl(address(lendingPool));
-        lendingPoolProxyAddress = address(deployedContracts.lendingPoolAddressesProvider.getLendingPool());
+        lendingPoolProxyAddress =
+            address(deployedContracts.lendingPoolAddressesProvider.getLendingPool());
         deployedContracts.lendingPool = LendingPool(lendingPoolProxyAddress);
         deployedContracts.treasury = new Treasury(deployedContracts.lendingPoolAddressesProvider);
-        // granaryTreasury = new GranaryTreasury(ILendingPoolAddressesProvider(lendingPoolAddressesProvider));
 
         lendingPoolConfigurator = new LendingPoolConfigurator();
-        deployedContracts.lendingPoolAddressesProvider.setLendingPoolConfiguratorImpl(address(lendingPoolConfigurator));
+        deployedContracts.lendingPoolAddressesProvider.setLendingPoolConfiguratorImpl(
+            address(lendingPoolConfigurator)
+        );
         lendingPoolConfiguratorProxyAddress =
             deployedContracts.lendingPoolAddressesProvider.getLendingPoolConfigurator();
-        deployedContracts.lendingPoolConfigurator = LendingPoolConfigurator(lendingPoolConfiguratorProxyAddress);
+        deployedContracts.lendingPoolConfigurator =
+            LendingPoolConfigurator(lendingPoolConfiguratorProxyAddress);
         vm.prank(admin);
         deployedContracts.lendingPoolConfigurator.setPoolPause(true);
 
@@ -285,10 +291,18 @@ contract Common is Test {
         //@todo uiPoolDataProviderV2 = new UiPoolDataProviderV2(IChainlinkAggregator(ethPriceFeed), IChainlinkAggregator(ethPriceFeed));
         wETHGateway = new WETHGateway(WETH);
         deployedContracts.stableStrategy = new DefaultReserveInterestRateStrategy(
-            deployedContracts.lendingPoolAddressesProvider, sStrat[0], sStrat[1], sStrat[2], sStrat[3]
+            deployedContracts.lendingPoolAddressesProvider,
+            sStrat[0],
+            sStrat[1],
+            sStrat[2],
+            sStrat[3]
         );
         deployedContracts.volatileStrategy = new DefaultReserveInterestRateStrategy(
-            deployedContracts.lendingPoolAddressesProvider, volStrat[0], volStrat[1], volStrat[2], volStrat[3]
+            deployedContracts.lendingPoolAddressesProvider,
+            volStrat[0],
+            volStrat[1],
+            volStrat[2],
+            volStrat[3]
         );
 
         return (deployedContracts);
@@ -322,16 +336,22 @@ contract Common is Test {
         LendingPoolConfigurator lendingPoolConfiguratorProxy,
         LendingPoolAddressesProvider lendingPoolAddressesProvider
     ) public {
-        fixture_configureReserves(configAddresses, lendingPoolConfiguratorProxy, lendingPoolAddressesProvider, _aToken);
-        lendingPoolAddressesProvider.setLendingPoolCollateralManager(address(lendingPoolCollateralManager));
+        fixture_configureReserves(
+            configAddresses, lendingPoolConfiguratorProxy, lendingPoolAddressesProvider, _aToken
+        );
+        lendingPoolAddressesProvider.setLendingPoolCollateralManager(
+            address(lendingPoolCollateralManager)
+        );
         wETHGateway.authorizeLendingPool(ledingPool);
 
         vm.prank(admin);
         lendingPoolConfiguratorProxy.setPoolPause(false);
 
-        aTokens = fixture_getATokens(tokens, ProtocolDataProvider(configAddresses.protocolDataProvider));
-        variableDebtTokens =
-            fixture_getVarDebtTokens(tokens, ProtocolDataProvider(configAddresses.protocolDataProvider));
+        aTokens =
+            fixture_getATokens(tokens, ProtocolDataProvider(configAddresses.protocolDataProvider));
+        variableDebtTokens = fixture_getVarDebtTokens(
+            tokens, ProtocolDataProvider(configAddresses.protocolDataProvider)
+        );
     }
 
     function fixture_configureReserves(
@@ -347,8 +367,9 @@ contract Common is Test {
 
         for (uint8 idx = 0; idx < tokens.length; idx++) {
             string memory tmpSymbol = ERC20(tokens[idx]).symbol();
-            address interestStrategy =
-                isStableStrategy[idx] != false ? configAddresses.stableStrategy : configAddresses.volatileStrategy;
+            address interestStrategy = isStableStrategy[idx] != false
+                ? configAddresses.stableStrategy
+                : configAddresses.volatileStrategy;
             initInputParams[idx] = ILendingPoolConfigurator.InitReserveInput({
                 aTokenImpl: aTokenAddress,
                 variableDebtTokenImpl: address(variableDebtToken),
@@ -359,9 +380,9 @@ contract Common is Test {
                 treasury: configAddresses.treasury,
                 incentivesController: configAddresses.rewarder,
                 underlyingAssetName: tmpSymbol,
-                aTokenName: string.concat("Granary ", tmpSymbol),
-                aTokenSymbol: string.concat("grain", tmpSymbol),
-                variableDebtTokenName: string.concat("Granary variable debt bearing ", tmpSymbol),
+                aTokenName: string.concat("Cod3x Lend ", tmpSymbol),
+                aTokenSymbol: string.concat("cl", tmpSymbol),
+                variableDebtTokenName: string.concat("Cod3x Lend variable debt bearing ", tmpSymbol),
                 variableDebtTokenSymbol: string.concat("variableDebt", tmpSymbol),
                 params: "0x10"
             });
@@ -382,7 +403,9 @@ contract Common is Test {
             });
         }
         lendingPoolAddressesProvider.setPoolAdmin(configAddresses.aTokensAndRatesHelper);
-        ATokensAndRatesHelper(configAddresses.aTokensAndRatesHelper).configureReserves(inputConfigParams);
+        ATokensAndRatesHelper(configAddresses.aTokensAndRatesHelper).configureReserves(
+            inputConfigParams
+        );
         lendingPoolAddressesProvider.setPoolAdmin(admin);
     }
 
@@ -394,22 +417,23 @@ contract Common is Test {
         _aTokens = new AToken[](_tokens.length);
         for (uint32 idx = 0; idx < _tokens.length; idx++) {
             // console.log("Index: ", idx);
-            (address _aTokenAddress,) = protocolDataProvider.getReserveTokensAddresses(_tokens[idx], true);
+            (address _aTokenAddress,) =
+                protocolDataProvider.getReserveTokensAddresses(_tokens[idx], true);
             // console.log("Atoken address", _aTokenAddress);
             console.log("AToken%s: %s", idx, _aTokenAddress);
             _aTokens[idx] = AToken(_aTokenAddress);
         }
     }
 
-    function fixture_getVarDebtTokens(address[] memory _tokens, ProtocolDataProvider protocolDataProvider)
-        public
-        
-        returns (VariableDebtToken[] memory _varDebtTokens)
-    {
+    function fixture_getVarDebtTokens(
+        address[] memory _tokens,
+        ProtocolDataProvider protocolDataProvider
+    ) public returns (VariableDebtToken[] memory _varDebtTokens) {
         _varDebtTokens = new VariableDebtToken[](_tokens.length);
         for (uint32 idx = 0; idx < _tokens.length; idx++) {
             // console.log("Index: ", idx);
-            (, address _variableDebtToken) = protocolDataProvider.getReserveTokensAddresses(_tokens[idx], true);
+            (, address _variableDebtToken) =
+                protocolDataProvider.getReserveTokensAddresses(_tokens[idx], true);
             // console.log("Atoken address", _variableDebtToken);
             string memory debtToken = string.concat("debtToken", uintToString(idx));
             vm.label(_variableDebtToken, debtToken);
@@ -418,7 +442,11 @@ contract Common is Test {
         }
     }
 
-    function fixture_getErc20Tokens(address[] memory _tokens) public pure returns (ERC20[] memory erc20Tokens) {
+    function fixture_getErc20Tokens(address[] memory _tokens)
+        public
+        pure
+        returns (ERC20[] memory erc20Tokens)
+    {
         erc20Tokens = new ERC20[](_tokens.length);
         for (uint32 idx = 0; idx < _tokens.length; idx++) {
             erc20Tokens[idx] = ERC20(_tokens[idx]);
@@ -434,7 +462,8 @@ contract Common is Test {
         _priceFeedMocks = new MockAggregator[](_tokens.length);
         _aggregators = new address[](_tokens.length);
         for (uint32 idx; idx < _tokens.length; idx++) {
-            _priceFeedMocks[idx] = new MockAggregator(_prices[idx], int256(uint256(_tokens[idx].decimals())));
+            _priceFeedMocks[idx] =
+                new MockAggregator(_prices[idx], int256(uint256(_tokens[idx].decimals())));
             _aggregators[idx] = address(_priceFeedMocks[idx]);
         }
     }
@@ -445,11 +474,11 @@ contract Common is Test {
     {
         MockERC4626[] memory _mockedVaults = new MockERC4626[](_tokens.length);
         for (uint32 idx = 0; idx < _tokens.length; idx++) {
-            _mockedVaults[idx] = new MockERC4626(_tokens[idx], "Mock ERC4626", "mock", TVL_CAP, _treasury);
+            _mockedVaults[idx] =
+                new MockERC4626(_tokens[idx], "Mock ERC4626", "mock", TVL_CAP, _treasury);
         }
         return _mockedVaults;
     }
-
 
     function fixture_transferTokensToTestContract(
         ERC20[] memory _tokens,
@@ -463,20 +492,33 @@ contract Common is Test {
             console.log("_toGiveInUsd:", _toGiveInUsd);
             uint256 rawGive = (_toGiveInUsd / price) * 10 ** PRICE_FEED_DECIMALS;
             console.log("rawGive:", rawGive);
-            console.log("Distributed %s of %s", rawGive/(10**(18-_tokens[idx].decimals())), _tokens[idx].symbol());
-            deal(address(_tokens[idx]), _testContractAddress, rawGive/(10**(18 - _tokens[idx].decimals())));
-            console.log("Balance: %s %s",_tokens[idx].balanceOf(_testContractAddress), _tokens[idx].symbol());
+            console.log(
+                "Distributed %s of %s",
+                rawGive / (10 ** (18 - _tokens[idx].decimals())),
+                _tokens[idx].symbol()
+            );
+            deal(
+                address(_tokens[idx]),
+                _testContractAddress,
+                rawGive / (10 ** (18 - _tokens[idx].decimals()))
+            );
+            console.log(
+                "Balance: %s %s",
+                _tokens[idx].balanceOf(_testContractAddress),
+                _tokens[idx].symbol()
+            );
         }
     }
 
-    function fixture_deployMiniPoolSetup(address _lendingPoolAddressesProvider, address _lendingPool)
-        public
-        returns (DeployedMiniPoolContracts memory)
-    {
+    function fixture_deployMiniPoolSetup(
+        address _lendingPoolAddressesProvider,
+        address _lendingPool
+    ) public returns (DeployedMiniPoolContracts memory) {
         DeployedMiniPoolContracts memory deployedMiniPoolContracts;
         deployedMiniPoolContracts.miniPoolImpl = new MiniPool();
-        deployedMiniPoolContracts.miniPoolAddressesProvider =
-            new MiniPoolAddressesProvider(ILendingPoolAddressesProvider(_lendingPoolAddressesProvider));
+        deployedMiniPoolContracts.miniPoolAddressesProvider = new MiniPoolAddressesProvider(
+            ILendingPoolAddressesProvider(_lendingPoolAddressesProvider)
+        );
         deployedMiniPoolContracts.aToken6909Impl = new ATokenERC6909();
         deployedMiniPoolContracts.flowLimiter = new flowLimiter(
             ILendingPoolAddressesProvider(_lendingPoolAddressesProvider),
@@ -484,9 +526,12 @@ contract Common is Test {
             ILendingPool(_lendingPool)
         );
         address miniPoolConfigIMPL = address(new MiniPoolConfigurator());
-        deployedMiniPoolContracts.miniPoolAddressesProvider.setMiniPoolConfigurator(miniPoolConfigIMPL);
-        deployedMiniPoolContracts.miniPoolConfigurator =
-            MiniPoolConfigurator(deployedMiniPoolContracts.miniPoolAddressesProvider.getMiniPoolConfigurator());
+        deployedMiniPoolContracts.miniPoolAddressesProvider.setMiniPoolConfigurator(
+            miniPoolConfigIMPL
+        );
+        deployedMiniPoolContracts.miniPoolConfigurator = MiniPoolConfigurator(
+            deployedMiniPoolContracts.miniPoolAddressesProvider.getMiniPoolConfigurator()
+        );
 
         deployedMiniPoolContracts.miniPoolAddressesProvider.setMiniPoolImpl(
             address(deployedMiniPoolContracts.miniPoolImpl)
@@ -514,12 +559,12 @@ contract Common is Test {
             : amountRaw / (10 ** (decimalsB - decimalsA));
     }
 
-    function fixture_preciseConvertWithDecimals(uint256 amountRay, uint256 decimalsA, uint256 decimalsB)
-        public
-        pure
-        returns (uint256)
-    {
-                return (decimalsA > decimalsB)
+    function fixture_preciseConvertWithDecimals(
+        uint256 amountRay,
+        uint256 decimalsA,
+        uint256 decimalsB
+    ) public pure returns (uint256) {
+        return (decimalsA > decimalsB)
             ? amountRay / 10 ** (RAY_DECIMALS - PRICE_FEED_DECIMALS + (decimalsA - decimalsB))
             : amountRay / 10 ** (RAY_DECIMALS - PRICE_FEED_DECIMALS - (decimalsB - decimalsA));
     }
@@ -580,9 +625,13 @@ contract Common is Test {
                 tokensToConfigure[idx], true, 9500, 9700, 10100, IMiniPool(mp)
             );
 
-            miniPoolContracts.miniPoolConfigurator.activateReserve(tokensToConfigure[idx], true, IMiniPool(mp));
+            miniPoolContracts.miniPoolConfigurator.activateReserve(
+                tokensToConfigure[idx], true, IMiniPool(mp)
+            );
 
-            miniPoolContracts.miniPoolConfigurator.enableBorrowingOnReserve(tokensToConfigure[idx], true, IMiniPool(mp));
+            miniPoolContracts.miniPoolConfigurator.enableBorrowingOnReserve(
+                tokensToConfigure[idx], true, IMiniPool(mp)
+            );
 
             miniPoolContracts.miniPoolConfigurator.setReserveInterestRateStrategyAddress(
                 address(tokensToConfigure[idx]), true, address(IRS), IMiniPool(mp)
@@ -592,11 +641,15 @@ contract Common is Test {
         return (mp);
     }
 
-    function getUsdValOfToken(uint256 amount, address token) public view returns (uint256){
+    function getUsdValOfToken(uint256 amount, address token) public view returns (uint256) {
         return amount * oracle.getAssetPrice(token);
     }
 
-    function fixture_getReserveData(address token, ProtocolDataProvider protocolDataProvider) public view returns (ReserveDataParams memory) {
+    function fixture_getReserveData(address token, ProtocolDataProvider protocolDataProvider)
+        public
+        view
+        returns (ReserveDataParams memory)
+    {
         (
             uint256 availableLiquidity,
             uint256 totalVariableDebt,
@@ -617,24 +670,30 @@ contract Common is Test {
         );
     }
 
-    function fixture_changePriceOfToken(TokenParams memory collateralParams, uint256 percentageOfChange, bool isPriceIncrease) public returns(uint256) {
+    function fixture_changePriceOfToken(
+        TokenParams memory collateralParams,
+        uint256 percentageOfChange,
+        bool isPriceIncrease
+    ) public returns (uint256) {
         uint256 newUsdcPrice;
-        newUsdcPrice = (isPriceIncrease) ? (collateralParams.price + collateralParams.price * percentageOfChange / 10_000) : (collateralParams.price - collateralParams.price * percentageOfChange / 10_000);
+        newUsdcPrice = (isPriceIncrease)
+            ? (collateralParams.price + collateralParams.price * percentageOfChange / 10_000)
+            : (collateralParams.price - collateralParams.price * percentageOfChange / 10_000);
         address collateralSource = oracle.getSourceOfAsset(address(collateralParams.token));
         MockAggregator agg = MockAggregator(collateralSource);
         console.log("1. Latest price: ", uint256(agg.latestAnswer()));
 
         agg.setLastAnswer(int256(newUsdcPrice));
-        
+
         console.log("2. Latest price: ", uint256(agg.latestAnswer()));
         console.log("2. Oracle price: ", oracle.getAssetPrice(address(collateralParams.token)));
     }
 
-    function fixture_calcCompoundedInterest(uint256 rate, uint256 currentTimestamp, uint256 lastUpdateTimestamp)
-        public
-        pure
-        returns (uint256)
-    {
+    function fixture_calcCompoundedInterest(
+        uint256 rate,
+        uint256 currentTimestamp,
+        uint256 lastUpdateTimestamp
+    ) public pure returns (uint256) {
         uint256 timeDifference = currentTimestamp - lastUpdateTimestamp;
         if (timeDifference == 0) {
             return WadRayMath.RAY;
@@ -653,7 +712,7 @@ contract Common is Test {
     }
 
     function fixture_calcExpectedVariableDebtTokenBalance(
-        uint256 variableBorrowRate, 
+        uint256 variableBorrowRate,
         uint256 variableBorrowIndex,
         uint256 lastUpdateTimestamp,
         uint256 scaledVariableDebt,
@@ -662,9 +721,8 @@ contract Common is Test {
         if (variableBorrowRate == 0) {
             return variableBorrowIndex;
         }
-        uint256 cumulatedInterest = fixture_calcCompoundedInterest(
-            variableBorrowRate, txTimestamp, lastUpdateTimestamp
-        );
+        uint256 cumulatedInterest =
+            fixture_calcCompoundedInterest(variableBorrowRate, txTimestamp, lastUpdateTimestamp);
         uint256 normalizedDebt = cumulatedInterest.rayMul(variableBorrowIndex);
 
         uint256 expectedVariableDebtTokenBalance = scaledVariableDebt.rayMul(normalizedDebt);

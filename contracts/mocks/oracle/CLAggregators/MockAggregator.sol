@@ -2,36 +2,36 @@
 pragma solidity ^0.8.23;
 
 contract MockAggregator {
-  int256 private _latestAnswer;
-  int256 private _decimals;
+    int256 private _latestAnswer;
+    int256 private _decimals;
 
-  event AnswerUpdated(int256 indexed current, uint256 indexed roundId, uint256 timestamp);
+    event AnswerUpdated(int256 indexed current, uint256 indexed roundId, uint256 timestamp);
 
-  constructor(int256 _initialAnswer, int256 decimals) {
-    _latestAnswer = _initialAnswer;
-    _decimals = decimals;
-    emit AnswerUpdated(_initialAnswer, 0, block.timestamp);
-  }
+    constructor(int256 _initialAnswer, int256 decimals) {
+        _latestAnswer = _initialAnswer;
+        _decimals = decimals;
+        emit AnswerUpdated(_initialAnswer, 0, block.timestamp);
+    }
 
-  function latestAnswer() external view returns (int256) {
-    return _latestAnswer;
-  }
+    function latestAnswer() external view returns (int256) {
+        return _latestAnswer;
+    }
 
-  function decimals() external view returns (int256) {
-    return _decimals;
-  }
+    function decimals() external view returns (int256) {
+        return _decimals;
+    }
 
-  function getTokenType() external view returns (uint256) {
-    return 1;
-  }
+    function getTokenType() external view returns (uint256) {
+        return 1;
+    }
 
-  function setLastAnswer(int256 _newAnswer) external {
-    _latestAnswer = _newAnswer;
-    emit AnswerUpdated(_newAnswer, 0, block.timestamp);
-  }
+    function setLastAnswer(int256 _newAnswer) external {
+        _latestAnswer = _newAnswer;
+        emit AnswerUpdated(_newAnswer, 0, block.timestamp);
+    }
 
-  // function getSubTokens() external view returns (address[] memory) {
-  // TODO: implement mock for when multiple subtokens. Maybe we need to create diff mock contract
-  // to call it from the migration for this case??
-  // }
+    // function getSubTokens() external view returns (address[] memory) {
+    // TODO: implement mock for when multiple subtokens. Maybe we need to create diff mock contract
+    // to call it from the migration for this case??
+    // }
 }

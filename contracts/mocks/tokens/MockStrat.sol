@@ -8,9 +8,8 @@ import {IExternalContract} from "../dependencies/IExternalContract.sol";
 import {SafeERC20} from "../../../contracts/dependencies/openzeppelin/contracts/SafeERC20.sol";
 import {IERC20} from "../../../contracts/dependencies/openzeppelin/contracts/IERC20.sol";
 
-
 /**
- * @dev This strategy will deposit and leverage a token on Granary to maximize yield
+ * @dev This strategy will deposit and leverage a token on Cod3x Lend to maximize yield
  */
 contract ReaperStrategy is ReaperBaseStrategyv4 {
     using SafeERC20 for IERC20;
@@ -21,16 +20,10 @@ contract ReaperStrategy is ReaperBaseStrategyv4 {
      * @dev Initializes the strategy. Sets parameters, saves routes, and gives allowances.
      * @notice see documentation for each variable above its respective declaration.
      */
-    constructor(
-        address _vault,
-        address _want,
-        address _externalContract
-    ) {
+    constructor(address _vault, address _want, address _externalContract) {
         want = _want;
         externalContract = IExternalContract(_externalContract);
         __ReaperBaseStrategy_init(_vault, want);
-
-
     }
 
     function _liquidateAllPositions() internal override returns (uint256 amountFreed) {
@@ -49,8 +42,8 @@ contract ReaperStrategy is ReaperBaseStrategyv4 {
      * !audit we increase the allowance in the balance amount but we deposit the amount specified
      */
     function _deposit(uint256 toReinvest) internal override {
-            IERC20(want).safeIncreaseAllowance(address(externalContract), toReinvest);
-            externalContract.deposit(toReinvest);
+        IERC20(want).safeIncreaseAllowance(address(externalContract), toReinvest);
+        externalContract.deposit(toReinvest);
     }
 
     /**
@@ -89,7 +82,7 @@ contract ReaperStrategy is ReaperBaseStrategyv4 {
         externalContract.balance();
     }
 
-    function balanceOfPool() override public view returns (uint256) {
+    function balanceOfPool() public view override returns (uint256) {
         _getExternalBalance();
     }
 }

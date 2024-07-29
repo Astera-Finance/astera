@@ -35,7 +35,8 @@ contract PausableFunctionsTest is Common {
         erc20Tokens = fixture_getErc20Tokens(tokens);
         fixture_transferTokensToTestContract(erc20Tokens, 100_000 ether, address(this));
         miniPoolContracts = fixture_deployMiniPoolSetup(
-            address(deployedContracts.lendingPoolAddressesProvider), address(deployedContracts.lendingPool)
+            address(deployedContracts.lendingPoolAddressesProvider),
+            address(deployedContracts.lendingPool)
         );
 
         address[] memory reserves = new address[](2 * tokens.length);
@@ -50,13 +51,12 @@ contract PausableFunctionsTest is Common {
 
         miniPool = fixture_configureMiniPoolReserves(reserves, configAddresses, miniPoolContracts);
 
-        vm.label(miniPool, "MiniPool");      
-
+        vm.label(miniPool, "MiniPool");
     }
 
     function testLendingPoolFunctionsWhenPaused() public {
         uint256 amount;
-        
+
         /* Pause Lending Pool */
         vm.prank(admin);
         deployedContracts.lendingPoolConfigurator.setPoolPause(true);
@@ -65,31 +65,48 @@ contract PausableFunctionsTest is Common {
             amount = erc20Tokens[idx].balanceOf(address(this));
             erc20Tokens[idx].approve(address(deployedContracts.lendingPool), amount);
             vm.expectRevert(bytes(Errors.LP_IS_PAUSED));
-            deployedContracts.lendingPool.deposit(address(erc20Tokens[idx]), false, amount, address(this));
-
-            vm.expectRevert(bytes(Errors.LP_IS_PAUSED));
-            deployedContracts.lendingPool.withdraw(address(erc20Tokens[idx]), false, amount, address(this));
-
-            vm.expectRevert(bytes(Errors.LP_IS_PAUSED));
-            deployedContracts.lendingPool.borrow(address(erc20Tokens[idx]), false, amount, address(this));
-
-            vm.expectRevert(bytes(Errors.LP_IS_PAUSED));
-            deployedContracts.lendingPool.repay(address(erc20Tokens[idx]), false, amount, address(this));
-
-            vm.expectRevert(bytes(Errors.LP_IS_PAUSED));
-            deployedContracts.lendingPool.liquidationCall(
-                address(erc20Tokens[idx]), false, address(erc20Tokens[idx]), false, address(this), amount, false
+            deployedContracts.lendingPool.deposit(
+                address(erc20Tokens[idx]), false, amount, address(this)
             );
 
             vm.expectRevert(bytes(Errors.LP_IS_PAUSED));
-            deployedContracts.lendingPool.setUserUseReserveAsCollateral(address(erc20Tokens[idx]), false, true);
+            deployedContracts.lendingPool.withdraw(
+                address(erc20Tokens[idx]), false, amount, address(this)
+            );
+
+            vm.expectRevert(bytes(Errors.LP_IS_PAUSED));
+            deployedContracts.lendingPool.borrow(
+                address(erc20Tokens[idx]), false, amount, address(this)
+            );
+
+            vm.expectRevert(bytes(Errors.LP_IS_PAUSED));
+            deployedContracts.lendingPool.repay(
+                address(erc20Tokens[idx]), false, amount, address(this)
+            );
+
+            vm.expectRevert(bytes(Errors.LP_IS_PAUSED));
+            deployedContracts.lendingPool.liquidationCall(
+                address(erc20Tokens[idx]),
+                false,
+                address(erc20Tokens[idx]),
+                false,
+                address(this),
+                amount,
+                false
+            );
+
+            vm.expectRevert(bytes(Errors.LP_IS_PAUSED));
+            deployedContracts.lendingPool.setUserUseReserveAsCollateral(
+                address(erc20Tokens[idx]), false, true
+            );
 
             address[] memory tokenAddresses = new address[](3);
             uint256[] memory balancesBefore = new uint256[](3);
             uint256[] memory amounts = new uint256[](3);
             uint256[] memory modes = new uint256[](3);
-            ILendingPool.FlashLoanParams memory flashloanParams =
-                ILendingPool.FlashLoanParams(address(this), tokenAddresses, reserveTypes, address(this));
+            ILendingPool.FlashLoanParams memory flashloanParams = ILendingPool.FlashLoanParams(
+                address(this), tokenAddresses, reserveTypes, address(this)
+            );
             bytes memory params = abi.encode(balancesBefore, address(this));
             vm.expectRevert(bytes(Errors.LP_IS_PAUSED));
             deployedContracts.lendingPool.flashLoan(flashloanParams, amounts, modes, params);
@@ -98,7 +115,7 @@ contract PausableFunctionsTest is Common {
 
     function testMiniPoolFunctionsWhenPaused() public {
         uint256 amount;
-        
+
         vm.prank(admin);
         miniPoolContracts.miniPoolConfigurator.setPoolPause(true, IMiniPool(miniPool));
 
@@ -119,12 +136,19 @@ contract PausableFunctionsTest is Common {
 
             vm.expectRevert(bytes(Errors.LP_IS_PAUSED));
             IMiniPool(miniPool).liquidationCall(
-                address(erc20Tokens[idx]), false, address(erc20Tokens[idx]), false, address(this), amount, false
+                address(erc20Tokens[idx]),
+                false,
+                address(erc20Tokens[idx]),
+                false,
+                address(this),
+                amount,
+                false
             );
 
             vm.expectRevert(bytes(Errors.LP_IS_PAUSED));
-            IMiniPool(miniPool).setUserUseReserveAsCollateral(address(erc20Tokens[idx]), false, true);
-
+            IMiniPool(miniPool).setUserUseReserveAsCollateral(
+                address(erc20Tokens[idx]), false, true
+            );
         }
     }
 }

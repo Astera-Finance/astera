@@ -10,7 +10,8 @@ import {IVariableDebtToken} from "contracts/interfaces/IVariableDebtToken.sol";
 import {VariableDebtToken} from "contracts/protocol/tokenization/VariableDebtToken.sol";
 import {ILendingPool} from "contracts/interfaces/ILendingPool.sol";
 import {DataTypes} from "contracts/protocol/libraries/types/DataTypes.sol";
-import {ReserveConfiguration} from "contracts/protocol/libraries/configuration/ReserveConfiguration.sol";
+import {ReserveConfiguration} from
+    "contracts/protocol/libraries/configuration/ReserveConfiguration.sol";
 import {Ownable} from "contracts/dependencies/openzeppelin/contracts/Ownable.sol";
 
 /**
@@ -55,10 +56,10 @@ contract PiReserveInterestRateStrategy is IReserveInterestRateStrategy, Ownable 
 
     // Events
     event PidLog(
-        uint256 utilizationRate, 
-        uint256 currentLiquidityRate, 
-        uint256 currentVariableBorrowRate, 
-        int256 err, 
+        uint256 utilizationRate,
+        uint256 currentLiquidityRate,
+        uint256 currentVariableBorrowRate,
+        int256 err,
         int256 controllerErr
     );
 
@@ -70,9 +71,9 @@ contract PiReserveInterestRateStrategy is IReserveInterestRateStrategy, Ownable 
         int256 maxITimeAmp,
         uint256 optimalUtilizationRate,
         uint256 kp,
-        uint256 ki        
+        uint256 ki
     ) Ownable(msg.sender) {
-        if (optimalUtilizationRate >= uint256(RAY)){
+        if (optimalUtilizationRate >= uint256(RAY)) {
             revert PiReserveInterestRateStrategy__U0_GREATER_THAN_RAY();
         }
         _optimalUtilizationRate = optimalUtilizationRate;
@@ -84,7 +85,7 @@ contract PiReserveInterestRateStrategy is IReserveInterestRateStrategy, Ownable 
         _lastTimestamp = block.timestamp;
         _minControllerError = minControllerError;
         _maxErrIAmp = int256(_ki).rayMulInt(-RAY * maxITimeAmp);
-        
+
         if (transferFunction(type(int256).min) < 0) {
             revert PiReserveInterestRateStrategy__BASE_BORROW_RATE_CANT_BE_NEGATIVE();
         }
@@ -100,7 +101,7 @@ contract PiReserveInterestRateStrategy is IReserveInterestRateStrategy, Ownable 
     // ----------- admin -----------
 
     function setOptimalUtilizationRate(uint256 optimalUtilizationRate) external onlyOwner {
-        if (optimalUtilizationRate >= uint256(RAY)){
+        if (optimalUtilizationRate >= uint256(RAY)) {
             revert PiReserveInterestRateStrategy__U0_GREATER_THAN_RAY();
         }
         _optimalUtilizationRate = optimalUtilizationRate;
@@ -160,8 +161,9 @@ contract PiReserveInterestRateStrategy is IReserveInterestRateStrategy, Ownable 
         uint256 totalVariableDebt,
         uint256 reserveFactor
     ) internal returns (uint256, uint256) {
-        uint256 utilizationRate =
-            totalVariableDebt == 0 ? 0 : totalVariableDebt.rayDiv(availableLiquidity + totalVariableDebt);
+        uint256 utilizationRate = totalVariableDebt == 0
+            ? 0
+            : totalVariableDebt.rayDiv(availableLiquidity + totalVariableDebt);
 
         // If no borrowers we reset the strategy
         if (utilizationRate == 0) {
@@ -178,9 +180,12 @@ contract PiReserveInterestRateStrategy is IReserveInterestRateStrategy, Ownable 
 
         int256 controllerErr = getControllerError(err);
         uint256 currentVariableBorrowRate = transferFunction(controllerErr);
-        uint256 currentLiquidityRate = getLiquidityRate(currentVariableBorrowRate, utilizationRate, reserveFactor);
+        uint256 currentLiquidityRate =
+            getLiquidityRate(currentVariableBorrowRate, utilizationRate, reserveFactor);
 
-        emit PidLog(utilizationRate, currentLiquidityRate, currentVariableBorrowRate, err, controllerErr);
+        emit PidLog(
+            utilizationRate, currentLiquidityRate, currentVariableBorrowRate, err, controllerErr
+        );
 
         return (currentLiquidityRate, currentVariableBorrowRate);
     }
@@ -195,20 +200,23 @@ contract PiReserveInterestRateStrategy is IReserveInterestRateStrategy, Ownable 
      */
     function getCurrentInterestRates() public view returns (uint256, uint256, uint256) {
         // utilization
-        DataTypes.ReserveData memory reserve =
-            ILendingPool(_addressesProvider.getLendingPool()).getReserveData(_asset, _assetReserveType);
+        DataTypes.ReserveData memory reserve = ILendingPool(_addressesProvider.getLendingPool())
+            .getReserveData(_asset, _assetReserveType);
         uint256 availableLiquidity = IAToken(reserve.aTokenAddress).getTotalManagedAssets();
-        uint256 totalVariableDebt =
-            IVariableDebtToken(reserve.variableDebtTokenAddress).scaledTotalSupply().rayMul(reserve.variableBorrowIndex);
-        uint256 utilizationRate =
-            totalVariableDebt == 0 ? 0 : totalVariableDebt.rayDiv(availableLiquidity + totalVariableDebt);
+        uint256 totalVariableDebt = IVariableDebtToken(reserve.variableDebtTokenAddress)
+            .scaledTotalSupply().rayMul(reserve.variableBorrowIndex);
+        uint256 utilizationRate = totalVariableDebt == 0
+            ? 0
+            : totalVariableDebt.rayDiv(availableLiquidity + totalVariableDebt);
 
         // borrow rate
-        uint256 currentVariableBorrowRate = transferFunction(getControllerError(getNormalizedError(utilizationRate)));
+        uint256 currentVariableBorrowRate =
+            transferFunction(getControllerError(getNormalizedError(utilizationRate)));
 
         // liquity rate
-        uint256 currentLiquidityRate =
-            getLiquidityRate(currentVariableBorrowRate, utilizationRate, getReserveFactor(reserve.configuration));
+        uint256 currentLiquidityRate = getLiquidityRate(
+            currentVariableBorrowRate, utilizationRate, getReserveFactor(reserve.configuration)
+        );
 
         return (currentLiquidityRate, currentVariableBorrowRate, utilizationRate);
     }
@@ -239,11 +247,11 @@ contract PiReserveInterestRateStrategy is IReserveInterestRateStrategy, Ownable 
     }
 
     /// @dev Process the liquidity rate from the variable borrow rate.
-    function getLiquidityRate(uint256 currentVariableBorrowRate, uint256 utilizationRate, uint256 reserveFactor)
-        internal
-        pure
-        returns (uint256)
-    {
+    function getLiquidityRate(
+        uint256 currentVariableBorrowRate,
+        uint256 utilizationRate,
+        uint256 reserveFactor
+    ) internal pure returns (uint256) {
         return currentVariableBorrowRate.rayMul(utilizationRate).percentMul(
             PercentageMath.PERCENTAGE_FACTOR - reserveFactor
         );
@@ -268,7 +276,11 @@ contract PiReserveInterestRateStrategy is IReserveInterestRateStrategy, Ownable 
      * @param self The reserve configuration
      * @return The reserve factor
      */
-    function getReserveFactor(DataTypes.ReserveConfigurationMap memory self) internal pure returns (uint256) {
+    function getReserveFactor(DataTypes.ReserveConfigurationMap memory self)
+        internal
+        pure
+        returns (uint256)
+    {
         return (self.data & ~ReserveConfiguration.RESERVE_FACTOR_MASK)
             >> ReserveConfiguration.RESERVE_FACTOR_START_BIT_POSITION;
     }

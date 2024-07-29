@@ -1,13 +1,13 @@
 pragma solidity ^0.8.20;
 
-import {ERC20} from '../../dependencies/openzeppelin/contracts/ERC20.sol';
-import {IERC20} from '../../dependencies/openzeppelin/contracts/IERC20.sol';
-import {IExternalContract} from '../dependencies/IExternalContract.sol';
+import {ERC20} from "../../dependencies/openzeppelin/contracts/ERC20.sol";
+import {IERC20} from "../../dependencies/openzeppelin/contracts/IERC20.sol";
+import {IExternalContract} from "../dependencies/IExternalContract.sol";
 
 contract ExternalContract is IExternalContract {
     address public want;
 
-    constructor (address _want) {
+    constructor(address _want) {
         want = _want;
     }
 

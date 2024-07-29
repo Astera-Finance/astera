@@ -1,0 +1,39 @@
+seqLen: 150
+testLimit: 50000
+
+workers: 10
+coverage: true
+corpusDir: "corpus"
+testMode: assertion
+deployer: "0x10000"
+sender: ["0x10000", "0x20000", "0x30000"]
+coverageFormats: ["txt"]
+shrinkLimit: 5000
+
+# Ignore helpers
+filterBlacklist: true
+filterFunctions: []
+codeSize: 0xf000
+
+# Library linking
+cryticArgs: [
+  "--compile-libraries=(BorrowLogic,0xf01),(DepositLogic,0xf03),(FlashLoanLogic,0xf11),(GenericLogic,0xf12),(LiquidationLogic,0xf13),(MiniPoolBorrowLogic,0xa01),(MiniPoolDepositLogic,0xa03),(MiniPoolFlashLoanLogic,0xa11),(MiniPoolGenericLogic,0xa12),(MiniPoolLiquidationLogic,0xa13),(MiniPoolLoanInfoLogic,0xa14),(MiniPoolReserveLogic,0xa15),(MiniPoolValidationLogic,0xa16),(MiniPoolWithdrawLogic,0xa17)"
+]
+
+deployContracts: [
+  ["0xf01", "BorrowLogic"],
+  ["0xf03", "DepositLogic"],
+  ["0xf11", "FlashLoanLogic"],
+  ["0xf12", "GenericLogic"],
+  ["0xf13", "LiquidationLogic"],
+
+  ["0xa01", "MiniPoolBorrowLogic"],
+  ["0xa03", "MiniPoolDepositLogic"],
+  ["0xa11", "MiniPoolFlashLoanLogic"],
+  ["0xa12", "MiniPoolGenericLogic"],
+  ["0xa13", "MiniPoolLiquidationLogic"],
+  ["0xa14", "MiniPoolLoanInfoLogic"],
+  ["0xa15", "MiniPoolReserveLogic"],
+  ["0xa16", "MiniPoolValidationLogic"],
+  ["0xa17", "MiniPoolWithdrawLogic"],
+]

@@ -1,11 +1,11 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.13;
 
-import "../GranaryPropertiesBase.sol";
+import "../PropertiesBase.sol";
 import "contracts/dependencies/openzeppelin/contracts/ERC20.sol";
 
 
-contract LendingPoolProp is GranaryPropertiesBase {
+contract LendingPoolProp is PropertiesBase {
     constructor() {}
 
     // --------------------- state updates ---------------------

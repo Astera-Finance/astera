@@ -14,7 +14,7 @@ interface IMiniPoolAddressesProvider {
     // Functions related to MiniPool implementation management
     function setMiniPoolImpl(address impl) external;
     function getMiniPoolImpl() external view returns (address);
-    
+
     // Functions related to AToken6909 implementation management
     function setAToken6909Impl(address impl) external;
     function getAToken6909Impl() external view returns (address);

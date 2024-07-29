@@ -1,41 +1,41 @@
 // SPDX-License-Identifier: AGPL-3.0-only
 pragma solidity ^0.8.23;
 
-import {SafeMath} from '../../../../dependencies/openzeppelin/contracts/SafeMath.sol';
-import {IAERC6909} from '../../../../interfaces/IAERC6909.sol';
-import {IERC20} from '../../../../dependencies/openzeppelin/contracts/IERC20.sol';
-import {IMiniPoolAddressesProvider} from '../../../../interfaces/IMiniPoolAddressesProvider.sol';
-import {SafeERC20} from '../../../../dependencies/openzeppelin/contracts/SafeERC20.sol';
-import {IReserveInterestRateStrategy} from '../../../../interfaces/IReserveInterestRateStrategy.sol';
-import {ReserveConfiguration} from '../../../libraries/configuration/ReserveConfiguration.sol';
-import {ReserveBorrowConfiguration} from '../../../libraries/configuration/ReserveBorrowConfiguration.sol';
-import {MathUtils} from '../../../libraries/math/MathUtils.sol';
-import {WadRayMath} from '../../../libraries/math/WadRayMath.sol';
-import {PercentageMath} from '../../../libraries/math/PercentageMath.sol';
-import {Errors} from '../../../libraries/helpers/Errors.sol';
-import {DataTypes} from '../../../libraries/types/DataTypes.sol';
-import {MiniPoolReserveLogic} from './MiniPoolReserveLogic.sol';
-import {UserConfiguration} from '../../../libraries/configuration/UserConfiguration.sol';
-import {MiniPoolValidationLogic} from './MiniPoolValidationLogic.sol';
+import {SafeMath} from "../../../../dependencies/openzeppelin/contracts/SafeMath.sol";
+import {IAERC6909} from "../../../../interfaces/IAERC6909.sol";
+import {IERC20} from "../../../../dependencies/openzeppelin/contracts/IERC20.sol";
+import {IMiniPoolAddressesProvider} from "../../../../interfaces/IMiniPoolAddressesProvider.sol";
+import {SafeERC20} from "../../../../dependencies/openzeppelin/contracts/SafeERC20.sol";
+import {IReserveInterestRateStrategy} from "../../../../interfaces/IReserveInterestRateStrategy.sol";
+import {ReserveConfiguration} from "../../../libraries/configuration/ReserveConfiguration.sol";
+import {ReserveBorrowConfiguration} from
+    "../../../libraries/configuration/ReserveBorrowConfiguration.sol";
+import {MathUtils} from "../../../libraries/math/MathUtils.sol";
+import {WadRayMath} from "../../../libraries/math/WadRayMath.sol";
+import {PercentageMath} from "../../../libraries/math/PercentageMath.sol";
+import {Errors} from "../../../libraries/helpers/Errors.sol";
+import {DataTypes} from "../../../libraries/types/DataTypes.sol";
+import {MiniPoolReserveLogic} from "./MiniPoolReserveLogic.sol";
+import {UserConfiguration} from "../../../libraries/configuration/UserConfiguration.sol";
+import {MiniPoolValidationLogic} from "./MiniPoolValidationLogic.sol";
 
 /**
  * @title withdraw Logic library
  * @notice Implements the logic to withdraw assets into the protocol
  */
-
 library MiniPoolWithdrawLogic {
-  using SafeMath for uint256;
-  using WadRayMath for uint256;
-  using PercentageMath for uint256;
-  using MiniPoolReserveLogic for DataTypes.MiniPoolReserveData;
-  using ReserveConfiguration for DataTypes.ReserveConfigurationMap;
-  using UserConfiguration for DataTypes.UserConfigurationMap;
+    using SafeMath for uint256;
+    using WadRayMath for uint256;
+    using PercentageMath for uint256;
+    using MiniPoolReserveLogic for DataTypes.MiniPoolReserveData;
+    using ReserveConfiguration for DataTypes.ReserveConfigurationMap;
+    using UserConfiguration for DataTypes.UserConfigurationMap;
 
     event ReserveUsedAsCollateralDisabled(address indexed reserve, address indexed user);
-    event Withdraw(address indexed reserve, address indexed user, address indexed to, uint256 amount);
+    event Withdraw(
+        address indexed reserve, address indexed user, address indexed to, uint256 amount
+    );
     event ReserveUsedAsCollateralEnabled(address indexed reserve, address indexed user);
-
-
 
     struct withdrawParams {
         address asset;
@@ -53,25 +53,26 @@ library MiniPoolWithdrawLogic {
     }
 
     function withdraw(
-            withdrawParams memory params,
-            mapping(address => DataTypes.MiniPoolReserveData) storage reservesData,
-            mapping(address => DataTypes.UserConfigurationMap) storage usersConfig,
-            mapping(uint256 => DataTypes.ReserveReference) storage reserves,
-            IMiniPoolAddressesProvider addressesProvider
+        withdrawParams memory params,
+        mapping(address => DataTypes.MiniPoolReserveData) storage reservesData,
+        mapping(address => DataTypes.UserConfigurationMap) storage usersConfig,
+        mapping(uint256 => DataTypes.ReserveReference) storage reserves,
+        IMiniPoolAddressesProvider addressesProvider
     ) external returns (uint256) {
         DataTypes.MiniPoolReserveData storage reserve = reservesData[params.asset];
         withdrawLocalVars memory localVars;
-        
-        {localVars.aToken = reserve.aTokenAddress;
-        localVars.id = reserve.aTokenID;
 
-        localVars.userBalance = IAERC6909(localVars.aToken).balanceOf(msg.sender, localVars.id);
+        {
+            localVars.aToken = reserve.aTokenAddress;
+            localVars.id = reserve.aTokenID;
 
-        localVars.amountToWithdraw = params.amount;
+            localVars.userBalance = IAERC6909(localVars.aToken).balanceOf(msg.sender, localVars.id);
 
-        if (params.amount == type(uint256).max) {
-            localVars.amountToWithdraw = localVars.userBalance;
-        }
+            localVars.amountToWithdraw = params.amount;
+
+            if (params.amount == type(uint256).max) {
+                localVars.amountToWithdraw = localVars.userBalance;
+            }
         }
         MiniPoolValidationLogic.validateWithdraw(
             MiniPoolValidationLogic.ValidateWithdrawParams(
@@ -96,14 +97,14 @@ library MiniPoolWithdrawLogic {
             emit ReserveUsedAsCollateralDisabled(params.asset, msg.sender);
         }
 
-        IAERC6909(localVars.aToken).burn(msg.sender, params.to, localVars.id, localVars.amountToWithdraw, reserve.liquidityIndex);
+        IAERC6909(localVars.aToken).burn(
+            msg.sender, params.to, localVars.id, localVars.amountToWithdraw, reserve.liquidityIndex
+        );
 
         emit Withdraw(params.asset, msg.sender, params.to, localVars.amountToWithdraw);
 
         return localVars.amountToWithdraw;
     }
-
-
 
     struct finalizeTransferParams {
         address asset;
@@ -115,17 +116,19 @@ library MiniPoolWithdrawLogic {
         uint256 balanceToBefore;
         uint256 reservesCount;
     }
+
     function finalizeTransfer(
         finalizeTransferParams memory params,
         mapping(address => DataTypes.MiniPoolReserveData) storage reserves,
-        mapping(address => DataTypes.UserConfigurationMap) storage usersConfig, 
+        mapping(address => DataTypes.UserConfigurationMap) storage usersConfig,
         mapping(uint256 => DataTypes.ReserveReference) storage reservesList,
         IMiniPoolAddressesProvider addressesProvider
-    ) external {
-        
-        require(msg.sender == reserves[params.asset].aTokenAddress, Errors.LP_CALLER_MUST_BE_AN_ATOKEN);
+    ) internal {
+        require(
+            msg.sender == reserves[params.asset].aTokenAddress, Errors.LP_CALLER_MUST_BE_AN_ATOKEN
+        );
 
-       MiniPoolValidationLogic.validateTransfer(
+        MiniPoolValidationLogic.validateTransfer(
             params.from,
             reserves,
             usersConfig[params.from],
@@ -157,24 +160,26 @@ library MiniPoolWithdrawLogic {
         mapping(address => DataTypes.UserConfigurationMap) storage usersConfig,
         mapping(uint256 => DataTypes.ReserveReference) storage reserves,
         IMiniPoolAddressesProvider addressesProvider
-    ) external returns (uint256) {
+    ) internal returns (uint256) {
         DataTypes.MiniPoolReserveData storage reserve = reservesData[params.asset];
         withdrawLocalVars memory localVars;
-        
-        {localVars.aToken = reserve.aTokenAddress;
-        localVars.id = reserve.aTokenID;
 
-        localVars.userBalance = IAERC6909(localVars.aToken).balanceOf(address(this), localVars.id);
+        {
+            localVars.aToken = reserve.aTokenAddress;
+            localVars.id = reserve.aTokenID;
 
-        localVars.amountToWithdraw = params.amount;
+            localVars.userBalance =
+                IAERC6909(localVars.aToken).balanceOf(address(this), localVars.id);
 
-        if (params.amount == type(uint256).max) {
-            localVars.amountToWithdraw = localVars.userBalance;
-        }
-        uint256 availableLiquidity = IERC20(params.asset).balanceOf(localVars.aToken);
-        if(localVars.amountToWithdraw > availableLiquidity) {
-            localVars.amountToWithdraw = availableLiquidity;
-        }
+            localVars.amountToWithdraw = params.amount;
+
+            if (params.amount == type(uint256).max) {
+                localVars.amountToWithdraw = localVars.userBalance;
+            }
+            uint256 availableLiquidity = IERC20(params.asset).balanceOf(localVars.aToken);
+            if (localVars.amountToWithdraw > availableLiquidity) {
+                localVars.amountToWithdraw = availableLiquidity;
+            }
         }
         MiniPoolValidationLogic.validateWithdraw(
             MiniPoolValidationLogic.ValidateWithdrawParams(
@@ -193,12 +198,16 @@ library MiniPoolWithdrawLogic {
 
         reserve.updateInterestRates(params.asset, 0, localVars.amountToWithdraw);
 
-        IAERC6909(localVars.aToken).burn(address(this), params.to, localVars.id, localVars.amountToWithdraw, reserve.liquidityIndex);
+        IAERC6909(localVars.aToken).burn(
+            address(this),
+            params.to,
+            localVars.id,
+            localVars.amountToWithdraw,
+            reserve.liquidityIndex
+        );
 
         emit Withdraw(params.asset, address(this), params.to, localVars.amountToWithdraw);
 
         return localVars.amountToWithdraw;
     }
-
 }
-

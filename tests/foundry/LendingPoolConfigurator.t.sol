@@ -23,7 +23,11 @@ contract LendingPoolConfiguratorTest is Common {
     event BorrowingEnabledOnReserve(address indexed asset, bool reserveType);
     event BorrowingDisabledOnReserve(address indexed asset, bool reserveType);
     event CollateralConfigurationChanged(
-        address indexed asset, bool reserveType, uint256 ltv, uint256 liquidationThreshold, uint256 liquidationBonus
+        address indexed asset,
+        bool reserveType,
+        uint256 ltv,
+        uint256 liquidationThreshold,
+        uint256 liquidationBonus
     );
     event ReserveActivated(address indexed asset, bool reserveType);
     event ReserveDeactivated(address indexed asset, bool reserveType);
@@ -36,11 +40,18 @@ contract LendingPoolConfiguratorTest is Common {
     event ReserveHighVolatilityLtvChanged(address indexed asset, bool reserveType, uint256 ltv);
     event ReserveDecimalsChanged(address indexed asset, bool reserveType, uint256 decimals);
     event ReserveDepositCapChanged(address indexed asset, bool reserveType, uint256 depositCap);
-    event ReserveInterestRateStrategyChanged(address indexed asset, bool reserveType, address strategy);
-    event ATokenUpgraded(
-        address indexed asset, address indexed proxy, address indexed implementation, bool reserveType
+    event ReserveInterestRateStrategyChanged(
+        address indexed asset, bool reserveType, address strategy
     );
-    event VariableDebtTokenUpgraded(address indexed asset, address indexed proxy, address indexed implementation);
+    event ATokenUpgraded(
+        address indexed asset,
+        address indexed proxy,
+        address indexed implementation,
+        bool reserveType
+    );
+    event VariableDebtTokenUpgraded(
+        address indexed asset, address indexed proxy, address indexed implementation
+    );
 
     ERC20[] erc20Tokens;
     DeployedContracts deployedContracts;
@@ -76,7 +87,9 @@ contract LendingPoolConfiguratorTest is Common {
             vm.expectEmit(true, false, false, true);
             emit BorrowingDisabledOnReserve(address(erc20Tokens[idx]), true);
             vm.prank(admin);
-            deployedContracts.lendingPoolConfigurator.disableBorrowingOnReserve(address(erc20Tokens[idx]), true);
+            deployedContracts.lendingPoolConfigurator.disableBorrowingOnReserve(
+                address(erc20Tokens[idx]), true
+            );
             // DataTypes.ReserveConfigurationMap memory currentConfig =
             //     deployedContracts.lendingPool.getConfiguration(address(erc20Tokens[idx]), false);
             // assertEq(currentConfig.getReserveFactor(), validReserveFactor);
@@ -88,7 +101,9 @@ contract LendingPoolConfiguratorTest is Common {
             vm.expectEmit(true, false, false, true);
             emit ReserveActivated(address(erc20Tokens[idx]), true);
             vm.prank(admin);
-            deployedContracts.lendingPoolConfigurator.activateReserve(address(erc20Tokens[idx]), true);
+            deployedContracts.lendingPoolConfigurator.activateReserve(
+                address(erc20Tokens[idx]), true
+            );
             // DataTypes.ReserveConfigurationMap memory currentConfig =
             //     deployedContracts.lendingPool.getConfiguration(address(erc20Tokens[idx]), false);
             // assertEq(currentConfig.getReserveFactor(), validReserveFactor);
@@ -100,7 +115,9 @@ contract LendingPoolConfiguratorTest is Common {
             vm.expectEmit(true, false, false, true);
             emit ReserveDeactivated(address(erc20Tokens[idx]), true);
             vm.prank(admin);
-            deployedContracts.lendingPoolConfigurator.deactivateReserve(address(erc20Tokens[idx]), true);
+            deployedContracts.lendingPoolConfigurator.deactivateReserve(
+                address(erc20Tokens[idx]), true
+            );
             // DataTypes.ReserveConfigurationMap memory currentConfig =
             //     deployedContracts.lendingPool.getConfiguration(address(erc20Tokens[idx]), false);
             // assertEq(currentConfig.getReserveFactor(), validReserveFactor);
@@ -124,7 +141,9 @@ contract LendingPoolConfiguratorTest is Common {
             vm.expectEmit(true, false, false, true);
             emit ReserveUnfrozen(address(erc20Tokens[idx]), true);
             vm.prank(admin);
-            deployedContracts.lendingPoolConfigurator.unfreezeReserve(address(erc20Tokens[idx]), true);
+            deployedContracts.lendingPoolConfigurator.unfreezeReserve(
+                address(erc20Tokens[idx]), true
+            );
             // DataTypes.ReserveConfigurationMap memory currentConfig =
             //     deployedContracts.lendingPool.getConfiguration(address(erc20Tokens[idx]), false);
             // assertEq(currentConfig.getReserveFactor(), validReserveFactor);
@@ -147,7 +166,8 @@ contract LendingPoolConfiguratorTest is Common {
     }
 
     function testSetReserveFactor_Negative(uint256 invalidReserveFactor) public {
-        invalidReserveFactor = bound(invalidReserveFactor, MAX_VALID_RESERVE_FACTOR + 1, type(uint256).max);
+        invalidReserveFactor =
+            bound(invalidReserveFactor, MAX_VALID_RESERVE_FACTOR + 1, type(uint256).max);
         for (uint32 idx; idx < erc20Tokens.length; idx++) {
             vm.expectRevert(bytes(Errors.RC_INVALID_RESERVE_FACTOR));
             vm.prank(admin);
@@ -163,7 +183,9 @@ contract LendingPoolConfiguratorTest is Common {
             vm.expectEmit(true, false, false, false);
             emit ReserveDepositCapChanged(address(erc20Tokens[idx]), true, validDepositCap);
             vm.prank(admin);
-            deployedContracts.lendingPoolConfigurator.setDepositCap(address(erc20Tokens[idx]), true, validDepositCap);
+            deployedContracts.lendingPoolConfigurator.setDepositCap(
+                address(erc20Tokens[idx]), true, validDepositCap
+            );
             // DataTypes.ReserveConfigurationMap memory currentConfig =
             //     deployedContracts.lendingPool.getConfiguration(address(erc20Tokens[idx]), false);
             // assertEq(currentConfig.getReserveFactor(), validReserveFactor);
@@ -175,7 +197,9 @@ contract LendingPoolConfiguratorTest is Common {
         for (uint32 idx; idx < erc20Tokens.length; idx++) {
             vm.expectRevert(bytes(Errors.RC_INVALID_DEPOSIT_CAP));
             vm.prank(admin);
-            deployedContracts.lendingPoolConfigurator.setDepositCap(address(erc20Tokens[idx]), false, invalidDepositCap);
+            deployedContracts.lendingPoolConfigurator.setDepositCap(
+                address(erc20Tokens[idx]), false, invalidDepositCap
+            );
         }
     }
 
@@ -188,7 +212,9 @@ contract LendingPoolConfiguratorTest is Common {
         /* set vault positive */
         vm.expectCall(
             lendingPoolAddr,
-            abi.encodeCall(deployedContracts.lendingPool.setVault, (aTokenAddress, address(mockedVaults[0])))
+            abi.encodeCall(
+                deployedContracts.lendingPool.setVault, (aTokenAddress, address(mockedVaults[0]))
+            )
         );
         deployedContracts.lendingPoolConfigurator.setVault(aTokenAddress, address(mockedVaults[0]));
 
@@ -199,7 +225,8 @@ contract LendingPoolConfiguratorTest is Common {
         /* set farming pct positive */
         farmingPct = bound(farmingPct, 0, 10000);
         vm.expectCall(
-            lendingPoolAddr, abi.encodeCall(deployedContracts.lendingPool.setFarmingPct, (aTokenAddress, farmingPct))
+            lendingPoolAddr,
+            abi.encodeCall(deployedContracts.lendingPool.setFarmingPct, (aTokenAddress, farmingPct))
         );
         deployedContracts.lendingPoolConfigurator.setFarmingPct(aTokenAddress, farmingPct);
 
@@ -212,15 +239,22 @@ contract LendingPoolConfiguratorTest is Common {
         claimingThreshold = bound(claimingThreshold, 0, type(uint256).max);
         vm.expectCall(
             lendingPoolAddr,
-            abi.encodeCall(deployedContracts.lendingPool.setClaimingThreshold, (aTokenAddress, claimingThreshold))
+            abi.encodeCall(
+                deployedContracts.lendingPool.setClaimingThreshold,
+                (aTokenAddress, claimingThreshold)
+            )
         );
-        deployedContracts.lendingPoolConfigurator.setClaimingThreshold(aTokenAddress, claimingThreshold);
+        deployedContracts.lendingPoolConfigurator.setClaimingThreshold(
+            aTokenAddress, claimingThreshold
+        );
 
         /* set farming pct drift positive */
         farmingPct = bound(farmingPct, 0, 10000);
         vm.expectCall(
             lendingPoolAddr,
-            abi.encodeCall(deployedContracts.lendingPool.setFarmingPctDrift, (aTokenAddress, farmingPct))
+            abi.encodeCall(
+                deployedContracts.lendingPool.setFarmingPctDrift, (aTokenAddress, farmingPct)
+            )
         );
         deployedContracts.lendingPoolConfigurator.setFarmingPctDrift(aTokenAddress, farmingPct);
 
@@ -234,7 +268,9 @@ contract LendingPoolConfiguratorTest is Common {
         vm.assume(profitHandler != address(0));
         vm.expectCall(
             lendingPoolAddr,
-            abi.encodeCall(deployedContracts.lendingPool.setProfitHandler, (aTokenAddress, profitHandler))
+            abi.encodeCall(
+                deployedContracts.lendingPool.setProfitHandler, (aTokenAddress, profitHandler)
+            )
         );
         deployedContracts.lendingPoolConfigurator.setProfitHandler(aTokenAddress, profitHandler);
 

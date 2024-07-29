@@ -281,7 +281,10 @@ abstract contract ERC20 is Context, IERC20, IERC20Metadata, IERC20Errors {
      *
      * Requirements are the same as {_approve}.
      */
-    function _approve(address owner, address spender, uint256 value, bool emitEvent) internal virtual {
+    function _approve(address owner, address spender, uint256 value, bool emitEvent)
+        internal
+        virtual
+    {
         if (owner == address(0)) {
             revert ERC20InvalidApprover(address(0));
         }

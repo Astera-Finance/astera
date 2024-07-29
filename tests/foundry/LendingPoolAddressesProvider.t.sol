@@ -30,7 +30,7 @@ contract LendingPoolAddressesProviderTest is Common {
     }
 
     function testSetAndGetMarketId() public {
-        string memory newMarketId = "New Granary Genesis Market";
+        string memory newMarketId = "New Cod3x Lend Genesis Market";
         LendingPoolAddressesProvider provider = new LendingPoolAddressesProvider(marketId);
         assertEq(provider.getMarketId(), marketId);
 
@@ -131,7 +131,7 @@ contract LendingPoolAddressesProviderTest is Common {
     //     vm.assume(hacker != address(this));
     //     address nonsecureAddress = makeAddr("nonsecure");
     //     bytes32 id = "RANDOM_PROXY";
-    //     string memory newMarketId = "New Granary Genesis Market";
+    //     string memory newMarketId = "New Cod3x Lend Genesis Market";
 
     //     LendingPoolAddressesProvider provider = new LendingPoolAddressesProvider(marketId);
 

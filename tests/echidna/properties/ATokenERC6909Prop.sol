@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.13;
 
-import "../GranaryPropertiesBase.sol";
+import "../PropertiesBase.sol";
 
-contract ATokenERC6909Prop is GranaryPropertiesBase {
+contract ATokenERC6909Prop is PropertiesBase {
     constructor() {}
 
     // --------------------- state updates ---------------------

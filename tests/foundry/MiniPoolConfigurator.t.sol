@@ -5,7 +5,6 @@ import "./MiniPoolDepositBorrow.t.sol";
 import "contracts/protocol/libraries/helpers/Errors.sol";
 import {WadRayMath} from "contracts/protocol/libraries/math/WadRayMath.sol";
 
-
 contract MiniPoolConfiguratorTest is MiniPoolDepositBorrowTest {
     using WadRayMath for uint256;
     using ReserveConfiguration for DataTypes.ReserveConfigurationMap;
@@ -22,7 +21,7 @@ contract MiniPoolConfiguratorTest is MiniPoolDepositBorrowTest {
     event ReserveFrozen(address indexed asset, bool reserveType);
     event ReserveUnfrozen(address indexed asset, bool reserveType);
     event ReserveFactorChanged(address indexed asset, bool reserveType, uint256 factor);
-    
+
     event ReserveDepositCapChanged(address indexed asset, bool reserveType, uint256 depositCap);
     event ReserveVolatilityTierChanged(address indexed asset, bool reserveType, uint256 tier);
 
@@ -30,13 +29,14 @@ contract MiniPoolConfiguratorTest is MiniPoolDepositBorrowTest {
     event ReserveMediumVolatilityLtvChanged(address indexed asset, bool reserveType, uint256 ltv);
     event ReserveHighVolatilityLtvChanged(address indexed asset, bool reserveType, uint256 ltv);
 
-
     function testDisableBorrowingOnReserve() public {
         for (uint32 idx; idx < erc20Tokens.length; idx++) {
             vm.expectEmit(true, false, false, true);
             emit BorrowingDisabledOnReserve(address(erc20Tokens[idx]), true);
             vm.prank(admin);
-            miniPoolContracts.miniPoolConfigurator.disableBorrowingOnReserve(address(erc20Tokens[idx]), true, IMiniPool(miniPool));
+            miniPoolContracts.miniPoolConfigurator.disableBorrowingOnReserve(
+                address(erc20Tokens[idx]), true, IMiniPool(miniPool)
+            );
             // DataTypes.ReserveConfigurationMap memory currentConfig =
             //     deployedContracts.lendingPool.getConfiguration(address(erc20Tokens[idx]), false);
             // assertEq(currentConfig.getReserveFactor(), validReserveFactor);
@@ -48,7 +48,9 @@ contract MiniPoolConfiguratorTest is MiniPoolDepositBorrowTest {
             vm.expectEmit(true, false, false, true);
             emit ReserveActivated(address(erc20Tokens[idx]), true);
             vm.prank(admin);
-            miniPoolContracts.miniPoolConfigurator.activateReserve(address(erc20Tokens[idx]), true, IMiniPool(miniPool));
+            miniPoolContracts.miniPoolConfigurator.activateReserve(
+                address(erc20Tokens[idx]), true, IMiniPool(miniPool)
+            );
         }
     }
 
@@ -57,7 +59,9 @@ contract MiniPoolConfiguratorTest is MiniPoolDepositBorrowTest {
             vm.expectEmit(true, false, false, true);
             emit ReserveDeactivated(address(erc20Tokens[idx]), true);
             vm.prank(admin);
-            miniPoolContracts.miniPoolConfigurator.deactivateReserve(address(erc20Tokens[idx]), true, IMiniPool(miniPool));
+            miniPoolContracts.miniPoolConfigurator.deactivateReserve(
+                address(erc20Tokens[idx]), true, IMiniPool(miniPool)
+            );
         }
     }
 
@@ -66,7 +70,9 @@ contract MiniPoolConfiguratorTest is MiniPoolDepositBorrowTest {
             vm.expectEmit(true, false, false, true);
             emit ReserveFrozen(address(erc20Tokens[idx]), true);
             vm.prank(admin);
-            miniPoolContracts.miniPoolConfigurator.freezeReserve(address(erc20Tokens[idx]), true, IMiniPool(miniPool));
+            miniPoolContracts.miniPoolConfigurator.freezeReserve(
+                address(erc20Tokens[idx]), true, IMiniPool(miniPool)
+            );
         }
     }
 
@@ -75,7 +81,9 @@ contract MiniPoolConfiguratorTest is MiniPoolDepositBorrowTest {
             vm.expectEmit(true, false, false, true);
             emit ReserveUnfrozen(address(erc20Tokens[idx]), true);
             vm.prank(admin);
-            miniPoolContracts.miniPoolConfigurator.unfreezeReserve(address(erc20Tokens[idx]), true, IMiniPool(miniPool));
+            miniPoolContracts.miniPoolConfigurator.unfreezeReserve(
+                address(erc20Tokens[idx]), true, IMiniPool(miniPool)
+            );
         }
     }
 
@@ -92,7 +100,8 @@ contract MiniPoolConfiguratorTest is MiniPoolDepositBorrowTest {
     }
 
     function testSetReserveFactor_Negative(uint256 invalidReserveFactor) public {
-        invalidReserveFactor = bound(invalidReserveFactor, MAX_VALID_RESERVE_FACTOR + 1, type(uint256).max);
+        invalidReserveFactor =
+            bound(invalidReserveFactor, MAX_VALID_RESERVE_FACTOR + 1, type(uint256).max);
         for (uint32 idx; idx < erc20Tokens.length; idx++) {
             vm.expectRevert(bytes(Errors.RC_INVALID_RESERVE_FACTOR));
             vm.prank(admin);
@@ -102,31 +111,57 @@ contract MiniPoolConfiguratorTest is MiniPoolDepositBorrowTest {
         }
     }
 
-    function testSetUserUseReserveAsCollateral(uint256 amount, uint256 collateralOffset, uint256 borrowOffset) public {
+    function testSetUserUseReserveAsCollateral(
+        uint256 amount,
+        uint256 collateralOffset,
+        uint256 borrowOffset
+    ) public {
         collateralOffset = bound(collateralOffset, 0, tokens.length - 1);
         borrowOffset = bound(borrowOffset, 0, tokens.length - 1);
-        IAERC6909 aErc6909Token = IAERC6909(miniPoolContracts.miniPoolAddressesProvider.getMiniPoolToAERC6909(miniPool));
-        TokenParams memory collateralTokenParams = TokenParams(erc20Tokens[collateralOffset], aTokens[collateralOffset], oracle.getAssetPrice(address(erc20Tokens[collateralOffset])));
-        TokenParams memory borrowTokenParams = TokenParams(erc20Tokens[borrowOffset], aTokens[borrowOffset], oracle.getAssetPrice(address(erc20Tokens[borrowOffset])));
+        IAERC6909 aErc6909Token =
+            IAERC6909(miniPoolContracts.miniPoolAddressesProvider.getMiniPoolToAERC6909(miniPool));
+        TokenParams memory collateralTokenParams = TokenParams(
+            erc20Tokens[collateralOffset],
+            aTokens[collateralOffset],
+            oracle.getAssetPrice(address(erc20Tokens[collateralOffset]))
+        );
+        TokenParams memory borrowTokenParams = TokenParams(
+            erc20Tokens[borrowOffset],
+            aTokens[borrowOffset],
+            oracle.getAssetPrice(address(erc20Tokens[borrowOffset]))
+        );
         address user = makeAddr("user");
         vm.label(address(aErc6909Token), "aErc6909Token");
         vm.label(address(collateralTokenParams.aToken), "aToken");
         vm.label(address(collateralTokenParams.token), "token");
-      
-        amount = bound(amount, 10**(borrowTokenParams.token.decimals()-2), borrowTokenParams.token.balanceOf(address(this)) / 10);
+
+        amount = bound(
+            amount,
+            10 ** (borrowTokenParams.token.decimals() - 2),
+            borrowTokenParams.token.balanceOf(address(this)) / 10
+        );
 
         /* Test depositing */
         uint256 minNrOfTokens;
         {
-            (, uint256 collateralTokenLtv,,,,,,,) = deployedContracts.protocolDataProvider.getReserveConfigurationData(address(collateralTokenParams.token), true);
+            (, uint256 collateralTokenLtv,,,,,,,) = deployedContracts
+                .protocolDataProvider
+                .getReserveConfigurationData(address(collateralTokenParams.token), true);
             console.log("collateralTokenLtv: ", collateralTokenLtv);
-            uint256 borrowTokenInUsd = (amount * borrowTokenParams.price * 10_000) / ((10 ** PRICE_FEED_DECIMALS) * collateralTokenLtv);
+            uint256 borrowTokenInUsd = (amount * borrowTokenParams.price * 10_000)
+                / ((10 ** PRICE_FEED_DECIMALS) * collateralTokenLtv);
             uint256 borrowTokenRay = borrowTokenInUsd.rayDiv(collateralTokenParams.price);
             uint256 borrowTokenInCollateralToken = fixture_preciseConvertWithDecimals(
-                borrowTokenRay, borrowTokenParams.token.decimals(), collateralTokenParams.token.decimals()
+                borrowTokenRay,
+                borrowTokenParams.token.decimals(),
+                collateralTokenParams.token.decimals()
             );
-            minNrOfTokens = (borrowTokenInCollateralToken > collateralTokenParams.token.balanceOf(address(this)) / 4) ? 
-                (collateralTokenParams.token.balanceOf(address(this)) / 4) : borrowTokenInCollateralToken;
+            minNrOfTokens = (
+                borrowTokenInCollateralToken
+                    > collateralTokenParams.token.balanceOf(address(this)) / 4
+            )
+                ? (collateralTokenParams.token.balanceOf(address(this)) / 4)
+                : borrowTokenInCollateralToken;
         }
         {
             console.log("collateral amount %s %s", amount, collateralTokenParams.token.symbol());
@@ -137,17 +172,21 @@ contract MiniPoolConfiguratorTest is MiniPoolDepositBorrowTest {
             console.log("Other user deposit");
             address otherUser = makeAddr("otherUser");
             fixture_MiniPoolDeposit(amount, borrowOffset, otherUser, borrowTokenParams);
-            
+
             vm.startPrank(user);
             console.log("Set collateral for token");
             console.log("Amount: %s and minNrOf: %s", amount, minNrOfTokens);
             vm.expectEmit();
             emit ReserveUsedAsCollateralDisabled(address(collateralTokenParams.token), user);
-            IMiniPool(miniPool).setUserUseReserveAsCollateral(address(collateralTokenParams.token), true, false);
+            IMiniPool(miniPool).setUserUseReserveAsCollateral(
+                address(collateralTokenParams.token), true, false
+            );
             vm.expectEmit();
             emit ReserveUsedAsCollateralDisabled(address(collateralTokenParams.aToken), user);
-            IMiniPool(miniPool).setUserUseReserveAsCollateral(address(collateralTokenParams.aToken), true, false);
-            
+            IMiniPool(miniPool).setUserUseReserveAsCollateral(
+                address(collateralTokenParams.aToken), true, false
+            );
+
             vm.expectRevert(bytes(Errors.VL_COLLATERAL_BALANCE_IS_0));
             IMiniPool(miniPool).borrow(address(borrowTokenParams.token), true, amount, user);
 
@@ -155,18 +194,24 @@ contract MiniPoolConfiguratorTest is MiniPoolDepositBorrowTest {
         }
     }
 
-        function testReserveFactorPositiveInNormalBorrow(uint256 amount, uint256 collateralOffset, uint256 borrowOffset, uint256 validReserveFactor) public {
+    function testReserveFactorPositiveInNormalBorrow(
+        uint256 amount,
+        uint256 collateralOffset,
+        uint256 borrowOffset,
+        uint256 validReserveFactor
+    ) public {
         /**
-         * Preconditions: 
+         * Preconditions:
          * 1. Reserves in MiniPool must be configured
          * Test Scenario:
-         * 1. Reserve factor is set 
+         * 1. Reserve factor is set
          * 2. User adds token as collateral into the miniPool
          * 3. Reserve factor is configured by admin to mint to treasury
          * 3. User borrows token
-         * Invariants: 
+         * Invariants:
          * 1. Some tokens are minted to the treasury
-         * */
+         *
+         */
 
         /* Fuzz vectors */
         collateralOffset = bound(collateralOffset, 0, tokens.length - 1);
@@ -174,38 +219,66 @@ contract MiniPoolConfiguratorTest is MiniPoolDepositBorrowTest {
         console.log("[collateral]Offset: ", collateralOffset);
         console.log("[borrow]Offset: ", borrowOffset);
         validReserveFactor = 1e3; //bound(validReserveFactor, 0, 1e4); //@issue: max allowed reserve factor is to PercentageMath.PERCENTAGE_FACTOR (1e4) not MAX_VALID_RESERVE_FACTOR
-        
-        IAERC6909 aErc6909Token = IAERC6909(miniPoolContracts.miniPoolAddressesProvider.getMiniPoolToAERC6909(miniPool));
+
+        IAERC6909 aErc6909Token =
+            IAERC6909(miniPoolContracts.miniPoolAddressesProvider.getMiniPoolToAERC6909(miniPool));
 
         /* Test vars */
         address user = makeAddr("user");
-        TokenParams memory collateralTokenParams = TokenParams(erc20Tokens[collateralOffset], aTokens[collateralOffset], oracle.getAssetPrice(address(erc20Tokens[collateralOffset])));
-        TokenParams memory borrowTokenParams = TokenParams(erc20Tokens[borrowOffset], aTokens[borrowOffset], oracle.getAssetPrice(address(erc20Tokens[borrowOffset])));
+        TokenParams memory collateralTokenParams = TokenParams(
+            erc20Tokens[collateralOffset],
+            aTokens[collateralOffset],
+            oracle.getAssetPrice(address(erc20Tokens[collateralOffset]))
+        );
+        TokenParams memory borrowTokenParams = TokenParams(
+            erc20Tokens[borrowOffset],
+            aTokens[borrowOffset],
+            oracle.getAssetPrice(address(erc20Tokens[borrowOffset]))
+        );
         /* Assumptions */
-        amount = bound(amount, 10**(borrowTokenParams.token.decimals()-1), borrowTokenParams.token.balanceOf(address(this)) / 10);
+        amount = bound(
+            amount,
+            10 ** (borrowTokenParams.token.decimals() - 1),
+            borrowTokenParams.token.balanceOf(address(this)) / 10
+        );
         console.log("Amount bounded: ", amount);
-
 
         uint256 minNrOfTokens;
         {
-            (, uint256 collateralTokenLtv,,,,,,,) = deployedContracts.protocolDataProvider.getReserveConfigurationData(address(collateralTokenParams.token), true);
+            (, uint256 collateralTokenLtv,,,,,,,) = deployedContracts
+                .protocolDataProvider
+                .getReserveConfigurationData(address(collateralTokenParams.token), true);
             console.log("collateralTokenLtv: ", collateralTokenLtv);
-            uint256 borrowTokenInUsd = (amount * borrowTokenParams.price * 10_000) / ((10 ** PRICE_FEED_DECIMALS) * collateralTokenLtv);
+            uint256 borrowTokenInUsd = (amount * borrowTokenParams.price * 10_000)
+                / ((10 ** PRICE_FEED_DECIMALS) * collateralTokenLtv);
             console.log("borrow in USD: ", borrowTokenInUsd);
             uint256 borrowTokenRay = borrowTokenInUsd.rayDiv(collateralTokenParams.price);
             uint256 borrowTokenInCollateralToken = fixture_preciseConvertWithDecimals(
-                borrowTokenRay, borrowTokenParams.token.decimals(), collateralTokenParams.token.decimals()
+                borrowTokenRay,
+                borrowTokenParams.token.decimals(),
+                collateralTokenParams.token.decimals()
             );
-            console.log("collateral in USD: ", (borrowTokenInCollateralToken * collateralTokenParams.price * 10_000) / (10**PRICE_FEED_DECIMALS));
-            minNrOfTokens = (borrowTokenInCollateralToken > collateralTokenParams.token.balanceOf(address(this)) / 4) ? 
-                (collateralTokenParams.token.balanceOf(address(this)) / 4) : borrowTokenInCollateralToken;
-
+            console.log(
+                "collateral in USD: ",
+                (borrowTokenInCollateralToken * collateralTokenParams.price * 10_000)
+                    / (10 ** PRICE_FEED_DECIMALS)
+            );
+            minNrOfTokens = (
+                borrowTokenInCollateralToken
+                    > collateralTokenParams.token.balanceOf(address(this)) / 4
+            )
+                ? (collateralTokenParams.token.balanceOf(address(this)) / 4)
+                : borrowTokenInCollateralToken;
         }
 
         {
             /* Sb deposits tokens which will be borrowed */
             address liquidityProvider = makeAddr("liquidityProvider");
-            console.log("Deposit borrowTokens: %s with balance: %s", 2 * amount, borrowTokenParams.token.balanceOf(address(this)));
+            console.log(
+                "Deposit borrowTokens: %s with balance: %s",
+                2 * amount,
+                borrowTokenParams.token.balanceOf(address(this))
+            );
             fixture_MiniPoolDeposit(amount, borrowOffset, liquidityProvider, borrowTokenParams);
         }
 
@@ -215,26 +288,34 @@ contract MiniPoolConfiguratorTest is MiniPoolDepositBorrowTest {
 
         vm.prank(admin);
         miniPoolContracts.miniPoolConfigurator.setReserveFactor(
-                        address(collateralTokenParams.token), true, validReserveFactor, IMiniPool(miniPool));
+            address(collateralTokenParams.token), true, validReserveFactor, IMiniPool(miniPool)
+        );
 
         vm.startPrank(user);
-        uint256 atokenBalanceBefore = aErc6909Token.balanceOf(address(deployedContracts.treasury), 1000 + borrowOffset);
-        uint256 tokenBalanceBefore = aErc6909Token.balanceOf(address(deployedContracts.treasury), 1128 + borrowOffset);
+        uint256 atokenBalanceBefore =
+            aErc6909Token.balanceOf(address(deployedContracts.treasury), 1000 + borrowOffset);
+        uint256 tokenBalanceBefore =
+            aErc6909Token.balanceOf(address(deployedContracts.treasury), 1128 + borrowOffset);
         console.log("BORROW 1");
-        IMiniPool(miniPool).borrow(address(borrowTokenParams.token), true, amount/3, user);
+        IMiniPool(miniPool).borrow(address(borrowTokenParams.token), true, amount / 3, user);
         skip(100 days);
         console.log("BORROW 2");
-        IMiniPool(miniPool).borrow(address(borrowTokenParams.token), true, amount/3, user);
+        IMiniPool(miniPool).borrow(address(borrowTokenParams.token), true, amount / 3, user);
         // console.log("Part of borrow aToken balance shall be transfered to the treasury");
         // assertGt(aErc6909Token.balanceOf(address(deployedContracts.treasury), 1000 + borrowOffset), atokenBalanceBefore);
-        console.log("curr balance: ", aErc6909Token.balanceOf(address(deployedContracts.treasury), 1128 + borrowOffset));
+        console.log(
+            "curr balance: ",
+            aErc6909Token.balanceOf(address(deployedContracts.treasury), 1128 + borrowOffset)
+        );
         console.log("Part of borrow token balance shall be transfered to the treasury");
 
         //@issue cannot set miniPoolToTreasury variable so mintToTreasure and reserveFactor is not working. It is only getter getMiniPoolTreasury in MiniPoolAddressProvider.sol which is returning address(0)
-        assertGt(aErc6909Token.balanceOf(address(deployedContracts.treasury), 1128 + borrowOffset), tokenBalanceBefore);
+        assertGt(
+            aErc6909Token.balanceOf(address(deployedContracts.treasury), 1128 + borrowOffset),
+            tokenBalanceBefore
+        );
 
         vm.stopPrank();
-
     }
 
     function testSetDepositCap_Positive(uint256 validDepositCap) public {
@@ -243,7 +324,9 @@ contract MiniPoolConfiguratorTest is MiniPoolDepositBorrowTest {
             vm.expectEmit(true, false, false, false);
             emit ReserveDepositCapChanged(address(erc20Tokens[idx]), true, validDepositCap);
             vm.prank(admin);
-            miniPoolContracts.miniPoolConfigurator.setDepositCap(address(erc20Tokens[idx]), true, validDepositCap, IMiniPool(miniPool));
+            miniPoolContracts.miniPoolConfigurator.setDepositCap(
+                address(erc20Tokens[idx]), true, validDepositCap, IMiniPool(miniPool)
+            );
             // DataTypes.ReserveConfigurationMap memory currentConfig =
             //     deployedContracts.lendingPool.getConfiguration(address(erc20Tokens[idx]), false);
             // assertEq(currentConfig.getReserveFactor(), validReserveFactor);
@@ -255,38 +338,48 @@ contract MiniPoolConfiguratorTest is MiniPoolDepositBorrowTest {
         for (uint32 idx; idx < erc20Tokens.length; idx++) {
             vm.expectRevert(bytes(Errors.RC_INVALID_DEPOSIT_CAP));
             vm.prank(admin);
-            miniPoolContracts.miniPoolConfigurator.setDepositCap(address(erc20Tokens[idx]), false, invalidDepositCap, IMiniPool(miniPool));
+            miniPoolContracts.miniPoolConfigurator.setDepositCap(
+                address(erc20Tokens[idx]), false, invalidDepositCap, IMiniPool(miniPool)
+            );
         }
     }
 
     function testSetReserveVolatilityTier(uint256 tier) public {
         tier = bound(tier, 0, MAX_VALID_VOLATILITY_TIER);
-        for(uint32 idx; idx < erc20Tokens.length; idx++){
+        for (uint32 idx; idx < erc20Tokens.length; idx++) {
             vm.expectEmit(); //true, false, false, false
             emit ReserveVolatilityTierChanged(address(erc20Tokens[idx]), true, tier);
             vm.prank(admin);
-            miniPoolContracts.miniPoolConfigurator.setReserveVolatilityTier(address(erc20Tokens[idx]), true, tier, IMiniPool(miniPool));
+            miniPoolContracts.miniPoolConfigurator.setReserveVolatilityTier(
+                address(erc20Tokens[idx]), true, tier, IMiniPool(miniPool)
+            );
         }
     }
 
     function testSetReserveVolatilitiesLtv(uint256 ltv) public {
         ltv = bound(ltv, 0, MAX_VALID_LTV);
-        for(uint32 idx; idx < erc20Tokens.length; idx++){
+        for (uint32 idx; idx < erc20Tokens.length; idx++) {
             /* Low volatility */
             vm.expectEmit(); //true, false, false, false
             emit ReserveLowVolatilityLtvChanged(address(erc20Tokens[idx]), true, ltv);
             vm.prank(admin);
-            miniPoolContracts.miniPoolConfigurator.setLowVolatilityLtv(address(erc20Tokens[idx]), true, ltv, IMiniPool(miniPool));
+            miniPoolContracts.miniPoolConfigurator.setLowVolatilityLtv(
+                address(erc20Tokens[idx]), true, ltv, IMiniPool(miniPool)
+            );
             /* Medium volatility */
             vm.expectEmit(); //true, false, false, false
             emit ReserveMediumVolatilityLtvChanged(address(erc20Tokens[idx]), true, ltv);
             vm.prank(admin);
-            miniPoolContracts.miniPoolConfigurator.setMediumVolatilityLtv(address(erc20Tokens[idx]), true, ltv, IMiniPool(miniPool));
-           /* High volatility */
+            miniPoolContracts.miniPoolConfigurator.setMediumVolatilityLtv(
+                address(erc20Tokens[idx]), true, ltv, IMiniPool(miniPool)
+            );
+            /* High volatility */
             vm.expectEmit(); //true, false, false, false
             emit ReserveHighVolatilityLtvChanged(address(erc20Tokens[idx]), true, ltv);
             vm.prank(admin);
-            miniPoolContracts.miniPoolConfigurator.setHighVolatilityLtv(address(erc20Tokens[idx]), true, ltv, IMiniPool(miniPool));
+            miniPoolContracts.miniPoolConfigurator.setHighVolatilityLtv(
+                address(erc20Tokens[idx]), true, ltv, IMiniPool(miniPool)
+            );
         }
     }
 
@@ -312,7 +405,8 @@ contract MiniPoolConfiguratorTest is MiniPoolDepositBorrowTest {
         vars.mpId = 0;
         vars.mp = miniPoolContracts.miniPoolAddressesProvider.getMiniPool(vars.mpId);
         vm.label(vars.mp, "MiniPool");
-        vars.aErc6909Token = IAERC6909(miniPoolContracts.miniPoolAddressesProvider.getMiniPoolToAERC6909(vars.mp));
+        vars.aErc6909Token =
+            IAERC6909(miniPoolContracts.miniPoolAddressesProvider.getMiniPoolToAERC6909(vars.mp));
         vm.label(address(vars.aErc6909Token), "aErc6909Token");
 
         vars.whaleUser = makeAddr("whaleUser");
@@ -341,7 +435,9 @@ contract MiniPoolConfiguratorTest is MiniPoolDepositBorrowTest {
 
         vm.startPrank(vars.whaleUser);
         vars.usdc.approve(address(deployedContracts.lendingPool), vars.amount * 1000); //500000 USDC
-        deployedContracts.lendingPool.deposit(address(vars.usdc), true, vars.amount * 1000, vars.whaleUser);
+        deployedContracts.lendingPool.deposit(
+            address(vars.usdc), true, vars.amount * 1000, vars.whaleUser
+        );
         vm.stopPrank();
 
         vm.startPrank(vars.user);
@@ -359,7 +455,9 @@ contract MiniPoolConfiguratorTest is MiniPoolDepositBorrowTest {
         vm.startPrank(vars.user);
         IMiniPool(vars.mp).borrow(address(vars.grainUSDC), true, vars.amount * 94, vars.user); // 47000 USDC
         assertEq(vars.debtUSDC.balanceOf(vars.mp), vars.amount * 94);
-        assertEq(IVariableDebtToken(address(vars.debtUSDC)).scaledBalanceOf(vars.mp), vars.amount * 94);
+        assertEq(
+            IVariableDebtToken(address(vars.debtUSDC)).scaledBalanceOf(vars.mp), vars.amount * 94
+        );
 
         DataTypes.ReserveData memory reserveData =
             deployedContracts.lendingPool.getReserveData(address(vars.usdc), true);
@@ -370,7 +468,10 @@ contract MiniPoolConfiguratorTest is MiniPoolDepositBorrowTest {
         console.log("CurrentVariableBorrowRate: ", currentVariableBorrowRate);
         console.log("Delta: ", delta);
         console.log("1 %s vs 2 %s", address(vars.debtUSDC), reserveData.variableDebtTokenAddress);
-        console.log("Balance of variable debt: ", IERC20(reserveData.variableDebtTokenAddress).balanceOf(vars.user));
+        console.log(
+            "Balance of variable debt: ",
+            IERC20(reserveData.variableDebtTokenAddress).balanceOf(vars.user)
+        );
         DataTypes.MiniPoolReserveData memory mpReserveData =
             IMiniPool(vars.mp).getReserveData(address(aTokens[0]), true);
         uint128 mpCurrentLiquidityRate = mpReserveData.currentLiquidityRate;

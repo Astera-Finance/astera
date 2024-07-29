@@ -46,7 +46,8 @@ contract OracleTest is Common {
         prices[3] = int256(95 * 10 ** PRICE_FEED_DECIMALS - 1); // DAI
         (, aggregators) = fixture_getTokenPriceFeeds(erc20tokens, prices);
 
-        Oracle fallbackOracle = new Oracle(tokens, aggregators, ZERO_ADDRESS, ZERO_ADDRESS, BASE_CURRENCY_UNIT);
+        Oracle fallbackOracle =
+            new Oracle(tokens, aggregators, ZERO_ADDRESS, ZERO_ADDRESS, BASE_CURRENCY_UNIT);
 
         oracle.setFallbackOracle(address(fallbackOracle));
         assertEq(address(fallbackOracle), oracle.getFallbackOracle());

@@ -27,7 +27,9 @@ library SafeERC20 {
     /**
      * @dev Indicates a failed `decreaseAllowance` request.
      */
-    error SafeERC20FailedDecreaseAllowance(address spender, uint256 currentAllowance, uint256 requestedDecrease);
+    error SafeERC20FailedDecreaseAllowance(
+        address spender, uint256 currentAllowance, uint256 requestedDecrease
+    );
 
     /**
      * @dev Transfer `value` amount of `token` from the calling contract to `to`. If `token` returns no value,
@@ -58,11 +60,15 @@ library SafeERC20 {
      * @dev Decrease the calling contract's allowance toward `spender` by `requestedDecrease`. If `token` returns no
      * value, non-reverting calls are assumed to be successful.
      */
-    function safeDecreaseAllowance(IERC20 token, address spender, uint256 requestedDecrease) internal {
+    function safeDecreaseAllowance(IERC20 token, address spender, uint256 requestedDecrease)
+        internal
+    {
         unchecked {
             uint256 currentAllowance = token.allowance(address(this), spender);
             if (currentAllowance < requestedDecrease) {
-                revert SafeERC20FailedDecreaseAllowance(spender, currentAllowance, requestedDecrease);
+                revert SafeERC20FailedDecreaseAllowance(
+                    spender, currentAllowance, requestedDecrease
+                );
             }
             forceApprove(token, spender, currentAllowance - requestedDecrease);
         }
@@ -113,6 +119,7 @@ library SafeERC20 {
         // and not revert is the subcall reverts.
 
         (bool success, bytes memory returndata) = address(token).call(data);
-        return success && (returndata.length == 0 || abi.decode(returndata, (bool))) && address(token).code.length > 0;
+        return success && (returndata.length == 0 || abi.decode(returndata, (bool)))
+            && address(token).code.length > 0;
     }
 }

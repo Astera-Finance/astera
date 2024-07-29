@@ -1,28 +1,27 @@
 // SPDX-License-Identifier: agpl-3.0
 pragma solidity ^0.8.23;
 
-import {IERC20} from '../../../dependencies/openzeppelin/contracts/IERC20.sol';
-import {SafeERC20} from '../../../dependencies/openzeppelin/contracts/SafeERC20.sol';
-import {IPriceOracleGetter} from '../../../interfaces/IPriceOracleGetter.sol';
-import {ILendingPoolAddressesProvider} from '../../../interfaces/ILendingPoolAddressesProvider.sol';
-import {IAToken} from '../../../interfaces/IAToken.sol';
-import {IVariableDebtToken} from '../../../interfaces/IVariableDebtToken.sol';
-import {SafeMath} from '../../../dependencies/openzeppelin/contracts/SafeMath.sol';
-import {WadRayMath} from '../math/WadRayMath.sol';
-import {PercentageMath} from '../math/PercentageMath.sol';
-import {Errors} from '../helpers/Errors.sol';
-import {DataTypes} from '../types/DataTypes.sol';
-import {GenericLogic} from './GenericLogic.sol';
-import {ReserveLogic} from './ReserveLogic.sol';
-import {ValidationLogic} from './ValidationLogic.sol';
-import {ReserveConfiguration} from '../configuration/ReserveConfiguration.sol';
-import {ReserveBorrowConfiguration} from '../configuration/ReserveBorrowConfiguration.sol';
-import {UserConfiguration} from '../configuration/UserConfiguration.sol';
-import {UserRecentBorrow} from '../configuration/UserRecentBorrow.sol';
-import {Helpers} from '../helpers/Helpers.sol';
-import {IFlashLoanReceiver} from '../../../flashloan/interfaces/IFlashLoanReceiver.sol'; // Add this line
-import {BorrowLogic} from './BorrowLogic.sol';
-
+import {IERC20} from "../../../dependencies/openzeppelin/contracts/IERC20.sol";
+import {SafeERC20} from "../../../dependencies/openzeppelin/contracts/SafeERC20.sol";
+import {IPriceOracleGetter} from "../../../interfaces/IPriceOracleGetter.sol";
+import {ILendingPoolAddressesProvider} from "../../../interfaces/ILendingPoolAddressesProvider.sol";
+import {IAToken} from "../../../interfaces/IAToken.sol";
+import {IVariableDebtToken} from "../../../interfaces/IVariableDebtToken.sol";
+import {SafeMath} from "../../../dependencies/openzeppelin/contracts/SafeMath.sol";
+import {WadRayMath} from "../math/WadRayMath.sol";
+import {PercentageMath} from "../math/PercentageMath.sol";
+import {Errors} from "../helpers/Errors.sol";
+import {DataTypes} from "../types/DataTypes.sol";
+import {GenericLogic} from "./GenericLogic.sol";
+import {ReserveLogic} from "./ReserveLogic.sol";
+import {ValidationLogic} from "./ValidationLogic.sol";
+import {ReserveConfiguration} from "../configuration/ReserveConfiguration.sol";
+import {ReserveBorrowConfiguration} from "../configuration/ReserveBorrowConfiguration.sol";
+import {UserConfiguration} from "../configuration/UserConfiguration.sol";
+import {UserRecentBorrow} from "../configuration/UserRecentBorrow.sol";
+import {Helpers} from "../helpers/Helpers.sol";
+import {IFlashLoanReceiver} from "../../../flashloan/interfaces/IFlashLoanReceiver.sol"; // Add this line
+import {BorrowLogic} from "./BorrowLogic.sol";
 
 library FlashLoanLogic {
     using SafeMath for uint256;
@@ -73,7 +72,8 @@ library FlashLoanLogic {
      * IMPORTANT There are security concerns for developers of flashloan receiver contracts that must be kept into consideration.
      * For further details please visit https://developers.aave.com
      * @param flashLoanParams struct containing receiverAddress, onBehalfOf, assets, amounts
-     **/
+     *
+     */
     function flashLoan(
         FlashLoanParams memory flashLoanParams,
         mapping(uint256 => DataTypes.ReserveReference) storage reservesList,
@@ -96,10 +96,17 @@ library FlashLoanLogic {
             flashLoanParams.reserveTypes,
             flashLoanParams.amounts,
             flashLoanParams.flashLoanPremiumTotal,
-            reserves);
+            reserves
+        );
 
         require(
-            vars.receiver.executeOperation(flashLoanParams.assets, flashLoanParams.amounts, premiums, msg.sender, flashLoanParams.params),
+            vars.receiver.executeOperation(
+                flashLoanParams.assets,
+                flashLoanParams.amounts,
+                premiums,
+                msg.sender,
+                flashLoanParams.params
+            ),
             Errors.LP_INVALID_FLASH_LOAN_EXECUTOR_RETURN
         );
 
@@ -110,17 +117,19 @@ library FlashLoanLogic {
             vars.currentPremium = premiums[vars.i];
             vars.currentATokenAddress = aTokenAddresses[vars.i];
 
-            if (DataTypes.InterestRateMode(flashLoanParams.modes[vars.i]) == DataTypes.InterestRateMode.NONE) {
+            if (
+                DataTypes.InterestRateMode(flashLoanParams.modes[vars.i])
+                    == DataTypes.InterestRateMode.NONE
+            ) {
                 reserves[vars.currentAsset][vars.currentType].updateState();
                 reserves[vars.currentAsset][vars.currentType].cumulateToLiquidityIndex(
-                    IERC20(vars.currentATokenAddress).totalSupply(),
-          vars.currentPremium
+                    IERC20(vars.currentATokenAddress).totalSupply(), vars.currentPremium
                 );
                 reserves[vars.currentAsset][vars.currentType].updateInterestRates(
                     vars.currentAsset,
-          vars.currentATokenAddress,
-          vars.currentAmount.add(vars.currentPremium),
-          0
+                    vars.currentATokenAddress,
+                    vars.currentAmount.add(vars.currentPremium),
+                    0
                 );
 
                 IERC20(vars.currentAsset).safeTransferFrom(
@@ -151,10 +160,10 @@ library FlashLoanLogic {
             }
             emit FlashLoan(
                 flashLoanParams.receiverAddress,
-        msg.sender,
-        vars.currentAsset,
-        vars.currentAmount,
-        vars.currentPremium
+                msg.sender,
+                vars.currentAsset,
+                vars.currentAmount,
+                vars.currentPremium
             );
         }
     }
