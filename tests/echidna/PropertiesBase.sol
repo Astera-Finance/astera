@@ -60,6 +60,16 @@ import "contracts/protocol/libraries/logic/GenericLogic.sol";
 import "contracts/protocol/libraries/logic/ReserveLogic.sol";
 import "contracts/protocol/libraries/logic/ValidationLogic.sol";
 
+import "contracts/protocol/lendingpool/minipool/logic/MiniPoolBorrowLogic.sol";
+import "contracts/protocol/lendingpool/minipool/logic/MiniPoolDepositLogic.sol";
+import "contracts/protocol/lendingpool/minipool/logic/MiniPoolFlashLoanLogic.sol";
+import "contracts/protocol/lendingpool/minipool/logic/MiniPoolGenericLogic.sol";
+import "contracts/protocol/lendingpool/minipool/logic/MiniPoolLiquidationLogic.sol";
+import "contracts/protocol/lendingpool/minipool/logic/MiniPoolLoanInfoLogic.sol";
+import "contracts/protocol/lendingpool/minipool/logic/MiniPoolReserveLogic.sol";
+import "contracts/protocol/lendingpool/minipool/logic/MiniPoolValidationLogic.sol";
+import "contracts/protocol/lendingpool/minipool/logic/MiniPoolWithdrawLogic.sol";
+
 // Users are defined in users
 // Admin is address(this)
 contract PropertiesBase is PropertiesAsserts, MarketParams {

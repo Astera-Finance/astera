@@ -38,7 +38,7 @@ library MiniPoolValidationLogic {
      * @param amount The amount to be deposited
      */
     function validateDeposit(DataTypes.MiniPoolReserveData storage reserve, uint256 amount)
-        internal
+        external
         view
     {
         (bool isActive, bool isFrozen,) = reserve.configuration.getFlags();

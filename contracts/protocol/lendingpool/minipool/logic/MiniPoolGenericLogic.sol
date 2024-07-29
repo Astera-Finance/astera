@@ -64,7 +64,7 @@ library MiniPoolGenericLogic {
         mapping(uint256 => DataTypes.ReserveReference) storage reserves,
         uint256 reservesCount,
         address oracle
-    ) internal view returns (bool) {
+    ) external view returns (bool) {
         if (!userConfig.isBorrowingAny() || !userConfig.isUsingAsCollateral(reservesData[asset].id))
         {
             return true;

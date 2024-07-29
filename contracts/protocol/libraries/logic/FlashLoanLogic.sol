@@ -80,7 +80,7 @@ library FlashLoanLogic {
         mapping(address => DataTypes.UserConfigurationMap) storage usersConfig,
         mapping(address => DataTypes.UserRecentBorrowMap) storage usersRecentBorrow,
         mapping(address => mapping(bool => DataTypes.ReserveData)) storage reserves
-    ) internal {
+    ) external {
         FlashLoanLocalVars memory vars;
 
         ValidationLogic.validateFlashloan(flashLoanParams.assets, flashLoanParams.amounts); //@todo add types array to this funciton too

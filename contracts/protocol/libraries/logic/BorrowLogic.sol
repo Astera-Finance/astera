@@ -99,7 +99,7 @@ library BorrowLogic {
         DataTypes.UserConfigurationMap memory userConfig,
         DataTypes.UserRecentBorrowMap storage userRecentBorrow,
         mapping(uint256 => DataTypes.ReserveReference) storage reserves
-    ) internal view returns (uint256, uint256, uint256, uint256, uint256) {
+    ) external view returns (uint256, uint256, uint256, uint256, uint256) {
         CalculateUserAccountDataVolatileVars memory vars;
 
         if (userConfig.isEmpty()) {

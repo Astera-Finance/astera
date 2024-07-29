@@ -50,7 +50,7 @@ library DepositLogic {
         mapping(address => mapping(bool => DataTypes.ReserveData)) storage _reserves,
         mapping(address => DataTypes.UserConfigurationMap) storage _usersConfig,
         ILendingPoolAddressesProvider _addressesProvider
-    ) internal {
+    ) external {
         DataTypes.ReserveData storage reserve = _reserves[params.asset][params.reserveType];
 
         ValidationLogic.validateDeposit(reserve, params.amount);

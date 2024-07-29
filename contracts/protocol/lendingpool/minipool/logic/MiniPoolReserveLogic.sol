@@ -61,7 +61,7 @@ library MiniPoolReserveLogic {
      *
      */
     function getNormalizedIncome(DataTypes.MiniPoolReserveData storage reserve)
-        internal
+        external
         view
         returns (uint256)
     {

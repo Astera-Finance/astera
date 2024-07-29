@@ -58,7 +58,7 @@ library MiniPoolWithdrawLogic {
         mapping(address => DataTypes.UserConfigurationMap) storage usersConfig,
         mapping(uint256 => DataTypes.ReserveReference) storage reserves,
         IMiniPoolAddressesProvider addressesProvider
-    ) internal returns (uint256) {
+    ) external returns (uint256) {
         DataTypes.MiniPoolReserveData storage reserve = reservesData[params.asset];
         withdrawLocalVars memory localVars;
 

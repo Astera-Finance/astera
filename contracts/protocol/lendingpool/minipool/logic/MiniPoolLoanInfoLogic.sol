@@ -75,7 +75,7 @@ library MiniPoolLoanInfoLogic {
         mapping(address => uint8) storage _userLoanInfoCount,
         mapping(address => mapping(bool => DataTypes.ReserveData)) storage _reserves,
         updateLoanDataParams memory params
-    ) internal returns (bool) {
+    ) external returns (bool) {
         updateLoanDataLocalVars memory vars;
         if (params.updateLoan) {
             vars.i = 0;

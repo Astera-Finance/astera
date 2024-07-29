@@ -17,7 +17,7 @@ library MiniPoolLiquidationLogic {
         address _addressesProvider;
     }
 
-    function liquidationCall(liquidationCallParams memory params) internal {
+    function liquidationCall(liquidationCallParams memory params) external {
         address collateralManager = ILendingPoolAddressesProvider(params._addressesProvider)
             .getLendingPoolCollateralManager();
 
