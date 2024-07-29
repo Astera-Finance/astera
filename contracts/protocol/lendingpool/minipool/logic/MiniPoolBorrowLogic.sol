@@ -100,7 +100,7 @@ library MiniPoolBorrowLogic {
         DataTypes.UserConfigurationMap memory userConfig,
         DataTypes.UserRecentBorrowMap storage userRecentBorrow,
         mapping(uint256 => DataTypes.ReserveReference) storage reserves
-    ) internal view returns (uint256, uint256, uint256, uint256, uint256) {
+    ) external view returns (uint256, uint256, uint256, uint256, uint256) {
         CalculateUserAccountDataVolatileVars memory vars;
 
         if (userConfig.isEmpty()) {
@@ -253,7 +253,7 @@ library MiniPoolBorrowLogic {
         mapping(uint256 => DataTypes.ReserveReference) storage reservesList,
         mapping(address => DataTypes.UserConfigurationMap) storage usersConfig,
         mapping(address => DataTypes.UserRecentBorrowMap) storage _usersRecentBorrow
-    ) internal {
+    ) external {
         DataTypes.MiniPoolReserveData storage reserve = reserves[vars.asset];
         require(reserve.configuration.getActive(), Errors.VL_NO_ACTIVE_RESERVE);
 
@@ -350,7 +350,7 @@ library MiniPoolBorrowLogic {
         repayParams memory params,
         mapping(address => DataTypes.MiniPoolReserveData) storage _reserves,
         mapping(address => DataTypes.UserConfigurationMap) storage _usersConfig
-    ) internal returns (uint256) {
+    ) external returns (uint256) {
         DataTypes.MiniPoolReserveData storage reserve = _reserves[params.asset];
 
         (uint256 variableDebt) = Helpers.getUserCurrentDebt(params.onBehalfOf, reserve);
