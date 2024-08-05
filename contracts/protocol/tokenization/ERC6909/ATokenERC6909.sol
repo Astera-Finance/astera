@@ -389,7 +389,9 @@ contract ATokenERC6909 is IncentivizedERC6909, VersionedInitializable {
         );
     }
 
-    function handleRepayment(address user, uint256 id, uint256 amount) external {
+    function handleRepayment(address user, address onBehalfOf, uint256 id, uint256 amount)
+        external
+    {
         require(msg.sender == address(POOL), Errors.CT_CALLER_MUST_BE_LENDING_POOL);
     }
 

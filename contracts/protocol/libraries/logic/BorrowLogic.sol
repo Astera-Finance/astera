@@ -352,7 +352,7 @@ library BorrowLogic {
 
         IERC20(params.asset).safeTransferFrom(msg.sender, aToken, paybackAmount);
 
-        IAToken(aToken).handleRepayment(msg.sender, paybackAmount);
+        IAToken(aToken).handleRepayment(msg.sender, params.onBehalfOf, paybackAmount);
 
         emit Repay(params.asset, params.onBehalfOf, msg.sender, paybackAmount);
 

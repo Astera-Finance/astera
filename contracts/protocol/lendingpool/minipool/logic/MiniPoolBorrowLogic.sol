@@ -384,7 +384,9 @@ library MiniPoolBorrowLogic {
 
         IERC20(params.asset).safeTransferFrom(msg.sender, aToken, paybackAmount);
 
-        IAERC6909(aToken).handleRepayment(msg.sender, reserve.aTokenID, paybackAmount);
+        IAERC6909(aToken).handleRepayment(
+            msg.sender, params.onBehalfOf, reserve.aTokenID, paybackAmount
+        );
 
         emit Repay(params.asset, params.onBehalfOf, msg.sender, paybackAmount);
 
