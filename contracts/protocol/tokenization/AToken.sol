@@ -377,7 +377,9 @@ contract AToken is
         external
         override
         onlyLendingPool
-    {}
+    {
+        underlyingAmount = underlyingAmount.add(amount);
+    }
 
     /**
      * @dev implements the permit function as for
