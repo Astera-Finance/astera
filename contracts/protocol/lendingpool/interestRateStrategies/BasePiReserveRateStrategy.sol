@@ -1,18 +1,15 @@
 // SPDX-License-Identifier: agpl-3.0
 pragma solidity ^0.8.23;
 
-import {IReserveInterestRateStrategy} from "contracts/interfaces/IReserveInterestRateStrategy.sol";
+// import {IReserveInterestRateStrategy} from "contracts/interfaces/IReserveInterestRateStrategy.sol";
 import {WadRayMath} from "contracts/protocol/libraries/math/WadRayMath.sol";
 import {PercentageMath} from "contracts/protocol/libraries/math/PercentageMath.sol";
-import {ILendingPoolAddressesProvider} from "contracts/interfaces/ILendingPoolAddressesProvider.sol";
-import {IAToken} from "contracts/interfaces/IAToken.sol";
-import {IVariableDebtToken} from "contracts/interfaces/IVariableDebtToken.sol";
-import {VariableDebtToken} from "contracts/protocol/tokenization/VariableDebtToken.sol";
-import {ILendingPool} from "contracts/interfaces/ILendingPool.sol";
 import {DataTypes} from "contracts/protocol/libraries/types/DataTypes.sol";
 import {ReserveConfiguration} from
     "contracts/protocol/libraries/configuration/ReserveConfiguration.sol";
 import {Ownable} from "contracts/dependencies/openzeppelin/contracts/Ownable.sol";
+
+// import "forge-std/console.sol";
 
 /**
  * @title PiReserveInterestRateStrategy contract
@@ -24,12 +21,12 @@ import {Ownable} from "contracts/dependencies/openzeppelin/contracts/Ownable.sol
  * needs to be associated with only one market.
  * @author ByteMasons
  */
-contract PiReserveInterestRateStrategy is IReserveInterestRateStrategy, Ownable {
+abstract contract BasePiReserveRateStrategy is Ownable {
     using WadRayMath for uint256;
     using WadRayMath for int256;
     using PercentageMath for uint256;
 
-    ILendingPoolAddressesProvider public immutable _addressesProvider;
+    address public immutable _addressProvider;
     address public immutable _asset; // This strategy contract needs to be associated to a unique market.
     bool public immutable _assetReserveType; // This strategy contract needs to be associated to a unique market.
 
@@ -64,7 +61,7 @@ contract PiReserveInterestRateStrategy is IReserveInterestRateStrategy, Ownable 
     );
 
     constructor(
-        ILendingPoolAddressesProvider provider,
+        address provider,
         address asset,
         bool assetReserveType,
         int256 minControllerError,
@@ -79,7 +76,7 @@ contract PiReserveInterestRateStrategy is IReserveInterestRateStrategy, Ownable 
         _optimalUtilizationRate = optimalUtilizationRate;
         _asset = asset;
         _assetReserveType = assetReserveType;
-        _addressesProvider = provider;
+        _addressProvider = provider;
         _kp = kp;
         _ki = ki;
         _lastTimestamp = block.timestamp;
@@ -92,11 +89,37 @@ contract PiReserveInterestRateStrategy is IReserveInterestRateStrategy, Ownable 
     }
 
     modifier onlyLendingPool() {
-        if (msg.sender != _addressesProvider.getLendingPool()) {
+        if (msg.sender != _getLendingPool()) {
             revert PiReserveInterestRateStrategy__ACCESS_RESTRICTED_TO_LENDING_POOL();
         }
         _;
     }
+
+    /* Virtual functions */
+    /**
+     * @notice Returns lending pool address for main pool or mini pool.
+     * @return lendingPoolAddress
+     */
+    function _getLendingPool() internal view virtual returns (address) {}
+    /**
+     * @notice Returns available liquidity in the pool for specific asset.
+     * @param asset - address of asset
+     * @return availableLiquidity
+     */
+    function getAvailableLiquidity(address asset) public view virtual returns (uint256) {}
+    /**
+     * @notice Returns current debt for specified asset.
+     * @param asset - address of asset
+     * @return currentDebt
+     */
+    function getCurrentDebt(address asset) public view virtual returns (uint256) {}
+    /**
+     * @notice The view version of `calculateInterestRates()`.
+     * @return currentLiquidityRate
+     * @return currentVariableBorrowRate
+     * @return utilizationRate
+     */
+    function getCurrentInterestRates() public view virtual returns (uint256, uint256, uint256) {}
 
     // ----------- admin -----------
 
@@ -132,17 +155,18 @@ contract PiReserveInterestRateStrategy is IReserveInterestRateStrategy, Ownable 
      * @return The liquidity rate and the variable borrow rate
      *
      */
-    function calculateInterestRates(
+    function _calculateInterestRates(
         address reserve,
         address aToken,
         uint256 liquidityAdded, //! since this function is not view anymore we need to make sure liquidityAdded is added at the end
         uint256 liquidityTaken, //! since this function is not view anymore we need to make sure liquidityTaken is removed at the end
         uint256 totalVariableDebt,
         uint256 reserveFactor
-    ) external override onlyLendingPool returns (uint256, uint256) {
-        uint256 availableLiquidity = IAToken(aToken).getTotalManagedAssets();
+    ) internal returns (uint256, uint256) {
+        uint256 availableLiquidity = getAvailableLiquidity(reserve);
         availableLiquidity = availableLiquidity + liquidityAdded - liquidityTaken;
-        return calculateInterestRates(reserve, availableLiquidity, totalVariableDebt, reserveFactor);
+        return
+            _calculateInterestRates(reserve, availableLiquidity, totalVariableDebt, reserveFactor);
     }
 
     /**
@@ -155,7 +179,7 @@ contract PiReserveInterestRateStrategy is IReserveInterestRateStrategy, Ownable 
      * @return The liquidity rateand the variable borrow rate
      *
      */
-    function calculateInterestRates(
+    function _calculateInterestRates(
         address,
         uint256 availableLiquidity,
         uint256 totalVariableDebt,
@@ -177,7 +201,6 @@ contract PiReserveInterestRateStrategy is IReserveInterestRateStrategy, Ownable 
         _errI += int256(_ki).rayMulInt(err * int256(block.timestamp - _lastTimestamp));
         if (_errI < _maxErrIAmp) _errI = _maxErrIAmp; // Limit _errI negative accumulation.
         _lastTimestamp = block.timestamp;
-
         int256 controllerErr = getControllerError(err);
         uint256 currentVariableBorrowRate = transferFunction(controllerErr);
         uint256 currentLiquidityRate =
@@ -188,45 +211,6 @@ contract PiReserveInterestRateStrategy is IReserveInterestRateStrategy, Ownable 
         );
 
         return (currentLiquidityRate, currentVariableBorrowRate);
-    }
-
-    // ----------- view -----------
-
-    /**
-     * @notice The view version of `calculateInterestRates()`.
-     * @return currentLiquidityRate
-     * @return currentVariableBorrowRate
-     * @return utilizationRate
-     */
-    function getCurrentInterestRates() public view returns (uint256, uint256, uint256) {
-        // utilization
-        DataTypes.ReserveData memory reserve = ILendingPool(_addressesProvider.getLendingPool())
-            .getReserveData(_asset, _assetReserveType);
-        uint256 availableLiquidity = IAToken(reserve.aTokenAddress).getTotalManagedAssets();
-        uint256 totalVariableDebt = IVariableDebtToken(reserve.variableDebtTokenAddress)
-            .scaledTotalSupply().rayMul(reserve.variableBorrowIndex);
-        uint256 utilizationRate = totalVariableDebt == 0
-            ? 0
-            : totalVariableDebt.rayDiv(availableLiquidity + totalVariableDebt);
-
-        // borrow rate
-        uint256 currentVariableBorrowRate =
-            transferFunction(getControllerError(getNormalizedError(utilizationRate)));
-
-        // liquity rate
-        uint256 currentLiquidityRate = getLiquidityRate(
-            currentVariableBorrowRate, utilizationRate, getReserveFactor(reserve.configuration)
-        );
-
-        return (currentLiquidityRate, currentVariableBorrowRate, utilizationRate);
-    }
-
-    function baseVariableBorrowRate() public view override returns (uint256) {
-        return uint256(transferFunction(type(int256).min));
-    }
-
-    function getMaxVariableBorrowRate() external pure override returns (uint256) {
-        return type(uint256).max;
     }
 
     // ----------- helpers -----------

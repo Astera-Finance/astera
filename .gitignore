@@ -29,3 +29,6 @@ corpus/
 **/crytic-export
 **/corpus
 cache_forge
+
+*.csv
+*.png

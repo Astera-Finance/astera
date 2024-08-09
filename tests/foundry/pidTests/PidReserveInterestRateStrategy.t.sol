@@ -17,7 +17,7 @@ contract PidReserveInterestRateStrategyTest is Common {
     ConfigAddresses configAddresses;
     PiReserveInterestRateStrategy pidStrat;
 
-    string path = "./tests/foundry/pidTests/datas/output.csv";
+    string path = "./tests/foundry/pidTests/data/output.csv";
     uint256 nbUsers = 4;
     uint256 initialAmt = 1e12 ether;
     uint256 DEFAULT_TIME_BEFORE_OP = 6 hours;
@@ -40,7 +40,7 @@ contract PidReserveInterestRateStrategyTest is Common {
         // );
 
         pidStrat = new PiReserveInterestRateStrategy(
-            deployedContracts.lendingPoolAddressesProvider,
+            address(deployedContracts.lendingPoolAddressesProvider),
             DAI,
             true,
             -400e24, //-192e24, // min rate == 0.5%
@@ -86,7 +86,7 @@ contract PidReserveInterestRateStrategyTest is Common {
         if (vm.exists(path)) vm.removeFile(path);
         vm.writeLine(
             path,
-            "timestamp,user,action,asset,utilizationRate,currentLiquidityRate,currentVariableBorrowRate"
+            "timestamp,user,action,asset,utilizationRate,currentLiquidityRate,currentVariableBorrowRate,availableLiquidity,currentDebt"
         );
     }
 
@@ -224,6 +224,8 @@ contract PidReserveInterestRateStrategyTest is Common {
     function logg(address user, uint256 action, address asset) public {
         (uint256 currentLiquidityRate, uint256 currentVariableBorrowRate, uint256 utilizationRate) =
             pidStrat.getCurrentInterestRates();
+        uint256 availableLiquidity = pidStrat.getAvailableLiquidity(asset);
+        uint256 currentDebt = pidStrat.getCurrentDebt(asset);
 
         string memory data = string(
             abi.encodePacked(
@@ -239,7 +241,11 @@ contract PidReserveInterestRateStrategyTest is Common {
                 ",",
                 Strings.toString(currentLiquidityRate),
                 ",",
-                Strings.toString(currentVariableBorrowRate)
+                Strings.toString(currentVariableBorrowRate),
+                ",",
+                Strings.toString(availableLiquidity),
+                ",",
+                Strings.toString(currentDebt)
             )
         );
 

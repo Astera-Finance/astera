@@ -13,19 +13,12 @@ interface IMiniPoolReserveInterestRateStrategy {
 
     function calculateInterestRates(
         address reserve,
-        uint256 availableLiquidity,
-        uint256 totalVariableDebt,
-        uint256 reserveFactor
-    ) external view returns (uint256, uint256);
-
-    function calculateInterestRates(
-        address reserve,
         address aToken,
         uint256 liquidityAdded,
         uint256 liquidityTaken,
         uint256 totalVariableDebt,
         uint256 reserveFactor
-    ) external view returns (uint256 liquidityRate, uint256 variableBorrowRate);
+    ) external returns (uint256 liquidityRate, uint256 variableBorrowRate);
 
     struct augmentedInterestRateParams {
         uint256 totalVariableDebt;
@@ -39,6 +32,5 @@ interface IMiniPoolReserveInterestRateStrategy {
 
     function calculateAugmentedInterestRate(augmentedInterestRateParams memory params)
         external
-        view
         returns (uint256, uint256);
 }

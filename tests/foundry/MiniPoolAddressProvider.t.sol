@@ -59,7 +59,8 @@ contract MiniPoolAddressProvider is Common {
             }
         }
 
-        miniPool = fixture_configureMiniPoolReserves(reserves, configAddresses, miniPoolContracts);
+        miniPool =
+            fixture_configureMiniPoolReserves(reserves, configAddresses, miniPoolContracts, false);
         vm.label(miniPool, "MiniPool");
     }
 

@@ -59,7 +59,8 @@ contract ATokenErc6909Test is Common {
             }
         }
 
-        miniPool = fixture_configureMiniPoolReserves(reserves, configAddresses, miniPoolContracts);
+        miniPool =
+            fixture_configureMiniPoolReserves(reserves, configAddresses, miniPoolContracts, false);
         vm.label(miniPool, "MiniPool");
 
         aErc6909Token =
@@ -849,7 +850,8 @@ contract ATokenErc6909Test is Common {
         address[] memory reserves = new address[](1);
         reserves[0] = tokens[0];
 
-        miniPool = fixture_configureMiniPoolReserves(reserves, configAddresses, miniPoolContracts);
+        miniPool =
+            fixture_configureMiniPoolReserves(reserves, configAddresses, miniPoolContracts, false);
         vm.label(miniPool, "MiniPool");
 
         IAERC6909 internalAErc6909Token =
