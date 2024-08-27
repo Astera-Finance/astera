@@ -351,13 +351,11 @@ contract MiniPoolRepayWithdrawTransferTest is MiniPoolDepositBorrowTest {
 
         vm.startPrank(user);
         console.log("Withdraw function for token shall revert");
+        uint256 balanceOfCollateral = aErc6909Token.balanceOf(user, 1128 + collateralOffset);
         // vm.expectRevert();
-        //vm.expectRevert(bytes(Errors.VL_TRANSFER_NOT_ALLOWED)); // @issue: foundry bug ?
+        vm.expectRevert(bytes(Errors.VL_TRANSFER_NOT_ALLOWED));
         IMiniPool(miniPool).withdraw(
-            address(collateralParams.token),
-            true,
-            aErc6909Token.balanceOf(user, 1128 + collateralOffset),
-            user
+            address(collateralParams.token), true, balanceOfCollateral, user
         );
         // console.log("Withdraw function for AToken shall revert");
         // vm.expectRevert(bytes(Errors.VL_TRANSFER_NOT_ALLOWED));
@@ -365,7 +363,8 @@ contract MiniPoolRepayWithdrawTransferTest is MiniPoolDepositBorrowTest {
         vm.stopPrank();
     }
 
-    function testMultipleUsersBorrowRepayAndWithdraw(
+    // @issue5: ailing but this is interest rate augmented functionality which will be rewroked (see test scenario point 2)
+    function test_MultipleUsersBorrowRepayAndWithdrawWithFlowLimit(
         uint256 amount1,
         uint256 amount2,
         uint256 collateralOffset,
@@ -476,6 +475,9 @@ contract MiniPoolRepayWithdrawTransferTest is MiniPoolDepositBorrowTest {
         );
         console.log("Balance: ", aErc6909Token.balanceOf(users.user1, 1000 + collateralOffset));
         console.log("Balance: ", aErc6909Token.balanceOf(users.user1, 1128 + collateralOffset));
+        uint256 availableLiquidity =
+            IERC20(aTokens[collateralOffset]).balanceOf(address(aErc6909Token));
+        console.log("AvailableLiquidity: ", availableLiquidity);
         console.log("Withdrawing...");
         IMiniPool(miniPool).withdraw(
             address(collateralParams.token),
@@ -483,6 +485,11 @@ contract MiniPoolRepayWithdrawTransferTest is MiniPoolDepositBorrowTest {
             aErc6909Token.balanceOf(users.user1, 1128 + collateralOffset),
             users.user1
         );
+        console.log(
+            "After Balance: ", aErc6909Token.balanceOf(users.user1, 1128 + collateralOffset)
+        );
+        availableLiquidity = IERC20(aTokens[collateralOffset]).balanceOf(address(aErc6909Token));
+        console.log("After availableLiquidity: ", availableLiquidity);
         vm.stopPrank();
 
         vm.startPrank(users.user2);
@@ -502,8 +509,10 @@ contract MiniPoolRepayWithdrawTransferTest is MiniPoolDepositBorrowTest {
             aErc6909Token.balanceOf(users.user2, 2000 + borrowOffset) / 2,
             users.user2
         );
+        availableLiquidity = IERC20(aTokens[collateralOffset]).balanceOf(address(aErc6909Token));
         console.log("Balance: ", aErc6909Token.balanceOf(users.user2, 1000 + collateralOffset));
         console.log("Balance: ", aErc6909Token.balanceOf(users.user2, 1128 + collateralOffset));
+        console.log("AvailableLiquidity: ", availableLiquidity);
         console.log("Withdrawing...");
         IMiniPool(miniPool).withdraw(
             address(collateralParams.token),
@@ -605,6 +614,135 @@ contract MiniPoolRepayWithdrawTransferTest is MiniPoolDepositBorrowTest {
             );
         }
 
+        vm.stopPrank();
+    }
+
+    // @issue11 Users are not able to withdraw all funds that they deposited after repaying
+    function testMultipleUsersBorrowRepayAndWithdraw(
+        uint256 amount1,
+        uint256 amount2,
+        uint256 skipDuration
+    ) public {
+        /**
+         * Preconditions:
+         * 1. Reserves in LendingPool and MiniPool must be configured
+         * 2. Mini Pool must be properly funded
+         * Test Scenario:
+         * 1. Users add tokens as collateral into the miniPool
+         * 2. Users borrow tokens available in miniPool
+         * 3. Some time elapse - aTokens and debtTokens appreciate in specific rate
+         * 4. Users repay all debts
+         * 5. Users withdraw funds
+         * Invariants:
+         * 1. All users shall be able to withdraw the greater or equal amount of funds that they deposited
+         * 2.
+         *
+         */
+        uint8 WBTC_OFFSET = 1;
+        uint8 USDC_OFFSET = 0;
+
+        /* Fuzz vectors */
+        skipDuration = bound(skipDuration, 0, 300 days);
+
+        TokenParams memory usdcParams = TokenParams(
+            erc20Tokens[USDC_OFFSET],
+            aTokens[USDC_OFFSET],
+            oracle.getAssetPrice(address(erc20Tokens[USDC_OFFSET]))
+        );
+        TokenParams memory wbtcParams = TokenParams(
+            erc20Tokens[WBTC_OFFSET],
+            aTokens[WBTC_OFFSET],
+            oracle.getAssetPrice(address(erc20Tokens[WBTC_OFFSET]))
+        );
+        IAERC6909 aErc6909Token =
+            IAERC6909(miniPoolContracts.miniPoolAddressesProvider.getMiniPoolToAERC6909(miniPool));
+
+        Users memory users;
+        // = Users(makeAddr("user1"), makeAddr("user2"), makeAddr("user3"))
+        users.user1 = makeAddr("user1");
+        users.user2 = makeAddr("user2");
+        users.user3 = makeAddr("distributor");
+
+        amount1 = 1000 * 10 ** usdcParams.token.decimals(); // 10 000 usdc
+        amount2 = 10 ** (wbtcParams.token.decimals() - 1); // 0.1 wbtc
+
+        console.log("----------------USER1 DEPOSIT---------------");
+        fixture_MiniPoolDeposit(amount1, USDC_OFFSET, users.user1, usdcParams);
+        console.log("----------------USER2 DEPOSIT---------------");
+        fixture_MiniPoolDeposit(amount2, WBTC_OFFSET, users.user2, wbtcParams);
+
+        console.log("----------------USER1 BORROW---------------");
+        vm.startPrank(users.user1);
+        IMiniPool(miniPool).borrow(address(wbtcParams.token), true, amount2 / 4, users.user1);
+
+        console.log("----------------USER2 BORROW---------------");
+        vm.startPrank(users.user2);
+        IMiniPool(miniPool).borrow(address(usdcParams.token), true, amount1 / 4, users.user2);
+
+        skip(skipDuration);
+
+        vm.startPrank(users.user1);
+        console.log("----------------USER1 TRANSFER---------------");
+        console.log(
+            "Amount %s vs debt balance %s",
+            amount1,
+            aErc6909Token.balanceOf(users.user1, 2128 + WBTC_OFFSET)
+        );
+        wbtcParams.token.approve(
+            address(miniPool), aErc6909Token.balanceOf(users.user1, 2128 + WBTC_OFFSET)
+        );
+        console.log("Repaying...");
+        /* Give lacking amount to user 1 */
+        IMiniPool(miniPool).repay(
+            address(wbtcParams.token),
+            true,
+            aErc6909Token.balanceOf(users.user1, 2128 + WBTC_OFFSET),
+            users.user1
+        );
+        console.log("Balance: ", aErc6909Token.balanceOf(users.user1, 1000 + USDC_OFFSET));
+        console.log("Balance: ", aErc6909Token.balanceOf(users.user1, 1128 + USDC_OFFSET));
+        uint256 availableLiquidity = IERC20(aTokens[USDC_OFFSET]).balanceOf(address(aErc6909Token));
+        console.log("AvailableLiquidity: ", availableLiquidity);
+        console.log("Withdrawing...");
+        IMiniPool(miniPool).withdraw(
+            address(usdcParams.token),
+            true,
+            aErc6909Token.balanceOf(users.user1, 1128 + USDC_OFFSET),
+            users.user1
+        );
+        console.log("After Balance: ", aErc6909Token.balanceOf(users.user1, 1128 + USDC_OFFSET));
+        availableLiquidity = IERC20(aTokens[USDC_OFFSET]).balanceOf(address(aErc6909Token));
+        console.log("After availableLiquidity: ", availableLiquidity);
+        vm.stopPrank();
+
+        vm.startPrank(users.user2);
+        console.log("----------------USER2 TRANSFER---------------");
+        console.log(
+            "Amount %s vs debt balance %s",
+            amount1,
+            aErc6909Token.balanceOf(users.user2, 2128 + USDC_OFFSET)
+        );
+        wbtcParams.token.approve(
+            address(miniPool), aErc6909Token.balanceOf(users.user2, 2128 + USDC_OFFSET) / 2
+        );
+        console.log("Repaying...");
+        IMiniPool(miniPool).repay(
+            address(wbtcParams.token),
+            true,
+            aErc6909Token.balanceOf(users.user2, 2128 + USDC_OFFSET) / 2,
+            users.user2
+        );
+        availableLiquidity = IERC20(aTokens[WBTC_OFFSET]).balanceOf(address(aErc6909Token));
+        console.log("Balance: ", aErc6909Token.balanceOf(users.user2, 1000 + WBTC_OFFSET));
+        console.log("Balance: ", aErc6909Token.balanceOf(users.user2, 1128 + WBTC_OFFSET));
+        console.log("AvailableLiquidity: ", availableLiquidity);
+        console.log("Withdrawing...");
+        IMiniPool(miniPool).withdraw(
+            address(usdcParams.token),
+            true,
+            aErc6909Token.balanceOf(users.user2, 1128 + WBTC_OFFSET) / 2,
+            users.user2
+        );
         vm.stopPrank();
     }
 }

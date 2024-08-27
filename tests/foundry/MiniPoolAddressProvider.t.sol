@@ -51,7 +51,6 @@ contract MiniPoolAddressProvider is Common {
 
         address[] memory reserves = new address[](2 * tokens.length);
         for (uint8 idx = 0; idx < (2 * tokens.length); idx++) {
-            console.log(idx);
             if (idx < tokens.length) {
                 reserves[idx] = tokens[idx];
             } else {
@@ -59,8 +58,10 @@ contract MiniPoolAddressProvider is Common {
             }
         }
 
-        miniPool =
-            fixture_configureMiniPoolReserves(reserves, configAddresses, miniPoolContracts, false);
+        configAddresses.protocolDataProvider = address(miniPoolContracts.miniPoolAddressesProvider);
+        configAddresses.stableStrategy = address(miniPoolContracts.stableStrategy);
+        configAddresses.volatileStrategy = address(miniPoolContracts.volatileStrategy);
+        miniPool = fixture_configureMiniPoolReserves(reserves, configAddresses, miniPoolContracts);
         vm.label(miniPool, "MiniPool");
     }
 
@@ -70,14 +71,15 @@ contract MiniPoolAddressProvider is Common {
         );
         address miniPoolConfigIMPL = address(new MiniPoolConfigurator());
         console.log("1. MiniPoolConfigurator", miniPoolAddressesProvider.getMiniPoolConfigurator());
-        //@issue: MiniPoolConfiurator is not set during initialization and cannot be updated
         miniPoolAddressesProvider.setMiniPoolConfigurator(address(miniPoolConfigIMPL));
         console.log("1. MiniPoolConfigurator", miniPoolAddressesProvider.getMiniPoolConfigurator());
 
+        /* Set IMPL again - expect revert */
         console.log(
             "2. MiniPoolConfigurator",
             miniPoolContracts.miniPoolAddressesProvider.getMiniPoolConfigurator()
         );
+        vm.expectRevert();
         miniPoolContracts.miniPoolAddressesProvider.setMiniPoolConfigurator(
             address(miniPoolConfigIMPL)
         );
@@ -85,6 +87,5 @@ contract MiniPoolAddressProvider is Common {
             "2. MiniPoolConfigurator",
             miniPoolContracts.miniPoolAddressesProvider.getMiniPoolConfigurator()
         );
-        // miniPoolContracts.miniPoolAddressesProvider.setMiniPoolConfigurator(randomAddress);
     }
 }

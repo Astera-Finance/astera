@@ -41,7 +41,6 @@ contract PausableFunctionsTest is Common {
 
         address[] memory reserves = new address[](2 * tokens.length);
         for (uint8 idx = 0; idx < (2 * tokens.length); idx++) {
-            console.log(idx);
             if (idx < tokens.length) {
                 reserves[idx] = tokens[idx];
             } else {
@@ -49,8 +48,7 @@ contract PausableFunctionsTest is Common {
             }
         }
 
-        miniPool =
-            fixture_configureMiniPoolReserves(reserves, configAddresses, miniPoolContracts, false);
+        miniPool = fixture_configureMiniPoolReserves(reserves, configAddresses, miniPoolContracts);
 
         vm.label(miniPool, "MiniPool");
     }
@@ -124,16 +122,16 @@ contract PausableFunctionsTest is Common {
             amount = erc20Tokens[idx].balanceOf(address(this));
             erc20Tokens[idx].approve(address(deployedContracts.lendingPool), amount);
             vm.expectRevert(bytes(Errors.LP_IS_PAUSED));
-            IMiniPool(miniPool).deposit(address(erc20Tokens[idx]), false, amount, address(this));
+            IMiniPool(miniPool).deposit(address(erc20Tokens[idx]), true, amount, address(this));
 
             vm.expectRevert(bytes(Errors.LP_IS_PAUSED));
-            IMiniPool(miniPool).withdraw(address(erc20Tokens[idx]), false, amount, address(this));
+            IMiniPool(miniPool).withdraw(address(erc20Tokens[idx]), true, amount, address(this));
 
             vm.expectRevert(bytes(Errors.LP_IS_PAUSED));
-            IMiniPool(miniPool).borrow(address(erc20Tokens[idx]), false, amount, address(this));
+            IMiniPool(miniPool).borrow(address(erc20Tokens[idx]), true, amount, address(this));
 
             vm.expectRevert(bytes(Errors.LP_IS_PAUSED));
-            IMiniPool(miniPool).repay(address(erc20Tokens[idx]), false, amount, address(this));
+            IMiniPool(miniPool).repay(address(erc20Tokens[idx]), true, amount, address(this));
 
             vm.expectRevert(bytes(Errors.LP_IS_PAUSED));
             IMiniPool(miniPool).liquidationCall(

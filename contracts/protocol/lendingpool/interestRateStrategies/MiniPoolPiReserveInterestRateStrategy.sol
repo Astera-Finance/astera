@@ -11,8 +11,6 @@ import {IMiniPoolReserveInterestRateStrategy} from
     "../../../interfaces/IMiniPoolReserveInterestRateStrategy.sol";
 import "./BasePiReserveRateStrategy.sol";
 
-// import "forge-std/console.sol";
-
 /**
  * @title PiReserveInterestRateStrategy contract
  * @notice Implements the calculation of the interest rates using control theory.
@@ -107,7 +105,6 @@ contract MiniPoolPiReserveInterestRateStrategy is
         uint256 currentLiquidityRate = getLiquidityRate(
             currentVariableBorrowRate, utilizationRate, getReserveFactor(reserve.configuration)
         );
-
         return (currentLiquidityRate, currentVariableBorrowRate, utilizationRate);
     }
 

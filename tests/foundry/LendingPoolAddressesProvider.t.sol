@@ -69,7 +69,7 @@ contract LendingPoolAddressesProviderTest is Common {
         vm.expectEmit(true, false, false, false);
         emit LendingPoolUpdated(address(lendingPool));
         provider.setLendingPoolImpl(address(lendingPool));
-        provider.setAddress(id, address(lendingPool)); // @issue Lack of check for id,address == 0
+        provider.setAddress(id, address(lendingPool)); // @issue6 Lack of check for id,address == 0
         assertEq(provider.getLendingPool(), address(lendingPool));
     }
 
@@ -82,7 +82,7 @@ contract LendingPoolAddressesProviderTest is Common {
         emit LendingPoolConfiguratorUpdated(address(lendingPoolConfigurator));
         provider.setLendingPoolConfiguratorImpl(address(lendingPoolConfigurator));
 
-        provider.setAddress(id, address(lendingPoolConfigurator)); // @issue Lack of check for id == 0
+        provider.setAddress(id, address(lendingPoolConfigurator)); // @issue6 Lack of check for id == 0
 
         assertEq(provider.getLendingPoolConfigurator(), address(lendingPoolConfigurator));
     }

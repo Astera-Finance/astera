@@ -9,8 +9,6 @@ import {ReserveConfiguration} from
     "contracts/protocol/libraries/configuration/ReserveConfiguration.sol";
 import {Ownable} from "contracts/dependencies/openzeppelin/contracts/Ownable.sol";
 
-// import "forge-std/console.sol";
-
 /**
  * @title PiReserveInterestRateStrategy contract
  * @notice Implements the calculation of the interest rates using control theory.
@@ -209,7 +207,6 @@ abstract contract BasePiReserveRateStrategy is Ownable {
         emit PidLog(
             utilizationRate, currentLiquidityRate, currentVariableBorrowRate, err, controllerErr
         );
-
         return (currentLiquidityRate, currentVariableBorrowRate);
     }
 

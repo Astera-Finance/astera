@@ -184,7 +184,6 @@ contract LendingPoolTest is Common {
         uint256 usdcMaxBorrowValue = usdcLtv * usdcDepositValue / 10_000;
         uint256 wbtcMaxBorrowAmountWithUsdcCollateral;
         {
-            // uint256 wbtcMaxBorrowAmountRaw = (usdcMaxBorrowValue * 10 ** PRICE_FEED_DECIMALS) / wbtcPrice;
             uint256 wbtcMaxBorrowAmountRay = usdcMaxBorrowValue.rayDiv(wbtcPrice);
             console.log("wbtcMaxBorrowAmountRay:", wbtcMaxBorrowAmountRay);
             wbtcMaxBorrowAmountWithUsdcCollateral = fixture_preciseConvertWithDecimals(
@@ -253,7 +252,7 @@ contract LendingPoolTest is Common {
 
         /* Main user borrows maxPossible amount of wbtc */
         vm.expectRevert();
-        //vm.expectRevert(bytes(Errors.LP_NOT_ENOUGH_LIQUIDITY_TO_BORROW)); // @issue over/underflow instead of LP_NOT_ENOUGH_LIQUIDITY_TO_BORROW
+        // vm.expectRevert(bytes(Errors.LP_NOT_ENOUGH_LIQUIDITY_TO_BORROW)); // @issue10 Over/underflow instead of LP_NOT_ENOUGH_LIQUIDITY_TO_BORROW
         deployedContracts.lendingPool.borrow(
             address(wbtc), true, wbtcMaxBorrowAmountWithUsdcCollateral, address(this)
         );

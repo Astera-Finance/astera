@@ -5,14 +5,11 @@ import "./Common.sol";
 import "contracts/protocol/libraries/helpers/Errors.sol";
 import {WadRayMath} from "contracts/protocol/libraries/math/WadRayMath.sol";
 
-// import {ILendingPool} from "contracts/interfaces/ILendingPool.sol";
-
 contract LendingPoolAddressesProviderRegistryTest is Common {
     event AddressesProviderRegistered(address indexed newAddress);
     event AddressesProviderUnregistered(address indexed newAddress);
 
     function testRegisteringAndReadingAddresses(uint256 id) public {
-        // _addressesProviders[provider] = id; // @issue should Id be only one per provider ?
         address randomAddress = makeAddr("RandomAddr");
         id = bound(id, 1, type(uint256).max);
         LendingPoolAddressesProviderRegistry lendingPoolAddressesProviderRegistry =
@@ -53,7 +50,7 @@ contract LendingPoolAddressesProviderRegistryTest is Common {
 
         addressesProvidersList = lendingPoolAddressesProviderRegistry.getAddressesProvidersList();
 
-        // @issue There is no removal from list here
+        // @issue7 There is no removal from list here
         // assertEq(addressesProvidersList.length, 1); // violated
         // assertEq(addressesProvidersList[0], randomAddress2); // violated
 
