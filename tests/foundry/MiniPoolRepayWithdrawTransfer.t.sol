@@ -364,7 +364,7 @@ contract MiniPoolRepayWithdrawTransferTest is MiniPoolDepositBorrowTest {
     }
 
     // @issue5: ailing but this is interest rate augmented functionality which will be rewroked (see test scenario point 2)
-    function test_MultipleUsersBorrowRepayAndWithdrawWithFlowLimit(
+    function testMultipleUsersBorrowRepayAndWithdrawWithFlowLimit(
         uint256 amount1,
         uint256 amount2,
         uint256 collateralOffset,

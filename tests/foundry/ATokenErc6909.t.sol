@@ -251,6 +251,16 @@ contract ATokenErc6909Test is Common {
         uint256 index,
         uint256 offset
     ) public {
+        /**
+         * Preconditions:
+         * 1. ATokens must be available for user (funds deposited)
+         * Test Scenario:
+         * 1. Perform mintToTreasury actions to check additivenes after some time elapsed
+         * 2. Perform one big mintToTreasury after some time elapsed
+         * Invariants:
+         * 1. Balances of treasury must reflect minting
+         *
+         */
         uint8 nrOfIterations = 20;
 
         /* Fuzz vector creation */
@@ -279,6 +289,7 @@ contract ATokenErc6909Test is Common {
             aErc6909Token.balanceOf(treasury, id), maxValToMint.rayDiv(index), nrOfIterations / 2
         );
         console.log("Minting: ", maxValToMint.rayDiv(index));
+        console.log("Balance of treasury: ", aErc6909Token.balanceOf(treasury, id));
         aErc6909Token.mintToTreasury(id, maxValToMint, index);
         assertApproxEqAbs(
             aErc6909Token.balanceOf(treasury, id),
@@ -437,6 +448,15 @@ contract ATokenErc6909Test is Common {
     function testErc6909TransferFrom_AToken(uint256 valToTransfer, uint256 offset, uint256 timeDiff)
         public
     {
+        /**
+         * Preconditions:
+         * 1. ATokens must be available for user (funds deposited)
+         * Test Scenario:
+         * 1. Perform transferFrom actions to check additivenes after some time elapsed
+         * 2. Perform one big transferFrom after some time elapsed
+         * Invariants:
+         * 1. Balances of accounts 'from' and 'to' must reflects token transfers
+         */
         /* Fuzz vector creation */
         timeDiff = bound(timeDiff, 0 days, 10000 days); // Fuzzing time to skip
         offset = bound(offset, 0, tokens.length - 3);

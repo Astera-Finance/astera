@@ -32,6 +32,16 @@ contract LendingPoolAddressesProviderRegistryTest is Common {
     }
 
     function testUnregisteringAndReadingAddresses(uint256 id) public {
+        /**
+         * Preconditions:
+         * 1. Length of array 'addressesProvidersList' must be zero
+         * Test Scenario:
+         * 1. Register address provider
+         * 2. Unregister address provider
+         * Invariants:
+         * 1. Length of array 'addressesProvidersList' must be one after registering
+         * 2. Length of array 'addressesProvidersList' must be zero after unregistering
+         */
         address randomAddress1 = makeAddr("RandomAddr1");
         address randomAddress2 = makeAddr("RandomAddr2");
         id = bound(id, 1, type(uint256).max);

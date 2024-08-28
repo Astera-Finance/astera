@@ -50,6 +50,7 @@ contract MiniPoolRepayWithdrawTransferTest is MiniPoolDepositBorrowTest {
          * Invariants:
          * 1. Liquidator shall end up with more collateral tokens
          * 2. User's debtToken balance shall decrease
+         * 3. Health factor shall be greater than 1
          *
          */
 
