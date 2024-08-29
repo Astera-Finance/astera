@@ -31,6 +31,7 @@ contract DeployMLM is Script, StdCheats, localDeployConfig {
             DeployedContracts memory contracts = _deployLendingPool(address(this), mockTokens, oracle, sStrat, volStrat);
             ConfigParams memory MLPConfig = ConfigParams(baseLTVs, liquidationThresholds, liquidationBonuses, reserveFactors, borrowingEnabled, reserveTypes, isStableStrategy);
             _configureReserves(contracts, mockTokens, MLPConfig, address(this));
+            
             address[] memory miniPoolOneMockTokens = _deployERC20MocksAndUpdateOracle(MiniPoolOneNames, MiniPoolOneSymbols, MiniPoolOneDecimals, MiniPoolOnePrices, oracle);
             
             ConfigParams memory miniPoolOneConfig = ConfigParams(MiniPoolOnebaseLTVs, MiniPoolOneliquidationThresholds, MiniPoolOneliquidationBonuses, MiniPoolOnereserveFactors, MiniPoolOneborrowingEnabled, MiniPoolOnereserveTypes, MiniPoolOneisStableStrategy);
@@ -41,11 +42,13 @@ contract DeployMLM is Script, StdCheats, localDeployConfig {
             
             (address aToken6909_1, address miniPool_1) = _deployMiniPool(contracts, miniPoolOneConfigParams, address(this), 0);
             
-            ConfigParams memory miniPoolTwoConfig = ConfigParams(MiniPoolOnebaseLTVs, MiniPoolOneliquidationThresholds, MiniPoolOneliquidationBonuses, MiniPoolOnereserveFactors, MiniPoolOneborrowingEnabled, MiniPoolOnereserveTypes, MiniPoolOneisStableStrategy);
+            address[] memory miniPoolTwoMockTokens = _deployERC20MocksAndUpdateOracle(MiniPoolTwoNames, MiniPoolTwoSymbols, MiniPoolTwoDecimals, MiniPoolTwoPrices, oracle);
+
+            ConfigParams memory miniPoolTwoConfig = ConfigParams(MiniPoolTwoBaseLTVs, MiniPoolTwoLiquidationThresholds, MiniPoolTwoLiquidationBonuses, MiniPoolTwoReserveFactors, MiniPoolTwoBorrowingEnabled, MiniPoolTwoReserveTypes, MiniPoolTwoisStableStrategy);
             address[] memory miniPoolTwoTranche = new address[](1); //USDC
             (miniPoolTwoTranche[0], ) =  contracts.protocolDataProvider.getReserveTokensAddresses(mockTokens[1], true);
             ConfigParams memory miniPoolTwoTrancheConfig = ConfigParams(trancheBaseLTVs, trancheLiquidationThresholds, trancheLiquidationBonuses, trancheReserveFactors, trancheBorrowingEnabled, trancheReserveTypes, trancheIsStableStrategy);
-            MiniPoolConfigParams memory miniPoolTwoConfigParams = MiniPoolConfigParams(miniPoolTwoTranche, miniPoolTwoTrancheConfig, miniPoolOneMockTokens, miniPoolTwoConfig);
+            MiniPoolConfigParams memory miniPoolTwoConfigParams = MiniPoolConfigParams(miniPoolTwoTranche, miniPoolTwoTrancheConfig, miniPoolTwoMockTokens, miniPoolTwoConfig);
             
             (address aToken6909_2, address miniPool_2) = _deployMiniPool(contracts, miniPoolTwoConfigParams, address(this), 1);
 
