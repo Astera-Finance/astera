@@ -7,7 +7,7 @@ import {LendingPoolAddressesProvider} from
 import {LendingPoolConfigurator} from "../protocol/lendingpool/LendingPoolConfigurator.sol";
 import {AToken} from "../protocol/tokenization/AToken.sol";
 import {DefaultReserveInterestRateStrategy} from
-    "../protocol/lendingpool/interestRateStrategies/DefaultReserveInterestRateStrategy.sol";
+    "../protocol/lendingpool/InterestRateStrategies/DefaultReserveInterestRateStrategy.sol";
 import {Ownable} from "../dependencies/openzeppelin/contracts/Ownable.sol";
 import {StringLib} from "./StringLib.sol";
 
