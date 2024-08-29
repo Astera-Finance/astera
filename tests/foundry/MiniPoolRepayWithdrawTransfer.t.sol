@@ -780,8 +780,9 @@ contract MiniPoolRepayWithdrawTransferTest is MiniPoolDepositBorrowTest {
          * 3. User borrows token (aWBTC) in miniPool - lending from mini pool happens
          * 4. Provider borrows some aUSDC - User starts getting interest rates
          * 5. Some time elapse - aTokens and debtTokens appreciate in value
-         * 6. User repay all debts (aWBTC) - distribute some aWBTC to pay accrued interests
-         * 7. User withdraw funds (at least all aUSDC)
+         * 6. User repays all debts (aWBTC) - distribute some aWBTC to pay accrued interests
+         * 7. Provider repays all debts (aUSDC) - distribute some aUSDC to pay accrued interests
+         * 8. User withdraw funds (at least all aUSDC)
          * Invariants:
          * 1. User shall be able to withdraw the greater amount of funds that he deposited (because the accrued interests)
          *
@@ -790,7 +791,7 @@ contract MiniPoolRepayWithdrawTransferTest is MiniPoolDepositBorrowTest {
         uint8 USDC_OFFSET = 0;
 
         /* Fuzz vectors */
-        skipDuration = 100 days; //bound(skipDuration, 0, 300 days);
+        skipDuration = 300 days; //bound(skipDuration, 0, 300 days);
 
         TokenParams memory usdcParams = TokenParams(
             erc20Tokens[USDC_OFFSET],
@@ -821,6 +822,7 @@ contract MiniPoolRepayWithdrawTransferTest is MiniPoolDepositBorrowTest {
         deal(address(usdcParams.token), users.user1, amount1);
         deal(address(wbtcParams.token), users.user2, amount2);
         deal(address(wbtcParams.token), users.user3, amount1);
+        deal(address(usdcParams.token), users.user3, amount1);
 
         console.log("----------------PROVIDER DEPOSITs LIQUIDITY (WBTC)---------------");
         vm.startPrank(users.user2);
@@ -959,7 +961,55 @@ contract MiniPoolRepayWithdrawTransferTest is MiniPoolDepositBorrowTest {
             aErc6909Token.balanceOf(users.user1, 2000 + WBTC_OFFSET),
             users.user1
         );
+        vm.stopPrank();
+        console.log("----------------PROVIDER REPAYS---------------");
+
+        console.log(
+            "Amount %s vs debt balance %s",
+            amount1,
+            aErc6909Token.balanceOf(users.user2, 2000 + USDC_OFFSET)
+        );
+        {
+            uint256 diff = aErc6909Token.balanceOf(users.user2, 2000 + USDC_OFFSET) - amount1 / 10;
+            console.log("Distributing borrowed asset to pay interests %s", diff);
+            console.log("----------------USER3---------------");
+            vm.startPrank(users.user3);
+            {
+                uint256 initialTokenBalance = usdcParams.token.balanceOf(users.user3);
+                uint256 initialATokenBalance = usdcParams.aToken.balanceOf(users.user3);
+                usdcParams.token.approve(address(deployedContracts.lendingPool), amount1);
+                deployedContracts.lendingPool.deposit(
+                    address(usdcParams.token), true, amount1, users.user3
+                );
+                console.log("User token balance shall be {initialTokenBalance - amount}");
+                assertEq(usdcParams.token.balanceOf(users.user3), initialTokenBalance - amount1);
+                console.log("User grain token balance shall be {initialATokenBalance + amount}");
+                assertEq(usdcParams.aToken.balanceOf(users.user3), initialATokenBalance + amount1);
+            }
+            usdcParams.aToken.transfer(users.user2, diff);
+            vm.stopPrank();
+        }
+        vm.startPrank(users.user2);
+        console.log(
+            "To pay back: %s vs available balance: %s",
+            aErc6909Token.balanceOf(users.user2, 2000 + USDC_OFFSET),
+            usdcParams.aToken.balanceOf(users.user2)
+        );
+        usdcParams.aToken.approve(
+            address(miniPool), aErc6909Token.balanceOf(users.user2, 2000 + USDC_OFFSET)
+        );
+        console.log("Provider Repaying...");
+        /* Give lacking amount to user */
+        IMiniPool(miniPool).repay(
+            address(usdcParams.aToken),
+            true,
+            aErc6909Token.balanceOf(users.user2, 2000 + USDC_OFFSET),
+            users.user2
+        );
+        vm.stopPrank();
+
         console.log("----------------USER WITHDRAW---------------");
+        vm.startPrank(users.user1);
         console.log("Balance aToken: ", aErc6909Token.balanceOf(users.user1, 1000 + USDC_OFFSET));
         console.log("Balance token: ", aErc6909Token.balanceOf(users.user1, 1128 + USDC_OFFSET));
         uint256 availableLiquidity = IERC20(aTokens[USDC_OFFSET]).balanceOf(address(aErc6909Token));
