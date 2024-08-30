@@ -547,4 +547,26 @@ contract LendingPoolConfigurator is VersionedInitializable, ILendingPoolConfigur
     function rebalance(address aTokenAddress) external onlyEmergencyAdmin {
         pool.rebalance(aTokenAddress);
     }
+
+    function getTotalManagedAssets(address aTokenAddress) external view returns (uint256) {
+        return pool.getTotalManagedAssets(aTokenAddress);
+    }
+
+    function updateFlashLoanFee(uint256 flashLoanPremiumTotal) external onlyPoolAdmin {
+        pool.updateFlashLoanFee(flashLoanPremiumTotal);
+    }
+
+    function setRewarderForReserve(address asset, bool reserveType, address rewarder)
+        external
+        onlyPoolAdmin
+    {
+        pool.setRewarderForReserve(asset, reserveType, rewarder);
+    }
+
+    function setTreasury(address asset, bool reserveType, address rewarder)
+        external
+        onlyPoolAdmin
+    {
+        pool.setTreasury(asset, reserveType, rewarder);
+    }
 }
