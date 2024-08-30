@@ -782,11 +782,12 @@ contract MiniPoolRepayWithdrawTransferTest is MiniPoolDepositBorrowTest {
          * 5. Some time elapse - aTokens and debtTokens appreciate in value
          * 6. User repays all debts (aWBTC) - distribute some aWBTC to pay accrued interests
          * 7. Provider repays all debts (aUSDC) - distribute some aUSDC to pay accrued interests
-         * 8. User withdraw funds (at least all aUSDC)
+         * 8. User withdraws all the funds with accrued interests
          * Invariants:
-         * 1. User shall be able to withdraw the greater amount of funds that he deposited (because the accrued interests)
+         * 1. User shall be able to withdraw all user's balance with accrued interests (always greater than deposit)
          *
          */
+        /* Constants */
         uint8 WBTC_OFFSET = 1;
         uint8 USDC_OFFSET = 0;
 
@@ -807,7 +808,6 @@ contract MiniPoolRepayWithdrawTransferTest is MiniPoolDepositBorrowTest {
             IAERC6909(miniPoolContracts.miniPoolAddressesProvider.getMiniPoolToAERC6909(miniPool));
 
         Users memory users;
-        // = Users(makeAddr("user1"), makeAddr("user2"), makeAddr("user3"))
         users.user1 = makeAddr("user1");
         users.user2 = makeAddr("provider");
         users.user3 = makeAddr("distributor");
@@ -910,7 +910,7 @@ contract MiniPoolRepayWithdrawTransferTest is MiniPoolDepositBorrowTest {
         IMiniPool(miniPool).borrow(address(wbtcParams.aToken), true, amount2 / 4, users.user1);
         vm.stopPrank();
 
-        console.log("----------------USER2 BORROWs---------------");
+        console.log("----------------PROVIDER BORROWs---------------");
         vm.prank(users.user2);
         IMiniPool(miniPool).borrow(address(usdcParams.aToken), true, amount1 / 10, users.user2);
 
@@ -954,7 +954,6 @@ contract MiniPoolRepayWithdrawTransferTest is MiniPoolDepositBorrowTest {
             address(miniPool), aErc6909Token.balanceOf(users.user1, 2000 + WBTC_OFFSET)
         );
         console.log("User1 Repaying...");
-        /* Give lacking amount to user 1 */
         IMiniPool(miniPool).repay(
             address(wbtcParams.aToken),
             true,
@@ -998,7 +997,7 @@ contract MiniPoolRepayWithdrawTransferTest is MiniPoolDepositBorrowTest {
         usdcParams.aToken.approve(
             address(miniPool), aErc6909Token.balanceOf(users.user2, 2000 + USDC_OFFSET)
         );
-        console.log("Provider Repaying...");
+        console.log("Provider repaying...");
         /* Give lacking amount to user */
         IMiniPool(miniPool).repay(
             address(usdcParams.aToken),
@@ -1027,8 +1026,16 @@ contract MiniPoolRepayWithdrawTransferTest is MiniPoolDepositBorrowTest {
         console.log("After Balance: ", aErc6909Token.balanceOf(users.user1, 1000 + USDC_OFFSET));
         availableLiquidity = IERC20(aTokens[USDC_OFFSET]).balanceOf(address(aErc6909Token));
         console.log("After availableLiquidity: ", availableLiquidity);
-        assertEq(aErc6909Token.balanceOf(users.user1, 1000 + USDC_OFFSET), 0);
-        assertGe(usdcParams.aToken.balanceOf(users.user1), amount1);
+        assertEq(
+            aErc6909Token.balanceOf(users.user1, 1000 + USDC_OFFSET),
+            0,
+            "User's token balance in a protocol is not 0 after withdrawal"
+        );
+        assertGe(
+            usdcParams.aToken.balanceOf(users.user1),
+            amount1,
+            "User doesn't have greater amount than he deposited"
+        );
         vm.stopPrank();
     }
 }
