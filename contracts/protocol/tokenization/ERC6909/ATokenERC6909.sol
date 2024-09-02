@@ -22,6 +22,14 @@ contract ATokenERC6909 is IncentivizedERC6909, VersionedInitializable {
     using SignedSafeMath for int256;
     using ReserveLogic for DataTypes.ReserveData;
 
+    bytes public constant EIP712_REVISION = bytes("1");
+    bytes32 internal constant EIP712_DOMAIN = keccak256(
+        "EIP712Domain(string name,string version,uint256 chainId,address verifyingContract)"
+    );
+    bytes32 public DOMAIN_SEPARATOR;
+    bytes32 public constant PERMIT_TYPEHASH = keccak256(
+        "Permit(address owner,address spender,uint256 value,uint256 nonce,uint256 deadline,uint256 id)"
+    );
     uint256 public constant ATOKEN_REVISION = 0x1;
     uint256 private _totalTokens;
     uint256 private _totalUniqueTokens;
@@ -32,6 +40,9 @@ contract ATokenERC6909 is IncentivizedERC6909, VersionedInitializable {
     IMiniPool private POOL;
     uint256 constant ATokenAddressableIDs = 1000; // This is the first ID for aToken
     uint256 constant DebtTokenAddressableIDs = 2000; // This is the first ID for debtToken
+
+    /// @dev owner => token id => next valid nonce to submit with permit()
+    mapping(address => mapping(uint256 => uint256)) public _nonces;
 
     event TokenInitialized(
         uint256 indexed id, string name, string symbol, uint8 decimals, address underlyingAsset
@@ -49,9 +60,24 @@ contract ATokenERC6909 is IncentivizedERC6909, VersionedInitializable {
 
     function initialize(address provider, uint256 minipoolId) public initializer {
         require(address(provider) != address(0), Errors.LP_NOT_CONTRACT);
+        uint256 chainId;
+
+        //solium-disable-next-line
+        assembly {
+            chainId := chainid()
+        }
         _addressesProvider = IMiniPoolAddressesProvider(provider);
         _minipoolId = minipoolId;
         POOL = IMiniPool(_addressesProvider.getMiniPool(minipoolId));
+        DOMAIN_SEPARATOR = keccak256(
+            abi.encode(
+                EIP712_DOMAIN,
+                keccak256(bytes("Cod3x Mini Pool Token")),
+                keccak256(EIP712_REVISION),
+                chainId,
+                address(this)
+            )
+        );
     }
 
     function _initializeATokenID(
@@ -258,7 +284,6 @@ contract ATokenERC6909 is IncentivizedERC6909, VersionedInitializable {
         if (currentSupplyScaled == 0) {
             return 0;
         }
-
         return currentSupplyScaled.rayMul(getIndexForOverlyingAsset(id));
     }
 
@@ -367,6 +392,46 @@ contract ATokenERC6909 is IncentivizedERC6909, VersionedInitializable {
         }
     }
 
+    /**
+     * @dev implements the permit function as for
+     * https://github.com/ethereum/EIPs/blob/8a34d644aacf0f9f8f00815307fd7dd5da07655f/EIPS/eip-2612.md
+     * @param owner The owner of the funds
+     * @param spender The spender
+     * @param value The amount
+     * @param deadline The deadline timestamp, type(uint256).max for max deadline
+     * @param id Id of the token
+     * @param v Signature param
+     * @param s Signature param
+     * @param r Signature param
+     */
+    function permit(
+        address owner,
+        address spender,
+        uint256 value,
+        uint256 deadline,
+        uint256 id,
+        uint8 v,
+        bytes32 r,
+        bytes32 s
+    ) external {
+        require(owner != address(0), "INVALID_OWNER");
+        //solium-disable-next-line
+        require(block.timestamp <= deadline, "INVALID_EXPIRATION");
+        uint256 currentValidNonce = _nonces[owner][id];
+        bytes32 digest = keccak256(
+            abi.encodePacked(
+                "\x19\x01",
+                DOMAIN_SEPARATOR,
+                keccak256(
+                    abi.encode(PERMIT_TYPEHASH, owner, spender, value, currentValidNonce, deadline)
+                )
+            )
+        );
+        require(owner == ecrecover(digest, v, r, s), "INVALID_SIGNATURE");
+        _nonces[owner][id] = currentValidNonce.add(1);
+        _approve(owner, spender, id, value);
+    }
+
     function _decreaseBorrowAllowance(
         address delegator,
         address delegatee,
@@ -391,6 +456,7 @@ contract ATokenERC6909 is IncentivizedERC6909, VersionedInitializable {
 
     function handleRepayment(address user, address onBehalfOf, uint256 id, uint256 amount)
         external
+        view
     {
         require(msg.sender == address(POOL), Errors.CT_CALLER_MUST_BE_LENDING_POOL);
     }

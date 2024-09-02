@@ -121,9 +121,6 @@ contract MiniPoolRepayWithdrawTransferTest is MiniPoolDepositBorrowTest {
             "currentLiquidityRate: ", liquidationVars.borrowReserveDataBefore.currentLiquidityRate
         );
         console.log(
-            "availableMLPLiquidity: ", liquidationVars.borrowReserveDataBefore.availableMLPLiquidity
-        ); //@issue8 availableMLPLiquidity always 0
-        console.log(
             "currentVariableBorrowRate: ",
             liquidationVars.borrowReserveDataBefore.currentVariableBorrowRate
         );
@@ -136,10 +133,6 @@ contract MiniPoolRepayWithdrawTransferTest is MiniPoolDepositBorrowTest {
             "currentLiquidityRate: ",
             liquidationVars.collateralReserveDataBefore.currentLiquidityRate
         );
-        console.log(
-            "availableMLPLiquidity: ",
-            liquidationVars.collateralReserveDataBefore.availableMLPLiquidity
-        ); //@issue8 availableMLPLiquidity always 0
         console.log(
             "currentVariableBorrowRate: ",
             liquidationVars.collateralReserveDataBefore.currentVariableBorrowRate
@@ -310,13 +303,6 @@ contract MiniPoolRepayWithdrawTransferTest is MiniPoolDepositBorrowTest {
             variableDebtBeforeTx - liquidationVars.amountToLiquidate,
             0.01e18
         );
-        //@issue8 availableMLPLiquidity always 0
-        // console.log("Available liquidity of debt token after liquidation shall be greater by {amountToLiquidate} than available liquidity before liquidation");
-        // assertApproxEqRel(
-        //     liquidationVars.borrowReserveDataAfter.availableMLPLiquidity,
-        //     liquidationVars.borrowReserveDataBefore.availableMLPLiquidity + liquidationVars.amountToLiquidate,
-        //     0.01e18
-        // );
         console.log(
             "Liquidity index for debt token after liquidation shall be greater than liquidity index before liquidation"
         );
@@ -331,14 +317,6 @@ contract MiniPoolRepayWithdrawTransferTest is MiniPoolDepositBorrowTest {
             liquidationVars.borrowReserveDataAfter.currentLiquidityRate,
             liquidationVars.borrowReserveDataBefore.currentLiquidityRate
         );
-
-        //@issue8 availableMLPLiquidity always 0
-        // console.log("Available liquidity of collateral token after liquidation shall be greater by {amountToLiquidate} than available liquidity before liquidation");
-        // assertApproxEqRel(
-        //     liquidationVars.collateralReserveDataAfter.availableMLPLiquidity,
-        //     liquidationVars.collateralReserveDataBefore.availableMLPLiquidity - liquidationVars.expectedCollateralLiquidated,
-        //     0.01e18
-        // );
     }
 
     function testLendingPoolLiquidatesMiniPool() public {

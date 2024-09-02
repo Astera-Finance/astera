@@ -268,12 +268,12 @@ contract ATokenErc6909Test is Common {
         offset = bound(offset, 0, tokens.length - 1);
         //index = 1e27;
         uint256 id = 1000 + offset;
+        address treasury = makeAddr("treasury");
         // Below index values generates issues !
         // index = 2 * 1e27;
         index = bound(index, 1e27, 10e27); // assume index increases in time as the interest accumulates
         vm.assume(maxValToMint.rayDiv(index) > 0);
-
-        address treasury = miniPoolContracts.miniPoolAddressesProvider.getMiniPoolTreasury(0);
+        miniPoolContracts.miniPoolAddressesProvider.setMiniPoolToTreasury(0, treasury);
         uint256 granuality = maxValToMint / nrOfIterations;
         vm.assume(maxValToMint % granuality == 0); // accept only multiplicity of {nrOfIterations}
         // maxValToMint = maxValToMint - (maxValToMint % granuality);
@@ -285,9 +285,7 @@ contract ATokenErc6909Test is Common {
             console.log("granuality: ", granuality);
             aErc6909Token.mintToTreasury(id, granuality, index);
         }
-        assertApproxEqAbs(
-            aErc6909Token.balanceOf(treasury, id), maxValToMint.rayDiv(index), nrOfIterations / 2
-        );
+        assertApproxEqAbs(aErc6909Token.balanceOf(treasury, id), maxValToMint.rayDiv(index), 1);
         console.log("Minting: ", maxValToMint.rayDiv(index));
         console.log("Balance of treasury: ", aErc6909Token.balanceOf(treasury, id));
         aErc6909Token.mintToTreasury(id, maxValToMint, index);
@@ -297,7 +295,11 @@ contract ATokenErc6909Test is Common {
             nrOfIterations / 2
         );
 
-        assertEq(aErc6909Token.scaledTotalSupply(id), 2 * maxValToMint.rayDiv(index)); // @issue1: FAILS HERE - total supply is not considered during minting to the treasury
+        assertEq(
+            aErc6909Token.scaledTotalSupply(id),
+            2 * maxValToMint.rayDiv(index),
+            "Total supply differs"
+        );
 
         vm.stopPrank();
     }
@@ -865,5 +867,351 @@ contract ATokenErc6909Test is Common {
 
         vm.expectRevert(bytes("Contract instance has already been initialized"));
         internalAErc6909Token.initialize(address(miniPoolContracts.miniPoolAddressesProvider), 0);
+    }
+
+    struct GassslessTestParams {
+        uint256 privateKey;
+        uint256 fee;
+        uint256 idOffset;
+        address user1;
+        address user2;
+        bytes32 permitHash;
+    }
+
+    function testGaslessATokenTransferRehypothecation(uint256 amountToTransfer) public {
+        GassslessTestParams memory testParams;
+        testParams.privateKey = 123;
+        testParams.user1 = vm.addr(testParams.privateKey);
+        console.log("User address:", testParams.user1);
+        testParams.user2 = makeAddr("user2");
+        testParams.fee = 1e10;
+        amountToTransfer = bound(amountToTransfer, testParams.fee + 1, 100e18);
+        testParams.idOffset = 1000;
+
+        for (uint8 idx = 0; idx < erc20Tokens.length; idx++) {
+            deal(address(erc20Tokens[idx]), address(this), amountToTransfer);
+            erc20Tokens[idx].approve(address(deployedContracts.lendingPool), amountToTransfer);
+            deployedContracts.lendingPool.deposit(
+                address(erc20Tokens[idx]), true, amountToTransfer, address(this)
+            );
+            assertGt(aTokens[idx].balanceOf(address(this)), 0, "Not deposited to the lendingPool");
+            aTokens[idx].approve(miniPool, aTokens[idx].balanceOf(address(this)));
+            IMiniPool(miniPool).deposit(
+                address(aTokens[idx]), true, aTokens[idx].balanceOf(address(this)), testParams.user1
+            );
+
+            uint256 user1BalanceBefore =
+                aErc6909Token.balanceOf(testParams.user1, testParams.idOffset + idx);
+            uint256 thisBalanceBefore =
+                aErc6909Token.balanceOf(address(this), testParams.idOffset + idx);
+            console.log("user1BalanceBefore: ", user1BalanceBefore);
+            console.log("thisBalanceBefore: ", thisBalanceBefore);
+            // uint256 initialGasBalance = address(this).balance;
+            assertGt(user1BalanceBefore, 0, "Not deposited to the miniPool");
+
+            bytes32 permitHash = _getPermitHash(
+                address(aErc6909Token),
+                testParams.user1,
+                address(this),
+                amountToTransfer,
+                aErc6909Token._nonces(testParams.user1, testParams.idOffset + idx),
+                block.timestamp + 60
+            );
+            assertEq(
+                aErc6909Token.balanceOf(testParams.user2, testParams.idOffset + idx),
+                0,
+                "aToken balance for user2 before transfer is not zero"
+            );
+            {
+                (uint8 v, bytes32 r, bytes32 s) = vm.sign(testParams.privateKey, permitHash);
+                aErc6909Token.permit(
+                    testParams.user1,
+                    address(this),
+                    amountToTransfer,
+                    block.timestamp + 60,
+                    testParams.idOffset + idx,
+                    v,
+                    r,
+                    s
+                );
+            }
+
+            aErc6909Token.transferFrom(
+                testParams.user1,
+                testParams.user2,
+                testParams.idOffset + idx,
+                amountToTransfer - testParams.fee
+            );
+            aErc6909Token.transferFrom(
+                testParams.user1, address(this), testParams.idOffset + idx, testParams.fee
+            );
+
+            assertEq(
+                aErc6909Token.balanceOf(testParams.user1, testParams.idOffset + idx)
+                    + amountToTransfer,
+                user1BalanceBefore,
+                "aToken balance for user1 is wrong"
+            );
+            assertEq(
+                aErc6909Token.balanceOf(testParams.user2, testParams.idOffset + idx),
+                amountToTransfer - testParams.fee,
+                "aToken balance for user2 is wrong"
+            );
+            assertEq(
+                aErc6909Token.balanceOf(address(this), testParams.idOffset + idx),
+                thisBalanceBefore + testParams.fee,
+                "aToken balance for this is wrong"
+            );
+        }
+    }
+
+    function testGaslessATokenTransferNormalFlow(uint256 amountToTransfer) public {
+        GassslessTestParams memory testParams;
+        testParams.privateKey = 123;
+        testParams.user1 = vm.addr(testParams.privateKey);
+        console.log("User address:", testParams.user1);
+        testParams.user2 = makeAddr("user2");
+        testParams.fee = 1e10;
+        amountToTransfer = bound(amountToTransfer, testParams.fee + 1, 100e18);
+        testParams.idOffset = 1128;
+
+        for (uint8 idx = 0; idx < erc20Tokens.length; idx++) {
+            deal(address(erc20Tokens[idx]), address(this), amountToTransfer);
+            erc20Tokens[idx].approve(miniPool, erc20Tokens[idx].balanceOf(address(this)));
+            IMiniPool(miniPool).deposit(
+                address(erc20Tokens[idx]), true, amountToTransfer, testParams.user1
+            );
+
+            uint256 user1BalanceBefore =
+                aErc6909Token.balanceOf(testParams.user1, testParams.idOffset + idx);
+            uint256 thisBalanceBefore =
+                aErc6909Token.balanceOf(address(this), testParams.idOffset + idx);
+            console.log("user1BalanceBefore: ", user1BalanceBefore);
+            console.log("thisBalanceBefore: ", thisBalanceBefore);
+            // uint256 initialGasBalance = address(this).balance;
+            assertGt(user1BalanceBefore, 0, "Not deposited to the miniPool");
+
+            bytes32 permitHash = _getPermitHash(
+                address(aErc6909Token),
+                testParams.user1,
+                address(this),
+                amountToTransfer,
+                aErc6909Token._nonces(testParams.user1, testParams.idOffset + idx),
+                block.timestamp + 60
+            );
+            assertEq(
+                aErc6909Token.balanceOf(testParams.user2, testParams.idOffset + idx),
+                0,
+                "aToken balance for user2 before transfer is not zero"
+            );
+            {
+                (uint8 v, bytes32 r, bytes32 s) = vm.sign(testParams.privateKey, permitHash);
+                aErc6909Token.permit(
+                    testParams.user1,
+                    address(this),
+                    amountToTransfer,
+                    block.timestamp + 60,
+                    testParams.idOffset + idx,
+                    v,
+                    r,
+                    s
+                );
+            }
+
+            aErc6909Token.transferFrom(
+                testParams.user1,
+                testParams.user2,
+                testParams.idOffset + idx,
+                amountToTransfer - testParams.fee
+            );
+            aErc6909Token.transferFrom(
+                testParams.user1, address(this), testParams.idOffset + idx, testParams.fee
+            );
+
+            assertEq(
+                aErc6909Token.balanceOf(testParams.user1, testParams.idOffset + idx)
+                    + amountToTransfer,
+                user1BalanceBefore,
+                "aToken balance for user1 is wrong"
+            );
+            assertEq(
+                aErc6909Token.balanceOf(testParams.user2, testParams.idOffset + idx),
+                amountToTransfer - testParams.fee,
+                "aToken balance for user2 is wrong"
+            );
+            assertEq(
+                aErc6909Token.balanceOf(address(this), testParams.idOffset + idx),
+                thisBalanceBefore + testParams.fee,
+                "aToken balance for this is wrong"
+            );
+        }
+    }
+
+    function testGaslessDebtTokenLendingPool(uint256 amountToTransfer) public {
+        GassslessTestParams memory testParams;
+        testParams.privateKey = 123;
+        testParams.user1 = vm.addr(testParams.privateKey);
+        console.log("User address:", testParams.user1);
+        testParams.user2 = makeAddr("user2");
+        testParams.fee = 1e10;
+        amountToTransfer = bound(amountToTransfer, testParams.fee + 1, 100e18);
+        testParams.idOffset = 2128;
+
+        for (uint8 idx = 0; idx < erc20Tokens.length; idx++) {
+            deal(address(erc20Tokens[idx]), address(this), amountToTransfer);
+            erc20Tokens[idx].approve(miniPool, erc20Tokens[idx].balanceOf(address(this)));
+            IMiniPool(miniPool).deposit(
+                address(erc20Tokens[idx]), true, amountToTransfer, testParams.user1
+            );
+            vm.prank(testParams.user1);
+            IMiniPool(miniPool).borrow(
+                address(erc20Tokens[idx]), true, amountToTransfer / 2, testParams.user1
+            );
+
+            uint256 user1BalanceBefore =
+                aErc6909Token.balanceOf(testParams.user1, testParams.idOffset + idx);
+            uint256 thisBalanceBefore =
+                aErc6909Token.balanceOf(address(this), testParams.idOffset + idx);
+            console.log("user1BalanceBefore: ", user1BalanceBefore);
+            console.log("thisBalanceBefore: ", thisBalanceBefore);
+            // uint256 initialGasBalance = address(this).balance;
+            assertGt(user1BalanceBefore, 0, "Not deposited to the miniPool");
+
+            bytes32 permitHash = _getPermitHash(
+                address(aErc6909Token),
+                testParams.user1,
+                miniPool,
+                amountToTransfer,
+                aErc6909Token._nonces(testParams.user1, testParams.idOffset + idx),
+                block.timestamp + 60
+            );
+            assertEq(
+                aErc6909Token.balanceOf(testParams.user2, testParams.idOffset + idx),
+                0,
+                "aToken balance for user2 before transfer is not zero"
+            );
+            {
+                (uint8 v, bytes32 r, bytes32 s) = vm.sign(testParams.privateKey, permitHash);
+                aErc6909Token.permit(
+                    testParams.user1,
+                    miniPool,
+                    amountToTransfer,
+                    block.timestamp + 60,
+                    testParams.idOffset + idx,
+                    v,
+                    r,
+                    s
+                );
+            }
+            vm.prank(miniPool);
+            aErc6909Token.transferFrom(
+                testParams.user1, testParams.user2, testParams.idOffset + idx, amountToTransfer / 2
+            );
+
+            assertEq(
+                aErc6909Token.balanceOf(testParams.user1, testParams.idOffset + idx)
+                    + amountToTransfer / 2,
+                user1BalanceBefore,
+                "aToken balance for user1 is wrong"
+            );
+            assertEq(
+                aErc6909Token.balanceOf(testParams.user2, testParams.idOffset + idx),
+                amountToTransfer / 2,
+                "aToken balance for user2 is wrong"
+            );
+        }
+    }
+
+    function testGaslessDebtTokenRevertion(uint256 amountToTransfer) public {
+        GassslessTestParams memory testParams;
+        testParams.privateKey = 123;
+        testParams.user1 = vm.addr(testParams.privateKey);
+        console.log("User address:", testParams.user1);
+        testParams.user2 = makeAddr("user2");
+        testParams.fee = 1e10;
+        amountToTransfer = bound(amountToTransfer, testParams.fee + 1, 100e18);
+        testParams.idOffset = 2128;
+
+        for (uint8 idx = 0; idx < erc20Tokens.length; idx++) {
+            deal(address(erc20Tokens[idx]), address(this), amountToTransfer);
+            erc20Tokens[idx].approve(miniPool, erc20Tokens[idx].balanceOf(address(this)));
+            IMiniPool(miniPool).deposit(
+                address(erc20Tokens[idx]), true, amountToTransfer, testParams.user1
+            );
+            vm.prank(testParams.user1);
+            IMiniPool(miniPool).borrow(
+                address(erc20Tokens[idx]), true, amountToTransfer / 2, testParams.user1
+            );
+
+            uint256 user1BalanceBefore =
+                aErc6909Token.balanceOf(testParams.user1, testParams.idOffset + idx);
+            uint256 thisBalanceBefore =
+                aErc6909Token.balanceOf(address(this), testParams.idOffset + idx);
+            console.log("user1BalanceBefore: ", user1BalanceBefore);
+            console.log("thisBalanceBefore: ", thisBalanceBefore);
+            // uint256 initialGasBalance = address(this).balance;
+            assertGt(user1BalanceBefore, 0, "Not deposited to the miniPool");
+
+            bytes32 permitHash = _getPermitHash(
+                address(aErc6909Token),
+                testParams.user1,
+                address(this),
+                amountToTransfer,
+                aErc6909Token._nonces(testParams.user1, testParams.idOffset + idx),
+                block.timestamp + 60
+            );
+            assertEq(
+                aErc6909Token.balanceOf(testParams.user2, testParams.idOffset + idx),
+                0,
+                "aToken balance for user2 before transfer is not zero"
+            );
+            {
+                (uint8 v, bytes32 r, bytes32 s) = vm.sign(testParams.privateKey, permitHash);
+                aErc6909Token.permit(
+                    testParams.user1,
+                    address(this),
+                    amountToTransfer,
+                    block.timestamp + 60,
+                    testParams.idOffset + idx,
+                    v,
+                    r,
+                    s
+                );
+            }
+            vm.expectRevert(bytes(Errors.CT_CALLER_MUST_BE_LENDING_POOL));
+            aErc6909Token.transferFrom(
+                testParams.user1,
+                testParams.user2,
+                testParams.idOffset + idx,
+                amountToTransfer - testParams.fee
+            );
+        }
+    }
+
+    function _getPermitHash(
+        address token,
+        address owner,
+        address spender,
+        uint256 value,
+        uint256 currentValidNonce,
+        uint256 deadline
+    ) private view returns (bytes32) {
+        bytes32 digest = keccak256(
+            abi.encodePacked(
+                "\x19\x01",
+                IAERC6909(token).DOMAIN_SEPARATOR(),
+                keccak256(
+                    abi.encode(
+                        IAERC6909(token).PERMIT_TYPEHASH(),
+                        owner,
+                        spender,
+                        value,
+                        currentValidNonce,
+                        deadline
+                    )
+                )
+            )
+        );
+        return digest;
     }
 }

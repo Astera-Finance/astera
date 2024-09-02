@@ -159,4 +159,8 @@ contract MiniPoolAddressesProvider is Ownable {
     function setMiniPoolCollateralManager(address collateralManager) external onlyOwner {
         _addresses[LENDING_POOL_COLLATERAL_MANAGER] = collateralManager;
     }
+
+    function setMiniPoolToTreasury(uint256 id, address treasury) external onlyOwner {
+        _miniPoolToTreasury[id] = treasury;
+    }
 }

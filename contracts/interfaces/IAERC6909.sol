@@ -56,7 +56,18 @@ interface IAERC6909 is IERC6909 {
         external;
     function isTranche(uint256 id) external view returns (bool);
     function transferOnLiquidation(address from, address to, uint256 id, uint256 amount) external;
-    //     function borrowAllowances(address delegator, address delegatee, uint256 id)
-    //         external
-    //         returns (uint256);
+    function _nonces(address token, uint256 id) external view returns (uint256 nonce);
+    function permit(
+        address owner,
+        address spender,
+        uint256 value,
+        uint256 deadline,
+        uint256 id,
+        uint8 v,
+        bytes32 r,
+        bytes32 s
+    ) external;
+
+    function DOMAIN_SEPARATOR() external view returns (bytes32);
+    function PERMIT_TYPEHASH() external view returns (bytes32);
 }
