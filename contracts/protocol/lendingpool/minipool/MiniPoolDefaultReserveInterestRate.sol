@@ -133,7 +133,7 @@ contract MiniPoolDefaultReserveInterestRateStrategy is IMiniPoolReserveInterestR
         uint256 availableLiquidity,
         uint256 totalVariableDebt,
         uint256 reserveFactor
-    ) public view override returns (uint256, uint256) {
+    ) public view returns (uint256, uint256) {
         CalcInterestRatesLocalVars memory vars;
 
         vars.totalDebt = totalVariableDebt;

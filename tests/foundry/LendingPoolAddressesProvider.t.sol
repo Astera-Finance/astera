@@ -62,18 +62,36 @@ contract LendingPoolAddressesProviderTest is Common {
     }
 
     function testSetAndGetLendingPool() public {
+        /**
+         * Preconditions:
+         * 1. LendingPoolAddressProvider and LendingPool instances must be deployed
+         * Test Scenario:
+         * 1. Set new implementation of LendingPool
+         * 2. Set new address of LendingPool
+         * Invariants:
+         * 1. LendingPoolAddressProvider must return proper address after setting new implementation and its address
+         */
         bytes32 id = "LENDING_POOL";
         LendingPoolAddressesProvider provider = new LendingPoolAddressesProvider(marketId);
-        LendingPoolConfigurator lendingPool = new LendingPoolConfigurator();
+        LendingPool lendingPool = new LendingPool();
 
         vm.expectEmit(true, false, false, false);
         emit LendingPoolUpdated(address(lendingPool));
         provider.setLendingPoolImpl(address(lendingPool));
-        provider.setAddress(id, address(lendingPool)); // @issue Lack of check for id,address == 0
+        provider.setAddress(id, address(lendingPool)); // @issue6 Lack of check for address == 0
         assertEq(provider.getLendingPool(), address(lendingPool));
     }
 
     function testSetAndGetLendingPoolConfigurator() public {
+        /**
+         * Preconditions:
+         * 1. LendingPoolAddressProvider and LendingPoolConfigurator instances must be deployed
+         * Test Scenario:
+         * 1. Set new implementation of LendingPoolConfigurator
+         * 2. Set new address of LendingPoolConfigurator
+         * Invariants:
+         * 1. LendingPoolAddressProvider must return proper address after setting new implementation and its address
+         */
         bytes32 id = "LENDING_POOL_CONFIGURATOR";
         LendingPoolAddressesProvider provider = new LendingPoolAddressesProvider(marketId);
         LendingPoolConfigurator lendingPoolConfigurator = new LendingPoolConfigurator();
@@ -82,7 +100,7 @@ contract LendingPoolAddressesProviderTest is Common {
         emit LendingPoolConfiguratorUpdated(address(lendingPoolConfigurator));
         provider.setLendingPoolConfiguratorImpl(address(lendingPoolConfigurator));
 
-        provider.setAddress(id, address(lendingPoolConfigurator)); // @issue Lack of check for id == 0
+        provider.setAddress(id, address(lendingPoolConfigurator)); // @issue6 Lack of check for id == 0
 
         assertEq(provider.getLendingPoolConfigurator(), address(lendingPoolConfigurator));
     }

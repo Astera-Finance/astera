@@ -138,22 +138,13 @@ contract MiniPoolDepositBorrowTest is Common {
             (, uint256 collateralTokenLtv,,,,,,,) = deployedContracts
                 .protocolDataProvider
                 .getReserveConfigurationData(address(collateralTokenParams.token), true);
-            console.log("collateralTokenLtv: ", collateralTokenLtv);
             uint256 borrowTokenInUsd = (amount * borrowTokenParams.price * 10_000)
                 / ((10 ** PRICE_FEED_DECIMALS) * collateralTokenLtv);
-            console.log("borrowTokenInUsd: ", borrowTokenInUsd);
-            console.log("collateralTokenParams.price", collateralTokenParams.price);
-            console.log("borrowTokenParams.price", borrowTokenParams.price);
             uint256 borrowTokenRay = borrowTokenInUsd.rayDiv(collateralTokenParams.price);
             uint256 borrowTokenInCollateralToken = fixture_preciseConvertWithDecimals(
                 borrowTokenRay,
                 borrowTokenParams.token.decimals(),
                 collateralTokenParams.token.decimals()
-            );
-            console.log("borrowTokenInCollateralToken: ", borrowTokenInCollateralToken);
-            console.log(
-                "collateralTokenParams.token.balanceOf(address(this)): ",
-                collateralTokenParams.token.balanceOf(address(this))
             );
             minNrOfTokens = (
                 borrowTokenInCollateralToken
@@ -162,7 +153,7 @@ contract MiniPoolDepositBorrowTest is Common {
                 ? (collateralTokenParams.token.balanceOf(address(this)) / 4)
                 : borrowTokenInCollateralToken;
             console.log(
-                "min nr of collateral in usd: ",
+                "Min nr of collateral in usd: ",
                 (borrowTokenInCollateralToken * collateralTokenParams.price)
                     / (10 ** PRICE_FEED_DECIMALS)
             );
@@ -265,7 +256,6 @@ contract MiniPoolDepositBorrowTest is Common {
             (, uint256 collateralTokenLtv,,,,,,,) = deployedContracts
                 .protocolDataProvider
                 .getReserveConfigurationData(address(collateralTokenParams.token), true);
-            console.log("collateralTokenLtv: ", collateralTokenLtv);
             uint256 borrowTokenInUsd = (amount * borrowTokenParams.price * 10000)
                 / ((10 ** PRICE_FEED_DECIMALS) * collateralTokenLtv);
             uint256 borrowTokenRay = borrowTokenInUsd.rayDiv(collateralTokenParams.price);
@@ -274,23 +264,12 @@ contract MiniPoolDepositBorrowTest is Common {
                 borrowTokenParams.token.decimals(),
                 collateralTokenParams.token.decimals()
             );
-            console.log(
-                "collateral balance in borrow token %s vs collateral balance %s",
-                borrowTokenInCollateralToken,
-                collateralTokenParams.token.balanceOf(address(this))
-            );
             minNrOfTokens = (
                 borrowTokenInCollateralToken
                     > collateralTokenParams.token.balanceOf(address(this)) / 4
             )
                 ? (collateralTokenParams.token.balanceOf(address(this)) / 4)
                 : borrowTokenInCollateralToken;
-            console.log("minNrOfTokens: ", minNrOfTokens);
-            console.log("borrowTokenInCollateralToken: ", borrowTokenInCollateralToken);
-            console.log(
-                "collateralTokenParams.token.balanceOf(address(this)) / 4: ",
-                collateralTokenParams.token.balanceOf(address(this)) / 4
-            );
         }
         {
             /* Sb deposits tokens which will be borrowed */
@@ -411,7 +390,9 @@ contract MiniPoolDepositBorrowTest is Common {
                 reserves[idx] = address(aTokens[idx - tokens.length]);
             }
         }
-
+        configAddresses.protocolDataProvider = address(miniPoolContracts.miniPoolAddressesProvider);
+        configAddresses.stableStrategy = address(miniPoolContracts.stableStrategy);
+        configAddresses.volatileStrategy = address(miniPoolContracts.volatileStrategy);
         miniPool = fixture_configureMiniPoolReserves(reserves, configAddresses, miniPoolContracts);
         vm.label(miniPool, "MiniPool");
     }

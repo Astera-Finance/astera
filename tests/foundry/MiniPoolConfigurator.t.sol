@@ -164,9 +164,7 @@ contract MiniPoolConfiguratorTest is MiniPoolDepositBorrowTest {
                 : borrowTokenInCollateralToken;
         }
         {
-            console.log("collateral amount %s %s", amount, collateralTokenParams.token.symbol());
-            console.log("-> borrow amount %s %s", minNrOfTokens, borrowTokenParams.token.symbol());
-            /*  */
+            /* Users deposit */
             console.log("User deposit");
             fixture_MiniPoolDeposit(minNrOfTokens, collateralOffset, user, collateralTokenParams);
             console.log("Other user deposit");
@@ -207,7 +205,7 @@ contract MiniPoolConfiguratorTest is MiniPoolDepositBorrowTest {
          * 1. Reserve factor is set
          * 2. User adds token as collateral into the miniPool
          * 3. Reserve factor is configured by admin to mint to treasury
-         * 3. User borrows token
+         * 4. User borrows token
          * Invariants:
          * 1. Some tokens are minted to the treasury
          *
@@ -216,9 +214,7 @@ contract MiniPoolConfiguratorTest is MiniPoolDepositBorrowTest {
         /* Fuzz vectors */
         collateralOffset = bound(collateralOffset, 0, tokens.length - 1);
         borrowOffset = bound(borrowOffset, 0, tokens.length - 1);
-        console.log("[collateral]Offset: ", collateralOffset);
-        console.log("[borrow]Offset: ", borrowOffset);
-        validReserveFactor = 1e3; //bound(validReserveFactor, 0, 1e4); //@issue: max allowed reserve factor is to PercentageMath.PERCENTAGE_FACTOR (1e4) not MAX_VALID_RESERVE_FACTOR
+        validReserveFactor = 1e3; //bound(validReserveFactor, 0, 1e4); //@issue3: max allowed reserve factor is to PercentageMath.PERCENTAGE_FACTOR (1e4) not MAX_VALID_RESERVE_FACTOR. It is cause because of PercentageMath.PERCENTAGE_FACTOR - reserveFactor in getLiquidityRate
 
         IAERC6909 aErc6909Token =
             IAERC6909(miniPoolContracts.miniPoolAddressesProvider.getMiniPoolToAERC6909(miniPool));
@@ -240,7 +236,7 @@ contract MiniPoolConfiguratorTest is MiniPoolDepositBorrowTest {
             amount,
             10 ** (borrowTokenParams.token.decimals() - 1),
             borrowTokenParams.token.balanceOf(address(this)) / 10
-        );
+        ); // 0.1 - available balance / 10
         console.log("Amount bounded: ", amount);
 
         uint256 minNrOfTokens;
@@ -248,7 +244,6 @@ contract MiniPoolConfiguratorTest is MiniPoolDepositBorrowTest {
             (, uint256 collateralTokenLtv,,,,,,,) = deployedContracts
                 .protocolDataProvider
                 .getReserveConfigurationData(address(collateralTokenParams.token), true);
-            console.log("collateralTokenLtv: ", collateralTokenLtv);
             uint256 borrowTokenInUsd = (amount * borrowTokenParams.price * 10_000)
                 / ((10 ** PRICE_FEED_DECIMALS) * collateralTokenLtv);
             console.log("borrow in USD: ", borrowTokenInUsd);
@@ -283,17 +278,15 @@ contract MiniPoolConfiguratorTest is MiniPoolDepositBorrowTest {
         }
 
         /* User deposits collateral */
-        console.log("Depositing %s ....", minNrOfTokens);
         fixture_MiniPoolDeposit(minNrOfTokens, collateralOffset, user, collateralTokenParams);
 
+        /* Setting reserve factor that allow minting to the treasury */
         vm.prank(admin);
         miniPoolContracts.miniPoolConfigurator.setReserveFactor(
             address(collateralTokenParams.token), true, validReserveFactor, IMiniPool(miniPool)
         );
 
         vm.startPrank(user);
-        uint256 atokenBalanceBefore =
-            aErc6909Token.balanceOf(address(deployedContracts.treasury), 1000 + borrowOffset);
         uint256 tokenBalanceBefore =
             aErc6909Token.balanceOf(address(deployedContracts.treasury), 1128 + borrowOffset);
         console.log("BORROW 1");
@@ -303,13 +296,9 @@ contract MiniPoolConfiguratorTest is MiniPoolDepositBorrowTest {
         IMiniPool(miniPool).borrow(address(borrowTokenParams.token), true, amount / 3, user);
         // console.log("Part of borrow aToken balance shall be transfered to the treasury");
         // assertGt(aErc6909Token.balanceOf(address(deployedContracts.treasury), 1000 + borrowOffset), atokenBalanceBefore);
-        console.log(
-            "curr balance: ",
-            aErc6909Token.balanceOf(address(deployedContracts.treasury), 1128 + borrowOffset)
-        );
         console.log("Part of borrow token balance shall be transfered to the treasury");
 
-        //@issue cannot set miniPoolToTreasury variable so mintToTreasure and reserveFactor is not working. It is only getter getMiniPoolTreasury in MiniPoolAddressProvider.sol which is returning address(0)
+        //@issue4 Cannot set miniPoolToTreasury variable so mintToTreasure and reserveFactor is not working. It is only getter getMiniPoolTreasury in MiniPoolAddressProvider.sol which is returning address(0)
         assertGt(
             aErc6909Token.balanceOf(address(deployedContracts.treasury), 1128 + borrowOffset),
             tokenBalanceBefore
@@ -319,7 +308,7 @@ contract MiniPoolConfiguratorTest is MiniPoolDepositBorrowTest {
     }
 
     function testSetDepositCap_Positive(uint256 validDepositCap) public {
-        validDepositCap = bound(validDepositCap, 0, MAX_VALID_DEPOSIT_CAP);
+        validDepositCap = bound(validDepositCap, 0, MAX_VALID_DEPOSIT_CAP - 1);
         for (uint32 idx; idx < erc20Tokens.length; idx++) {
             vm.expectEmit(true, false, false, false);
             emit ReserveDepositCapChanged(address(erc20Tokens[idx]), true, validDepositCap);
@@ -334,7 +323,7 @@ contract MiniPoolConfiguratorTest is MiniPoolDepositBorrowTest {
     }
 
     function testSetDepositCap_Negative(uint256 invalidDepositCap) public {
-        invalidDepositCap = bound(invalidDepositCap, MAX_VALID_DEPOSIT_CAP + 1, type(uint256).max);
+        invalidDepositCap = bound(invalidDepositCap, MAX_VALID_DEPOSIT_CAP, type(uint256).max);
         for (uint32 idx; idx < erc20Tokens.length; idx++) {
             vm.expectRevert(bytes(Errors.RC_INVALID_DEPOSIT_CAP));
             vm.prank(admin);
@@ -429,7 +418,6 @@ contract MiniPoolConfiguratorTest is MiniPoolDepositBorrowTest {
         vm.prank(vars.usdcWhale);
         vars.usdc.transfer(vars.whaleUser, vars.amount * 1000);
 
-        console.log("whale balance: ", vars.dai.balanceOf(vars.daiWhale) / (10 ** 18));
         vm.prank(vars.daiWhale);
         vars.dai.transfer(vars.user, vars.amount * 1e14); // 50000 DAI
 

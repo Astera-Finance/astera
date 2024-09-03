@@ -5,14 +5,11 @@ import "./Common.sol";
 import "contracts/protocol/libraries/helpers/Errors.sol";
 import {WadRayMath} from "contracts/protocol/libraries/math/WadRayMath.sol";
 
-// import {ILendingPool} from "contracts/interfaces/ILendingPool.sol";
-
 contract LendingPoolAddressesProviderRegistryTest is Common {
     event AddressesProviderRegistered(address indexed newAddress);
     event AddressesProviderUnregistered(address indexed newAddress);
 
     function testRegisteringAndReadingAddresses(uint256 id) public {
-        // _addressesProviders[provider] = id; // @issue should Id be only one per provider ?
         address randomAddress = makeAddr("RandomAddr");
         id = bound(id, 1, type(uint256).max);
         LendingPoolAddressesProviderRegistry lendingPoolAddressesProviderRegistry =
@@ -35,6 +32,16 @@ contract LendingPoolAddressesProviderRegistryTest is Common {
     }
 
     function testUnregisteringAndReadingAddresses(uint256 id) public {
+        /**
+         * Preconditions:
+         * 1. Length of array 'addressesProvidersList' must be zero
+         * Test Scenario:
+         * 1. Register address provider
+         * 2. Unregister address provider
+         * Invariants:
+         * 1. Length of array 'addressesProvidersList' must be one after registering
+         * 2. Length of array 'addressesProvidersList' must be zero after unregistering
+         */
         address randomAddress1 = makeAddr("RandomAddr1");
         address randomAddress2 = makeAddr("RandomAddr2");
         id = bound(id, 1, type(uint256).max);
@@ -53,7 +60,7 @@ contract LendingPoolAddressesProviderRegistryTest is Common {
 
         addressesProvidersList = lendingPoolAddressesProviderRegistry.getAddressesProvidersList();
 
-        // @issue There is no removal from list here
+        // @issue7 There is no removal from list here
         // assertEq(addressesProvidersList.length, 1); // violated
         // assertEq(addressesProvidersList[0], randomAddress2); // violated
 

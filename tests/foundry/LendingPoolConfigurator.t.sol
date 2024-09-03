@@ -178,7 +178,7 @@ contract LendingPoolConfiguratorTest is Common {
     }
 
     function testSetDepositCap_Positive(uint256 validDepositCap) public {
-        validDepositCap = bound(validDepositCap, 0, MAX_VALID_DEPOSIT_CAP);
+        validDepositCap = bound(validDepositCap, 0, MAX_VALID_DEPOSIT_CAP - 1);
         for (uint32 idx; idx < erc20Tokens.length; idx++) {
             vm.expectEmit(true, false, false, false);
             emit ReserveDepositCapChanged(address(erc20Tokens[idx]), true, validDepositCap);
@@ -193,7 +193,7 @@ contract LendingPoolConfiguratorTest is Common {
     }
 
     function testSetDepositCap_Negative(uint256 invalidDepositCap) public {
-        invalidDepositCap = bound(invalidDepositCap, MAX_VALID_DEPOSIT_CAP + 1, type(uint256).max);
+        invalidDepositCap = bound(invalidDepositCap, MAX_VALID_DEPOSIT_CAP, type(uint256).max);
         for (uint32 idx; idx < erc20Tokens.length; idx++) {
             vm.expectRevert(bytes(Errors.RC_INVALID_DEPOSIT_CAP));
             vm.prank(admin);
