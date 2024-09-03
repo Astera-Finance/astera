@@ -102,15 +102,15 @@ abstract contract BasePiReserveRateStrategy is Ownable {
     /**
      * @notice Returns available liquidity in the pool for specific asset.
      * @param asset - address of asset
+     * @param aToken - address of aToken
      * @return availableLiquidity
      */
-    function getAvailableLiquidity(address asset) public view virtual returns (uint256) {}
-    /**
-     * @notice Returns current debt for specified asset.
-     * @param asset - address of asset
-     * @return currentDebt
-     */
-    function getCurrentDebt(address asset) public view virtual returns (uint256) {}
+    function getAvailableLiquidity(address asset, address aToken)
+        public
+        view
+        virtual
+        returns (uint256)
+    {}
     /**
      * @notice The view version of `calculateInterestRates()`.
      * @return currentLiquidityRate
@@ -161,7 +161,7 @@ abstract contract BasePiReserveRateStrategy is Ownable {
         uint256 totalVariableDebt,
         uint256 reserveFactor
     ) internal returns (uint256, uint256) {
-        uint256 availableLiquidity = getAvailableLiquidity(reserve);
+        uint256 availableLiquidity = getAvailableLiquidity(reserve, aToken);
         availableLiquidity = availableLiquidity + liquidityAdded - liquidityTaken;
         return
             _calculateInterestRates(reserve, availableLiquidity, totalVariableDebt, reserveFactor);

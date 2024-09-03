@@ -55,25 +55,18 @@ contract MiniPoolPiReserveInterestRateStrategy is
         return IMiniPoolAddressesProvider(_addressProvider).getMiniPool(0);
     }
 
-    function getAvailableLiquidity(address asset) public view override returns (uint256) {
-        DataTypes.MiniPoolReserveData memory reserve =
-            IMiniPool(_getLendingPool()).getReserveData(asset, _assetReserveType);
-        uint256 availableLiquidity = IERC20(asset).balanceOf(reserve.aTokenAddress);
+    function getAvailableLiquidity(address asset, address aToken)
+        public
+        view
+        override
+        returns (uint256)
+    {
+        uint256 availableLiquidity = IERC20(asset).balanceOf(aToken);
 
         // IAERC6909 aErc6909Token =
         //     IAERC6909(IMiniPoolAddressesProvider(_provider).getMiniPoolToAERC6909(_getLendingPool()));
         // uint256 availableLiquidity = aErc6909Token.totalSupply(reserve.variableDebtTokenID);
         return availableLiquidity;
-    }
-
-    function getCurrentDebt(address asset) public view override returns (uint256) {
-        IAERC6909 aErc6909Token = IAERC6909(
-            IMiniPoolAddressesProvider(_addressProvider).getMiniPoolToAERC6909(_getLendingPool())
-        );
-        DataTypes.MiniPoolReserveData memory reserve =
-            IMiniPool(_getLendingPool()).getReserveData(asset, _assetReserveType);
-        uint256 totalVariableDebt = aErc6909Token.totalSupply(reserve.variableDebtTokenID);
-        return totalVariableDebt;
     }
 
     // ----------- view -----------
@@ -202,5 +195,14 @@ contract MiniPoolPiReserveInterestRateStrategy is
         _calculateInterestRates(
             reserve, aToken, liquidityAdded, liquidityTaken, totalVariableDebt, reserveFactor
         );
+    }
+
+    function calculateInterestRates(
+        address,
+        uint256 availableLiquidity,
+        uint256 totalVariableDebt,
+        uint256 reserveFactor
+    ) internal returns (uint256, uint256) {
+        _calculateInterestRates(address(0), availableLiquidity, totalVariableDebt, reserveFactor);
     }
 }

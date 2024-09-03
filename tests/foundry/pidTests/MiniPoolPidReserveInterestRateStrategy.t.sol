@@ -105,9 +105,7 @@ contract MiniPoolPidReserveInterestRateStrategyTest is Common {
             }
         }
         console.log("Mini pool reserve configuration..... ");
-        fixture_configureMiniPoolReserves(
-            reserves, configAddresses, deployedMiniPoolContracts, true
-        );
+        fixture_configureMiniPoolReserves(reserves, configAddresses, deployedMiniPoolContracts);
 
         miniPool = deployedMiniPoolContracts.miniPoolAddressesProvider.getMiniPool(0);
         console.log("3.Minipool: ", miniPool);
@@ -125,13 +123,13 @@ contract MiniPoolPidReserveInterestRateStrategyTest is Common {
         if (vm.exists(path)) vm.removeFile(path);
         vm.writeLine(
             path,
-            "timestamp,user,action,asset,utilizationRate,currentLiquidityRate,currentVariableBorrowRate,availableLiquidity,currentDebt"
+            "timestamp,user,action,asset,utilizationRate,currentLiquidityRate,currentVariableBorrowRate,errI"
         );
         /// File setup for MiniPool
         if (vm.exists(pathMiniPool)) vm.removeFile(pathMiniPool);
         vm.writeLine(
             pathMiniPool,
-            "timestamp,user,action,asset,utilizationRate,currentLiquidityRate,currentVariableBorrowRate,availableLiquidity,currentDebt"
+            "timestamp,user,action,asset,utilizationRate,currentLiquidityRate,currentVariableBorrowRate,errI"
         );
     }
 
@@ -324,6 +322,7 @@ contract MiniPoolPidReserveInterestRateStrategyTest is Common {
     function deposit(address user, IERC20 asset, uint256 amount) internal {
         vm.startPrank(user);
         asset.approve(address(deployedContracts.lendingPool), amount);
+        console.log("Depositing to Pool: %s", address(deployedContracts.lendingPool));
         deployedContracts.lendingPool.deposit(address(asset), true, amount, user);
         vm.stopPrank();
         logg(user, 0, address(asset));
@@ -331,6 +330,7 @@ contract MiniPoolPidReserveInterestRateStrategyTest is Common {
     }
 
     function borrowMiniPool(address user, IERC20 asset, uint256 amount) internal {
+        console.log("Borrowing MiniPool");
         vm.startPrank(user);
         IMiniPool(miniPool).borrow(address(asset), true, amount, user);
         vm.stopPrank();
@@ -414,8 +414,13 @@ contract MiniPoolPidReserveInterestRateStrategyTest is Common {
     function logg(address user, uint256 action, address asset) public {
         (uint256 currentLiquidityRate, uint256 currentVariableBorrowRate, uint256 utilizationRate) =
             pidStrat.getCurrentInterestRates();
-        uint256 availableLiquidity = pidStrat.getAvailableLiquidity(asset);
-        uint256 currentDebt = pidStrat.getCurrentDebt(asset);
+
+        // console.log("MINI POOL: ", address(miniPool));
+        // console.log("MAIN LENDING POOL: ", address(deployedContracts.lendingPool));
+        // int256 errI = pidStrat._errI();
+        // console.log("miniErrI in logg: ", uint256(miniPoolPidStrat._errI()));
+        // console.log("mainErrI in logg: ", uint256(pidStrat._errI()));
+        // console.log("ki: ", pidStrat._ki());
 
         string memory data = string(
             abi.encodePacked(
@@ -431,13 +436,15 @@ contract MiniPoolPidReserveInterestRateStrategyTest is Common {
                 ",",
                 Strings.toString(currentLiquidityRate),
                 ",",
-                Strings.toString(currentVariableBorrowRate),
-                ",",
-                Strings.toString(availableLiquidity),
-                ",",
-                Strings.toString(currentDebt)
+                Strings.toString(currentVariableBorrowRate)
             )
         );
+        // ",",
+        // Strings.toString(availableLiquidity),
+        // ",",
+        // Strings.toString(currentDebt),
+        // ",",
+        // Strings.toString(uint256(errI))
 
         vm.writeLine(path, data);
     }
@@ -446,8 +453,12 @@ contract MiniPoolPidReserveInterestRateStrategyTest is Common {
         (uint256 currentLiquidityRate, uint256 currentVariableBorrowRate, uint256 utilizationRate) =
             miniPoolPidStrat.getCurrentInterestRates();
 
-        uint256 availableLiquidity = miniPoolPidStrat.getAvailableLiquidity(asset);
-        uint256 currentDebt = miniPoolPidStrat.getCurrentDebt(asset);
+        // console.log("MAIN STRAT: ", address(pidStrat));
+        // console.log("MINI STRAT: ", address(miniPoolPidStrat));
+        // int256 errI = miniPoolPidStrat._errI();
+        // console.log("miniErrI in logg: ", uint256(miniPoolPidStrat._errI()));
+        // console.log("mainErrI in logg: ", uint256(pidStrat._errI()));
+        // console.log("ki: ", miniPoolPidStrat._ki());
 
         string memory data = string(
             abi.encodePacked(
@@ -463,13 +474,11 @@ contract MiniPoolPidReserveInterestRateStrategyTest is Common {
                 ",",
                 Strings.toString(currentLiquidityRate),
                 ",",
-                Strings.toString(currentVariableBorrowRate),
-                ",",
-                Strings.toString(availableLiquidity),
-                ",",
-                Strings.toString(currentDebt)
+                Strings.toString(currentVariableBorrowRate)
             )
         );
+        // ",",
+        // Strings.toString(uint256(errI))
 
         vm.writeLine(pathMiniPool, data);
     }

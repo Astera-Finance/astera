@@ -11,8 +11,9 @@ else:
     dir = os.getcwd() + "/tests/foundry/pidTests/data"
 idx = 0
 
-liquidities = []
-debts = []
+# liquidities = []
+# debts = []
+# errI = []
 timestamp = []
 names = []
 linestyles = ['-.', '--', ':']
@@ -35,8 +36,9 @@ for root, dirs, filenames in os.walk(dir):
             asset_data["currentVariableBorrowRate"] = asset_data["currentVariableBorrowRate"].astype(float)
             asset_data["currentLiquidityRate"] = asset_data["currentLiquidityRate"].astype(float)
             asset_data["utilizationRate"] = asset_data["utilizationRate"].astype(float)
-            liquidities.append(asset_data["availableLiquidity"].astype(float))
-            debts.append(asset_data["currentDebt"].astype(float))
+            # liquidities.append(asset_data["availableLiquidity"].astype(float))
+            # debts.append(asset_data["currentDebt"].astype(float))
+            # errI.append(asset_data["errI"].astype(float))
             
             # Create a figure with two subplots
             fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(10, 8), sharex=True)
@@ -70,26 +72,37 @@ for root, dirs, filenames in os.walk(dir):
 # Create a figure with two subplots
 fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(10, 8), sharex=True)
 
-# Upper subplot: main pool and mini pool liquidities
-for idx,liquidity in enumerate(liquidities):
-    ax1.plot(timestamp, liquidity / 1e18, label="{} liquidity".format(names[idx]), linestyle=linestyles[idx%3])
+# # Upper subplot: main pool and mini pool liquidities
+# for idx,liquidity in enumerate(liquidities):
+#     ax1.plot(timestamp, liquidity / 1e18, label="{} liquidity".format(names[idx]), linestyle=linestyles[idx%3])
 
-ax1.set_title("Liquidities and debts over time for asset 0xda10009cbd5d07dd0cecc66161fc93d7c9000da1")
-ax1.set_ylabel("Liquidity")
-if log : 
-    ax1.set_yscale('log')  # Set y-axis to log scale
-ax1.legend()
-ax1.grid(True)
+# ax1.set_title("Liquidities and debts over time for asset 0xda10009cbd5d07dd0cecc66161fc93d7c9000da1")
+# ax1.set_ylabel("Liquidity")
+# if log : 
+#     ax1.set_yscale('log')  # Set y-axis to log scale
+# ax1.legend()
+# ax1.grid(True)
 
-# Lower subplot: main pool and mini pool debts
-for idx,debt in enumerate(debts):
-    ax2.plot(timestamp, debt / 1e18, label="{} debt".format(names[idx]), linestyle=linestyles[idx%3])
-ax2.set_xlabel("Timestamp")
-ax2.set_ylabel("Debts")
-if log : 
-    ax2.set_yscale('log')  # Set y-axis to log scale
-ax2.legend()
-ax2.grid(True)
+# # Lower subplot: main pool and mini pool debts
+# for idx,debt in enumerate(debts):
+#     ax2.plot(timestamp, debt / 1e18, label="{} debt".format(names[idx]), linestyle=linestyles[idx%3])
+# ax2.set_xlabel("Timestamp")
+# ax2.set_ylabel("Debts")
+# if log : 
+#     ax2.set_yscale('log')  # Set y-axis to log scale
+# ax2.legend()
+# ax2.grid(True)
+
+# Lowest subplot: main pool and mini pool errI
+# for idx,err in enumerate(errI):
+#     ax2.plot(timestamp, err / 1e18, label="{} errI".format(names[idx]), linestyle=linestyles[idx%3])
+# ax2.set_xlabel("Timestamp")
+# ax2.set_ylabel("ErrI")
+# if log : 
+#     ax2.set_yscale('log')  # Set y-axis to log scale
+# ax2.legend()
+# ax2.grid(True)
+
 
 plt.tight_layout()
 
