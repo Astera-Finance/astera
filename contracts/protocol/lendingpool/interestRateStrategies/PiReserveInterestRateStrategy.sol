@@ -55,18 +55,13 @@ contract PiReserveInterestRateStrategy is
         return ILendingPoolAddressesProvider(_addressProvider).getLendingPool();
     }
 
-    function getAvailableLiquidity(address asset) public view override returns (uint256) {
-        DataTypes.ReserveData memory reserve =
-            ILendingPool(_getLendingPool()).getReserveData(asset, _assetReserveType);
-        return IAToken(reserve.aTokenAddress).getTotalManagedAssets();
-    }
-
-    function getCurrentDebt(address asset) public view override returns (uint256) {
-        DataTypes.ReserveData memory reserve =
-            ILendingPool(_getLendingPool()).getReserveData(asset, _assetReserveType);
-        uint256 totalVariableDebt = IVariableDebtToken(reserve.variableDebtTokenAddress)
-            .scaledTotalSupply().rayMul(reserve.variableBorrowIndex);
-        return totalVariableDebt;
+    function getAvailableLiquidity(address asset, address aToken)
+        public
+        view
+        override
+        returns (uint256)
+    {
+        return IAToken(aToken).getTotalManagedAssets();
     }
 
     // ----------- view -----------
@@ -81,7 +76,7 @@ contract PiReserveInterestRateStrategy is
         // utilization
         DataTypes.ReserveData memory reserve =
             ILendingPool(_getLendingPool()).getReserveData(_asset, _assetReserveType);
-        uint256 availableLiquidity = getAvailableLiquidity(_asset);
+        uint256 availableLiquidity = getAvailableLiquidity(_asset, reserve.aTokenAddress);
         uint256 totalVariableDebt = IVariableDebtToken(reserve.variableDebtTokenAddress)
             .scaledTotalSupply().rayMul(reserve.variableBorrowIndex);
         uint256 utilizationRate = totalVariableDebt == 0
@@ -121,5 +116,14 @@ contract PiReserveInterestRateStrategy is
         _calculateInterestRates(
             reserve, aToken, liquidityAdded, liquidityTaken, totalVariableDebt, reserveFactor
         );
+    }
+
+    function calculateInterestRates(
+        address,
+        uint256 availableLiquidity,
+        uint256 totalVariableDebt,
+        uint256 reserveFactor
+    ) internal returns (uint256, uint256) {
+        _calculateInterestRates(address(0), availableLiquidity, totalVariableDebt, reserveFactor);
     }
 }

@@ -224,8 +224,6 @@ contract PidReserveInterestRateStrategyTest is Common {
     function logg(address user, uint256 action, address asset) public {
         (uint256 currentLiquidityRate, uint256 currentVariableBorrowRate, uint256 utilizationRate) =
             pidStrat.getCurrentInterestRates();
-        uint256 availableLiquidity = pidStrat.getAvailableLiquidity(asset);
-        uint256 currentDebt = pidStrat.getCurrentDebt(asset);
 
         string memory data = string(
             abi.encodePacked(
@@ -241,11 +239,7 @@ contract PidReserveInterestRateStrategyTest is Common {
                 ",",
                 Strings.toString(currentLiquidityRate),
                 ",",
-                Strings.toString(currentVariableBorrowRate),
-                ",",
-                Strings.toString(availableLiquidity),
-                ",",
-                Strings.toString(currentDebt)
+                Strings.toString(currentVariableBorrowRate)
             )
         );
 
