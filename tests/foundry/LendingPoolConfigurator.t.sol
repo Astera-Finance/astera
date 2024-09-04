@@ -52,6 +52,8 @@ contract LendingPoolConfiguratorTest is Common {
     event VariableDebtTokenUpgraded(
         address indexed asset, address indexed proxy, address indexed implementation
     );
+    event Paused();
+    event Unpaused();
 
     ERC20[] erc20Tokens;
     DeployedContracts deployedContracts;
@@ -283,21 +285,115 @@ contract LendingPoolConfiguratorTest is Common {
     }
 
     function testAccessControlForPoolInteractions() public {
-        address aTokenAddress = makeAddr("aTokenAddress");
+        address tokenAddress = makeAddr("tokenAddress");
+        address randomAddress = makeAddr("randomAddress");
         uint256 randomNumber;
         randomNumber = bound(randomNumber, 0, type(uint256).max);
         /* access controls */
         vm.expectRevert(bytes("33"));
-        deployedContracts.lendingPoolConfigurator.setFarmingPct(aTokenAddress, randomNumber);
+        deployedContracts.lendingPoolConfigurator.setFarmingPct(tokenAddress, randomNumber);
         vm.expectRevert(bytes("33"));
-        deployedContracts.lendingPoolConfigurator.setClaimingThreshold(aTokenAddress, randomNumber);
+        deployedContracts.lendingPoolConfigurator.setClaimingThreshold(tokenAddress, randomNumber);
         vm.expectRevert(bytes("33"));
-        deployedContracts.lendingPoolConfigurator.setFarmingPctDrift(aTokenAddress, randomNumber);
+        deployedContracts.lendingPoolConfigurator.setFarmingPctDrift(tokenAddress, randomNumber);
         vm.expectRevert(bytes("33"));
-        deployedContracts.lendingPoolConfigurator.setProfitHandler(aTokenAddress, aTokenAddress);
+        deployedContracts.lendingPoolConfigurator.setProfitHandler(tokenAddress, tokenAddress);
         vm.expectRevert(bytes("33"));
-        deployedContracts.lendingPoolConfigurator.setVault(aTokenAddress, aTokenAddress);
+        deployedContracts.lendingPoolConfigurator.setVault(tokenAddress, tokenAddress);
         vm.expectRevert(bytes("76"));
-        deployedContracts.lendingPoolConfigurator.rebalance(aTokenAddress);
+        deployedContracts.lendingPoolConfigurator.rebalance(tokenAddress);
+
+        vm.expectRevert(bytes("33"));
+        deployedContracts.lendingPoolConfigurator.setReserveInterestRateStrategyAddress(
+            tokenAddress, true, randomAddress
+        );
+        vm.expectRevert(bytes("76"));
+        deployedContracts.lendingPoolConfigurator.setPoolPause(true);
+        vm.expectRevert(bytes("33"));
+        deployedContracts.lendingPoolConfigurator.updateFlashLoanFee(randomNumber);
+        vm.expectRevert(bytes("33"));
+        deployedContracts.lendingPoolConfigurator.setRewarderForReserve(
+            tokenAddress, true, randomAddress
+        );
+        vm.expectRevert(bytes("33"));
+        deployedContracts.lendingPoolConfigurator.setTreasury(tokenAddress, true, randomAddress);
+    }
+
+    function testSetReserveInterestRateStrategyAddress() public {
+        address newInterestRateStrategy = makeAddr("newInterestRateStrategy");
+        for (uint32 idx; idx < erc20Tokens.length; idx++) {
+            vm.prank(admin);
+            deployedContracts.lendingPoolConfigurator.setReserveInterestRateStrategyAddress(
+                address(erc20Tokens[idx]), true, newInterestRateStrategy
+            );
+            DataTypes.ReserveData memory data =
+                deployedContracts.lendingPool.getReserveData(address(erc20Tokens[idx]), true);
+            assertEq(data.interestRateStrategyAddress, newInterestRateStrategy);
+        }
+    }
+
+    function testSetPause() public {
+        vm.expectEmit(false, false, false, false);
+        emit Paused();
+        vm.prank(admin);
+        deployedContracts.lendingPoolConfigurator.setPoolPause(true);
+        assertEq(deployedContracts.lendingPool.paused(), true);
+
+        vm.expectEmit(false, false, false, false);
+        emit Unpaused();
+        vm.prank(admin);
+        deployedContracts.lendingPoolConfigurator.setPoolPause(false);
+        assertEq(deployedContracts.lendingPool.paused(), false);
+    }
+
+    function testGetTotalManagedAssets() public {
+        uint256 amount = 1e18;
+        address user = makeAddr("user");
+        for (uint32 idx = 0; idx < aTokens.length; idx++) {
+            deal(address(erc20Tokens[idx]), address(this), amount);
+            uint256 _userGrainBalanceBefore = aTokens[idx].balanceOf(address(user));
+            uint256 _thisBalanceTokenBefore = erc20Tokens[idx].balanceOf(address(this));
+
+            /* Deposit on behalf of user */
+            erc20Tokens[idx].approve(address(deployedContracts.lendingPool), amount);
+            deployedContracts.lendingPool.deposit(address(erc20Tokens[idx]), true, amount, user);
+            assertEq(_thisBalanceTokenBefore, erc20Tokens[idx].balanceOf(address(this)) + amount);
+            assertEq(_userGrainBalanceBefore + amount, aTokens[idx].balanceOf(address(user)));
+            assertEq(
+                deployedContracts.lendingPoolConfigurator.getTotalManagedAssets(
+                    address(aTokens[idx])
+                ),
+                amount
+            );
+        }
+    }
+
+    function testUpdateFlashLoanFee(uint256 flashLoanPremiumTotal) public {
+        vm.prank(admin);
+        deployedContracts.lendingPoolConfigurator.updateFlashLoanFee(flashLoanPremiumTotal);
+        assertEq(deployedContracts.lendingPool.FLASHLOAN_PREMIUM_TOTAL(), flashLoanPremiumTotal);
+    }
+
+    function testSetRewarderForReserve() public {
+        address newRewarder = makeAddr("newRewarder");
+        for (uint32 idx; idx < erc20Tokens.length; idx++) {
+            vm.prank(admin);
+            deployedContracts.lendingPoolConfigurator.setRewarderForReserve(
+                address(erc20Tokens[idx]), true, newRewarder
+            );
+            assertEq(address(aTokens[idx].getIncentivesController()), newRewarder);
+            assertEq(address(variableDebtTokens[idx].getIncentivesController()), newRewarder);
+        }
+    }
+
+    function testSetTreasury() public {
+        address newTreasury = makeAddr("newTreasury");
+        for (uint32 idx; idx < erc20Tokens.length; idx++) {
+            vm.prank(admin);
+            deployedContracts.lendingPoolConfigurator.setTreasury(
+                address(erc20Tokens[idx]), true, newTreasury
+            );
+            assertEq(aTokens[idx].RESERVE_TREASURY_ADDRESS(), newTreasury);
+        }
     }
 }

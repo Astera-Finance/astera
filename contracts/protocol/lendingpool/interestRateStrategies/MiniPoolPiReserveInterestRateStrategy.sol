@@ -3,13 +3,16 @@ pragma solidity ^0.8.23;
 
 import {IMiniPoolAddressesProvider} from "contracts/interfaces/IMiniPoolAddressesProvider.sol";
 import {IERC20} from "../../../dependencies/openzeppelin/contracts/IERC20.sol";
-import {IVariableDebtToken} from "contracts/interfaces/IVariableDebtToken.sol";
 import {IAERC6909} from "contracts/interfaces/IAERC6909.sol";
-import {VariableDebtToken} from "contracts/protocol/tokenization/VariableDebtToken.sol";
 import {IMiniPool} from "contracts/interfaces/IMiniPool.sol";
 import {IMiniPoolReserveInterestRateStrategy} from
     "../../../interfaces/IMiniPoolReserveInterestRateStrategy.sol";
-import "./BasePiReserveRateStrategy.sol";
+import {
+    BasePiReserveRateStrategy,
+    WadRayMath,
+    PercentageMath,
+    DataTypes
+} from "./BasePiReserveRateStrategy.sol";
 
 /**
  * @title PiReserveInterestRateStrategy contract
@@ -99,79 +102,6 @@ contract MiniPoolPiReserveInterestRateStrategy is
             currentVariableBorrowRate, utilizationRate, getReserveFactor(reserve.configuration)
         );
         return (currentLiquidityRate, currentVariableBorrowRate, utilizationRate);
-    }
-
-    struct CalcAugmentedInterestRatesLocalVars {
-        uint256 interestRateDelta;
-        uint256 currentVariableBorrowRate;
-        uint256 currentLiquidityRate;
-        uint256 utilizationRate;
-        uint256 backstopUtilizationRate;
-    }
-
-    function calculateAugmentedInterestRate(augmentedInterestRateParams memory params)
-        external
-        returns (uint256, uint256)
-    {
-        CalcAugmentedInterestRatesLocalVars memory vars;
-        vars.interestRateDelta =
-            uint256(params.underlyingVarRate) - uint256(params.underlyingLiqRate);
-        vars.utilizationRate = params.totalVariableDebt == 0
-            ? 0
-            : params.totalVariableDebt.rayDiv(params.availableLiquidity + params.totalVariableDebt);
-        vars.backstopUtilizationRate = params.utilizedBackstopLiquidity == 0
-            ? 0
-            : params.utilizedBackstopLiquidity.rayDiv(params.totalAvailableBackstopLiquidity);
-
-        if (vars.backstopUtilizationRate > 0) {
-            // PID state update
-            int256 err = getNormalizedError(vars.backstopUtilizationRate);
-            _errI += int256(_ki).rayMulInt(err * int256(block.timestamp - _lastTimestamp));
-            if (_errI < _maxErrIAmp) _errI = _maxErrIAmp; // Limit _errI negative accumulation.
-            _lastTimestamp = block.timestamp;
-
-            int256 controllerErr = getControllerError(err);
-            vars.currentVariableBorrowRate = transferFunction(controllerErr);
-            vars.currentLiquidityRate = getLiquidityRate(
-                vars.currentVariableBorrowRate, vars.backstopUtilizationRate, params.reserveFactor
-            );
-
-            emit PidLog(
-                vars.backstopUtilizationRate,
-                vars.currentLiquidityRate,
-                vars.currentVariableBorrowRate,
-                err,
-                controllerErr
-            );
-        } else {
-            // backstopUtilizationRate is 0
-            if (vars.utilizationRate == 0) {
-                _errI = 0;
-                _lastTimestamp = block.timestamp;
-                return (0, 0);
-            }
-            // PID state update
-            int256 err = getNormalizedError(vars.utilizationRate);
-            _errI += int256(_ki).rayMulInt(err * int256(block.timestamp - _lastTimestamp));
-            if (_errI < _maxErrIAmp) _errI = _maxErrIAmp; // Limit _errI negative accumulation.
-            _lastTimestamp = block.timestamp;
-
-            int256 controllerErr = getControllerError(err);
-            vars.currentVariableBorrowRate = transferFunction(controllerErr);
-            vars.currentLiquidityRate = getLiquidityRate(
-                vars.currentVariableBorrowRate, vars.utilizationRate, params.reserveFactor
-            );
-
-            emit PidLog(
-                vars.backstopUtilizationRate,
-                vars.currentLiquidityRate,
-                vars.currentVariableBorrowRate,
-                err,
-                controllerErr
-            );
-        }
-
-        return (vars.currentLiquidityRate, vars.currentVariableBorrowRate);
     }
 
     // ----------- view -----------

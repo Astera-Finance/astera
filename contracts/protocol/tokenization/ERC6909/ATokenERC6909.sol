@@ -49,6 +49,12 @@ contract ATokenERC6909 is IncentivizedERC6909, VersionedInitializable {
 
     function initialize(address provider, uint256 minipoolId) public initializer {
         require(address(provider) != address(0), Errors.LP_NOT_CONTRACT);
+        uint256 chainId;
+
+        //solium-disable-next-line
+        assembly {
+            chainId := chainid()
+        }
         _addressesProvider = IMiniPoolAddressesProvider(provider);
         _minipoolId = minipoolId;
         POOL = IMiniPool(_addressesProvider.getMiniPool(minipoolId));
@@ -258,7 +264,6 @@ contract ATokenERC6909 is IncentivizedERC6909, VersionedInitializable {
         if (currentSupplyScaled == 0) {
             return 0;
         }
-
         return currentSupplyScaled.rayMul(getIndexForOverlyingAsset(id));
     }
 
@@ -391,6 +396,7 @@ contract ATokenERC6909 is IncentivizedERC6909, VersionedInitializable {
 
     function handleRepayment(address user, address onBehalfOf, uint256 id, uint256 amount)
         external
+        view
     {
         require(msg.sender == address(POOL), Errors.CT_CALLER_MUST_BE_LENDING_POOL);
     }

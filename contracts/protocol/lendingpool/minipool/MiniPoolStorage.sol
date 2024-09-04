@@ -4,11 +4,9 @@ pragma solidity ^0.8.23;
 import {UserConfiguration} from "../../libraries/configuration/UserConfiguration.sol";
 import {ReserveConfiguration} from "../../libraries/configuration/ReserveConfiguration.sol";
 import {ReserveLogic} from "../../libraries/logic/ReserveLogic.sol";
-import {ILendingPoolAddressesProvider} from "../../../interfaces/ILendingPoolAddressesProvider.sol";
 import {IMiniPoolAddressesProvider} from "../../../interfaces/IMiniPoolAddressesProvider.sol";
 import {ILendingPool} from "../../../interfaces/ILendingPool.sol";
 import {DataTypes} from "../../libraries/types/DataTypes.sol";
-import {IAERC6909} from "../../../interfaces/IAERC6909.sol";
 
 contract MiniPoolStorage {
     using ReserveLogic for DataTypes.ReserveData;
@@ -17,14 +15,11 @@ contract MiniPoolStorage {
 
     IMiniPoolAddressesProvider internal _addressesProvider;
     ILendingPool internal _pool;
-    IAERC6909 internal _marketToken;
     uint256 internal _minipoolId;
-    address internal _interestCollector;
 
     mapping(address => DataTypes.MiniPoolReserveData) internal _reserves;
     mapping(address => DataTypes.UserConfigurationMap) internal _usersConfig;
     mapping(address => DataTypes.UserRecentBorrowMap) internal _usersRecentBorrow;
-    mapping(address => uint256) internal _lendingPoolDebt;
 
     // the list of the available reserves, structured as a mapping for gas savings reasons
     mapping(uint256 => DataTypes.ReserveReference) internal _reservesList;

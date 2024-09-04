@@ -219,6 +219,9 @@ contract MiniPoolConfiguratorTest is MiniPoolDepositBorrowTest {
         IAERC6909 aErc6909Token =
             IAERC6909(miniPoolContracts.miniPoolAddressesProvider.getMiniPoolToAERC6909(miniPool));
 
+        address treasury = makeAddr("treasury");
+        miniPoolContracts.miniPoolAddressesProvider.setMiniPoolToTreasury(0, treasury);
+
         /* Test vars */
         address user = makeAddr("user");
         TokenParams memory collateralTokenParams = TokenParams(
@@ -267,7 +270,7 @@ contract MiniPoolConfiguratorTest is MiniPoolDepositBorrowTest {
         }
 
         {
-            /* Sb deposits tokens which will be borrowed */
+            /* Sb deposits tokens that will be borrowed */
             address liquidityProvider = makeAddr("liquidityProvider");
             console.log(
                 "Deposit borrowTokens: %s with balance: %s",
@@ -283,13 +286,12 @@ contract MiniPoolConfiguratorTest is MiniPoolDepositBorrowTest {
         /* Setting reserve factor that allow minting to the treasury */
         vm.prank(admin);
         miniPoolContracts.miniPoolConfigurator.setReserveFactor(
-            address(collateralTokenParams.token), true, validReserveFactor, IMiniPool(miniPool)
+            address(borrowTokenParams.token), true, validReserveFactor, IMiniPool(miniPool)
         );
 
         vm.startPrank(user);
-        uint256 tokenBalanceBefore =
-            aErc6909Token.balanceOf(address(deployedContracts.treasury), 1128 + borrowOffset);
-        console.log("BORROW 1");
+        uint256 tokenBalanceBefore = aErc6909Token.balanceOf(address(treasury), 1128 + borrowOffset);
+        console.log("BORROW 1 token: %s", address(borrowTokenParams.token));
         IMiniPool(miniPool).borrow(address(borrowTokenParams.token), true, amount / 3, user);
         skip(100 days);
         console.log("BORROW 2");
@@ -298,10 +300,8 @@ contract MiniPoolConfiguratorTest is MiniPoolDepositBorrowTest {
         // assertGt(aErc6909Token.balanceOf(address(deployedContracts.treasury), 1000 + borrowOffset), atokenBalanceBefore);
         console.log("Part of borrow token balance shall be transfered to the treasury");
 
-        //@issue4 Cannot set miniPoolToTreasury variable so mintToTreasure and reserveFactor is not working. It is only getter getMiniPoolTreasury in MiniPoolAddressProvider.sol which is returning address(0)
         assertGt(
-            aErc6909Token.balanceOf(address(deployedContracts.treasury), 1128 + borrowOffset),
-            tokenBalanceBefore
+            aErc6909Token.balanceOf(address(treasury), 1128 + borrowOffset), tokenBalanceBefore
         );
 
         vm.stopPrank();

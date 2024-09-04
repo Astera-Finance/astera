@@ -421,6 +421,8 @@ library BorrowLogic {
             //revert(Errors.VL_BORROW_FLOW_LIMIT_REACHED);
             revert();
         } else {
+            reserve.updateState();
+
             IVariableDebtToken(reserve.variableDebtTokenAddress).mint(
                 params.miniPoolAddress,
                 params.miniPoolAddress,

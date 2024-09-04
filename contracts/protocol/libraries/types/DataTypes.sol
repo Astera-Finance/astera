@@ -37,8 +37,6 @@ library DataTypes {
         uint128 variableBorrowIndex;
         //the current supply rate. Expressed in ray
         uint128 currentLiquidityRate;
-        //the current amount available to borrow from the lending pool
-        uint256 availableMLPLiquidity;
         //the current variable borrow rate. Expressed in ray
         uint128 currentVariableBorrowRate;
         uint40 lastUpdateTimestamp;

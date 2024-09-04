@@ -225,17 +225,23 @@ contract ATokenTest is Common {
     function testGaslessTokenTransfer(uint256 amountToTransfer) public {
         uint256 privateKey = 123;
         address user1 = vm.addr(privateKey);
+        console.log("User address:", user1);
         address user2 = makeAddr("user2");
-        amountToTransfer = bound(amountToTransfer, 1, 100_000);
+        uint256 fee = 1e10;
+        amountToTransfer = bound(amountToTransfer, fee + 1, 100e18);
 
-        for (uint8 idx = 0; idx > 0; idx++) {
+        for (uint8 idx = 0; idx < erc20Tokens.length; idx++) {
+            deal(address(erc20Tokens[idx]), address(this), amountToTransfer);
             erc20Tokens[idx].approve(address(deployedContracts.lendingPool), amountToTransfer);
             deployedContracts.lendingPool.deposit(
-                address(erc20Tokens[idx]), true, amountToTransfer, address(this)
+                address(erc20Tokens[idx]), true, amountToTransfer, user1
             );
-            aTokens[idx].transfer(user1, amountToTransfer);
+            // aTokens[idx].transfer(user1, amountToTransfer);
 
             uint256 user1BalanceBefore = aTokens[idx].balanceOf(user1);
+            uint256 thisBalanceBefore = aTokens[idx].balanceOf(address(this));
+
+            // uint256 initialGasBalance = address(this).balance;
 
             bytes32 permitHash = _getPermitHash(
                 aTokens[idx],
@@ -245,15 +251,38 @@ contract ATokenTest is Common {
                 aTokens[idx]._nonces(user1),
                 block.timestamp + 60
             );
-            (uint8 v, bytes32 r, bytes32 s) = vm.sign(privateKey, permitHash);
-            aTokens[idx].permit(
-                user1, address(this), amountToTransfer, block.timestamp + 60, v, r, s
+            assertEq(
+                aTokens[idx].balanceOf(user2),
+                0,
+                "aToken balance for user2 before transfer is not zero"
             );
-            aTokens[idx].transferFrom(user1, user2, amountToTransfer);
-            // fee eventually aTokens[idx].transferFrom(user1, address(this), amountToTransfer);
+            {
+                (uint8 v, bytes32 r, bytes32 s) = vm.sign(privateKey, permitHash);
+                aTokens[idx].permit(
+                    user1, address(this), amountToTransfer, block.timestamp + 60, v, r, s
+                );
+            }
 
-            assertEq(aTokens[idx].balanceOf(user1) + amountToTransfer, user1BalanceBefore);
-            assertEq(aTokens[idx].balanceOf(user2), amountToTransfer);
+            aTokens[idx].transferFrom(user1, user2, amountToTransfer - fee);
+            aTokens[idx].transferFrom(user1, address(this), fee);
+
+            assertEq(
+                aTokens[idx].balanceOf(user1) + amountToTransfer,
+                user1BalanceBefore,
+                "aToken balance for user1 is wrong"
+            );
+            assertEq(
+                aTokens[idx].balanceOf(user2),
+                amountToTransfer - fee,
+                "aToken balance for user2 is wrong"
+            );
+            assertEq(
+                aTokens[idx].balanceOf(address(this)),
+                thisBalanceBefore + fee,
+                "aToken balance for this is wrong"
+            );
+
+            // assertLt(initialGasBalance, address(this).balance);
         }
     }
 
@@ -268,10 +297,10 @@ contract ATokenTest is Common {
         bytes32 digest = keccak256(
             abi.encodePacked(
                 "\x19\x01",
-                token.DOMAIN_SEPARATOR,
+                token.DOMAIN_SEPARATOR(),
                 keccak256(
                     abi.encode(
-                        token.PERMIT_TYPEHASH, owner, spender, value, currentValidNonce, deadline
+                        token.PERMIT_TYPEHASH(), owner, spender, value, currentValidNonce, deadline
                     )
                 )
             )

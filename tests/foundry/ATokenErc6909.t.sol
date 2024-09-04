@@ -268,12 +268,12 @@ contract ATokenErc6909Test is Common {
         offset = bound(offset, 0, tokens.length - 1);
         //index = 1e27;
         uint256 id = 1000 + offset;
+        address treasury = makeAddr("treasury");
         // Below index values generates issues !
         // index = 2 * 1e27;
         index = bound(index, 1e27, 10e27); // assume index increases in time as the interest accumulates
         vm.assume(maxValToMint.rayDiv(index) > 0);
-
-        address treasury = miniPoolContracts.miniPoolAddressesProvider.getMiniPoolTreasury(0);
+        miniPoolContracts.miniPoolAddressesProvider.setMiniPoolToTreasury(0, treasury);
         uint256 granuality = maxValToMint / nrOfIterations;
         vm.assume(maxValToMint % granuality == 0); // accept only multiplicity of {nrOfIterations}
         // maxValToMint = maxValToMint - (maxValToMint % granuality);
@@ -285,9 +285,7 @@ contract ATokenErc6909Test is Common {
             console.log("granuality: ", granuality);
             aErc6909Token.mintToTreasury(id, granuality, index);
         }
-        assertApproxEqAbs(
-            aErc6909Token.balanceOf(treasury, id), maxValToMint.rayDiv(index), nrOfIterations / 2
-        );
+        assertApproxEqAbs(aErc6909Token.balanceOf(treasury, id), maxValToMint.rayDiv(index), 1);
         console.log("Minting: ", maxValToMint.rayDiv(index));
         console.log("Balance of treasury: ", aErc6909Token.balanceOf(treasury, id));
         aErc6909Token.mintToTreasury(id, maxValToMint, index);
@@ -297,7 +295,11 @@ contract ATokenErc6909Test is Common {
             nrOfIterations / 2
         );
 
-        assertEq(aErc6909Token.scaledTotalSupply(id), 2 * maxValToMint.rayDiv(index)); // @issue1: FAILS HERE - total supply is not considered during minting to the treasury
+        assertEq(
+            aErc6909Token.scaledTotalSupply(id),
+            2 * maxValToMint.rayDiv(index),
+            "Total supply differs"
+        );
 
         vm.stopPrank();
     }
