@@ -13,6 +13,7 @@ import {VersionedInitializable} from "../libraries/upgradeability/VersionedIniti
 import {IncentivizedERC20} from "./IncentivizedERC20.sol";
 import {IRewarder} from "../../interfaces/IRewarder.sol";
 import {IERC4626} from "../../interfaces/IERC4626.sol";
+import {ATokenNonRebasing} from "./ATokenNonRebasing.sol";
 
 /**
  * @title Aave ERC20 AToken
@@ -49,6 +50,8 @@ contract AToken is
     address internal _underlyingAsset;
     bool internal _reserveType;
     IRewarder internal _incentivesController;
+
+    ATokenNonRebasing public _aTokenWrapper;
 
     /**
      * @dev Rehypothecation related vars
@@ -122,6 +125,8 @@ contract AToken is
         _treasury = treasury;
         _underlyingAsset = underlyingAsset;
         _incentivesController = incentivesController;
+
+        _aTokenWrapper = new ATokenNonRebasing(address(this));
 
         _reserveType = true; // @issue was always false, make it configurable or always true ?
 
@@ -457,6 +462,37 @@ contract AToken is
      */
     function _transfer(address from, address to, uint256 amount) internal override {
         _transfer(from, to, amount, true);
+    }
+
+    /// --------- Share logic ---------
+
+    /**
+     * @dev Transfers the aToken shares between two users. Validates the transfer
+     * (ie checks for valid HF after the transfer) if required
+     * @param from The source address
+     * @param to The destination address
+     * @param shareAmount The share amount getting transferred
+     */
+    function transferShare(address from, address to, uint256 shareAmount) external {
+        require(msg.sender == address(_aTokenWrapper), "CALLER_NOT_WRAPPER");
+
+        address underlyingAsset = _underlyingAsset;
+        ILendingPool pool = _pool;
+
+        uint256 index = pool.getReserveNormalizedIncome(underlyingAsset, _reserveType);
+
+        uint256 fromBalanceBefore = super.balanceOf(from).rayMul(index);
+        uint256 toBalanceBefore = super.balanceOf(to).rayMul(index);
+
+        super._transfer(from, to, shareAmount);
+
+        uint256 amount = shareAmount.rayMul(index);
+
+        pool.finalizeTransfer(
+            underlyingAsset, _reserveType, from, to, amount, fromBalanceBefore, toBalanceBefore
+        );
+
+        emit BalanceTransfer(from, to, amount, index);
     }
 
     /// @dev Rebalance so as to free _amountToWithdraw for a future transfer
