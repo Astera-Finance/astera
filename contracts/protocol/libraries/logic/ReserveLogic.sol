@@ -315,9 +315,8 @@ library ReserveLogic {
         //as the liquidity rate might come only from stable rate loans, we need to ensure
         //that there is actual variable debt before accumulating
         if (scaledVariableDebt != 0) {
-            uint256 cumulatedVariableBorrowInterest = MathUtils.calculateCompoundedInterest(
-                reserve.currentVariableBorrowRate, timestamp
-            );
+            uint256 cumulatedVariableBorrowInterest =
+                MathUtils.calculateCompoundedInterest(reserve.currentVariableBorrowRate, timestamp);
             newVariableBorrowIndex = cumulatedVariableBorrowInterest.rayMul(variableBorrowIndex);
             require(
                 newVariableBorrowIndex <= type(uint128).max,
