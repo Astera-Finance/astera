@@ -8,11 +8,8 @@ import {IERC20} from "../../../dependencies/openzeppelin/contracts/IERC20.sol";
 import {SafeERC20} from "../../../dependencies/openzeppelin/contracts/SafeERC20.sol";
 import {IMiniPoolAddressesProvider} from "../../../interfaces/IMiniPoolAddressesProvider.sol";
 import {IFlowLimiter} from "../../../interfaces/IFlowLimiter.sol";
-import {ILendingPoolAddressesProvider} from "../../../interfaces/ILendingPoolAddressesProvider.sol";
 import {IAToken} from "../../../interfaces/IAToken.sol";
-import {IVariableDebtToken} from "../../../interfaces/IVariableDebtToken.sol";
 import {IFlashLoanReceiver} from "../../../flashloan/interfaces/IFlashLoanReceiver.sol";
-import {IPriceOracleGetter} from "../../../interfaces/IPriceOracleGetter.sol";
 import {ILendingPool} from "../../../interfaces/ILendingPool.sol";
 import {VersionedInitializable} from "../../libraries/upgradeability/VersionedInitializable.sol";
 import {Helpers} from "../../libraries/helpers/Helpers.sol";
@@ -236,7 +233,6 @@ contract MiniPool is VersionedInitializable, IMiniPool, MiniPoolStorage {
             _usersConfig,
             _usersRecentBorrow
         );
-        pokeInterestRate(asset, reserveType);
     }
 
     struct repayVars {
@@ -374,8 +370,6 @@ contract MiniPool is VersionedInitializable, IMiniPool, MiniPoolStorage {
                 ILendingPool(_addressesProvider.getLendingPool()).repayWithATokens(
                     vars.underlyingAsset, reserveType, amount, address(this)
                 );
-
-                pokeInterestRate(asset, reserveType);
             }
         }
     }
@@ -743,14 +737,6 @@ contract MiniPool is VersionedInitializable, IMiniPool, MiniPoolStorage {
             _reservesList[reservesCount] = DataTypes.ReserveReference(asset, reserveType);
 
             _reservesCount = reservesCount + 1;
-        }
-    }
-
-    function pokeInterestRate(address asset, bool reserveType) public {
-        if (_lendingPoolDebt[asset] != 0) {
-            _reserves[asset].updateInterestRatesAugmented(
-                asset, 0, 0, _addressesProvider, reserveType
-            );
         }
     }
 

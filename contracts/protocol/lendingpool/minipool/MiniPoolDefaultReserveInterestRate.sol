@@ -8,8 +8,6 @@ import {WadRayMath} from "../../libraries/math/WadRayMath.sol";
 import {PercentageMath} from "../../libraries/math/PercentageMath.sol";
 import {ILendingPoolAddressesProvider} from "../../../interfaces/ILendingPoolAddressesProvider.sol";
 import {IERC20} from "../../../dependencies/openzeppelin/contracts/IERC20.sol";
-import {IAToken} from "../../../interfaces/IAToken.sol";
-import {IAERC6909} from "../../../interfaces/IAERC6909.sol";
 import {IMiniPoolAddressesProvider} from "../../../interfaces/IMiniPoolAddressesProvider.sol";
 /**
  * @title DefaultReserveInterestRateStrategy contract
@@ -158,69 +156,6 @@ contract MiniPoolDefaultReserveInterestRateStrategy is IMiniPoolReserveInterestR
 
         vars.currentLiquidityRate = vars.currentVariableBorrowRate.rayMul(vars.utilizationRate)
             .percentMul(PercentageMath.PERCENTAGE_FACTOR.sub(reserveFactor));
-
-        return (vars.currentLiquidityRate, vars.currentVariableBorrowRate);
-    }
-
-    struct CalcAugmentedInterestRatesLocalVars {
-        uint256 interestRateDelta;
-        uint256 currentVariableBorrowRate;
-        uint256 currentLiquidityRate;
-        uint256 utilizationRate;
-        uint256 backstopUtilizationRate;
-    }
-
-    function calculateAugmentedInterestRate(augmentedInterestRateParams memory params)
-        external
-        view
-        override
-        returns (uint256, uint256)
-    {
-        CalcAugmentedInterestRatesLocalVars memory vars;
-        vars.interestRateDelta =
-            uint256(params.underlyingVarRate) - uint256(params.underlyingLiqRate);
-        vars.utilizationRate = params.totalVariableDebt == 0
-            ? 0
-            : params.totalVariableDebt.rayDiv(params.availableLiquidity.add(params.totalVariableDebt));
-        vars.backstopUtilizationRate = params.utilizedBackstopLiquidity == 0
-            ? 0
-            : params.utilizedBackstopLiquidity.rayDiv(params.totalAvailableBackstopLiquidity);
-
-        if (vars.backstopUtilizationRate > 0) {
-            if (vars.backstopUtilizationRate > OPTIMAL_UTILIZATION_RATE) {
-                uint256 excessUtilizationRateRatio = vars.backstopUtilizationRate.sub(
-                    OPTIMAL_UTILIZATION_RATE
-                ).rayDiv(EXCESS_UTILIZATION_RATE);
-
-                vars.currentVariableBorrowRate = vars.interestRateDelta.add(_variableRateSlope1).add(
-                    _variableRateSlope2.rayMul(excessUtilizationRateRatio)
-                );
-            } else {
-                vars.currentVariableBorrowRate = vars.interestRateDelta.add(
-                    vars.backstopUtilizationRate.rayMul(_variableRateSlope1).rayDiv(
-                        OPTIMAL_UTILIZATION_RATE
-                    )
-                );
-            }
-        } else {
-            if (vars.utilizationRate > OPTIMAL_UTILIZATION_RATE) {
-                uint256 excessUtilizationRateRatio = vars.utilizationRate.sub(
-                    OPTIMAL_UTILIZATION_RATE
-                ).rayDiv(EXCESS_UTILIZATION_RATE);
-
-                vars.currentVariableBorrowRate = _baseVariableBorrowRate.add(_variableRateSlope1)
-                    .add(_variableRateSlope2.rayMul(excessUtilizationRateRatio));
-            } else {
-                vars.currentVariableBorrowRate = _baseVariableBorrowRate.add(
-                    vars.utilizationRate.rayMul(_variableRateSlope1).rayDiv(
-                        OPTIMAL_UTILIZATION_RATE
-                    )
-                );
-            }
-        }
-
-        vars.currentLiquidityRate = vars.currentVariableBorrowRate.rayMul(vars.utilizationRate)
-            .percentMul(PercentageMath.PERCENTAGE_FACTOR.sub(params.reserveFactor));
 
         return (vars.currentLiquidityRate, vars.currentVariableBorrowRate);
     }
