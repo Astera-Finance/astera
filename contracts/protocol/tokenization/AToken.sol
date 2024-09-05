@@ -40,6 +40,8 @@ contract AToken is
 
     uint256 public constant ATOKEN_REVISION = 0x1;
 
+    mapping(address => mapping(address => uint256)) internal _shareAllowances;
+
     /// @dev owner => next valid nonce to submit with permit()
     mapping(address => uint256) public _nonces;
 
@@ -469,6 +471,7 @@ contract AToken is
     /**
      * @dev Transfers the aToken shares between two users. Validates the transfer
      * (ie checks for valid HF after the transfer) if required
+     * Restricted to `_aTokenWrapper`.
      * @param from The source address
      * @param to The destination address
      * @param shareAmount The share amount getting transferred
@@ -494,6 +497,25 @@ contract AToken is
 
         emit BalanceTransfer(from, to, amount, index);
     }
+
+    /**
+     * @dev Allows `spender` to spend the shares owned by `owner`. 
+     * Restricted to `_aTokenWrapper`.
+     * @param owner The owner of the shares.
+     * @param spender The user allowed to spend owner tokens
+     * @param shareAmount The share amount getting approved
+     */
+    function shareApprove(address owner, address spender, uint256 shareAmount) external {
+        require(msg.sender == address(_aTokenWrapper), "CALLER_NOT_WRAPPER");
+
+        _shareAllowances[owner][spender] = shareAmount;
+    }
+
+    function shareAllowances(address owner, address spender) external view returns (uint256) {
+        return _shareAllowances[owner][spender];
+    }
+
+    /// --------- Rehypothecation logic ---------
 
     /// @dev Rebalance so as to free _amountToWithdraw for a future transfer
     function _rebalance(uint256 _amountToWithdraw) internal {

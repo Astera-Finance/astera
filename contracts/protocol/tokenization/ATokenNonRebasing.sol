@@ -10,8 +10,6 @@ import {AToken} from "./AToken.sol";
 contract ATokenNonRebasing
 {
     AToken _aToken;
-
-    mapping(address => mapping(address => uint256)) internal _allowances;
     
     event Transfer(address indexed _from, address indexed _to, uint256 _value);
 
@@ -88,7 +86,7 @@ contract ATokenNonRebasing
         virtual
         returns (uint256)
     {
-        return _allowances[owner][spender];
+        return _aToken.shareAllowances(owner, spender);
     }
 
     /**
@@ -121,7 +119,7 @@ contract ATokenNonRebasing
         _approve(
             sender,
             msg.sender,
-            _allowances[sender][msg.sender] - amountShare
+            _aToken.shareAllowances(sender, msg.sender) - amountShare
         );
 
         emit Transfer(sender, recipient, amountShare);
@@ -137,7 +135,7 @@ contract ATokenNonRebasing
      *
      */
     function increaseAllowance(address spender, uint256 addedValue) public virtual returns (bool) {
-        _approve(msg.sender, spender, _allowances[msg.sender][spender] + addedValue);
+        _approve(msg.sender, spender, _aToken.shareAllowances(msg.sender, spender) + addedValue);
         return true;
     }
 
@@ -156,7 +154,7 @@ contract ATokenNonRebasing
         _approve(
             msg.sender,
             spender,
-            _allowances[msg.sender][spender] - subtractedValue
+            _aToken.shareAllowances(msg.sender, spender) - subtractedValue
         );
         return true;
     }
@@ -165,7 +163,8 @@ contract ATokenNonRebasing
         require(owner != address(0), "ERC20: approve from the zero address");
         require(spender != address(0), "ERC20: approve to the zero address");
 
-        _allowances[owner][spender] = amount;
+        _aToken.shareApprove(owner, spender, amount);
+
         emit Approval(owner, spender, amount);
     }
 }
