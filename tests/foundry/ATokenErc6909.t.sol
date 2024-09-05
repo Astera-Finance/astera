@@ -4,6 +4,7 @@ pragma solidity ^0.8.0;
 import "./Common.sol";
 import "contracts/protocol/libraries/helpers/Errors.sol";
 import {WadRayMath} from "contracts/protocol/libraries/math/WadRayMath.sol";
+import "contracts/interfaces/IMiniPoolRewarder.sol";
 
 contract ATokenErc6909Test is Common {
     using WadRayMath for uint256;
@@ -78,7 +79,7 @@ contract ATokenErc6909Test is Common {
             vm.expectRevert(bytes(Errors.CT_CALLER_MUST_BE_LENDING_POOL));
             aErc6909Token.transferOnLiquidation(admin, addr, 0, 1);
             vm.expectRevert(bytes(Errors.CT_CALLER_MUST_BE_LENDING_POOL));
-            aErc6909Token.setIncentivesController(IRewarder(addr));
+            aErc6909Token.setIncentivesController(IMiniPoolRewarder(addr));
             vm.expectRevert(bytes(Errors.CT_CALLER_MUST_BE_LENDING_POOL));
             aErc6909Token.setPool(IMiniPool(addr));
             vm.expectRevert(bytes(Errors.CT_CALLER_MUST_BE_LENDING_POOL));

@@ -577,7 +577,7 @@ contract Common is Test {
     ) public returns (address) {
         IMiniPoolConfigurator.InitReserveInput[] memory initInputParams =
             new IMiniPoolConfigurator.InitReserveInput[](tokensToConfigure.length);
-        // address aTokensErc6909Addr;
+        
         uint256[] memory ssStrat = new uint256[](4);
         ssStrat[0] = uint256(0.75e27);
         ssStrat[1] = uint256(0e27);
