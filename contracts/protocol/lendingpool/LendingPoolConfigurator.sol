@@ -79,6 +79,7 @@ contract LendingPoolConfigurator is VersionedInitializable, ILendingPoolConfigur
                 input.underlyingAsset,
                 IRewarder(input.incentivesController),
                 input.underlyingAssetDecimals,
+                input.reserveType,
                 input.aTokenName,
                 input.aTokenSymbol,
                 input.params
@@ -93,6 +94,7 @@ contract LendingPoolConfigurator is VersionedInitializable, ILendingPoolConfigur
                 input.underlyingAsset,
                 IRewarder(input.incentivesController),
                 input.underlyingAssetDecimals,
+                input.reserveType,
                 input.variableDebtTokenName,
                 input.variableDebtTokenSymbol,
                 input.params
