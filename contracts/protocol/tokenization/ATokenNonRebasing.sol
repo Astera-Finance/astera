@@ -8,7 +8,7 @@ import {AToken} from "./AToken.sol";
  * @author Cod3x - Beirao
  */
 contract ATokenNonRebasing {
-    AToken _aToken;
+    AToken public immutable _aToken;
 
     event Transfer(address indexed _from, address indexed _to, uint256 _value);
 
