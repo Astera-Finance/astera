@@ -8,7 +8,7 @@ import {AToken} from "./AToken.sol";
  * @author Cod3x - Beirao
  */
 contract ATokenNonRebasing {
-    AToken public immutable _aToken;
+    AToken internal immutable _aToken;
 
     event Transfer(address indexed _from, address indexed _to, uint256 _value);
 
@@ -48,6 +48,13 @@ contract ATokenNonRebasing {
      */
     function totalSupply() public view virtual returns (uint256) {
         return _aToken.scaledTotalSupply();
+    }
+
+    /**
+     * @dev Returns the address of the underlying asset of this aToken (E.g. WETH for aWETH)
+     */
+    function ATOKEN_ADDRESS() public view returns (address) {
+        return address(_aToken);
     }
 
     /**
