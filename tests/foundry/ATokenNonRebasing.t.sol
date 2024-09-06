@@ -47,15 +47,17 @@ contract ATokenNonRebasingTest is Common {
     function testViewFunctions() public {
         unbackedATokenMint_fixture();
         for (uint32 idx = 0; idx < aTokens.length; idx++) {
-            assertEq(aTokens[idx].name(), aTokens[idx]._aTokenWrapper().name());
-            assertEq(aTokens[idx].symbol(), aTokens[idx]._aTokenWrapper().symbol());
-            assertEq(aTokens[idx].decimals(), aTokens[idx]._aTokenWrapper().decimals());
-            assertEq(aTokens[idx].totalSupply(), aTokens[idx].scaledTotalSupply());
+            assertEq(aTokens[idx].name(), AToken(aTokens[idx].WRAPPER_ADDRESS()).name());
+            assertEq(aTokens[idx].symbol(), AToken(aTokens[idx].WRAPPER_ADDRESS()).symbol());
+            assertEq(aTokens[idx].decimals(), AToken(aTokens[idx].WRAPPER_ADDRESS()).decimals());
+            assertEq(aTokens[idx].totalSupply(), AToken(aTokens[idx]).scaledTotalSupply());
 
-            assertEq(aTokens[idx].totalSupply(), aTokens[idx]._aTokenWrapper().totalSupply());
+            assertEq(
+                aTokens[idx].totalSupply(), AToken(aTokens[idx].WRAPPER_ADDRESS()).totalSupply()
+            );
             assertEq(
                 aTokens[idx].balanceOf(address(this)),
-                aTokens[idx]._aTokenWrapper().balanceOf(address(this))
+                AToken(aTokens[idx].WRAPPER_ADDRESS()).balanceOf(address(this))
             );
         }
     }
@@ -68,7 +70,7 @@ contract ATokenNonRebasingTest is Common {
 
             assertEq(aTokens[idx].balanceOf(user), 100e18);
 
-            aTokens[idx]._aTokenWrapper().transfer(user, 50e18);
+            AToken(aTokens[idx].WRAPPER_ADDRESS()).transfer(user, 50e18);
 
             assertEq(aTokens[idx].balanceOf(user), 150e18);
         }
@@ -80,9 +82,9 @@ contract ATokenNonRebasingTest is Common {
         address user = makeAddr("user");
 
         for (uint32 idx = 0; idx < aTokens.length; idx++) {
-            aTokens[idx]._aTokenWrapper().approve(user, 100e18);
+            AToken(aTokens[idx].WRAPPER_ADDRESS()).approve(user, 100e18);
 
-            assertEq(aTokens[idx]._aTokenWrapper().allowance(address(this), user), 100e18);
+            assertEq(AToken(aTokens[idx].WRAPPER_ADDRESS()).allowance(address(this), user), 100e18);
         }
     }
 
@@ -92,11 +94,13 @@ contract ATokenNonRebasingTest is Common {
         address user = makeAddr("user");
 
         for (uint32 idx = 0; idx < aTokens.length; idx++) {
-            aTokens[idx]._aTokenWrapper().approve(user, 100e18);
-            assertEq(aTokens[idx]._aTokenWrapper().allowance(address(this), user), 100e18, "124");
+            AToken(aTokens[idx].WRAPPER_ADDRESS()).approve(user, 100e18);
+            assertEq(
+                AToken(aTokens[idx].WRAPPER_ADDRESS()).allowance(address(this), user), 100e18, "124"
+            );
 
             vm.startPrank(user);
-            aTokens[idx]._aTokenWrapper().transferFrom(address(this), user, 50e18);
+            AToken(aTokens[idx].WRAPPER_ADDRESS()).transferFrom(address(this), user, 50e18);
             vm.stopPrank();
 
             assertEq(aTokens[idx].balanceOf(user), 50e18);
@@ -109,10 +113,10 @@ contract ATokenNonRebasingTest is Common {
         address user = makeAddr("user");
 
         for (uint32 idx = 0; idx < 1; /* aTokens.length */ idx++) {
-            aTokens[idx]._aTokenWrapper().approve(user, 100e18);
+            AToken(aTokens[idx].WRAPPER_ADDRESS()).approve(user, 100e18);
 
             vm.startPrank(user);
-            ATokenNonRebasing aw = aTokens[idx]._aTokenWrapper();
+            ATokenNonRebasing aw = ATokenNonRebasing(aTokens[idx].WRAPPER_ADDRESS());
 
             vm.expectRevert();
             aw.transferFrom(address(this), user, 150e18);
@@ -141,7 +145,7 @@ contract ATokenNonRebasingTest is Common {
 
         assertEq(
             aTokens[0].scaledBalanceOf(address(this)),
-            aTokens[0]._aTokenWrapper().balanceOf(address(this))
+            AToken(aTokens[0].WRAPPER_ADDRESS()).balanceOf(address(this))
         );
 
         skip(300 days);
@@ -152,19 +156,19 @@ contract ATokenNonRebasingTest is Common {
 
         assertEq(
             aTokens[0].scaledBalanceOf(address(this)),
-            aTokens[0]._aTokenWrapper().balanceOf(address(this))
+            AToken(aTokens[0].WRAPPER_ADDRESS()).balanceOf(address(this))
         );
 
         // test transfer share vs normal transfer.
         uint256 amt1 = 100e6;
         aTokens[0].transfer(user, amt1);
         assertEq(aTokens[0].balanceOf(user), amt1);
-        aTokens[0]._aTokenWrapper().transfer(user, amt1);
+        AToken(aTokens[0].WRAPPER_ADDRESS()).transfer(user, amt1);
         assertApproxEqRel(
             aTokens[0].balanceOf(user),
             amt1
                 + amt1 * aTokens[0].balanceOf(address(this))
-                    / aTokens[0]._aTokenWrapper().balanceOf(address(this)),
+                    / AToken(aTokens[0].WRAPPER_ADDRESS()).balanceOf(address(this)),
             1e13
         );
     }

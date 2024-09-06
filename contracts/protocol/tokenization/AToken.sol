@@ -53,7 +53,7 @@ contract AToken is
     bool internal _reserveType;
     IRewarder internal _incentivesController;
 
-    ATokenNonRebasing public _aTokenWrapper;
+    address internal _aTokenWrapper;
 
     /**
      * @dev Rehypothecation related vars
@@ -128,7 +128,7 @@ contract AToken is
         _underlyingAsset = underlyingAsset;
         _incentivesController = incentivesController;
 
-        _aTokenWrapper = new ATokenNonRebasing(address(this));
+        _aTokenWrapper = address(new ATokenNonRebasing(address(this)));
 
         _reserveType = true; // @issue was always false, make it configurable or always true ?
 
@@ -477,7 +477,7 @@ contract AToken is
      * @param shareAmount The share amount getting transferred
      */
     function transferShare(address from, address to, uint256 shareAmount) external {
-        require(msg.sender == address(_aTokenWrapper), "CALLER_NOT_WRAPPER");
+        require(msg.sender == _aTokenWrapper, "CALLER_NOT_WRAPPER");
 
         address underlyingAsset = _underlyingAsset;
         ILendingPool pool = _pool;
@@ -506,13 +506,17 @@ contract AToken is
      * @param shareAmount The share amount getting approved
      */
     function shareApprove(address owner, address spender, uint256 shareAmount) external {
-        require(msg.sender == address(_aTokenWrapper), "CALLER_NOT_WRAPPER");
+        require(msg.sender == _aTokenWrapper, "CALLER_NOT_WRAPPER");
 
         _shareAllowances[owner][spender] = shareAmount;
     }
 
     function shareAllowances(address owner, address spender) external view returns (uint256) {
         return _shareAllowances[owner][spender];
+    }
+
+    function WRAPPER_ADDRESS() external view returns (address) {
+        return _aTokenWrapper;
     }
 
     /// --------- Rehypothecation logic ---------

@@ -51,6 +51,20 @@ contract ATokenNonRebasing {
     }
 
     /**
+     * @dev Returns the address of the underlying asset of this aToken (E.g. WETH for aWETH)
+     */
+    function UNDERLYING_ASSET_ADDRESS() public view returns (address) {
+        return _aToken.UNDERLYING_ASSET_ADDRESS();
+    }
+
+    /**
+     * @dev Returns the address of the LendingPool address associated with the aToken.
+     */
+    function getPool() external view returns (address) {
+        return _aToken.getPool();
+    }
+
+    /**
      * @return The balance of the share
      *
      */
