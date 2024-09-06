@@ -499,7 +499,7 @@ contract AToken is
     }
 
     /**
-     * @dev Allows `spender` to spend the shares owned by `owner`. 
+     * @dev Allows `spender` to spend the shares owned by `owner`.
      * Restricted to `_aTokenWrapper`.
      * @param owner The owner of the shares.
      * @param spender The user allowed to spend owner tokens

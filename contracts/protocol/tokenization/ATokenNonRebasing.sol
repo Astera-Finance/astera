@@ -7,10 +7,9 @@ import {AToken} from "./AToken.sol";
  * @title ERC20 Non Rebasing AToken wrapper
  * @author Cod3x - Beirao
  */
-contract ATokenNonRebasing
-{
+contract ATokenNonRebasing {
     AToken _aToken;
-    
+
     event Transfer(address indexed _from, address indexed _to, uint256 _value);
 
     event Approval(address indexed _owner, address indexed _spender, uint256 _value);
@@ -68,7 +67,7 @@ contract ATokenNonRebasing
      */
     function transfer(address recipient, uint256 amountShare) public virtual returns (bool) {
         _aToken.transferShare(msg.sender, recipient, amountShare);
-        
+
         emit Transfer(msg.sender, recipient, amountShare);
         return true;
     }
@@ -80,12 +79,7 @@ contract ATokenNonRebasing
      * @return The amount of owner's shares spender is allowed to spend
      *
      */
-    function allowance(address owner, address spender)
-        public
-        view
-        virtual
-        returns (uint256)
-    {
+    function allowance(address owner, address spender) public view virtual returns (uint256) {
         return _aToken.shareAllowances(owner, spender);
     }
 
@@ -112,15 +106,10 @@ contract ATokenNonRebasing
     function transferFrom(address sender, address recipient, uint256 amountShare)
         public
         virtual
-    
         returns (bool)
     {
         _aToken.transferShare(sender, recipient, amountShare);
-        _approve(
-            sender,
-            msg.sender,
-            _aToken.shareAllowances(sender, msg.sender) - amountShare
-        );
+        _approve(sender, msg.sender, _aToken.shareAllowances(sender, msg.sender) - amountShare);
 
         emit Transfer(sender, recipient, amountShare);
 
@@ -152,9 +141,7 @@ contract ATokenNonRebasing
         returns (bool)
     {
         _approve(
-            msg.sender,
-            spender,
-            _aToken.shareAllowances(msg.sender, spender) - subtractedValue
+            msg.sender, spender, _aToken.shareAllowances(msg.sender, spender) - subtractedValue
         );
         return true;
     }
