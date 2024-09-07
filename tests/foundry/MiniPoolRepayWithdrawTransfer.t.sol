@@ -515,13 +515,15 @@ contract MiniPoolRepayWithdrawTransferTest is MiniPoolDepositBorrowTest {
         console.log(
             "After Balance: ", aErc6909Token.balanceOf(users.user1, 1128 + collateralOffset)
         );
-        availableLiquidity = IERC20(aTokensWrapper[collateralOffset]).balanceOf(address(aErc6909Token));
+        availableLiquidity =
+            IERC20(aTokensWrapper[collateralOffset]).balanceOf(address(aErc6909Token));
         console.log("After availableLiquidity: ", availableLiquidity);
         vm.stopPrank();
 
         console.log("----------------USER2 WITHDRAW---------------");
         vm.startPrank(users.user2);
-        availableLiquidity = IERC20(aTokensWrapper[collateralOffset]).balanceOf(address(aErc6909Token));
+        availableLiquidity =
+            IERC20(aTokensWrapper[collateralOffset]).balanceOf(address(aErc6909Token));
         console.log("Balance: ", aErc6909Token.balanceOf(users.user2, 1000 + collateralOffset));
         console.log("Balance: ", aErc6909Token.balanceOf(users.user2, 1128 + collateralOffset));
         console.log("AvailableLiquidity: ", availableLiquidity);
@@ -733,7 +735,8 @@ contract MiniPoolRepayWithdrawTransferTest is MiniPoolDepositBorrowTest {
         vm.startPrank(users.user1);
         console.log("Balance: ", aErc6909Token.balanceOf(users.user1, 1000 + USDC_OFFSET));
         console.log("Balance: ", aErc6909Token.balanceOf(users.user1, 1128 + USDC_OFFSET));
-        uint256 availableLiquidity = IERC20(aTokensWrapper[USDC_OFFSET]).balanceOf(address(aErc6909Token));
+        uint256 availableLiquidity =
+            IERC20(aTokensWrapper[USDC_OFFSET]).balanceOf(address(aErc6909Token));
         console.log("AvailableLiquidity: ", availableLiquidity);
         console.log("Withdrawing... %s", aErc6909Token.balanceOf(users.user1, 1128 + USDC_OFFSET));
         IMiniPool(miniPool).withdraw(
@@ -1011,7 +1014,8 @@ contract MiniPoolRepayWithdrawTransferTest is MiniPoolDepositBorrowTest {
         vm.startPrank(users.user1);
         console.log("Balance aToken: ", aErc6909Token.balanceOf(users.user1, 1000 + USDC_OFFSET));
         console.log("Balance token: ", aErc6909Token.balanceOf(users.user1, 1128 + USDC_OFFSET));
-        uint256 availableLiquidity = IERC20(aTokensWrapper[USDC_OFFSET]).balanceOf(address(aErc6909Token));
+        uint256 availableLiquidity =
+            IERC20(aTokensWrapper[USDC_OFFSET]).balanceOf(address(aErc6909Token));
         console.log("AvailableLiquidity: ", availableLiquidity);
         console.log(
             "aToken: %s, sender %s, id: %s", address(aErc6909Token), users.user1, 1000 + USDC_OFFSET
