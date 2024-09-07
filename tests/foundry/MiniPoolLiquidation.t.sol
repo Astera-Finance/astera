@@ -10,7 +10,7 @@ import {ReserveConfiguration} from
 
 import "forge-std/StdUtils.sol";
 
-contract MiniPoolRepayWithdrawTransferTest is MiniPoolDepositBorrowTest {
+contract MiniPoolLiquidationTest is MiniPoolDepositBorrowTest {
     using WadRayMath for uint256;
     using PercentageMath for uint256;
     using ReserveConfiguration for DataTypes.ReserveConfigurationMap;
@@ -65,12 +65,12 @@ contract MiniPoolRepayWithdrawTransferTest is MiniPoolDepositBorrowTest {
         address user = makeAddr("user");
         TokenParams memory collateralParams = TokenParams(
             erc20Tokens[collateralOffset],
-            aTokens[collateralOffset],
+            aTokensWrapper[collateralOffset],
             oracle.getAssetPrice(address(erc20Tokens[collateralOffset]))
         );
         TokenParams memory borrowParams = TokenParams(
             erc20Tokens[borrowOffset],
-            aTokens[borrowOffset],
+            aTokensWrapper[borrowOffset],
             oracle.getAssetPrice(address(erc20Tokens[borrowOffset]))
         );
         IAERC6909 aErc6909Token =
@@ -231,7 +231,7 @@ contract MiniPoolRepayWithdrawTransferTest is MiniPoolDepositBorrowTest {
             );
             assertLe(
                 aErc6909Token.balanceOf(user, 1128 + collateralOffset),
-                liquidationVars.userCollateralBalance / 2
+                liquidationVars.userCollateralBalance / 2, "444"
             );
 
             console.log(
@@ -418,6 +418,7 @@ contract MiniPoolRepayWithdrawTransferTest is MiniPoolDepositBorrowTest {
 
             vm.startPrank(liquidator);
             borrowParams.token.approve(miniPool, amountToLiquidate);
+            console.log("address(collateralParams.token) : ", address(collateralParams.token));
             IMiniPool(miniPool).liquidationCall(
                 address(collateralParams.token),
                 true,
