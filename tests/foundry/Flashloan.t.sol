@@ -13,6 +13,7 @@ contract FlashloanTest is Common {
         address indexed target,
         address indexed initiator,
         address indexed asset,
+        DataTypes.InterestRateMode interestRateMode,
         uint256 amount,
         uint256 premium
     );
@@ -85,12 +86,21 @@ contract FlashloanTest is Common {
         }
     }
 
+    struct Balances {
+        uint256[] balancesBefore;
+        uint256[] aTokenBalancesBefore;
+        uint256[] totalManagedAssetsBefore;
+    }
+
     function testFlashloan_Positive() public {
         bool[] memory reserveTypes = new bool[](tokens.length);
         address[] memory tokenAddresses = new address[](tokens.length);
         uint256[] memory amounts = new uint256[](tokens.length);
         uint256[] memory modes = new uint256[](tokens.length);
-        uint256[] memory balancesBefore = new uint256[](tokens.length);
+        Balances memory balances;
+        balances.balancesBefore = new uint256[](tokens.length);
+        balances.aTokenBalancesBefore = new uint256[](tokens.length);
+        balances.totalManagedAssetsBefore = new uint256[](tokens.length);
 
         for (uint32 idx = 0; idx < tokens.length; idx++) {
             uint256 amountToDeposit = IERC20(tokens[idx]).balanceOf(address(this)) / 2;
@@ -102,18 +112,48 @@ contract FlashloanTest is Common {
             tokenAddresses[idx] = address(erc20Tokens[idx]);
             amounts[idx] = IERC20(tokens[idx]).balanceOf(address(this)) / 2;
             modes[idx] = 0;
-            balancesBefore[idx] = IERC20(tokens[idx]).balanceOf(address(this));
+            balances.balancesBefore[idx] = IERC20(tokens[idx]).balanceOf(address(this));
+            balances.aTokenBalancesBefore[idx] =
+                IERC20(tokens[idx]).balanceOf(address(aTokens[idx]));
+            balances.totalManagedAssetsBefore[idx] = AToken(aTokens[idx]).getTotalManagedAssets();
         }
 
         ILendingPool.FlashLoanParams memory flashloanParams =
             ILendingPool.FlashLoanParams(address(this), tokenAddresses, reserveTypes, address(this));
-        bytes memory params = abi.encode(balancesBefore, address(this));
+        bytes memory params = abi.encode(balances.balancesBefore, address(this));
         for (uint32 idx = 0; idx < tokens.length; idx++) {
             vm.expectEmit(true, true, true, false);
-            emit FlashLoan(address(this), address(this), tokenAddresses[idx], amounts[idx], 0);
+            emit FlashLoan(
+                address(this),
+                address(this),
+                tokenAddresses[idx],
+                DataTypes.InterestRateMode(0),
+                amounts[idx],
+                0
+            );
         }
 
         deployedContracts.lendingPool.flashLoan(flashloanParams, amounts, modes, params);
+
+        for (uint32 idx = 0; idx < tokens.length; idx++) {
+            console.log(
+                "Balance now: %s vs Balance before: %s",
+                IERC20(tokens[idx]).balanceOf(address(aTokens[idx])),
+                balances.aTokenBalancesBefore[idx]
+            );
+            assertGe(
+                IERC20(tokens[idx]).balanceOf(address(aTokens[idx])),
+                balances.aTokenBalancesBefore[idx]
+            );
+            console.log(
+                "Managed assets now: %s vs Managed assets before: %s",
+                AToken(aTokens[idx]).getTotalManagedAssets(),
+                balances.totalManagedAssetsBefore[idx]
+            );
+            assertGe(
+                AToken(aTokens[idx]).getTotalManagedAssets(), balances.totalManagedAssetsBefore[idx]
+            );
+        }
     }
 
     function testFlashloan_NotTrueReturned() public {

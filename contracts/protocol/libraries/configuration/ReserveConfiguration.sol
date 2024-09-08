@@ -10,6 +10,7 @@ import {DataTypes} from "../types/DataTypes.sol";
  * @notice Implements the bitmap logic to handle the reserve configuration
  */
 library ReserveConfiguration {
+    /* TODO: make all internal */
     uint256 constant LTV_MASK = 0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF0000; // prettier-ignore
     uint256 constant LIQUIDATION_THRESHOLD_MASK =
         0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF0000FFFF; // prettier-ignore
@@ -25,8 +26,15 @@ library ReserveConfiguration {
         0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFBFFFFFFFFFFFFFF; // prettier-ignore
     uint256 constant RESERVE_FACTOR_MASK =
         0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF0000FFFFFFFFFFFFFFFF; // prettier-ignore
+
     uint256 constant DEPOSIT_CAP_MASK =
         0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF00FFFFFFFFFFFFFFFFFFFF; // prettier-ignore
+
+    uint256 constant PAUSED_MASK =
+        0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFEFFFFFFFFFFFFFFF; // prettier-ignore
+
+    uint256 internal constant FLASHLOAN_ENABLED_MASK =
+        0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF7FFFFFFFFFFFFFFF; // prettier-ignore
 
     /// @dev For the LTV, the start bit is 0 (up to 15), hence no bitshifting is needed
     uint256 constant LIQUIDATION_THRESHOLD_START_BIT_POSITION = 16;
@@ -45,6 +53,11 @@ library ReserveConfiguration {
     uint256 constant MAX_VALID_RESERVE_FACTOR = 65535;
 
     uint256 constant MAX_VALID_DEPOSIT_CAP = 255;
+
+    uint256 constant IS_PAUSED_START_BIT_POSITION = 60;
+    uint256 constant FLASHLOAN_ENABLED_START_BIT_POSITION = 63;
+
+    /* TODO: make all getters with memory param */
 
     /**
      * @dev Sets the Loan to Value of the reserve
@@ -212,6 +225,29 @@ library ReserveConfiguration {
     }
 
     /**
+     * @notice Sets the paused state of the reserve
+     * @param self The reserve configuration
+     * @param paused The paused state
+     */
+    function setPaused(DataTypes.ReserveConfigurationMap memory self, bool paused) internal pure {
+        self.data =
+            (self.data & PAUSED_MASK) | (uint256(paused ? 1 : 0) << IS_PAUSED_START_BIT_POSITION);
+    }
+
+    /**
+     * @notice Gets the paused state of the reserve
+     * @param self The reserve configuration
+     * @return The paused state
+     */
+    function getPaused(DataTypes.ReserveConfigurationMap storage self)
+        internal
+        view
+        returns (bool)
+    {
+        return (self.data & ~PAUSED_MASK) != 0;
+    }
+
+    /**
      * @dev Enables or disables borrowing on the reserve
      * @param self The reserve configuration
      * @param enabled True if the borrowing needs to be enabled, false otherwise
@@ -364,5 +400,31 @@ library ReserveConfiguration {
             (self.data & ~FROZEN_MASK) != 0,
             (self.data & ~BORROWING_MASK) != 0
         );
+    }
+
+    /**
+     * @notice Sets the flashloanable flag for the reserve
+     * @param self The reserve configuration
+     * @param flashLoanEnabled True if the asset is flashloanable, false otherwise
+     */
+    function setFlashLoanEnabled(
+        DataTypes.ReserveConfigurationMap memory self,
+        bool flashLoanEnabled
+    ) internal pure {
+        self.data = (self.data & FLASHLOAN_ENABLED_MASK)
+            | (uint256(flashLoanEnabled ? 1 : 0) << FLASHLOAN_ENABLED_START_BIT_POSITION);
+    }
+
+    /**
+     * @notice Gets the flashloanable flag for the reserve
+     * @param self The reserve configuration
+     * @return The flashloanable flag
+     */
+    function getFlashLoanEnabled(DataTypes.ReserveConfigurationMap memory self)
+        internal
+        pure
+        returns (bool)
+    {
+        return (self.data & ~FLASHLOAN_ENABLED_MASK) != 0;
     }
 }

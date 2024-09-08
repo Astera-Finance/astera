@@ -310,7 +310,9 @@ contract LendingPoolConfiguratorTest is Common {
         vm.expectRevert(bytes("76"));
         deployedContracts.lendingPoolConfigurator.setPoolPause(true);
         vm.expectRevert(bytes("33"));
-        deployedContracts.lendingPoolConfigurator.updateFlashLoanFee(randomNumber);
+        deployedContracts.lendingPoolConfigurator.updateFlashloanPremiums(
+            uint128(randomNumber), uint128(randomNumber)
+        );
         vm.expectRevert(bytes("33"));
         deployedContracts.lendingPoolConfigurator.setRewarderForReserve(
             tokenAddress, true, randomAddress
@@ -368,10 +370,19 @@ contract LendingPoolConfiguratorTest is Common {
         }
     }
 
-    function testUpdateFlashLoanFee(uint256 flashLoanPremiumTotal) public {
+    function testUpdateFlashloanPremiums(
+        uint128 flashLoanPremiumTotal,
+        uint128 flashLoanPremiumToProtocol
+    ) public {
         vm.prank(admin);
-        deployedContracts.lendingPoolConfigurator.updateFlashLoanFee(flashLoanPremiumTotal);
+        deployedContracts.lendingPoolConfigurator.updateFlashloanPremiums(
+            flashLoanPremiumTotal, flashLoanPremiumToProtocol
+        );
         assertEq(deployedContracts.lendingPool.FLASHLOAN_PREMIUM_TOTAL(), flashLoanPremiumTotal);
+        assertEq(
+            deployedContracts.lendingPool.FLASHLOAN_PREMIUM_TO_PROTOCOL(),
+            flashLoanPremiumToProtocol
+        );
     }
 
     function testSetRewarderForReserve() public {

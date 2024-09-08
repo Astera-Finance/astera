@@ -102,8 +102,11 @@ library Errors {
     string public constant AT_VAULT_ALREADY_INITIALIZED = "87";
     string public constant AT_VL_INVALID_ATOKEN_PARAMS = "88";
     string public constant AT_INVALID_ATOKEN_ID = "89";
-
     string public constant LP_CALLER_NOT_MINIPOOL = "90";
+    string public constant VL_RESERVE_PAUSED = "91";
+    string public constant VL_RESERVE_INACTIVE = "92";
+    string public constant VL_FLASHLOAN_DISABLED = "93";
+    string public constant LPC_FLASHLOAN_PREMIUM_INVALID = "94";
 
     enum CollateralManagerErrors {
         NO_ERROR,

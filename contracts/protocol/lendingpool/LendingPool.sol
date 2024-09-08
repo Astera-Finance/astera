@@ -93,8 +93,23 @@ contract LendingPool is VersionedInitializable, ILendingPool, LendingPoolStorage
      */
     function initialize(ILendingPoolAddressesProvider provider) public initializer {
         _addressesProvider = provider;
-        _flashLoanPremiumTotal = 9;
+        _updateFlashloanPremiums(9, uint128(PercentageMath.PERCENTAGE_FACTOR)); // 100% fee goes to the protocol by default
         _maxNumberOfReserves = 128;
+    }
+
+    function updateFlashloanPremiums(
+        uint128 flashLoanPremiumTotal,
+        uint128 flashLoanPremiumToProtocol
+    ) external onlyLendingPoolConfigurator {
+        _updateFlashloanPremiums(flashLoanPremiumTotal, flashLoanPremiumToProtocol);
+    }
+
+    function _updateFlashloanPremiums(
+        uint128 flashLoanPremiumTotal,
+        uint128 flashLoanPremiumToProtocol
+    ) internal {
+        _flashLoanPremiumTotal = flashLoanPremiumTotal;
+        _flashLoanPremiumToProtocol = flashLoanPremiumToProtocol;
     }
 
     /**
@@ -330,18 +345,19 @@ contract LendingPool is VersionedInitializable, ILendingPool, LendingPoolStorage
         bytes calldata params
     ) external override whenNotPaused {
         FlashLoanLogic.flashLoan(
-            FlashLoanLogic.FlashLoanParams(
-                flashLoanParams.receiverAddress,
-                flashLoanParams.assets,
-                flashLoanParams.reserveTypes,
-                flashLoanParams.onBehalfOf,
-                _addressesProvider,
-                _reservesCount,
-                _flashLoanPremiumTotal,
-                amounts,
-                modes,
-                params
-            ),
+            FlashLoanLogic.FlashLoanParams({
+                receiverAddress: flashLoanParams.receiverAddress,
+                assets: flashLoanParams.assets,
+                reserveTypes: flashLoanParams.reserveTypes,
+                onBehalfOf: flashLoanParams.onBehalfOf,
+                addressesProvider: _addressesProvider,
+                reservesCount: _reservesCount,
+                flashLoanPremiumTotal: _flashLoanPremiumTotal,
+                amounts: amounts,
+                flashLoanPremiumToProtocol: _flashLoanPremiumToProtocol,
+                modes: modes,
+                params: params
+            }),
             _reservesList,
             _usersConfig,
             _usersRecentBorrow,
@@ -544,8 +560,15 @@ contract LendingPool is VersionedInitializable, ILendingPool, LendingPoolStorage
     /**
      * @dev Returns the fee on flash loans
      */
-    function FLASHLOAN_PREMIUM_TOTAL() public view returns (uint256) {
+    function FLASHLOAN_PREMIUM_TOTAL() public view returns (uint128) {
         return _flashLoanPremiumTotal;
+    }
+
+    /**
+     * @dev Returns the fee on flash loans
+     */
+    function FLASHLOAN_PREMIUM_TO_PROTOCOL() public view virtual returns (uint128) {
+        return _flashLoanPremiumToProtocol;
     }
 
     /**
@@ -747,14 +770,6 @@ contract LendingPool is VersionedInitializable, ILendingPool, LendingPoolStorage
 
             _reservesCount = reservesCount + 1;
         }
-    }
-
-    function updateFlashLoanFee(uint256 flashLoanPremiumTotal)
-        external
-        override
-        onlyLendingPoolConfigurator
-    {
-        _flashLoanPremiumTotal = flashLoanPremiumTotal;
     }
 
     function setRewarderForReserve(address asset, bool reserveType, address rewarder)

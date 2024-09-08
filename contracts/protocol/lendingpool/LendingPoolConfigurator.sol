@@ -117,6 +117,8 @@ contract LendingPoolConfigurator is VersionedInitializable, ILendingPoolConfigur
         currentConfig.setActive(true);
         currentConfig.setFrozen(false);
 
+        currentConfig.setFlashLoanEnabled(true);
+
         pool.setConfiguration(input.underlyingAsset, input.reserveType, currentConfig.data);
 
         emit ReserveInitialized(
@@ -483,6 +485,31 @@ contract LendingPoolConfigurator is VersionedInitializable, ILendingPoolConfigur
         pool.setPause(val);
     }
 
+    function updateFlashloanPremiumTotal(uint128 newFlashloanPremiumTotal) external onlyPoolAdmin {
+        require(
+            newFlashloanPremiumTotal <= PercentageMath.PERCENTAGE_FACTOR,
+            Errors.LPC_FLASHLOAN_PREMIUM_INVALID
+        );
+        uint128 oldFlashloanPremiumTotal = pool.FLASHLOAN_PREMIUM_TOTAL();
+        pool.updateFlashloanPremiums(newFlashloanPremiumTotal, pool.FLASHLOAN_PREMIUM_TO_PROTOCOL());
+        emit FlashloanPremiumTotalUpdated(oldFlashloanPremiumTotal, newFlashloanPremiumTotal);
+    }
+
+    function updateFlashloanPremiumToProtocol(uint128 newFlashloanPremiumToProtocol)
+        external
+        onlyPoolAdmin
+    {
+        require(
+            newFlashloanPremiumToProtocol <= PercentageMath.PERCENTAGE_FACTOR,
+            Errors.LPC_FLASHLOAN_PREMIUM_INVALID
+        );
+        uint128 oldFlashloanPremiumToProtocol = pool.FLASHLOAN_PREMIUM_TO_PROTOCOL();
+        pool.updateFlashloanPremiums(pool.FLASHLOAN_PREMIUM_TOTAL(), newFlashloanPremiumToProtocol);
+        emit FlashloanPremiumToProtocolUpdated(
+            oldFlashloanPremiumToProtocol, newFlashloanPremiumToProtocol
+        );
+    }
+
     function _initTokenWithProxy(address implementation, bytes memory initParams)
         internal
         returns (address)
@@ -554,8 +581,11 @@ contract LendingPoolConfigurator is VersionedInitializable, ILendingPoolConfigur
         return pool.getTotalManagedAssets(aTokenAddress);
     }
 
-    function updateFlashLoanFee(uint256 flashLoanPremiumTotal) external onlyPoolAdmin {
-        pool.updateFlashLoanFee(flashLoanPremiumTotal);
+    function updateFlashloanPremiums(
+        uint128 flashLoanPremiumTotal,
+        uint128 flashLoanPremiumToProtocol
+    ) external onlyPoolAdmin {
+        pool.updateFlashloanPremiums(flashLoanPremiumTotal, flashLoanPremiumToProtocol);
     }
 
     function setRewarderForReserve(address asset, bool reserveType, address rewarder)

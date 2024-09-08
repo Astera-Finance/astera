@@ -29,20 +29,43 @@ library FlashLoanLogic {
     using PercentageMath for uint256;
     using SafeERC20 for IERC20;
     using ReserveLogic for DataTypes.ReserveData;
+    using ValidationLogic for DataTypes.ReserveData;
     using ReserveConfiguration for DataTypes.ReserveConfigurationMap;
     using UserConfiguration for DataTypes.UserConfigurationMap;
 
+    event FlashLoan(
+        address indexed target,
+        address indexed initiator,
+        address indexed asset,
+        DataTypes.InterestRateMode interestRateMode,
+        uint256 amount,
+        uint256 premium
+    );
+
     struct FlashLoanLocalVars {
         IFlashLoanReceiver receiver;
-        address oracle;
         uint256 i;
         address currentAsset;
+        uint256 currentAmount;
+        uint256[] totalPremiums;
+        uint256 flashloanPremiumTotal;
+        uint256 flashloanPremiumToProtocol;
+        address oracle;
         bool currentType;
         address currentATokenAddress;
-        uint256 currentAmount;
         uint256 currentPremium;
         uint256 currentAmountPlusPremium;
         address debtToken;
+    }
+
+    struct FlashLoanRepaymentParams {
+        uint256 amount;
+        uint256 totalPremium;
+        uint256 flashLoanPremiumToProtocol;
+        uint256 liquidityIndex;
+        address asset;
+        address aToken;
+        address receiverAddress;
     }
 
     struct FlashLoanParams {
@@ -56,15 +79,8 @@ library FlashLoanLogic {
         uint256[] amounts;
         uint256[] modes;
         bytes params;
+        uint256 flashLoanPremiumToProtocol;
     }
-
-    event FlashLoan(
-        address indexed target,
-        address indexed initiator,
-        address indexed asset,
-        uint256 amount,
-        uint256 premium
-    );
 
     /**
      * @dev Allows smartcontracts to access the liquidity of the pool within one transaction,
@@ -83,7 +99,9 @@ library FlashLoanLogic {
     ) external {
         FlashLoanLocalVars memory vars;
 
-        ValidationLogic.validateFlashloan(flashLoanParams.assets, flashLoanParams.amounts); //@todo add types array to this funciton too
+        ValidationLogic.validateFlashloan(
+            reserves, flashLoanParams.reserveTypes, flashLoanParams.assets, flashLoanParams.amounts
+        );
 
         address[] memory aTokenAddresses = new address[](flashLoanParams.assets.length);
         uint256[] memory premiums = new uint256[](flashLoanParams.assets.length);
@@ -96,6 +114,7 @@ library FlashLoanLogic {
             flashLoanParams.reserveTypes,
             flashLoanParams.amounts,
             flashLoanParams.flashLoanPremiumTotal,
+            flashLoanParams.modes,
             reserves
         );
 
@@ -121,21 +140,17 @@ library FlashLoanLogic {
                 DataTypes.InterestRateMode(flashLoanParams.modes[vars.i])
                     == DataTypes.InterestRateMode.NONE
             ) {
-                reserves[vars.currentAsset][vars.currentType].updateState();
-                reserves[vars.currentAsset][vars.currentType].cumulateToLiquidityIndex(
-                    IERC20(vars.currentATokenAddress).totalSupply(), vars.currentPremium
-                );
-                reserves[vars.currentAsset][vars.currentType].updateInterestRates(
-                    vars.currentAsset,
-                    vars.currentATokenAddress,
-                    vars.currentAmount.add(vars.currentPremium),
-                    0
-                );
-
-                IERC20(vars.currentAsset).safeTransferFrom(
-                    flashLoanParams.receiverAddress,
-                    vars.currentATokenAddress,
-                    vars.currentAmount.add(vars.currentPremium)
+                _handleFlashLoanRepayment(
+                    reserves[vars.currentAsset][vars.currentType],
+                    FlashLoanRepaymentParams({
+                        amount: vars.currentAmount,
+                        totalPremium: vars.currentPremium,
+                        flashLoanPremiumToProtocol: flashLoanParams.flashLoanPremiumToProtocol,
+                        liquidityIndex: reserves[vars.currentAsset][vars.currentType].liquidityIndex,
+                        asset: vars.currentAsset,
+                        aToken: vars.currentATokenAddress,
+                        receiverAddress: flashLoanParams.receiverAddress
+                    })
                 );
             } else {
                 // If the user chose to not return the funds, the system checks if there is enough collateral and
@@ -158,10 +173,12 @@ library FlashLoanLogic {
                     usersRecentBorrow
                 );
             }
+
             emit FlashLoan(
                 flashLoanParams.receiverAddress,
                 msg.sender,
                 vars.currentAsset,
+                DataTypes.InterestRateMode(flashLoanParams.modes[vars.i]),
                 vars.currentAmount,
                 vars.currentPremium
             );
@@ -174,6 +191,7 @@ library FlashLoanLogic {
         bool[] memory reserveTypes,
         uint256[] memory amounts,
         uint256 _flashLoanPremiumTotal,
+        uint256[] memory modes,
         mapping(address => mapping(bool => DataTypes.ReserveData)) storage _reserves
     ) internal returns (address[] memory aTokenAddresses, uint256[] memory premiums) {
         aTokenAddresses = new address[](assets.length);
@@ -181,9 +199,56 @@ library FlashLoanLogic {
         for (uint256 i = 0; i < assets.length; i++) {
             aTokenAddresses[i] = _reserves[assets[i]][reserveTypes[i]].aTokenAddress;
 
-            premiums[i] = amounts[i].mul(_flashLoanPremiumTotal).div(10000);
+            premiums[i] = DataTypes.InterestRateMode(modes[i]) == DataTypes.InterestRateMode.NONE
+                ? amounts[i].mul(_flashLoanPremiumTotal).div(10000)
+                : 0;
 
             IAToken(aTokenAddresses[i]).transferUnderlyingTo(receiverAddress, amounts[i]);
         }
+    }
+
+    /**
+     * @notice Handles repayment of flashloaned assets + premium
+     * @dev Will pull the amount + premium from the receiver, so must have approved pool
+     * @param reserve The state of the flashloaned reserve
+     * @param params The additional parameters needed to execute the repayment function
+     */
+    function _handleFlashLoanRepayment(
+        DataTypes.ReserveData storage reserve,
+        FlashLoanRepaymentParams memory params
+    ) internal {
+        uint256 premiumToProtocol =
+            params.totalPremium.percentMul(params.flashLoanPremiumToProtocol);
+        uint256 premiumToLP = params.totalPremium - premiumToProtocol;
+        uint256 amountPlusPremium = params.amount + params.totalPremium;
+
+        // DataTypes.ReserveCache memory reserveCache = reserve.cache();
+        reserve.updateState();
+        reserve.cumulateToLiquidityIndex(
+            IERC20(params.aToken).totalSupply()
+                + uint256(reserve.accruedToTreasury).rayMul(params.liquidityIndex),
+            premiumToLP
+        );
+
+        reserve.accruedToTreasury += uint128(premiumToProtocol.rayDiv(params.liquidityIndex));
+
+        reserve.updateInterestRates(params.asset, params.aToken, amountPlusPremium, 0);
+
+        IERC20(params.asset).safeTransferFrom(
+            params.receiverAddress, params.aToken, amountPlusPremium
+        );
+
+        IAToken(params.aToken).handleRepayment(
+            params.receiverAddress, params.receiverAddress, amountPlusPremium
+        );
+
+        emit FlashLoan(
+            params.receiverAddress,
+            msg.sender,
+            params.asset,
+            DataTypes.InterestRateMode(0),
+            params.amount,
+            params.totalPremium
+        );
     }
 }
