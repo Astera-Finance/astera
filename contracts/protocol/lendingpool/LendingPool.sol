@@ -93,23 +93,8 @@ contract LendingPool is VersionedInitializable, ILendingPool, LendingPoolStorage
      */
     function initialize(ILendingPoolAddressesProvider provider) public initializer {
         _addressesProvider = provider;
-        _updateFlashloanPremiums(9, uint128(PercentageMath.PERCENTAGE_FACTOR)); // 100% fee goes to the protocol by default
+        _updateFlashLoanFee(9);
         _maxNumberOfReserves = 128;
-    }
-
-    function updateFlashloanPremiums(
-        uint128 flashLoanPremiumTotal,
-        uint128 flashLoanPremiumToProtocol
-    ) external onlyLendingPoolConfigurator {
-        _updateFlashloanPremiums(flashLoanPremiumTotal, flashLoanPremiumToProtocol);
-    }
-
-    function _updateFlashloanPremiums(
-        uint128 flashLoanPremiumTotal,
-        uint128 flashLoanPremiumToProtocol
-    ) internal {
-        _flashLoanPremiumTotal = flashLoanPremiumTotal;
-        _flashLoanPremiumToProtocol = flashLoanPremiumToProtocol;
     }
 
     /**
@@ -354,7 +339,6 @@ contract LendingPool is VersionedInitializable, ILendingPool, LendingPoolStorage
                 reservesCount: _reservesCount,
                 flashLoanPremiumTotal: _flashLoanPremiumTotal,
                 amounts: amounts,
-                flashLoanPremiumToProtocol: _flashLoanPremiumToProtocol,
                 modes: modes,
                 params: params
             }),
@@ -565,13 +549,6 @@ contract LendingPool is VersionedInitializable, ILendingPool, LendingPoolStorage
     }
 
     /**
-     * @dev Returns the fee on flash loans
-     */
-    function FLASHLOAN_PREMIUM_TO_PROTOCOL() public view virtual returns (uint128) {
-        return _flashLoanPremiumToProtocol;
-    }
-
-    /**
      * @dev Returns the maximum number of reserves supported to be listed in this LendingPool
      */
     function MAX_NUMBER_RESERVES() public view returns (uint256) {
@@ -770,6 +747,18 @@ contract LendingPool is VersionedInitializable, ILendingPool, LendingPoolStorage
 
             _reservesCount = reservesCount + 1;
         }
+    }
+
+    function updateFlashLoanFee(uint128 flashLoanPremiumTotal)
+        external
+        override
+        onlyLendingPoolConfigurator
+    {
+        _updateFlashLoanFee(flashLoanPremiumTotal);
+    }
+
+    function _updateFlashLoanFee(uint128 flashLoanPremiumTotal) internal {
+        _flashLoanPremiumTotal = flashLoanPremiumTotal;
     }
 
     function setRewarderForReserve(address asset, bool reserveType, address rewarder)

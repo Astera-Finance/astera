@@ -49,7 +49,6 @@ library FlashLoanLogic {
         uint256 currentAmount;
         uint256[] totalPremiums;
         uint256 flashloanPremiumTotal;
-        uint256 flashloanPremiumToProtocol;
         address oracle;
         bool currentType;
         address currentATokenAddress;
@@ -61,7 +60,6 @@ library FlashLoanLogic {
     struct FlashLoanRepaymentParams {
         uint256 amount;
         uint256 totalPremium;
-        uint256 flashLoanPremiumToProtocol;
         uint256 liquidityIndex;
         address asset;
         address aToken;
@@ -79,7 +77,6 @@ library FlashLoanLogic {
         uint256[] amounts;
         uint256[] modes;
         bytes params;
-        uint256 flashLoanPremiumToProtocol;
     }
 
     /**
@@ -145,7 +142,6 @@ library FlashLoanLogic {
                     FlashLoanRepaymentParams({
                         amount: vars.currentAmount,
                         totalPremium: vars.currentPremium,
-                        flashLoanPremiumToProtocol: flashLoanParams.flashLoanPremiumToProtocol,
                         liquidityIndex: reserves[vars.currentAsset][vars.currentType].liquidityIndex,
                         asset: vars.currentAsset,
                         aToken: vars.currentATokenAddress,
@@ -217,20 +213,11 @@ library FlashLoanLogic {
         DataTypes.ReserveData storage reserve,
         FlashLoanRepaymentParams memory params
     ) internal {
-        uint256 premiumToProtocol =
-            params.totalPremium.percentMul(params.flashLoanPremiumToProtocol);
-        uint256 premiumToLP = params.totalPremium - premiumToProtocol;
         uint256 amountPlusPremium = params.amount + params.totalPremium;
 
         // DataTypes.ReserveCache memory reserveCache = reserve.cache();
         reserve.updateState();
-        reserve.cumulateToLiquidityIndex(
-            IERC20(params.aToken).totalSupply()
-                + uint256(reserve.accruedToTreasury).rayMul(params.liquidityIndex),
-            premiumToLP
-        );
-
-        reserve.accruedToTreasury += uint128(premiumToProtocol.rayDiv(params.liquidityIndex));
+        reserve.cumulateToLiquidityIndex(IERC20(params.aToken).totalSupply(), params.totalPremium);
 
         reserve.updateInterestRates(params.asset, params.aToken, amountPlusPremium, 0);
 

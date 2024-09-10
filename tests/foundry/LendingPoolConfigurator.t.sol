@@ -310,9 +310,7 @@ contract LendingPoolConfiguratorTest is Common {
         vm.expectRevert(bytes("76"));
         deployedContracts.lendingPoolConfigurator.setPoolPause(true);
         vm.expectRevert(bytes("33"));
-        deployedContracts.lendingPoolConfigurator.updateFlashloanPremiums(
-            uint128(randomNumber), uint128(randomNumber)
-        );
+        deployedContracts.lendingPoolConfigurator.updateFlashloanPremiumTotal(uint128(randomNumber));
         vm.expectRevert(bytes("33"));
         deployedContracts.lendingPoolConfigurator.setRewarderForReserve(
             tokenAddress, true, randomAddress
@@ -370,19 +368,18 @@ contract LendingPoolConfiguratorTest is Common {
         }
     }
 
-    function testUpdateFlashloanPremiums(
-        uint128 flashLoanPremiumTotal,
-        uint128 flashLoanPremiumToProtocol
-    ) public {
+    function testUpdateFlashloanPremiumTotal(uint128 flashLoanPremiumTotal) public {
+        vm.assume(flashLoanPremiumTotal <= 1e4);
         vm.prank(admin);
-        deployedContracts.lendingPoolConfigurator.updateFlashloanPremiums(
-            flashLoanPremiumTotal, flashLoanPremiumToProtocol
-        );
+        deployedContracts.lendingPoolConfigurator.updateFlashloanPremiumTotal(flashLoanPremiumTotal);
         assertEq(deployedContracts.lendingPool.FLASHLOAN_PREMIUM_TOTAL(), flashLoanPremiumTotal);
-        assertEq(
-            deployedContracts.lendingPool.FLASHLOAN_PREMIUM_TO_PROTOCOL(),
-            flashLoanPremiumToProtocol
-        );
+    }
+
+    function testUpdateFlashloanPremiumTotalNegative(uint128 flashLoanPremiumTotal) public {
+        vm.assume(flashLoanPremiumTotal > 1e4);
+        vm.prank(admin);
+        vm.expectRevert(bytes(Errors.LPC_FLASHLOAN_PREMIUM_INVALID));
+        deployedContracts.lendingPoolConfigurator.updateFlashloanPremiumTotal(flashLoanPremiumTotal);
     }
 
     function testSetRewarderForReserve() public {

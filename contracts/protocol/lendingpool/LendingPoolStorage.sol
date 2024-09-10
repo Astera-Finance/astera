@@ -34,8 +34,6 @@ contract LendingPoolStorage {
 
     uint128 internal _flashLoanPremiumTotal;
 
-    uint128 internal _flashLoanPremiumToProtocol;
-
     uint256 internal _maxNumberOfReserves;
 
     uint256 internal _lendingUpdateTimestamp; // track the last update made to the protocol parameters relative to borrowing

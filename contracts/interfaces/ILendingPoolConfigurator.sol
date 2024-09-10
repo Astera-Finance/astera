@@ -210,13 +210,4 @@ interface ILendingPoolConfigurator {
     event FlashloanPremiumTotalUpdated(
         uint128 oldFlashloanPremiumTotal, uint128 newFlashloanPremiumTotal
     );
-
-    /**
-     * @dev Emitted when the part of the premium that goes to protocol is updated.
-     * @param oldFlashloanPremiumToProtocol The old premium, expressed in bps
-     * @param newFlashloanPremiumToProtocol The new premium, expressed in bps
-     */
-    event FlashloanPremiumToProtocolUpdated(
-        uint128 oldFlashloanPremiumToProtocol, uint128 newFlashloanPremiumToProtocol
-    );
 }
