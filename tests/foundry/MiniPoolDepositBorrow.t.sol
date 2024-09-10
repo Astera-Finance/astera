@@ -382,7 +382,7 @@ contract MiniPoolDepositBorrowTest is Common {
         vm.label(miniPool, "MiniPool");
     }
 
-     function testMiniPoolBeirao() public {
+     function testMiniPoolBeiraoC02() public {
         address user = makeAddr("user");
         address user2 = makeAddr("user2");
 
