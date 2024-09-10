@@ -208,6 +208,7 @@ contract Common is Test {
 
     LendingPoolCollateralManager public lendingPoolCollateralManager;
     AToken[] public aTokens;
+    AToken[] public aTokensWrapper;
     VariableDebtToken[] public variableDebtTokens;
     ATokenERC6909[] public aTokensErc6909;
 
@@ -387,6 +388,9 @@ contract Common is Test {
 
         aTokens =
             fixture_getATokens(tokens, ProtocolDataProvider(configAddresses.protocolDataProvider));
+        aTokensWrapper = fixture_getATokensWrapper(
+            tokens, ProtocolDataProvider(configAddresses.protocolDataProvider)
+        );
         variableDebtTokens = fixture_getVarDebtTokens(
             tokens, ProtocolDataProvider(configAddresses.protocolDataProvider)
         );
@@ -459,6 +463,19 @@ contract Common is Test {
                 protocolDataProvider.getReserveTokensAddresses(_tokens[idx], true);
             // console.log("AToken%s: %s", idx, _aTokenAddress);
             _aTokens[idx] = AToken(_aTokenAddress);
+        }
+    }
+
+    function fixture_getATokensWrapper(
+        address[] memory _tokens,
+        ProtocolDataProvider protocolDataProvider
+    ) public view returns (AToken[] memory _aTokensW) {
+        _aTokensW = new AToken[](_tokens.length);
+        for (uint32 idx = 0; idx < _tokens.length; idx++) {
+            (address _aTokenAddress,) =
+                protocolDataProvider.getReserveTokensAddresses(_tokens[idx], true);
+            // console.log("AToken%s: %s", idx, _aTokenAddress);
+            _aTokensW[idx] = AToken(address(AToken(_aTokenAddress).WRAPPER_ADDRESS()));
         }
     }
 

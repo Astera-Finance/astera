@@ -24,6 +24,7 @@ import {UserConfiguration} from "../../libraries/configuration/UserConfiguration
 import {DataTypes} from "../../libraries/types/DataTypes.sol";
 import {MiniPoolStorage} from "./MiniPoolStorage.sol";
 import {IMiniPool} from "../../../interfaces/IMiniPool.sol";
+import {ATokenNonRebasing} from "contracts/protocol/tokenization/ATokenNonRebasing.sol";
 
 import {MiniPoolDepositLogic} from "./logic/MiniPoolDepositLogic.sol";
 import {MiniPoolWithdrawLogic} from "./logic/MiniPoolWithdrawLogic.sol";
@@ -194,7 +195,7 @@ contract MiniPool is VersionedInitializable, IMiniPool, MiniPoolStorage {
                 reserveType,
                 amount.sub(vars.availableLiquidity),
                 address(this),
-                address(asset)
+                ATokenNonRebasing(asset).ATOKEN_ADDRESS()
             );
 
             vars.amountRecieved = IERC20(underlying).balanceOf(address(this));
