@@ -201,4 +201,13 @@ interface ILendingPoolConfigurator {
     event VariableDebtTokenUpgraded(
         address indexed asset, address indexed proxy, address indexed implementation
     );
+
+    /**
+     * @dev Emitted when the total premium on flashloans is updated.
+     * @param oldFlashloanPremiumTotal The old premium, expressed in bps
+     * @param newFlashloanPremiumTotal The new premium, expressed in bps
+     */
+    event FlashloanPremiumTotalUpdated(
+        uint128 oldFlashloanPremiumTotal, uint128 newFlashloanPremiumTotal
+    );
 }

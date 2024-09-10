@@ -19,10 +19,10 @@ contract VariableDebtToken is DebtTokenBase, IVariableDebtToken {
     using WadRayMath for uint256;
 
     uint256 public constant DEBT_TOKEN_REVISION = 0x1;
+    bool public RESERVE_TYPE;
 
     ILendingPool internal _pool;
     address internal _underlyingAsset;
-    bool internal _reserveType;
     IRewarder internal _incentivesController;
 
     /**
@@ -39,6 +39,7 @@ contract VariableDebtToken is DebtTokenBase, IVariableDebtToken {
         address underlyingAsset,
         IRewarder incentivesController,
         uint8 debtTokenDecimals,
+        bool reserveType,
         string memory debtTokenName,
         string memory debtTokenSymbol,
         bytes calldata params
@@ -51,13 +52,14 @@ contract VariableDebtToken is DebtTokenBase, IVariableDebtToken {
         _underlyingAsset = underlyingAsset;
         _incentivesController = incentivesController;
 
-        _reserveType = true; // @issue was always false, make it configurable or always true ?
+        RESERVE_TYPE = reserveType;
 
         emit Initialized(
             underlyingAsset,
             address(pool),
             address(incentivesController),
             debtTokenDecimals,
+            reserveType,
             debtTokenName,
             debtTokenSymbol,
             params
@@ -86,7 +88,7 @@ contract VariableDebtToken is DebtTokenBase, IVariableDebtToken {
         }
 
         return scaledBalance.rayMul(
-            _pool.getReserveNormalizedVariableDebt(_underlyingAsset, _reserveType)
+            _pool.getReserveNormalizedVariableDebt(_underlyingAsset, RESERVE_TYPE)
         );
     }
 
@@ -157,7 +159,7 @@ contract VariableDebtToken is DebtTokenBase, IVariableDebtToken {
      */
     function totalSupply() public view virtual override returns (uint256) {
         return super.totalSupply().rayMul(
-            _pool.getReserveNormalizedVariableDebt(_underlyingAsset, _reserveType)
+            _pool.getReserveNormalizedVariableDebt(_underlyingAsset, RESERVE_TYPE)
         );
     }
 

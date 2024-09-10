@@ -79,6 +79,7 @@ contract LendingPoolConfigurator is VersionedInitializable, ILendingPoolConfigur
                 input.underlyingAsset,
                 IRewarder(input.incentivesController),
                 input.underlyingAssetDecimals,
+                input.reserveType,
                 input.aTokenName,
                 input.aTokenSymbol,
                 input.params
@@ -93,6 +94,7 @@ contract LendingPoolConfigurator is VersionedInitializable, ILendingPoolConfigur
                 input.underlyingAsset,
                 IRewarder(input.incentivesController),
                 input.underlyingAssetDecimals,
+                input.reserveType,
                 input.variableDebtTokenName,
                 input.variableDebtTokenSymbol,
                 input.params
@@ -114,6 +116,8 @@ contract LendingPoolConfigurator is VersionedInitializable, ILendingPoolConfigur
 
         currentConfig.setActive(true);
         currentConfig.setFrozen(false);
+
+        currentConfig.setFlashLoanEnabled(true);
 
         pool.setConfiguration(input.underlyingAsset, input.reserveType, currentConfig.data);
 
@@ -481,6 +485,16 @@ contract LendingPoolConfigurator is VersionedInitializable, ILendingPoolConfigur
         pool.setPause(val);
     }
 
+    function updateFlashloanPremiumTotal(uint128 newFlashloanPremiumTotal) external onlyPoolAdmin {
+        require(
+            newFlashloanPremiumTotal <= PercentageMath.PERCENTAGE_FACTOR,
+            Errors.LPC_FLASHLOAN_PREMIUM_INVALID
+        );
+        uint128 oldFlashloanPremiumTotal = pool.FLASHLOAN_PREMIUM_TOTAL();
+        pool.updateFlashLoanFee(newFlashloanPremiumTotal);
+        emit FlashloanPremiumTotalUpdated(oldFlashloanPremiumTotal, newFlashloanPremiumTotal);
+    }
+
     function _initTokenWithProxy(address implementation, bytes memory initParams)
         internal
         returns (address)
@@ -550,10 +564,6 @@ contract LendingPoolConfigurator is VersionedInitializable, ILendingPoolConfigur
 
     function getTotalManagedAssets(address aTokenAddress) external view returns (uint256) {
         return pool.getTotalManagedAssets(aTokenAddress);
-    }
-
-    function updateFlashLoanFee(uint256 flashLoanPremiumTotal) external onlyPoolAdmin {
-        pool.updateFlashLoanFee(flashLoanPremiumTotal);
     }
 
     function setRewarderForReserve(address asset, bool reserveType, address rewarder)

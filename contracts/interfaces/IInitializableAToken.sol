@@ -18,6 +18,7 @@ interface IInitializableAToken {
      * @param treasury The address of the treasury
      * @param rewarder The address of the incentives controller for this aToken
      * @param aTokenDecimals the decimals of the underlying
+     * @param reserveType Whether the reserve is boosted by a vault
      * @param aTokenName the name of the aToken
      * @param aTokenSymbol the symbol of the aToken
      * @param params A set of encoded parameters for additional initialization
@@ -29,6 +30,7 @@ interface IInitializableAToken {
         address treasury,
         address rewarder,
         uint8 aTokenDecimals,
+        bool reserveType,
         string aTokenName,
         string aTokenSymbol,
         bytes params
@@ -41,8 +43,10 @@ interface IInitializableAToken {
      * @param underlyingAsset The address of the underlying asset of this aToken (E.g. WETH for aWETH)
      * @param rewarder The smart contract managing potential incentives distribution
      * @param aTokenDecimals The decimals of the aToken, same as the underlying asset's
+     * @param reserveType Whether the reserve is boosted by a vault
      * @param aTokenName The name of the aToken
      * @param aTokenSymbol The symbol of the aToken
+     * @param params Additional params to configure contract
      */
     function initialize(
         ILendingPool pool,
@@ -50,6 +54,7 @@ interface IInitializableAToken {
         address underlyingAsset,
         IRewarder rewarder,
         uint8 aTokenDecimals,
+        bool reserveType,
         string calldata aTokenName,
         string calldata aTokenSymbol,
         bytes calldata params

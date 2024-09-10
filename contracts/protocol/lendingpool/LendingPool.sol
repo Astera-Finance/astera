@@ -93,7 +93,7 @@ contract LendingPool is VersionedInitializable, ILendingPool, LendingPoolStorage
      */
     function initialize(ILendingPoolAddressesProvider provider) public initializer {
         _addressesProvider = provider;
-        _flashLoanPremiumTotal = 9;
+        _updateFlashLoanFee(9);
         _maxNumberOfReserves = 128;
     }
 
@@ -330,18 +330,18 @@ contract LendingPool is VersionedInitializable, ILendingPool, LendingPoolStorage
         bytes calldata params
     ) external override whenNotPaused {
         FlashLoanLogic.flashLoan(
-            FlashLoanLogic.FlashLoanParams(
-                flashLoanParams.receiverAddress,
-                flashLoanParams.assets,
-                flashLoanParams.reserveTypes,
-                flashLoanParams.onBehalfOf,
-                _addressesProvider,
-                _reservesCount,
-                _flashLoanPremiumTotal,
-                amounts,
-                modes,
-                params
-            ),
+            FlashLoanLogic.FlashLoanParams({
+                receiverAddress: flashLoanParams.receiverAddress,
+                assets: flashLoanParams.assets,
+                reserveTypes: flashLoanParams.reserveTypes,
+                onBehalfOf: flashLoanParams.onBehalfOf,
+                addressesProvider: _addressesProvider,
+                reservesCount: _reservesCount,
+                flashLoanPremiumTotal: _flashLoanPremiumTotal,
+                amounts: amounts,
+                modes: modes,
+                params: params
+            }),
             _reservesList,
             _usersConfig,
             _usersRecentBorrow,
@@ -544,7 +544,7 @@ contract LendingPool is VersionedInitializable, ILendingPool, LendingPoolStorage
     /**
      * @dev Returns the fee on flash loans
      */
-    function FLASHLOAN_PREMIUM_TOTAL() public view returns (uint256) {
+    function FLASHLOAN_PREMIUM_TOTAL() public view returns (uint128) {
         return _flashLoanPremiumTotal;
     }
 
@@ -749,11 +749,15 @@ contract LendingPool is VersionedInitializable, ILendingPool, LendingPoolStorage
         }
     }
 
-    function updateFlashLoanFee(uint256 flashLoanPremiumTotal)
+    function updateFlashLoanFee(uint128 flashLoanPremiumTotal)
         external
         override
         onlyLendingPoolConfigurator
     {
+        _updateFlashLoanFee(flashLoanPremiumTotal);
+    }
+
+    function _updateFlashLoanFee(uint128 flashLoanPremiumTotal) internal {
         _flashLoanPremiumTotal = flashLoanPremiumTotal;
     }
 

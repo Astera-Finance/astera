@@ -17,6 +17,7 @@ interface IInitializableDebtToken {
      * @param pool The address of the associated lending pool
      * @param rewarder The address of the incentives controller for this aToken
      * @param debtTokenDecimals the decimals of the debt token
+     * @param reserveType Whether the reserve is boosted by a vault
      * @param debtTokenName the name of the debt token
      * @param debtTokenSymbol the symbol of the debt token
      * @param params A set of encoded parameters for additional initialization
@@ -27,6 +28,7 @@ interface IInitializableDebtToken {
         address indexed pool,
         address rewarder,
         uint8 debtTokenDecimals,
+        bool reserveType,
         string debtTokenName,
         string debtTokenSymbol,
         bytes params
@@ -38,6 +40,7 @@ interface IInitializableDebtToken {
      * @param underlyingAsset The address of the underlying asset of this aToken (E.g. WETH for aWETH)
      * @param rewarder The smart contract managing potential incentives distribution
      * @param debtTokenDecimals The decimals of the debtToken, same as the underlying asset's
+     * @param reserveType Whether the reserve is boosted by a vault
      * @param debtTokenName The name of the token
      * @param debtTokenSymbol The symbol of the token
      */
@@ -46,6 +49,7 @@ interface IInitializableDebtToken {
         address underlyingAsset,
         IRewarder rewarder,
         uint8 debtTokenDecimals,
+        bool reserveType,
         string memory debtTokenName,
         string memory debtTokenSymbol,
         bytes calldata params
