@@ -415,8 +415,8 @@ library BorrowLogic {
         require(reserve.configuration.getActive(), Errors.VL_NO_ACTIVE_RESERVE);
 
         if (
-            flowLimiter.currentFlow(params.asset, params.reserveType, params.miniPoolAddress)
-                + params.amount > flowLimiter.getFlowLimit(params.asset, params.miniPoolAddress)
+            flowLimiter.currentFlow(params.asset, params.miniPoolAddress) + params.amount
+                > flowLimiter.getFlowLimit(params.asset, params.miniPoolAddress)
         ) {
             //revert(Errors.VL_BORROW_FLOW_LIMIT_REACHED);
             revert();

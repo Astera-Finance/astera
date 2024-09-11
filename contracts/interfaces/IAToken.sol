@@ -122,6 +122,10 @@ interface IAToken is IERC20, IScaledBalanceToken, IInitializableAToken {
 
     function WRAPPER_ADDRESS() external view returns (address);
 
+    function convertToShares(uint256 assetAmount) external view returns (uint256);
+
+    function convertToAssets(uint256 shareAmount) external view returns (uint256);
+
     /// --------- Rehypothecation logic ---------
 
     /**

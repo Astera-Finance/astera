@@ -167,6 +167,14 @@ contract ATokenNonRebasing {
         return true;
     }
 
+    function convertToShares(uint256 assetAmount) external view returns (uint256) {
+        return _aToken.convertToShares(assetAmount);
+    }
+
+    function convertToAssets(uint256 shareAmount) external view returns (uint256) {
+        return _aToken.convertToAssets(shareAmount);
+    }
+
     function _approve(address owner, address spender, uint256 amount) internal virtual {
         require(owner != address(0), "ERC20: approve from the zero address");
         require(spender != address(0), "ERC20: approve to the zero address");

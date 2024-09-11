@@ -289,7 +289,7 @@ contract MiniPoolDepositBorrowTest is Common {
             vm.startPrank(address(miniPoolContracts.miniPoolAddressesProvider));
             console.log("address of asset:", address(borrowTokenParams.aToken));
             uint256 currentFlow = miniPoolContracts.flowLimiter.currentFlow(
-                address(borrowTokenParams.token), true, miniPool
+                address(borrowTokenParams.token), miniPool
             );
             miniPoolContracts.flowLimiter.setFlowLimit(
                 address(borrowTokenParams.token), miniPool, currentFlow + amount
@@ -382,7 +382,7 @@ contract MiniPoolDepositBorrowTest is Common {
         vm.label(miniPool, "MiniPool");
     }
 
-     function testMiniPoolBeiraoC02() public {
+    function testMiniPoolBeiraoC02() public {
         address user = makeAddr("user");
         address user2 = makeAddr("user2");
 
@@ -395,52 +395,42 @@ contract MiniPoolDepositBorrowTest is Common {
         IAERC6909 aErc6909Token =
             IAERC6909(miniPoolContracts.miniPoolAddressesProvider.getMiniPoolToAERC6909(miniPool));
 
-        uint USDC_OFFSET = 0;
+        uint256 USDC_OFFSET = 0;
 
         /* Deposit tests */
-        deal(
-            address(tokenParamsUsdc.token),
-            user,
-            amountUsdc
-        );
+        deal(address(tokenParamsUsdc.token), user, amountUsdc);
 
-        deal(
-            address(tokenParamsUsdc.token),
-            user2,
-            amountUsdc
-        );
+        deal(address(tokenParamsUsdc.token), user2, amountUsdc);
 
-        deal(
-            address(tokenParamsWbtc.token),
-            user,
-            amountwBtc
-        );
+        deal(address(tokenParamsWbtc.token), user, amountwBtc);
 
-        deal(
-            address(tokenParamsWbtc.token),
-            user2,
-            amountwBtc
-        );
+        deal(address(tokenParamsWbtc.token), user2, amountwBtc);
 
         assertEq(amountUsdc, tokenParamsUsdc.token.balanceOf(address(user)));
 
         vm.startPrank(user);
         tokenParamsUsdc.token.approve(address(deployedContracts.lendingPool), amountUsdc);
-        deployedContracts.lendingPool.deposit(address(tokenParamsUsdc.token), true, amountUsdc, user);
+        deployedContracts.lendingPool.deposit(
+            address(tokenParamsUsdc.token), true, amountUsdc, user
+        );
         assertEq(amountUsdc, tokenParamsUsdc.aToken.balanceOf(address(user)));
 
         vm.startPrank(user2);
         tokenParamsWbtc.token.approve(address(deployedContracts.lendingPool), amountwBtc);
-        deployedContracts.lendingPool.deposit(address(tokenParamsWbtc.token), true, amountwBtc, user2);
+        deployedContracts.lendingPool.deposit(
+            address(tokenParamsWbtc.token), true, amountwBtc, user2
+        );
         assertEq(amountwBtc, tokenParamsWbtc.aToken.balanceOf(address(user2)));
 
-        deployedContracts.lendingPool.borrow(address(tokenParamsUsdc.token), true, amountUsdc, user2);
+        deployedContracts.lendingPool.borrow(
+            address(tokenParamsUsdc.token), true, amountUsdc, user2
+        );
         assertEq(amountUsdc * 2, tokenParamsUsdc.token.balanceOf(address(user2)));
 
         assertEq(amountUsdc, aTokens[0].balanceOf(address(user)));
 
         vm.startPrank(user);
-        uint amtAUsdc = tokenParamsUsdc.aToken.balanceOf(address(user)) / 2;
+        uint256 amtAUsdc = tokenParamsUsdc.aToken.balanceOf(address(user)) / 2;
         tokenParamsUsdc.aToken.approve(miniPool, amtAUsdc);
         IMiniPool(miniPool).deposit(address(tokenParamsUsdc.aToken), true, amtAUsdc, user);
         assertEq(amtAUsdc, aErc6909Token.balanceOf(user, 1000 + USDC_OFFSET));
@@ -453,14 +443,17 @@ contract MiniPoolDepositBorrowTest is Common {
         assertEq(amtAUsdc, tokenParamsUsdc.aToken.balanceOf(address(aErc6909Token)));
         assertLt(amtAUsdc, aTokens[0].balanceOf(address(aErc6909Token)));
 
-
-        IMiniPool(miniPool).withdraw(address(tokenParamsUsdc.aToken), true, aErc6909Token.balanceOf(user, 1000 + USDC_OFFSET), user);
+        IMiniPool(miniPool).withdraw(
+            address(tokenParamsUsdc.aToken),
+            true,
+            aErc6909Token.balanceOf(user, 1000 + USDC_OFFSET),
+            user
+        );
 
         assertEq(0, tokenParamsUsdc.aToken.balanceOf(address(aErc6909Token)));
 
         assertEq(0, aTokens[0].balanceOf(address(aErc6909Token)));
     }
-
 
     function testMiniPoolDeposits(uint256 amount, uint256 offset) public {
         /* Fuzz vector creation */

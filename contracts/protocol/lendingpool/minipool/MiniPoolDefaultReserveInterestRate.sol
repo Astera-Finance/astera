@@ -9,6 +9,9 @@ import {PercentageMath} from "../../libraries/math/PercentageMath.sol";
 import {ILendingPoolAddressesProvider} from "../../../interfaces/ILendingPoolAddressesProvider.sol";
 import {IERC20} from "../../../dependencies/openzeppelin/contracts/IERC20.sol";
 import {IMiniPoolAddressesProvider} from "../../../interfaces/IMiniPoolAddressesProvider.sol";
+import {IFlowLimiter} from "contracts/interfaces/IFlowLimiter.sol";
+import {IAToken} from "contracts/interfaces/IAToken.sol";
+
 /**
  * @title DefaultReserveInterestRateStrategy contract
  * @notice Implements the calculation of the interest rates depending on the reserve state
@@ -19,7 +22,6 @@ import {IMiniPoolAddressesProvider} from "../../../interfaces/IMiniPoolAddresses
  * @author Aave
  *
  */
-
 contract MiniPoolDefaultReserveInterestRateStrategy is IMiniPoolReserveInterestRateStrategy {
     using WadRayMath for uint256;
     using SafeMath for uint256;
@@ -101,7 +103,23 @@ contract MiniPoolDefaultReserveInterestRateStrategy is IMiniPoolReserveInterestR
         uint256 totalVariableDebt,
         uint256 reserveFactor
     ) external view override returns (uint256, uint256) {
-        uint256 availableLiquidity = IERC20(reserve).balanceOf(aToken);
+        uint256 availableLiquidity;
+
+        //? if (IAERC6909(reserve.aTokenAddress).isTranche(reserve.aTokenID)) instead of try{}?
+
+        // try IAToken(reserve).UNDERLYING_ASSET_ADDRESS() returns (address underlying_) {
+        //     IFlowLimiter flowLimiter = IFlowLimiter(addressesProvider.getFlowLimiter());
+        //     uint256 flowLimit = flowLimiter.getFlowLimit(underlying_, msg.sender);
+        //     uint256 currentFlow = flowLimiter.currentFlow(underlying_, msg.sender);
+
+        //     availableLiquidity = IERC20(reserve).balanceOf(aToken) + flowLimit - currentFlow;
+
+        // } catch  {
+        //     availableLiquidity = IERC20(reserve).balanceOf(aToken);
+        // }
+
+        availableLiquidity = IERC20(reserve).balanceOf(aToken);
+
         //avoid stack too deep
         availableLiquidity = availableLiquidity.add(liquidityAdded).sub(liquidityTaken);
 
