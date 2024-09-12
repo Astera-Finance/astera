@@ -351,7 +351,8 @@ contract MiniPool is VersionedInitializable, IMiniPool, MiniPoolStorage {
         vars.aTokenAddress = reserve.aTokenAddress;
         if (IAERC6909(reserve.aTokenAddress).isTranche(reserve.aTokenID)) {
             vars.underlyingAsset = IAToken(asset).UNDERLYING_ASSET_ADDRESS();
-            vars.underlyingDebt = IAToken(asset).convertToShares(getCurrentLendingPoolDebt(vars.underlyingAsset)); // share
+            vars.underlyingDebt =
+                IAToken(asset).convertToShares(getCurrentLendingPoolDebt(vars.underlyingAsset)); // share
             if (vars.underlyingDebt != 0) {
                 if (vars.underlyingDebt < amount) {
                     amount = vars.underlyingDebt;

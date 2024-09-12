@@ -70,4 +70,6 @@ interface IAERC6909 is IERC6909 {
 
     function DOMAIN_SEPARATOR() external view returns (bytes32);
     function PERMIT_TYPEHASH() external view returns (bytes32);
+    function MINIPOOL_ADDRESS() external view returns (address);
+    function MINIPOOL_ID() external view returns (uint256);
 }

@@ -11,6 +11,7 @@ import {IERC20} from "../../../dependencies/openzeppelin/contracts/IERC20.sol";
 import {IMiniPoolAddressesProvider} from "../../../interfaces/IMiniPoolAddressesProvider.sol";
 import {IFlowLimiter} from "contracts/interfaces/IFlowLimiter.sol";
 import {IAToken} from "contracts/interfaces/IAToken.sol";
+import {IAERC6909} from "contracts/interfaces/IAERC6909.sol";
 
 /**
  * @title DefaultReserveInterestRateStrategy contract
@@ -105,20 +106,17 @@ contract MiniPoolDefaultReserveInterestRateStrategy is IMiniPoolReserveInterestR
     ) external view override returns (uint256, uint256) {
         uint256 availableLiquidity;
 
-        //? if (IAERC6909(reserve.aTokenAddress).isTranche(reserve.aTokenID)) instead of try{}?
+        if (IAERC6909(aToken).isTranche(IAERC6909(aToken).MINIPOOL_ID())) {
+            IFlowLimiter flowLimiter = IFlowLimiter(addressesProvider.getFlowLimiter());
+            address underlying = IAToken(reserve).UNDERLYING_ASSET_ADDRESS();
+            address minipool = IAERC6909(aToken).MINIPOOL_ADDRESS();
 
-        // try IAToken(reserve).UNDERLYING_ASSET_ADDRESS() returns (address underlying_) {
-        //     IFlowLimiter flowLimiter = IFlowLimiter(addressesProvider.getFlowLimiter());
-        //     uint256 flowLimit = flowLimiter.getFlowLimit(underlying_, msg.sender);
-        //     uint256 currentFlow = flowLimiter.currentFlow(underlying_, msg.sender);
-
-        //     availableLiquidity = IERC20(reserve).balanceOf(aToken) + flowLimit - currentFlow;
-
-        // } catch  {
-        //     availableLiquidity = IERC20(reserve).balanceOf(aToken);
-        // }
-
-        availableLiquidity = IERC20(reserve).balanceOf(aToken);
+            availableLiquidity = IERC20(reserve).balanceOf(aToken)
+                + IAToken(reserve).convertToShares(flowLimiter.getFlowLimit(underlying, minipool))
+                - IAToken(reserve).convertToShares(flowLimiter.currentFlow(underlying, minipool));
+        } else {
+            availableLiquidity = IERC20(reserve).balanceOf(aToken);
+        }
 
         //avoid stack too deep
         availableLiquidity = availableLiquidity.add(liquidityAdded).sub(liquidityTaken);
