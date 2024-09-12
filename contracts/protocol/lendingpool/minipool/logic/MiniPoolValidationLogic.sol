@@ -269,15 +269,36 @@ library MiniPoolValidationLogic {
     }
 
     /**
-     * @dev Validates a flashloan action
-     * @param assets The assets being flashborrowed
+     * @notice Validates a flashloan action.
+     * @param reserves The state of all the reserves
+     * @param assets The assets being flash-borrowed
      * @param amounts The amounts for each asset being borrowed
-     *
      */
-    function validateFlashloan(address[] memory assets, uint256[] memory amounts) internal pure {
+    function validateFlashloan(
+        mapping(address => DataTypes.MiniPoolReserveData) storage reserves,
+        address[] memory assets,
+        uint256[] memory amounts
+    ) internal view {
         require(assets.length == amounts.length, Errors.VL_INCONSISTENT_FLASHLOAN_PARAMS);
+        for (uint256 i = 0; i < assets.length; i++) {
+            validateFlashloanSimple(reserves[assets[i]]);
+        }
     }
 
+    /**
+     * @notice Validates a flashloan action.
+     * @param reserve The state of the reserve
+     */
+    function validateFlashloanSimple(DataTypes.MiniPoolReserveData storage reserve) internal view {
+        DataTypes.ReserveConfigurationMap storage configuration = reserve.configuration;
+        require(
+            !IAERC6909(reserve.aTokenAddress).isTranche(reserve.aTokenID),
+            Errors.VL_TRANCHED_ASSET_CANNOT_BE_FLASHLOAN
+        );
+        require(!configuration.getPaused(), Errors.VL_RESERVE_PAUSED);
+        require(configuration.getActive(), Errors.VL_RESERVE_INACTIVE);
+        require(configuration.getFlashLoanEnabled(), Errors.VL_FLASHLOAN_DISABLED);
+    }
     /**
      * @dev Validates the liquidation action
      * @param collateralReserve The reserve data of the collateral
@@ -287,6 +308,7 @@ library MiniPoolValidationLogic {
      * @param userVariableDebt Total variable debt balance of the user
      *
      */
+
     function validateLiquidationCall(
         DataTypes.MiniPoolReserveData storage collateralReserve,
         DataTypes.MiniPoolReserveData storage principalReserve,
