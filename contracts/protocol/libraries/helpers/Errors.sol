@@ -107,6 +107,7 @@ library Errors {
     string public constant VL_RESERVE_INACTIVE = "92";
     string public constant VL_FLASHLOAN_DISABLED = "93";
     string public constant LPC_FLASHLOAN_PREMIUM_INVALID = "94";
+    string public constant VL_TRANCHED_ASSET_CANNOT_BE_FLASHLOAN = "95";
 
     enum CollateralManagerErrors {
         NO_ERROR,

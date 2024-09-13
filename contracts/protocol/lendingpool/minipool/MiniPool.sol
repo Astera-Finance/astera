@@ -412,7 +412,6 @@ contract MiniPool is VersionedInitializable, IMiniPool, MiniPoolStorage {
             MiniPoolFlashLoanLogic.FlashLoanParams(
                 flashLoanParams.receiverAddress,
                 flashLoanParams.assets,
-                flashLoanParams.reserveTypes,
                 flashLoanParams.onBehalfOf,
                 _addressesProvider,
                 _reservesCount,

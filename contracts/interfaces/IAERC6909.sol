@@ -22,11 +22,6 @@ interface IAERC6909 is IERC6909 {
         external
         override
         returns (bool);
-    function getIndexForUnderlyingAsset(address underlyingAsset)
-        external
-        view
-        returns (uint256 index);
-    function getIndexForOverlyingAsset(uint256 id) external view returns (uint256 index);
     function transferUnderlyingTo(address to, uint256 id, uint256 amount) external;
     function getScaledUserBalanceAndSupply(address user, uint256 id)
         external
@@ -72,4 +67,6 @@ interface IAERC6909 is IERC6909 {
     function PERMIT_TYPEHASH() external view returns (bytes32);
     function MINIPOOL_ADDRESS() external view returns (address);
     function MINIPOOL_ID() external view returns (uint256);
+    function ATOKEN_ADDRESSABLE_ID() external view returns (uint256);
+    function DEBT_TOKEN_ADDRESSABLE_ID() external view returns (uint256);
 }
