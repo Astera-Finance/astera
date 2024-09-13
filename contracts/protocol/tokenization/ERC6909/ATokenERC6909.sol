@@ -30,8 +30,8 @@ contract ATokenERC6909 is IncentivizedERC6909, VersionedInitializable {
     IMiniPoolAddressesProvider private _addressesProvider;
     IRewarder private INCENTIVES_CONTROLLER;
     IMiniPool private POOL;
-    uint256 constant public ATOKEN_ADDRESSABLE_ID = 1000; // This is the first ID for aToken
-    uint256 constant public DEBT_TOKEN_ADDRESSABLE_ID = 2000; // This is the first ID for debtToken
+    uint256 public constant ATOKEN_ADDRESSABLE_ID = 1000; // This is the first ID for aToken
+    uint256 public constant DEBT_TOKEN_ADDRESSABLE_ID = 2000; // This is the first ID for debtToken
 
     event TokenInitialized(
         uint256 indexed id, string name, string symbol, uint8 decimals, address underlyingAsset
@@ -225,21 +225,6 @@ contract ATokenERC6909 is IncentivizedERC6909, VersionedInitializable {
         }
     }
 
-    function getIndexForUnderlyingAsset(address underlyingAsset)
-        public
-        view
-        returns (uint256 index)
-    {
-        ILendingPool pool = ILendingPool(_addressesProvider.getLendingPool());
-        index = pool.getReserveData(underlyingAsset, true).liquidityIndex;
-    }
-
-    function getIndexForOverlyingAsset(uint256 id) public view returns (uint256 index) {
-        uint256 underlyingIndex = getIndexForUnderlyingAsset(_underlyingAssetAddresses[id]);
-        index = POOL.getReserveNormalizedIncome(_underlyingAssetAddresses[id], true);
-        index = index.rayMul(underlyingIndex).rayDiv(1e27);
-    }
-
     function transferUnderlyingTo(address to, uint256 id, uint256 amount) public {
         require(msg.sender == address(POOL), Errors.CT_CALLER_MUST_BE_LENDING_POOL);
         if (_isTranche[id]) {
@@ -268,8 +253,6 @@ contract ATokenERC6909 is IncentivizedERC6909, VersionedInitializable {
         return currentSupplyScaled.rayMul(
             POOL.getReserveNormalizedIncome(_underlyingAssetAddresses[id], false)
         );
-
-        //return currentSupplyScaled.rayMul(getIndexForOverlyingAsset(id));
     }
 
     function scaledTotalSupply(uint256 id) public view returns (uint256) {

@@ -200,9 +200,7 @@ library MiniPoolFlashLoanLogic {
                 : 0;
 
             IAERC6909 aToken6909 = IAERC6909(aTokenAddresses[i]);
-            aToken6909.transferUnderlyingTo(
-                receiverAddress, reserve.id + aToken6909.ATOKEN_ADDRESSABLE_ID(), amounts[i]
-            );
+            aToken6909.transferUnderlyingTo(receiverAddress, reserve.aTokenID, amounts[i]);
         }
     }
 
@@ -218,11 +216,12 @@ library MiniPoolFlashLoanLogic {
     ) internal {
         uint256 amountPlusPremium = params.amount + params.totalPremium;
 
-        // DataTypes.ReserveCache memory reserveCache = reserve.cache();
         reserve.updateState();
 
-        uint256 id = reserve.id + IAERC6909(params.aToken).ATOKEN_ADDRESSABLE_ID();
-        reserve.cumulateToLiquidityIndex(IAERC6909(params.aToken).totalSupply(id), params.totalPremium);
+        uint256 id = reserve.aTokenID;
+        reserve.cumulateToLiquidityIndex(
+            IAERC6909(params.aToken).totalSupply(id), params.totalPremium
+        );
 
         reserve.updateInterestRates(params.asset, amountPlusPremium, 0);
 
