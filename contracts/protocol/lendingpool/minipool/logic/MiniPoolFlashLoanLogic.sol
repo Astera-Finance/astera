@@ -199,8 +199,9 @@ library MiniPoolFlashLoanLogic {
                 ? amounts[i].mul(_flashLoanPremiumTotal).div(10000)
                 : 0;
 
-            IAERC6909(aTokenAddresses[i]).transferUnderlyingTo(
-                receiverAddress, reserve.id, amounts[i]
+            IAERC6909 aToken6909 = IAERC6909(aTokenAddresses[i]);
+            aToken6909.transferUnderlyingTo(
+                receiverAddress, reserve.id + aToken6909.ATOKEN_ADDRESSABLE_ID(), amounts[i]
             );
         }
     }
@@ -219,7 +220,9 @@ library MiniPoolFlashLoanLogic {
 
         // DataTypes.ReserveCache memory reserveCache = reserve.cache();
         reserve.updateState();
-        reserve.cumulateToLiquidityIndex(IERC20(params.aToken).totalSupply(), params.totalPremium);
+
+        uint256 id = reserve.id + IAERC6909(params.aToken).ATOKEN_ADDRESSABLE_ID();
+        reserve.cumulateToLiquidityIndex(IAERC6909(params.aToken).totalSupply(id), params.totalPremium);
 
         reserve.updateInterestRates(params.asset, amountPlusPremium, 0);
 
@@ -228,7 +231,7 @@ library MiniPoolFlashLoanLogic {
         );
 
         IAERC6909(params.aToken).handleRepayment(
-            params.receiverAddress, params.receiverAddress, reserve.id, amountPlusPremium
+            params.receiverAddress, params.receiverAddress, id, amountPlusPremium
         );
 
         emit FlashLoan(
