@@ -517,6 +517,14 @@ contract AToken is
         return _aTokenWrapper;
     }
 
+    function convertToShares(uint256 assetAmount) external view returns (uint256) {
+        return assetAmount.rayDiv(_pool.getReserveNormalizedIncome(_underlyingAsset, RESERVE_TYPE));
+    }
+
+    function convertToAssets(uint256 shareAmount) external view returns (uint256) {
+        return shareAmount.rayMul(_pool.getReserveNormalizedIncome(_underlyingAsset, RESERVE_TYPE));
+    }
+
     /// --------- Rehypothecation logic ---------
 
     /// @dev Rebalance so as to free _amountToWithdraw for a future transfer

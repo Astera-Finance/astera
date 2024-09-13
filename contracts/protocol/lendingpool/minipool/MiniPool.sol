@@ -193,7 +193,7 @@ contract MiniPool is VersionedInitializable, IMiniPool, MiniPoolStorage {
             ILendingPool(vars.LendingPool).miniPoolBorrow(
                 underlying,
                 reserveType,
-                amount.sub(vars.availableLiquidity),
+                IAToken(asset).convertToAssets(amount.sub(vars.availableLiquidity)), // amount + availableLiquidity converted to asset
                 address(this),
                 ATokenNonRebasing(asset).ATOKEN_ADDRESS()
             );
@@ -351,7 +351,8 @@ contract MiniPool is VersionedInitializable, IMiniPool, MiniPoolStorage {
         vars.aTokenAddress = reserve.aTokenAddress;
         if (IAERC6909(reserve.aTokenAddress).isTranche(reserve.aTokenID)) {
             vars.underlyingAsset = IAToken(asset).UNDERLYING_ASSET_ADDRESS();
-            vars.underlyingDebt = getCurrentLendingPoolDebt(vars.underlyingAsset, reserveType);
+            vars.underlyingDebt =
+                IAToken(asset).convertToShares(getCurrentLendingPoolDebt(vars.underlyingAsset)); // share
             if (vars.underlyingDebt != 0) {
                 if (vars.underlyingDebt < amount) {
                     amount = vars.underlyingDebt;
@@ -364,13 +365,14 @@ contract MiniPool is VersionedInitializable, IMiniPool, MiniPoolStorage {
                     _usersConfig,
                     _reservesList,
                     _addressesProvider
-                );
-                amount = IERC20(asset).balanceOf(address(this));
-                IERC20(asset).approve(_addressesProvider.getLendingPool(), amount);
+                ); // MUST use share
 
+                IERC20 aToken = IERC20(ATokenNonRebasing(asset).ATOKEN_ADDRESS());
+                amount = aToken.balanceOf(address(this)); // asset
+                aToken.approve(_addressesProvider.getLendingPool(), amount);
                 ILendingPool(_addressesProvider.getLendingPool()).repayWithATokens(
                     vars.underlyingAsset, reserveType, amount, address(this)
-                );
+                ); // MUST use asset
             }
         }
     }
@@ -741,13 +743,7 @@ contract MiniPool is VersionedInitializable, IMiniPool, MiniPoolStorage {
         }
     }
 
-    function getCurrentLendingPoolDebt(address asset, bool reserveType)
-        public
-        view
-        returns (uint256)
-    {
-        return IFlowLimiter(_addressesProvider.getFlowLimiter()).currentFlow(
-            asset, reserveType, address(this)
-        );
+    function getCurrentLendingPoolDebt(address asset) public view returns (uint256) {
+        return IFlowLimiter(_addressesProvider.getFlowLimiter()).currentFlow(asset, address(this));
     }
 }
