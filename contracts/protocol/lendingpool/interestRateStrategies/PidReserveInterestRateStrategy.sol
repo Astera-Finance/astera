@@ -13,6 +13,7 @@ import {DataTypes} from "contracts/protocol/libraries/types/DataTypes.sol";
 import {ReserveConfiguration} from
     "contracts/protocol/libraries/configuration/ReserveConfiguration.sol";
 import {Ownable} from "contracts/dependencies/openzeppelin/contracts/Ownable.sol";
+import {Errors} from "../../libraries/helpers/Errors.sol";
 
 /**
  * @title PidReserveInterestRateStrategy contract
@@ -156,6 +157,10 @@ contract PidReserveInterestRateStrategy is IReserveInterestRateStrategy, Ownable
         uint256 reserveFactor
     ) external override onlyLendingPool returns (uint256, uint256) {
         uint256 availableLiquidity = IAToken(aToken).getTotalManagedAssets();
+        if (availableLiquidity + liquidityAdded < liquidityTaken) {
+            revert(Errors.LP_NOT_ENOUGH_LIQUIDITY_TO_BORROW);
+        }
+
         availableLiquidity = availableLiquidity + liquidityAdded - liquidityTaken;
         return calculateInterestRates(reserve, availableLiquidity, totalVariableDebt, reserveFactor);
     }
