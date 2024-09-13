@@ -23,6 +23,8 @@ import {UserConfiguration} from "../../../libraries/configuration/UserConfigurat
 import {UserRecentBorrow} from "../../../libraries/configuration/UserRecentBorrow.sol";
 import {Helpers} from "../../../libraries/helpers/Helpers.sol";
 
+import "forge-std/console.sol";
+
 /**
  * @title BorrowLogic library
  * @author Cod3x
@@ -360,7 +362,7 @@ library MiniPoolBorrowLogic {
         );
 
         uint256 paybackAmount = variableDebt;
-
+        console.log("paybackAmount: %s vs variableDebt: %s", paybackAmount, variableDebt);
         if (params.amount < paybackAmount) {
             paybackAmount = params.amount;
         }

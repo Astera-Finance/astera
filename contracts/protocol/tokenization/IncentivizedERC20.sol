@@ -7,6 +7,8 @@ import {IERC20Detailed} from "../../dependencies/openzeppelin/contracts/IERC20De
 import {SafeMath} from "../../dependencies/openzeppelin/contracts/SafeMath.sol";
 import {IRewarder} from "../../interfaces/IRewarder.sol";
 
+import "forge-std/console.sol";
+
 /**
  * @title ERC20
  * @notice Basic ERC20 implementation
@@ -184,6 +186,7 @@ abstract contract IncentivizedERC20 is Context, IERC20, IERC20Detailed {
 
         _beforeTokenTransfer(sender, recipient, amount);
 
+        // console.log("---------------------------- TRANSFERING --------------------- ->>>>>", amount);
         uint256 oldSenderBalance = _balances[sender];
         _balances[sender] = oldSenderBalance.sub(amount, "ERC20: transfer amount exceeds balance");
         uint256 oldRecipientBalance = _balances[recipient];
@@ -207,7 +210,7 @@ abstract contract IncentivizedERC20 is Context, IERC20, IERC20Detailed {
 
         uint256 oldTotalSupply = _totalSupply;
         _totalSupply = oldTotalSupply.add(amount);
-
+        console.log("---------------------------- MINTING --------------------- ->>>>>", amount);
         uint256 oldAccountBalance = _balances[account];
         _balances[account] = oldAccountBalance.add(amount);
 
@@ -224,6 +227,7 @@ abstract contract IncentivizedERC20 is Context, IERC20, IERC20Detailed {
         uint256 oldTotalSupply = _totalSupply;
         _totalSupply = oldTotalSupply.sub(amount);
 
+        console.log("---------------------------- BURNING --------------------- ->>>>>", amount);
         uint256 oldAccountBalance = _balances[account];
         _balances[account] = oldAccountBalance.sub(amount, "ERC20: burn amount exceeds balance");
 

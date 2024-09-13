@@ -15,6 +15,8 @@ import {PercentageMath} from "../math/PercentageMath.sol";
 import {Errors} from "../helpers/Errors.sol";
 import {DataTypes} from "../types/DataTypes.sol";
 
+import "forge-std/console.sol";
+
 /**
  * @title ReserveLogic library
  * @author Aave
@@ -61,7 +63,12 @@ library ReserveLogic {
         returns (uint256)
     {
         uint40 timestamp = reserve.lastUpdateTimestamp;
-
+        console.log(
+            "AToken: %s debtToken: %s liquidityRate: %s",
+            reserve.aTokenAddress,
+            reserve.variableDebtTokenAddress,
+            reserve.currentLiquidityRate
+        );
         //solium-disable-next-line
         if (timestamp == uint40(block.timestamp)) {
             //if the index was updated in the same block, no need to perform any calculation
@@ -71,6 +78,7 @@ library ReserveLogic {
         uint256 cumulated = MathUtils.calculateLinearInterest(
             reserve.currentLiquidityRate, timestamp
         ).rayMul(reserve.liquidityIndex);
+        console.log("Main Cumulated: ", cumulated);
 
         return cumulated;
     }

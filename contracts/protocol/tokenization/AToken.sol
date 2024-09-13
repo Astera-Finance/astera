@@ -15,6 +15,8 @@ import {IRewarder} from "../../interfaces/IRewarder.sol";
 import {IERC4626} from "../../interfaces/IERC4626.sol";
 import {ATokenNonRebasing} from "./ATokenNonRebasing.sol";
 
+import "forge-std/console.sol";
+
 /**
  * @title Aave ERC20 AToken
  * @dev Implementation of the interest bearing token for the Aave protocol
@@ -251,6 +253,7 @@ contract AToken is
         override(IncentivizedERC20, IERC20)
         returns (uint256)
     {
+        console.log("aToken super balanceOf: ", super.balanceOf(user));
         return super.balanceOf(user).rayMul(
             _pool.getReserveNormalizedIncome(_underlyingAsset, RESERVE_TYPE)
         );

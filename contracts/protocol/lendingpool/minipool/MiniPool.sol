@@ -32,6 +32,8 @@ import {MiniPoolBorrowLogic} from "./logic/MiniPoolBorrowLogic.sol";
 import {MiniPoolFlashLoanLogic} from "./logic/MiniPoolFlashLoanLogic.sol";
 import {MiniPoolLiquidationLogic} from "./logic/MiniPoolLiquidationLogic.sol";
 
+import "forge-std/console.sol";
+
 /**
  * @title MiniPool contract
  * @dev A highly correlated sub market that can borrow from the main lending pool and charge double interest rates on those loans
@@ -188,6 +190,7 @@ contract MiniPool is VersionedInitializable, IMiniPool, MiniPoolStorage {
             amount > vars.availableLiquidity
                 && IAERC6909(reserve.aTokenAddress).isTranche(reserve.aTokenID)
         ) {
+            console.log("AUGMENTED --------------------------");
             address underlying = IAToken(asset).UNDERLYING_ASSET_ADDRESS();
             vars.LendingPool = _addressesProvider.getLendingPool();
             ILendingPool(vars.LendingPool).miniPoolBorrow(

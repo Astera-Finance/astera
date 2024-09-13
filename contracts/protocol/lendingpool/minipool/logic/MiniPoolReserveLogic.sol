@@ -20,6 +20,8 @@ import {IFlowLimiter} from "../../../../interfaces/IFlowLimiter.sol";
 import {IMiniPoolReserveInterestRateStrategy} from
     "../../../../interfaces/IMiniPoolReserveInterestRateStrategy.sol";
 
+import "forge-std/console.sol";
+
 /**
  * @title ReserveLogic library
  * @author Aave
@@ -66,7 +68,12 @@ library MiniPoolReserveLogic {
         returns (uint256)
     {
         uint40 timestamp = reserve.lastUpdateTimestamp;
-
+        // console.log("[Mini] AToken: %s aTokenID: %s ", reserve.aTokenAddress, reserve.aTokenID);
+        // console.log(
+        //     "debtID: %s liquidityRate: %s",
+        //     reserve.variableDebtTokenID,
+        //     reserve.currentLiquidityRate
+        // );
         //solium-disable-next-line
         if (timestamp == uint40(block.timestamp)) {
             //if the index was updated in the same block, no need to perform any calculation
@@ -76,6 +83,7 @@ library MiniPoolReserveLogic {
         uint256 cumulated = MathUtils.calculateLinearInterest(
             reserve.currentLiquidityRate, timestamp
         ).rayMul(reserve.liquidityIndex);
+        // console.log("Mini Cumulated: ", cumulated);
 
         return cumulated;
     }
@@ -313,7 +321,9 @@ library MiniPoolReserveLogic {
 
         uint256 newLiquidityIndex = liquidityIndex;
         uint256 newVariableBorrowIndex = variableBorrowIndex;
-
+        console.log(
+            "..............................Before variableBorrowIndex: ", variableBorrowIndex
+        );
         //only cumulating if there is any income being produced
         if (currentLiquidityRate > 0) {
             uint256 cumulatedLiquidityInterest =
@@ -340,6 +350,9 @@ library MiniPoolReserveLogic {
 
         //solium-disable-next-line
         reserve.lastUpdateTimestamp = uint40(block.timestamp);
+        console.log(
+            "..............................After variableBorrowIndex: ", reserve.variableBorrowIndex
+        );
         return (newLiquidityIndex, newVariableBorrowIndex);
     }
 }

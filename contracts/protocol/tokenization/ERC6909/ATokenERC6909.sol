@@ -16,6 +16,8 @@ import {IERC20} from "../../../dependencies/openzeppelin/contracts/IERC20.sol";
 import {IMiniPoolAddressesProvider} from "../../../interfaces/IMiniPoolAddressesProvider.sol";
 import {IMiniPool} from "../../../interfaces/IMiniPool.sol";
 
+import "forge-std/console.sol";
+
 contract ATokenERC6909 is IncentivizedERC6909, VersionedInitializable {
     using SafeMath for uint256;
     using WadRayMath for uint256;
@@ -209,7 +211,13 @@ contract ATokenERC6909 is IncentivizedERC6909, VersionedInitializable {
             uint256 fromBalanceBefore = super.balanceOf(from, id).rayMul(index);
             uint256 toBalanceBefore = super.balanceOf(to, id).rayMul(index);
 
+            console.log("Amount trasfering", amount.rayDiv(index));
             super.transferFrom(from, to, id, amount.rayDiv(index));
+            console.log(
+                "[IN] Before Check balance of to.. %s vs %s",
+                super.balanceOf(to, id).rayMul(index),
+                toBalanceBefore
+            );
 
             POOL.finalizeTransfer(
                 _underlyingAssetAddresses[id],
@@ -237,6 +245,8 @@ contract ATokenERC6909 is IncentivizedERC6909, VersionedInitializable {
     function getIndexForOverlyingAsset(uint256 id) public view returns (uint256 index) {
         uint256 underlyingIndex = getIndexForUnderlyingAsset(_underlyingAssetAddresses[id]);
         index = POOL.getReserveNormalizedIncome(_underlyingAssetAddresses[id], true);
+        console.log("Index for underlying: ", underlyingIndex);
+        console.log("Index for reserve: ", index);
         index = index.rayMul(underlyingIndex).rayDiv(1e27);
     }
 
@@ -260,11 +270,14 @@ contract ATokenERC6909 is IncentivizedERC6909, VersionedInitializable {
 
     function totalSupply(uint256 id) public view override returns (uint256) {
         uint256 currentSupplyScaled = super.totalSupply(id);
-
+        console.log("currentSupplyScaled: ", currentSupplyScaled);
         if (currentSupplyScaled == 0) {
             return 0;
         }
-        return currentSupplyScaled.rayMul(getIndexForOverlyingAsset(id));
+        console.log("getIndexForOverlyingAsset: ", getIndexForOverlyingAsset(id));
+        return currentSupplyScaled.rayMul(
+            POOL.getReserveNormalizedIncome(_underlyingAssetAddresses[id], true)
+        );
     }
 
     function scaledTotalSupply(uint256 id) public view returns (uint256) {
@@ -361,13 +374,23 @@ contract ATokenERC6909 is IncentivizedERC6909, VersionedInitializable {
     ) external {
         require(msg.sender == address(POOL), Errors.CT_CALLER_MUST_BE_LENDING_POOL);
         if (isDebtToken(id)) {
+            console.log("[LL] Before burning: ", balanceOf(user, id));
+            console.log("[LL] Super balance of: ", super.balanceOf(user, id));
+            console.log("[LL] Amount to burn: ", amount);
             uint256 amountScaled = amount.rayDiv(index);
+            console.log("[LL] AmountScaled to burn: ", amountScaled);
             require(amountScaled != 0, Errors.CT_INVALID_BURN_AMOUNT);
             _burn(user, id, amountScaled);
+            console.log("[LL] After burning: ", balanceOf(user, id));
         } else {
-            uint256 amountScaled = amount.rayDiv(index);
+            console.log("[LL] Before burning: ", balanceOf(user, id));
+            console.log("[LL] Super balance of: ", super.balanceOf(user, id));
+            console.log("[LL] Amount to burn: ", amount);
+            uint256 amountScaled = amount.rayMul(index);
+            console.log("[LL] AmountScaled to burn: ", amountScaled);
             require(amountScaled != 0, Errors.CT_INVALID_BURN_AMOUNT);
             _burn(user, id, amountScaled);
+            console.log("[LL] After burning: ", balanceOf(user, id));
             transferUnderlyingTo(receiverOfUnderlying, id, amount);
         }
     }
@@ -389,6 +412,11 @@ contract ATokenERC6909 is IncentivizedERC6909, VersionedInitializable {
     }
 
     function balanceOf(address user, uint256 id) public view override returns (uint256) {
+        console.log(
+            "6909 Super balance of: %s and income: %s",
+            super.balanceOf(user, id),
+            POOL.getReserveNormalizedIncome(_underlyingAssetAddresses[id], true)
+        );
         return super.balanceOf(user, id).rayMul(
             POOL.getReserveNormalizedIncome(_underlyingAssetAddresses[id], true)
         );

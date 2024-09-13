@@ -9,6 +9,9 @@ import {PercentageMath} from "../../libraries/math/PercentageMath.sol";
 import {ILendingPoolAddressesProvider} from "../../../interfaces/ILendingPoolAddressesProvider.sol";
 import {IERC20} from "../../../dependencies/openzeppelin/contracts/IERC20.sol";
 import {IMiniPoolAddressesProvider} from "../../../interfaces/IMiniPoolAddressesProvider.sol";
+
+import "forge-std/console.sol";
+
 /**
  * @title DefaultReserveInterestRateStrategy contract
  * @notice Implements the calculation of the interest rates depending on the reserve state
@@ -19,7 +22,6 @@ import {IMiniPoolAddressesProvider} from "../../../interfaces/IMiniPoolAddresses
  * @author Aave
  *
  */
-
 contract MiniPoolDefaultReserveInterestRateStrategy is IMiniPoolReserveInterestRateStrategy {
     using WadRayMath for uint256;
     using SafeMath for uint256;
@@ -103,6 +105,11 @@ contract MiniPoolDefaultReserveInterestRateStrategy is IMiniPoolReserveInterestR
     ) external view override returns (uint256, uint256) {
         uint256 availableLiquidity = IERC20(reserve).balanceOf(aToken);
         //avoid stack too deep
+        console.log(
+            "availableLiquidity: %s vs liquidityTaken: %s",
+            availableLiquidity.add(liquidityAdded),
+            liquidityTaken
+        );
         availableLiquidity = availableLiquidity.add(liquidityAdded).sub(liquidityTaken);
 
         return calculateInterestRates(reserve, availableLiquidity, totalVariableDebt, reserveFactor);
