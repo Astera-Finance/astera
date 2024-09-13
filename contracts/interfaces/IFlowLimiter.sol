@@ -6,8 +6,5 @@ import {IMiniPool} from "./IMiniPool.sol";
 interface IFlowLimiter {
     function setFlowLimit(address asset, address miniPool, uint256 limit) external;
     function getFlowLimit(address asset, address miniPool) external view returns (uint256);
-    function currentFlow(address asset, bool reserveType, address miniPool)
-        external
-        view
-        returns (uint256);
+    function currentFlow(address asset, address miniPool) external view returns (uint256);
 }

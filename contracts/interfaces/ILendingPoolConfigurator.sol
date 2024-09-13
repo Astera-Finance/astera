@@ -123,6 +123,38 @@ interface ILendingPoolConfigurator {
     event ReserveUnfrozen(address indexed asset, bool reserveType);
 
     /**
+     * @dev Emitted when a reserve is paused
+     * @param asset The address of the underlying asset of the reserve
+     * @param reserveType Whether the reserve is boosted by a vault
+     *
+     */
+    event ReservePaused(address indexed asset, bool reserveType);
+
+    /**
+     * @dev Emitted when a reserve is unpaused
+     * @param asset The address of the underlying asset of the reserve
+     * @param reserveType Whether the reserve is boosted by a vault
+     *
+     */
+    event ReserveUnpaused(address indexed asset, bool reserveType);
+
+    /**
+     * @dev Emitted when FL is enabled
+     * @param asset The address of the underlying asset of the reserve
+     * @param reserveType Whether the reserve is boosted by a vault
+     *
+     */
+    event EnableFlashloan(address indexed asset, bool reserveType);
+
+    /**
+     * @dev Emitted when FL is disabled
+     * @param asset The address of the underlying asset of the reserve
+     * @param reserveType Whether the reserve is boosted by a vault
+     *
+     */
+    event DisableFlashloan(address indexed asset, bool reserveType);
+
+    /**
      * @dev Emitted when a reserve factor is updated
      * @param asset The address of the underlying asset of the reserve
      * @param reserveType Whether the reserve is boosted by a vault

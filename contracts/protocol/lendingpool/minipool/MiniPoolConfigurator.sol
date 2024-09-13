@@ -92,7 +92,12 @@ contract MiniPoolConfigurator is VersionedInitializable, IMiniPoolConfigurator {
         );
         DataTypes.ReserveConfigurationMap memory currentConfig =
             pool.getConfiguration(input.underlyingAsset, false);
+
         currentConfig.setDecimals(input.underlyingAssetDecimals);
+        currentConfig.setActive(true);
+        currentConfig.setFrozen(false);
+        currentConfig.setFlashLoanEnabled(true);
+
         pool.setConfiguration(input.underlyingAsset, false, currentConfig.data);
     }
 
@@ -286,6 +291,87 @@ contract MiniPoolConfigurator is VersionedInitializable, IMiniPoolConfigurator {
         pool.setConfiguration(asset, reserveType, currentConfig.data);
 
         emit ReserveUnfrozen(asset, reserveType);
+    }
+
+    /**
+     * @dev Pause a reserve.
+     * @param asset The address of the underlying asset of the reserve
+     * @param reserveType Whether the reserve is boosted by a vault
+     * @param pool Minipool address
+     *
+     */
+    function pauseReserve(address asset, bool reserveType, IMiniPool pool) external onlyPoolAdmin {
+        DataTypes.ReserveConfigurationMap memory currentConfig =
+            pool.getConfiguration(asset, reserveType);
+
+        currentConfig.setPaused(true);
+
+        pool.setConfiguration(asset, reserveType, currentConfig.data);
+
+        emit ReservePaused(asset, reserveType);
+    }
+
+    /**
+     * @dev Unpause a reserve
+     * @param asset The address of the underlying asset of the reserve
+     * @param reserveType Whether the reserve is boosted by a vault
+     * @param pool Minipool address
+     *
+     */
+    function unpauseReserve(address asset, bool reserveType, IMiniPool pool)
+        external
+        onlyPoolAdmin
+    {
+        DataTypes.ReserveConfigurationMap memory currentConfig =
+            pool.getConfiguration(asset, reserveType);
+
+        currentConfig.setPaused(false);
+
+        pool.setConfiguration(asset, reserveType, currentConfig.data);
+
+        emit ReserveUnpaused(asset, reserveType);
+    }
+
+    /**
+     * @dev Enable Flash loan.
+     * @param asset The address of the underlying asset of the reserve
+     * @param reserveType Whether the reserve is boosted by a vault
+     * @param pool Minipool address
+     *
+     */
+    function enableFlashloan(address asset, bool reserveType, IMiniPool pool)
+        external
+        onlyPoolAdmin
+    {
+        DataTypes.ReserveConfigurationMap memory currentConfig =
+            pool.getConfiguration(asset, reserveType);
+
+        currentConfig.setFlashLoanEnabled(true);
+
+        pool.setConfiguration(asset, reserveType, currentConfig.data);
+
+        emit EnableFlashloan(asset, reserveType);
+    }
+
+    /**
+     * @dev Disable Flash loan.
+     * @param asset The address of the underlying asset of the reserve
+     * @param reserveType Whether the reserve is boosted by a vault
+     * @param pool Minipool address
+     *
+     */
+    function disableFlashloan(address asset, bool reserveType, IMiniPool pool)
+        external
+        onlyPoolAdmin
+    {
+        DataTypes.ReserveConfigurationMap memory currentConfig =
+            pool.getConfiguration(asset, reserveType);
+
+        currentConfig.setFlashLoanEnabled(false);
+
+        pool.setConfiguration(asset, reserveType, currentConfig.data);
+
+        emit DisableFlashloan(asset, reserveType);
     }
 
     /**

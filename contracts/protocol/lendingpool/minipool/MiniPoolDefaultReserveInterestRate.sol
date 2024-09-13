@@ -9,6 +9,10 @@ import {PercentageMath} from "../../libraries/math/PercentageMath.sol";
 import {ILendingPoolAddressesProvider} from "../../../interfaces/ILendingPoolAddressesProvider.sol";
 import {IERC20} from "../../../dependencies/openzeppelin/contracts/IERC20.sol";
 import {IMiniPoolAddressesProvider} from "../../../interfaces/IMiniPoolAddressesProvider.sol";
+import {IFlowLimiter} from "contracts/interfaces/IFlowLimiter.sol";
+import {IAToken} from "contracts/interfaces/IAToken.sol";
+import {IAERC6909} from "contracts/interfaces/IAERC6909.sol";
+
 /**
  * @title DefaultReserveInterestRateStrategy contract
  * @notice Implements the calculation of the interest rates depending on the reserve state
@@ -19,7 +23,6 @@ import {IMiniPoolAddressesProvider} from "../../../interfaces/IMiniPoolAddresses
  * @author Aave
  *
  */
-
 contract MiniPoolDefaultReserveInterestRateStrategy is IMiniPoolReserveInterestRateStrategy {
     using WadRayMath for uint256;
     using SafeMath for uint256;
@@ -101,7 +104,20 @@ contract MiniPoolDefaultReserveInterestRateStrategy is IMiniPoolReserveInterestR
         uint256 totalVariableDebt,
         uint256 reserveFactor
     ) external view override returns (uint256, uint256) {
-        uint256 availableLiquidity = IERC20(reserve).balanceOf(aToken);
+        uint256 availableLiquidity;
+
+        if (IAERC6909(aToken).isTranche(IAERC6909(aToken).MINIPOOL_ID())) {
+            IFlowLimiter flowLimiter = IFlowLimiter(addressesProvider.getFlowLimiter());
+            address underlying = IAToken(reserve).UNDERLYING_ASSET_ADDRESS();
+            address minipool = IAERC6909(aToken).MINIPOOL_ADDRESS();
+
+            availableLiquidity = IERC20(reserve).balanceOf(aToken)
+                + IAToken(reserve).convertToShares(flowLimiter.getFlowLimit(underlying, minipool))
+                - IAToken(reserve).convertToShares(flowLimiter.currentFlow(underlying, minipool));
+        } else {
+            availableLiquidity = IERC20(reserve).balanceOf(aToken);
+        }
+
         //avoid stack too deep
         availableLiquidity = availableLiquidity.add(liquidityAdded).sub(liquidityTaken);
 

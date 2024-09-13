@@ -113,10 +113,8 @@ contract LendingPoolConfigurator is VersionedInitializable, ILendingPoolConfigur
             pool.getConfiguration(input.underlyingAsset, input.reserveType);
 
         currentConfig.setDecimals(input.underlyingAssetDecimals);
-
         currentConfig.setActive(true);
         currentConfig.setFrozen(false);
-
         currentConfig.setFlashLoanEnabled(true);
 
         pool.setConfiguration(input.underlyingAsset, input.reserveType, currentConfig.data);
@@ -366,6 +364,74 @@ contract LendingPoolConfigurator is VersionedInitializable, ILendingPoolConfigur
         pool.setConfiguration(asset, reserveType, currentConfig.data);
 
         emit ReserveUnfrozen(asset, reserveType);
+    }
+
+    /**
+     * @dev Pause a reserve.
+     * @param asset The address of the underlying asset of the reserve
+     * @param reserveType Whether the reserve is boosted by a vault
+     *
+     */
+    function pauseReserve(address asset, bool reserveType) external onlyPoolAdmin {
+        DataTypes.ReserveConfigurationMap memory currentConfig =
+            pool.getConfiguration(asset, reserveType);
+
+        currentConfig.setPaused(true);
+
+        pool.setConfiguration(asset, reserveType, currentConfig.data);
+
+        emit ReservePaused(asset, reserveType);
+    }
+
+    /**
+     * @dev Unpause a reserve
+     * @param asset The address of the underlying asset of the reserve
+     * @param reserveType Whether the reserve is boosted by a vault
+     *
+     */
+    function unpauseReserve(address asset, bool reserveType) external onlyPoolAdmin {
+        DataTypes.ReserveConfigurationMap memory currentConfig =
+            pool.getConfiguration(asset, reserveType);
+
+        currentConfig.setPaused(false);
+
+        pool.setConfiguration(asset, reserveType, currentConfig.data);
+
+        emit ReserveUnpaused(asset, reserveType);
+    }
+
+    /**
+     * @dev Enable Flash loan.
+     * @param asset The address of the underlying asset of the reserve
+     * @param reserveType Whether the reserve is boosted by a vault
+     *
+     */
+    function enableFlashloan(address asset, bool reserveType) external onlyPoolAdmin {
+        DataTypes.ReserveConfigurationMap memory currentConfig =
+            pool.getConfiguration(asset, reserveType);
+
+        currentConfig.setFlashLoanEnabled(true);
+
+        pool.setConfiguration(asset, reserveType, currentConfig.data);
+
+        emit EnableFlashloan(asset, reserveType);
+    }
+
+    /**
+     * @dev Disable Flash loan.
+     * @param asset The address of the underlying asset of the reserve
+     * @param reserveType Whether the reserve is boosted by a vault
+     *
+     */
+    function disableFlashloan(address asset, bool reserveType) external onlyPoolAdmin {
+        DataTypes.ReserveConfigurationMap memory currentConfig =
+            pool.getConfiguration(asset, reserveType);
+
+        currentConfig.setFlashLoanEnabled(false);
+
+        pool.setConfiguration(asset, reserveType, currentConfig.data);
+
+        emit DisableFlashloan(asset, reserveType);
     }
 
     /**

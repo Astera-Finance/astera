@@ -30,8 +30,8 @@ contract ATokenERC6909 is IncentivizedERC6909, VersionedInitializable {
     IMiniPoolAddressesProvider private _addressesProvider;
     IRewarder private INCENTIVES_CONTROLLER;
     IMiniPool private POOL;
-    uint256 constant ATokenAddressableIDs = 1000; // This is the first ID for aToken
-    uint256 constant DebtTokenAddressableIDs = 2000; // This is the first ID for debtToken
+    uint256 public constant ATOKEN_ADDRESSABLE_ID = 1000; // This is the first ID for aToken
+    uint256 public constant DEBT_TOKEN_ADDRESSABLE_ID = 2000; // This is the first ID for debtToken
 
     event TokenInitialized(
         uint256 indexed id, string name, string symbol, uint8 decimals, address underlyingAsset
@@ -71,7 +71,7 @@ contract ATokenERC6909 is IncentivizedERC6909, VersionedInitializable {
         require(bytes(name).length != 0);
         require(bytes(symbol).length != 0);
         require(decimals != 0);
-        require(id < DebtTokenAddressableIDs, Errors.AT_INVALID_ATOKEN_ID);
+        require(id < DEBT_TOKEN_ADDRESSABLE_ID, Errors.AT_INVALID_ATOKEN_ID);
         _setName(id, string.concat("Cod3x Lend Interest Bearing ", name));
         _setSymbol(id, string.concat("grain", symbol));
         _setDecimals(id, decimals);
@@ -225,21 +225,6 @@ contract ATokenERC6909 is IncentivizedERC6909, VersionedInitializable {
         }
     }
 
-    function getIndexForUnderlyingAsset(address underlyingAsset)
-        public
-        view
-        returns (uint256 index)
-    {
-        ILendingPool pool = ILendingPool(_addressesProvider.getLendingPool());
-        index = pool.getReserveData(underlyingAsset, true).liquidityIndex;
-    }
-
-    function getIndexForOverlyingAsset(uint256 id) public view returns (uint256 index) {
-        uint256 underlyingIndex = getIndexForUnderlyingAsset(_underlyingAssetAddresses[id]);
-        index = POOL.getReserveNormalizedIncome(_underlyingAssetAddresses[id], true);
-        index = index.rayMul(underlyingIndex).rayDiv(1e27);
-    }
-
     function transferUnderlyingTo(address to, uint256 id, uint256 amount) public {
         require(msg.sender == address(POOL), Errors.CT_CALLER_MUST_BE_LENDING_POOL);
         if (_isTranche[id]) {
@@ -264,7 +249,10 @@ contract ATokenERC6909 is IncentivizedERC6909, VersionedInitializable {
         if (currentSupplyScaled == 0) {
             return 0;
         }
-        return currentSupplyScaled.rayMul(getIndexForOverlyingAsset(id));
+
+        return currentSupplyScaled.rayMul(
+            POOL.getReserveNormalizedIncome(_underlyingAssetAddresses[id], false)
+        );
     }
 
     function scaledTotalSupply(uint256 id) public view returns (uint256) {
@@ -272,11 +260,11 @@ contract ATokenERC6909 is IncentivizedERC6909, VersionedInitializable {
     }
 
     function isAToken(uint256 id) public pure returns (bool) {
-        return id < DebtTokenAddressableIDs && id >= ATokenAddressableIDs;
+        return id < DEBT_TOKEN_ADDRESSABLE_ID && id >= ATOKEN_ADDRESSABLE_ID;
     }
 
     function isDebtToken(uint256 id) public pure returns (bool) {
-        return id >= DebtTokenAddressableIDs;
+        return id >= DEBT_TOKEN_ADDRESSABLE_ID;
     }
 
     function getIdForUnderlying(address underlying)
@@ -288,11 +276,11 @@ contract ATokenERC6909 is IncentivizedERC6909, VersionedInitializable {
         if (_determineIfAToken(underlying, address(pool))) {
             address tokenUnderlying = IAToken(underlying).UNDERLYING_ASSET_ADDRESS();
             uint256 tokenID = pool.getReserveData(tokenUnderlying, true).id;
-            return (tokenID + ATokenAddressableIDs, tokenID + DebtTokenAddressableIDs, true);
+            return (tokenID + ATOKEN_ADDRESSABLE_ID, tokenID + DEBT_TOKEN_ADDRESSABLE_ID, true);
         } else {
             uint256 offset = pool.MAX_NUMBER_RESERVES();
             uint256 tokenID = offset + _totalUniqueTokens;
-            return (tokenID + ATokenAddressableIDs, tokenID + DebtTokenAddressableIDs, false);
+            return (tokenID + ATOKEN_ADDRESSABLE_ID, tokenID + DEBT_TOKEN_ADDRESSABLE_ID, false);
         }
     }
 
@@ -330,7 +318,7 @@ contract ATokenERC6909 is IncentivizedERC6909, VersionedInitializable {
 
         uint256 previousBalance;
 
-        if (id >= DebtTokenAddressableIDs) {
+        if (id >= DEBT_TOKEN_ADDRESSABLE_ID) {
             if (onBehalfOf != user) {
                 require(
                     _borrowAllowances[id][onBehalfOf][user] >= amount,
@@ -420,5 +408,13 @@ contract ATokenERC6909 is IncentivizedERC6909, VersionedInitializable {
 
             super._transfer(address(0), from, to, id, amount.rayDiv(index));
         }
+    }
+
+    function MINIPOOL_ADDRESS() external view returns (address) {
+        return address(POOL);
+    }
+
+    function MINIPOOL_ID() external view returns (uint256) {
+        return _minipoolId;
     }
 }
