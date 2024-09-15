@@ -91,7 +91,9 @@ contract Oracle is IPriceOracleGetter, Ownable {
         address underlying;
 
         // Check if `asset`is an aToken.
-        try ATokenNonRebasing(asset).UNDERLYING_ASSET_ADDRESS() returns (address underlying_) {
+        try ATokenNonRebasing(asset).UNDERLYING_ASSET_ADDRESS{gas: 4000}() returns (
+            address underlying_
+        ) {
             underlying = underlying_;
         } catch {
             underlying = asset;
