@@ -9,9 +9,10 @@ import {ReserveConfiguration} from
     "contracts/protocol/libraries/configuration/ReserveConfiguration.sol";
 
 import "forge-std/StdUtils.sol";
+import "contracts/interfaces/IMiniPool.sol";
 // import {ILendingPool} from "contracts/interfaces/ILendingPool.sol";
 
-contract MiniPoolDepositBorrowTest is Common {
+contract MiniPoolFlashloanTest is Common {
     event ReserveUsedAsCollateralDisabled(address indexed reserve, address indexed user);
 
     using WadRayMath for uint256;
@@ -339,6 +340,21 @@ contract MiniPoolDepositBorrowTest is Common {
         vm.stopPrank();
     }
 
+    function executeOperation(
+        address[] calldata assets,
+        uint256[] calldata amounts,
+        uint256[] calldata premiums,
+        address initiator,
+        bytes calldata params
+    ) external returns (bool) {
+        uint256[] memory totalAmountsToPay = new uint256[](assets.length);
+        for (uint32 idx = 0; idx < assets.length; idx++) {
+            totalAmountsToPay[idx] = amounts[idx] + premiums[idx];
+            IERC20(assets[idx]).approve(address(miniPool), totalAmountsToPay[idx]);
+        }
+        return true;
+    }
+
     function setUp() public {
         opFork = vm.createSelectFork(RPC, FORK_BLOCK);
         assertEq(vm.activeFork(), opFork);
@@ -382,7 +398,7 @@ contract MiniPoolDepositBorrowTest is Common {
         vm.label(miniPool, "MiniPool");
     }
 
-    function testMiniPoolBeiraoC02() public {
+    function fixture_minipoolFL() internal returns (TokenParams memory, TokenParams memory) {
         address user = makeAddr("user");
         address user2 = makeAddr("user2");
 
@@ -395,126 +411,305 @@ contract MiniPoolDepositBorrowTest is Common {
         IAERC6909 aErc6909Token =
             IAERC6909(miniPoolContracts.miniPoolAddressesProvider.getMiniPoolToAERC6909(miniPool));
 
-        uint256 USDC_OFFSET = 0;
-
-        /* Deposit tests */
         deal(address(tokenParamsUsdc.token), user, amountUsdc);
-
         deal(address(tokenParamsUsdc.token), user2, amountUsdc);
-
+        deal(address(tokenParamsUsdc.token), address(this), amountUsdc);
         deal(address(tokenParamsWbtc.token), user, amountwBtc);
-
         deal(address(tokenParamsWbtc.token), user2, amountwBtc);
-
-        assertEq(amountUsdc, tokenParamsUsdc.token.balanceOf(address(user)));
+        deal(address(tokenParamsWbtc.token), address(this), amountwBtc);
 
         vm.startPrank(user);
         tokenParamsUsdc.token.approve(address(deployedContracts.lendingPool), amountUsdc);
         deployedContracts.lendingPool.deposit(
             address(tokenParamsUsdc.token), true, amountUsdc, user
         );
-        assertEq(amountUsdc, tokenParamsUsdc.aToken.balanceOf(address(user)));
 
         vm.startPrank(user2);
         tokenParamsWbtc.token.approve(address(deployedContracts.lendingPool), amountwBtc);
         deployedContracts.lendingPool.deposit(
             address(tokenParamsWbtc.token), true, amountwBtc, user2
         );
-        assertEq(amountwBtc, tokenParamsWbtc.aToken.balanceOf(address(user2)));
-
         deployedContracts.lendingPool.borrow(
             address(tokenParamsUsdc.token), true, amountUsdc, user2
         );
-        assertEq(amountUsdc * 2, tokenParamsUsdc.token.balanceOf(address(user2)));
-
-        assertEq(amountUsdc, aTokens[0].balanceOf(address(user)));
 
         vm.startPrank(user);
         uint256 amtAUsdc = tokenParamsUsdc.aToken.balanceOf(address(user)) / 2;
         tokenParamsUsdc.aToken.approve(miniPool, amtAUsdc);
         IMiniPool(miniPool).deposit(address(tokenParamsUsdc.aToken), true, amtAUsdc, user);
-        assertEq(amtAUsdc, aErc6909Token.balanceOf(user, 1000 + USDC_OFFSET));
 
-        assertEq(amtAUsdc, tokenParamsUsdc.aToken.balanceOf(address(aErc6909Token)));
-        assertEq(amtAUsdc, aTokens[0].balanceOf(address(aErc6909Token)));
+        uint256 amt = amountUsdc * 10;
+        deal(address(tokenParamsUsdc.token), user, amt);
+        tokenParamsUsdc.token.approve(miniPool, amt);
+        IMiniPool(miniPool).deposit(address(tokenParamsUsdc.token), true, amt, user);
 
-        skip(10 days);
+        amt = amountwBtc * 10;
+        deal(address(tokenParamsWbtc.token), user, amt);
+        tokenParamsWbtc.token.approve(miniPool, amt);
+        IMiniPool(miniPool).deposit(address(tokenParamsWbtc.token), true, amt, user);
 
-        assertEq(amtAUsdc, tokenParamsUsdc.aToken.balanceOf(address(aErc6909Token)));
-        assertLt(amtAUsdc, aTokens[0].balanceOf(address(aErc6909Token)));
+        vm.stopPrank();
 
-        IMiniPool(miniPool).withdraw(
-            address(tokenParamsUsdc.aToken),
-            true,
-            aErc6909Token.balanceOf(user, 1000 + USDC_OFFSET),
-            user
-        );
-
-        assertEq(0, tokenParamsUsdc.aToken.balanceOf(address(aErc6909Token)));
-
-        assertEq(0, aTokens[0].balanceOf(address(aErc6909Token)));
+        return (tokenParamsUsdc, tokenParamsWbtc);
     }
 
-    function testMiniPoolDeposits(uint256 amount, uint256 offset) public {
-        /* Fuzz vector creation */
-        address user = makeAddr("user");
-        offset = bound(offset, 0, tokens.length - 1);
-        TokenParams memory tokenParams = TokenParams(erc20Tokens[offset], aTokensWrapper[offset], 0);
+    function testMiniPoolFL1() public {
+        (TokenParams memory tokenParamsUsdc, TokenParams memory tokenParamsWbtc) =
+            fixture_minipoolFL();
 
-        /* Assumptions */
-        vm.assume(amount <= tokenParams.token.balanceOf(address(this)) / 2);
-        vm.assume(amount > 10 ** tokenParams.token.decimals() / 100);
+        /// FL
+        address[] memory assets = new address[](1);
+        assets[0] = address(tokenParamsUsdc.token);
 
-        /* Deposit tests */
-        fixture_MiniPoolDeposit(amount, offset, user, tokenParams);
+        uint256[] memory amounts = new uint256[](assets.length);
+        amounts[0] = 1e8;
+
+        uint256[] memory modes = new uint256[](assets.length);
+        modes[0] = 0;
+
+        bool[] memory reserveTypes = new bool[](assets.length);
+        reserveTypes[0] = false;
+
+        IMiniPool.FlashLoanParams memory flashLoanParams =
+            IMiniPool.FlashLoanParams(address(this), assets, reserveTypes, address(this));
+
+        uint256 balanceBefore = tokenParamsUsdc.token.balanceOf(address(this));
+
+        IMiniPool(miniPool).flashLoan(flashLoanParams, amounts, modes, bytes("0"));
+
+        assertEq(
+            tokenParamsUsdc.token.balanceOf(address(this)),
+            balanceBefore - amounts[0] * IMiniPool(miniPool).FLASHLOAN_PREMIUM_TOTAL() / 10000
+        );
     }
 
-    function testMiniPoolNormalBorrow(
-        uint256 amount,
-        uint256 collateralOffset,
-        uint256 borrowOffset
-    ) public {
-        /**
-         * Preconditions:
-         * 1. Reserves in MiniPool must be configured
-         * Test Scenario:
-         * 1. User adds token as collateral into the miniPool
-         * 2. User borrows token
-         * Invariants:
-         * 1. Balance of debtToken for user in IERC6909 standard increased
-         * 2. Total supply of debtToken shall increase
-         * 3. Health of user's position shall decrease
-         * 4. User shall have borrowed assets
-         *
-         */
+    function testMiniPoolFL2() public {
+        (TokenParams memory tokenParamsUsdc, TokenParams memory tokenParamsWbtc) =
+            fixture_minipoolFL();
 
-        /* Fuzz vectors */
-        collateralOffset = bound(collateralOffset, 0, tokens.length - 1);
-        borrowOffset = bound(borrowOffset, 0, tokens.length - 1);
-        console.log("[collateral]Offset: ", collateralOffset);
-        console.log("[borrow]Offset: ", borrowOffset);
+        /// FL
+        address[] memory assets = new address[](1);
+        assets[0] = address(tokenParamsWbtc.token);
 
-        /* Test vars */
-        address user = makeAddr("user");
-        TokenParams memory collateralTokenParams = TokenParams(
-            erc20Tokens[collateralOffset],
-            aTokensWrapper[collateralOffset],
-            oracle.getAssetPrice(address(erc20Tokens[collateralOffset]))
-        );
-        TokenParams memory borrowTokenParams = TokenParams(
-            erc20Tokens[borrowOffset],
-            aTokensWrapper[borrowOffset],
-            oracle.getAssetPrice(address(erc20Tokens[borrowOffset]))
-        );
-        /* Assumptions */
-        amount = bound(
-            amount,
-            10 ** (borrowTokenParams.token.decimals() - 2),
-            borrowTokenParams.token.balanceOf(address(this)) / 10
-        );
+        uint256[] memory amounts = new uint256[](assets.length);
+        amounts[0] = 100e6;
 
-        fixture_miniPoolBorrow(
-            amount, collateralOffset, borrowOffset, collateralTokenParams, borrowTokenParams, user
-        );
+        uint256[] memory modes = new uint256[](assets.length);
+        modes[0] = 0;
+
+        bool[] memory reserveTypes = new bool[](assets.length);
+        reserveTypes[0] = false;
+
+        IMiniPool.FlashLoanParams memory flashLoanParams =
+            IMiniPool.FlashLoanParams(address(this), assets, reserveTypes, address(this));
+
+        IMiniPool(miniPool).flashLoan(flashLoanParams, amounts, modes, bytes("0"));
+    }
+
+    function testMiniPoolFLMultiAssets() public {
+        (TokenParams memory tokenParamsUsdc, TokenParams memory tokenParamsWbtc) =
+            fixture_minipoolFL();
+
+        /// FL
+        address[] memory assets = new address[](2);
+        assets[0] = address(tokenParamsUsdc.token);
+        assets[1] = address(tokenParamsWbtc.token);
+
+        uint256[] memory amounts = new uint256[](assets.length);
+        amounts[0] = 100e6;
+        amounts[1] = 1e8;
+
+        uint256[] memory modes = new uint256[](assets.length);
+        modes[0] = 0;
+        modes[1] = 0;
+
+        bool[] memory reserveTypes = new bool[](assets.length);
+        reserveTypes[0] = false;
+        reserveTypes[1] = false;
+
+        IMiniPool.FlashLoanParams memory flashLoanParams =
+            IMiniPool.FlashLoanParams(address(this), assets, reserveTypes, address(this));
+
+        IMiniPool(miniPool).flashLoan(flashLoanParams, amounts, modes, bytes("0"));
+    }
+
+    function testMiniPoolFLRevertTranchedAsset() public {
+        (TokenParams memory tokenParamsUsdc, TokenParams memory tokenParamsWbtc) =
+            fixture_minipoolFL();
+
+        /// FL
+        address[] memory assets = new address[](1);
+        assets[0] = address(tokenParamsUsdc.aToken);
+
+        uint256[] memory amounts = new uint256[](assets.length);
+        amounts[0] = 100e6;
+
+        uint256[] memory modes = new uint256[](assets.length);
+        modes[0] = 0;
+
+        bool[] memory reserveTypes = new bool[](assets.length);
+        reserveTypes[0] = false;
+
+        IMiniPool.FlashLoanParams memory flashLoanParams =
+            IMiniPool.FlashLoanParams(address(this), assets, reserveTypes, address(this));
+
+        vm.expectRevert(bytes("95"));
+        IMiniPool(miniPool).flashLoan(flashLoanParams, amounts, modes, bytes("0"));
+    }
+
+    function testMiniPoolFLRevertTranchedAssets() public {
+        (TokenParams memory tokenParamsUsdc, TokenParams memory tokenParamsWbtc) =
+            fixture_minipoolFL();
+
+        /// FL
+        address[] memory assets = new address[](2);
+        assets[0] = address(tokenParamsUsdc.token);
+        assets[1] = address(tokenParamsUsdc.aToken);
+
+        uint256[] memory amounts = new uint256[](assets.length);
+        amounts[0] = 100e6;
+        amounts[1] = 100e6;
+
+        uint256[] memory modes = new uint256[](assets.length);
+        modes[0] = 0;
+        modes[1] = 0;
+
+        bool[] memory reserveTypes = new bool[](assets.length);
+        reserveTypes[0] = false;
+        reserveTypes[1] = false;
+
+        IMiniPool.FlashLoanParams memory flashLoanParams =
+            IMiniPool.FlashLoanParams(address(this), assets, reserveTypes, address(this));
+
+        vm.expectRevert(bytes("95"));
+        IMiniPool(miniPool).flashLoan(flashLoanParams, amounts, modes, bytes("0"));
+    }
+
+    function testMiniPoolFLIntoBorrow() public {
+        (TokenParams memory tokenParamsUsdc, TokenParams memory tokenParamsWbtc) =
+            fixture_minipoolFL();
+        IAERC6909 aErc6909Token =
+            IAERC6909(miniPoolContracts.miniPoolAddressesProvider.getMiniPoolToAERC6909(miniPool));
+        uint256 USDC_OFFSET = 0;
+
+        uint256 amt = 2e8;
+        deal(address(tokenParamsWbtc.token), address(this), amt);
+        tokenParamsWbtc.token.approve(miniPool, amt);
+        IMiniPool(miniPool).deposit(address(tokenParamsWbtc.token), true, amt, address(this));
+
+        /// FL
+        address[] memory assets = new address[](1);
+        assets[0] = address(tokenParamsUsdc.token);
+
+        uint256[] memory amounts = new uint256[](assets.length);
+        amounts[0] = 100e6;
+
+        uint256[] memory modes = new uint256[](assets.length);
+        modes[0] = 1;
+
+        bool[] memory reserveTypes = new bool[](assets.length);
+        reserveTypes[0] = false;
+
+        IMiniPool.FlashLoanParams memory flashLoanParams =
+            IMiniPool.FlashLoanParams(address(this), assets, reserveTypes, address(this));
+
+        uint256 balanceBefore = tokenParamsUsdc.token.balanceOf(address(this));
+
+        IMiniPool(miniPool).flashLoan(flashLoanParams, amounts, modes, bytes("0"));
+
+        // Must not take a fee but + amount
+        assertEq(tokenParamsUsdc.token.balanceOf(address(this)), balanceBefore + amounts[0]);
+
+        assertEq(aErc6909Token.balanceOf(address(this), 2000 + 128 + USDC_OFFSET), amounts[0]);
+    }
+
+    function testMiniPoolFLIntoMultipleBorrow1() public {
+        (TokenParams memory tokenParamsUsdc, TokenParams memory tokenParamsWbtc) =
+            fixture_minipoolFL();
+        IAERC6909 aErc6909Token =
+            IAERC6909(miniPoolContracts.miniPoolAddressesProvider.getMiniPoolToAERC6909(miniPool));
+        uint256 USDC_OFFSET = 0;
+
+        uint256 amt = 2e8;
+        deal(address(tokenParamsWbtc.token), address(this), amt);
+        tokenParamsWbtc.token.approve(miniPool, amt);
+        IMiniPool(miniPool).deposit(address(tokenParamsWbtc.token), true, amt, address(this));
+
+        /// FL
+        address[] memory assets = new address[](2);
+        assets[0] = address(tokenParamsUsdc.token);
+        assets[1] = address(tokenParamsWbtc.token);
+
+        uint256[] memory amounts = new uint256[](assets.length);
+        amounts[0] = 100e6;
+        amounts[1] = 1e8;
+
+        uint256[] memory modes = new uint256[](assets.length);
+        modes[0] = 1;
+        modes[1] = 1;
+
+        bool[] memory reserveTypes = new bool[](assets.length);
+        reserveTypes[0] = false;
+        reserveTypes[1] = false;
+
+        IMiniPool.FlashLoanParams memory flashLoanParams =
+            IMiniPool.FlashLoanParams(address(this), assets, reserveTypes, address(this));
+
+        uint256 balanceBeforeUsdc = tokenParamsUsdc.token.balanceOf(address(this));
+        uint256 balanceBeforeWbtc = tokenParamsWbtc.token.balanceOf(address(this));
+
+        IMiniPool(miniPool).flashLoan(flashLoanParams, amounts, modes, bytes("0"));
+
+        // Must not take a fee but + amount
+        assertEq(tokenParamsUsdc.token.balanceOf(address(this)), balanceBeforeUsdc + amounts[0]);
+        assertEq(tokenParamsWbtc.token.balanceOf(address(this)), balanceBeforeWbtc + amounts[1]);
+
+        assertEq(aErc6909Token.balanceOf(address(this), 2000 + 128 + 0), amounts[0]);
+        assertEq(aErc6909Token.balanceOf(address(this), 2000 + 128 + 1), amounts[1]);
+    }
+
+    function testMiniPoolFLIntoMultipleBorrow2() public {
+        (TokenParams memory tokenParamsUsdc, TokenParams memory tokenParamsWbtc) =
+            fixture_minipoolFL();
+        IAERC6909 aErc6909Token =
+            IAERC6909(miniPoolContracts.miniPoolAddressesProvider.getMiniPoolToAERC6909(miniPool));
+        uint256 USDC_OFFSET = 0;
+
+        uint256 amt = 2e8;
+        deal(address(tokenParamsWbtc.token), address(this), amt * 2);
+        tokenParamsWbtc.token.approve(miniPool, amt);
+        IMiniPool(miniPool).deposit(address(tokenParamsWbtc.token), true, amt, address(this));
+
+        /// FL
+        address[] memory assets = new address[](2);
+        assets[0] = address(tokenParamsUsdc.token);
+        assets[1] = address(tokenParamsWbtc.token);
+
+        uint256[] memory amounts = new uint256[](assets.length);
+        amounts[0] = 100e6;
+        amounts[1] = 1e8;
+
+        uint256[] memory modes = new uint256[](assets.length);
+        modes[0] = 1;
+        modes[1] = 1;
+
+        bool[] memory reserveTypes = new bool[](assets.length);
+        reserveTypes[0] = false;
+        reserveTypes[1] = false;
+
+        IMiniPool.FlashLoanParams memory flashLoanParams =
+            IMiniPool.FlashLoanParams(address(this), assets, reserveTypes, address(this));
+
+        uint256 balanceBeforeUsdc = tokenParamsUsdc.token.balanceOf(address(this));
+        uint256 balanceBeforeWbtc = tokenParamsWbtc.token.balanceOf(address(this));
+
+        IMiniPool(miniPool).flashLoan(flashLoanParams, amounts, modes, bytes("0"));
+
+        // Must not take a fee but + amount
+        assertEq(tokenParamsUsdc.token.balanceOf(address(this)), balanceBeforeUsdc + amounts[0]);
+        assertEq(tokenParamsWbtc.token.balanceOf(address(this)), balanceBeforeWbtc + amounts[1]);
+
+        assertEq(aErc6909Token.balanceOf(address(this), 2000 + 128 + 0), amounts[0]);
+        assertEq(aErc6909Token.balanceOf(address(this), 2000 + 128 + 1), amounts[1]);
     }
 }

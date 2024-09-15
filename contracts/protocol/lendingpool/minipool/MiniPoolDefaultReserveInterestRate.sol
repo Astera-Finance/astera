@@ -8,9 +8,11 @@ import {WadRayMath} from "../../libraries/math/WadRayMath.sol";
 import {PercentageMath} from "../../libraries/math/PercentageMath.sol";
 import {ILendingPoolAddressesProvider} from "../../../interfaces/ILendingPoolAddressesProvider.sol";
 import {IERC20} from "../../../dependencies/openzeppelin/contracts/IERC20.sol";
-import {IAToken} from "../../../interfaces/IAToken.sol";
-import {IAERC6909} from "../../../interfaces/IAERC6909.sol";
 import {IMiniPoolAddressesProvider} from "../../../interfaces/IMiniPoolAddressesProvider.sol";
+import {IFlowLimiter} from "contracts/interfaces/IFlowLimiter.sol";
+import {IAToken} from "contracts/interfaces/IAToken.sol";
+import {IAERC6909} from "contracts/interfaces/IAERC6909.sol";
+
 /**
  * @title DefaultReserveInterestRateStrategy contract
  * @notice Implements the calculation of the interest rates depending on the reserve state
@@ -21,7 +23,6 @@ import {IMiniPoolAddressesProvider} from "../../../interfaces/IMiniPoolAddresses
  * @author Aave
  *
  */
-
 contract MiniPoolDefaultReserveInterestRateStrategy is IMiniPoolReserveInterestRateStrategy {
     using WadRayMath for uint256;
     using SafeMath for uint256;
@@ -103,7 +104,20 @@ contract MiniPoolDefaultReserveInterestRateStrategy is IMiniPoolReserveInterestR
         uint256 totalVariableDebt,
         uint256 reserveFactor
     ) external view override returns (uint256, uint256) {
-        uint256 availableLiquidity = IERC20(reserve).balanceOf(aToken);
+        uint256 availableLiquidity;
+
+        if (IAERC6909(aToken).isTranche(IAERC6909(aToken).MINIPOOL_ID())) {
+            IFlowLimiter flowLimiter = IFlowLimiter(addressesProvider.getFlowLimiter());
+            address underlying = IAToken(reserve).UNDERLYING_ASSET_ADDRESS();
+            address minipool = IAERC6909(aToken).MINIPOOL_ADDRESS();
+
+            availableLiquidity = IERC20(reserve).balanceOf(aToken)
+                + IAToken(reserve).convertToShares(flowLimiter.getFlowLimit(underlying, minipool))
+                - IAToken(reserve).convertToShares(flowLimiter.currentFlow(underlying, minipool));
+        } else {
+            availableLiquidity = IERC20(reserve).balanceOf(aToken);
+        }
+
         //avoid stack too deep
         availableLiquidity = availableLiquidity.add(liquidityAdded).sub(liquidityTaken);
 
@@ -133,7 +147,7 @@ contract MiniPoolDefaultReserveInterestRateStrategy is IMiniPoolReserveInterestR
         uint256 availableLiquidity,
         uint256 totalVariableDebt,
         uint256 reserveFactor
-    ) public view override returns (uint256, uint256) {
+    ) public view returns (uint256, uint256) {
         CalcInterestRatesLocalVars memory vars;
 
         vars.totalDebt = totalVariableDebt;
@@ -158,69 +172,6 @@ contract MiniPoolDefaultReserveInterestRateStrategy is IMiniPoolReserveInterestR
 
         vars.currentLiquidityRate = vars.currentVariableBorrowRate.rayMul(vars.utilizationRate)
             .percentMul(PercentageMath.PERCENTAGE_FACTOR.sub(reserveFactor));
-
-        return (vars.currentLiquidityRate, vars.currentVariableBorrowRate);
-    }
-
-    struct CalcAugmentedInterestRatesLocalVars {
-        uint256 interestRateDelta;
-        uint256 currentVariableBorrowRate;
-        uint256 currentLiquidityRate;
-        uint256 utilizationRate;
-        uint256 backstopUtilizationRate;
-    }
-
-    function calculateAugmentedInterestRate(augmentedInterestRateParams memory params)
-        external
-        view
-        override
-        returns (uint256, uint256)
-    {
-        CalcAugmentedInterestRatesLocalVars memory vars;
-        vars.interestRateDelta =
-            uint256(params.underlyingVarRate) - uint256(params.underlyingLiqRate);
-        vars.utilizationRate = params.totalVariableDebt == 0
-            ? 0
-            : params.totalVariableDebt.rayDiv(params.availableLiquidity.add(params.totalVariableDebt));
-        vars.backstopUtilizationRate = params.utilizedBackstopLiquidity == 0
-            ? 0
-            : params.utilizedBackstopLiquidity.rayDiv(params.totalAvailableBackstopLiquidity);
-
-        if (vars.backstopUtilizationRate > 0) {
-            if (vars.backstopUtilizationRate > OPTIMAL_UTILIZATION_RATE) {
-                uint256 excessUtilizationRateRatio = vars.backstopUtilizationRate.sub(
-                    OPTIMAL_UTILIZATION_RATE
-                ).rayDiv(EXCESS_UTILIZATION_RATE);
-
-                vars.currentVariableBorrowRate = vars.interestRateDelta.add(_variableRateSlope1).add(
-                    _variableRateSlope2.rayMul(excessUtilizationRateRatio)
-                );
-            } else {
-                vars.currentVariableBorrowRate = vars.interestRateDelta.add(
-                    vars.backstopUtilizationRate.rayMul(_variableRateSlope1).rayDiv(
-                        OPTIMAL_UTILIZATION_RATE
-                    )
-                );
-            }
-        } else {
-            if (vars.utilizationRate > OPTIMAL_UTILIZATION_RATE) {
-                uint256 excessUtilizationRateRatio = vars.utilizationRate.sub(
-                    OPTIMAL_UTILIZATION_RATE
-                ).rayDiv(EXCESS_UTILIZATION_RATE);
-
-                vars.currentVariableBorrowRate = _baseVariableBorrowRate.add(_variableRateSlope1)
-                    .add(_variableRateSlope2.rayMul(excessUtilizationRateRatio));
-            } else {
-                vars.currentVariableBorrowRate = _baseVariableBorrowRate.add(
-                    vars.utilizationRate.rayMul(_variableRateSlope1).rayDiv(
-                        OPTIMAL_UTILIZATION_RATE
-                    )
-                );
-            }
-        }
-
-        vars.currentLiquidityRate = vars.currentVariableBorrowRate.rayMul(vars.utilizationRate)
-            .percentMul(PercentageMath.PERCENTAGE_FACTOR.sub(params.reserveFactor));
 
         return (vars.currentLiquidityRate, vars.currentVariableBorrowRate);
     }

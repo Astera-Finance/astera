@@ -402,6 +402,8 @@ interface IMiniPool {
 
     function MAX_NUMBER_RESERVES() external view returns (uint256);
 
+    function FLASHLOAN_PREMIUM_TOTAL() external view returns (uint256);
+
     function setPause(bool val) external;
 
     function paused() external view returns (bool);

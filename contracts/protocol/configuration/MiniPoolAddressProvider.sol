@@ -9,6 +9,7 @@ import {InitializableImmutableAdminUpgradeabilityProxy} from
     "../libraries/upgradeability/InitializableImmutableAdminUpgradeabilityProxy.sol";
 
 import {ILendingPoolAddressesProvider} from "../../interfaces/ILendingPoolAddressesProvider.sol";
+import {IFlowLimiter} from "contracts/interfaces/IFlowLimiter.sol";
 
 /**
  * @title LendingPoolAddressesProvider contract
@@ -77,9 +78,13 @@ contract MiniPoolAddressesProvider is Ownable {
         return _addresses[PRICE_ORACLE];
     }
 
-    function getFlowLimiter() external view returns (address) {
+    function getFlowLimiter() public view returns (address) {
         return ILendingPoolAddressesProvider(_addresses[LENDING_POOL_ADDRESSES_PROVIDER])
             .getFlowLimiter();
+    }
+
+    function setFlowLimit(address asset, address miniPool, uint256 limit) external onlyOwner {
+        IFlowLimiter(getFlowLimiter()).setFlowLimit(asset, miniPool, limit);
     }
 
     function setMiniPoolImpl(address impl) external onlyOwner {
@@ -166,5 +171,9 @@ contract MiniPoolAddressesProvider is Ownable {
 
     function setMiniPoolCollateralManager(address collateralManager) external onlyOwner {
         _addresses[LENDING_POOL_COLLATERAL_MANAGER] = collateralManager;
+    }
+
+    function setMiniPoolToTreasury(uint256 id, address treasury) external onlyOwner {
+        _miniPoolToTreasury[id] = treasury;
     }
 }

@@ -112,6 +112,22 @@ interface IAToken is IERC20, IScaledBalanceToken, IInitializableAToken {
      */
     function UNDERLYING_ASSET_ADDRESS() external view returns (address);
 
+    /// --------- Share logic ---------
+
+    function transferShare(address from, address to, uint256 shareAmount) external;
+
+    function shareApprove(address owner, address spender, uint256 shareAmount) external;
+
+    function shareAllowances(address owner, address spender) external view returns (uint256);
+
+    function WRAPPER_ADDRESS() external view returns (address);
+
+    function convertToShares(uint256 assetAmount) external view returns (uint256);
+
+    function convertToAssets(uint256 shareAmount) external view returns (uint256);
+
+    /// --------- Rehypothecation logic ---------
+
     /**
      * @dev Returns the total balance of underlying asset of this token, including balance lent to a vault
      *

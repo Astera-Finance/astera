@@ -32,7 +32,7 @@ contract LendingPoolStorage {
 
     bool internal _paused;
 
-    uint256 internal _flashLoanPremiumTotal;
+    uint128 internal _flashLoanPremiumTotal;
 
     uint256 internal _maxNumberOfReserves;
 

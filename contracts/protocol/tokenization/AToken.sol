@@ -13,6 +13,7 @@ import {VersionedInitializable} from "../libraries/upgradeability/VersionedIniti
 import {IncentivizedERC20} from "./IncentivizedERC20.sol";
 import {IRewarder} from "../../interfaces/IRewarder.sol";
 import {IERC4626} from "../../interfaces/IERC4626.sol";
+import {ATokenNonRebasing} from "./ATokenNonRebasing.sol";
 
 /**
  * @title Aave ERC20 AToken
@@ -39,16 +40,21 @@ contract AToken is
 
     uint256 public constant ATOKEN_REVISION = 0x1;
 
+    mapping(address => mapping(address => uint256)) internal _shareAllowances;
+
     /// @dev owner => next valid nonce to submit with permit()
     mapping(address => uint256) public _nonces;
 
     bytes32 public DOMAIN_SEPARATOR;
+    bool public RESERVE_TYPE;
 
     ILendingPool internal _pool;
     address internal _treasury;
     address internal _underlyingAsset;
-    bool internal _reserveType;
+
     IRewarder internal _incentivesController;
+
+    address internal _aTokenWrapper;
 
     /**
      * @dev Rehypothecation related vars
@@ -83,9 +89,11 @@ contract AToken is
      * @param treasury The address of the Aave treasury, receiving the fees on this aToken
      * @param underlyingAsset The address of the underlying asset of this aToken (E.g. WETH for aWETH)
      * @param incentivesController The smart contract managing potential incentives distribution
-     * @param aTokenDecimals The decimals of the aToken, same as the underlying asset's
+     * @param aTokenDecimals The decimals of the aToken, same as the underlying asset's\
+     * @param reserveType Whether the reserve is boosted by a vault
      * @param aTokenName The name of the aToken
      * @param aTokenSymbol The symbol of the aToken
+     * @param params Additional params to configure contract
      */
     function initialize(
         ILendingPool pool,
@@ -93,26 +101,22 @@ contract AToken is
         address underlyingAsset,
         IRewarder incentivesController,
         uint8 aTokenDecimals,
+        bool reserveType,
         string calldata aTokenName,
         string calldata aTokenSymbol,
         bytes calldata params
     ) external override initializer {
-        uint256 chainId;
-
-        //solium-disable-next-line
-        assembly {
-            chainId := chainid()
-        }
-
         DOMAIN_SEPARATOR = keccak256(
             abi.encode(
                 EIP712_DOMAIN,
                 keccak256(bytes(aTokenName)),
                 keccak256(EIP712_REVISION),
-                chainId,
+                block.chainid,
                 address(this)
             )
         );
+
+        RESERVE_TYPE = reserveType;
 
         _setName(aTokenName);
         _setSymbol(aTokenSymbol);
@@ -123,7 +127,7 @@ contract AToken is
         _underlyingAsset = underlyingAsset;
         _incentivesController = incentivesController;
 
-        _reserveType = true; // @issue was always false, make it configurable or always true ?
+        _aTokenWrapper = address(new ATokenNonRebasing(address(this)));
 
         emit Initialized(
             underlyingAsset,
@@ -131,6 +135,7 @@ contract AToken is
             treasury,
             address(incentivesController),
             aTokenDecimals,
+            reserveType,
             aTokenName,
             aTokenSymbol,
             params
@@ -247,7 +252,7 @@ contract AToken is
         returns (uint256)
     {
         return super.balanceOf(user).rayMul(
-            _pool.getReserveNormalizedIncome(_underlyingAsset, _reserveType)
+            _pool.getReserveNormalizedIncome(_underlyingAsset, RESERVE_TYPE)
         );
     }
 
@@ -293,7 +298,7 @@ contract AToken is
         }
 
         return currentSupplyScaled.rayMul(
-            _pool.getReserveNormalizedIncome(_underlyingAsset, _reserveType)
+            _pool.getReserveNormalizedIncome(_underlyingAsset, RESERVE_TYPE)
         );
     }
 
@@ -432,7 +437,7 @@ contract AToken is
         address underlyingAsset = _underlyingAsset;
         ILendingPool pool = _pool;
 
-        uint256 index = pool.getReserveNormalizedIncome(underlyingAsset, _reserveType);
+        uint256 index = pool.getReserveNormalizedIncome(underlyingAsset, RESERVE_TYPE);
 
         uint256 fromBalanceBefore = super.balanceOf(from).rayMul(index);
         uint256 toBalanceBefore = super.balanceOf(to).rayMul(index);
@@ -441,7 +446,7 @@ contract AToken is
 
         if (validate) {
             pool.finalizeTransfer(
-                underlyingAsset, _reserveType, from, to, amount, fromBalanceBefore, toBalanceBefore
+                underlyingAsset, RESERVE_TYPE, from, to, amount, fromBalanceBefore, toBalanceBefore
             );
         }
 
@@ -458,6 +463,69 @@ contract AToken is
     function _transfer(address from, address to, uint256 amount) internal override {
         _transfer(from, to, amount, true);
     }
+
+    /// --------- Share logic ---------
+
+    /**
+     * @dev Transfers the aToken shares between two users. Validates the transfer
+     * (ie checks for valid HF after the transfer) if required
+     * Restricted to `_aTokenWrapper`.
+     * @param from The source address
+     * @param to The destination address
+     * @param shareAmount The share amount getting transferred
+     */
+    function transferShare(address from, address to, uint256 shareAmount) external {
+        require(msg.sender == _aTokenWrapper, "CALLER_NOT_WRAPPER");
+
+        address underlyingAsset = _underlyingAsset;
+        ILendingPool pool = _pool;
+
+        uint256 index = pool.getReserveNormalizedIncome(underlyingAsset, RESERVE_TYPE);
+
+        uint256 fromBalanceBefore = super.balanceOf(from).rayMul(index);
+        uint256 toBalanceBefore = super.balanceOf(to).rayMul(index);
+
+        super._transfer(from, to, shareAmount);
+
+        uint256 amount = shareAmount.rayMul(index);
+
+        pool.finalizeTransfer(
+            underlyingAsset, RESERVE_TYPE, from, to, amount, fromBalanceBefore, toBalanceBefore
+        );
+
+        emit BalanceTransfer(from, to, amount, index);
+    }
+
+    /**
+     * @dev Allows `spender` to spend the shares owned by `owner`.
+     * Restricted to `_aTokenWrapper`.
+     * @param owner The owner of the shares.
+     * @param spender The user allowed to spend owner tokens
+     * @param shareAmount The share amount getting approved
+     */
+    function shareApprove(address owner, address spender, uint256 shareAmount) external {
+        require(msg.sender == _aTokenWrapper, "CALLER_NOT_WRAPPER");
+
+        _shareAllowances[owner][spender] = shareAmount;
+    }
+
+    function shareAllowances(address owner, address spender) external view returns (uint256) {
+        return _shareAllowances[owner][spender];
+    }
+
+    function WRAPPER_ADDRESS() external view returns (address) {
+        return _aTokenWrapper;
+    }
+
+    function convertToShares(uint256 assetAmount) external view returns (uint256) {
+        return assetAmount.rayDiv(_pool.getReserveNormalizedIncome(_underlyingAsset, RESERVE_TYPE));
+    }
+
+    function convertToAssets(uint256 shareAmount) external view returns (uint256) {
+        return shareAmount.rayMul(_pool.getReserveNormalizedIncome(_underlyingAsset, RESERVE_TYPE));
+    }
+
+    /// --------- Rehypothecation logic ---------
 
     /// @dev Rebalance so as to free _amountToWithdraw for a future transfer
     function _rebalance(uint256 _amountToWithdraw) internal {

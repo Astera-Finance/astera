@@ -8,11 +8,8 @@ import {IERC20} from "../../../dependencies/openzeppelin/contracts/IERC20.sol";
 import {SafeERC20} from "../../../dependencies/openzeppelin/contracts/SafeERC20.sol";
 import {IMiniPoolAddressesProvider} from "../../../interfaces/IMiniPoolAddressesProvider.sol";
 import {IFlowLimiter} from "../../../interfaces/IFlowLimiter.sol";
-import {ILendingPoolAddressesProvider} from "../../../interfaces/ILendingPoolAddressesProvider.sol";
 import {IAToken} from "../../../interfaces/IAToken.sol";
-import {IVariableDebtToken} from "../../../interfaces/IVariableDebtToken.sol";
 import {IFlashLoanReceiver} from "../../../flashloan/interfaces/IFlashLoanReceiver.sol";
-import {IPriceOracleGetter} from "../../../interfaces/IPriceOracleGetter.sol";
 import {ILendingPool} from "../../../interfaces/ILendingPool.sol";
 import {VersionedInitializable} from "../../libraries/upgradeability/VersionedInitializable.sol";
 import {Helpers} from "../../libraries/helpers/Helpers.sol";
@@ -27,6 +24,7 @@ import {UserConfiguration} from "../../libraries/configuration/UserConfiguration
 import {DataTypes} from "../../libraries/types/DataTypes.sol";
 import {MiniPoolStorage} from "./MiniPoolStorage.sol";
 import {IMiniPool} from "../../../interfaces/IMiniPool.sol";
+import {ATokenNonRebasing} from "contracts/protocol/tokenization/ATokenNonRebasing.sol";
 
 import {MiniPoolDepositLogic} from "./logic/MiniPoolDepositLogic.sol";
 import {MiniPoolWithdrawLogic} from "./logic/MiniPoolWithdrawLogic.sol";
@@ -195,9 +193,9 @@ contract MiniPool is VersionedInitializable, IMiniPool, MiniPoolStorage {
             ILendingPool(vars.LendingPool).miniPoolBorrow(
                 underlying,
                 reserveType,
-                amount.sub(vars.availableLiquidity),
+                IAToken(asset).convertToAssets(amount.sub(vars.availableLiquidity)), // amount + availableLiquidity converted to asset
                 address(this),
-                address(asset)
+                ATokenNonRebasing(asset).ATOKEN_ADDRESS()
             );
 
             vars.amountRecieved = IERC20(underlying).balanceOf(address(this));
@@ -236,7 +234,6 @@ contract MiniPool is VersionedInitializable, IMiniPool, MiniPoolStorage {
             _usersConfig,
             _usersRecentBorrow
         );
-        pokeInterestRate(asset, reserveType);
     }
 
     struct repayVars {
@@ -354,7 +351,8 @@ contract MiniPool is VersionedInitializable, IMiniPool, MiniPoolStorage {
         vars.aTokenAddress = reserve.aTokenAddress;
         if (IAERC6909(reserve.aTokenAddress).isTranche(reserve.aTokenID)) {
             vars.underlyingAsset = IAToken(asset).UNDERLYING_ASSET_ADDRESS();
-            vars.underlyingDebt = getCurrentLendingPoolDebt(vars.underlyingAsset, reserveType);
+            vars.underlyingDebt =
+                IAToken(asset).convertToShares(getCurrentLendingPoolDebt(vars.underlyingAsset)); // share
             if (vars.underlyingDebt != 0) {
                 if (vars.underlyingDebt < amount) {
                     amount = vars.underlyingDebt;
@@ -367,15 +365,14 @@ contract MiniPool is VersionedInitializable, IMiniPool, MiniPoolStorage {
                     _usersConfig,
                     _reservesList,
                     _addressesProvider
-                );
-                amount = IERC20(asset).balanceOf(address(this));
-                IERC20(asset).approve(_addressesProvider.getLendingPool(), amount);
+                ); // MUST use share
 
+                IERC20 aToken = IERC20(ATokenNonRebasing(asset).ATOKEN_ADDRESS());
+                amount = aToken.balanceOf(address(this)); // asset
+                aToken.approve(_addressesProvider.getLendingPool(), amount);
                 ILendingPool(_addressesProvider.getLendingPool()).repayWithATokens(
                     vars.underlyingAsset, reserveType, amount, address(this)
-                );
-
-                pokeInterestRate(asset, reserveType);
+                ); // MUST use asset
             }
         }
     }
@@ -415,7 +412,6 @@ contract MiniPool is VersionedInitializable, IMiniPool, MiniPoolStorage {
             MiniPoolFlashLoanLogic.FlashLoanParams(
                 flashLoanParams.receiverAddress,
                 flashLoanParams.assets,
-                flashLoanParams.reserveTypes,
                 flashLoanParams.onBehalfOf,
                 _addressesProvider,
                 _reservesCount,
@@ -746,21 +742,7 @@ contract MiniPool is VersionedInitializable, IMiniPool, MiniPoolStorage {
         }
     }
 
-    function pokeInterestRate(address asset, bool reserveType) public {
-        if (_lendingPoolDebt[asset] != 0) {
-            _reserves[asset].updateInterestRatesAugmented(
-                asset, 0, 0, _addressesProvider, reserveType
-            );
-        }
-    }
-
-    function getCurrentLendingPoolDebt(address asset, bool reserveType)
-        public
-        view
-        returns (uint256)
-    {
-        return IFlowLimiter(_addressesProvider.getFlowLimiter()).currentFlow(
-            asset, reserveType, address(this)
-        );
+    function getCurrentLendingPoolDebt(address asset) public view returns (uint256) {
+        return IFlowLimiter(_addressesProvider.getFlowLimiter()).currentFlow(asset, address(this));
     }
 }

@@ -265,13 +265,32 @@ library ValidationLogic {
     }
 
     /**
-     * @dev Validates a flashloan action
-     * @param assets The assets being flashborrowed
+     * @notice Validates a flashloan action.
+     * @param reservesData The state of all the reserves
+     * @param assets The assets being flash-borrowed
      * @param amounts The amounts for each asset being borrowed
-     *
      */
-    function validateFlashloan(address[] memory assets, uint256[] memory amounts) internal pure {
+    function validateFlashloan(
+        mapping(address => mapping(bool => DataTypes.ReserveData)) storage reservesData,
+        bool[] memory reserveType,
+        address[] memory assets,
+        uint256[] memory amounts
+    ) internal view {
         require(assets.length == amounts.length, Errors.VL_INCONSISTENT_FLASHLOAN_PARAMS);
+        for (uint256 i = 0; i < assets.length; i++) {
+            validateFlashloanSimple(reservesData[assets[i]][reserveType[i]]);
+        }
+    }
+
+    /**
+     * @notice Validates a flashloan action.
+     * @param reserve The state of the reserve
+     */
+    function validateFlashloanSimple(DataTypes.ReserveData storage reserve) internal view {
+        DataTypes.ReserveConfigurationMap storage configuration = reserve.configuration;
+        require(!configuration.getPaused(), Errors.VL_RESERVE_PAUSED);
+        require(configuration.getActive(), Errors.VL_RESERVE_INACTIVE);
+        require(configuration.getFlashLoanEnabled(), Errors.VL_FLASHLOAN_DISABLED);
     }
 
     /**

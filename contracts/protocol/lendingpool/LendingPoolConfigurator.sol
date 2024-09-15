@@ -79,6 +79,7 @@ contract LendingPoolConfigurator is VersionedInitializable, ILendingPoolConfigur
                 input.underlyingAsset,
                 IRewarder(input.incentivesController),
                 input.underlyingAssetDecimals,
+                input.reserveType,
                 input.aTokenName,
                 input.aTokenSymbol,
                 input.params
@@ -93,6 +94,7 @@ contract LendingPoolConfigurator is VersionedInitializable, ILendingPoolConfigur
                 input.underlyingAsset,
                 IRewarder(input.incentivesController),
                 input.underlyingAssetDecimals,
+                input.reserveType,
                 input.variableDebtTokenName,
                 input.variableDebtTokenSymbol,
                 input.params
@@ -111,9 +113,9 @@ contract LendingPoolConfigurator is VersionedInitializable, ILendingPoolConfigur
             pool.getConfiguration(input.underlyingAsset, input.reserveType);
 
         currentConfig.setDecimals(input.underlyingAssetDecimals);
-
         currentConfig.setActive(true);
         currentConfig.setFrozen(false);
+        currentConfig.setFlashLoanEnabled(true);
 
         pool.setConfiguration(input.underlyingAsset, input.reserveType, currentConfig.data);
 
@@ -365,6 +367,74 @@ contract LendingPoolConfigurator is VersionedInitializable, ILendingPoolConfigur
     }
 
     /**
+     * @dev Pause a reserve.
+     * @param asset The address of the underlying asset of the reserve
+     * @param reserveType Whether the reserve is boosted by a vault
+     *
+     */
+    function pauseReserve(address asset, bool reserveType) external onlyPoolAdmin {
+        DataTypes.ReserveConfigurationMap memory currentConfig =
+            pool.getConfiguration(asset, reserveType);
+
+        currentConfig.setPaused(true);
+
+        pool.setConfiguration(asset, reserveType, currentConfig.data);
+
+        emit ReservePaused(asset, reserveType);
+    }
+
+    /**
+     * @dev Unpause a reserve
+     * @param asset The address of the underlying asset of the reserve
+     * @param reserveType Whether the reserve is boosted by a vault
+     *
+     */
+    function unpauseReserve(address asset, bool reserveType) external onlyPoolAdmin {
+        DataTypes.ReserveConfigurationMap memory currentConfig =
+            pool.getConfiguration(asset, reserveType);
+
+        currentConfig.setPaused(false);
+
+        pool.setConfiguration(asset, reserveType, currentConfig.data);
+
+        emit ReserveUnpaused(asset, reserveType);
+    }
+
+    /**
+     * @dev Enable Flash loan.
+     * @param asset The address of the underlying asset of the reserve
+     * @param reserveType Whether the reserve is boosted by a vault
+     *
+     */
+    function enableFlashloan(address asset, bool reserveType) external onlyPoolAdmin {
+        DataTypes.ReserveConfigurationMap memory currentConfig =
+            pool.getConfiguration(asset, reserveType);
+
+        currentConfig.setFlashLoanEnabled(true);
+
+        pool.setConfiguration(asset, reserveType, currentConfig.data);
+
+        emit EnableFlashloan(asset, reserveType);
+    }
+
+    /**
+     * @dev Disable Flash loan.
+     * @param asset The address of the underlying asset of the reserve
+     * @param reserveType Whether the reserve is boosted by a vault
+     *
+     */
+    function disableFlashloan(address asset, bool reserveType) external onlyPoolAdmin {
+        DataTypes.ReserveConfigurationMap memory currentConfig =
+            pool.getConfiguration(asset, reserveType);
+
+        currentConfig.setFlashLoanEnabled(false);
+
+        pool.setConfiguration(asset, reserveType, currentConfig.data);
+
+        emit DisableFlashloan(asset, reserveType);
+    }
+
+    /**
      * @dev Updates the reserve factor of a reserve
      * @param asset The address of the underlying asset of the reserve
      * @param reserveType Whether the reserve is boosted by a vault
@@ -481,6 +551,16 @@ contract LendingPoolConfigurator is VersionedInitializable, ILendingPoolConfigur
         pool.setPause(val);
     }
 
+    function updateFlashloanPremiumTotal(uint128 newFlashloanPremiumTotal) external onlyPoolAdmin {
+        require(
+            newFlashloanPremiumTotal <= PercentageMath.PERCENTAGE_FACTOR,
+            Errors.LPC_FLASHLOAN_PREMIUM_INVALID
+        );
+        uint128 oldFlashloanPremiumTotal = pool.FLASHLOAN_PREMIUM_TOTAL();
+        pool.updateFlashLoanFee(newFlashloanPremiumTotal);
+        emit FlashloanPremiumTotalUpdated(oldFlashloanPremiumTotal, newFlashloanPremiumTotal);
+    }
+
     function _initTokenWithProxy(address implementation, bytes memory initParams)
         internal
         returns (address)
@@ -546,5 +626,23 @@ contract LendingPoolConfigurator is VersionedInitializable, ILendingPoolConfigur
 
     function rebalance(address aTokenAddress) external onlyEmergencyAdmin {
         pool.rebalance(aTokenAddress);
+    }
+
+    function getTotalManagedAssets(address aTokenAddress) external view returns (uint256) {
+        return pool.getTotalManagedAssets(aTokenAddress);
+    }
+
+    function setRewarderForReserve(address asset, bool reserveType, address rewarder)
+        external
+        onlyPoolAdmin
+    {
+        pool.setRewarderForReserve(asset, reserveType, rewarder);
+    }
+
+    function setTreasury(address asset, bool reserveType, address rewarder)
+        external
+        onlyPoolAdmin
+    {
+        pool.setTreasury(asset, reserveType, rewarder);
     }
 }

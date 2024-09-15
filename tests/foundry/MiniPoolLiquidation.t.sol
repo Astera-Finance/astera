@@ -10,7 +10,7 @@ import {ReserveConfiguration} from
 
 import "forge-std/StdUtils.sol";
 
-contract MiniPoolRepayWithdrawTransferTest is MiniPoolDepositBorrowTest {
+contract MiniPoolLiquidationTest is MiniPoolDepositBorrowTest {
     using WadRayMath for uint256;
     using PercentageMath for uint256;
     using ReserveConfiguration for DataTypes.ReserveConfigurationMap;
@@ -50,6 +50,7 @@ contract MiniPoolRepayWithdrawTransferTest is MiniPoolDepositBorrowTest {
          * Invariants:
          * 1. Liquidator shall end up with more collateral tokens
          * 2. User's debtToken balance shall decrease
+         * 3. Health factor shall be greater than 1
          *
          */
 
@@ -64,12 +65,12 @@ contract MiniPoolRepayWithdrawTransferTest is MiniPoolDepositBorrowTest {
         address user = makeAddr("user");
         TokenParams memory collateralParams = TokenParams(
             erc20Tokens[collateralOffset],
-            aTokens[collateralOffset],
+            aTokensWrapper[collateralOffset],
             oracle.getAssetPrice(address(erc20Tokens[collateralOffset]))
         );
         TokenParams memory borrowParams = TokenParams(
             erc20Tokens[borrowOffset],
-            aTokens[borrowOffset],
+            aTokensWrapper[borrowOffset],
             oracle.getAssetPrice(address(erc20Tokens[borrowOffset]))
         );
         IAERC6909 aErc6909Token =
@@ -120,9 +121,6 @@ contract MiniPoolRepayWithdrawTransferTest is MiniPoolDepositBorrowTest {
             "currentLiquidityRate: ", liquidationVars.borrowReserveDataBefore.currentLiquidityRate
         );
         console.log(
-            "availableMLPLiquidity: ", liquidationVars.borrowReserveDataBefore.availableMLPLiquidity
-        ); //@issue availableMLPLiquidity always 0
-        console.log(
             "currentVariableBorrowRate: ",
             liquidationVars.borrowReserveDataBefore.currentVariableBorrowRate
         );
@@ -135,10 +133,6 @@ contract MiniPoolRepayWithdrawTransferTest is MiniPoolDepositBorrowTest {
             "currentLiquidityRate: ",
             liquidationVars.collateralReserveDataBefore.currentLiquidityRate
         );
-        console.log(
-            "availableMLPLiquidity: ",
-            liquidationVars.collateralReserveDataBefore.availableMLPLiquidity
-        ); //@issue availableMLPLiquidity always 0
         console.log(
             "currentVariableBorrowRate: ",
             liquidationVars.collateralReserveDataBefore.currentVariableBorrowRate
@@ -237,7 +231,8 @@ contract MiniPoolRepayWithdrawTransferTest is MiniPoolDepositBorrowTest {
             );
             assertLe(
                 aErc6909Token.balanceOf(user, 1128 + collateralOffset),
-                liquidationVars.userCollateralBalance / 2
+                liquidationVars.userCollateralBalance / 2,
+                "444"
             );
 
             console.log(
@@ -274,7 +269,7 @@ contract MiniPoolRepayWithdrawTransferTest is MiniPoolDepositBorrowTest {
                 liquidationVars.healthFactor,
                 healthFactorAfterLiquidation
             );
-            //assertGt(healthFactorAfterLiquidation, liquidationVars.healthFactor); // @issue should it be greater than 1 ?
+            //assertGt(healthFactorAfterLiquidation, liquidationVars.healthFactor); // @issue9 Health factor after liquidation shall be greater than 1
             vm.stopPrank();
         }
 
@@ -309,13 +304,6 @@ contract MiniPoolRepayWithdrawTransferTest is MiniPoolDepositBorrowTest {
             variableDebtBeforeTx - liquidationVars.amountToLiquidate,
             0.01e18
         );
-        //@issue availableMLPLiquidity always 0
-        // console.log("Available liquidity of debt token after liquidation shall be greater by {amountToLiquidate} than available liquidity before liquidation");
-        // assertApproxEqRel(
-        //     liquidationVars.borrowReserveDataAfter.availableMLPLiquidity,
-        //     liquidationVars.borrowReserveDataBefore.availableMLPLiquidity + liquidationVars.amountToLiquidate,
-        //     0.01e18
-        // );
         console.log(
             "Liquidity index for debt token after liquidation shall be greater than liquidity index before liquidation"
         );
@@ -330,14 +318,6 @@ contract MiniPoolRepayWithdrawTransferTest is MiniPoolDepositBorrowTest {
             liquidationVars.borrowReserveDataAfter.currentLiquidityRate,
             liquidationVars.borrowReserveDataBefore.currentLiquidityRate
         );
-
-        //@issue availableMLPLiquidity always 0
-        // console.log("Available liquidity of collateral token after liquidation shall be greater by {amountToLiquidate} than available liquidity before liquidation");
-        // assertApproxEqRel(
-        //     liquidationVars.collateralReserveDataAfter.availableMLPLiquidity,
-        //     liquidationVars.collateralReserveDataBefore.availableMLPLiquidity - liquidationVars.expectedCollateralLiquidated,
-        //     0.01e18
-        // );
     }
 
     function testLendingPoolLiquidatesMiniPool() public {
@@ -358,6 +338,7 @@ contract MiniPoolRepayWithdrawTransferTest is MiniPoolDepositBorrowTest {
          */
     }
 
+    //@issue5 - Failing but this is interest rate augmented functionality which will be rewroked
     function testLiquidationsWithFlowFromLendingPool(
         uint256 amount,
         uint256 collateralOffset,
@@ -438,6 +419,7 @@ contract MiniPoolRepayWithdrawTransferTest is MiniPoolDepositBorrowTest {
 
             vm.startPrank(liquidator);
             borrowParams.token.approve(miniPool, amountToLiquidate);
+            console.log("address(collateralParams.token) : ", address(collateralParams.token));
             IMiniPool(miniPool).liquidationCall(
                 address(collateralParams.token),
                 true,

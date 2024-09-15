@@ -34,6 +34,7 @@ contract flowLimiter {
 
     function setFlowLimit(address asset, address miniPool, uint256 limit) external {
         require(msg.sender == address(miniPoolAddressesProvider), Errors.CALLER_NOT_POOL_ADMIN);
+        require(currentFlow(asset, miniPool) < limit, Errors.VL_INVALID_AMOUNT); // To avoid overflow in interest calculation.
         miniPoolMaxDebt[asset][miniPool] = limit;
     }
 
@@ -41,12 +42,10 @@ contract flowLimiter {
         return miniPoolMaxDebt[asset][miniPool];
     }
 
-    function currentFlow(address asset, bool reserveType, address miniPool)
-        external
-        view
-        returns (uint256)
-    {
-        return IERC20(lendingPool.getReserveData(asset, reserveType).variableDebtTokenAddress)
-            .balanceOf(address(miniPool));
+    function currentFlow(address asset, address miniPool) public view returns (uint256) {
+        // `reserveType` always true since miniPool internal borrow is basically rehypothecation.
+        return IERC20(lendingPool.getReserveData(asset, true).variableDebtTokenAddress).balanceOf(
+            address(miniPool)
+        );
     }
 }

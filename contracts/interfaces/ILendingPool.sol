@@ -418,8 +418,8 @@ interface ILendingPool {
     function rebalance(address aTokenAddress) external;
 
     function getTotalManagedAssets(address aTokenAddres) external view returns (uint256);
+    function updateFlashLoanFee(uint128 flashLoanPremiumTotal) external;
 
-    function updateFlashLoanFee(uint256 flashLoanPremiumTotal) external;
     function setRewarderForReserve(address asset, bool reserveType, address rewarder) external;
     function setTreasury(address asset, bool reserveType, address treasury) external;
 
@@ -434,4 +434,6 @@ interface ILendingPool {
     function repayWithATokens(address asset, bool reserveType, uint256 amount, address onBehalfOf)
         external
         returns (uint256);
+
+    function FLASHLOAN_PREMIUM_TOTAL() external view returns (uint128);
 }
