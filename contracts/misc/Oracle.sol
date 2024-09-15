@@ -113,14 +113,12 @@ contract Oracle is IPriceOracleGetter, Ownable {
             }
         }
 
-        // // if `asset` is an aToken then convert the price from asset to share.
-        // if (asset != underlying) {
-        //     return ATokenNonRebasing(asset).convertToShares(finalPrice);
-        // } else {
-        //     return finalPrice;
-        // }
-
-        return finalPrice;
+        // if `asset` is an aToken then convert the price from asset to share.
+        if (asset != underlying) {
+            return ATokenNonRebasing(asset).convertToShares(finalPrice);
+        } else {
+            return finalPrice;
+        }
     }
 
     /// @notice Gets a list of prices from a list of assets addresses
