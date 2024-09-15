@@ -326,52 +326,32 @@ contract ATokenErc6909Test is Common {
         vm.assume(maxValToBurn % granuality == 0); // accept only multiplicity of {nrOfIterations}
 
         assertEq(aErc6909Token.getUnderlyingAsset(id), address(tokenParams.aToken));
-        console.log(
-            "1. aErc6909Token after deposit %s ", aErc6909Token.balanceOf(address(this), id)
-        );
-        console.log(
-            "1. aToken before deposit to the lending pool %s ",
-            IERC20(aErc6909Token.getUnderlyingAsset(id)).balanceOf(address(aErc6909Token))
-        );
-        console.log(
-            "1. underlyingToken before deposit to the lending pool %s ",
-            tokenParams.token.balanceOf(address(tokenParams.aToken))
-        );
 
+        /* Deposit token to the lending pool */
         tokenParams.token.approve(address(deployedContracts.lendingPool), 3 * maxValToBurn);
         deployedContracts.lendingPool.deposit(
             address(tokenParams.token), true, 3 * maxValToBurn, address(this)
         );
 
-        console.log(
-            "2. aErc6909Token after deposit %s ", aErc6909Token.balanceOf(address(this), id)
-        );
-        console.log(
-            "2. aToken before deposit to the mini pool %s ",
-            IERC20(aErc6909Token.getUnderlyingAsset(id)).balanceOf(address(aErc6909Token))
-        );
-        console.log(
-            "2. underlyingToken before deposit to the mini pool %s ",
-            tokenParams.token.balanceOf(address(tokenParams.aToken))
-        );
-
+        /* Deposit aToken into the mini pool */
         tokenParams.aToken.approve(miniPool, 3 * maxValToBurn);
         IMiniPool(miniPool).deposit(
             address(tokenParams.aToken), true, 3 * maxValToBurn, address(this)
         );
+
+        /* Borrow aToken from mini pool */
         console.log(
-            "3. aErc6909Token after deposit %s ", aErc6909Token.balanceOf(address(this), id)
+            "1. aErc6909Token after deposit %s ", aErc6909Token.balanceOf(address(this), id)
         );
 
         console.log(
-            "3. aToken after deposit %s ",
+            "1. aToken after deposit %s ",
             IERC20(aErc6909Token.getUnderlyingAsset(id)).balanceOf(address(aErc6909Token))
         );
         console.log(
-            "3. underlyingToken after deposit %s ",
+            "1. underlyingToken after deposit %s ",
             tokenParams.token.balanceOf(address(tokenParams.aToken))
         );
-
         IMiniPool(miniPool).borrow(address(tokenParams.aToken), true, maxValToBurn, address(this));
         skip(timeDiff);
         index = IMiniPool(miniPool).getReserveNormalizedIncome(address(tokenParams.aToken), true);
@@ -382,15 +362,15 @@ contract ATokenErc6909Test is Common {
             nrOfIterations / 2
         );
         console.log(
-            "3.5. aErc6909Token after deposit %s ", aErc6909Token.balanceOf(address(this), id)
+            "2. aErc6909Token after deposit %s ", aErc6909Token.balanceOf(address(this), id)
         );
 
         console.log(
-            "3.5. aToken after deposit %s ",
+            "2. aToken after deposit %s ",
             IERC20(aErc6909Token.getUnderlyingAsset(id)).balanceOf(address(aErc6909Token))
         );
         console.log(
-            "3.5. underlyingToken after deposit %s ",
+            "2. underlyingToken after deposit %s ",
             tokenParams.token.balanceOf(address(tokenParams.aToken))
         );
 
@@ -407,27 +387,33 @@ contract ATokenErc6909Test is Common {
             console.log(
                 "Granual: %s vs %s",
                 aErc6909Token.balanceOf(address(this), id),
-                3 * maxValToBurn.rayMul(index) - cnt.rayDiv(index)
+                (3 * maxValToBurn).rayMul(index) - cnt
             );
             console.log("Granuality: ", granuality);
             console.log("Granuality cumulated: ", cnt.rayDiv(index));
             aErc6909Token.burn(address(this), address(this), id, granuality, index);
         }
-        // console.log("rayMul ", maxValToBurn.rayMul(index));
-        // console.log("rayDiv ", maxValToBurn.rayDiv(index));
-        // console.log("aErc6909Token burns ballance shall be 2 * {maxValToBurn} adjusted with {index}");
-        // console.log("%s vs %s", aErc6909Token.balanceOf(address(this), id), 3 * maxValToBurn.rayMul(index) - maxValToBurn.rayDiv(index));
-        // assertApproxEqAbs(aErc6909Token.balanceOf(address(this), id), 3 * maxValToBurn.rayMul(index) - maxValToBurn.rayDiv(index), nrOfIterations);
+
         console.log(
-            "4. aErc6909Token after 1 burning %s ", aErc6909Token.balanceOf(address(this), id)
+            "%s vs %s",
+            aErc6909Token.balanceOf(address(this), id),
+            (3 * maxValToBurn).rayMul(index) - maxValToBurn
+        );
+        assertApproxEqAbs(
+            aErc6909Token.balanceOf(address(this), id),
+            (3 * maxValToBurn).rayMul(index) - maxValToBurn,
+            nrOfIterations
+        );
+        console.log(
+            "3. aErc6909Token after 1 burning %s ", aErc6909Token.balanceOf(address(this), id)
         );
 
         console.log(
-            "4. aToken after 1 burning %s ",
+            "3. aToken after 1 burning %s ",
             IERC20(aErc6909Token.getUnderlyingAsset(id)).balanceOf(address(aErc6909Token))
         );
         console.log(
-            "4. underlyingToken after 1 burning %s ",
+            "3. underlyingToken after 1 burning %s ",
             tokenParams.token.balanceOf(address(tokenParams.aToken))
         );
 
@@ -454,39 +440,35 @@ contract ATokenErc6909Test is Common {
         aErc6909Token.burn(address(this), address(this), id, maxValToBurn, index);
         console.log("After single burn balance shall be {maxValToBurn} adjusted with {index}");
         console.log(
-            "5. aErc6909Token after 2 burning %s ", aErc6909Token.balanceOf(address(this), id)
+            "4. aErc6909Token after 2 burning %s ", aErc6909Token.balanceOf(address(this), id)
         );
 
         console.log(
-            "5. aToken after 2 burning %s ",
+            "4. aToken after 2 burning %s ",
             IERC20(aErc6909Token.getUnderlyingAsset(id)).balanceOf(address(aErc6909Token))
         );
         console.log(
-            "5. underlyingToken after 2 burning %s ",
+            "4. underlyingToken after 2 burning %s ",
             tokenParams.token.balanceOf(address(tokenParams.aToken))
         );
         assertApproxEqAbs(
             IERC20(aErc6909Token.getUnderlyingAsset(id)).balanceOf(address(this)),
             initialAmountOfUnderlying + maxValToBurn,
-            nrOfIterations
+            nrOfIterations,
+            "Balance of underlying is not lower by maxValToBurn"
         );
-
-        uint256 lendingIndex =
-            IMiniPool(miniPool).getReserveNormalizedIncome(address(tokenParams.token), true);
-
-        console.log("Typical index1: ", maxValToBurn.rayMul(index));
-        console.log("Typical index2: ", maxValToBurn.rayMul(lendingIndex));
-
-        assertEq(
+        assertApproxEqAbs(
             aErc6909Token.balanceOf(address(this), id),
-            maxValToBurn.rayMul(index).rayMul(lendingIndex),
-            "Balance of token is not {maxValToBurn} after burning"
+            (3 * maxValToBurn).rayMul(index) - 2 * maxValToBurn,
+            nrOfIterations,
+            "Balance of miniPool aTokens is not lower by maxValToBurn"
         );
 
-        assertEq(
+        assertApproxEqAbs(
             aErc6909Token.totalSupply(id),
-            maxValToBurn.rayMul(index).rayMul(lendingIndex),
-            "Total supply of token is not {maxValToBurn} after burning"
+            (3 * maxValToBurn).rayMul(index) - 2 * maxValToBurn,
+            nrOfIterations,
+            "Total supply of miniPool aTokens is not lower by maxValToBurn"
         );
 
         console.log("Cannot burn 3th time because it is not available (assets are borrowed)");
@@ -556,11 +538,11 @@ contract ATokenErc6909Test is Common {
         // console.log("aErc6909Token.balanceOf(address(this): ", aErc6909Token.balanceOf(address(this), id));
         assertApproxEqAbs(
             aErc6909Token.balanceOf(address(this), testParams.id),
-            4 * valToTransfer.rayDiv(index),
+            4 * valToTransfer,
             testParams.nrOfIterations / 2
         );
         uint256 initialTotalSupply = aErc6909Token.scaledTotalSupply(testParams.id);
-        assertEq(initialTotalSupply, 4 * valToTransfer.rayDiv(index));
+        assertEq(initialTotalSupply, 4 * valToTransfer);
         vm.stopPrank();
 
         skip(timeDiff);
@@ -640,8 +622,8 @@ contract ATokenErc6909Test is Common {
         );
         assertApproxEqAbs(
             aErc6909Token.balanceOf(testParams.user, testParams.id),
-            initialUserBalance + valToTransfer.rayDiv(index),
-            1
+            initialUserBalance + valToTransfer,
+            testParams.nrOfIterations
         );
         console.log(
             "Check balance of this.. %s vs %s",
