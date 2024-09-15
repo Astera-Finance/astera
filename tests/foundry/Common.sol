@@ -353,6 +353,10 @@ contract Common is Test {
         variableDebtTokens = fixture_getVarDebtTokens(
             tokens, ProtocolDataProvider(configAddresses.protocolDataProvider)
         );
+        for(uint256 idx; idx < tokens.length; idx++){
+            vm.label(address(aTokens[idx]), string.concat("AToken ", uintToString(idx)));
+            vm.label(address(variableDebtTokens[idx]), string.concat("VariableDebtToken ", uintToString(idx)));
+        }
     }
 
     function fixture_configureReserves(
