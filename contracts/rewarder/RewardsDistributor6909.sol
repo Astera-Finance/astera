@@ -207,15 +207,16 @@ abstract contract RewardsDistributor6909 is IMiniPoolRewardsDistributor, Ownable
         RewardData storage rewardData = _assets[market6909][assetID].rewards[reward];
         uint256 userIndex = rewardData.usersIndex[user];
         uint256 accruedRewards = 0;
+        uint8 assetDecimals = _assets[market6909][assetID].decimals;
 
         uint256 newIndex = _updateAssetStateInternal(
-            market6909, assetID,  reward, rewardData, totalSupply, _assets[market6909][assetID].decimals
+            market6909, assetID,  reward, rewardData, totalSupply, assetDecimals
         );
 
         if (userIndex != newIndex) {
             if (userBalance != 0) {
                 accruedRewards =
-                    _getRewards(userBalance, newIndex, userIndex, _assets[market6909][assetID].decimals);
+                    _getRewards(userBalance, newIndex, userIndex, assetDecimals);
             }
 
             rewardData.usersIndex[user] = newIndex;

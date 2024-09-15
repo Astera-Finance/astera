@@ -460,4 +460,8 @@ contract ATokenERC6909 is IncentivizedERC6909, VersionedInitializable {
             super._transfer(address(0), from, to, id, amount.rayDiv(index));
         }
     }
+
+    function getMiniPoolID() external view returns (uint256) {
+        return _minipoolId;
+    }
 }

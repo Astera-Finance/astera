@@ -5,10 +5,19 @@ import {IRewardsController} from "./interfaces/IRewardsController.sol";
 import {RewardsDistributor} from "./RewardsDistributor.sol";
 import {IScaledBalanceToken} from "./interfaces/IScaledBalanceToken.sol";
 import {DistributionTypes} from "./libraries/DistributionTypes.sol";
+import {IAERC6909} from "../interfaces/IAERC6909.sol";
+import {IMiniPoolAddressesProvider} from "./interfaces/IMiniPoolAddressesProvider.sol";
 
 abstract contract RewardsController is RewardsDistributor, IRewardsController {
     // user => authorized claimer
     mapping(address => address) internal _authorizedClaimers;
+    IMiniPoolAddressesProvider internal _addressesProvider;
+    mapping(address => bool) internal _isAtokenERC6909;
+    mapping(address => bool) internal _isMiniPool;
+            //aToken => ERC6909 => last Reported (totalSupply(ID) - balanceOf(ERC6909))
+    mapping(address => mapping(address => uint256)) internal lastReportedDiff;
+    uint256 internal _totalDiff;
+    uint256 internal _totalTrackedMiniPools;
 
     modifier onlyAuthorizedClaimers(address claimer, address user) {
         require(_authorizedClaimers[user] == claimer, "CLAIMER_UNAUTHORIZED");
@@ -17,6 +26,9 @@ abstract contract RewardsController is RewardsDistributor, IRewardsController {
 
     constructor(address initialOwner) RewardsDistributor(initialOwner) {}
 
+    function setMiniPoolAddressesProvider(address addressesProvider) external onlyOwner {
+        _addressesProvider = IMiniPoolAddressesProvider(addressesProvider);
+    }
     function getClaimer(address user) external view override returns (address) {
         return _authorizedClaimers[user];
     }
@@ -41,8 +53,35 @@ abstract contract RewardsController is RewardsDistributor, IRewardsController {
         external
         override
     {
-        _updateUserRewardsPerAssetInternal(msg.sender, user, userBalance, totalSupply);
+        refreshMiniPoolData();
+        //if user is an ERC6909 aToken, this will only be true for aTokens
+        if(_isAtokenERC6909[user] == true){
+            (uint256 assetID, uint256 debtID, bool isTranche) = IAERC6909(user).getIdForUnderlying(msg.sender);
+            //for trancheATokens we calculate the total supply of the AERC6909 ID for the assetID
+            //we subtract the current balance
+            uint256 totalSupplyAsset = IAERC6909(user).scaledTotalSupply(assetID);
+            uint256 diff = totalSupplyAsset - userBalance;
+            _totalDiff = _totalDiff - lastReportedDiff[msg.sender][user] + diff;
+            lastReportedDiff[msg.sender][user] = diff;
+            userBalance = totalSupplyAsset;
+            
+        }
+        _updateUserRewardsPerAssetInternal(msg.sender, user, userBalance, totalSupply + _totalDiff);
     }
+
+    function refreshMiniPoolData() internal {
+        if(address(_addressesProvider) != address(0)){
+            if(_totalTrackedMiniPools != _addressesProvider.getMiniPoolCount()){
+                for(uint256 i = _totalTrackedMiniPools; i < _addressesProvider.getMiniPoolCount(); i++){
+                    address miniPool = _addressesProvider.getMiniPool(i);
+                    _isMiniPool[miniPool] = true;
+                    address aToken6909 = _addressesProvider.getMiniPoolToAERC6909(miniPool);
+                    _isAtokenERC6909[aToken6909] = true;
+                    _totalTrackedMiniPools++;
+                }
+            }
+        }
+    }   
 
     function claimRewards(address[] calldata assets, uint256 amount, address to, address reward)
         external

@@ -8,11 +8,6 @@ optimizer = true
 optimizer_runs = 200
 solc_version = '0.8.23'
 fs_permissions = [{ access = "read-write", path = "./"}]
-ignored_error_codes = [2018, 2072, 5667, 9302, 2519, 8760, 6321, 2519]
 
 [fmt]
 line_length = 100
-
-[profile.RPCs]
-ARBITRUM = 'https://dawn-practical-violet.arbitrum-mainnet.quiknode.pro/ac38ec1cbc9fdf1fc3936a3356e763e69f319d06/'
-ARB_SEPOLIA = 'https://withered-summer-card.arbitrum-sepolia.quiknode.pro/b116716f2e76aded31dd7777b734923ad4b69279/'

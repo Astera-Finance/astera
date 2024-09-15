@@ -27,10 +27,14 @@ contract DeployMLM is Script, StdCheats, localDeployConfig {
             string memory RPC = vm.envString("ARBITRUM");
         }else {
             //deploy to a local node
+            string memory RPC = "";
+            uint256 pk = 0;
+            address admin = address(this);
+            vm.startBroadcast(pk);
             (address[] memory mockTokens, Oracle oracle) = _deployERC20Mocks(MainPoolnames, MainPoolSymbols, MainPoolDecimals, MainPoolPrices);
-            DeployedContracts memory contracts = _deployLendingPool(address(this), mockTokens, oracle, sStrat, volStrat);
+            DeployedContracts memory contracts = _deployLendingPool(admin, mockTokens, oracle, sStrat, volStrat);
             ConfigParams memory MLPConfig = ConfigParams(baseLTVs, liquidationThresholds, liquidationBonuses, reserveFactors, borrowingEnabled, reserveTypes, isStableStrategy);
-            _configureReserves(contracts, mockTokens, MLPConfig, address(this));
+            _configureReserves(contracts, mockTokens, MLPConfig, admin);
             
             address[] memory miniPoolOneMockTokens = _deployERC20MocksAndUpdateOracle(MiniPoolOneNames, MiniPoolOneSymbols, MiniPoolOneDecimals, MiniPoolOnePrices, oracle);
             
@@ -40,7 +44,7 @@ contract DeployMLM is Script, StdCheats, localDeployConfig {
             ConfigParams memory miniPoolOneTrancheConfig = ConfigParams(trancheBaseLTVs, trancheLiquidationThresholds, trancheLiquidationBonuses, trancheReserveFactors, trancheBorrowingEnabled, trancheReserveTypes, trancheIsStableStrategy);
             MiniPoolConfigParams memory miniPoolOneConfigParams = MiniPoolConfigParams(miniPoolOneTranche, miniPoolOneTrancheConfig, miniPoolOneMockTokens, miniPoolOneConfig);
             
-            (address aToken6909_1, address miniPool_1) = _deployMiniPool(contracts, miniPoolOneConfigParams, address(this), 0);
+            (address aToken6909_1, address miniPool_1) = _deployMiniPool(contracts, miniPoolOneConfigParams, admin, 0);
             
             address[] memory miniPoolTwoMockTokens = _deployERC20MocksAndUpdateOracle(MiniPoolTwoNames, MiniPoolTwoSymbols, MiniPoolTwoDecimals, MiniPoolTwoPrices, oracle);
 
@@ -50,8 +54,8 @@ contract DeployMLM is Script, StdCheats, localDeployConfig {
             ConfigParams memory miniPoolTwoTrancheConfig = ConfigParams(trancheBaseLTVs, trancheLiquidationThresholds, trancheLiquidationBonuses, trancheReserveFactors, trancheBorrowingEnabled, trancheReserveTypes, trancheIsStableStrategy);
             MiniPoolConfigParams memory miniPoolTwoConfigParams = MiniPoolConfigParams(miniPoolTwoTranche, miniPoolTwoTrancheConfig, miniPoolTwoMockTokens, miniPoolTwoConfig);
             
-            (address aToken6909_2, address miniPool_2) = _deployMiniPool(contracts, miniPoolTwoConfigParams, address(this), 1);
-
+            (address aToken6909_2, address miniPool_2) = _deployMiniPool(contracts, miniPoolTwoConfigParams, admin, 1);
+            vm.stopBroadcast();
             return contracts;
         }
 
