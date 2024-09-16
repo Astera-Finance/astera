@@ -13,7 +13,7 @@ import {DataTypes} from "contracts/protocol/libraries/types/DataTypes.sol";
 
 /**
  * @title GenericLogic library
- * @author Aave
+ * @author Cod3x
  * @title Implements protocol-level logic to calculate and validate the state of a user
  */
 library GenericLogic {

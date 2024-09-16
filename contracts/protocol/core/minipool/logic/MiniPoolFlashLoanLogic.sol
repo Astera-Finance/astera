@@ -24,6 +24,10 @@ import {IFlashLoanReceiver} from "contracts/interfaces/IFlashLoanReceiver.sol"; 
 import {MiniPoolBorrowLogic} from "./MiniPoolBorrowLogic.sol";
 import {IAERC6909} from "contracts/interfaces/IAERC6909.sol";
 
+/**
+ * @title MiniPoolFlashLoanLogic
+ * @author Cod3x
+ */
 library MiniPoolFlashLoanLogic {
     using WadRayMath for uint256;
     using PercentageMath for uint256;

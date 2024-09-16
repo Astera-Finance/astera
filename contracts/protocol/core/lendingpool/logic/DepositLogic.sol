@@ -23,6 +23,7 @@ import {ValidationLogic} from "./ValidationLogic.sol";
 /**
  * @title Deposit Logic library
  * @notice Implements the logic to deposit assets into the protocol
+ * @author Cod3x
  */
 library DepositLogic {
     using WadRayMath for uint256;

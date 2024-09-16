@@ -11,7 +11,7 @@ import {Errors} from "contracts/protocol/libraries/helpers/Errors.sol";
 /**
  * @title DebtTokenBase
  * @notice Base contract for VariableDebtToken
- * @author Aave
+ * @author Cod3x
  */
 abstract contract DebtTokenBase is
     IncentivizedERC20("DEBTTOKEN_IMPL", "DEBTTOKEN_IMPL", 0),

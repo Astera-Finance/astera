@@ -1,6 +1,10 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity 0.8.23;
 
+/**
+ * @title DistributionTypes
+ * @author Cod3x
+ */
 library DistributionTypes {
     struct RewardsConfigInput {
         uint88 emissionPerSecond;

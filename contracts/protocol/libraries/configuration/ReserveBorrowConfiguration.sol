@@ -6,7 +6,7 @@ import {DataTypes} from "contracts/protocol/libraries/types/DataTypes.sol";
 
 /**
  * @title ReserveConfiguration library
- * @author Aave
+ * @author Cod3x
  * @notice Implements the bitmap logic to handle the reserve configuration regarding borrows and isolated markets
  */
 library ReserveBorrowConfiguration {

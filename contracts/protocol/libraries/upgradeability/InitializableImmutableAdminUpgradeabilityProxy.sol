@@ -7,6 +7,7 @@ import "contracts/dependencies/openzeppelin/upgradeability/InitializableUpgradea
 /**
  * @title InitializableAdminUpgradeabilityProxy
  * @dev Extends BaseAdminUpgradeabilityProxy with an initializer function
+ * @author Cod3x
  */
 contract InitializableImmutableAdminUpgradeabilityProxy is
     BaseImmutableAdminUpgradeabilityProxy,

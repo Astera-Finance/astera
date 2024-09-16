@@ -4,6 +4,10 @@ pragma solidity 0.8.23;
 import {ILendingPoolAddressesProvider} from "contracts/interfaces/ILendingPoolAddressesProvider.sol";
 import {Errors} from "contracts/protocol/libraries/helpers/Errors.sol";
 
+/**
+ * @title MiniPoolLiquidationLogic
+ * @author Cod3x
+ */
 library MiniPoolLiquidationLogic {
     struct liquidationCallParams {
         address collateralAsset;

@@ -7,7 +7,7 @@ import {DataTypes} from "contracts/protocol/libraries/types/DataTypes.sol";
 
 /**
  * @title Helpers library
- * @author Aave
+ * @author Cod3x
  */
 library Helpers {
     /**

@@ -7,7 +7,7 @@ import {IRewarder} from "./IRewarder.sol";
 /**
  * @title IInitializableAToken
  * @notice Interface for the initialize function on AToken
- * @author Aave
+ * @author Cod3x
  *
  */
 interface IInitializableAToken {

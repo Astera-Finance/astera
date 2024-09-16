@@ -25,7 +25,7 @@ import {MiniPoolStorage} from "./MiniPoolStorage.sol";
 
 /**
  * @title LendingPoolCollateralManager contract
- * @author Aave
+ * @author Cod3x
  * @dev Implements actions involving management of collateral in the protocol, the main one being the liquidations
  * IMPORTANT This contract will run always via DELEGATECALL, through the LendingPool, so the chain of inheritance
  * is the same as the LendingPool, to have compatible storage layouts

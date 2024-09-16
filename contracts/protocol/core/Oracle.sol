@@ -11,7 +11,7 @@ import {IMiniPool} from "contracts/interfaces/IMiniPool.sol";
 import {ATokenNonRebasing} from "contracts/protocol/tokenization/ERC20/ATokenNonRebasing.sol";
 
 /// @title Oracle
-/// @author Aave
+/// @author Cod3x
 /// @notice Proxy smart contract to get the price of an asset from a price source, with Chainlink Aggregator
 ///         smart contracts as primary option
 /// - If the returned price by a Chainlink aggregator is <= 0, the call is forwarded to a fallbackOracle

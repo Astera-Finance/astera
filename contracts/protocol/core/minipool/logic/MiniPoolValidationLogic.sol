@@ -20,7 +20,7 @@ import {IAERC6909} from "contracts/interfaces/IAERC6909.sol";
 
 /**
  * @title ReserveLogic library
- * @author Aave
+ * @author Cod3x
  * @notice Implements functions to validate the different actions of the protocol
  */
 library MiniPoolValidationLogic {

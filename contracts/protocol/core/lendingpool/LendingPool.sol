@@ -45,7 +45,7 @@ import {LiquidationLogic} from "contracts/protocol/core/lendingpool/logic/Liquid
  * - To be covered by a proxy contract, owned by the LendingPoolAddressesProvider of the specific market
  * - All admin functions are callable by the LendingPoolConfigurator contract defined also in the
  *   LendingPoolAddressesProvider
- * @author Aave
+ * @author Cod3x
  *
  */
 contract LendingPool is VersionedInitializable, ILendingPool, LendingPoolStorage {

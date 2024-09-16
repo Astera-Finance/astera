@@ -18,7 +18,7 @@ import {Errors} from "contracts/protocol/libraries/helpers/Errors.sol";
  * automatically adjust the interest rate according to the `Kp` and `Ki` variables.
  * @dev ATTENTION, this contract must no be used as a library. One PiReserveInterestRateStrategy
  * needs to be associated with only one market.
- * @author ByteMasons
+ * @author Cod3x
  */
 abstract contract BasePiReserveRateStrategy is Ownable {
     using WadRayMath for uint256;

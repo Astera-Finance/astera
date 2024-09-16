@@ -11,6 +11,10 @@ import {ReserveConfiguration} from
 import {UserConfiguration} from "contracts/protocol/libraries/configuration/UserConfiguration.sol";
 import {DataTypes} from "contracts/protocol/libraries/types/DataTypes.sol";
 
+/**
+ * @title ProtocolDataProvider
+ * @author Cod3x
+ */
 contract ProtocolDataProvider {
     using ReserveConfiguration for DataTypes.ReserveConfigurationMap;
     using UserConfiguration for DataTypes.UserConfigurationMap;

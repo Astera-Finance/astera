@@ -13,6 +13,10 @@ import {UserConfiguration} from "contracts/protocol/libraries/configuration/User
 import {Helpers} from "contracts/protocol/libraries/helpers/Helpers.sol";
 import {DataTypes} from "contracts/protocol/libraries/types/DataTypes.sol";
 
+/**
+ * @title WETHGateway
+ * @author Cod3x
+ */
 contract WETHGateway is IWETHGateway, Ownable {
     using ReserveConfiguration for DataTypes.ReserveConfigurationMap;
     using UserConfiguration for DataTypes.UserConfigurationMap;

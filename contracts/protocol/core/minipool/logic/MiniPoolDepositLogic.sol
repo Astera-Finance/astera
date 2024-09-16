@@ -22,6 +22,7 @@ import {MiniPoolReserveLogic} from "./MiniPoolReserveLogic.sol";
 /**
  * @title Deposit Logic library
  * @notice Implements the logic to deposit assets into the protocol
+ * @author Cod3x
  */
 library MiniPoolDepositLogic {
     using WadRayMath for uint256;

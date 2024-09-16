@@ -9,6 +9,10 @@ import {IMiniPoolAddressesProvider} from "contracts/interfaces/IMiniPoolAddresse
 import {ILendingPool} from "contracts/interfaces/ILendingPool.sol";
 import {DataTypes} from "contracts/protocol/libraries/types/DataTypes.sol";
 
+/**
+ * @title MiniPoolStorage
+ * @author Cod3x
+ */
 contract MiniPoolStorage {
     using ReserveLogic for DataTypes.ReserveData;
     using ReserveConfiguration for DataTypes.ReserveConfigurationMap;

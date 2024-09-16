@@ -26,7 +26,7 @@ import {IMiniPoolConfigurator} from "contracts/interfaces/IMiniPoolConfigurator.
 import {IMiniPool} from "contracts/interfaces/IMiniPool.sol";
 /**
  * @title LendingPoolConfigurator contract
- * @author Aave
+ * @author Cod3x
  * @dev Implements the configuration methods for the Aave protocol
  *
  */

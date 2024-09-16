@@ -5,6 +5,10 @@ import {IERC20} from "contracts/dependencies/openzeppelin/contracts/IERC20.sol";
 import {SafeERC20} from "contracts/dependencies/openzeppelin/contracts/SafeERC20.sol";
 import {RewardsController6909} from "contracts/protocol/rewarder/minipool/RewardsController6909.sol";
 
+/**
+ * @title Rewarder6909
+ * @author Cod3x
+ */
 contract Rewarder6909 is RewardsController6909 {
     using SafeERC20 for IERC20;
 

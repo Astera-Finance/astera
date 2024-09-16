@@ -10,10 +10,9 @@ import {IERC20} from "contracts/dependencies/openzeppelin/contracts/IERC20.sol";
 import {Errors} from "contracts/protocol/libraries/helpers/Errors.sol";
 
 /**
- *
  * @title FlowLimiter
  * @notice This contract is used to Limit AND Facilitate the flow of funds into miniPools from the main Lending Pool
- *
+ * @author Cod3x
  */
 contract flowLimiter {
     ILendingPoolAddressesProvider public addressesProvider;

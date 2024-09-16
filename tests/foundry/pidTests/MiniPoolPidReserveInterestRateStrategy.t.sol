@@ -5,8 +5,7 @@ import "../Common.sol";
 import "contracts/protocol/libraries/helpers/Errors.sol";
 import {WadRayMath} from "contracts/protocol/libraries/math/WadRayMath.sol";
 import "contracts/protocol/core/InterestRateStrategies/PidReserveInterestRateStrategy.sol";
-import
-    "contracts/protocol/core/InterestRateStrategies/MiniPoolPiReserveInterestRateStrategy.sol";
+import "contracts/protocol/core/InterestRateStrategies/MiniPoolPiReserveInterestRateStrategy.sol";
 import "openzeppelin-contracts/contracts/utils/Strings.sol";
 
 contract MiniPoolPidReserveInterestRateStrategyTest is Common {

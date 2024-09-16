@@ -6,6 +6,10 @@ import {IERC20Detailed} from "contracts/dependencies/openzeppelin/contracts/IERC
 import {DistributionTypes} from "contracts/protocol/libraries/types/DistributionTypes.sol";
 import {Ownable} from "lib/openzeppelin-contracts/contracts/access/Ownable.sol";
 
+/**
+ * @title RewardsDistributor
+ * @author Cod3x
+ */
 abstract contract RewardsDistributor is IRewardsDistributor, Ownable {
     struct RewardData {
         uint88 emissionPerSecond;

@@ -8,6 +8,10 @@ import {DistributionTypes} from "contracts/protocol/libraries/types/Distribution
 import {IAERC6909} from "contracts/interfaces/IAERC6909.sol";
 import {IMiniPoolAddressesProvider} from "contracts/interfaces/IMiniPoolAddressesProvider.sol";
 
+/**
+ * @title RewardsController
+ * @author Cod3x
+ */
 abstract contract RewardsController is RewardsDistributor, IRewardsController {
     // user => authorized claimer
     mapping(address => address) internal _authorizedClaimers;

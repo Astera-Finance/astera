@@ -18,6 +18,10 @@ import {DefaultReserveInterestRateStrategy} from
     "contracts/protocol/core/InterestRateStrategies/DefaultReserveInterestRateStrategy.sol";
 import {IERC20DetailedBytes} from "contracts/interfaces/IERC20DetailedBytes.sol";
 
+/**
+ * @title UiPoolDataProviderV2
+ * @author Cod3x
+ */
 contract UiPoolDataProviderV2 is IUiPoolDataProviderV2 {
     using WadRayMath for uint256;
     using ReserveConfiguration for DataTypes.ReserveConfigurationMap;

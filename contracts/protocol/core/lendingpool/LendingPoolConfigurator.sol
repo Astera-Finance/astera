@@ -23,7 +23,7 @@ import {IAToken} from "contracts/interfaces/IAToken.sol";
 
 /**
  * @title LendingPoolConfigurator contract
- * @author Aave
+ * @author Cod3x
  * @dev Implements the configuration methods for the Aave protocol
  *
  */

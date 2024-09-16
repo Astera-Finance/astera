@@ -7,7 +7,7 @@ import {IRewarder} from "./IRewarder.sol";
 
 /**
  * @title IVariableDebtToken
- * @author Aave
+ * @author Cod3x
  * @notice Defines the basic interface for a variable debt token.
  *
  */

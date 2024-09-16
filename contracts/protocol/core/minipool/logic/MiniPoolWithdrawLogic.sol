@@ -22,6 +22,7 @@ import {MiniPoolValidationLogic} from "./MiniPoolValidationLogic.sol";
 /**
  * @title withdraw Logic library
  * @notice Implements the logic to withdraw assets into the protocol
+ * @author Cod3x
  */
 library MiniPoolWithdrawLogic {
     using WadRayMath for uint256;

@@ -7,6 +7,10 @@ import {IERC6909} from "contracts/interfaces/IERC6909.sol";
 import {DistributionTypes} from "contracts/protocol/libraries/types/DistributionTypes.sol";
 import {Ownable} from "lib/openzeppelin-contracts/contracts/access/Ownable.sol";
 
+/**
+ * @title RewardsDistributor6909
+ * @author Cod3x
+ */
 abstract contract RewardsDistributor6909 is IMiniPoolRewardsDistributor, Ownable {
     struct RewardData {
         uint88 emissionPerSecond;

@@ -9,6 +9,10 @@ import {IERC20} from "contracts/dependencies/openzeppelin/contracts/IERC20.sol";
 import {DataTypes} from "contracts/protocol/libraries/types/DataTypes.sol";
 import {Ownable} from "contracts/dependencies/openzeppelin/contracts/Ownable.sol";
 
+/**
+ * @title Treasury
+ * @author Cod3x
+ */
 contract Treasury is Ownable {
     ILendingPoolAddressesProvider public ADDRESSES_PROVIDER;
     ILendingPool public LENDING_POOL;

@@ -17,7 +17,7 @@ import {ATokenNonRebasing} from "./ATokenNonRebasing.sol";
 /**
  * @title Aave ERC20 AToken
  * @dev Implementation of the interest bearing token for the Aave protocol
- * @author Aave
+ * @author Cod3x
  */
 contract AToken is
     VersionedInitializable,

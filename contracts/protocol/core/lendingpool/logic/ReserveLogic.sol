@@ -18,7 +18,7 @@ import {DataTypes} from "contracts/protocol/libraries/types/DataTypes.sol";
 
 /**
  * @title ReserveLogic library
- * @author Aave
+ * @author Cod3x
  * @notice Implements the logic to update the reserves state
  */
 library ReserveLogic {

@@ -12,7 +12,7 @@ import {IRewarder} from "contracts/interfaces/IRewarder.sol";
  * @title VariableDebtToken
  * @notice Implements a variable debt token to track the borrowing positions of users
  * at variable rate mode
- * @author Aave
+ * @author Cod3x
  *
  */
 contract VariableDebtToken is DebtTokenBase, IVariableDebtToken {

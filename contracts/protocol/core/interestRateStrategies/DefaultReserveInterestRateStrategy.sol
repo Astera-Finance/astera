@@ -16,7 +16,7 @@ import {Errors} from "contracts/protocol/libraries/helpers/Errors.sol";
  * point of utilization and another from that one to 100%
  * - An instance of this same contract, can't be used across different Aave markets, due to the caching
  *   of the LendingPoolAddressesProvider
- * @author Aave
+ * @author Cod3x
  *
  */
 contract DefaultReserveInterestRateStrategy is IReserveInterestRateStrategy {

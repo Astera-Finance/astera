@@ -24,6 +24,10 @@ import {Helpers} from "contracts/protocol/libraries/helpers/Helpers.sol";
 import {IFlashLoanReceiver} from "contracts/interfaces/IFlashLoanReceiver.sol"; // Add this line
 import {BorrowLogic} from "./BorrowLogic.sol";
 
+/**
+ * @title FlashLoanLogic
+ * @author Cod3x
+ */
 library FlashLoanLogic {
     using WadRayMath for uint256;
     using PercentageMath for uint256;

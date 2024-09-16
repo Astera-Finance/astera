@@ -4,7 +4,7 @@ pragma solidity ^0.8.0;
 /**
  * @title IDelegationToken
  * @dev Implements an interface for tokens with delegation COMP/UNI compatible
- * @author Aave
+ * @author Cod3x
  *
  */
 interface IDelegationToken {

@@ -6,6 +6,10 @@ import {ILendingPoolAddressesProvider} from "contracts/interfaces/ILendingPoolAd
 import {Ownable} from "contracts/dependencies/openzeppelin/contracts/Ownable.sol";
 import {Errors} from "contracts/protocol/libraries/helpers/Errors.sol";
 
+/**
+ * @title RewardsVault
+ * @author Cod3x
+ */
 contract RewardsVault is Ownable {
     ILendingPoolAddressesProvider public ADDRESSES_PROVIDER;
     address public INCENTIVES_CONTROLLER;

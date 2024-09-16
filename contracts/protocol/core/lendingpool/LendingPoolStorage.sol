@@ -8,6 +8,10 @@ import {ReserveLogic} from "contracts/protocol/core/lendingpool/logic/ReserveLog
 import {ILendingPoolAddressesProvider} from "contracts/interfaces/ILendingPoolAddressesProvider.sol";
 import {DataTypes} from "contracts/protocol/libraries/types/DataTypes.sol";
 
+/**
+ * @title LendingPoolStorage
+ * @author Cod3x
+ */
 contract LendingPoolStorage {
     using ReserveLogic for DataTypes.ReserveData;
     using ReserveConfiguration for DataTypes.ReserveConfigurationMap;

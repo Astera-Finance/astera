@@ -1,6 +1,10 @@
 // SPDX-License-Identifier: agpl-3.0
 pragma solidity 0.8.23;
 
+/**
+ * @title Timelock
+ * @author Cod3x
+ */
 contract Timelock {
     event NewAdmin(address indexed newAdmin);
     event NewPendingAdmin(address indexed newPendingAdmin);

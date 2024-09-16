@@ -3,6 +3,10 @@ pragma solidity 0.8.23;
 
 import {WadRayMath} from "./WadRayMath.sol";
 
+/**
+ * @title MathUtils
+ * @author Cod3x
+ */
 library MathUtils {
     using WadRayMath for uint256;
 

@@ -8,7 +8,7 @@ import {Ownable} from "lib/openzeppelin-contracts/contracts/access/Ownable.sol";
 
 /**
  * @title RewardForwarder
- * @author 0xGoober
+ * @author Cod3x - 0xGoober
  * @dev This contract manages the forwarding of rewards to registered claimees.
  */
 contract RewardForwarder is Ownable {

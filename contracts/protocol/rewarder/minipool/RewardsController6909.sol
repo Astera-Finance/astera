@@ -7,6 +7,10 @@ import {IScaledBalanceToken} from "contracts/interfaces/IScaledBalanceToken.sol"
 import {IAERC6909} from "contracts/interfaces/IAERC6909.sol";
 import {DistributionTypes} from "contracts/protocol/libraries/types/DistributionTypes.sol";
 
+/**
+ * @title RewardsController6909
+ * @author Cod3x
+ */
 abstract contract RewardsController6909 is RewardsDistributor6909, IMiniPoolRewardsController {
     // user => authorized claimer
     mapping(address => address) internal _authorizedClaimers;

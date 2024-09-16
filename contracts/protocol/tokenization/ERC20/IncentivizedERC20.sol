@@ -9,7 +9,7 @@ import {IRewarder} from "contracts/interfaces/IRewarder.sol";
 /**
  * @title ERC20
  * @notice Basic ERC20 implementation
- * @author Aave, inspired by the Openzeppelin ERC20 implementation
+ * @author Cod3x, inspired by the Openzeppelin ERC20 implementation
  *
  */
 abstract contract IncentivizedERC20 is Context, IERC20, IERC20Detailed {

@@ -22,7 +22,7 @@ import {IMiniPoolReserveInterestRateStrategy} from
 
 /**
  * @title ReserveLogic library
- * @author Aave
+ * @author Cod3x
  * @notice Implements the logic to update the reserves state
  */
 library MiniPoolReserveLogic {

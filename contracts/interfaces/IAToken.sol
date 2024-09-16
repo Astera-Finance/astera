@@ -6,6 +6,10 @@ import {IScaledBalanceToken} from "./IScaledBalanceToken.sol";
 import {IInitializableAToken} from "./IInitializableAToken.sol";
 import {IRewarder} from "./IRewarder.sol";
 
+/**
+ * @title IAToken
+ * @author Cod3x
+ */
 interface IAToken is IERC20, IScaledBalanceToken, IInitializableAToken {
     /**
      * @dev Emitted after the mint action

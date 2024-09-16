@@ -19,7 +19,7 @@ import {IAERC6909} from "contracts/interfaces/IAERC6909.sol";
  * point of utilization and another from that one to 100%
  * - An instance of this same contract, can't be used across different Aave markets, due to the caching
  *   of the LendingPoolAddressesProvider
- * @author Aave
+ * @author Cod3x
  *
  */
 contract MiniPoolDefaultReserveInterestRateStrategy is IMiniPoolReserveInterestRateStrategy {

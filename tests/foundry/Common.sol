@@ -15,11 +15,9 @@ import "contracts/protocol/core/lendingpool/logic/GenericLogic.sol";
 import "contracts/protocol/core/lendingpool/logic/ValidationLogic.sol";
 import "contracts/protocol/configuration/LendingPoolAddressesProvider.sol";
 import "contracts/protocol/configuration/LendingPoolAddressesProviderRegistry.sol";
-import
-    "contracts/protocol/core/InterestRateStrategies/DefaultReserveInterestRateStrategy.sol";
+import "contracts/protocol/core/InterestRateStrategies/DefaultReserveInterestRateStrategy.sol";
 import "contracts/protocol/core/InterestRateStrategies/PiReserveInterestRateStrategy.sol";
-import
-    "contracts/protocol/core/InterestRateStrategies/MiniPoolPiReserveInterestRateStrategy.sol";
+import "contracts/protocol/core/InterestRateStrategies/MiniPoolPiReserveInterestRateStrategy.sol";
 import "contracts/protocol/core/lendingpool/LendingPool.sol";
 import "contracts/protocol/core/lendingpool/LendingPoolCollateralManager.sol";
 import "contracts/protocol/core/lendingpool/LendingPoolConfigurator.sol";

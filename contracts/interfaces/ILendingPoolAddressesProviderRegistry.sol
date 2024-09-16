@@ -7,7 +7,7 @@ pragma solidity ^0.8.0;
  * - Used for indexing purposes of Aave protocol's markets
  * - The id assigned to a LendingPoolAddressesProvider refers to the market it is connected with,
  *   for example with `0` for the Aave main market and `1` for the next created
- * @author Aave
+ * @author Cod3x
  *
  */
 interface ILendingPoolAddressesProviderRegistry {

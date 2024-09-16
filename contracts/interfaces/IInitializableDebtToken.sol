@@ -7,7 +7,7 @@ import {IRewarder} from "./IRewarder.sol";
 /**
  * @title IInitializableDebtToken
  * @notice Interface for the initialize function common between debt tokens
- * @author Aave
+ * @author Cod3x
  *
  */
 interface IInitializableDebtToken {
