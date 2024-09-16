@@ -15,7 +15,7 @@ import {UserConfiguration} from "contracts/protocol/libraries/configuration/User
 import {DataTypes} from "contracts/protocol/libraries/types/DataTypes.sol";
 import {IChainlinkAggregator} from "contracts/interfaces/IChainlinkAggregator.sol";
 import {DefaultReserveInterestRateStrategy} from
-    "contracts/protocol/lendingpool/InterestRateStrategies/DefaultReserveInterestRateStrategy.sol";
+    "contracts/protocol/core/InterestRateStrategies/DefaultReserveInterestRateStrategy.sol";
 import {IERC20DetailedBytes} from "contracts/interfaces/IERC20DetailedBytes.sol";
 
 contract UiPoolDataProviderV2 is IUiPoolDataProviderV2 {

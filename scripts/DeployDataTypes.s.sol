@@ -11,20 +11,20 @@ import "contracts/misc/ProtocolDataProvider.sol";
 import "contracts/misc/Treasury.sol";
 import "contracts/misc/UiPoolDataProviderV2.sol";
 import "contracts/misc/WETHGateway.sol";
-import "contracts/protocol/libraries/logic/ReserveLogic.sol";
-import "contracts/protocol/libraries/logic/GenericLogic.sol";
-import "contracts/protocol/libraries/logic/ValidationLogic.sol";
+import "contracts/protocol/core/lendingpool/logic/ReserveLogic.sol";
+import "contracts/protocol/core/lendingpool/logic/GenericLogic.sol";
+import "contracts/protocol/core/lendingpool/logic/ValidationLogic.sol";
 import "contracts/protocol/configuration/LendingPoolAddressesProvider.sol";
 import "contracts/protocol/configuration/LendingPoolAddressesProviderRegistry.sol";
 import
-    "contracts/protocol/lendingpool/InterestRateStrategies/DefaultReserveInterestRateStrategy.sol";
-import "contracts/protocol/lendingpool/LendingPool.sol";
-import "contracts/protocol/lendingpool/LendingPoolCollateralManager.sol";
-import "contracts/protocol/lendingpool/LendingPoolConfigurator.sol";
-import "contracts/protocol/lendingpool/minipool/MiniPool.sol";
+    "contracts/protocol/core/InterestRateStrategies/DefaultReserveInterestRateStrategy.sol";
+import "contracts/protocol/core/LendingPool.sol";
+import "contracts/protocol/core/LendingPoolCollateralManager.sol";
+import "contracts/protocol/core/LendingPoolConfigurator.sol";
+import "contracts/protocol/core/minipool/MiniPool.sol";
 import "contracts/protocol/configuration/MiniPoolAddressProvider.sol";
-import "contracts/protocol/lendingpool/minipool/MiniPoolConfigurator.sol";
-import "contracts/protocol/lendingpool/minipool/FlowLimiter.sol";
+import "contracts/protocol/core/minipool/MiniPoolConfigurator.sol";
+import "contracts/protocol/core/minipool/FlowLimiter.sol";
 
 import "contracts/deployments/ATokensAndRatesHelper.sol";
 import "contracts/protocol/tokenization/ERC20/AToken.sol";
@@ -40,9 +40,9 @@ import "contracts/mocks/dependencies/IStrategy.sol";
 import "contracts/mocks/dependencies/IExternalContract.sol";
 import {WadRayMath} from "contracts/protocol/libraries/math/WadRayMath.sol";
 
-import "contracts/protocol/lendingpool/minipool/MiniPoolDefaultReserveInterestRate.sol";
+import "contracts/protocol/core/minipool/MiniPoolDefaultReserveInterestRate.sol";
 import "contracts/mocks/oracle/PriceOracle.sol";
-import "contracts/protocol/lendingpool/minipool/MiniPoolCollateralManager.sol";
+import "contracts/protocol/core/minipool/MiniPoolCollateralManager.sol";
 
 
 // Structures

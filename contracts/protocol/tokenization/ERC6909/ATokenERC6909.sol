@@ -8,7 +8,7 @@ import {Errors} from "contracts/protocol/libraries/helpers/Errors.sol";
 import {VersionedInitializable} from
     "contracts/protocol/libraries/upgradeability/VersionedInitializable.sol";
 import {DataTypes} from "contracts/protocol/libraries/types/DataTypes.sol";
-import {ReserveLogic} from "contracts/protocol/libraries/logic/ReserveLogic.sol";
+import {ReserveLogic} from "contracts/protocol/core/lendingpool/logic/ReserveLogic.sol";
 import {IncentivizedERC6909} from "./IncentivizedERC6909.sol";
 import {IMiniPoolRewarder} from "contracts/interfaces/IMiniPoolRewarder.sol";
 import {IERC20} from "contracts/dependencies/openzeppelin/contracts/IERC20.sol";

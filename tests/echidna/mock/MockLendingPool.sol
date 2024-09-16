@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: agpl-3.0
 pragma solidity 0.8.23;
 
-import "contracts/protocol/lendingpool/LendingPool.sol";
-import "contracts/protocol/libraries/logic/BorrowLogic.sol";
+import "contracts/protocol/core/LendingPool.sol";
+import "contracts/protocol/core/lendingpool/logic/BorrowLogic.sol";
 import "contracts/dependencies/openzeppelin/contracts/ERC20.sol";
 import "contracts/misc/Oracle.sol";
 

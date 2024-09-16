@@ -4,9 +4,9 @@ pragma solidity ^0.8.0;
 import "../Common.sol";
 import "contracts/protocol/libraries/helpers/Errors.sol";
 import {WadRayMath} from "contracts/protocol/libraries/math/WadRayMath.sol";
-import "contracts/protocol/lendingpool/InterestRateStrategies/PidReserveInterestRateStrategy.sol";
+import "contracts/protocol/core/InterestRateStrategies/PidReserveInterestRateStrategy.sol";
 import
-    "contracts/protocol/lendingpool/InterestRateStrategies/MiniPoolPiReserveInterestRateStrategy.sol";
+    "contracts/protocol/core/InterestRateStrategies/MiniPoolPiReserveInterestRateStrategy.sol";
 import "openzeppelin-contracts/contracts/utils/Strings.sol";
 
 contract MiniPoolPidReserveInterestRateStrategyTest is Common {

@@ -1,13 +1,18 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity 0.8.23;
 
-import {IAToken} from "contracts/interfaces/IAToken.sol";
-import {IVariableDebtToken} from "contracts/interfaces/IVariableDebtToken.sol";
-import {ILendingPool} from "contracts/interfaces/ILendingPool.sol";
-import {ILendingPoolAddressesProvider} from "contracts/interfaces/ILendingPoolAddressesProvider.sol";
-import {IReserveInterestRateStrategy} from "contracts/interfaces/IReserveInterestRateStrategy.sol";
-import "contracts/protocol/lendingpool/interestRateStrategies/BasePiReserveRateStrategy.sol";
+import {IMiniPoolAddressesProvider} from "contracts/interfaces/IMiniPoolAddressesProvider.sol";
 import {IERC20} from "contracts/dependencies/openzeppelin/contracts/IERC20.sol";
+import {IAERC6909} from "contracts/interfaces/IAERC6909.sol";
+import {IMiniPool} from "contracts/interfaces/IMiniPool.sol";
+import {IMiniPoolReserveInterestRateStrategy} from
+    "contracts/interfaces/IMiniPoolReserveInterestRateStrategy.sol";
+import {
+    BasePiReserveRateStrategy,
+    WadRayMath,
+    PercentageMath,
+    DataTypes
+} from "contracts/protocol/core/interestRateStrategies/BasePiReserveRateStrategy.sol";
 
 /**
  * @title PiReserveInterestRateStrategy contract
@@ -19,9 +24,9 @@ import {IERC20} from "contracts/dependencies/openzeppelin/contracts/IERC20.sol";
  * needs to be associated with only one market.
  * @author ByteMasons
  */
-contract PiReserveInterestRateStrategy is
+contract MiniPoolPiReserveInterestRateStrategy is
     BasePiReserveRateStrategy,
-    IReserveInterestRateStrategy
+    IMiniPoolReserveInterestRateStrategy
 {
     using WadRayMath for uint256;
     using WadRayMath for int256;
@@ -50,16 +55,21 @@ contract PiReserveInterestRateStrategy is
     {}
 
     function _getLendingPool() internal view override returns (address) {
-        return ILendingPoolAddressesProvider(_addressProvider).getLendingPool();
+        return IMiniPoolAddressesProvider(_addressProvider).getMiniPool(0);
     }
 
-    function getAvailableLiquidity(address, address aToken)
+    function getAvailableLiquidity(address asset, address aToken)
         public
         view
         override
         returns (uint256)
     {
-        return IAToken(aToken).getTotalManagedAssets();
+        uint256 availableLiquidity = IERC20(asset).balanceOf(aToken);
+
+        // IAERC6909 aErc6909Token =
+        //     IAERC6909(IMiniPoolAddressesProvider(_provider).getMiniPoolToAERC6909(_getLendingPool()));
+        // uint256 availableLiquidity = aErc6909Token.totalSupply(reserve.variableDebtTokenID);
+        return availableLiquidity;
     }
 
     // ----------- view -----------
@@ -72,11 +82,13 @@ contract PiReserveInterestRateStrategy is
      */
     function getCurrentInterestRates() public view override returns (uint256, uint256, uint256) {
         // utilization
-        DataTypes.ReserveData memory reserve =
-            ILendingPool(_getLendingPool()).getReserveData(_asset, _assetReserveType);
-        uint256 availableLiquidity = getAvailableLiquidity(_asset, reserve.aTokenAddress);
-        uint256 totalVariableDebt = IVariableDebtToken(reserve.variableDebtTokenAddress)
-            .scaledTotalSupply().rayMul(reserve.variableBorrowIndex);
+        IAERC6909 aErc6909Token = IAERC6909(
+            IMiniPoolAddressesProvider(_addressProvider).getMiniPoolToAERC6909(_getLendingPool())
+        );
+        DataTypes.MiniPoolReserveData memory reserve =
+            IMiniPool(_getLendingPool()).getReserveData(_asset);
+        uint256 availableLiquidity = IERC20(_asset).balanceOf(reserve.aTokenAddress);
+        uint256 totalVariableDebt = aErc6909Token.totalSupply(reserve.variableDebtTokenID);
         uint256 utilizationRate = totalVariableDebt == 0
             ? 0
             : totalVariableDebt.rayDiv(availableLiquidity + totalVariableDebt);
@@ -89,7 +101,6 @@ contract PiReserveInterestRateStrategy is
         uint256 currentLiquidityRate = getLiquidityRate(
             currentVariableBorrowRate, utilizationRate, getReserveFactor(reserve.configuration)
         );
-
         return (currentLiquidityRate, currentVariableBorrowRate, utilizationRate);
     }
 
