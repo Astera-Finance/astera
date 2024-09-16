@@ -20,7 +20,7 @@ import {ReserveBorrowConfiguration} from
 import {UserConfiguration} from "contracts/protocol/libraries/configuration/UserConfiguration.sol";
 import {UserRecentBorrow} from "contracts/protocol/libraries/configuration/UserRecentBorrow.sol";
 import {Helpers} from "contracts/protocol/libraries/helpers/Helpers.sol";
-import {IFlashLoanReceiver} from "contracts/flashloan/interfaces/IFlashLoanReceiver.sol"; // Add this line
+import {IFlashLoanReceiver} from "contracts/interfaces/IFlashLoanReceiver.sol"; // Add this line
 import {MiniPoolBorrowLogic} from "./MiniPoolBorrowLogic.sol";
 import {IAERC6909} from "contracts/interfaces/IAERC6909.sol";
 

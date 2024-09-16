@@ -9,7 +9,6 @@ import {AToken} from "contracts/protocol/tokenization/AToken.sol";
 import {DefaultReserveInterestRateStrategy} from
     "contracts/protocol/lendingpool/InterestRateStrategies/DefaultReserveInterestRateStrategy.sol";
 import {Ownable} from "contracts/dependencies/openzeppelin/contracts/Ownable.sol";
-import {StringLib} from "contracts/deployments/StringLib.sol";
 
 contract ATokensAndRatesHelper is Ownable {
     address payable private pool;

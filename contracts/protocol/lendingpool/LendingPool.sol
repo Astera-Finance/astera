@@ -7,7 +7,7 @@ import {Address} from "contracts/dependencies/openzeppelin/contracts/Address.sol
 import {ILendingPoolAddressesProvider} from "contracts/interfaces/ILendingPoolAddressesProvider.sol";
 import {IAToken} from "contracts/interfaces/IAToken.sol";
 import {IVariableDebtToken} from "contracts/interfaces/IVariableDebtToken.sol";
-import {IFlashLoanReceiver} from "contracts/flashloan/interfaces/IFlashLoanReceiver.sol";
+import {IFlashLoanReceiver} from "contracts/interfaces/IFlashLoanReceiver.sol";
 import {IPriceOracleGetter} from "contracts/interfaces/IPriceOracleGetter.sol";
 import {ILendingPool} from "contracts/interfaces/ILendingPool.sol";
 import {VersionedInitializable} from

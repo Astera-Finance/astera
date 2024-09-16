@@ -8,7 +8,7 @@ import {SafeERC20} from "contracts/dependencies/openzeppelin/contracts/SafeERC20
 import {IMiniPoolAddressesProvider} from "contracts/interfaces/IMiniPoolAddressesProvider.sol";
 import {IFlowLimiter} from "contracts/interfaces/IFlowLimiter.sol";
 import {IAToken} from "contracts/interfaces/IAToken.sol";
-import {IFlashLoanReceiver} from "contracts/flashloan/interfaces/IFlashLoanReceiver.sol";
+import {IFlashLoanReceiver} from "contracts/interfaces/IFlashLoanReceiver.sol";
 import {ILendingPool} from "contracts/interfaces/ILendingPool.sol";
 import {VersionedInitializable} from
     "contracts/protocol/libraries/upgradeability/VersionedInitializable.sol";

@@ -4,7 +4,7 @@ pragma solidity ^0.8.13;
 // import "contracts/interfaces/ILendingPool.sol";
 // import "contracts/interfaces/ILendingPoolAddressesProvider.sol";
 import 'contracts/dependencies/openzeppelin/contracts/ERC20.sol';
-import 'contracts/flashloan/base/FlashLoanReceiverBase.sol';
+import 'contracts/mocks/dependencies/FlashLoanReceiverBase.sol';
 
 contract User is FlashLoanReceiverBase {
     
