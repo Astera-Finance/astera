@@ -4,7 +4,7 @@ pragma solidity ^0.8.0;
 import "forge-std/Test.sol";
 import "forge-std/console.sol";
 import "contracts/dependencies/openzeppelin/contracts/ERC20.sol";
-import "contracts/rewarder/Rewarder.sol";
+import "contracts/rewarder/lendingpool/Rewarder.sol";
 import "contracts/misc/Oracle.sol";
 import "contracts/misc/ProtocolDataProvider.sol";
 import "contracts/misc/Treasury.sol";

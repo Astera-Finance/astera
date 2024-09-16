@@ -3,7 +3,7 @@ pragma solidity 0.8.23;
 
 import {IRewardsController} from "contracts/interfaces/IRewardsController.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import {DistributionTypes} from "./DistributionTypes.sol";
+import {DistributionTypes} from "contracts/rewarder/DistributionTypes.sol";
 import {Ownable} from "lib/openzeppelin-contracts/contracts/access/Ownable.sol";
 
 /**

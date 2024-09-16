@@ -4,10 +4,10 @@ pragma solidity ^0.8.0;
 import "./Common.sol";
 import "contracts/protocol/libraries/helpers/Errors.sol";
 import "contracts/misc/RewardsVault.sol";
-import "contracts/rewarder/Rewarder6909.sol";
+import "contracts/rewarder/minipool/Rewarder6909.sol";
 import "contracts/mocks/tokens/MintableERC20.sol";
 import {DistributionTypes} from "contracts/rewarder/DistributionTypes.sol";
-import {RewardForwarder} from "contracts/rewarder/RewardForwarder.sol";
+import {RewardForwarder} from "contracts/rewarder/lendingpool/RewardForwarder.sol";
 
 import "forge-std/StdUtils.sol";
 

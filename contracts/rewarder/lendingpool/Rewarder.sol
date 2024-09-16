@@ -3,9 +3,9 @@ pragma solidity 0.8.23;
 
 import {IERC20} from "contracts/dependencies/openzeppelin/contracts/IERC20.sol";
 import {SafeERC20} from "contracts/dependencies/openzeppelin/contracts/SafeERC20.sol";
-import {RewardsController6909} from "./RewardsController6909.sol";
+import {RewardsController} from "contracts/rewarder/lendingpool/RewardsController.sol";
 
-contract Rewarder6909 is RewardsController6909 {
+contract Rewarder is RewardsController {
     using SafeERC20 for IERC20;
 
     // reward => reward vault
@@ -13,7 +13,7 @@ contract Rewarder6909 is RewardsController6909 {
 
     event RewardsVaultUpdated(address indexed vault);
 
-    constructor() RewardsController6909(msg.sender) {}
+    constructor() RewardsController(msg.sender) {}
 
     function setRewardsVault(address vault, address reward) external onlyOwner {
         _rewardsVault[reward] = vault;
