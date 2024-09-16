@@ -3,7 +3,7 @@ pragma solidity ^0.8.23;
 
 import {Context} from "../../../dependencies/openzeppelin/contracts/Context.sol";
 import {SafeMath} from "../../../dependencies/openzeppelin/contracts/SafeMath.sol";
-import {IRewarder} from "../../../interfaces/IRewarder.sol";
+import {IMiniPoolRewarder} from "../../../interfaces/IMiniPoolRewarder.sol";
 import {ERC6909} from "../../../dependencies/solady/ERC6909.sol";
 
 /**
@@ -44,17 +44,19 @@ abstract contract IncentivizedERC6909 is Context, ERC6909 {
         return (_tokenURI[id]);
     }
 
-    function _getIncentivesController() internal view virtual returns (IRewarder);
+    function _getIncentivesController() internal view virtual returns (IMiniPoolRewarder);
 
     function totalSupply(uint256 id) public view virtual returns (uint256) {
         return _totalSupply[id];
     }
 
-    function _decrementTotalSupply(uint256 id, uint256 amt) internal virtual {
+    function _decrementTotalSupply(uint256 id, uint256 amt) internal virtual returns (uint256 oldTotalSupply) {
+        oldTotalSupply= _totalSupply[id];
         _totalSupply[id] = _totalSupply[id].sub(amt);
     }
 
-    function _incrementTotalSupply(uint256 id, uint256 amt) internal virtual {
+    function _incrementTotalSupply(uint256 id, uint256 amt) internal virtual returns (uint256 oldTotalSupply){
+        oldTotalSupply= _totalSupply[id];
         _totalSupply[id] = _totalSupply[id].add(amt);
     }
 

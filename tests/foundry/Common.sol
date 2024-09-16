@@ -16,10 +16,10 @@ import "contracts/protocol/libraries/logic/ValidationLogic.sol";
 import "contracts/protocol/configuration/LendingPoolAddressesProvider.sol";
 import "contracts/protocol/configuration/LendingPoolAddressesProviderRegistry.sol";
 import
-    "contracts/protocol/lendingpool/interestRateStrategies/DefaultReserveInterestRateStrategy.sol";
-import "contracts/protocol/lendingpool/interestRateStrategies/PiReserveInterestRateStrategy.sol";
+    "contracts/protocol/lendingpool/InterestRateStrategies/DefaultReserveInterestRateStrategy.sol";
+import "contracts/protocol/lendingpool/InterestRateStrategies/PiReserveInterestRateStrategy.sol";
 import
-    "contracts/protocol/lendingpool/interestRateStrategies/MiniPoolPiReserveInterestRateStrategy.sol";
+    "contracts/protocol/lendingpool/InterestRateStrategies/MiniPoolPiReserveInterestRateStrategy.sol";
 import "contracts/protocol/lendingpool/LendingPool.sol";
 import "contracts/protocol/lendingpool/LendingPoolCollateralManager.sol";
 import "contracts/protocol/lendingpool/LendingPoolConfigurator.sol";
@@ -394,6 +394,10 @@ contract Common is Test {
         variableDebtTokens = fixture_getVarDebtTokens(
             tokens, ProtocolDataProvider(configAddresses.protocolDataProvider)
         );
+        for(uint256 idx; idx < tokens.length; idx++){
+            vm.label(address(aTokens[idx]), string.concat("AToken ", uintToString(idx)));
+            vm.label(address(variableDebtTokens[idx]), string.concat("VariableDebtToken ", uintToString(idx)));
+        }
     }
 
     function fixture_configureReserves(

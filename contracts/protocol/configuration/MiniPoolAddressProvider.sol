@@ -46,6 +46,10 @@ contract MiniPoolAddressesProvider is Ownable {
         _addresses[PRICE_ORACLE] = provider.getPriceOracle();
     }
 
+    function getMiniPoolCount() external view returns (uint256) {
+        return _minipoolCount;
+    }
+
     function getLendingPoolAddressesProvider() external view returns (address) {
         return _addresses[LENDING_POOL_ADDRESSES_PROVIDER];
     }
@@ -101,7 +105,7 @@ contract MiniPoolAddressesProvider is Ownable {
 
     function upgradeMiniPool(address MiniPoolProxy) external onlyOwner {}
 
-    function deployMiniPool() external onlyOwner {
+    function deployMiniPool() external onlyOwner returns (uint256) {
         InitializableImmutableAdminUpgradeabilityProxy proxy =
             new InitializableImmutableAdminUpgradeabilityProxy(address(this));
 
@@ -118,7 +122,11 @@ contract MiniPoolAddressesProvider is Ownable {
 
         _miniPoolToAERC6909[address(proxy)] = address(aTokenProxy);
 
+        uint256 minipoolID = _minipoolCount;
+
         _minipoolCount++;
+
+        return minipoolID;
     }
 
     function getMiniPool(uint256 id) external view returns (address) {

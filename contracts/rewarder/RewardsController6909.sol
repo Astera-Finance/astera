@@ -1,49 +1,22 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.20;
 
-import {IRewardsController} from "./interfaces/IRewardsController.sol";
-import {RewardsDistributor} from "./RewardsDistributor.sol";
+import {IMiniPoolRewardsController} from "./interfaces/IMiniPoolRewardsController.sol";
+import {RewardsDistributor6909} from "./RewardsDistributor6909.sol";
 import {IScaledBalanceToken} from "./interfaces/IScaledBalanceToken.sol";
-import {DistributionTypes} from "./libraries/DistributionTypes.sol";
 import {IAERC6909} from "../interfaces/IAERC6909.sol";
-import {IMiniPoolAddressesProvider} from "./interfaces/IMiniPoolAddressesProvider.sol";
+import {DistributionTypes} from "./libraries/DistributionTypes.sol";
 
-abstract contract RewardsController is RewardsDistributor, IRewardsController {
+abstract contract RewardsController6909 is RewardsDistributor6909, IMiniPoolRewardsController {
     // user => authorized claimer
     mapping(address => address) internal _authorizedClaimers;
-    IMiniPoolAddressesProvider internal _addressesProvider;
-    mapping(address => bool) internal _isAtokenERC6909;
-    mapping(address => bool) internal _isMiniPool;
-            //aToken => ERC6909 => last Reported (totalSupply(ID) - balanceOf(ERC6909))
-    mapping(address => mapping(address => uint256)) internal lastReportedDiff;
-    uint256 internal _totalDiff;
-    uint256 internal _totalTrackedMiniPools;
-    address public rewardForwarder;
 
     modifier onlyAuthorizedClaimers(address claimer, address user) {
         require(_authorizedClaimers[user] == claimer, "CLAIMER_UNAUTHORIZED");
         _;
     }
 
-    constructor(address initialOwner) RewardsDistributor(initialOwner) {}
-
-    function setMiniPoolAddressesProvider(address addressesProvider) external onlyOwner {
-        _addressesProvider = IMiniPoolAddressesProvider(addressesProvider);
-    }
-
-    function setRewardForwarder(address forwarder) external onlyOwner {
-        if(rewardForwarder != address(0)){
-            rewardForwarder = forwarder;
-        }else {
-            rewardForwarder = forwarder;
-            for(uint256 i = 0; i < _totalTrackedMiniPools; i++){
-                address miniPool = _addressesProvider.getMiniPool(i);
-                setDefaultForwarder(miniPool);
-                address aToken6909 = _addressesProvider.getMiniPoolToAERC6909(miniPool);
-                setDefaultForwarder(aToken6909);
-            }
-        }
-    }
+    constructor(address initialOwner) RewardsDistributor6909(initialOwner) {}
 
     function getClaimer(address user) external view override returns (address) {
         return _authorizedClaimers[user];
@@ -54,61 +27,27 @@ abstract contract RewardsController is RewardsDistributor, IRewardsController {
         emit ClaimerSet(user, caller);
     }
 
-    function configureAssets(DistributionTypes.RewardsConfigInput[] memory config)
+    function configureAssets(DistributionTypes.MiniPoolRewardsConfigInput[] memory config)
         external
         override
         onlyOwner
     {
         for (uint256 i = 0; i < config.length; i++) {
-            config[i].totalSupply = IScaledBalanceToken(config[i].asset).scaledTotalSupply();
+            //fix Token Configuration
+            config[i].totalSupply = IAERC6909(config[i].asset.market6909).scaledTotalSupply(config[i].asset.assetID);
         }
         _configureAssets(config);
     }
 
-    function handleAction(address user, uint256 totalSupply, uint256 userBalance)
+    //@AUDIT
+    function handleAction(uint256 assetID, address user, uint256 totalSupply, uint256 userBalance)
         external
         override
     {
-        refreshMiniPoolData();
-        //if user is an ERC6909 aToken, this will only be true for aTokens
-        if(_isAtokenERC6909[user] == true){
-            (uint256 assetID, uint256 debtID, bool isTranche) = IAERC6909(user).getIdForUnderlying(msg.sender);
-            //for trancheATokens we calculate the total supply of the AERC6909 ID for the assetID
-            //we subtract the current balance
-            uint256 totalSupplyAsset = IAERC6909(user).scaledTotalSupply(assetID);
-            uint256 diff = totalSupplyAsset - userBalance;
-            _totalDiff = _totalDiff - lastReportedDiff[msg.sender][user] + diff;
-            lastReportedDiff[msg.sender][user] = diff;
-            userBalance = totalSupplyAsset;
-            
-        }
-        _updateUserRewardsPerAssetInternal(msg.sender, user, userBalance, totalSupply + _totalDiff);
+        _updateUserRewardsPerAssetInternal(msg.sender, assetID, user, userBalance, totalSupply);
     }
 
-    function refreshMiniPoolData() internal {
-        if(address(_addressesProvider) != address(0)){
-            if(_totalTrackedMiniPools != _addressesProvider.getMiniPoolCount()){
-                for(uint256 i = _totalTrackedMiniPools; i < _addressesProvider.getMiniPoolCount(); i++){
-                    address miniPool = _addressesProvider.getMiniPool(i);
-                    _isMiniPool[miniPool] = true;
-                    setDefaultForwarder(miniPool);
-                    address aToken6909 = _addressesProvider.getMiniPoolToAERC6909(miniPool);
-                    _isAtokenERC6909[aToken6909] = true;
-                    setDefaultForwarder(aToken6909);
-                    _totalTrackedMiniPools++;
-                }
-            }
-        }
-    }
-
-    function setDefaultForwarder(address claimee) internal{
-        if(rewardForwarder != address(0)){
-            _authorizedClaimers[claimee] = rewardForwarder;
-            emit ClaimerSet(claimee, rewardForwarder);
-        }
-    }   
-
-    function claimRewards(address[] calldata assets, uint256 amount, address to, address reward)
+    function claimRewards(DistributionTypes.asset6909[] calldata assets, uint256 amount, address to, address reward)
         external
         override
         returns (uint256)
@@ -118,7 +57,7 @@ abstract contract RewardsController is RewardsDistributor, IRewardsController {
     }
 
     function claimRewardsOnBehalf(
-        address[] calldata assets,
+        DistributionTypes.asset6909[] calldata assets,
         uint256 amount,
         address user,
         address to,
@@ -129,7 +68,7 @@ abstract contract RewardsController is RewardsDistributor, IRewardsController {
         return _claimRewards(assets, amount, msg.sender, user, to, reward);
     }
 
-    function claimRewardsToSelf(address[] calldata assets, uint256 amount, address reward)
+    function claimRewardsToSelf(DistributionTypes.asset6909[] calldata assets, uint256 amount, address reward)
         external
         override
         returns (uint256)
@@ -137,7 +76,7 @@ abstract contract RewardsController is RewardsDistributor, IRewardsController {
         return _claimRewards(assets, amount, msg.sender, msg.sender, msg.sender, reward);
     }
 
-    function claimAllRewards(address[] calldata assets, address to)
+    function claimAllRewards(DistributionTypes.asset6909[] calldata assets, address to)
         external
         override
         returns (address[] memory rewardTokens, uint256[] memory claimedAmounts)
@@ -146,7 +85,7 @@ abstract contract RewardsController is RewardsDistributor, IRewardsController {
         return _claimAllRewards(assets, msg.sender, msg.sender, to);
     }
 
-    function claimAllRewardsOnBehalf(address[] calldata assets, address user, address to)
+    function claimAllRewardsOnBehalf(DistributionTypes.asset6909[] calldata assets, address user, address to)
         external
         override
         onlyAuthorizedClaimers(msg.sender, user)
@@ -157,7 +96,7 @@ abstract contract RewardsController is RewardsDistributor, IRewardsController {
         return _claimAllRewards(assets, msg.sender, user, to);
     }
 
-    function claimAllRewardsToSelf(address[] calldata assets)
+    function claimAllRewardsToSelf(DistributionTypes.asset6909[] calldata assets)
         external
         override
         returns (address[] memory rewardTokens, uint256[] memory claimedAmounts)
@@ -165,23 +104,23 @@ abstract contract RewardsController is RewardsDistributor, IRewardsController {
         return _claimAllRewards(assets, msg.sender, msg.sender, msg.sender);
     }
 
-    function _getUserStake(address[] calldata assets, address user)
+    function _getUserStake(DistributionTypes.asset6909[] calldata assets, address user)
         internal
         view
         override
-        returns (DistributionTypes.UserAssetInput[] memory userState)
+        returns (DistributionTypes.UserMiniPoolAssetInput[] memory userState)
     {
-        userState = new DistributionTypes.UserAssetInput[](assets.length);
+        userState = new DistributionTypes.UserMiniPoolAssetInput[](assets.length);
         for (uint256 i = 0; i < assets.length; i++) {
-            userState[i].underlyingAsset = assets[i];
+            userState[i].asset = assets[i];
             (userState[i].userBalance, userState[i].totalSupply) =
-                IScaledBalanceToken(assets[i]).getScaledUserBalanceAndSupply(user);
+                IAERC6909(assets[i].market6909).getScaledUserBalanceAndSupply(user, assets[i].assetID);
         }
         return userState;
     }
 
     function _claimRewards(
-        address[] calldata assets,
+        DistributionTypes.asset6909[] calldata assets,
         uint256 amount,
         address claimer,
         address user,
@@ -211,7 +150,7 @@ abstract contract RewardsController is RewardsDistributor, IRewardsController {
         return amountToClaim;
     }
 
-    function _claimAllRewards(address[] calldata assets, address claimer, address user, address to)
+    function _claimAllRewards(DistributionTypes.asset6909[] calldata assets, address claimer, address user, address to)
         internal
         returns (address[] memory rewardTokens, uint256[] memory claimedAmounts)
     {

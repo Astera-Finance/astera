@@ -11,10 +11,17 @@ import {VersionedInitializable} from "../../libraries/upgradeability/VersionedIn
 import {DataTypes} from "../../libraries/types/DataTypes.sol";
 import {ReserveLogic} from "../../libraries/logic/ReserveLogic.sol";
 import {IncentivizedERC6909} from "./IncentivizedERC6909.sol";
-import {IRewarder} from "../../../interfaces/IRewarder.sol";
+import {IMiniPoolRewarder} from "../../../interfaces/IMiniPoolRewarder.sol";
 import {IERC20} from "../../../dependencies/openzeppelin/contracts/IERC20.sol";
 import {IMiniPoolAddressesProvider} from "../../../interfaces/IMiniPoolAddressesProvider.sol";
 import {IMiniPool} from "../../../interfaces/IMiniPool.sol";
+
+/**
+ * @title ERC6909-MultiToken Built to service all collateral and debt tokens for a specific MiniPool
+ *         Current implementation allows for 128 tranched tokens from the Main Pool and 1000-128 unique tokens
+ *         from the MiniPool. 
+ * @author Cod3x - 0xGoober
+ */
 
 contract ATokenERC6909 is IncentivizedERC6909, VersionedInitializable {
     using SafeMath for uint256;
@@ -28,7 +35,7 @@ contract ATokenERC6909 is IncentivizedERC6909, VersionedInitializable {
     uint256 private _totalTrancheTokens;
 
     IMiniPoolAddressesProvider private _addressesProvider;
-    IRewarder private INCENTIVES_CONTROLLER;
+    IMiniPoolRewarder private INCENTIVES_CONTROLLER;
     IMiniPool private POOL;
     uint256 public constant ATOKEN_ADDRESSABLE_ID = 1000; // This is the first ID for aToken
     uint256 public constant DEBT_TOKEN_ADDRESSABLE_ID = 2000; // This is the first ID for debtToken
@@ -119,11 +126,11 @@ contract ATokenERC6909 is IncentivizedERC6909, VersionedInitializable {
         _initializeDebtTokenID(debtTokenID, underlyingAsset, name, symbol, decimals);
     }
 
-    function _getIncentivesController() internal view override returns (IRewarder) {
+    function _getIncentivesController() internal view override returns (IMiniPoolRewarder) {
         return INCENTIVES_CONTROLLER;
     }
 
-    function setIncentivesController(IRewarder controller) external {
+    function setIncentivesController(IMiniPoolRewarder controller) external {
         require(msg.sender == address(POOL), Errors.CT_CALLER_MUST_BE_LENDING_POOL);
         INCENTIVES_CONTROLLER = controller;
     }
@@ -160,10 +167,55 @@ contract ATokenERC6909 is IncentivizedERC6909, VersionedInitializable {
         internal
         override
     {
+        uint256 oldSupply = totalSupply(id);
+        uint256 oldFromBalance = balanceOf(from, id);
+        uint256 oldToBalance = balanceOf(to, id);
+        //if the token was minted
         if (from == address(0) && to != address(0)) {
-            _incrementTotalSupply(id, amount);
+            oldSupply = _incrementTotalSupply(id, amount);
+            oldToBalance = oldToBalance - amount;
+            oldFromBalance = 0;
+            if (address(_getIncentivesController()) != address(0)) {
+                _getIncentivesController().handleAction(
+                    id,
+                    to, 
+                    oldSupply, 
+                    oldToBalance);
+            }
+        //if the token was burned
         } else if (to == address(0) && from != address(0)) {
-            _decrementTotalSupply(id, amount);
+            oldSupply = _decrementTotalSupply(id, amount);
+            oldFromBalance = oldFromBalance + amount;
+            oldToBalance = 0;
+            if (address(_getIncentivesController()) != address(0)) {
+                _getIncentivesController().handleAction(
+                    id,
+                    from, 
+                    oldSupply, 
+                    oldFromBalance);
+            }
+        }
+        //the token was transferred
+        else {
+            oldFromBalance = oldFromBalance + amount;
+            oldToBalance = oldToBalance - amount;
+            if (address(_getIncentivesController()) != address(0)) {
+                _getIncentivesController().handleAction(
+                    id,
+                    from, 
+                    oldSupply, 
+                    oldFromBalance
+                );
+                
+                if (from != to) {
+                    _getIncentivesController().handleAction(
+                        id,
+                        to, 
+                        oldSupply,
+                        oldToBalance
+                    );
+                }
+            }
         }
     }
 
