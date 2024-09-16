@@ -3,7 +3,7 @@ pragma solidity 0.8.23;
 
 import {IERC20} from "contracts/dependencies/openzeppelin/contracts/IERC20.sol";
 import {SafeERC20} from "contracts/dependencies/openzeppelin/contracts/SafeERC20.sol";
-import {RewardsController} from "contracts/rewarder/lendingpool/RewardsController.sol";
+import {RewardsController} from "contracts/protocol/rewarder/lendingpool/RewardsController.sol";
 
 contract Rewarder is RewardsController {
     using SafeERC20 for IERC20;

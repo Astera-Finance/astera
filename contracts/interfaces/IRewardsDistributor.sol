@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-import {DistributionTypes} from "contracts/rewarder/DistributionTypes.sol";
+import {DistributionTypes} from "contracts/protocol/rewarder/DistributionTypes.sol";
 
 interface IRewardsDistributor {
     event AssetConfigUpdated(

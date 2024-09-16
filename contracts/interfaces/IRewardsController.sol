@@ -2,7 +2,7 @@
 pragma solidity ^0.8.0;
 
 import {IRewardsDistributor} from "./IRewardsDistributor.sol";
-import {DistributionTypes} from "contracts/rewarder/DistributionTypes.sol";
+import {DistributionTypes} from "contracts/protocol/rewarder/DistributionTypes.sol";
 
 interface IRewardsController is IRewardsDistributor {
     event RewardsClaimed(

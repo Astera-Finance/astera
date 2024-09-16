@@ -1,13 +1,12 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.23;
 
-import {IMiniPoolRewardsDistributor} from "contracts/interfaces/IMiniPoolRewardsDistributor.sol";
+import {IRewardsDistributor} from "contracts/interfaces/IRewardsDistributor.sol";
 import {IERC20Detailed} from "contracts/dependencies/openzeppelin/contracts/IERC20Detailed.sol";
-import {IERC6909} from "contracts/interfaces/IERC6909.sol";
-import {DistributionTypes} from "contracts/rewarder/DistributionTypes.sol";
+import {DistributionTypes} from "contracts/protocol/rewarder/DistributionTypes.sol";
 import {Ownable} from "lib/openzeppelin-contracts/contracts/access/Ownable.sol";
 
-abstract contract RewardsDistributor6909 is IMiniPoolRewardsDistributor, Ownable {
+abstract contract RewardsDistributor is IRewardsDistributor, Ownable {
     struct RewardData {
         uint88 emissionPerSecond;
         uint104 index;
@@ -23,8 +22,8 @@ abstract contract RewardsDistributor6909 is IMiniPoolRewardsDistributor, Ownable
         uint8 decimals;
     }
 
-    // incentivized Market6909 => asset id => AssetData
-    mapping(address => mapping(uint256 => AssetData)) internal _assets;
+    // incentivized asset => AssetData
+    mapping(address => AssetData) internal _assets;
 
     // user => reward => unclaimed rewards
     mapping(address => mapping(address => uint256)) internal _usersUnclaimedRewards;
@@ -36,49 +35,44 @@ abstract contract RewardsDistributor6909 is IMiniPoolRewardsDistributor, Ownable
 
     constructor(address initialOwner) Ownable(initialOwner) {}
 
-    function getRewardsData(address market6909, uint256 assetID, address reward)
+    function getRewardsData(address asset, address reward)
         public
         view
         override
         returns (uint256, uint256, uint256, uint256)
     {
         return (
-            _assets[market6909][assetID].rewards[reward].index,
-            _assets[market6909][assetID].rewards[reward].emissionPerSecond,
-            _assets[market6909][assetID].rewards[reward].lastUpdateTimestamp,
-            _assets[market6909][assetID].rewards[reward].distributionEnd
+            _assets[asset].rewards[reward].index,
+            _assets[asset].rewards[reward].emissionPerSecond,
+            _assets[asset].rewards[reward].lastUpdateTimestamp,
+            _assets[asset].rewards[reward].distributionEnd
         );
     }
 
-    function getDistributionEnd(address market6909, uint256 assetID, address reward)
+    function getDistributionEnd(address asset, address reward)
         external
         view
         override
         returns (uint256)
     {
-        return _assets[market6909][assetID].rewards[reward].distributionEnd;
+        return _assets[asset].rewards[reward].distributionEnd;
     }
 
-    function getRewardsByAsset(address market6909, uint256 assetID)
-        external
-        view
-        override
-        returns (address[] memory)
-    {
-        return _assets[market6909][assetID].availableRewards;
+    function getRewardsByAsset(address asset) external view override returns (address[] memory) {
+        return _assets[asset].availableRewards;
     }
 
     function getRewardTokens() external view override returns (address[] memory) {
         return _rewardTokens;
     }
 
-    function getUserAssetData(address user, address market6909, uint256 assetID, address reward)
+    function getUserAssetData(address user, address asset, address reward)
         public
         view
         override
         returns (uint256)
     {
-        return _assets[market6909][assetID].rewards[reward].usersIndex[user];
+        return _assets[asset].rewards[reward].usersIndex[user];
     }
 
     function getUserUnclaimedRewardsFromStorage(address user, address reward)
@@ -90,15 +84,16 @@ abstract contract RewardsDistributor6909 is IMiniPoolRewardsDistributor, Ownable
         return _usersUnclaimedRewards[user][reward];
     }
 
-    function getUserRewardsBalance(
-        DistributionTypes.asset6909[] calldata assets,
-        address user,
-        address reward
-    ) external view override returns (uint256) {
+    function getUserRewardsBalance(address[] calldata assets, address user, address reward)
+        external
+        view
+        override
+        returns (uint256)
+    {
         return _getUserReward(user, reward, _getUserStake(assets, user));
     }
 
-    function getAllUserRewardsBalance(DistributionTypes.asset6909[] calldata assets, address user)
+    function getAllUserRewardsBalance(address[] calldata assets, address user)
         external
         view
         override
@@ -107,39 +102,31 @@ abstract contract RewardsDistributor6909 is IMiniPoolRewardsDistributor, Ownable
         return _getAllUserRewards(user, _getUserStake(assets, user));
     }
 
-    function setDistributionEnd(
-        address market6909,
-        uint256 assetID,
-        address reward,
-        uint32 distributionEnd
-    ) external override onlyOwner {
-        _assets[market6909][assetID].rewards[reward].distributionEnd = distributionEnd;
+    function setDistributionEnd(address asset, address reward, uint32 distributionEnd)
+        external
+        override
+        onlyOwner
+    {
+        _assets[asset].rewards[reward].distributionEnd = distributionEnd;
 
         emit AssetConfigUpdated(
-            market6909,
-            assetID,
-            reward,
-            _assets[market6909][assetID].rewards[reward].emissionPerSecond,
-            distributionEnd
+            asset, reward, _assets[asset].rewards[reward].emissionPerSecond, distributionEnd
         );
     }
 
-    function _configureAssets(DistributionTypes.MiniPoolRewardsConfigInput[] memory rewardsInput)
+    function _configureAssets(DistributionTypes.RewardsConfigInput[] memory rewardsInput)
         internal
     {
         for (uint256 i = 0; i < rewardsInput.length; i++) {
-            _assets[rewardsInput[i].asset.market6909][rewardsInput[i].asset.assetID].decimals =
-                IERC6909(rewardsInput[i].asset.market6909).decimals(rewardsInput[i].asset.assetID);
+            _assets[rewardsInput[i].asset].decimals =
+                IERC20Detailed(rewardsInput[i].asset).decimals();
 
-            RewardData storage rewardConfig = _assets[rewardsInput[i].asset.market6909][rewardsInput[i]
-                .asset
-                .assetID].rewards[rewardsInput[i].reward];
+            RewardData storage rewardConfig =
+                _assets[rewardsInput[i].asset].rewards[rewardsInput[i].reward];
 
             // Add reward address to asset available rewards if latestUpdateTimestamp is zero
             if (rewardConfig.lastUpdateTimestamp == 0) {
-                _assets[rewardsInput[i].asset.market6909][rewardsInput[i].asset.assetID]
-                    .availableRewards
-                    .push(rewardsInput[i].reward);
+                _assets[rewardsInput[i].asset].availableRewards.push(rewardsInput[i].reward);
             }
 
             // Add reward address to global rewards list if still not enabled
@@ -150,12 +137,11 @@ abstract contract RewardsDistributor6909 is IMiniPoolRewardsDistributor, Ownable
 
             // Due emissions is still zero, updates only latestUpdateTimestamp
             _updateAssetStateInternal(
-                rewardsInput[i].asset.market6909,
-                rewardsInput[i].asset.assetID,
+                rewardsInput[i].asset,
                 rewardsInput[i].reward,
                 rewardConfig,
                 rewardsInput[i].totalSupply,
-                _assets[rewardsInput[i].asset.market6909][rewardsInput[i].asset.assetID].decimals
+                _assets[rewardsInput[i].asset].decimals
             );
 
             // Configure emission and distribution end of the reward per asset
@@ -163,8 +149,7 @@ abstract contract RewardsDistributor6909 is IMiniPoolRewardsDistributor, Ownable
             rewardConfig.distributionEnd = rewardsInput[i].distributionEnd;
 
             emit AssetConfigUpdated(
-                rewardsInput[i].asset.market6909,
-                rewardsInput[i].asset.assetID,
+                rewardsInput[i].asset,
                 rewardsInput[i].reward,
                 rewardsInput[i].emissionPerSecond,
                 rewardsInput[i].distributionEnd
@@ -173,8 +158,7 @@ abstract contract RewardsDistributor6909 is IMiniPoolRewardsDistributor, Ownable
     }
 
     function _updateAssetStateInternal(
-        address market6909,
-        uint256 assetID,
+        address asset,
         address reward,
         RewardData storage rewardConfig,
         uint256 totalSupply,
@@ -200,7 +184,7 @@ abstract contract RewardsDistributor6909 is IMiniPoolRewardsDistributor, Ownable
             //optimization: storing one after another saves one SSTORE
             rewardConfig.index = uint104(newIndex);
             rewardConfig.lastUpdateTimestamp = uint32(block.timestamp);
-            emit AssetIndexUpdated(market6909, assetID, reward, newIndex);
+            emit AssetIndexUpdated(asset, reward, newIndex);
         } else {
             rewardConfig.lastUpdateTimestamp = uint32(block.timestamp);
         }
@@ -210,45 +194,42 @@ abstract contract RewardsDistributor6909 is IMiniPoolRewardsDistributor, Ownable
 
     function _updateUserRewardsInternal(
         address user,
-        address market6909,
-        uint256 assetID,
+        address asset,
         address reward,
         uint256 userBalance,
         uint256 totalSupply
     ) internal returns (uint256) {
-        RewardData storage rewardData = _assets[market6909][assetID].rewards[reward];
+        RewardData storage rewardData = _assets[asset].rewards[reward];
         uint256 userIndex = rewardData.usersIndex[user];
         uint256 accruedRewards = 0;
-        uint8 assetDecimals = _assets[market6909][assetID].decimals;
 
         uint256 newIndex = _updateAssetStateInternal(
-            market6909, assetID, reward, rewardData, totalSupply, assetDecimals
+            asset, reward, rewardData, totalSupply, _assets[asset].decimals
         );
 
         if (userIndex != newIndex) {
             if (userBalance != 0) {
-                accruedRewards = _getRewards(userBalance, newIndex, userIndex, assetDecimals);
+                accruedRewards =
+                    _getRewards(userBalance, newIndex, userIndex, _assets[asset].decimals);
             }
 
             rewardData.usersIndex[user] = newIndex;
-            emit UserIndexUpdated(user, market6909, assetID, reward, newIndex);
+            emit UserIndexUpdated(user, asset, reward, newIndex);
         }
 
         return accruedRewards;
     }
 
     function _updateUserRewardsPerAssetInternal(
-        address market6909,
-        uint256 assetID,
+        address asset,
         address user,
         uint256 userBalance,
         uint256 totalSupply
     ) internal {
-        for (uint256 r = 0; r < _assets[market6909][assetID].availableRewards.length; r++) {
-            address reward = _assets[market6909][assetID].availableRewards[r];
-            uint256 accruedRewards = _updateUserRewardsInternal(
-                user, market6909, assetID, reward, userBalance, totalSupply
-            );
+        for (uint256 r = 0; r < _assets[asset].availableRewards.length; r++) {
+            address reward = _assets[asset].availableRewards[r];
+            uint256 accruedRewards =
+                _updateUserRewardsInternal(user, asset, reward, userBalance, totalSupply);
             if (accruedRewards != 0) {
                 _usersUnclaimedRewards[user][reward] += accruedRewards;
 
@@ -257,14 +238,12 @@ abstract contract RewardsDistributor6909 is IMiniPoolRewardsDistributor, Ownable
         }
     }
 
-    function _distributeRewards(
-        address user,
-        DistributionTypes.UserMiniPoolAssetInput[] memory userState
-    ) internal {
+    function _distributeRewards(address user, DistributionTypes.UserAssetInput[] memory userState)
+        internal
+    {
         for (uint256 i = 0; i < userState.length; i++) {
             _updateUserRewardsPerAssetInternal(
-                userState[i].asset.market6909,
-                userState[i].asset.assetID,
+                userState[i].underlyingAsset,
                 user,
                 userState[i].userBalance,
                 userState[i].totalSupply
@@ -275,7 +254,7 @@ abstract contract RewardsDistributor6909 is IMiniPoolRewardsDistributor, Ownable
     function _getUserReward(
         address user,
         address reward,
-        DistributionTypes.UserMiniPoolAssetInput[] memory userState
+        DistributionTypes.UserAssetInput[] memory userState
     ) internal view returns (uint256 unclaimedRewards) {
         // Add unrealized rewards
         for (uint256 i = 0; i < userState.length; i++) {
@@ -289,10 +268,11 @@ abstract contract RewardsDistributor6909 is IMiniPoolRewardsDistributor, Ownable
         return unclaimedRewards + _usersUnclaimedRewards[user][reward];
     }
 
-    function _getAllUserRewards(
-        address user,
-        DistributionTypes.UserMiniPoolAssetInput[] memory userState
-    ) internal view returns (address[] memory rewardTokens, uint256[] memory unclaimedRewards) {
+    function _getAllUserRewards(address user, DistributionTypes.UserAssetInput[] memory userState)
+        internal
+        view
+        returns (address[] memory rewardTokens, uint256[] memory unclaimedRewards)
+    {
         rewardTokens = new address[](_rewardTokens.length);
         unclaimedRewards = new uint256[](rewardTokens.length);
 
@@ -318,11 +298,10 @@ abstract contract RewardsDistributor6909 is IMiniPoolRewardsDistributor, Ownable
     function _getUnrealizedRewardsFromStake(
         address user,
         address reward,
-        DistributionTypes.UserMiniPoolAssetInput memory stake
+        DistributionTypes.UserAssetInput memory stake
     ) internal view returns (uint256) {
-        RewardData storage rewardData =
-            _assets[stake.asset.market6909][stake.asset.assetID].rewards[reward];
-        uint8 assetDecimals = _assets[stake.asset.market6909][stake.asset.assetID].decimals;
+        RewardData storage rewardData = _assets[stake.underlyingAsset].rewards[reward];
+        uint8 assetDecimals = _assets[stake.underlyingAsset].decimals;
         uint256 assetIndex = _getAssetIndex(
             rewardData.index,
             rewardData.emissionPerSecond,
@@ -366,18 +345,13 @@ abstract contract RewardsDistributor6909 is IMiniPoolRewardsDistributor, Ownable
         return (emissionPerSecond * timeDelta * (10 ** decimals)) / totalBalance + currentIndex;
     }
 
-    function _getUserStake(DistributionTypes.asset6909[] calldata assets, address user)
+    function _getUserStake(address[] calldata assets, address user)
         internal
         view
         virtual
-        returns (DistributionTypes.UserMiniPoolAssetInput[] memory userState);
+        returns (DistributionTypes.UserAssetInput[] memory userState);
 
-    function getAssetDecimals(DistributionTypes.asset6909 calldata asset)
-        external
-        view
-        override
-        returns (uint8)
-    {
-        return _assets[asset.market6909][asset.assetID].decimals;
+    function getAssetDecimals(address asset) external view override returns (uint8) {
+        return _assets[asset].decimals;
     }
 }

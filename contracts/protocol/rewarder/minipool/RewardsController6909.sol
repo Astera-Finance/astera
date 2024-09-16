@@ -5,7 +5,7 @@ import {IMiniPoolRewardsController} from "contracts/interfaces/IMiniPoolRewardsC
 import {RewardsDistributor6909} from "./RewardsDistributor6909.sol";
 import {IScaledBalanceToken} from "contracts/interfaces/IScaledBalanceToken.sol";
 import {IAERC6909} from "contracts/interfaces/IAERC6909.sol";
-import {DistributionTypes} from "contracts/rewarder/DistributionTypes.sol";
+import {DistributionTypes} from "contracts/protocol/rewarder/DistributionTypes.sol";
 
 abstract contract RewardsController6909 is RewardsDistributor6909, IMiniPoolRewardsController {
     // user => authorized claimer
