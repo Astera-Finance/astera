@@ -143,15 +143,10 @@ library MiniPoolBorrowLogic {
             }
 
             vars.tokenUnit = 10 ** vars.decimals;
-            if (IAERC6909(currentReserve.aTokenAddress).isTranche(currentReserve.aTokenID)) {
-                vars.underlyingAsset =
-                    IAToken(vars.currentReserveAddress).UNDERLYING_ASSET_ADDRESS();
-                vars.reserveUnitPrice =
-                    IPriceOracleGetter(params.oracle).getAssetPrice(vars.underlyingAsset);
-            } else {
-                vars.reserveUnitPrice =
-                    IPriceOracleGetter(params.oracle).getAssetPrice(vars.currentReserveAddress);
-            }
+
+            vars.reserveUnitPrice =
+                IPriceOracleGetter(params.oracle).getAssetPrice(vars.currentReserveAddress);
+
             if (vars.liquidationThreshold != 0 && userConfig.isUsingAsCollateral(vars.i)) {
                 vars.compoundedLiquidityBalance = IAERC6909(currentReserve.aTokenAddress).balanceOf(
                     params.user, currentReserve.aTokenID
@@ -328,9 +323,6 @@ library MiniPoolBorrowLogic {
         view
         returns (uint256)
     {
-        if (IPriceOracleGetter(oracle).getSourceOfAsset(asset) == address(0)) {
-            asset = IAToken(asset).UNDERLYING_ASSET_ADDRESS();
-        }
         return IPriceOracleGetter(oracle).getAssetPrice(asset).mul(amount).div(10 ** decimals);
     }
 

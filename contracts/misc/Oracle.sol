@@ -3,10 +3,12 @@ pragma solidity ^0.8.23;
 
 import {Ownable} from "../dependencies/openzeppelin/contracts/Ownable.sol";
 import {IERC20} from "../dependencies/openzeppelin/contracts/IERC20.sol";
-
 import {IPriceOracleGetter} from "../interfaces/IPriceOracleGetter.sol";
 import {IChainlinkAggregator} from "../interfaces/IChainlinkAggregator.sol";
 import {SafeERC20} from "../dependencies/openzeppelin/contracts/SafeERC20.sol";
+import {IAToken} from "contracts/interfaces/IAToken.sol";
+import {IMiniPool} from "contracts/interfaces/IMiniPool.sol";
+import {ATokenNonRebasing} from "contracts/protocol/tokenization/ATokenNonRebasing.sol";
 
 /// @title Oracle
 /// @author Aave
@@ -86,19 +88,38 @@ contract Oracle is IPriceOracleGetter, Ownable {
     /// @notice Gets an asset price by address
     /// @param asset The asset address
     function getAssetPrice(address asset) public view override returns (uint256) {
-        IChainlinkAggregator source = assetsSources[asset];
+        address underlying;
 
-        if (asset == BASE_CURRENCY) {
-            return BASE_CURRENCY_UNIT;
+        // Check if `asset`is an aToken.
+        try ATokenNonRebasing(asset).UNDERLYING_ASSET_ADDRESS{gas: 4000}() returns (
+            address underlying_
+        ) {
+            underlying = underlying_;
+        } catch {
+            underlying = asset;
+        }
+
+        IChainlinkAggregator source = assetsSources[underlying];
+        uint256 finalPrice;
+
+        if (underlying == BASE_CURRENCY) {
+            finalPrice = BASE_CURRENCY_UNIT;
         } else if (address(source) == address(0)) {
-            return _fallbackOracle.getAssetPrice(asset);
+            finalPrice = _fallbackOracle.getAssetPrice(underlying);
         } else {
             int256 price = IChainlinkAggregator(source).latestAnswer();
             if (price > 0) {
-                return uint256(price);
+                finalPrice = uint256(price);
             } else {
-                return _fallbackOracle.getAssetPrice(asset);
+                finalPrice = _fallbackOracle.getAssetPrice(underlying);
             }
+        }
+
+        // if `asset` is an aToken then convert the price from asset to share.
+        if (asset != underlying) {
+            return ATokenNonRebasing(asset).convertToShares(finalPrice);
+        } else {
+            return finalPrice;
         }
     }
 

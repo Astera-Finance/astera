@@ -183,15 +183,10 @@ library MiniPoolGenericLogic {
                 currentReserve.configuration.getParams();
 
             vars.tokenUnit = 10 ** vars.decimals;
-            if (IAERC6909(currentReserve.aTokenAddress).isTranche(currentReserve.aTokenID)) {
-                vars.underlyingAsset =
-                    IAToken(vars.currentReserveAddress).UNDERLYING_ASSET_ADDRESS();
-                vars.reserveUnitPrice =
-                    IPriceOracleGetter(oracle).getAssetPrice(vars.underlyingAsset);
-            } else {
-                vars.reserveUnitPrice =
-                    IPriceOracleGetter(oracle).getAssetPrice(vars.currentReserveAddress);
-            }
+
+            vars.reserveUnitPrice =
+                IPriceOracleGetter(oracle).getAssetPrice(vars.currentReserveAddress);
+
             if (vars.liquidationThreshold != 0 && userConfig.isUsingAsCollateral(vars.i)) {
                 vars.compoundedLiquidityBalance =
                     IAERC6909(currentReserve.aTokenAddress).balanceOf(user, currentReserve.aTokenID);

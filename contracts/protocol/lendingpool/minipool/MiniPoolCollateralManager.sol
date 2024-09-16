@@ -278,18 +278,9 @@ contract MiniPoolCollateralManager is
         IPriceOracleGetter oracle = IPriceOracleGetter(_addressesProvider.getPriceOracle());
 
         AvailableCollateralToLiquidateLocalVars memory vars;
-        if (collateralReserve.aTokenID % 1000 < 128) {
-            vars.collateralPrice =
-                oracle.getAssetPrice(IAToken(collateralAsset).UNDERLYING_ASSET_ADDRESS());
-        } else {
-            vars.collateralPrice = oracle.getAssetPrice(collateralAsset);
-        }
-        if (debtReserve.variableDebtTokenID % 1000 < 128) {
-            vars.debtAssetPrice =
-                oracle.getAssetPrice(IAToken(debtAsset).UNDERLYING_ASSET_ADDRESS());
-        } else {
-            vars.debtAssetPrice = oracle.getAssetPrice(debtAsset);
-        }
+
+        vars.collateralPrice = oracle.getAssetPrice(collateralAsset);
+        vars.debtAssetPrice = oracle.getAssetPrice(debtAsset);
 
         (,, vars.liquidationBonus, vars.collateralDecimals,) =
             collateralReserve.configuration.getParams();
