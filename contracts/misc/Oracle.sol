@@ -8,7 +8,7 @@ import {IChainlinkAggregator} from "contracts/interfaces/IChainlinkAggregator.so
 import {SafeERC20} from "contracts/dependencies/openzeppelin/contracts/SafeERC20.sol";
 import {IAToken} from "contracts/interfaces/IAToken.sol";
 import {IMiniPool} from "contracts/interfaces/IMiniPool.sol";
-import {ATokenNonRebasing} from "contracts/protocol/tokenization/ATokenNonRebasing.sol";
+import {ATokenNonRebasing} from "contracts/protocol/tokenization/ERC20/ATokenNonRebasing.sol";
 
 /// @title Oracle
 /// @author Aave

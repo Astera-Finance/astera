@@ -25,7 +25,7 @@ import {UserConfiguration} from "contracts/protocol/libraries/configuration/User
 import {DataTypes} from "contracts/protocol/libraries/types/DataTypes.sol";
 import {MiniPoolStorage} from "./MiniPoolStorage.sol";
 import {IMiniPool} from "contracts/interfaces/IMiniPool.sol";
-import {ATokenNonRebasing} from "contracts/protocol/tokenization/ATokenNonRebasing.sol";
+import {ATokenNonRebasing} from "contracts/protocol/tokenization/ERC20/ATokenNonRebasing.sol";
 
 import {MiniPoolDepositLogic} from "./logic/MiniPoolDepositLogic.sol";
 import {MiniPoolWithdrawLogic} from "./logic/MiniPoolWithdrawLogic.sol";

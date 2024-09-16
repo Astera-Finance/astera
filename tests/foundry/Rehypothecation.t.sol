@@ -25,8 +25,8 @@
 // // import "contracts/deployments/StableAndVariableTokensHelper.sol";
 
 // // import "contracts/deployments/ATokensAndRatesHelper.sol";
-// // import "contracts/protocol/tokenization/AToken.sol";
-// // import "contracts/protocol/tokenization/VariableDebtToken.sol";
+// // import "contracts/protocol/tokenization/ERC20/AToken.sol";
+// // import "contracts/protocol/tokenization/ERC20/VariableDebtToken.sol";
 // // import "contracts/mocks/tokens/MintableERC20.sol";
 // // import "contracts/mocks/tokens/WETH9Mocked.sol";
 // // import "contracts/mocks/oracle/CLAggregators/MockAggregator.sol";

@@ -49,9 +49,9 @@ import "contracts/protocol/lendingpool/interestRateStrategies/DefaultReserveInte
 import "contracts/protocol/lendingpool/LendingPoolConfigurator.sol";
 import "contracts/protocol/lendingpool/LendingPoolStorage.sol";
 
-import "contracts/protocol/tokenization/AToken.sol";
-import "contracts/protocol/tokenization/DelegationAwareAToken.sol";
-import "contracts/protocol/tokenization/VariableDebtToken.sol";
+import "contracts/protocol/tokenization/ERC20/AToken.sol";
+import "contracts/protocol/tokenization/ERC20/DelegationAwareAToken.sol";
+import "contracts/protocol/tokenization/ERC20/VariableDebtToken.sol";
 
 import "contracts/protocol/libraries/logic/BorrowLogic.sol";
 import "contracts/protocol/libraries/logic/GenericLogic.sol";

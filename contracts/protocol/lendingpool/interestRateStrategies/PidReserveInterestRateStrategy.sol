@@ -7,7 +7,7 @@ import {PercentageMath} from "contracts/protocol/libraries/math/PercentageMath.s
 import {ILendingPoolAddressesProvider} from "contracts/interfaces/ILendingPoolAddressesProvider.sol";
 import {IAToken} from "contracts/interfaces/IAToken.sol";
 import {IVariableDebtToken} from "contracts/interfaces/IVariableDebtToken.sol";
-import {VariableDebtToken} from "contracts/protocol/tokenization/VariableDebtToken.sol";
+import {VariableDebtToken} from "contracts/protocol/tokenization/ERC20/VariableDebtToken.sol";
 import {ILendingPool} from "contracts/interfaces/ILendingPool.sol";
 import {DataTypes} from "contracts/protocol/libraries/types/DataTypes.sol";
 import {ReserveConfiguration} from
