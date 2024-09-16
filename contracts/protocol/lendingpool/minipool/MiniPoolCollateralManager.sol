@@ -8,7 +8,8 @@ import {IAERC6909} from "contracts/interfaces/IAERC6909.sol";
 import {IVariableDebtToken} from "contracts/interfaces/IVariableDebtToken.sol";
 import {IPriceOracleGetter} from "contracts/interfaces/IPriceOracleGetter.sol";
 import {ILendingPoolCollateralManager} from "contracts/interfaces/ILendingPoolCollateralManager.sol";
-import {VersionedInitializable} from "contracts/protocol/libraries/upgradeability/VersionedInitializable.sol";
+import {VersionedInitializable} from
+    "contracts/protocol/libraries/upgradeability/VersionedInitializable.sol";
 import {MiniPoolGenericLogic} from "./logic/MiniPoolGenericLogic.sol";
 import {Helpers} from "contracts/protocol/libraries/helpers/Helpers.sol";
 import {WadRayMath} from "contracts/protocol/libraries/math/WadRayMath.sol";
@@ -17,7 +18,8 @@ import {SafeERC20} from "contracts/dependencies/openzeppelin/contracts/SafeERC20
 import {Errors} from "contracts/protocol/libraries/helpers/Errors.sol";
 import {MiniPoolValidationLogic} from "./logic/MiniPoolValidationLogic.sol";
 import {UserConfiguration} from "contracts/protocol/libraries/configuration/UserConfiguration.sol";
-import {ReserveConfiguration} from "contracts/protocol/libraries/configuration/ReserveConfiguration.sol";
+import {ReserveConfiguration} from
+    "contracts/protocol/libraries/configuration/ReserveConfiguration.sol";
 import {MiniPoolReserveLogic} from "./logic/MiniPoolReserveLogic.sol";
 import {DataTypes} from "contracts/protocol/libraries/types/DataTypes.sol";
 import {MiniPoolStorage} from "./MiniPoolStorage.sol";

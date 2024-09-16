@@ -16,7 +16,8 @@ import {DataTypes} from "contracts/protocol/libraries/types/DataTypes.sol";
 import {MiniPoolGenericLogic} from "./MiniPoolGenericLogic.sol";
 import {MiniPoolReserveLogic} from "./MiniPoolReserveLogic.sol";
 import {MiniPoolValidationLogic} from "./MiniPoolValidationLogic.sol";
-import {ReserveConfiguration} from "contracts/protocol/libraries/configuration/ReserveConfiguration.sol";
+import {ReserveConfiguration} from
+    "contracts/protocol/libraries/configuration/ReserveConfiguration.sol";
 import {ReserveBorrowConfiguration} from
     "contracts/protocol/libraries/configuration/ReserveBorrowConfiguration.sol";
 import {UserConfiguration} from "contracts/protocol/libraries/configuration/UserConfiguration.sol";

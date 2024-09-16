@@ -11,7 +11,8 @@ import {IFlowLimiter} from "contracts/interfaces/IFlowLimiter.sol";
 import {IAToken} from "contracts/interfaces/IAToken.sol";
 import {IFlashLoanReceiver} from "contracts/flashloan/interfaces/IFlashLoanReceiver.sol";
 import {ILendingPool} from "contracts/interfaces/ILendingPool.sol";
-import {VersionedInitializable} from "contracts/protocol/libraries/upgradeability/VersionedInitializable.sol";
+import {VersionedInitializable} from
+    "contracts/protocol/libraries/upgradeability/VersionedInitializable.sol";
 import {Helpers} from "contracts/protocol/libraries/helpers/Helpers.sol";
 import {Errors} from "contracts/protocol/libraries/helpers/Errors.sol";
 import {WadRayMath} from "contracts/protocol/libraries/math/WadRayMath.sol";
@@ -19,7 +20,8 @@ import {PercentageMath} from "contracts/protocol/libraries/math/PercentageMath.s
 import {MiniPoolReserveLogic} from "./logic/MiniPoolReserveLogic.sol";
 import {MiniPoolGenericLogic} from "./logic/MiniPoolGenericLogic.sol";
 import {MiniPoolValidationLogic} from "./logic/MiniPoolValidationLogic.sol";
-import {ReserveConfiguration} from "contracts/protocol/libraries/configuration/ReserveConfiguration.sol";
+import {ReserveConfiguration} from
+    "contracts/protocol/libraries/configuration/ReserveConfiguration.sol";
 import {UserConfiguration} from "contracts/protocol/libraries/configuration/UserConfiguration.sol";
 import {DataTypes} from "contracts/protocol/libraries/types/DataTypes.sol";
 import {MiniPoolStorage} from "./MiniPoolStorage.sol";

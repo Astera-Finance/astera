@@ -11,7 +11,8 @@ import {IVariableDebtToken} from "contracts/interfaces/IVariableDebtToken.sol";
 import {IFlashLoanReceiver} from "contracts/flashloan/interfaces/IFlashLoanReceiver.sol";
 import {IPriceOracleGetter} from "contracts/interfaces/IPriceOracleGetter.sol";
 import {ILendingPool} from "contracts/interfaces/ILendingPool.sol";
-import {VersionedInitializable} from "contracts/protocol/libraries/upgradeability/VersionedInitializable.sol";
+import {VersionedInitializable} from
+    "contracts/protocol/libraries/upgradeability/VersionedInitializable.sol";
 import {Helpers} from "contracts/protocol/libraries/helpers/Helpers.sol";
 import {Errors} from "contracts/protocol/libraries/helpers/Errors.sol";
 import {WadRayMath} from "contracts/protocol/libraries/math/WadRayMath.sol";
@@ -19,7 +20,8 @@ import {PercentageMath} from "contracts/protocol/libraries/math/PercentageMath.s
 import {ReserveLogic} from "contracts/protocol/libraries/logic/ReserveLogic.sol";
 import {GenericLogic} from "contracts/protocol/libraries/logic/GenericLogic.sol";
 import {ValidationLogic} from "contracts/protocol/libraries/logic/ValidationLogic.sol";
-import {ReserveConfiguration} from "contracts/protocol/libraries/configuration/ReserveConfiguration.sol";
+import {ReserveConfiguration} from
+    "contracts/protocol/libraries/configuration/ReserveConfiguration.sol";
 import {UserConfiguration} from "contracts/protocol/libraries/configuration/UserConfiguration.sol";
 import {DataTypes} from "contracts/protocol/libraries/types/DataTypes.sol";
 import {LendingPoolStorage} from "./LendingPoolStorage.sol";

@@ -9,7 +9,8 @@ import {ILendingPool} from "contracts/interfaces/ILendingPool.sol";
 import {IAToken} from "contracts/interfaces/IAToken.sol";
 import {WadRayMath} from "contracts/protocol/libraries/math/WadRayMath.sol";
 import {Errors} from "contracts/protocol/libraries/helpers/Errors.sol";
-import {VersionedInitializable} from "contracts/protocol/libraries/upgradeability/VersionedInitializable.sol";
+import {VersionedInitializable} from
+    "contracts/protocol/libraries/upgradeability/VersionedInitializable.sol";
 import {IncentivizedERC20} from "./IncentivizedERC20.sol";
 import {IRewarder} from "contracts/interfaces/IRewarder.sol";
 import {IERC4626} from "contracts/interfaces/IERC4626.sol";

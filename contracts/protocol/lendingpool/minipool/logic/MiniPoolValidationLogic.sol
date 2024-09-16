@@ -9,7 +9,8 @@ import {MiniPoolBorrowLogic} from "./MiniPoolBorrowLogic.sol";
 import {WadRayMath} from "contracts/protocol/libraries/math/WadRayMath.sol";
 import {PercentageMath} from "contracts/protocol/libraries/math/PercentageMath.sol";
 import {SafeERC20} from "contracts/dependencies/openzeppelin/contracts/SafeERC20.sol";
-import {ReserveConfiguration} from "contracts/protocol/libraries/configuration/ReserveConfiguration.sol";
+import {ReserveConfiguration} from
+    "contracts/protocol/libraries/configuration/ReserveConfiguration.sol";
 import {UserConfiguration} from "contracts/protocol/libraries/configuration/UserConfiguration.sol";
 import {Errors} from "contracts/protocol/libraries/helpers/Errors.sol";
 import {Helpers} from "contracts/protocol/libraries/helpers/Helpers.sol";

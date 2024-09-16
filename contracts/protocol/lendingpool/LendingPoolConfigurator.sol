@@ -2,11 +2,14 @@
 pragma solidity ^0.8.23;
 
 import {SafeMath} from "contracts/dependencies/openzeppelin/contracts/SafeMath.sol";
-import {VersionedInitializable} from "contracts/protocol/libraries/upgradeability/VersionedInitializable.sol";
+import {VersionedInitializable} from
+    "contracts/protocol/libraries/upgradeability/VersionedInitializable.sol";
 import {InitializableImmutableAdminUpgradeabilityProxy} from
     "contracts/protocol/libraries/upgradeability/InitializableImmutableAdminUpgradeabilityProxy.sol";
-import {ReserveConfiguration} from "contracts/protocol/libraries/configuration/ReserveConfiguration.sol";
-import {ReserveBorrowConfiguration} from "contracts/protocol/libraries/configuration/ReserveBorrowConfiguration.sol";
+import {ReserveConfiguration} from
+    "contracts/protocol/libraries/configuration/ReserveConfiguration.sol";
+import {ReserveBorrowConfiguration} from
+    "contracts/protocol/libraries/configuration/ReserveBorrowConfiguration.sol";
 import {ILendingPoolAddressesProvider} from "contracts/interfaces/ILendingPoolAddressesProvider.sol";
 import {ILendingPool} from "contracts/interfaces/ILendingPool.sol";
 import {IERC20Detailed} from "contracts/dependencies/openzeppelin/contracts/IERC20Detailed.sol";

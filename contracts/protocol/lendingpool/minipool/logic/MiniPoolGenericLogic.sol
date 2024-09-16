@@ -6,7 +6,8 @@ import {IERC20} from "contracts/dependencies/openzeppelin/contracts/IERC20.sol";
 import {IAToken} from "contracts/interfaces/IAToken.sol";
 import {IAERC6909} from "contracts/interfaces/IAERC6909.sol";
 import {MiniPoolReserveLogic} from "./MiniPoolReserveLogic.sol";
-import {ReserveConfiguration} from "contracts/protocol/libraries/configuration/ReserveConfiguration.sol";
+import {ReserveConfiguration} from
+    "contracts/protocol/libraries/configuration/ReserveConfiguration.sol";
 import {UserConfiguration} from "contracts/protocol/libraries/configuration/UserConfiguration.sol";
 import {WadRayMath} from "contracts/protocol/libraries/math/WadRayMath.sol";
 import {PercentageMath} from "contracts/protocol/libraries/math/PercentageMath.sol";

@@ -15,8 +15,10 @@ import {DataTypes} from "contracts/protocol/libraries/types/DataTypes.sol";
 import {GenericLogic} from "./GenericLogic.sol";
 import {ReserveLogic} from "./ReserveLogic.sol";
 import {ValidationLogic} from "./ValidationLogic.sol";
-import {ReserveConfiguration} from "contracts/protocol/libraries/configuration/ReserveConfiguration.sol";
-import {ReserveBorrowConfiguration} from "contracts/protocol/libraries/configuration/ReserveBorrowConfiguration.sol";
+import {ReserveConfiguration} from
+    "contracts/protocol/libraries/configuration/ReserveConfiguration.sol";
+import {ReserveBorrowConfiguration} from
+    "contracts/protocol/libraries/configuration/ReserveBorrowConfiguration.sol";
 import {UserConfiguration} from "contracts/protocol/libraries/configuration/UserConfiguration.sol";
 import {UserRecentBorrow} from "contracts/protocol/libraries/configuration/UserRecentBorrow.sol";
 import {Helpers} from "contracts/protocol/libraries/helpers/Helpers.sol";

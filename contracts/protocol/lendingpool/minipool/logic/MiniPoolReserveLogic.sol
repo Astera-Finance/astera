@@ -6,7 +6,8 @@ import {IAToken} from "contracts/interfaces/IAToken.sol";
 import {IAERC6909} from "contracts/interfaces/IAERC6909.sol";
 import {ILendingPool} from "contracts/interfaces/ILendingPool.sol";
 import {IReserveInterestRateStrategy} from "contracts/interfaces/IReserveInterestRateStrategy.sol";
-import {ReserveConfiguration} from "contracts/protocol/libraries/configuration/ReserveConfiguration.sol";
+import {ReserveConfiguration} from
+    "contracts/protocol/libraries/configuration/ReserveConfiguration.sol";
 import {ReserveBorrowConfiguration} from
     "contracts/protocol/libraries/configuration/ReserveBorrowConfiguration.sol";
 import {MathUtils} from "contracts/protocol/libraries/math/MathUtils.sol";

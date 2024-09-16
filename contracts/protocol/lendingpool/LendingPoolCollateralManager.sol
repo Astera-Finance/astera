@@ -7,7 +7,8 @@ import {IAToken} from "contracts/interfaces/IAToken.sol";
 import {IVariableDebtToken} from "contracts/interfaces/IVariableDebtToken.sol";
 import {IPriceOracleGetter} from "contracts/interfaces/IPriceOracleGetter.sol";
 import {ILendingPoolCollateralManager} from "contracts/interfaces/ILendingPoolCollateralManager.sol";
-import {VersionedInitializable} from "contracts/protocol/libraries/upgradeability/VersionedInitializable.sol";
+import {VersionedInitializable} from
+    "contracts/protocol/libraries/upgradeability/VersionedInitializable.sol";
 import {GenericLogic} from "contracts/protocol/libraries/logic/GenericLogic.sol";
 import {Helpers} from "contracts/protocol/libraries/helpers/Helpers.sol";
 import {WadRayMath} from "contracts/protocol/libraries/math/WadRayMath.sol";
@@ -16,7 +17,8 @@ import {SafeERC20} from "contracts/dependencies/openzeppelin/contracts/SafeERC20
 import {Errors} from "contracts/protocol/libraries/helpers/Errors.sol";
 import {ValidationLogic} from "contracts/protocol/libraries/logic/ValidationLogic.sol";
 import {UserConfiguration} from "contracts/protocol/libraries/configuration/UserConfiguration.sol";
-import {ReserveConfiguration} from "contracts/protocol/libraries/configuration/ReserveConfiguration.sol";
+import {ReserveConfiguration} from
+    "contracts/protocol/libraries/configuration/ReserveConfiguration.sol";
 import {ReserveLogic} from "contracts/protocol/libraries/logic/ReserveLogic.sol";
 import {DataTypes} from "contracts/protocol/libraries/types/DataTypes.sol";
 import {LendingPoolStorage} from "./LendingPoolStorage.sol";

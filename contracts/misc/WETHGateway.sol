@@ -7,7 +7,8 @@ import {IWETH} from "./interfaces/IWETH.sol";
 import {IWETHGateway} from "./interfaces/IWETHGateway.sol";
 import {ILendingPool} from "contracts/interfaces/ILendingPool.sol";
 import {IAToken} from "contracts/interfaces/IAToken.sol";
-import {ReserveConfiguration} from "contracts/protocol/libraries/configuration/ReserveConfiguration.sol";
+import {ReserveConfiguration} from
+    "contracts/protocol/libraries/configuration/ReserveConfiguration.sol";
 import {UserConfiguration} from "contracts/protocol/libraries/configuration/UserConfiguration.sol";
 import {Helpers} from "contracts/protocol/libraries/helpers/Helpers.sol";
 import {DataTypes} from "contracts/protocol/libraries/types/DataTypes.sol";
