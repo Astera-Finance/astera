@@ -32,7 +32,7 @@ import "contracts/interfaces/IVariableDebtToken.sol";
 import "contracts/interfaces/IPriceOracleGetter.sol";
 
 import "contracts/misc/Treasury.sol";
-import "contracts/misc/Oracle.sol";
+import "contracts/protocol/core/Oracle.sol";
 import "contracts/misc/ProtocolDataProvider.sol";
 import "contracts/misc/UiPoolDataProviderV2.sol";
 import "contracts/misc/RewardsVault.sol";
@@ -44,10 +44,10 @@ import "contracts/deployments/ATokensAndRatesHelper.sol";
 import "contracts/protocol/configuration/LendingPoolAddressesProvider.sol";
 import "contracts/protocol/configuration/LendingPoolAddressesProviderRegistry.sol";
 
-import "contracts/protocol/core/LendingPoolCollateralManager.sol";
+import "contracts/protocol/core/lendingpool/LendingPoolCollateralManager.sol";
 import "contracts/protocol/core/interestRateStrategies/DefaultReserveInterestRateStrategy.sol";
-import "contracts/protocol/core/LendingPoolConfigurator.sol";
-import "contracts/protocol/core/LendingPoolStorage.sol";
+import "contracts/protocol/core/lendingpool/LendingPoolConfigurator.sol";
+import "contracts/protocol/core/lendingpool/LendingPoolStorage.sol";
 
 import "contracts/protocol/tokenization/ERC20/AToken.sol";
 import "contracts/protocol/tokenization/ERC20/DelegationAwareAToken.sol";

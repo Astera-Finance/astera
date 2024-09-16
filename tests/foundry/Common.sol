@@ -5,7 +5,7 @@ import "forge-std/Test.sol";
 import "forge-std/console.sol";
 import "contracts/dependencies/openzeppelin/contracts/ERC20.sol";
 import "contracts/protocol/rewarder/lendingpool/Rewarder.sol";
-import "contracts/misc/Oracle.sol";
+import "contracts/protocol/core/Oracle.sol";
 import "contracts/misc/ProtocolDataProvider.sol";
 import "contracts/misc/Treasury.sol";
 import "contracts/misc/UiPoolDataProviderV2.sol";
@@ -20,9 +20,9 @@ import
 import "contracts/protocol/core/InterestRateStrategies/PiReserveInterestRateStrategy.sol";
 import
     "contracts/protocol/core/InterestRateStrategies/MiniPoolPiReserveInterestRateStrategy.sol";
-import "contracts/protocol/core/LendingPool.sol";
-import "contracts/protocol/core/LendingPoolCollateralManager.sol";
-import "contracts/protocol/core/LendingPoolConfigurator.sol";
+import "contracts/protocol/core/lendingpool/LendingPool.sol";
+import "contracts/protocol/core/lendingpool/LendingPoolCollateralManager.sol";
+import "contracts/protocol/core/lendingpool/LendingPoolConfigurator.sol";
 import "contracts/protocol/core/minipool/MiniPool.sol";
 import "contracts/protocol/configuration/MiniPoolAddressProvider.sol";
 import "contracts/protocol/core/minipool/MiniPoolConfigurator.sol";
