@@ -1,14 +1,12 @@
 // SPDX-License-Identifier: agpl-3.0
 pragma solidity ^0.8.23;
 
-import {Ownable} from "../../dependencies/openzeppelin/contracts/Ownable.sol";
-
+import {Ownable} from "contracts/dependencies/openzeppelin/contracts/Ownable.sol";
 // Prettier ignore to prevent buidler flatter bug
 // prettier-ignore
 import {InitializableImmutableAdminUpgradeabilityProxy} from
-    "../libraries/upgradeability/InitializableImmutableAdminUpgradeabilityProxy.sol";
-
-import {ILendingPoolAddressesProvider} from "../../interfaces/ILendingPoolAddressesProvider.sol";
+    "contracts/protocol/libraries/upgradeability/InitializableImmutableAdminUpgradeabilityProxy.sol";
+import {ILendingPoolAddressesProvider} from "contracts/interfaces/ILendingPoolAddressesProvider.sol";
 
 /**
  * @title LendingPoolAddressesProvider contract

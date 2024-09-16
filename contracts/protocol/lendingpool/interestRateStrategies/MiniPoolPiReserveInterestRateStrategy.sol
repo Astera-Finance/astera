@@ -2,17 +2,17 @@
 pragma solidity ^0.8.23;
 
 import {IMiniPoolAddressesProvider} from "contracts/interfaces/IMiniPoolAddressesProvider.sol";
-import {IERC20} from "../../../dependencies/openzeppelin/contracts/IERC20.sol";
+import {IERC20} from "contracts/dependencies/openzeppelin/contracts/IERC20.sol";
 import {IAERC6909} from "contracts/interfaces/IAERC6909.sol";
 import {IMiniPool} from "contracts/interfaces/IMiniPool.sol";
 import {IMiniPoolReserveInterestRateStrategy} from
-    "../../../interfaces/IMiniPoolReserveInterestRateStrategy.sol";
+    "contracts/interfaces/IMiniPoolReserveInterestRateStrategy.sol";
 import {
     BasePiReserveRateStrategy,
     WadRayMath,
     PercentageMath,
     DataTypes
-} from "./BasePiReserveRateStrategy.sol";
+} from "contracts/protocol/lendingpool/interestRateStrategies/BasePiReserveRateStrategy.sol";
 
 /**
  * @title PiReserveInterestRateStrategy contract

@@ -1,12 +1,12 @@
 // SPDX-License-Identifier: agpl-3.0
 pragma solidity ^0.8.23;
 
-import {UserConfiguration} from "../../libraries/configuration/UserConfiguration.sol";
-import {ReserveConfiguration} from "../../libraries/configuration/ReserveConfiguration.sol";
-import {ReserveLogic} from "../../libraries/logic/ReserveLogic.sol";
-import {IMiniPoolAddressesProvider} from "../../../interfaces/IMiniPoolAddressesProvider.sol";
-import {ILendingPool} from "../../../interfaces/ILendingPool.sol";
-import {DataTypes} from "../../libraries/types/DataTypes.sol";
+import {UserConfiguration} from "contracts/protocol/libraries/configuration/UserConfiguration.sol";
+import {ReserveConfiguration} from "contracts/protocol/libraries/configuration/ReserveConfiguration.sol";
+import {ReserveLogic} from "contracts/protocol/libraries/logic/ReserveLogic.sol";
+import {IMiniPoolAddressesProvider} from "contracts/interfaces/IMiniPoolAddressesProvider.sol";
+import {ILendingPool} from "contracts/interfaces/ILendingPool.sol";
+import {DataTypes} from "contracts/protocol/libraries/types/DataTypes.sol";
 
 contract MiniPoolStorage {
     using ReserveLogic for DataTypes.ReserveData;

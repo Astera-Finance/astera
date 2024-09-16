@@ -6,7 +6,7 @@ import "contracts/protocol/libraries/helpers/Errors.sol";
 import "contracts/misc/RewardsVault.sol";
 import "contracts/rewarder/Rewarder6909.sol";
 import "contracts/mocks/tokens/MintableERC20.sol";
-import {DistributionTypes} from "contracts/rewarder/libraries/DistributionTypes.sol";
+import {DistributionTypes} from "contracts/rewarder/DistributionTypes.sol";
 import {RewardForwarder} from "contracts/rewarder/RewardForwarder.sol";
 
 import "forge-std/StdUtils.sol";

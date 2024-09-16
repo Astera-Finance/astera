@@ -6,9 +6,9 @@ import {IVariableDebtToken} from "contracts/interfaces/IVariableDebtToken.sol";
 import {ILendingPool} from "contracts/interfaces/ILendingPool.sol";
 import {ILendingPoolAddressesProvider} from "contracts/interfaces/ILendingPoolAddressesProvider.sol";
 import {IReserveInterestRateStrategy} from "contracts/interfaces/IReserveInterestRateStrategy.sol";
-import "./BasePiReserveRateStrategy.sol";
+import "contracts/protocol/lendingpool/interestRateStrategies/BasePiReserveRateStrategy.sol";
 
-import {IERC20} from "../../../dependencies/openzeppelin/contracts/IERC20.sol";
+import {IERC20} from "contracts/dependencies/openzeppelin/contracts/IERC20.sol";
 // import "forge-std/console.sol";
 
 /**

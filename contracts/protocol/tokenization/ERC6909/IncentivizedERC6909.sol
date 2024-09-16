@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: agpl-3.0
 pragma solidity ^0.8.23;
 
-import {Context} from "../../../dependencies/openzeppelin/contracts/Context.sol";
-import {SafeMath} from "../../../dependencies/openzeppelin/contracts/SafeMath.sol";
-import {IMiniPoolRewarder} from "../../../interfaces/IMiniPoolRewarder.sol";
+import {Context} from "contracts/dependencies/openzeppelin/contracts/Context.sol";
+import {SafeMath} from "contracts/dependencies/openzeppelin/contracts/SafeMath.sol";
+import {IMiniPoolRewarder} from "contracts/interfaces/IMiniPoolRewarder.sol";
 import {ERC6909} from "lib/solady/src/tokens/ERC6909.sol";
 
 /**

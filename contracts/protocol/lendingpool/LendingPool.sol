@@ -1,34 +1,34 @@
 // SPDX-License-Identifier: agpl-3.0
 pragma solidity ^0.8.23;
 
-import {SafeMath} from "../../dependencies/openzeppelin/contracts/SafeMath.sol";
-import {IERC20} from "../../dependencies/openzeppelin/contracts/IERC20.sol";
-import {SafeERC20} from "../../dependencies/openzeppelin/contracts/SafeERC20.sol";
-import {Address} from "../../dependencies/openzeppelin/contracts/Address.sol";
-import {ILendingPoolAddressesProvider} from "../../interfaces/ILendingPoolAddressesProvider.sol";
-import {IAToken} from "../../interfaces/IAToken.sol";
-import {IVariableDebtToken} from "../../interfaces/IVariableDebtToken.sol";
-import {IFlashLoanReceiver} from "../../flashloan/interfaces/IFlashLoanReceiver.sol";
-import {IPriceOracleGetter} from "../../interfaces/IPriceOracleGetter.sol";
-import {ILendingPool} from "../../interfaces/ILendingPool.sol";
-import {VersionedInitializable} from "../libraries/upgradeability/VersionedInitializable.sol";
-import {Helpers} from "../libraries/helpers/Helpers.sol";
-import {Errors} from "../libraries/helpers/Errors.sol";
-import {WadRayMath} from "../libraries/math/WadRayMath.sol";
-import {PercentageMath} from "../libraries/math/PercentageMath.sol";
-import {ReserveLogic} from "../libraries/logic/ReserveLogic.sol";
-import {GenericLogic} from "../libraries/logic/GenericLogic.sol";
-import {ValidationLogic} from "../libraries/logic/ValidationLogic.sol";
-import {ReserveConfiguration} from "../libraries/configuration/ReserveConfiguration.sol";
-import {UserConfiguration} from "../libraries/configuration/UserConfiguration.sol";
-import {DataTypes} from "../libraries/types/DataTypes.sol";
+import {SafeMath} from "contracts/dependencies/openzeppelin/contracts/SafeMath.sol";
+import {IERC20} from "contracts/dependencies/openzeppelin/contracts/IERC20.sol";
+import {SafeERC20} from "contracts/dependencies/openzeppelin/contracts/SafeERC20.sol";
+import {Address} from "contracts/dependencies/openzeppelin/contracts/Address.sol";
+import {ILendingPoolAddressesProvider} from "contracts/interfaces/ILendingPoolAddressesProvider.sol";
+import {IAToken} from "contracts/interfaces/IAToken.sol";
+import {IVariableDebtToken} from "contracts/interfaces/IVariableDebtToken.sol";
+import {IFlashLoanReceiver} from "contracts/flashloan/interfaces/IFlashLoanReceiver.sol";
+import {IPriceOracleGetter} from "contracts/interfaces/IPriceOracleGetter.sol";
+import {ILendingPool} from "contracts/interfaces/ILendingPool.sol";
+import {VersionedInitializable} from "contracts/protocol/libraries/upgradeability/VersionedInitializable.sol";
+import {Helpers} from "contracts/protocol/libraries/helpers/Helpers.sol";
+import {Errors} from "contracts/protocol/libraries/helpers/Errors.sol";
+import {WadRayMath} from "contracts/protocol/libraries/math/WadRayMath.sol";
+import {PercentageMath} from "contracts/protocol/libraries/math/PercentageMath.sol";
+import {ReserveLogic} from "contracts/protocol/libraries/logic/ReserveLogic.sol";
+import {GenericLogic} from "contracts/protocol/libraries/logic/GenericLogic.sol";
+import {ValidationLogic} from "contracts/protocol/libraries/logic/ValidationLogic.sol";
+import {ReserveConfiguration} from "contracts/protocol/libraries/configuration/ReserveConfiguration.sol";
+import {UserConfiguration} from "contracts/protocol/libraries/configuration/UserConfiguration.sol";
+import {DataTypes} from "contracts/protocol/libraries/types/DataTypes.sol";
 import {LendingPoolStorage} from "./LendingPoolStorage.sol";
 
-import {DepositLogic} from "../libraries/logic/DepositLogic.sol";
-import {WithdrawLogic} from "../libraries/logic/WithdrawLogic.sol";
-import {BorrowLogic} from "../libraries/logic/BorrowLogic.sol";
-import {FlashLoanLogic} from "../libraries/logic/FlashLoanLogic.sol";
-import {LiquidationLogic} from "../libraries/logic/LiquidationLogic.sol";
+import {DepositLogic} from "contracts/protocol/libraries/logic/DepositLogic.sol";
+import {WithdrawLogic} from "contracts/protocol/libraries/logic/WithdrawLogic.sol";
+import {BorrowLogic} from "contracts/protocol/libraries/logic/BorrowLogic.sol";
+import {FlashLoanLogic} from "contracts/protocol/libraries/logic/FlashLoanLogic.sol";
+import {LiquidationLogic} from "contracts/protocol/libraries/logic/LiquidationLogic.sol";
 
 /**
  * @title LendingPool contract

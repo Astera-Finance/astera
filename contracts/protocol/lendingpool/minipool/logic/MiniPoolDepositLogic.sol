@@ -1,21 +1,21 @@
 // SPDX-License-Identifier: AGPL-3.0-only
 pragma solidity ^0.8.23;
 
-import {IERC20} from "../../../../dependencies/openzeppelin/contracts/IERC20.sol";
-import {SafeERC20} from "../../../../dependencies/openzeppelin/contracts/SafeERC20.sol";
-import {SafeMath} from "../../../../dependencies/openzeppelin/contracts/SafeMath.sol";
-import {IMiniPoolAddressesProvider} from "../../../../interfaces/IMiniPoolAddressesProvider.sol";
-import {IAERC6909} from "../../../../interfaces/IAERC6909.sol";
-import {IReserveInterestRateStrategy} from "../../../../interfaces/IReserveInterestRateStrategy.sol";
-import {ReserveConfiguration} from "../../../libraries/configuration/ReserveConfiguration.sol";
+import {IERC20} from "contracts/dependencies/openzeppelin/contracts/IERC20.sol";
+import {SafeERC20} from "contracts/dependencies/openzeppelin/contracts/SafeERC20.sol";
+import {SafeMath} from "contracts/dependencies/openzeppelin/contracts/SafeMath.sol";
+import {IMiniPoolAddressesProvider} from "contracts/interfaces/IMiniPoolAddressesProvider.sol";
+import {IAERC6909} from "contracts/interfaces/IAERC6909.sol";
+import {IReserveInterestRateStrategy} from "contracts/interfaces/IReserveInterestRateStrategy.sol";
+import {ReserveConfiguration} from "contracts/protocol/libraries/configuration/ReserveConfiguration.sol";
 import {ReserveBorrowConfiguration} from
-    "../../../libraries/configuration/ReserveBorrowConfiguration.sol";
-import {MathUtils} from "../../../libraries/math/MathUtils.sol";
-import {WadRayMath} from "../../../libraries/math/WadRayMath.sol";
-import {PercentageMath} from "../../../libraries/math/PercentageMath.sol";
-import {Errors} from "../../../libraries/helpers/Errors.sol";
-import {DataTypes} from "../../../libraries/types/DataTypes.sol";
-import {UserConfiguration} from "../../../libraries/configuration/UserConfiguration.sol";
+    "contracts/protocol/libraries/configuration/ReserveBorrowConfiguration.sol";
+import {MathUtils} from "contracts/protocol/libraries/math/MathUtils.sol";
+import {WadRayMath} from "contracts/protocol/libraries/math/WadRayMath.sol";
+import {PercentageMath} from "contracts/protocol/libraries/math/PercentageMath.sol";
+import {Errors} from "contracts/protocol/libraries/helpers/Errors.sol";
+import {DataTypes} from "contracts/protocol/libraries/types/DataTypes.sol";
+import {UserConfiguration} from "contracts/protocol/libraries/configuration/UserConfiguration.sol";
 import {MiniPoolValidationLogic} from "./MiniPoolValidationLogic.sol";
 import {MiniPoolReserveLogic} from "./MiniPoolReserveLogic.sol";
 

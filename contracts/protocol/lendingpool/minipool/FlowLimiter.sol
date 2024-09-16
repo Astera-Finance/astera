@@ -1,13 +1,13 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.23;
 
-import {ILendingPoolAddressesProvider} from "../../../interfaces/ILendingPoolAddressesProvider.sol";
-import {IMiniPoolAddressesProvider} from "../../../interfaces/IMiniPoolAddressesProvider.sol";
-import {IMiniPool} from "../../../interfaces/IMiniPool.sol";
-import {ILendingPool} from "../../../interfaces/ILendingPool.sol";
-import {IVariableDebtToken} from "../../../interfaces/IVariableDebtToken.sol";
-import {IERC20} from "../../../dependencies/openzeppelin/contracts/IERC20.sol";
-import {Errors} from "../../libraries/helpers/Errors.sol";
+import {ILendingPoolAddressesProvider} from "contracts/interfaces/ILendingPoolAddressesProvider.sol";
+import {IMiniPoolAddressesProvider} from "contracts/interfaces/IMiniPoolAddressesProvider.sol";
+import {IMiniPool} from "contracts/interfaces/IMiniPool.sol";
+import {ILendingPool} from "contracts/interfaces/ILendingPool.sol";
+import {IVariableDebtToken} from "contracts/interfaces/IVariableDebtToken.sol";
+import {IERC20} from "contracts/dependencies/openzeppelin/contracts/IERC20.sol";
+import {Errors} from "contracts/protocol/libraries/helpers/Errors.sol";
 
 /**
  *

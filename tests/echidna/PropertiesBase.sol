@@ -35,10 +35,8 @@ import "contracts/misc/Treasury.sol";
 import "contracts/misc/Oracle.sol";
 import "contracts/misc/ProtocolDataProvider.sol";
 import "contracts/misc/UiPoolDataProviderV2.sol";
-import "contracts/misc/ChainlinkSourcesRegistry.sol";
 import "contracts/misc/RewardsVault.sol";
 import "contracts/misc/Timelock.sol";
-import "contracts/misc/WalletBalanceProvider.sol";
 import "contracts/misc/WETHGateway.sol";
 
 import "contracts/deployments/ATokensAndRatesHelper.sol";

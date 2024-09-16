@@ -1,12 +1,12 @@
 // SPDX-License-Identifier: agpl-3.0
 pragma solidity ^0.8.23;
 
-import {ILendingPool} from "../../../interfaces/ILendingPool.sol";
-import {ICreditDelegationToken} from "../../../interfaces/ICreditDelegationToken.sol";
-import {VersionedInitializable} from "../../libraries/upgradeability/VersionedInitializable.sol";
+import {ILendingPool} from "contracts/interfaces/ILendingPool.sol";
+import {ICreditDelegationToken} from "contracts/interfaces/ICreditDelegationToken.sol";
+import {VersionedInitializable} from "contracts/protocol/libraries/upgradeability/VersionedInitializable.sol";
 import {IncentivizedERC20} from "../IncentivizedERC20.sol";
-import {Errors} from "../../libraries/helpers/Errors.sol";
-import {SafeMath} from "../../../dependencies/openzeppelin/contracts/SafeMath.sol";
+import {Errors} from "contracts/protocol/libraries/helpers/Errors.sol";
+import {SafeMath} from "contracts/dependencies/openzeppelin/contracts/SafeMath.sol";
 
 /**
  * @title DebtTokenBase

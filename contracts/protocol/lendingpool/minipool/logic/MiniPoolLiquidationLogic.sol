@@ -2,8 +2,8 @@
 pragma solidity ^0.8.23;
 
 import {ILendingPoolAddressesProvider} from
-    "../../../../interfaces/ILendingPoolAddressesProvider.sol";
-import {Errors} from "../../../libraries/helpers/Errors.sol";
+    "contracts/interfaces/ILendingPoolAddressesProvider.sol";
+import {Errors} from "contracts/protocol/libraries/helpers/Errors.sol";
 
 library MiniPoolLiquidationLogic {
     struct liquidationCallParams {

@@ -1,22 +1,22 @@
 // SPDX-License-Identifier: agpl-3.0
 pragma solidity ^0.8.23;
 
-import {SafeMath} from "../../../../dependencies/openzeppelin/contracts/SafeMath.sol";
-import {IERC20} from "../../../../dependencies/openzeppelin/contracts/IERC20.sol";
+import {SafeMath} from "contracts/dependencies/openzeppelin/contracts/SafeMath.sol";
+import {IERC20} from "contracts/dependencies/openzeppelin/contracts/IERC20.sol";
 import {MiniPoolReserveLogic} from "./MiniPoolReserveLogic.sol";
 import {MiniPoolGenericLogic} from "./MiniPoolGenericLogic.sol";
 import {MiniPoolBorrowLogic} from "./MiniPoolBorrowLogic.sol";
-import {WadRayMath} from "../../../libraries/math/WadRayMath.sol";
-import {PercentageMath} from "../../../libraries/math/PercentageMath.sol";
-import {SafeERC20} from "../../../../dependencies/openzeppelin/contracts/SafeERC20.sol";
-import {ReserveConfiguration} from "../../../libraries/configuration/ReserveConfiguration.sol";
-import {UserConfiguration} from "../../../libraries/configuration/UserConfiguration.sol";
-import {Errors} from "../../../libraries/helpers/Errors.sol";
-import {Helpers} from "../../../libraries/helpers/Helpers.sol";
-import {IReserveInterestRateStrategy} from "../../../../interfaces/IReserveInterestRateStrategy.sol";
-import {DataTypes} from "../../../libraries/types/DataTypes.sol";
-import {IAToken} from "../../../../interfaces/IAToken.sol";
-import {IAERC6909} from "../../../../interfaces/IAERC6909.sol";
+import {WadRayMath} from "contracts/protocol/libraries/math/WadRayMath.sol";
+import {PercentageMath} from "contracts/protocol/libraries/math/PercentageMath.sol";
+import {SafeERC20} from "contracts/dependencies/openzeppelin/contracts/SafeERC20.sol";
+import {ReserveConfiguration} from "contracts/protocol/libraries/configuration/ReserveConfiguration.sol";
+import {UserConfiguration} from "contracts/protocol/libraries/configuration/UserConfiguration.sol";
+import {Errors} from "contracts/protocol/libraries/helpers/Errors.sol";
+import {Helpers} from "contracts/protocol/libraries/helpers/Helpers.sol";
+import {IReserveInterestRateStrategy} from "contracts/interfaces/IReserveInterestRateStrategy.sol";
+import {DataTypes} from "contracts/protocol/libraries/types/DataTypes.sol";
+import {IAToken} from "contracts/interfaces/IAToken.sol";
+import {IAERC6909} from "contracts/interfaces/IAERC6909.sol";
 
 /**
  * @title ReserveLogic library

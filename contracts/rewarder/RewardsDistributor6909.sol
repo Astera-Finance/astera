@@ -1,11 +1,11 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.20;
 
-import {IMiniPoolRewardsDistributor} from "./interfaces/IMiniPoolRewardsDistributor.sol";
-import {IERC20Detailed} from "./interfaces/IERC20Detailed.sol";
-import {IERC6909} from "./interfaces/IERC6909.sol";
-import {DistributionTypes} from "./libraries/DistributionTypes.sol";
-import {Ownable} from "./libraries/Ownable.sol";
+import {IMiniPoolRewardsDistributor} from "contracts/interfaces/IMiniPoolRewardsDistributor.sol";
+import {IERC20Detailed} from "contracts/dependencies/openzeppelin/contracts/IERC20Detailed.sol";
+import {IERC6909} from "contracts/interfaces/IERC6909.sol";
+import {DistributionTypes} from "./DistributionTypes.sol";
+import {Ownable} from "lib/openzeppelin-contracts/contracts/access/Ownable.sol";
 
 abstract contract RewardsDistributor6909 is IMiniPoolRewardsDistributor, Ownable {
     struct RewardData {

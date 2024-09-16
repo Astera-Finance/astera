@@ -1,13 +1,13 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.23;
 
-import {Errors} from "../protocol/libraries/helpers/Errors.sol";
-import {ILendingPoolAddressesProvider} from "../interfaces/ILendingPoolAddressesProvider.sol";
-import {ILendingPool} from "../interfaces/ILendingPool.sol";
-import {IAToken} from "../interfaces/IAToken.sol";
-import {IERC20} from "../dependencies/openzeppelin/contracts/IERC20.sol";
-import {DataTypes} from "../protocol/libraries/types/DataTypes.sol";
-import {Ownable} from "../dependencies/openzeppelin/contracts/Ownable.sol";
+import {Errors} from "contracts/protocol/libraries/helpers/Errors.sol";
+import {ILendingPoolAddressesProvider} from "contracts/interfaces/ILendingPoolAddressesProvider.sol";
+import {ILendingPool} from "contracts/interfaces/ILendingPool.sol";
+import {IAToken} from "contracts/interfaces/IAToken.sol";
+import {IERC20} from "contracts/dependencies/openzeppelin/contracts/IERC20.sol";
+import {DataTypes} from "contracts/protocol/libraries/types/DataTypes.sol";
+import {Ownable} from "contracts/dependencies/openzeppelin/contracts/Ownable.sol";
 
 contract Treasury is Ownable {
     ILendingPoolAddressesProvider public ADDRESSES_PROVIDER;

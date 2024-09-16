@@ -1,11 +1,11 @@
 // SPDX-License-Identifier: agpl-3.0
 pragma solidity ^0.8.23;
 
-import {Context} from "../../dependencies/openzeppelin/contracts/Context.sol";
-import {IERC20} from "../../dependencies/openzeppelin/contracts/IERC20.sol";
-import {IERC20Detailed} from "../../dependencies/openzeppelin/contracts/IERC20Detailed.sol";
-import {SafeMath} from "../../dependencies/openzeppelin/contracts/SafeMath.sol";
-import {IRewarder} from "../../interfaces/IRewarder.sol";
+import {Context} from "contracts/dependencies/openzeppelin/contracts/Context.sol";
+import {IERC20} from "contracts/dependencies/openzeppelin/contracts/IERC20.sol";
+import {IERC20Detailed} from "contracts/dependencies/openzeppelin/contracts/IERC20Detailed.sol";
+import {SafeMath} from "contracts/dependencies/openzeppelin/contracts/SafeMath.sol";
+import {IRewarder} from "contracts/interfaces/IRewarder.sol";
 
 /**
  * @title ERC20

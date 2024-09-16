@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.23;
 
-import "../dependencies/openzeppelin/contracts/SafeMath.sol";
+import "contracts/dependencies/openzeppelin/contracts/SafeMath.sol";
 
 contract Timelock {
     using SafeMath for uint256;

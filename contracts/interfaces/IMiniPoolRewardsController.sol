@@ -2,7 +2,7 @@
 pragma solidity ^0.8.23;
 
 import {IMiniPoolRewardsDistributor} from "./IMiniPoolRewardsDistributor.sol";
-import {DistributionTypes} from "../libraries/DistributionTypes.sol";
+import {DistributionTypes} from "contracts/rewarder/DistributionTypes.sol";
 
 interface IMiniPoolRewardsController is IMiniPoolRewardsDistributor {
     event RewardsClaimed(

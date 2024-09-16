@@ -1,20 +1,20 @@
 // SPDX-License-Identifier: agpl-3.0
 pragma solidity ^0.8.23;
 
-import {SafeMath} from "../../../../dependencies/openzeppelin/contracts/SafeMath.sol";
-import {IERC20} from "../../../../dependencies/openzeppelin/contracts/IERC20.sol";
-import {SafeERC20} from "../../../../dependencies/openzeppelin/contracts/SafeERC20.sol";
-import {IAToken} from "../../../../interfaces/IAToken.sol";
-import {IVariableDebtToken} from "../../../../interfaces/IVariableDebtToken.sol";
-import {IReserveInterestRateStrategy} from "../../../../interfaces/IReserveInterestRateStrategy.sol";
-import {ReserveConfiguration} from "../../../libraries/configuration/ReserveConfiguration.sol";
+import {SafeMath} from "contracts/dependencies/openzeppelin/contracts/SafeMath.sol";
+import {IERC20} from "contracts/dependencies/openzeppelin/contracts/IERC20.sol";
+import {SafeERC20} from "contracts/dependencies/openzeppelin/contracts/SafeERC20.sol";
+import {IAToken} from "contracts/interfaces/IAToken.sol";
+import {IVariableDebtToken} from "contracts/interfaces/IVariableDebtToken.sol";
+import {IReserveInterestRateStrategy} from "contracts/interfaces/IReserveInterestRateStrategy.sol";
+import {ReserveConfiguration} from "contracts/protocol/libraries/configuration/ReserveConfiguration.sol";
 import {ReserveBorrowConfiguration} from
-    "../../../libraries/configuration/ReserveBorrowConfiguration.sol";
-import {MathUtils} from "../../../libraries/math/MathUtils.sol";
-import {WadRayMath} from "../../../libraries/math/WadRayMath.sol";
-import {PercentageMath} from "../../../libraries/math/PercentageMath.sol";
-import {Errors} from "../../../libraries/helpers/Errors.sol";
-import {DataTypes} from "../../../libraries/types/DataTypes.sol";
+    "contracts/protocol/libraries/configuration/ReserveBorrowConfiguration.sol";
+import {MathUtils} from "contracts/protocol/libraries/math/MathUtils.sol";
+import {WadRayMath} from "contracts/protocol/libraries/math/WadRayMath.sol";
+import {PercentageMath} from "contracts/protocol/libraries/math/PercentageMath.sol";
+import {Errors} from "contracts/protocol/libraries/helpers/Errors.sol";
+import {DataTypes} from "contracts/protocol/libraries/types/DataTypes.sol";
 
 /**
  * @title LoanInfoLogic library

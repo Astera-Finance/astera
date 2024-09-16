@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.23;
 
-import {Ownable} from "../dependencies/openzeppelin/contracts/Ownable.sol";
+import {Ownable} from "contracts/dependencies/openzeppelin/contracts/Ownable.sol";
 
 contract ChainlinkSourcesRegistry is Ownable {
     /// @dev Mapping of current stored asset => underlying Chainlink aggregator

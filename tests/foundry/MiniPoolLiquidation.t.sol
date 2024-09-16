@@ -7,7 +7,7 @@ import {WadRayMath} from "contracts/protocol/libraries/math/WadRayMath.sol";
 import {PercentageMath} from "contracts/protocol/libraries/math/PercentageMath.sol";
 import {ReserveConfiguration} from
     "contracts/protocol/libraries/configuration/ReserveConfiguration.sol";
-
+import "contracts/protocol/lendingpool/minipool/MiniPoolCollateralManager.sol";
 import "forge-std/StdUtils.sol";
 
 contract MiniPoolLiquidationTest is MiniPoolDepositBorrowTest {

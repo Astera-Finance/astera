@@ -1,10 +1,10 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.20;
 
-import {IRewardsController} from "./interfaces/IRewardsController.sol";
+import {IRewardsController} from "contracts/interfaces/IRewardsController.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import {DistributionTypes} from "./libraries/DistributionTypes.sol";
-import {Ownable} from "./libraries/Ownable.sol";
+import {DistributionTypes} from "./DistributionTypes.sol";
+import {Ownable} from "lib/openzeppelin-contracts/contracts/access/Ownable.sol";
 
 /**
  * @title RewardForwarder

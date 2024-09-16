@@ -1,14 +1,14 @@
 // SPDX-License-Identifier: agpl-3.0
 pragma solidity ^0.8.23;
 
-import {SafeMath} from "../../../dependencies/openzeppelin/contracts/SafeMath.sol";
-import {IReserveInterestRateStrategy} from "../../../interfaces/IReserveInterestRateStrategy.sol";
-import {WadRayMath} from "../../libraries/math/WadRayMath.sol";
-import {PercentageMath} from "../../libraries/math/PercentageMath.sol";
-import {ILendingPoolAddressesProvider} from "../../../interfaces/ILendingPoolAddressesProvider.sol";
-import {IERC20} from "../../../dependencies/openzeppelin/contracts/IERC20.sol";
-import {IAToken} from "../../../interfaces/IAToken.sol";
-import {Errors} from "../../libraries/helpers/Errors.sol";
+import {SafeMath} from "contracts/dependencies/openzeppelin/contracts/SafeMath.sol";
+import {IReserveInterestRateStrategy} from "contracts/interfaces/IReserveInterestRateStrategy.sol";
+import {WadRayMath} from "contracts/protocol/libraries/math/WadRayMath.sol";
+import {PercentageMath} from "contracts/protocol/libraries/math/PercentageMath.sol";
+import {ILendingPoolAddressesProvider} from "contracts/interfaces/ILendingPoolAddressesProvider.sol";
+import {IERC20} from "contracts/dependencies/openzeppelin/contracts/IERC20.sol";
+import {IAToken} from "contracts/interfaces/IAToken.sol";
+import {Errors} from "contracts/protocol/libraries/helpers/Errors.sol";
 
 /**
  * @title DefaultReserveInterestRateStrategy contract

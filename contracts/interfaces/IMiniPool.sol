@@ -3,7 +3,7 @@ pragma solidity ^0.8.23;
 
 import {IMiniPoolAddressesProvider} from "./IMiniPoolAddressesProvider.sol";
 import {IAERC6909} from "./IAERC6909.sol";
-import {DataTypes} from "../protocol/libraries/types/DataTypes.sol";
+import {DataTypes} from "contracts/protocol/libraries/types/DataTypes.sol";
 
 interface IMiniPool {
     /**

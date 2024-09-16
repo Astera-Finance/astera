@@ -8,7 +8,7 @@ import {DataTypes} from "contracts/protocol/libraries/types/DataTypes.sol";
 import {ReserveConfiguration} from
     "contracts/protocol/libraries/configuration/ReserveConfiguration.sol";
 import {Ownable} from "contracts/dependencies/openzeppelin/contracts/Ownable.sol";
-import {Errors} from "../../libraries/helpers/Errors.sol";
+import {Errors} from "contracts/protocol/libraries/helpers/Errors.sol";
 
 /**
  * @title PiReserveInterestRateStrategy contract

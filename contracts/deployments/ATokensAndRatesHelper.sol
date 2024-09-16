@@ -1,15 +1,15 @@
 // SPDX-License-Identifier: agpl-3.0
 pragma solidity ^0.8.20;
 
-import {LendingPool} from "../protocol/lendingpool/LendingPool.sol";
+import {LendingPool} from "contracts/protocol/lendingpool/LendingPool.sol";
 import {LendingPoolAddressesProvider} from
-    "../protocol/configuration/LendingPoolAddressesProvider.sol";
-import {LendingPoolConfigurator} from "../protocol/lendingpool/LendingPoolConfigurator.sol";
-import {AToken} from "../protocol/tokenization/AToken.sol";
+    "contracts/protocol/configuration/LendingPoolAddressesProvider.sol";
+import {LendingPoolConfigurator} from "contracts/protocol/lendingpool/LendingPoolConfigurator.sol";
+import {AToken} from "contracts/protocol/tokenization/AToken.sol";
 import {DefaultReserveInterestRateStrategy} from
-    "../protocol/lendingpool/InterestRateStrategies/DefaultReserveInterestRateStrategy.sol";
-import {Ownable} from "../dependencies/openzeppelin/contracts/Ownable.sol";
-import {StringLib} from "./StringLib.sol";
+    "contracts/protocol/lendingpool/InterestRateStrategies/DefaultReserveInterestRateStrategy.sol";
+import {Ownable} from "contracts/dependencies/openzeppelin/contracts/Ownable.sol";
+import {StringLib} from "contracts/deployments/StringLib.sol";
 
 contract ATokensAndRatesHelper is Ownable {
     address payable private pool;

@@ -1,20 +1,20 @@
 // SPDX-License-Identifier: agpl-3.0
 pragma solidity ^0.8.23;
 
-import {IERC20Detailed} from "../dependencies/openzeppelin/contracts/IERC20Detailed.sol";
-import {ILendingPoolAddressesProvider} from "../interfaces/ILendingPoolAddressesProvider.sol";
+import {IERC20Detailed} from "contracts/dependencies/openzeppelin/contracts/IERC20Detailed.sol";
+import {ILendingPoolAddressesProvider} from "contracts/interfaces/ILendingPoolAddressesProvider.sol";
 import {IUiPoolDataProviderV2} from "./interfaces/IUiPoolDataProviderV2.sol";
-import {ILendingPool} from "../interfaces/ILendingPool.sol";
+import {ILendingPool} from "contracts/interfaces/ILendingPool.sol";
 import {IOracle} from "./interfaces/IOracle.sol";
-import {IAToken} from "../interfaces/IAToken.sol";
-import {IVariableDebtToken} from "../interfaces/IVariableDebtToken.sol";
-import {WadRayMath} from "../protocol/libraries/math/WadRayMath.sol";
-import {ReserveConfiguration} from "../protocol/libraries/configuration/ReserveConfiguration.sol";
-import {UserConfiguration} from "../protocol/libraries/configuration/UserConfiguration.sol";
-import {DataTypes} from "../protocol/libraries/types/DataTypes.sol";
-import {IChainlinkAggregator} from "../interfaces/IChainlinkAggregator.sol";
+import {IAToken} from "contracts/interfaces/IAToken.sol";
+import {IVariableDebtToken} from "contracts/interfaces/IVariableDebtToken.sol";
+import {WadRayMath} from "contracts/protocol/libraries/math/WadRayMath.sol";
+import {ReserveConfiguration} from "contracts/protocol/libraries/configuration/ReserveConfiguration.sol";
+import {UserConfiguration} from "contracts/protocol/libraries/configuration/UserConfiguration.sol";
+import {DataTypes} from "contracts/protocol/libraries/types/DataTypes.sol";
+import {IChainlinkAggregator} from "contracts/interfaces/IChainlinkAggregator.sol";
 import {DefaultReserveInterestRateStrategy} from
-    "../protocol/lendingpool/InterestRateStrategies/DefaultReserveInterestRateStrategy.sol";
+    "contracts/protocol/lendingpool/InterestRateStrategies/DefaultReserveInterestRateStrategy.sol";
 import {IERC20DetailedBytes} from "./interfaces/IERC20DetailedBytes.sol";
 
 contract UiPoolDataProviderV2 is IUiPoolDataProviderV2 {

@@ -1,18 +1,18 @@
 // SPDX-License-Identifier: agpl-3.0
 pragma solidity ^0.8.20;
 
-import {IERC20} from "../../dependencies/openzeppelin/contracts/IERC20.sol";
-import {SafeERC20} from "../../dependencies/openzeppelin/contracts/SafeERC20.sol";
-import {SignedSafeMath} from "../../dependencies/openzeppelin/contracts/SignedSafeMath.sol";
-import {SafeMath} from "../../dependencies/openzeppelin/contracts/SafeMath.sol";
-import {ILendingPool} from "../../interfaces/ILendingPool.sol";
-import {IAToken} from "../../interfaces/IAToken.sol";
-import {WadRayMath} from "../libraries/math/WadRayMath.sol";
-import {Errors} from "../libraries/helpers/Errors.sol";
-import {VersionedInitializable} from "../libraries/upgradeability/VersionedInitializable.sol";
+import {IERC20} from "contracts/dependencies/openzeppelin/contracts/IERC20.sol";
+import {SafeERC20} from "contracts/dependencies/openzeppelin/contracts/SafeERC20.sol";
+import {SignedSafeMath} from "contracts/dependencies/openzeppelin/contracts/SignedSafeMath.sol";
+import {SafeMath} from "contracts/dependencies/openzeppelin/contracts/SafeMath.sol";
+import {ILendingPool} from "contracts/interfaces/ILendingPool.sol";
+import {IAToken} from "contracts/interfaces/IAToken.sol";
+import {WadRayMath} from "contracts/protocol/libraries/math/WadRayMath.sol";
+import {Errors} from "contracts/protocol/libraries/helpers/Errors.sol";
+import {VersionedInitializable} from "contracts/protocol/libraries/upgradeability/VersionedInitializable.sol";
 import {IncentivizedERC20} from "./IncentivizedERC20.sol";
-import {IRewarder} from "../../interfaces/IRewarder.sol";
-import {IERC4626} from "../../interfaces/IERC4626.sol";
+import {IRewarder} from "contracts/interfaces/IRewarder.sol";
+import {IERC4626} from "contracts/interfaces/IERC4626.sol";
 import {ATokenNonRebasing} from "./ATokenNonRebasing.sol";
 
 /**
