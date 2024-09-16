@@ -34,7 +34,8 @@ abstract contract RewardsController6909 is RewardsDistributor6909, IMiniPoolRewa
     {
         for (uint256 i = 0; i < config.length; i++) {
             //fix Token Configuration
-            config[i].totalSupply = IAERC6909(config[i].asset.market6909).scaledTotalSupply(config[i].asset.assetID);
+            config[i].totalSupply =
+                IAERC6909(config[i].asset.market6909).scaledTotalSupply(config[i].asset.assetID);
         }
         _configureAssets(config);
     }
@@ -47,11 +48,12 @@ abstract contract RewardsController6909 is RewardsDistributor6909, IMiniPoolRewa
         _updateUserRewardsPerAssetInternal(msg.sender, assetID, user, userBalance, totalSupply);
     }
 
-    function claimRewards(DistributionTypes.asset6909[] calldata assets, uint256 amount, address to, address reward)
-        external
-        override
-        returns (uint256)
-    {
+    function claimRewards(
+        DistributionTypes.asset6909[] calldata assets,
+        uint256 amount,
+        address to,
+        address reward
+    ) external override returns (uint256) {
         require(to != address(0), "INVALID_TO_ADDRESS");
         return _claimRewards(assets, amount, msg.sender, msg.sender, to, reward);
     }
@@ -68,11 +70,11 @@ abstract contract RewardsController6909 is RewardsDistributor6909, IMiniPoolRewa
         return _claimRewards(assets, amount, msg.sender, user, to, reward);
     }
 
-    function claimRewardsToSelf(DistributionTypes.asset6909[] calldata assets, uint256 amount, address reward)
-        external
-        override
-        returns (uint256)
-    {
+    function claimRewardsToSelf(
+        DistributionTypes.asset6909[] calldata assets,
+        uint256 amount,
+        address reward
+    ) external override returns (uint256) {
         return _claimRewards(assets, amount, msg.sender, msg.sender, msg.sender, reward);
     }
 
@@ -85,7 +87,11 @@ abstract contract RewardsController6909 is RewardsDistributor6909, IMiniPoolRewa
         return _claimAllRewards(assets, msg.sender, msg.sender, to);
     }
 
-    function claimAllRewardsOnBehalf(DistributionTypes.asset6909[] calldata assets, address user, address to)
+    function claimAllRewardsOnBehalf(
+        DistributionTypes.asset6909[] calldata assets,
+        address user,
+        address to
+    )
         external
         override
         onlyAuthorizedClaimers(msg.sender, user)
@@ -113,8 +119,8 @@ abstract contract RewardsController6909 is RewardsDistributor6909, IMiniPoolRewa
         userState = new DistributionTypes.UserMiniPoolAssetInput[](assets.length);
         for (uint256 i = 0; i < assets.length; i++) {
             userState[i].asset = assets[i];
-            (userState[i].userBalance, userState[i].totalSupply) =
-                IAERC6909(assets[i].market6909).getScaledUserBalanceAndSupply(user, assets[i].assetID);
+            (userState[i].userBalance, userState[i].totalSupply) = IAERC6909(assets[i].market6909)
+                .getScaledUserBalanceAndSupply(user, assets[i].assetID);
         }
         return userState;
     }
@@ -150,10 +156,12 @@ abstract contract RewardsController6909 is RewardsDistributor6909, IMiniPoolRewa
         return amountToClaim;
     }
 
-    function _claimAllRewards(DistributionTypes.asset6909[] calldata assets, address claimer, address user, address to)
-        internal
-        returns (address[] memory rewardTokens, uint256[] memory claimedAmounts)
-    {
+    function _claimAllRewards(
+        DistributionTypes.asset6909[] calldata assets,
+        address claimer,
+        address user,
+        address to
+    ) internal returns (address[] memory rewardTokens, uint256[] memory claimedAmounts) {
         _distributeRewards(user, _getUserStake(assets, user));
 
         rewardTokens = new address[](_rewardTokens.length);

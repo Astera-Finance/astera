@@ -50,13 +50,21 @@ abstract contract IncentivizedERC6909 is Context, ERC6909 {
         return _totalSupply[id];
     }
 
-    function _decrementTotalSupply(uint256 id, uint256 amt) internal virtual returns (uint256 oldTotalSupply) {
-        oldTotalSupply= _totalSupply[id];
+    function _decrementTotalSupply(uint256 id, uint256 amt)
+        internal
+        virtual
+        returns (uint256 oldTotalSupply)
+    {
+        oldTotalSupply = _totalSupply[id];
         _totalSupply[id] = _totalSupply[id].sub(amt);
     }
 
-    function _incrementTotalSupply(uint256 id, uint256 amt) internal virtual returns (uint256 oldTotalSupply){
-        oldTotalSupply= _totalSupply[id];
+    function _incrementTotalSupply(uint256 id, uint256 amt)
+        internal
+        virtual
+        returns (uint256 oldTotalSupply)
+    {
+        oldTotalSupply = _totalSupply[id];
         _totalSupply[id] = _totalSupply[id].add(amt);
     }
 

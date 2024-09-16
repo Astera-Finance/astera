@@ -19,10 +19,9 @@ import {IMiniPool} from "../../../interfaces/IMiniPool.sol";
 /**
  * @title ERC6909-MultiToken Built to service all collateral and debt tokens for a specific MiniPool
  *         Current implementation allows for 128 tranched tokens from the Main Pool and 1000-128 unique tokens
- *         from the MiniPool. 
+ *         from the MiniPool.
  * @author Cod3x - 0xGoober
  */
-
 contract ATokenERC6909 is IncentivizedERC6909, VersionedInitializable {
     using SafeMath for uint256;
     using WadRayMath for uint256;
@@ -176,23 +175,15 @@ contract ATokenERC6909 is IncentivizedERC6909, VersionedInitializable {
             oldToBalance = oldToBalance - amount;
             oldFromBalance = 0;
             if (address(_getIncentivesController()) != address(0)) {
-                _getIncentivesController().handleAction(
-                    id,
-                    to, 
-                    oldSupply, 
-                    oldToBalance);
+                _getIncentivesController().handleAction(id, to, oldSupply, oldToBalance);
             }
-        //if the token was burned
+            //if the token was burned
         } else if (to == address(0) && from != address(0)) {
             oldSupply = _decrementTotalSupply(id, amount);
             oldFromBalance = oldFromBalance + amount;
             oldToBalance = 0;
             if (address(_getIncentivesController()) != address(0)) {
-                _getIncentivesController().handleAction(
-                    id,
-                    from, 
-                    oldSupply, 
-                    oldFromBalance);
+                _getIncentivesController().handleAction(id, from, oldSupply, oldFromBalance);
             }
         }
         //the token was transferred
@@ -200,20 +191,10 @@ contract ATokenERC6909 is IncentivizedERC6909, VersionedInitializable {
             oldFromBalance = oldFromBalance + amount;
             oldToBalance = oldToBalance - amount;
             if (address(_getIncentivesController()) != address(0)) {
-                _getIncentivesController().handleAction(
-                    id,
-                    from, 
-                    oldSupply, 
-                    oldFromBalance
-                );
-                
+                _getIncentivesController().handleAction(id, from, oldSupply, oldFromBalance);
+
                 if (from != to) {
-                    _getIncentivesController().handleAction(
-                        id,
-                        to, 
-                        oldSupply,
-                        oldToBalance
-                    );
+                    _getIncentivesController().handleAction(id, to, oldSupply, oldToBalance);
                 }
             }
         }

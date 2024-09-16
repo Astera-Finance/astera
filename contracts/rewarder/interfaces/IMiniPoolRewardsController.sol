@@ -19,13 +19,18 @@ interface IMiniPoolRewardsController is IMiniPoolRewardsDistributor {
 
     function getClaimer(address user) external view returns (address);
 
-    function configureAssets(DistributionTypes.MiniPoolRewardsConfigInput[] memory config) external;
+    function configureAssets(DistributionTypes.MiniPoolRewardsConfigInput[] memory config)
+        external;
 
-    function handleAction(uint256 assetID, address user, uint256 totalSupply, uint256 userBalance) external;
+    function handleAction(uint256 assetID, address user, uint256 totalSupply, uint256 userBalance)
+        external;
 
-    function claimRewards(DistributionTypes.asset6909[] calldata assets, uint256 amount, address to, address reward)
-        external
-        returns (uint256);
+    function claimRewards(
+        DistributionTypes.asset6909[] calldata assets,
+        uint256 amount,
+        address to,
+        address reward
+    ) external returns (uint256);
 
     function claimRewardsOnBehalf(
         DistributionTypes.asset6909[] calldata assets,
@@ -35,17 +40,21 @@ interface IMiniPoolRewardsController is IMiniPoolRewardsDistributor {
         address reward
     ) external returns (uint256);
 
-    function claimRewardsToSelf(DistributionTypes.asset6909[] calldata assets, uint256 amount, address reward)
-        external
-        returns (uint256);
+    function claimRewardsToSelf(
+        DistributionTypes.asset6909[] calldata assets,
+        uint256 amount,
+        address reward
+    ) external returns (uint256);
 
     function claimAllRewards(DistributionTypes.asset6909[] calldata assets, address to)
         external
         returns (address[] memory rewardsList, uint256[] memory claimedAmounts);
 
-    function claimAllRewardsOnBehalf(DistributionTypes.asset6909[] calldata assets, address user, address to)
-        external
-        returns (address[] memory rewardsList, uint256[] memory claimedAmounts);
+    function claimAllRewardsOnBehalf(
+        DistributionTypes.asset6909[] calldata assets,
+        address user,
+        address to
+    ) external returns (address[] memory rewardsList, uint256[] memory claimedAmounts);
 
     function claimAllRewardsToSelf(DistributionTypes.asset6909[] calldata assets)
         external

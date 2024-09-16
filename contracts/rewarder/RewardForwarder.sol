@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.20;
+
 import {IRewardsController} from "./interfaces/IRewardsController.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {DistributionTypes} from "./libraries/DistributionTypes.sol";
@@ -22,7 +23,7 @@ contract RewardForwarder is Ownable {
     mapping(address => mapping(uint256 => address)) public forwarders;
 
     constructor(address _rewardsController) Ownable(msg.sender) {
-        rewardsController = IRewardsController(_rewardsController);       
+        rewardsController = IRewardsController(_rewardsController);
     }
 
     /**
@@ -31,7 +32,10 @@ contract RewardForwarder is Ownable {
      * @param rewardTokenIndex The index of the reward token.
      * @param forwarder The address of the forwarder.
      */
-    function setForwarder(address claimee, uint256 rewardTokenIndex, address forwarder) external onlyOwner {
+    function setForwarder(address claimee, uint256 rewardTokenIndex, address forwarder)
+        external
+        onlyOwner
+    {
         forwarders[claimee][rewardTokenIndex] = forwarder;
     }
 
@@ -61,6 +65,7 @@ contract RewardForwarder is Ownable {
      * @dev Claims rewards for a specified mini pool.
      * @param claimee The address of the mini pool.
      */
+
     function claimRewardsForPool(address claimee) public {
         for (uint256 i = 0; i < rewardedPoolTokens.length; i++) {
             address token = rewardedPoolTokens[i];
@@ -80,15 +85,15 @@ contract RewardForwarder is Ownable {
      * @param claimee The address of the claimee.
      * @param token The address of the rewarded token.
      */
-    function claimRewardsFor(address claimee, address token) public returns (uint256[] memory claimedAmounts) {
+    function claimRewardsFor(address claimee, address token)
+        public
+        returns (uint256[] memory claimedAmounts)
+    {
         require(isRegisteredClaimee[claimee], "Not registered");
         address[] memory assets = new address[](1);
         assets[0] = token;
-        (address[] memory rewardTokens, uint256[] memory claimedAmounts) = rewardsController.claimAllRewardsOnBehalf(
-            assets,
-            claimee,
-            address(this)
-        );
+        (address[] memory rewardTokens, uint256[] memory claimedAmounts) =
+            rewardsController.claimAllRewardsOnBehalf(assets, claimee, address(this));
         for (uint256 i = 0; i < rewardTokens.length; i++) {
             claimedRewards[claimee][token][i] += claimedAmounts[i];
         }
