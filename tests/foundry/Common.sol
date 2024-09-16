@@ -34,7 +34,7 @@ import "contracts/protocol/tokenization/ERC6909/ATokenERC6909.sol";
 import "contracts/protocol/tokenization/ERC20/VariableDebtToken.sol";
 import "contracts/mocks/tokens/MintableERC20.sol";
 import "contracts/mocks/tokens/WETH9Mocked.sol";
-import "contracts/mocks/oracle/CLAggregators/MockAggregator.sol";
+import "contracts/mocks/oracle/MockAggregator.sol";
 import "contracts/mocks/tokens/MockVault.sol";
 import "contracts/mocks/tokens/ExternalContract.sol";
 import "contracts/mocks/dependencies/IStrategy.sol";
