@@ -105,13 +105,13 @@ contract ATokenERC6909 is IncentivizedERC6909, VersionedInitializable {
         string memory name,
         string memory symbol,
         uint8 decimals
-    ) external returns (uint256 aTokenID, uint256 debtTokenID, bool isTranche) {
+    ) external returns (uint256 aTokenID, uint256 debtTokenID, bool isTrancheRet) {
         require(
             msg.sender == address(_addressesProvider.getMiniPoolConfigurator()),
             Errors.LP_CALLER_NOT_LENDING_POOL_CONFIGURATOR
         );
-        (aTokenID, debtTokenID, isTranche) = getIdForUnderlying(underlyingAsset);
-        if (isTranche) {
+        (aTokenID, debtTokenID, isTrancheRet) = getIdForUnderlying(underlyingAsset);
+        if (isTrancheRet) {
             _totalTrancheTokens++;
             _isTranche[aTokenID] = true;
             _isTranche[debtTokenID] = true;
@@ -150,8 +150,9 @@ contract ATokenERC6909 is IncentivizedERC6909, VersionedInitializable {
         return _underlyingAssetAddresses[id];
     }
 
-    function _beforeTokenTransfer(address from, address to, uint256 id, uint256 amount)
+    function _beforeTokenTransfer(address, address, uint256 id, uint256)
         internal
+        view
         override
     {
         if (isDebtToken(id)) {
@@ -224,6 +225,8 @@ contract ATokenERC6909 is IncentivizedERC6909, VersionedInitializable {
         } else {
             super.transfer(to, id, amount);
         }
+
+        return true;
     }
 
     function transferFrom(address from, address to, uint256 id, uint256 amount)
@@ -253,6 +256,8 @@ contract ATokenERC6909 is IncentivizedERC6909, VersionedInitializable {
         } else {
             super.transferFrom(from, to, id, amount);
         }
+
+        return true;
     }
 
     function transferUnderlyingTo(address to, uint256 id, uint256 amount) public {
@@ -300,7 +305,7 @@ contract ATokenERC6909 is IncentivizedERC6909, VersionedInitializable {
     function getIdForUnderlying(address underlying)
         public
         view
-        returns (uint256 aTokenID, uint256 debtTokenID, bool isTranche)
+        returns (uint256, uint256, bool)
     {
         ILendingPool pool = ILendingPool(_addressesProvider.getLendingPool());
         if (_determineIfAToken(underlying, address(pool))) {
@@ -418,7 +423,7 @@ contract ATokenERC6909 is IncentivizedERC6909, VersionedInitializable {
         }
     }
 
-    function handleRepayment(address user, address onBehalfOf, uint256 id, uint256 amount)
+    function handleRepayment(address, address, uint256, uint256)
         external
         view
     {

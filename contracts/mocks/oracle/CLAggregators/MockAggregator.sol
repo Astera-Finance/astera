@@ -7,10 +7,10 @@ contract MockAggregator {
 
     event AnswerUpdated(int256 indexed current, uint256 indexed roundId, uint256 timestamp);
 
-    constructor(int256 _initialAnswer, int256 decimals) {
-        _latestAnswer = _initialAnswer;
-        _decimals = decimals;
-        emit AnswerUpdated(_initialAnswer, 0, block.timestamp);
+    constructor(int256 initialAnswer_, int256 decimals_) {
+        _latestAnswer = initialAnswer_;
+        _decimals = decimals_;
+        emit AnswerUpdated(initialAnswer_, 0, block.timestamp);
     }
 
     function latestAnswer() external view returns (int256) {
@@ -21,7 +21,7 @@ contract MockAggregator {
         return _decimals;
     }
 
-    function getTokenType() external view returns (uint256) {
+    function getTokenType() external pure returns (uint256) {
         return 1;
     }
 

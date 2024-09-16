@@ -53,7 +53,7 @@ contract PiReserveInterestRateStrategy is
         return ILendingPoolAddressesProvider(_addressProvider).getLendingPool();
     }
 
-    function getAvailableLiquidity(address asset, address aToken)
+    function getAvailableLiquidity(address, address aToken)
         public
         view
         override
@@ -111,7 +111,7 @@ contract PiReserveInterestRateStrategy is
         uint256 totalVariableDebt,
         uint256 reserveFactor
     ) external override onlyLendingPool returns (uint256, uint256) {
-        _calculateInterestRates(
+        return _calculateInterestRates(
             reserve, aToken, liquidityAdded, liquidityTaken, totalVariableDebt, reserveFactor
         );
     }
@@ -122,6 +122,6 @@ contract PiReserveInterestRateStrategy is
         uint256 totalVariableDebt,
         uint256 reserveFactor
     ) internal returns (uint256, uint256) {
-        _calculateInterestRates(address(0), availableLiquidity, totalVariableDebt, reserveFactor);
+        return _calculateInterestRates(address(0), availableLiquidity, totalVariableDebt, reserveFactor);
     }
 }

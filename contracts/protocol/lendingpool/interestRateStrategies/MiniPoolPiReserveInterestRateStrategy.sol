@@ -122,7 +122,7 @@ contract MiniPoolPiReserveInterestRateStrategy is
         uint256 totalVariableDebt,
         uint256 reserveFactor
     ) external override onlyLendingPool returns (uint256, uint256) {
-        _calculateInterestRates(
+        return _calculateInterestRates(
             reserve, aToken, liquidityAdded, liquidityTaken, totalVariableDebt, reserveFactor
         );
     }
@@ -133,6 +133,6 @@ contract MiniPoolPiReserveInterestRateStrategy is
         uint256 totalVariableDebt,
         uint256 reserveFactor
     ) internal returns (uint256, uint256) {
-        _calculateInterestRates(address(0), availableLiquidity, totalVariableDebt, reserveFactor);
+        return _calculateInterestRates(address(0), availableLiquidity, totalVariableDebt, reserveFactor);
     }
 }

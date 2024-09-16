@@ -256,7 +256,7 @@ library ReserveLogic {
         uint256 previousVariableBorrowIndex,
         uint256 newLiquidityIndex,
         uint256 newVariableBorrowIndex,
-        uint40 timestamp
+        uint40
     ) internal {
         MintToTreasuryLocalVars memory vars;
 

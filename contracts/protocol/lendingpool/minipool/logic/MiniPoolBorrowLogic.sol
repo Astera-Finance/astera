@@ -210,7 +210,6 @@ library MiniPoolBorrowLogic {
     ) internal view returns (uint256 userVolatility) {
         for (uint256 i; i < reservesCount; i++) {
             address currentReserveAddress = reserves[i].asset;
-            bool currentReserveType = reserves[i].reserveType;
             DataTypes.MiniPoolReserveData storage currentReserve =
                 reservesData[currentReserveAddress];
             if (!userConfig.isUsingAsCollateralOrBorrowing(i)) {
@@ -254,30 +253,16 @@ library MiniPoolBorrowLogic {
 
         MiniPoolValidationLogic.ValidateBorrowParams memory validateBorrowParams;
 
-        /*{
-    address oracle = vars.addressesProvider.getPriceOracle();
-
-    uint256 amountInETH =
-      IPriceOracleGetter(oracle).getAssetPrice(vars.asset).mul(vars.amount).div(
-        10**reserve.configuration.getDecimals()
-      );
-
-    }*/
         {
-            //address oracle = vars.addressesProvider.getPriceOracle();
-            uint256 amountInETH = amountInETH(
-                vars.asset,
-                vars.amount,
-                reserve.configuration.getDecimals(),
-                vars.addressesProvider.getPriceOracle()
-            );
+            address oracle = vars.addressesProvider.getPriceOracle();
 
             validateBorrowParams.asset = vars.asset;
             validateBorrowParams.userAddress = vars.onBehalfOf;
             validateBorrowParams.amount = vars.amount;
-            validateBorrowParams.amountInETH = amountInETH;
+            validateBorrowParams.amountInETH =
+                amountInETH(vars.asset, vars.amount, reserve.configuration.getDecimals(), oracle);
             validateBorrowParams.reservesCount = vars.reservesCount;
-            validateBorrowParams.oracle = vars.addressesProvider.getPriceOracle();
+            validateBorrowParams.oracle = oracle;
             MiniPoolValidationLogic.validateBorrow(
                 validateBorrowParams, reserve, reserves, userConfig, reservesList, userRecentBorrow
             );

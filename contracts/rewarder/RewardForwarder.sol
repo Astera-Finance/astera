@@ -87,17 +87,17 @@ contract RewardForwarder is Ownable {
      */
     function claimRewardsFor(address claimee, address token)
         public
-        returns (uint256[] memory claimedAmounts)
+        returns (uint256[] memory)
     {
         require(isRegisteredClaimee[claimee], "Not registered");
         address[] memory assets = new address[](1);
         assets[0] = token;
-        (address[] memory rewardTokens, uint256[] memory claimedAmounts) =
+        (address[] memory rewardTokens_, uint256[] memory claimedAmounts_) =
             rewardsController.claimAllRewardsOnBehalf(assets, claimee, address(this));
-        for (uint256 i = 0; i < rewardTokens.length; i++) {
-            claimedRewards[claimee][token][i] += claimedAmounts[i];
+        for (uint256 i = 0; i < rewardTokens_.length; i++) {
+            claimedRewards[claimee][token][i] += claimedAmounts_[i];
         }
-        return claimedAmounts;
+        return claimedAmounts_;
     }
 
     /**

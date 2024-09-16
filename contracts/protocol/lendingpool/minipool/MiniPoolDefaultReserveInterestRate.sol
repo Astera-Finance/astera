@@ -54,18 +54,18 @@ contract MiniPoolDefaultReserveInterestRateStrategy is IMiniPoolReserveInterestR
     uint256 internal immutable _variableRateSlope2;
 
     constructor(
-        IMiniPoolAddressesProvider provider,
-        uint256 optimalUtilizationRate,
-        uint256 baseVariableBorrowRate,
-        uint256 variableRateSlope1,
-        uint256 variableRateSlope2
+        IMiniPoolAddressesProvider provider_,
+        uint256 optimalUtilizationRate_,
+        uint256 baseVariableBorrowRate_,
+        uint256 variableRateSlope1_,
+        uint256 variableRateSlope2_
     ) {
-        OPTIMAL_UTILIZATION_RATE = optimalUtilizationRate;
-        EXCESS_UTILIZATION_RATE = WadRayMath.ray() - optimalUtilizationRate;
-        addressesProvider = provider;
-        _baseVariableBorrowRate = baseVariableBorrowRate;
-        _variableRateSlope1 = variableRateSlope1;
-        _variableRateSlope2 = variableRateSlope2;
+        OPTIMAL_UTILIZATION_RATE = optimalUtilizationRate_;
+        EXCESS_UTILIZATION_RATE = WadRayMath.ray() - optimalUtilizationRate_;
+        addressesProvider = provider_;
+        _baseVariableBorrowRate = baseVariableBorrowRate_;
+        _variableRateSlope1 = variableRateSlope1_;
+        _variableRateSlope2 = variableRateSlope2_;
     }
 
     function variableRateSlope1() external view returns (uint256) {
@@ -133,7 +133,6 @@ contract MiniPoolDefaultReserveInterestRateStrategy is IMiniPoolReserveInterestR
      * @dev Calculates the interest rates depending on the reserve's state and configurations.
      * NOTE This function is kept for compatibility with the previous DefaultInterestRateStrategy interface.
      * New protocol implementation uses the new calculateInterestRates() interface
-     * @param reserve The address of the reserve
      * @param availableLiquidity The liquidity available in the corresponding aToken
      * @param totalVariableDebt The total borrowed from the reserve at a variable rate
      * @param reserveFactor The reserve portion of the interest that goes to the treasury of the market
@@ -141,7 +140,7 @@ contract MiniPoolDefaultReserveInterestRateStrategy is IMiniPoolReserveInterestR
      *
      */
     function calculateInterestRates(
-        address reserve,
+        address,
         uint256 availableLiquidity,
         uint256 totalVariableDebt,
         uint256 reserveFactor

@@ -88,9 +88,9 @@ contract MiniPoolCollateralManager is
      */
     function liquidationCall(
         address collateralAsset,
-        bool collateralReserveType,
+        bool,
         address debtAsset,
-        bool debtReserveType,
+        bool,
         address user,
         uint256 debtToCover,
         bool receiveAToken

@@ -370,12 +370,10 @@ contract AToken is
 
     /**
      * @dev Invoked to execute actions on the aToken side after a repayment.
-     * @param user The user executing the repayment
-     * @param onBehalfOf The user beneficiary.
      * @param amount The amount getting repaid
      *
      */
-    function handleRepayment(address user, address onBehalfOf, uint256 amount)
+    function handleRepayment(address, address, uint256 amount)
         external
         override
         onlyLendingPool

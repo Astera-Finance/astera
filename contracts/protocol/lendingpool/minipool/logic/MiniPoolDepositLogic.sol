@@ -47,7 +47,7 @@ library MiniPoolDepositLogic {
         DepositParams memory params,
         mapping(address => DataTypes.MiniPoolReserveData) storage _reserves,
         mapping(address => DataTypes.UserConfigurationMap) storage _usersConfig,
-        IMiniPoolAddressesProvider _addressesProvider
+        IMiniPoolAddressesProvider
     ) external {
         DataTypes.MiniPoolReserveData storage reserve = _reserves[params.asset];
 
@@ -75,8 +75,8 @@ library MiniPoolDepositLogic {
     function internalDeposit(
         DepositParams memory params,
         mapping(address => DataTypes.MiniPoolReserveData) storage _reserves,
-        mapping(address => DataTypes.UserConfigurationMap) storage _usersConfig,
-        IMiniPoolAddressesProvider _addressesProvider
+        mapping(address => DataTypes.UserConfigurationMap) storage,
+        IMiniPoolAddressesProvider
     ) external {
         DataTypes.MiniPoolReserveData storage reserve = _reserves[params.asset];
 
@@ -89,7 +89,7 @@ library MiniPoolDepositLogic {
 
         IERC20(params.asset).safeTransfer(aToken, params.amount);
 
-        bool isFirstDeposit = IAERC6909(reserve.aTokenAddress).mint(
+        IAERC6909(reserve.aTokenAddress).mint(
             address(this), address(this), reserve.aTokenID, params.amount, reserve.liquidityIndex
         );
 

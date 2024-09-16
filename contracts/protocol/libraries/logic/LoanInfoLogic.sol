@@ -76,9 +76,11 @@ library LoanInfoLogic {
         updateLoanDataParams memory params
     ) internal returns (bool) {
         updateLoanDataLocalVars memory vars;
+        uint256 length;
+
         if (params.updateLoan) {
             vars.i = 0;
-            uint256 length = _userLoanInfoCount[params.user];
+            length = _userLoanInfoCount[params.user];
             for (vars.i; vars.i < length; vars.i++) {
                 if (
                     _userLoanInfo[params.user][vars.i].debtInfo.debtSnapshots[0].reserveID
@@ -105,7 +107,7 @@ library LoanInfoLogic {
             _userLoanInfoCount[params.user] = uint8(vars.loanID);
         }
         vars.i = 0;
-        uint256 length = params.collaterals.length;
+        length = params.collaterals.length;
         //uint8[] memory rankedIDs = rankIDs(params.ltvs);
 
         DataTypes.LoanInfo storage loanInfo = _userLoanInfo[params.user][vars.loanID];

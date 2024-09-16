@@ -357,7 +357,6 @@ contract LendingPool is VersionedInitializable, ILendingPool, LendingPoolStorage
         address aTokenAddress
     ) external override whenNotPaused {
         require(msg.sender == miniPoolAddress, Errors.LP_CALLER_NOT_MINIPOOL);
-        DataTypes.ReserveData storage reserve = _reserves[asset][reserveType];
 
         BorrowLogic.executeMiniPoolBorrow(
             BorrowLogic.ExecuteMiniPoolBorrowParams(

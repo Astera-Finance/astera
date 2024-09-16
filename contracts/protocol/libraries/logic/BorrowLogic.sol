@@ -247,23 +247,13 @@ library BorrowLogic {
 
         ValidationLogic.ValidateBorrowParams memory validateBorrowParams;
 
-        /*{
-    address oracle = vars.addressesProvider.getPriceOracle();
-
-    uint256 amountInETH =
-      IPriceOracleGetter(oracle).getAssetPrice(vars.asset).mul(vars.amount).div(
-        10**reserve.configuration.getDecimals()
-      );
-
-    }*/
         address oracle = vars.addressesProvider.getPriceOracle();
-        uint256 amountInETH =
-            amountInETH(vars.asset, vars.amount, reserve.configuration.getDecimals(), oracle);
 
         validateBorrowParams.asset = vars.asset;
         validateBorrowParams.userAddress = vars.onBehalfOf;
         validateBorrowParams.amount = vars.amount;
-        validateBorrowParams.amountInETH = amountInETH;
+        validateBorrowParams.amountInETH =
+            amountInETH(vars.asset, vars.amount, reserve.configuration.getDecimals(), oracle);
         validateBorrowParams.reservesCount = vars.reservesCount;
         validateBorrowParams.oracle = oracle;
         ValidationLogic.validateBorrow(

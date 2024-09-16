@@ -70,12 +70,12 @@ contract LendingPoolConfigurator is VersionedInitializable, ILendingPoolConfigur
         }
     }
 
-    function _initReserve(ILendingPool pool, InitReserveInput calldata input) internal {
+    function _initReserve(ILendingPool pool_, InitReserveInput calldata input) internal {
         address aTokenProxyAddress = _initTokenWithProxy(
             input.aTokenImpl,
             abi.encodeWithSelector(
                 IInitializableAToken.initialize.selector,
-                pool,
+                pool_,
                 input.treasury,
                 input.underlyingAsset,
                 IRewarder(input.incentivesController),

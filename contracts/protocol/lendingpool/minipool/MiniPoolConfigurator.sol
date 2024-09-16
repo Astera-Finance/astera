@@ -76,7 +76,7 @@ contract MiniPoolConfigurator is VersionedInitializable, IMiniPoolConfigurator {
 
     function _initReserve(IMiniPool pool, InitReserveInput calldata input) internal {
         address AERC6909proxy = addressesProvider.getMiniPoolToAERC6909(address(pool));
-        (uint256 aTokenID, uint256 debtTokenID, bool isTranche) = IAERC6909(AERC6909proxy)
+        (uint256 aTokenID, uint256 debtTokenID, ) = IAERC6909(AERC6909proxy)
             .initReserve(
             input.underlyingAsset,
             input.underlyingAssetName,
