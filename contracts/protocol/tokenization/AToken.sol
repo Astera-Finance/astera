@@ -373,11 +373,7 @@ contract AToken is
      * @param amount The amount getting repaid
      *
      */
-    function handleRepayment(address, address, uint256 amount)
-        external
-        override
-        onlyLendingPool
-    {
+    function handleRepayment(address, address, uint256 amount) external override onlyLendingPool {
         underlyingAmount = underlyingAmount + amount;
     }
 

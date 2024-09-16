@@ -150,11 +150,7 @@ contract ATokenERC6909 is IncentivizedERC6909, VersionedInitializable {
         return _underlyingAssetAddresses[id];
     }
 
-    function _beforeTokenTransfer(address, address, uint256 id, uint256)
-        internal
-        view
-        override
-    {
+    function _beforeTokenTransfer(address, address, uint256 id, uint256) internal view override {
         if (isDebtToken(id)) {
             require(msg.sender == address(POOL), Errors.CT_CALLER_MUST_BE_LENDING_POOL);
         }
@@ -302,11 +298,7 @@ contract ATokenERC6909 is IncentivizedERC6909, VersionedInitializable {
         return id >= DEBT_TOKEN_ADDRESSABLE_ID;
     }
 
-    function getIdForUnderlying(address underlying)
-        public
-        view
-        returns (uint256, uint256, bool)
-    {
+    function getIdForUnderlying(address underlying) public view returns (uint256, uint256, bool) {
         ILendingPool pool = ILendingPool(_addressesProvider.getLendingPool());
         if (_determineIfAToken(underlying, address(pool))) {
             address tokenUnderlying = IAToken(underlying).UNDERLYING_ASSET_ADDRESS();
@@ -423,10 +415,7 @@ contract ATokenERC6909 is IncentivizedERC6909, VersionedInitializable {
         }
     }
 
-    function handleRepayment(address, address, uint256, uint256)
-        external
-        view
-    {
+    function handleRepayment(address, address, uint256, uint256) external view {
         require(msg.sender == address(POOL), Errors.CT_CALLER_MUST_BE_LENDING_POOL);
     }
 

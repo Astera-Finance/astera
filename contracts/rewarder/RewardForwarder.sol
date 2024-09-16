@@ -85,10 +85,7 @@ contract RewardForwarder is Ownable {
      * @param claimee The address of the claimee.
      * @param token The address of the rewarded token.
      */
-    function claimRewardsFor(address claimee, address token)
-        public
-        returns (uint256[] memory)
-    {
+    function claimRewardsFor(address claimee, address token) public returns (uint256[] memory) {
         require(isRegisteredClaimee[claimee], "Not registered");
         address[] memory assets = new address[](1);
         assets[0] = token;

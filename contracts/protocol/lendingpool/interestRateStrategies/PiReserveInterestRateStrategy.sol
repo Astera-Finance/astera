@@ -122,6 +122,8 @@ contract PiReserveInterestRateStrategy is
         uint256 totalVariableDebt,
         uint256 reserveFactor
     ) internal returns (uint256, uint256) {
-        return _calculateInterestRates(address(0), availableLiquidity, totalVariableDebt, reserveFactor);
+        return _calculateInterestRates(
+            address(0), availableLiquidity, totalVariableDebt, reserveFactor
+        );
     }
 }
