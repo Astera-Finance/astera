@@ -1030,7 +1030,8 @@ contract MiniPoolRepayWithdrawTransferTest is MiniPoolDepositBorrowTest {
             "2. Normalized income aWBTC: ",
             IMiniPool(miniPool).getReserveNormalizedIncome(address(wbtcParams.aToken), true)
         );
-
+        uint256 availableLiquidity = IERC20(aTokens[USDC_OFFSET]).balanceOf(address(aErc6909Token));
+        console.log("2. AvailableLiquidity: ", availableLiquidity);
         console.log("Provider repaying...");
         /* Give lacking amount to user */
         IMiniPool(miniPool).repay(
@@ -1047,7 +1048,7 @@ contract MiniPoolRepayWithdrawTransferTest is MiniPoolDepositBorrowTest {
         vm.startPrank(users.user1);
         uint256 balanceAToken = aErc6909Token.balanceOf(users.user1, 1000 + USDC_OFFSET);
         console.log("3. Balance aToken: ", balanceAToken);
-        uint256 availableLiquidity = IERC20(aTokens[USDC_OFFSET]).balanceOf(address(aErc6909Token));
+        availableLiquidity = IERC20(aTokens[USDC_OFFSET]).balanceOf(address(aErc6909Token));
         // IERC20(reserve).balanceOf(aToken)
         console.log("3. AvailableLiquidity: ", availableLiquidity);
         console.log(
@@ -1097,7 +1098,7 @@ contract MiniPoolRepayWithdrawTransferTest is MiniPoolDepositBorrowTest {
         vm.stopPrank();
     }
 
-    function testMiniPoolC2() public {
+    function testMiniPoolDepositAndWithdrawAfterSomeTime() public {
         /**
          * Preconditions:
          * 1. Reserves in LendingPool and MiniPool must be configured
