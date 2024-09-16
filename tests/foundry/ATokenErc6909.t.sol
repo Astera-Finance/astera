@@ -122,7 +122,6 @@ contract ATokenErc6909Test is Common {
             console.log("granuality: ", granuality);
             aErc6909Token.mint(address(this), address(this), id, granuality, index);
         }
-        //assertGe(maxValToMint.rayDiv(index), aErc6909Token.balanceOf(address(this), id)); @audit ISSUE
         assertApproxEqAbs(
             aErc6909Token.balanceOf(address(this), id),
             maxValToMint.rayDiv(index),
@@ -174,7 +173,6 @@ contract ATokenErc6909Test is Common {
             console.log("granuality: ", granuality);
             aErc6909Token.mint(address(this), address(this), id, granuality, index);
         }
-        //assertGe(maxValToMint.rayDiv(index), aErc6909Token.balanceOf(address(this), id)); @audit ISSUE
         assertApproxEqAbs(
             aErc6909Token.balanceOf(address(this), id),
             maxValToMint.rayDiv(index),

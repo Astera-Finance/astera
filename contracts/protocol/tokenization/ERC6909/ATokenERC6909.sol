@@ -253,7 +253,10 @@ contract ATokenERC6909 is IncentivizedERC6909, VersionedInitializable {
         require(msg.sender == address(POOL), Errors.CT_CALLER_MUST_BE_LENDING_POOL);
         if (_isTranche[id]) {
             IERC20(_underlyingAssetAddresses[id]).transfer(to, amount);
-            //pool.transferAndUnwrap(_underlyingAssetAddresses[id], to, amount);
+            /// unwrap aToken for underlying => improved UX
+            // ILendingPool(_addressesProvider.getLendingPool()).withdraw(
+            //     IAToken(_underlyingAssetAddresses[id]).UNDERLYING_ASSET_ADDRESS(), true, amount, to
+            // );
         } else {
             IERC20(_underlyingAssetAddresses[id]).transfer(to, amount);
         }
