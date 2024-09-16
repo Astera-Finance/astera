@@ -4,47 +4,43 @@ pragma solidity ^0.8.0;
 import "forge-std/Test.sol";
 import "forge-std/console.sol";
 import "contracts/dependencies/openzeppelin/contracts/ERC20.sol";
-import "contracts/rewarder/Rewarder.sol";
-import "contracts/misc/Oracle.sol";
+import "contracts/protocol/rewarder/lendingpool/Rewarder.sol";
+import "contracts/protocol/core/Oracle.sol";
 import "contracts/misc/ProtocolDataProvider.sol";
 import "contracts/misc/Treasury.sol";
 import "contracts/misc/UiPoolDataProviderV2.sol";
 import "contracts/misc/WETHGateway.sol";
-import "contracts/protocol/libraries/logic/ReserveLogic.sol";
-import "contracts/protocol/libraries/logic/GenericLogic.sol";
-import "contracts/protocol/libraries/logic/ValidationLogic.sol";
+import "contracts/protocol/core/lendingpool/logic/ReserveLogic.sol";
+import "contracts/protocol/core/lendingpool/logic/GenericLogic.sol";
+import "contracts/protocol/core/lendingpool/logic/ValidationLogic.sol";
 import "contracts/protocol/configuration/LendingPoolAddressesProvider.sol";
 import "contracts/protocol/configuration/LendingPoolAddressesProviderRegistry.sol";
-import
-    "contracts/protocol/lendingpool/InterestRateStrategies/DefaultReserveInterestRateStrategy.sol";
-import "contracts/protocol/lendingpool/InterestRateStrategies/PiReserveInterestRateStrategy.sol";
-import
-    "contracts/protocol/lendingpool/InterestRateStrategies/MiniPoolPiReserveInterestRateStrategy.sol";
-import "contracts/protocol/lendingpool/LendingPool.sol";
-import "contracts/protocol/lendingpool/LendingPoolCollateralManager.sol";
-import "contracts/protocol/lendingpool/LendingPoolConfigurator.sol";
-import "contracts/protocol/lendingpool/minipool/MiniPool.sol";
+import "contracts/protocol/core/InterestRateStrategies/DefaultReserveInterestRateStrategy.sol";
+import "contracts/protocol/core/InterestRateStrategies/PiReserveInterestRateStrategy.sol";
+import "contracts/protocol/core/InterestRateStrategies/MiniPoolPiReserveInterestRateStrategy.sol";
+import "contracts/protocol/core/lendingpool/LendingPool.sol";
+import "contracts/protocol/core/lendingpool/LendingPoolCollateralManager.sol";
+import "contracts/protocol/core/lendingpool/LendingPoolConfigurator.sol";
+import "contracts/protocol/core/minipool/MiniPool.sol";
 import "contracts/protocol/configuration/MiniPoolAddressProvider.sol";
-import "contracts/protocol/lendingpool/minipool/MiniPoolConfigurator.sol";
-import "contracts/protocol/lendingpool/minipool/FlowLimiter.sol";
+import "contracts/protocol/core/minipool/MiniPoolConfigurator.sol";
+import "contracts/protocol/core/minipool/FlowLimiter.sol";
 
 import "contracts/deployments/ATokensAndRatesHelper.sol";
-import "contracts/protocol/tokenization/AToken.sol";
+import "contracts/protocol/tokenization/ERC20/AToken.sol";
 import "contracts/protocol/tokenization/ERC6909/ATokenERC6909.sol";
-import "contracts/protocol/tokenization/VariableDebtToken.sol";
+import "contracts/protocol/tokenization/ERC20/VariableDebtToken.sol";
 import "contracts/mocks/tokens/MintableERC20.sol";
 import "contracts/mocks/tokens/WETH9Mocked.sol";
-import "contracts/mocks/oracle/CLAggregators/MockAggregator.sol";
+import "contracts/mocks/oracle/MockAggregator.sol";
 import "contracts/mocks/tokens/MockVault.sol";
-import "contracts/mocks/tokens/MockStrat.sol";
 import "contracts/mocks/tokens/ExternalContract.sol";
 import "contracts/mocks/dependencies/IStrategy.sol";
 import "contracts/mocks/dependencies/IExternalContract.sol";
 import {WadRayMath} from "contracts/protocol/libraries/math/WadRayMath.sol";
 
-import "contracts/protocol/lendingpool/minipool/MiniPoolDefaultReserveInterestRate.sol";
+import "contracts/protocol/core/interestRateStrategies/MiniPoolDefaultReserveInterestRate.sol";
 import "contracts/mocks/oracle/PriceOracle.sol";
-import "contracts/protocol/lendingpool/minipool/MiniPoolCollateralManager.sol";
 
 struct ReserveDataParams {
     uint256 availableLiquidity;
@@ -394,9 +390,12 @@ contract Common is Test {
         variableDebtTokens = fixture_getVarDebtTokens(
             tokens, ProtocolDataProvider(configAddresses.protocolDataProvider)
         );
-        for(uint256 idx; idx < tokens.length; idx++){
+        for (uint256 idx; idx < tokens.length; idx++) {
             vm.label(address(aTokens[idx]), string.concat("AToken ", uintToString(idx)));
-            vm.label(address(variableDebtTokens[idx]), string.concat("VariableDebtToken ", uintToString(idx)));
+            vm.label(
+                address(variableDebtTokens[idx]),
+                string.concat("VariableDebtToken ", uintToString(idx))
+            );
         }
     }
 
@@ -713,12 +712,12 @@ contract Common is Test {
         address mp
     ) public {
         miniPoolConfigurator.configureReserveAsCollateral(
-            tokenToPrepare, true, 9500, 9700, 10100, IMiniPool(mp)
+            tokenToPrepare, 9500, 9700, 10100, IMiniPool(mp)
         );
 
-        miniPoolConfigurator.activateReserve(tokenToPrepare, true, IMiniPool(mp));
+        miniPoolConfigurator.activateReserve(tokenToPrepare, IMiniPool(mp));
 
-        miniPoolConfigurator.enableBorrowingOnReserve(tokenToPrepare, true, IMiniPool(mp));
+        miniPoolConfigurator.enableBorrowingOnReserve(tokenToPrepare, IMiniPool(mp));
     }
 
     function getUsdValOfToken(uint256 amount, address token) public view returns (uint256) {

@@ -1,10 +1,10 @@
 // SPDX-License-Identifier: agpl-3.0
-pragma solidity ^0.8.23;
+pragma solidity 0.8.23;
 
-import {Ownable} from "../../dependencies/openzeppelin/contracts/Ownable.sol";
+import {Ownable} from "contracts/dependencies/openzeppelin/contracts/Ownable.sol";
 import {ILendingPoolAddressesProviderRegistry} from
-    "../../interfaces/ILendingPoolAddressesProviderRegistry.sol";
-import {Errors} from "../libraries/helpers/Errors.sol";
+    "contracts/interfaces/ILendingPoolAddressesProviderRegistry.sol";
+import {Errors} from "contracts/protocol/libraries/helpers/Errors.sol";
 
 /**
  * @title LendingPoolAddressesProviderRegistry contract
@@ -12,7 +12,7 @@ import {Errors} from "../libraries/helpers/Errors.sol";
  * - Used for indexing purposes of Aave protocol's markets
  * - The id assigned to a LendingPoolAddressesProvider refers to the market it is connected with,
  *   for example with `0` for the Aave main market and `1` for the next created
- * @author Aave
+ * @author Cod3x
  *
  */
 contract LendingPoolAddressesProviderRegistry is Ownable, ILendingPoolAddressesProviderRegistry {

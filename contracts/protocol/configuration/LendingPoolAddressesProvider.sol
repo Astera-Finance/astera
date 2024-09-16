@@ -1,21 +1,19 @@
 // SPDX-License-Identifier: agpl-3.0
-pragma solidity ^0.8.23;
+pragma solidity 0.8.23;
 
-import {Ownable} from "../../dependencies/openzeppelin/contracts/Ownable.sol";
-
+import {Ownable} from "contracts/dependencies/openzeppelin/contracts/Ownable.sol";
 // Prettier ignore to prevent buidler flatter bug
 // prettier-ignore
 import {InitializableImmutableAdminUpgradeabilityProxy} from
-    "../libraries/upgradeability/InitializableImmutableAdminUpgradeabilityProxy.sol";
-
-import {ILendingPoolAddressesProvider} from "../../interfaces/ILendingPoolAddressesProvider.sol";
+    "contracts/protocol/libraries/upgradeability/InitializableImmutableAdminUpgradeabilityProxy.sol";
+import {ILendingPoolAddressesProvider} from "contracts/interfaces/ILendingPoolAddressesProvider.sol";
 
 /**
  * @title LendingPoolAddressesProvider contract
  * @dev Main registry of addresses part of or connected to the protocol, including permissioned roles
  * - Acting also as factory of proxies and admin of those, so with right to change its implementations
  * - Owned by the Aave Governance
- * @author Aave
+ * @author Cod3x
  *
  */
 contract LendingPoolAddressesProvider is Ownable, ILendingPoolAddressesProvider {

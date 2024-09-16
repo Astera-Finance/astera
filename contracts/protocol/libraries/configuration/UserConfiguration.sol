@@ -1,12 +1,12 @@
 // SPDX-License-Identifier: agpl-3.0
-pragma solidity ^0.8.23;
+pragma solidity 0.8.23;
 
-import {Errors} from "../helpers/Errors.sol";
-import {DataTypes} from "../types/DataTypes.sol";
+import {Errors} from "contracts/protocol/libraries/helpers/Errors.sol";
+import {DataTypes} from "contracts/protocol/libraries/types/DataTypes.sol";
 
 /**
  * @title UserConfiguration library
- * @author Aave
+ * @author Cod3x
  * @notice Implements the bitmap logic to handle the user configuration
  */
 library UserConfiguration {

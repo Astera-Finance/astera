@@ -18,7 +18,7 @@ contract RayMathTest is Common {
 
     function setUp() public {}
 
-    function testRayMulInt(int256 a, int256 b) public {
+    function testRayMulInt(int256 a, int256 b) public pure {
         int256 delta = int256(2.4061596916800453e38 - halfRAYint);
         a = bound(a, -delta, delta);
         b = bound(b, -delta, delta);
@@ -35,7 +35,7 @@ contract RayMathTest is Common {
         }
     }
 
-    function testFailRayMulInt(int256 a, int256 b, bool signA, bool signB) public {
+    function testFailRayMulInt(int256 a, int256 b, bool signA, bool signB) public pure {
         // 2.4061596916800453e38 = sqrt(type(int256).max)
         int256 min = int256(2.4161596916800453e38 - halfRAYint);
         a = bound(a, min, type(int256).max);
@@ -55,7 +55,7 @@ contract RayMathTest is Common {
         }
     }
 
-    function testRayDivInt(int256 a, int256 b) public {
+    function testRayDivInt(int256 a, int256 b) public pure {
         vm.assume(b != 0);
         vm.assume(a != 0);
         if (a >= 0 && b >= 0 || a <= 0 && b <= 0) {

@@ -14,42 +14,39 @@ contract MiniPoolConfiguratorTest is MiniPoolDepositBorrowTest {
     uint256 constant MAX_VALID_VOLATILITY_TIER = 4;
     uint256 constant MAX_VALID_LTV = 65535;
 
-    event BorrowingDisabledOnReserve(address indexed asset, bool reserveType);
+    event BorrowingDisabledOnReserve(address indexed asset);
 
-    event ReserveActivated(address indexed asset, bool reserveType);
-    event ReserveDeactivated(address indexed asset, bool reserveType);
-    event ReserveFrozen(address indexed asset, bool reserveType);
-    event ReserveUnfrozen(address indexed asset, bool reserveType);
-    event ReserveFactorChanged(address indexed asset, bool reserveType, uint256 factor);
+    event ReserveActivated(address indexed asset);
+    event ReserveDeactivated(address indexed asset);
+    event ReserveFrozen(address indexed asset);
+    event ReserveUnfrozen(address indexed asset);
+    event ReserveFactorChanged(address indexed asset, uint256 factor);
 
-    event ReserveDepositCapChanged(address indexed asset, bool reserveType, uint256 depositCap);
-    event ReserveVolatilityTierChanged(address indexed asset, bool reserveType, uint256 tier);
+    event ReserveDepositCapChanged(address indexed asset, uint256 depositCap);
+    event ReserveVolatilityTierChanged(address indexed asset, uint256 tier);
 
-    event ReserveLowVolatilityLtvChanged(address indexed asset, bool reserveType, uint256 ltv);
-    event ReserveMediumVolatilityLtvChanged(address indexed asset, bool reserveType, uint256 ltv);
-    event ReserveHighVolatilityLtvChanged(address indexed asset, bool reserveType, uint256 ltv);
+    event ReserveLowVolatilityLtvChanged(address indexed asset, uint256 ltv);
+    event ReserveMediumVolatilityLtvChanged(address indexed asset, uint256 ltv);
+    event ReserveHighVolatilityLtvChanged(address indexed asset, uint256 ltv);
 
     function testDisableBorrowingOnReserve() public {
         for (uint32 idx; idx < erc20Tokens.length; idx++) {
             vm.expectEmit(true, false, false, true);
-            emit BorrowingDisabledOnReserve(address(erc20Tokens[idx]), true);
+            emit BorrowingDisabledOnReserve(address(erc20Tokens[idx]));
             vm.prank(admin);
             miniPoolContracts.miniPoolConfigurator.disableBorrowingOnReserve(
-                address(erc20Tokens[idx]), true, IMiniPool(miniPool)
+                address(erc20Tokens[idx]), IMiniPool(miniPool)
             );
-            // DataTypes.ReserveConfigurationMap memory currentConfig =
-            //     deployedContracts.lendingPool.getConfiguration(address(erc20Tokens[idx]), false);
-            // assertEq(currentConfig.getReserveFactor(), validReserveFactor);
         }
     }
 
     function testActivateReserve() public {
         for (uint32 idx; idx < erc20Tokens.length; idx++) {
             vm.expectEmit(true, false, false, true);
-            emit ReserveActivated(address(erc20Tokens[idx]), true);
+            emit ReserveActivated(address(erc20Tokens[idx]));
             vm.prank(admin);
             miniPoolContracts.miniPoolConfigurator.activateReserve(
-                address(erc20Tokens[idx]), true, IMiniPool(miniPool)
+                address(erc20Tokens[idx]), IMiniPool(miniPool)
             );
         }
     }
@@ -57,10 +54,10 @@ contract MiniPoolConfiguratorTest is MiniPoolDepositBorrowTest {
     function testDeactivateReserve() public {
         for (uint32 idx; idx < erc20Tokens.length; idx++) {
             vm.expectEmit(true, false, false, true);
-            emit ReserveDeactivated(address(erc20Tokens[idx]), true);
+            emit ReserveDeactivated(address(erc20Tokens[idx]));
             vm.prank(admin);
             miniPoolContracts.miniPoolConfigurator.deactivateReserve(
-                address(erc20Tokens[idx]), true, IMiniPool(miniPool)
+                address(erc20Tokens[idx]), IMiniPool(miniPool)
             );
         }
     }
@@ -68,10 +65,10 @@ contract MiniPoolConfiguratorTest is MiniPoolDepositBorrowTest {
     function testFreezeReserve() public {
         for (uint32 idx; idx < erc20Tokens.length; idx++) {
             vm.expectEmit(true, false, false, true);
-            emit ReserveFrozen(address(erc20Tokens[idx]), true);
+            emit ReserveFrozen(address(erc20Tokens[idx]));
             vm.prank(admin);
             miniPoolContracts.miniPoolConfigurator.freezeReserve(
-                address(erc20Tokens[idx]), true, IMiniPool(miniPool)
+                address(erc20Tokens[idx]), IMiniPool(miniPool)
             );
         }
     }
@@ -79,10 +76,10 @@ contract MiniPoolConfiguratorTest is MiniPoolDepositBorrowTest {
     function testUnfreezeReserve() public {
         for (uint32 idx; idx < erc20Tokens.length; idx++) {
             vm.expectEmit(true, false, false, true);
-            emit ReserveUnfrozen(address(erc20Tokens[idx]), true);
+            emit ReserveUnfrozen(address(erc20Tokens[idx]));
             vm.prank(admin);
             miniPoolContracts.miniPoolConfigurator.unfreezeReserve(
-                address(erc20Tokens[idx]), true, IMiniPool(miniPool)
+                address(erc20Tokens[idx]), IMiniPool(miniPool)
             );
         }
     }
@@ -91,10 +88,10 @@ contract MiniPoolConfiguratorTest is MiniPoolDepositBorrowTest {
         validReserveFactor = bound(validReserveFactor, 0, MAX_VALID_RESERVE_FACTOR);
         for (uint32 idx; idx < erc20Tokens.length; idx++) {
             vm.expectEmit(true, false, false, false);
-            emit ReserveFactorChanged(address(erc20Tokens[idx]), true, validReserveFactor);
+            emit ReserveFactorChanged(address(erc20Tokens[idx]), validReserveFactor);
             vm.prank(admin);
             miniPoolContracts.miniPoolConfigurator.setReserveFactor(
-                address(erc20Tokens[idx]), true, validReserveFactor, IMiniPool(miniPool)
+                address(erc20Tokens[idx]), validReserveFactor, IMiniPool(miniPool)
             );
         }
     }
@@ -106,7 +103,7 @@ contract MiniPoolConfiguratorTest is MiniPoolDepositBorrowTest {
             vm.expectRevert(bytes(Errors.RC_INVALID_RESERVE_FACTOR));
             vm.prank(admin);
             miniPoolContracts.miniPoolConfigurator.setReserveFactor(
-                address(erc20Tokens[idx]), true, invalidReserveFactor, IMiniPool(miniPool)
+                address(erc20Tokens[idx]), invalidReserveFactor, IMiniPool(miniPool)
             );
         }
     }
@@ -177,16 +174,16 @@ contract MiniPoolConfiguratorTest is MiniPoolDepositBorrowTest {
             vm.expectEmit();
             emit ReserveUsedAsCollateralDisabled(address(collateralTokenParams.token), user);
             IMiniPool(miniPool).setUserUseReserveAsCollateral(
-                address(collateralTokenParams.token), true, false
+                address(collateralTokenParams.token), false
             );
             vm.expectEmit();
             emit ReserveUsedAsCollateralDisabled(address(collateralTokenParams.aToken), user);
             IMiniPool(miniPool).setUserUseReserveAsCollateral(
-                address(collateralTokenParams.aToken), true, false
+                address(collateralTokenParams.aToken), false
             );
 
             vm.expectRevert(bytes(Errors.VL_COLLATERAL_BALANCE_IS_0));
-            IMiniPool(miniPool).borrow(address(borrowTokenParams.token), true, amount, user);
+            IMiniPool(miniPool).borrow(address(borrowTokenParams.token), amount, user);
 
             vm.stopPrank();
         }
@@ -286,16 +283,16 @@ contract MiniPoolConfiguratorTest is MiniPoolDepositBorrowTest {
         /* Setting reserve factor that allow minting to the treasury */
         vm.prank(admin);
         miniPoolContracts.miniPoolConfigurator.setReserveFactor(
-            address(borrowTokenParams.token), true, validReserveFactor, IMiniPool(miniPool)
+            address(borrowTokenParams.token), validReserveFactor, IMiniPool(miniPool)
         );
 
         vm.startPrank(user);
         uint256 tokenBalanceBefore = aErc6909Token.balanceOf(address(treasury), 1128 + borrowOffset);
         console.log("BORROW 1 token: %s", address(borrowTokenParams.token));
-        IMiniPool(miniPool).borrow(address(borrowTokenParams.token), true, amount / 3, user);
+        IMiniPool(miniPool).borrow(address(borrowTokenParams.token), amount / 3, user);
         skip(100 days);
         console.log("BORROW 2");
-        IMiniPool(miniPool).borrow(address(borrowTokenParams.token), true, amount / 3, user);
+        IMiniPool(miniPool).borrow(address(borrowTokenParams.token), amount / 3, user);
         // console.log("Part of borrow aToken balance shall be transfered to the treasury");
         // assertGt(aErc6909Token.balanceOf(address(deployedContracts.treasury), 1000 + borrowOffset), atokenBalanceBefore);
         console.log("Part of borrow token balance shall be transfered to the treasury");
@@ -311,10 +308,10 @@ contract MiniPoolConfiguratorTest is MiniPoolDepositBorrowTest {
         validDepositCap = bound(validDepositCap, 0, MAX_VALID_DEPOSIT_CAP - 1);
         for (uint32 idx; idx < erc20Tokens.length; idx++) {
             vm.expectEmit(true, false, false, false);
-            emit ReserveDepositCapChanged(address(erc20Tokens[idx]), true, validDepositCap);
+            emit ReserveDepositCapChanged(address(erc20Tokens[idx]), validDepositCap);
             vm.prank(admin);
             miniPoolContracts.miniPoolConfigurator.setDepositCap(
-                address(erc20Tokens[idx]), true, validDepositCap, IMiniPool(miniPool)
+                address(erc20Tokens[idx]), validDepositCap, IMiniPool(miniPool)
             );
             // DataTypes.ReserveConfigurationMap memory currentConfig =
             //     deployedContracts.lendingPool.getConfiguration(address(erc20Tokens[idx]), false);
@@ -328,7 +325,7 @@ contract MiniPoolConfiguratorTest is MiniPoolDepositBorrowTest {
             vm.expectRevert(bytes(Errors.RC_INVALID_DEPOSIT_CAP));
             vm.prank(admin);
             miniPoolContracts.miniPoolConfigurator.setDepositCap(
-                address(erc20Tokens[idx]), false, invalidDepositCap, IMiniPool(miniPool)
+                address(erc20Tokens[idx]), invalidDepositCap, IMiniPool(miniPool)
             );
         }
     }
@@ -337,10 +334,10 @@ contract MiniPoolConfiguratorTest is MiniPoolDepositBorrowTest {
         tier = bound(tier, 0, MAX_VALID_VOLATILITY_TIER);
         for (uint32 idx; idx < erc20Tokens.length; idx++) {
             vm.expectEmit(); //true, false, false, false
-            emit ReserveVolatilityTierChanged(address(erc20Tokens[idx]), true, tier);
+            emit ReserveVolatilityTierChanged(address(erc20Tokens[idx]), tier);
             vm.prank(admin);
             miniPoolContracts.miniPoolConfigurator.setReserveVolatilityTier(
-                address(erc20Tokens[idx]), true, tier, IMiniPool(miniPool)
+                address(erc20Tokens[idx]), tier, IMiniPool(miniPool)
             );
         }
     }
@@ -350,24 +347,24 @@ contract MiniPoolConfiguratorTest is MiniPoolDepositBorrowTest {
         for (uint32 idx; idx < erc20Tokens.length; idx++) {
             /* Low volatility */
             vm.expectEmit(); //true, false, false, false
-            emit ReserveLowVolatilityLtvChanged(address(erc20Tokens[idx]), true, ltv);
+            emit ReserveLowVolatilityLtvChanged(address(erc20Tokens[idx]), ltv);
             vm.prank(admin);
             miniPoolContracts.miniPoolConfigurator.setLowVolatilityLtv(
-                address(erc20Tokens[idx]), true, ltv, IMiniPool(miniPool)
+                address(erc20Tokens[idx]), ltv, IMiniPool(miniPool)
             );
             /* Medium volatility */
             vm.expectEmit(); //true, false, false, false
-            emit ReserveMediumVolatilityLtvChanged(address(erc20Tokens[idx]), true, ltv);
+            emit ReserveMediumVolatilityLtvChanged(address(erc20Tokens[idx]), ltv);
             vm.prank(admin);
             miniPoolContracts.miniPoolConfigurator.setMediumVolatilityLtv(
-                address(erc20Tokens[idx]), true, ltv, IMiniPool(miniPool)
+                address(erc20Tokens[idx]), ltv, IMiniPool(miniPool)
             );
             /* High volatility */
             vm.expectEmit(); //true, false, false, false
-            emit ReserveHighVolatilityLtvChanged(address(erc20Tokens[idx]), true, ltv);
+            emit ReserveHighVolatilityLtvChanged(address(erc20Tokens[idx]), ltv);
             vm.prank(admin);
             miniPoolContracts.miniPoolConfigurator.setHighVolatilityLtv(
-                address(erc20Tokens[idx]), true, ltv, IMiniPool(miniPool)
+                address(erc20Tokens[idx]), ltv, IMiniPool(miniPool)
             );
         }
     }
@@ -432,7 +429,7 @@ contract MiniPoolConfiguratorTest is MiniPoolDepositBorrowTest {
         vars.dai.approve(address(vars.mp), vars.amount * 1e14);
         console.log("User balance: ", vars.dai.balanceOf(vars.user) / (10 ** 18));
         console.log("User depositAmount: ", vars.amount * 1e14 / (10 ** 18));
-        IMiniPool(vars.mp).deposit(address(vars.dai), true, vars.amount * 1e14, vars.user);
+        IMiniPool(vars.mp).deposit(address(vars.dai), vars.amount * 1e14, vars.user);
         vm.stopPrank();
 
         vars.flowLimiter = address(miniPoolContracts.flowLimiter);
@@ -441,7 +438,7 @@ contract MiniPoolConfiguratorTest is MiniPoolDepositBorrowTest {
         miniPoolContracts.flowLimiter.setFlowLimit(address(vars.usdc), vars.mp, vars.amount * 100); // 50000 USDC
 
         vm.startPrank(vars.user);
-        IMiniPool(vars.mp).borrow(address(vars.grainUSDC), true, vars.amount * 94, vars.user); // 47000 USDC
+        IMiniPool(vars.mp).borrow(address(vars.grainUSDC), vars.amount * 94, vars.user); // 47000 USDC
         assertEq(vars.debtUSDC.balanceOf(vars.mp), vars.amount * 94);
         assertEq(
             IVariableDebtToken(address(vars.debtUSDC)).scaledBalanceOf(vars.mp), vars.amount * 94
@@ -461,7 +458,7 @@ contract MiniPoolConfiguratorTest is MiniPoolDepositBorrowTest {
             IERC20(reserveData.variableDebtTokenAddress).balanceOf(vars.user)
         );
         DataTypes.MiniPoolReserveData memory mpReserveData =
-            IMiniPool(vars.mp).getReserveData(address(aTokensWrapper[0]), true);
+            IMiniPool(vars.mp).getReserveData(address(aTokensWrapper[0]));
         uint128 mpCurrentLiquidityRate = mpReserveData.currentLiquidityRate;
         uint128 mpCurrentVariableBorrowRate = mpReserveData.currentVariableBorrowRate;
 
@@ -471,7 +468,7 @@ contract MiniPoolConfiguratorTest is MiniPoolDepositBorrowTest {
 
         IERC20(vars.grainUSDC).approve(address(vars.mp), vars.amount * 94);
         console.log("Before repay: ");
-        IMiniPool(vars.mp).repay(address(vars.grainUSDC), true, vars.amount * 94, vars.user); // 47000 USDC
+        IMiniPool(vars.mp).repay(address(vars.grainUSDC), vars.amount * 94, vars.user); // 47000 USDC
         console.log("After repay: ");
 
         assertEq(vars.debtUSDC.balanceOf(vars.mp), 0);

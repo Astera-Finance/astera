@@ -1,11 +1,11 @@
 // SPDX-License-Identifier: agpl-3.0
-pragma solidity ^0.8.23;
+pragma solidity 0.8.23;
 
-import {Errors} from "../helpers/Errors.sol";
+import {Errors} from "contracts/protocol/libraries/helpers/Errors.sol";
 
 /**
  * @title WadRayMath library
- * @author Aave
+ * @author Cod3x
  * @dev Provides mul and div function for wads (decimal numbers with 18 digits precision) and rays (decimals with 27 digits)
  *
  */

@@ -62,9 +62,9 @@ contract MiniPoolRepayWithdrawTransferTest is MiniPoolDepositBorrowTest {
         console.log(grainUsdcAmount);
 
         vm.startPrank(user);
-        IMiniPool(miniPool).withdraw(address(tokenParams.token), true, usdcAmount, user);
+        IMiniPool(miniPool).withdraw(address(tokenParams.token), usdcAmount, user);
         assertEq(tokenParams.token.balanceOf(user), usdcAmount);
-        IMiniPool(miniPool).withdraw(address(tokenParams.aToken), true, grainUsdcAmount, user);
+        IMiniPool(miniPool).withdraw(address(tokenParams.aToken), grainUsdcAmount, user);
         assertEq(tokenParams.aToken.balanceOf(user), grainUsdcAmount);
         vm.stopPrank();
     }
@@ -172,7 +172,7 @@ contract MiniPoolRepayWithdrawTransferTest is MiniPoolDepositBorrowTest {
         balances.debtToken = aErc6909Token.balanceOf(user, 2000 + borrowOffset);
         balances.token = borrowParams.aToken.balanceOf(user);
         borrowParams.aToken.approve(address(miniPool), amount);
-        IMiniPool(miniPool).repay(address(borrowParams.aToken), true, amount, user);
+        IMiniPool(miniPool).repay(address(borrowParams.aToken), amount, user);
 
         console.log("Balance of total supply must be lower than before borrow");
         assertEq(
@@ -188,7 +188,7 @@ contract MiniPoolRepayWithdrawTransferTest is MiniPoolDepositBorrowTest {
         balances.debtToken = aErc6909Token.balanceOf(user, 2128 + borrowOffset);
         balances.token = borrowParams.token.balanceOf(user);
         borrowParams.token.approve(address(miniPool), amount);
-        IMiniPool(miniPool).repay(address(borrowParams.token), true, amount, user);
+        IMiniPool(miniPool).repay(address(borrowParams.token), amount, user);
         console.log("total supply: ", balances.totalSupply);
         console.log("debt token: ", balances.debtToken);
         console.log("token: ", balances.token);
@@ -261,7 +261,7 @@ contract MiniPoolRepayWithdrawTransferTest is MiniPoolDepositBorrowTest {
         console.log("Repaying...");
         vm.startPrank(user);
         borrowParams.aToken.approve(address(miniPool), amount);
-        IMiniPool(miniPool).repay(address(borrowParams.aToken), true, amount, user);
+        IMiniPool(miniPool).repay(address(borrowParams.aToken), amount, user);
 
         console.log("Balance of total supply must be lower than before borrow");
         assertEq(
@@ -354,9 +354,7 @@ contract MiniPoolRepayWithdrawTransferTest is MiniPoolDepositBorrowTest {
         uint256 balanceOfCollateral = aErc6909Token.balanceOf(user, 1128 + collateralOffset);
         // vm.expectRevert();
         vm.expectRevert(bytes(Errors.VL_TRANSFER_NOT_ALLOWED));
-        IMiniPool(miniPool).withdraw(
-            address(collateralParams.token), true, balanceOfCollateral, user
-        );
+        IMiniPool(miniPool).withdraw(address(collateralParams.token), balanceOfCollateral, user);
         // console.log("Withdraw function for AToken shall revert");
         // vm.expectRevert(bytes(Errors.VL_TRANSFER_NOT_ALLOWED));
         // IMiniPool(miniPool).withdraw(address(collateralParams.aToken), true, aErc6909Token.balanceOf(user, 1000 + collateralOffset), user);
@@ -474,7 +472,6 @@ contract MiniPoolRepayWithdrawTransferTest is MiniPoolDepositBorrowTest {
         /* Give lacking amount to user 1 */
         IMiniPool(miniPool).repay(
             address(borrowParams.aToken),
-            true,
             aErc6909Token.balanceOf(users.user1, 2000 + borrowOffset),
             users.user1
         );
@@ -492,7 +489,6 @@ contract MiniPoolRepayWithdrawTransferTest is MiniPoolDepositBorrowTest {
         console.log("Repaying...");
         IMiniPool(miniPool).repay(
             address(borrowParams.aToken),
-            true,
             aErc6909Token.balanceOf(users.user2, 2000 + borrowOffset),
             users.user2
         );
@@ -508,7 +504,6 @@ contract MiniPoolRepayWithdrawTransferTest is MiniPoolDepositBorrowTest {
         console.log("Withdrawing...");
         IMiniPool(miniPool).withdraw(
             address(collateralParams.token),
-            true,
             aErc6909Token.balanceOf(users.user1, 1128 + collateralOffset),
             users.user1
         );
@@ -530,7 +525,6 @@ contract MiniPoolRepayWithdrawTransferTest is MiniPoolDepositBorrowTest {
         console.log("Withdrawing...");
         IMiniPool(miniPool).withdraw(
             address(collateralParams.aToken),
-            true,
             aErc6909Token.balanceOf(users.user2, 1128 + collateralOffset),
             users.user2
         );
@@ -607,9 +601,7 @@ contract MiniPoolRepayWithdrawTransferTest is MiniPoolDepositBorrowTest {
             IPriceOracleGetter(oracle).getAssetPrice(address(collateralParams.token))
         );
         console.log("Withdraw token");
-        IMiniPool(miniPool).withdraw(
-            address(collateralParams.token), true, withdrawAmount / 2, user
-        );
+        IMiniPool(miniPool).withdraw(address(collateralParams.token), withdrawAmount / 2, user);
         // console.log("Withdraw AToken");
         // IMiniPool(miniPool).withdraw(address(collateralParams.aToken), true, withdrawAmount/2, user);
 
@@ -687,11 +679,11 @@ contract MiniPoolRepayWithdrawTransferTest is MiniPoolDepositBorrowTest {
 
         console.log("----------------USER1 BORROW---------------");
         vm.startPrank(users.user1);
-        IMiniPool(miniPool).borrow(address(wbtcParams.token), true, amount2 / 4, users.user1);
+        IMiniPool(miniPool).borrow(address(wbtcParams.token), amount2 / 4, users.user1);
 
         console.log("----------------USER2 BORROW---------------");
         vm.startPrank(users.user2);
-        IMiniPool(miniPool).borrow(address(usdcParams.token), true, amount1 / 4, users.user2);
+        IMiniPool(miniPool).borrow(address(usdcParams.token), amount1 / 4, users.user2);
 
         skip(skipDuration);
 
@@ -709,7 +701,6 @@ contract MiniPoolRepayWithdrawTransferTest is MiniPoolDepositBorrowTest {
         /* Give lacking amount to user 1 */
         IMiniPool(miniPool).repay(
             address(wbtcParams.token),
-            true,
             aErc6909Token.balanceOf(users.user1, 2128 + WBTC_OFFSET),
             users.user1
         );
@@ -726,7 +717,6 @@ contract MiniPoolRepayWithdrawTransferTest is MiniPoolDepositBorrowTest {
         console.log("User2 Repaying...");
         IMiniPool(miniPool).repay(
             address(usdcParams.token),
-            true,
             aErc6909Token.balanceOf(users.user2, 2128 + USDC_OFFSET),
             users.user2
         );
@@ -741,7 +731,6 @@ contract MiniPoolRepayWithdrawTransferTest is MiniPoolDepositBorrowTest {
         console.log("Withdrawing... %s", aErc6909Token.balanceOf(users.user1, 1128 + USDC_OFFSET));
         IMiniPool(miniPool).withdraw(
             address(usdcParams.token),
-            true,
             aErc6909Token.balanceOf(users.user1, 1128 + USDC_OFFSET),
             users.user1
         );
@@ -760,7 +749,6 @@ contract MiniPoolRepayWithdrawTransferTest is MiniPoolDepositBorrowTest {
         console.log("Withdrawing...");
         IMiniPool(miniPool).withdraw(
             address(wbtcParams.token),
-            true,
             aErc6909Token.balanceOf(users.user2, 1128 + WBTC_OFFSET) / 2,
             users.user2
         );
@@ -855,7 +843,7 @@ contract MiniPoolRepayWithdrawTransferTest is MiniPoolDepositBorrowTest {
             console.log("Balance amount: ", tmp_amount);
             console.log("Balance grainAmount: ", grainTokenDepositAmount);
             wbtcParams.aToken.approve(address(miniPool), tmp_amount);
-            IMiniPool(miniPool).deposit(address(wbtcParams.aToken), true, tmp_amount, users.user2);
+            IMiniPool(miniPool).deposit(address(wbtcParams.aToken), tmp_amount, users.user2);
             console.log("User AToken balance shall be less by {amount}");
             assertEq(grainTokenDepositAmount - tmp_amount, wbtcParams.aToken.balanceOf(users.user2));
             console.log("User grain token 6909 balance shall be initial balance + amount");
@@ -896,7 +884,7 @@ contract MiniPoolRepayWithdrawTransferTest is MiniPoolDepositBorrowTest {
             console.log("Balance amount: ", amount1);
             console.log("Balance grainAmount: ", grainTokenDepositAmount);
             usdcParams.aToken.approve(address(miniPool), amount1);
-            IMiniPool(miniPool).deposit(address(usdcParams.aToken), true, amount1, users.user1);
+            IMiniPool(miniPool).deposit(address(usdcParams.aToken), amount1, users.user1);
             console.log("User AToken balance shall be less by {amount}");
             assertEq(grainTokenDepositAmount - amount1, usdcParams.aToken.balanceOf(users.user1));
             console.log("User grain token 6909 balance shall be initial balance + amount");
@@ -910,12 +898,12 @@ contract MiniPoolRepayWithdrawTransferTest is MiniPoolDepositBorrowTest {
         }
 
         console.log("----------------USER1 BORROWs---------------");
-        IMiniPool(miniPool).borrow(address(wbtcParams.aToken), true, amount2 / 4, users.user1);
+        IMiniPool(miniPool).borrow(address(wbtcParams.aToken), amount2 / 4, users.user1);
         vm.stopPrank();
 
         console.log("----------------PROVIDER BORROWs---------------");
         vm.prank(users.user2);
-        IMiniPool(miniPool).borrow(address(usdcParams.aToken), true, amount1 / 10, users.user2);
+        IMiniPool(miniPool).borrow(address(usdcParams.aToken), amount1 / 10, users.user2);
 
         console.log("0. Balance aToken: ", aErc6909Token.balanceOf(users.user1, 1000 + USDC_OFFSET));
         console.log(
@@ -969,7 +957,6 @@ contract MiniPoolRepayWithdrawTransferTest is MiniPoolDepositBorrowTest {
         console.log("User1 Repaying...");
         IMiniPool(miniPool).repay(
             address(wbtcParams.aToken),
-            true,
             aErc6909Token.balanceOf(users.user1, 2000 + WBTC_OFFSET),
             users.user1
         );
@@ -1018,7 +1005,7 @@ contract MiniPoolRepayWithdrawTransferTest is MiniPoolDepositBorrowTest {
         );
         console.log(
             "2. Normalized income aUSDC: ",
-            IMiniPool(miniPool).getReserveNormalizedIncome(address(usdcParams.aToken), true)
+            IMiniPool(miniPool).getReserveNormalizedIncome(address(usdcParams.aToken))
         );
         console.log(
             "2. Normalized income WBTC: ",
@@ -1028,7 +1015,7 @@ contract MiniPoolRepayWithdrawTransferTest is MiniPoolDepositBorrowTest {
         );
         console.log(
             "2. Normalized income aWBTC: ",
-            IMiniPool(miniPool).getReserveNormalizedIncome(address(wbtcParams.aToken), true)
+            IMiniPool(miniPool).getReserveNormalizedIncome(address(wbtcParams.aToken))
         );
         uint256 availableLiquidity = IERC20(aTokens[USDC_OFFSET]).balanceOf(address(aErc6909Token));
         console.log("2. AvailableLiquidity: ", availableLiquidity);
@@ -1036,7 +1023,6 @@ contract MiniPoolRepayWithdrawTransferTest is MiniPoolDepositBorrowTest {
         /* Give lacking amount to user */
         IMiniPool(miniPool).repay(
             address(usdcParams.aToken),
-            true,
             aErc6909Token.balanceOf(users.user2, 2000 + USDC_OFFSET),
             users.user2
         );
@@ -1059,7 +1045,7 @@ contract MiniPoolRepayWithdrawTransferTest is MiniPoolDepositBorrowTest {
         );
         console.log(
             "3. Normalized income aUSDC: ",
-            IMiniPool(miniPool).getReserveNormalizedIncome(address(usdcParams.aToken), true)
+            IMiniPool(miniPool).getReserveNormalizedIncome(address(usdcParams.aToken))
         );
         console.log(
             "3. Normalized income WBTC: ",
@@ -1069,7 +1055,7 @@ contract MiniPoolRepayWithdrawTransferTest is MiniPoolDepositBorrowTest {
         );
         console.log(
             "3. Normalized income aWBTC: ",
-            IMiniPool(miniPool).getReserveNormalizedIncome(address(wbtcParams.aToken), true)
+            IMiniPool(miniPool).getReserveNormalizedIncome(address(wbtcParams.aToken))
         );
 
         // console.log(
@@ -1078,7 +1064,6 @@ contract MiniPoolRepayWithdrawTransferTest is MiniPoolDepositBorrowTest {
         console.log("Withdrawing... %s", aErc6909Token.balanceOf(users.user1, 1000 + USDC_OFFSET));
         IMiniPool(miniPool).withdraw(
             address(usdcParams.aToken),
-            true,
             aErc6909Token.balanceOf(users.user1, 1000 + USDC_OFFSET),
             users.user1
         );
@@ -1163,7 +1148,7 @@ contract MiniPoolRepayWithdrawTransferTest is MiniPoolDepositBorrowTest {
         vm.startPrank(user);
         uint256 amtAUsdc = tokenParamsUsdc.aToken.balanceOf(address(user)) / 2;
         tokenParamsUsdc.aToken.approve(miniPool, amtAUsdc);
-        IMiniPool(miniPool).deposit(address(tokenParamsUsdc.aToken), true, amtAUsdc, user);
+        IMiniPool(miniPool).deposit(address(tokenParamsUsdc.aToken), amtAUsdc, user);
         assertEq(amtAUsdc, aErc6909Token.balanceOf(user, 1000 + USDC_OFFSET));
 
         assertEq(amtAUsdc, tokenParamsUsdc.aToken.balanceOf(address(aErc6909Token)));
@@ -1176,10 +1161,7 @@ contract MiniPoolRepayWithdrawTransferTest is MiniPoolDepositBorrowTest {
         console.log("Balance before: ", tokenParamsUsdc.aToken.balanceOf(address(aErc6909Token)));
         console.log("Balance to withdraw: ", aErc6909Token.balanceOf(user, 1000 + USDC_OFFSET));
         IMiniPool(miniPool).withdraw(
-            address(tokenParamsUsdc.aToken),
-            true,
-            aErc6909Token.balanceOf(user, 1000 + USDC_OFFSET),
-            user
+            address(tokenParamsUsdc.aToken), aErc6909Token.balanceOf(user, 1000 + USDC_OFFSET), user
         );
         console.log("Balance after: ", tokenParamsUsdc.aToken.balanceOf(address(aErc6909Token)));
 

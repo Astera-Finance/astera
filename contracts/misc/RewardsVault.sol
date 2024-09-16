@@ -1,11 +1,15 @@
-// SPDX-License-Identifier: MIT
-pragma solidity ^0.8.23;
+// SPDX-License-Identifier: agpl-3.0
+pragma solidity 0.8.23;
 
-import {IERC20} from "../dependencies/openzeppelin/contracts/IERC20.sol";
-import {ILendingPoolAddressesProvider} from "../interfaces/ILendingPoolAddressesProvider.sol";
-import {Ownable} from "../dependencies/openzeppelin/contracts/Ownable.sol";
-import {Errors} from "../protocol/libraries/helpers/Errors.sol";
+import {IERC20} from "contracts/dependencies/openzeppelin/contracts/IERC20.sol";
+import {ILendingPoolAddressesProvider} from "contracts/interfaces/ILendingPoolAddressesProvider.sol";
+import {Ownable} from "contracts/dependencies/openzeppelin/contracts/Ownable.sol";
+import {Errors} from "contracts/protocol/libraries/helpers/Errors.sol";
 
+/**
+ * @title RewardsVault
+ * @author Cod3x
+ */
 contract RewardsVault is Ownable {
     ILendingPoolAddressesProvider public ADDRESSES_PROVIDER;
     address public INCENTIVES_CONTROLLER;

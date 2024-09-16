@@ -4,9 +4,8 @@ pragma solidity ^0.8.0;
 import "../Common.sol";
 import "contracts/protocol/libraries/helpers/Errors.sol";
 import {WadRayMath} from "contracts/protocol/libraries/math/WadRayMath.sol";
-import "contracts/protocol/lendingpool/InterestRateStrategies/PidReserveInterestRateStrategy.sol";
-import
-    "contracts/protocol/lendingpool/InterestRateStrategies/MiniPoolPiReserveInterestRateStrategy.sol";
+import "contracts/protocol/core/InterestRateStrategies/PidReserveInterestRateStrategy.sol";
+import "contracts/protocol/core/InterestRateStrategies/MiniPoolPiReserveInterestRateStrategy.sol";
 import "openzeppelin-contracts/contracts/utils/Strings.sol";
 
 contract MiniPoolPidReserveInterestRateStrategyTest is Common {
@@ -313,7 +312,7 @@ contract MiniPoolPidReserveInterestRateStrategyTest is Common {
         vm.startPrank(user);
         asset.approve(address(miniPool), amount);
         console.log("Depositing to miniPool: %s", miniPool);
-        IMiniPool(miniPool).deposit(address(asset), true, amount, user);
+        IMiniPool(miniPool).deposit(address(asset), amount, user);
         vm.stopPrank();
         loggMiniPool(user, 0, address(asset));
         skip(DEFAULT_TIME_BEFORE_OP);
@@ -332,7 +331,7 @@ contract MiniPoolPidReserveInterestRateStrategyTest is Common {
     function borrowMiniPool(address user, IERC20 asset, uint256 amount) internal {
         console.log("Borrowing MiniPool");
         vm.startPrank(user);
-        IMiniPool(miniPool).borrow(address(asset), true, amount, user);
+        IMiniPool(miniPool).borrow(address(asset), amount, user);
         vm.stopPrank();
         loggMiniPool(user, 1, address(asset));
         skip(DEFAULT_TIME_BEFORE_OP);
@@ -363,7 +362,7 @@ contract MiniPoolPidReserveInterestRateStrategyTest is Common {
 
     function withdrawMiniPool(address user, IERC20 asset, uint256 amount) internal {
         vm.startPrank(user);
-        IMiniPool(miniPool).withdraw(address(asset), true, amount, user);
+        IMiniPool(miniPool).withdraw(address(asset), amount, user);
         vm.stopPrank();
         loggMiniPool(user, 2, address(asset));
         skip(DEFAULT_TIME_BEFORE_OP);
@@ -381,7 +380,7 @@ contract MiniPoolPidReserveInterestRateStrategyTest is Common {
     function repayMiniPool(address user, IERC20 asset, uint256 amount) internal {
         vm.startPrank(user);
         asset.approve(miniPool, amount);
-        IMiniPool(miniPool).repay(address(asset), true, amount, user);
+        IMiniPool(miniPool).repay(address(asset), amount, user);
         vm.stopPrank();
         loggMiniPool(user, 3, address(asset));
         skip(DEFAULT_TIME_BEFORE_OP);

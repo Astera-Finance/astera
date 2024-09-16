@@ -1,12 +1,13 @@
 // SPDX-License-Identifier: agpl-3.0
-pragma solidity ^0.8.23;
+pragma solidity 0.8.23;
 
 import "./BaseImmutableAdminUpgradeabilityProxy.sol";
-import "../../../dependencies/openzeppelin/upgradeability/InitializableUpgradeabilityProxy.sol";
+import "contracts/dependencies/openzeppelin/upgradeability/InitializableUpgradeabilityProxy.sol";
 
 /**
  * @title InitializableAdminUpgradeabilityProxy
  * @dev Extends BaseAdminUpgradeabilityProxy with an initializer function
+ * @author Cod3x
  */
 contract InitializableImmutableAdminUpgradeabilityProxy is
     BaseImmutableAdminUpgradeabilityProxy,

@@ -1,10 +1,10 @@
 // SPDX-License-Identifier: agpl-3.0
-pragma solidity ^0.8.23;
+pragma solidity ^0.8.0;
 
 /**
  * @title IReserveInterestRateStrategyInterface interface
  * @dev Interface for the calculation of the interest rates
- * @author Aave
+ * @author Cod3x
  */
 interface IMiniPoolReserveInterestRateStrategy {
     function baseVariableBorrowRate() external view returns (uint256);

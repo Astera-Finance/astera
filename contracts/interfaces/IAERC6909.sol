@@ -1,10 +1,14 @@
 // SPDX-License-Identifier: agpl-3.0
-pragma solidity ^0.8.23;
+pragma solidity ^0.8.0;
 
 import "./IMiniPoolRewarder.sol";
 import "./IMiniPool.sol";
 import "./IERC6909.sol";
 
+/**
+ * @title IAERC6909
+ * @author Cod3x
+ */
 interface IAERC6909 is IERC6909 {
     function initialize(address provider, uint256 minipoolId) external;
     function initReserve(

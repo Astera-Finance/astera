@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: agpl-3.0
-pragma solidity ^0.8.23;
+pragma solidity ^0.8.0;
 
 import {IMiniPoolAddressesProvider} from "./IMiniPoolAddressesProvider.sol";
 import {IAERC6909} from "./IAERC6909.sol";
-import {DataTypes} from "../protocol/libraries/types/DataTypes.sol";
+import {DataTypes} from "contracts/protocol/libraries/types/DataTypes.sol";
 
 interface IMiniPool {
     /**
@@ -157,14 +157,12 @@ interface IMiniPool {
      *   is a different wallet
      *
      */
-    function deposit(address asset, bool reserveType, uint256 amount, address onBehalfOf)
-        external;
+    function deposit(address asset, uint256 amount, address onBehalfOf) external;
 
     /**
      * @dev Withdraws an `amount` of underlying asset from the reserve, burning the equivalent aTokens owned
      * E.g. User has 100 aUSDC, calls withdraw() and receives 100 USDC, burning the 100 aUSDC
      * @param asset The address of the underlying asset to withdraw
-     * @param reserveType Whether the reserve is boosted by a vault
      * @param amount The underlying amount to be withdrawn
      *   - Send the value type(uint256).max in order to withdraw the whole aToken balance
      * @param to Address that will receive the underlying, same as msg.sender if the user
@@ -173,9 +171,7 @@ interface IMiniPool {
      * @return The final amount withdrawn
      *
      */
-    function withdraw(address asset, bool reserveType, uint256 amount, address to)
-        external
-        returns (uint256);
+    function withdraw(address asset, uint256 amount, address to) external returns (uint256);
 
     /**
      * @dev Allows users to borrow a specific `amount` of the reserve underlying asset, provided that the borrower
@@ -190,13 +186,12 @@ interface IMiniPool {
      * if he has been given credit delegation allowance
      *
      */
-    function borrow(address asset, bool reserveType, uint256 amount, address onBehalfOf) external;
+    function borrow(address asset, uint256 amount, address onBehalfOf) external;
 
     /**
      * @notice Repays a borrowed `amount` on a specific reserve, burning the equivalent debt tokens owned
      * - E.g. User repays 100 USDC, burning 100 variable debt tokens of the `onBehalfOf` address
      * @param asset The address of the borrowed underlying asset previously borrowed
-     * @param reserveType Whether the reserve is boosted by a vault
      * @param amount The amount to repay
      * - Send the value type(uint256).max in order to repay the whole debt for `asset`
      * @param onBehalfOf Address of the user who will get his debt reduced/removed. Should be the address of the
@@ -205,19 +200,15 @@ interface IMiniPool {
      * @return The final amount repaid
      *
      */
-    function repay(address asset, bool reserveType, uint256 amount, address onBehalfOf)
-        external
-        returns (uint256);
+    function repay(address asset, uint256 amount, address onBehalfOf) external returns (uint256);
 
     /**
      * @dev Allows depositors to enable/disable a specific deposited asset as collateral
      * @param asset The address of the underlying asset deposited
-     * @param reserveType Whether the reserve is boosted by a vault
      * @param useAsCollateral `true` if the user wants to use the deposit as collateral, `false` otherwise
      *
      */
-    function setUserUseReserveAsCollateral(address asset, bool reserveType, bool useAsCollateral)
-        external;
+    function setUserUseReserveAsCollateral(address asset, bool useAsCollateral) external;
 
     /**
      * @dev Function to liquidate a non-healthy position collateral-wise, with Health Factor below 1
@@ -233,9 +224,7 @@ interface IMiniPool {
      */
     function liquidationCall(
         address collateralAsset,
-        bool collateralAssetType,
         address debtAsset,
-        bool debtAssetType,
         address user,
         uint256 debtToCover,
         bool receiveAToken
@@ -305,37 +294,31 @@ interface IMiniPool {
         address interestRateStrategyAddress
     ) external;
 
-    function setReserveInterestRateStrategyAddress(
-        address reserve,
-        bool reserveType,
-        address rateStrategyAddress
-    ) external;
+    function setReserveInterestRateStrategyAddress(address reserve, address rateStrategyAddress)
+        external;
 
-    function setConfiguration(address reserve, bool reserveType, uint256 configuration) external;
+    function setConfiguration(address reserve, uint256 configuration) external;
 
     /**
      * @dev Returns the configuration of the reserve
      * @param asset The address of the underlying asset of the reserve
-     * @param reserveType Whether the reserve is boosted by a vault
      * @return The configuration of the reserve
      *
      */
-    function getConfiguration(address asset, bool reserveType)
+    function getConfiguration(address asset)
         external
         view
         returns (DataTypes.ReserveConfigurationMap memory);
 
-    function setBorrowConfiguration(address reserve, bool reserveType, uint256 borrowConfiguration)
-        external;
+    function setBorrowConfiguration(address reserve, uint256 borrowConfiguration) external;
 
     /**
      * @dev Returns the borrow configuration of the reserve
      * @param asset The address of the underlying asset of the reserve
-     * @param reserveType The type of the reserve
      * @return The borrow configuration of the reserve
      *
      */
-    function getBorrowConfiguration(address asset, bool reserveType)
+    function getBorrowConfiguration(address asset)
         external
         view
         returns (DataTypes.ReserveBorrowConfigurationMap memory);
@@ -354,40 +337,30 @@ interface IMiniPool {
     /**
      * @dev Returns the normalized income normalized income of the reserve
      * @param asset The address of the underlying asset of the reserve
-     * @param reserveType Whether the reserve is boosted by a vault
      * @return The reserve's normalized income
      */
-    function getReserveNormalizedIncome(address asset, bool reserveType)
-        external
-        view
-        returns (uint256);
+    function getReserveNormalizedIncome(address asset) external view returns (uint256);
 
     /**
      * @dev Returns the normalized variable debt per unit of asset
      * @param asset The address of the underlying asset of the reserve
-     * @param reserveType Whether the reserve is boosted by a vault
      * @return The reserve normalized variable debt
      */
-    function getReserveNormalizedVariableDebt(address asset, bool reserveType)
-        external
-        view
-        returns (uint256);
+    function getReserveNormalizedVariableDebt(address asset) external view returns (uint256);
 
     /**
      * @dev Returns the state and configuration of the reserve
      * @param asset The address of the underlying asset of the reserve
-     * @param reserveType Whether the reserve is boosted by a vault
      * @return The state of the reserve
      *
      */
-    function getReserveData(address asset, bool reserveType)
+    function getReserveData(address asset)
         external
         view
         returns (DataTypes.MiniPoolReserveData memory);
 
     function finalizeTransfer(
         address asset,
-        bool reserveType,
         address from,
         address to,
         uint256 amount,

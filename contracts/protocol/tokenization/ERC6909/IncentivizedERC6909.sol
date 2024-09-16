@@ -1,10 +1,9 @@
-// SPDX-License-Identifier: agpl-3.0
-pragma solidity ^0.8.23;
+// SPDX-License-Identifier: BUSL-1.1
+pragma solidity 0.8.23;
 
-import {Context} from "../../../dependencies/openzeppelin/contracts/Context.sol";
-import {SafeMath} from "../../../dependencies/openzeppelin/contracts/SafeMath.sol";
-import {IMiniPoolRewarder} from "../../../interfaces/IMiniPoolRewarder.sol";
-import {ERC6909} from "../../../dependencies/solady/ERC6909.sol";
+import {Context} from "contracts/dependencies/openzeppelin/contracts/Context.sol";
+import {IMiniPoolRewarder} from "contracts/interfaces/IMiniPoolRewarder.sol";
+import {ERC6909} from "lib/solady/src/tokens/ERC6909.sol";
 
 /**
  * @title ERC6909
@@ -13,7 +12,6 @@ import {ERC6909} from "../../../dependencies/solady/ERC6909.sol";
  *
  */
 abstract contract IncentivizedERC6909 is Context, ERC6909 {
-    using SafeMath for uint256;
     ///     id      => name
 
     mapping(uint256 => string) private _name;
@@ -50,29 +48,37 @@ abstract contract IncentivizedERC6909 is Context, ERC6909 {
         return _totalSupply[id];
     }
 
-    function _decrementTotalSupply(uint256 id, uint256 amt) internal virtual returns (uint256 oldTotalSupply) {
-        oldTotalSupply= _totalSupply[id];
-        _totalSupply[id] = _totalSupply[id].sub(amt);
+    function _decrementTotalSupply(uint256 id, uint256 amt)
+        internal
+        virtual
+        returns (uint256 oldTotalSupply)
+    {
+        oldTotalSupply = _totalSupply[id];
+        _totalSupply[id] = _totalSupply[id] - amt;
     }
 
-    function _incrementTotalSupply(uint256 id, uint256 amt) internal virtual returns (uint256 oldTotalSupply){
-        oldTotalSupply= _totalSupply[id];
-        _totalSupply[id] = _totalSupply[id].add(amt);
+    function _incrementTotalSupply(uint256 id, uint256 amt)
+        internal
+        virtual
+        returns (uint256 oldTotalSupply)
+    {
+        oldTotalSupply = _totalSupply[id];
+        _totalSupply[id] = _totalSupply[id] + amt;
     }
 
-    function _setTokenURI(uint256 id, string memory tokenURI) internal virtual {
-        _tokenURI[id] = tokenURI;
+    function _setTokenURI(uint256 id, string memory tokenURI_) internal virtual {
+        _tokenURI[id] = tokenURI_;
     }
 
-    function _setDecimals(uint256 id, uint8 decimals) internal virtual {
-        _decimals[id] = decimals;
+    function _setDecimals(uint256 id, uint8 decimals_) internal virtual {
+        _decimals[id] = decimals_;
     }
 
-    function _setSymbol(uint256 id, string memory symbol) internal virtual {
-        _symbol[id] = symbol;
+    function _setSymbol(uint256 id, string memory symbol_) internal virtual {
+        _symbol[id] = symbol_;
     }
 
-    function _setName(uint256 id, string memory name) internal virtual {
-        _name[id] = name;
+    function _setName(uint256 id, string memory name_) internal virtual {
+        _name[id] = name_;
     }
 }

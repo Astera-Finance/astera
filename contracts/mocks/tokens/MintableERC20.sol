@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: agpl-3.0
-pragma solidity ^0.8.23;
+pragma solidity ^0.8.0;
 
-import {ERC20} from "../../dependencies/openzeppelin/contracts/ERC20.sol";
+import {ERC20} from "contracts/dependencies/openzeppelin/contracts/ERC20.sol";
 
 /**
  * @title ERC20Mintable
@@ -10,8 +10,10 @@ import {ERC20} from "../../dependencies/openzeppelin/contracts/ERC20.sol";
 contract MintableERC20 is ERC20 {
     uint8 private _decimals;
 
-    constructor(string memory name, string memory symbol, uint8 decimals) ERC20(name, symbol) {
-        _setupDecimals(decimals);
+    constructor(string memory name_, string memory symbol_, uint8 decimals_)
+        ERC20(name_, symbol_)
+    {
+        _setupDecimals(decimals_);
     }
 
     /**
