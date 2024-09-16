@@ -7,7 +7,7 @@ import "contracts/misc/RewardsVault.sol";
 import "contracts/rewarder/Rewarder6909.sol";
 import "contracts/mocks/tokens/MintableERC20.sol";
 import {DistributionTypes} from "contracts/rewarder/libraries/DistributionTypes.sol";
-
+import {RewardForwarder} from "contracts/rewarder/RewardForwarder.sol";
 
 import "forge-std/StdUtils.sol";
 
@@ -17,6 +17,7 @@ contract MiniPoolRewarderTest is Common {
     RewardsVault[] miniPoolRewardsVaults;
     RewardsVault[] mainPoolRewardsVaults;
     MintableERC20[] rewardTokens;
+    address[] rewardedTokens;
     DeployedContracts deployedContracts;
     DeployedMiniPoolContracts miniPoolContracts;
 
@@ -96,7 +97,8 @@ contract MiniPoolRewarderTest is Common {
                 distributionEnd,
                 address(aTokens[idx]),
                 address(rewardTokens[rewardTokenIndex])
-            );    
+            );
+            rewardedTokens.push(address(aTokens[idx]));
         }
         
 
@@ -124,7 +126,9 @@ contract MiniPoolRewarderTest is Common {
                 address(variableDebtTokens[idx]),
                 address(rewardTokens[rewardTokenIndex])
             );    
+            rewardedTokens.push(address(variableDebtTokens[idx]));
         }
+        deployedContracts.rewarder.setMiniPoolAddressesProvider(miniPoolAddressesProvider);
 
     }
 
@@ -230,8 +234,8 @@ contract MiniPoolRewarderTest is Common {
         vm.stopPrank();
 
         vm.startPrank(user1);
-        aTokens[2].approve(address(miniPool), 100 ether);
-        IMiniPool(miniPool).deposit(address(aTokens[2]), true, 100 ether, user1);
+        aTokensWrapper[2].approve(address(miniPool), 100 ether);
+        IMiniPool(miniPool).deposit(address(aTokensWrapper[2]), true, 100 ether, user1);
         vm.stopPrank();
 
         vm.warp(block.timestamp + 100);
@@ -301,7 +305,7 @@ contract MiniPoolRewarderTest is Common {
         vm.roll(block.number + 1);
 
 
-    // ** This is checking WETH rewards for the main pools aTokens and VariableDebtTokens **
+    // This is checking WETH rewards for the main pools aTokens and VariableDebtTokens
         address[] memory aTokenAddresses = new address[](2);
         aTokenAddresses[0] = address(aTokens[2]);
         aTokenAddresses[1] = address(variableDebtTokens[2]);
@@ -332,7 +336,7 @@ contract MiniPoolRewarderTest is Common {
 
         assertGe(user3Rewards[0], 20 ether);
 
-    // ** This is checking BTC rewards for the miniPool aTokens and VariableDebtTokens **
+    // This is checking BTC rewards for the miniPool aTokens and VariableDebtTokens
         DistributionTypes.asset6909[] memory assets = new DistributionTypes.asset6909[](4);
         assets[0] = DistributionTypes.asset6909(aTokensErc6909Addr, 1129); //BTC
         assets[1] = DistributionTypes.asset6909(aTokensErc6909Addr, 2129); //BTC debt
@@ -394,7 +398,7 @@ contract MiniPoolRewarderTest is Common {
         vm.roll(block.number + 1);
 
 
-    // ** This is checking WETH rewards for the main pools aTokens and VariableDebtTokens **
+    // This is checking WETH rewards for the main pools aTokens and VariableDebtTokens
         address[] memory aTokenAddresses = new address[](2);
         aTokenAddresses[0] = address(aTokens[2]);
         aTokenAddresses[1] = address(variableDebtTokens[2]);
@@ -425,7 +429,7 @@ contract MiniPoolRewarderTest is Common {
 
         assertEq(user3Rewards[0], 20 ether);
 
-    // ** This is checking BTC rewards for the miniPool aTokens and VariableDebtTokens **
+    // This is checking BTC rewards for the miniPool aTokens and VariableDebtTokens
         DistributionTypes.asset6909[] memory assets = new DistributionTypes.asset6909[](4);
         assets[0] = DistributionTypes.asset6909(aTokensErc6909Addr, 1129); //BTC
         assets[1] = DistributionTypes.asset6909(aTokensErc6909Addr, 2129); //BTC debt
@@ -437,6 +441,80 @@ contract MiniPoolRewarderTest is Common {
        uint256 miniPoolForwardedRewardsAToken6909 = rewarder.getUserRewardsBalance(assets, aTokensErc6909Addr, address(rewardTokens[0]));
        console.log("miniPoolForwardedRewardsAToken6909", miniPoolForwardedRewardsAToken6909);
        assertEq(miniPoolForwardedRewardsAToken6909, 0 ether);
+    }
+
+    function testRewarderForwarder() public {
+        address forwardDestinationA = address(0xabcdef);
+        vm.label(forwardDestinationA, "ForwardDestinationA");
+        address forwardDestinationB = address(0xabcdef123);
+        vm.label(forwardDestinationB, "ForwardDestinationB");
+        RewardForwarder forwarder = new RewardForwarder(address(deployedContracts.rewarder));
+        deployedContracts.rewarder.setRewardForwarder(address(forwarder));
+        forwarder.setRewardTokens();
+        forwarder.setRewardedTokens(rewardedTokens);
+        forwarder.setForwarder(aTokensErc6909Addr, 0, forwardDestinationA);
+        forwarder.setForwarder(miniPool, 0, forwardDestinationB);
+        forwarder.registerClaimee(aTokensErc6909Addr);
+        forwarder.registerClaimee(miniPool);
+        console.log("forwarder", address(forwarder));
+        console.log("rewarder", address(deployedContracts.rewarder));
+    
+        address user1;
+        address user2;
+        user1 = address(0x123);
+        user2 = address(0x456);
+
+        deal(address(erc20Tokens[2]), user1, 100 ether);
+        deal(address(erc20Tokens[2]), user2, 100 ether);
+
+        vm.startPrank(user1);
+        erc20Tokens[2].approve(address(deployedContracts.lendingPool), 100 ether);
+        deployedContracts.lendingPool.deposit(address(erc20Tokens[2]), true, 100 ether, user1);
+        vm.stopPrank();
+
+        vm.startPrank(user2);
+        erc20Tokens[2].approve(address(deployedContracts.lendingPool), 100 ether);
+        deployedContracts.lendingPool.deposit(address(erc20Tokens[2]), true, 100 ether, user2);
+        vm.stopPrank();
+
+        vm.startPrank(user1);
+        aTokensWrapper[2].approve(address(miniPool), 100 ether);
+        IMiniPool(miniPool).deposit(address(aTokensWrapper[2]), true, 100 ether, user1);
+        vm.stopPrank();
+
+        vm.warp(block.timestamp + 100);
+        vm.roll(block.number + 1);
+
+        address[] memory aTokenAddresses = new address[](1);
+        aTokenAddresses[0] = address(aTokens[2]);
+
+        address vault = deployedContracts.rewarder.getRewardsVault(address(rewardTokens[0]));
+        console.log("vault", address(vault));
+
+        vm.startPrank(user1);
+        (, uint256[] memory user1Rewards) = deployedContracts.rewarder.claimAllRewardsToSelf(aTokenAddresses);
+        vm.stopPrank();
+
+        console.log("user1Rewards[0]", user1Rewards[0]);
+
+        vm.startPrank(user2);
+        (, uint256[] memory user2Rewards) = deployedContracts.rewarder.claimAllRewardsToSelf(aTokenAddresses);
+        vm.stopPrank();
+
+        assertEq(user1Rewards[0], 0 ether);
+        assertEq(user2Rewards[0], 50 ether);
+
+        uint256 aToken6909ForwardedRewards = deployedContracts.rewarder.getUserRewardsBalance(aTokenAddresses, aTokensErc6909Addr, address(rewardTokens[0]));
+        console.log("miniPoolForwardedRewards", aToken6909ForwardedRewards);
+        assertEq(aToken6909ForwardedRewards, 50 ether);
+        uint256[] memory aToken6909ForwardedClaims = forwarder.claimRewardsFor(aTokensErc6909Addr, rewardedTokens[2]);
+        console.log("aToken6909ForwardedClaims[0]", aToken6909ForwardedClaims[0]);
+        assertEq(aToken6909ForwardedClaims[0], 50 ether);
+        forwarder.forwardRewards(aTokensErc6909Addr, rewardedTokens[2], 0);
+        assertEq(rewardTokens[0].balanceOf(forwardDestinationA), 50 ether);
+
+
+    
     }
 
 

@@ -1,8 +1,15 @@
+// SPDX-License-Identifier: MIT
+pragma solidity ^0.8.20;
 import {IRewardsController} from "./interfaces/IRewardsController.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {DistributionTypes} from "./libraries/DistributionTypes.sol";
 import {Ownable} from "./libraries/Ownable.sol";
 
+/**
+ * @title RewardForwarder
+ * @author 0xGoober
+ * @dev This contract manages the forwarding of rewards to registered claimees.
+ */
 contract RewardForwarder is Ownable {
     IRewardsController public rewardsController;
     address[] public rewardTokens; // tokens that can be claimed as rewards
@@ -52,13 +59,19 @@ contract RewardForwarder is Ownable {
     }
     /**
      * @dev Claims rewards for a specified mini pool.
-     * @param miniPool The address of the mini pool.
+     * @param claimee The address of the mini pool.
      */
-    function claimRewardsForPool(address miniPool) public {
+    function claimRewardsForPool(address claimee) public {
         for (uint256 i = 0; i < rewardedPoolTokens.length; i++) {
             address token = rewardedPoolTokens[i];
-            claimRewardsFor(miniPool, token);
-            forwardRewards(miniPool, token, i);
+            claimRewardsFor(claimee, token);
+        }
+    }
+
+    function forwardRewardsForPool(address claimee) public {
+        for (uint256 i = 0; i < rewardedPoolTokens.length; i++) {
+            address token = rewardedPoolTokens[i];
+            forwardRewards(claimee, token, i);
         }
     }
 
@@ -67,7 +80,7 @@ contract RewardForwarder is Ownable {
      * @param claimee The address of the claimee.
      * @param token The address of the rewarded token.
      */
-    function claimRewardsFor(address claimee, address token) public {
+    function claimRewardsFor(address claimee, address token) public returns (uint256[] memory claimedAmounts) {
         require(isRegisteredClaimee[claimee], "Not registered");
         address[] memory assets = new address[](1);
         assets[0] = token;
@@ -79,6 +92,7 @@ contract RewardForwarder is Ownable {
         for (uint256 i = 0; i < rewardTokens.length; i++) {
             claimedRewards[claimee][token][i] += claimedAmounts[i];
         }
+        return claimedAmounts;
     }
 
     /**
@@ -87,7 +101,7 @@ contract RewardForwarder is Ownable {
      * @param token The address of the rewarded token.
      * @param rewardTokenIndex The index of the reward token.
      */
-    function forwardRewards(address claimee, address token, uint256 rewardTokenIndex) internal {
+    function forwardRewards(address claimee, address token, uint256 rewardTokenIndex) public {
         address rewardToken = rewardTokens[rewardTokenIndex];
         uint256 amount = claimedRewards[claimee][token][rewardTokenIndex];
         require(amount != 0, "No rewards to forward");

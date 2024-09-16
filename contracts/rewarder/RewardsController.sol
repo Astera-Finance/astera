@@ -32,7 +32,17 @@ abstract contract RewardsController is RewardsDistributor, IRewardsController {
     }
 
     function setRewardForwarder(address forwarder) external onlyOwner {
-        rewardForwarder = forwarder;
+        if(rewardForwarder != address(0)){
+            rewardForwarder = forwarder;
+        }else {
+            rewardForwarder = forwarder;
+            for(uint256 i = 0; i < _totalTrackedMiniPools; i++){
+                address miniPool = _addressesProvider.getMiniPool(i);
+                setDefaultForwarder(miniPool);
+                address aToken6909 = _addressesProvider.getMiniPoolToAERC6909(miniPool);
+                setDefaultForwarder(aToken6909);
+            }
+        }
     }
 
     function getClaimer(address user) external view override returns (address) {

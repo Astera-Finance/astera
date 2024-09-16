@@ -16,6 +16,13 @@ import {IERC20} from "../../../dependencies/openzeppelin/contracts/IERC20.sol";
 import {IMiniPoolAddressesProvider} from "../../../interfaces/IMiniPoolAddressesProvider.sol";
 import {IMiniPool} from "../../../interfaces/IMiniPool.sol";
 
+/**
+ * @title ERC6909-MultiToken Built to service all collateral and debt tokens for a specific MiniPool
+ *         Current implementation allows for 128 tranched tokens from the Main Pool and 1000-128 unique tokens
+ *         from the MiniPool. 
+ * @author Cod3x - 0xGoober
+ */
+
 contract ATokenERC6909 is IncentivizedERC6909, VersionedInitializable {
     using SafeMath for uint256;
     using WadRayMath for uint256;
