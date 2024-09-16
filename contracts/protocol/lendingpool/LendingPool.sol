@@ -282,7 +282,7 @@ contract LendingPool is VersionedInitializable, ILendingPool, LendingPoolStorage
         bool receiveAToken
     ) external override whenNotPaused {
         if (_miniPoolsWithActiveLoans[user]) {
-            revert();
+            revert(Errors.VL_MINIPOOL_CANNOT_BE_LIQUIDATED);
         }
         LiquidationLogic.liquidationCall(
             LiquidationLogic.liquidationCallParams(

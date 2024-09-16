@@ -405,8 +405,7 @@ library BorrowLogic {
             flowLimiter.currentFlow(params.asset, params.miniPoolAddress) + params.amount
                 > flowLimiter.getFlowLimit(params.asset, params.miniPoolAddress)
         ) {
-            //revert(Errors.VL_BORROW_FLOW_LIMIT_REACHED);
-            revert();
+            revert(Errors.VL_BORROW_FLOW_LIMIT_REACHED);
         } else {
             reserve.updateState();
 
