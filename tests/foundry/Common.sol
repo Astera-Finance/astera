@@ -41,7 +41,7 @@ import "contracts/mocks/dependencies/IStrategy.sol";
 import "contracts/mocks/dependencies/IExternalContract.sol";
 import {WadRayMath} from "contracts/protocol/libraries/math/WadRayMath.sol";
 
-import "contracts/protocol/lendingpool/minipool/MiniPoolDefaultReserveInterestRate.sol";
+import "contracts/protocol/lendingpool/interestRateStrategies/MiniPoolDefaultReserveInterestRate.sol";
 import "contracts/mocks/oracle/PriceOracle.sol";
 
 struct ReserveDataParams {
