@@ -355,10 +355,6 @@ contract MiniPoolRewarderTest is Common {
        rewardsBalance = rewarder.getUserRewardsBalance(assets, user1, address(rewardTokens[0]));
        console.log("user1RewardsMiniPool", rewardsBalance);
        assertEq(rewardsBalance, 20 ether); // 20% of 100 for 10WETH of 50WETH deposited
-
-       /*uint256 user2RewardsMiniPool = rewarder.getUserRewardsBalance(assets, user2, address(rewardTokens[0]));
-       console.log("user2RewardsMiniPool", user2RewardsMiniPool);
-       assertEq(user2RewardsMiniPool, 0);*/
     }
 
     function testRewarderDoesNotPayMiniPoolFlow() public {

@@ -18,6 +18,7 @@ abstract contract RewardsController is RewardsDistributor, IRewardsController {
     mapping(address => mapping(address => uint256)) internal lastReportedDiff;
     uint256 internal _totalDiff;
     uint256 internal _totalTrackedMiniPools;
+    address public rewardForwarder;
 
     modifier onlyAuthorizedClaimers(address claimer, address user) {
         require(_authorizedClaimers[user] == claimer, "CLAIMER_UNAUTHORIZED");
@@ -29,6 +30,11 @@ abstract contract RewardsController is RewardsDistributor, IRewardsController {
     function setMiniPoolAddressesProvider(address addressesProvider) external onlyOwner {
         _addressesProvider = IMiniPoolAddressesProvider(addressesProvider);
     }
+
+    function setRewardForwarder(address forwarder) external onlyOwner {
+        rewardForwarder = forwarder;
+    }
+
     function getClaimer(address user) external view override returns (address) {
         return _authorizedClaimers[user];
     }
@@ -75,11 +81,20 @@ abstract contract RewardsController is RewardsDistributor, IRewardsController {
                 for(uint256 i = _totalTrackedMiniPools; i < _addressesProvider.getMiniPoolCount(); i++){
                     address miniPool = _addressesProvider.getMiniPool(i);
                     _isMiniPool[miniPool] = true;
+                    setDefaultForwarder(miniPool);
                     address aToken6909 = _addressesProvider.getMiniPoolToAERC6909(miniPool);
                     _isAtokenERC6909[aToken6909] = true;
+                    setDefaultForwarder(aToken6909);
                     _totalTrackedMiniPools++;
                 }
             }
+        }
+    }
+
+    function setDefaultForwarder(address claimee) internal{
+        if(rewardForwarder != address(0)){
+            _authorizedClaimers[claimee] = rewardForwarder;
+            emit ClaimerSet(claimee, rewardForwarder);
         }
     }   
 
