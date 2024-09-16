@@ -7,9 +7,7 @@ import {Errors} from "contracts/protocol/libraries/helpers/Errors.sol";
 library MiniPoolLiquidationLogic {
     struct liquidationCallParams {
         address collateralAsset;
-        bool collateralAssetType;
         address debtAsset;
-        bool debtAssetType;
         address user;
         uint256 debtToCover;
         bool receiveAToken;
@@ -25,9 +23,7 @@ library MiniPoolLiquidationLogic {
             abi.encodeWithSignature(
                 "liquidationCall(address,bool,address,bool,address,uint256,bool)",
                 params.collateralAsset,
-                params.collateralAssetType,
                 params.debtAsset,
-                params.debtAssetType,
                 params.user,
                 params.debtToCover,
                 params.receiveAToken

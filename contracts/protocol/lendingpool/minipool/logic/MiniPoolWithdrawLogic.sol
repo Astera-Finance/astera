@@ -38,7 +38,6 @@ library MiniPoolWithdrawLogic {
 
     struct withdrawParams {
         address asset;
-        bool reserveType;
         uint256 amount;
         address to;
         uint256 reservesCount;
@@ -76,7 +75,6 @@ library MiniPoolWithdrawLogic {
         MiniPoolValidationLogic.validateWithdraw(
             MiniPoolValidationLogic.ValidateWithdrawParams(
                 params.asset,
-                params.reserveType,
                 localVars.amountToWithdraw,
                 localVars.userBalance,
                 params.reservesCount,
@@ -107,7 +105,6 @@ library MiniPoolWithdrawLogic {
 
     struct finalizeTransferParams {
         address asset;
-        bool reserveType;
         address from;
         address to;
         uint256 amount;
@@ -183,7 +180,6 @@ library MiniPoolWithdrawLogic {
         MiniPoolValidationLogic.validateWithdraw(
             MiniPoolValidationLogic.ValidateWithdrawParams(
                 params.asset,
-                params.reserveType,
                 localVars.amountToWithdraw,
                 localVars.userBalance,
                 params.reservesCount,

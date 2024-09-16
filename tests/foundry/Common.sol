@@ -714,12 +714,12 @@ contract Common is Test {
         address mp
     ) public {
         miniPoolConfigurator.configureReserveAsCollateral(
-            tokenToPrepare, true, 9500, 9700, 10100, IMiniPool(mp)
+            tokenToPrepare, 9500, 9700, 10100, IMiniPool(mp)
         );
 
-        miniPoolConfigurator.activateReserve(tokenToPrepare, true, IMiniPool(mp));
+        miniPoolConfigurator.activateReserve(tokenToPrepare, IMiniPool(mp));
 
-        miniPoolConfigurator.enableBorrowingOnReserve(tokenToPrepare, true, IMiniPool(mp));
+        miniPoolConfigurator.enableBorrowingOnReserve(tokenToPrepare, IMiniPool(mp));
     }
 
     function getUsdValOfToken(uint256 amount, address token) public view returns (uint256) {

@@ -108,22 +108,9 @@ library MiniPoolBorrowLogic {
         // Get the user's volatility tier
         vars.userVolatility =
             calculateUserVolatilityTier(reservesData, userConfig, reserves, params.reservesCount);
-        // for (vars.i = 0; vars.i < params.reservesCount; vars.i++) {
-        //   vars.currentReserveAddress = reserves[vars.i];
-        //   DataTypes.ReserveData storage currentReserve = reservesData[vars.currentReserveAddress];
-
-        //   if (!userConfig.isUsingAsCollateralOrBorrowing(vars.i)) {
-        //     continue;
-        //   }
-
-        //   if (vars.userVolatility < currentReserve.borrowConfiguration.getVolatilityTier()) {
-        //     vars.userVolatility = currentReserve.borrowConfiguration.getVolatilityTier();
-        //   }
-        // }
 
         for (vars.i = 0; vars.i < params.reservesCount; vars.i++) {
             vars.currentReserveAddress = reserves[vars.i].asset;
-            vars.currentReserveType = reserves[vars.i].reserveType;
             DataTypes.MiniPoolReserveData storage currentReserve =
                 reservesData[vars.currentReserveAddress];
             // basically get same data as user account collateral, but with different LTVs being used depending on user's most volatile asset
@@ -225,7 +212,6 @@ library MiniPoolBorrowLogic {
 
     struct ExecuteBorrowParams {
         address asset;
-        bool reserveType;
         address user;
         address onBehalfOf;
         uint256 amount;
@@ -310,7 +296,6 @@ library MiniPoolBorrowLogic {
 
     struct repayParams {
         address asset;
-        bool reserveType;
         uint256 amount;
         address onBehalfOf;
         IMiniPoolAddressesProvider addressesProvider;

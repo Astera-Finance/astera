@@ -203,7 +203,7 @@ contract ATokenERC6909 is IncentivizedERC6909, VersionedInitializable {
         if (isAToken(id)) {
             address underlyingAsset = _underlyingAssetAddresses[id];
 
-            uint256 index = POOL.getReserveNormalizedIncome(underlyingAsset, true);
+            uint256 index = POOL.getReserveNormalizedIncome(underlyingAsset);
             uint256 fromBalanceBefore = super.balanceOf(msg.sender, id).rayMul(index);
             uint256 toBalanceBefore = super.balanceOf(to, id).rayMul(index);
 
@@ -211,7 +211,6 @@ contract ATokenERC6909 is IncentivizedERC6909, VersionedInitializable {
 
             POOL.finalizeTransfer(
                 _underlyingAssetAddresses[id],
-                true,
                 msg.sender,
                 to,
                 amount,
@@ -234,20 +233,14 @@ contract ATokenERC6909 is IncentivizedERC6909, VersionedInitializable {
         if (isAToken(id)) {
             address underlyingAsset = _underlyingAssetAddresses[id];
 
-            uint256 index = POOL.getReserveNormalizedIncome(underlyingAsset, true);
+            uint256 index = POOL.getReserveNormalizedIncome(underlyingAsset);
             uint256 fromBalanceBefore = super.balanceOf(from, id).rayMul(index);
             uint256 toBalanceBefore = super.balanceOf(to, id).rayMul(index);
 
             super.transferFrom(from, to, id, amount.rayDiv(index));
 
             POOL.finalizeTransfer(
-                _underlyingAssetAddresses[id],
-                true,
-                from,
-                to,
-                amount,
-                fromBalanceBefore,
-                toBalanceBefore
+                _underlyingAssetAddresses[id], from, to, amount, fromBalanceBefore, toBalanceBefore
             );
         } else {
             super.transferFrom(from, to, id, amount);
@@ -282,7 +275,7 @@ contract ATokenERC6909 is IncentivizedERC6909, VersionedInitializable {
         }
 
         return currentSupplyScaled.rayMul(
-            POOL.getReserveNormalizedIncome(_underlyingAssetAddresses[id], false)
+            POOL.getReserveNormalizedIncome(_underlyingAssetAddresses[id])
         );
     }
 
@@ -406,11 +399,11 @@ contract ATokenERC6909 is IncentivizedERC6909, VersionedInitializable {
     function balanceOf(address user, uint256 id) public view override returns (uint256) {
         if (isDebtToken(id)) {
             return super.balanceOf(user, id).rayMul(
-                POOL.getReserveNormalizedVariableDebt(_underlyingAssetAddresses[id], true)
+                POOL.getReserveNormalizedVariableDebt(_underlyingAssetAddresses[id])
             );
         } else {
             return super.balanceOf(user, id).rayMul(
-                POOL.getReserveNormalizedIncome(_underlyingAssetAddresses[id], true)
+                POOL.getReserveNormalizedIncome(_underlyingAssetAddresses[id])
             );
         }
     }
@@ -434,7 +427,7 @@ contract ATokenERC6909 is IncentivizedERC6909, VersionedInitializable {
         if (isAToken(id)) {
             address underlyingAsset = _underlyingAssetAddresses[id];
 
-            uint256 index = POOL.getReserveNormalizedIncome(underlyingAsset, true);
+            uint256 index = POOL.getReserveNormalizedIncome(underlyingAsset);
 
             super._transfer(address(0), from, to, id, amount.rayDiv(index));
         }

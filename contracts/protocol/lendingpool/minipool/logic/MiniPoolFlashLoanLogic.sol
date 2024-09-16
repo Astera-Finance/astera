@@ -150,7 +150,6 @@ library MiniPoolFlashLoanLogic {
                 MiniPoolBorrowLogic.executeBorrow(
                     MiniPoolBorrowLogic.ExecuteBorrowParams(
                         vars.currentAsset,
-                        false,
                         msg.sender,
                         flashLoanParams.onBehalfOf,
                         vars.currentAmount,

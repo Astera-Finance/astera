@@ -242,7 +242,7 @@ contract MiniPoolRewarderTest is Common {
 
         vm.startPrank(user1);
         aTokensWrapper[2].approve(address(miniPool), 100 ether);
-        IMiniPool(miniPool).deposit(address(aTokensWrapper[2]), true, 100 ether, user1);
+        IMiniPool(miniPool).deposit(address(aTokensWrapper[2]), 100 ether, user1);
         vm.stopPrank();
 
         vm.warp(block.timestamp + 100);
@@ -289,7 +289,7 @@ contract MiniPoolRewarderTest is Common {
         erc20Tokens[2].approve(address(deployedContracts.lendingPool), 100 ether);
         deployedContracts.lendingPool.deposit(address(erc20Tokens[2]), true, 100 ether, user1);
         aTokensWrapper[2].approve(miniPool, 100 ether);
-        IMiniPool(miniPool).deposit(address(aTokensWrapper[2]), true, 10 ether, user1);
+        IMiniPool(miniPool).deposit(address(aTokensWrapper[2]), 10 ether, user1);
         vm.stopPrank();
 
         vm.startPrank(user2);
@@ -303,7 +303,7 @@ contract MiniPoolRewarderTest is Common {
 
         vm.startPrank(user3);
         erc20Tokens[1].approve(miniPool, 5e9);
-        IMiniPool(miniPool).deposit(address(erc20Tokens[1]), true, 5e9, user3);
+        IMiniPool(miniPool).deposit(address(erc20Tokens[1]), 5e9, user3);
         vm.stopPrank();
 
         vm.prank(address(miniPoolContracts.miniPoolAddressesProvider.owner()));
@@ -312,7 +312,7 @@ contract MiniPoolRewarderTest is Common {
         );
 
         vm.prank(user3);
-        IMiniPool(miniPool).borrow(address(aTokensWrapper[2]), true, 50 ether, user3);
+        IMiniPool(miniPool).borrow(address(aTokensWrapper[2]), 50 ether, user3);
         vm.warp(block.timestamp + 100);
         vm.roll(block.number + 1);
 
@@ -405,7 +405,7 @@ contract MiniPoolRewarderTest is Common {
 
         vm.startPrank(user3);
         erc20Tokens[1].approve(miniPool, 5e9);
-        IMiniPool(miniPool).deposit(address(erc20Tokens[1]), true, 5e9, user3);
+        IMiniPool(miniPool).deposit(address(erc20Tokens[1]), 5e9, user3);
         vm.stopPrank();
 
         vm.prank(address(miniPoolContracts.miniPoolAddressesProvider.owner()));
@@ -414,7 +414,7 @@ contract MiniPoolRewarderTest is Common {
         );
 
         vm.prank(user3);
-        IMiniPool(miniPool).borrow(address(aTokensWrapper[2]), true, 50 ether, user3);
+        IMiniPool(miniPool).borrow(address(aTokensWrapper[2]), 50 ether, user3);
         vm.warp(block.timestamp + 100);
         vm.roll(block.number + 1);
 
@@ -508,7 +508,7 @@ contract MiniPoolRewarderTest is Common {
 
         vm.startPrank(user1);
         aTokensWrapper[2].approve(address(miniPool), 100 ether);
-        IMiniPool(miniPool).deposit(address(aTokensWrapper[2]), true, 100 ether, user1);
+        IMiniPool(miniPool).deposit(address(aTokensWrapper[2]), 100 ether, user1);
         vm.stopPrank();
 
         vm.warp(block.timestamp + 100);

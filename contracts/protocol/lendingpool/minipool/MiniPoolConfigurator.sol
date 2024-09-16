@@ -90,60 +90,51 @@ contract MiniPoolConfigurator is VersionedInitializable, IMiniPoolConfigurator {
             input.interestRateStrategyAddress
         );
         DataTypes.ReserveConfigurationMap memory currentConfig =
-            pool.getConfiguration(input.underlyingAsset, false);
+            pool.getConfiguration(input.underlyingAsset);
 
         currentConfig.setDecimals(input.underlyingAssetDecimals);
         currentConfig.setActive(true);
         currentConfig.setFrozen(false);
         currentConfig.setFlashLoanEnabled(true);
 
-        pool.setConfiguration(input.underlyingAsset, false, currentConfig.data);
+        pool.setConfiguration(input.underlyingAsset, currentConfig.data);
     }
 
     /**
      * @dev Enables borrowing on a reserve
      * @param asset The address of the underlying asset of the reserve
-     * @param reserveType Whether the reserve is boosted by a vault
+     * @param pool Minipool address
      *
      */
-    function enableBorrowingOnReserve(address asset, bool reserveType, IMiniPool pool)
-        external
-        onlyPoolAdmin
-    {
-        DataTypes.ReserveConfigurationMap memory currentConfig =
-            pool.getConfiguration(asset, reserveType);
+    function enableBorrowingOnReserve(address asset, IMiniPool pool) external onlyPoolAdmin {
+        DataTypes.ReserveConfigurationMap memory currentConfig = pool.getConfiguration(asset);
 
         currentConfig.setBorrowingEnabled(true);
 
-        pool.setConfiguration(asset, reserveType, currentConfig.data);
+        pool.setConfiguration(asset, currentConfig.data);
 
-        emit BorrowingEnabledOnReserve(asset, reserveType);
+        emit BorrowingEnabledOnReserve(asset);
     }
 
     /**
      * @dev Disables borrowing on a reserve
      * @param asset The address of the underlying asset of the reserve
-     * @param reserveType Whether the reserve is boosted by a vault
+     * @param pool Minipool address
      *
      */
-    function disableBorrowingOnReserve(address asset, bool reserveType, IMiniPool pool)
-        external
-        onlyPoolAdmin
-    {
-        DataTypes.ReserveConfigurationMap memory currentConfig =
-            pool.getConfiguration(asset, reserveType);
+    function disableBorrowingOnReserve(address asset, IMiniPool pool) external onlyPoolAdmin {
+        DataTypes.ReserveConfigurationMap memory currentConfig = pool.getConfiguration(asset);
 
         currentConfig.setBorrowingEnabled(false);
 
-        pool.setConfiguration(asset, reserveType, currentConfig.data);
-        emit BorrowingDisabledOnReserve(asset, reserveType);
+        pool.setConfiguration(asset, currentConfig.data);
+        emit BorrowingDisabledOnReserve(asset);
     }
 
     /**
      * @dev Configures the reserve collateralization parameters
      * all the values are expressed in percentages with two decimals of precision. A valid value is 10000, which means 100.00%
      * @param asset The address of the underlying asset of the reserve
-     * @param reserveType Whether the reserve is boosted by a vault
      * @param ltv The loan to value of the asset when used as collateral
      * @param liquidationThreshold The threshold at which loans using this asset as collateral will be considered undercollateralized
      * @param liquidationBonus The bonus liquidators receive to liquidate this asset. The values is always above 100%. A value of 105%
@@ -152,16 +143,14 @@ contract MiniPoolConfigurator is VersionedInitializable, IMiniPoolConfigurator {
      */
     function configureReserveAsCollateral(
         address asset,
-        bool reserveType,
         uint256 ltv,
         uint256 liquidationThreshold,
         uint256 liquidationBonus,
         IMiniPool pool
     ) external onlyPoolAdmin {
-        DataTypes.ReserveConfigurationMap memory currentConfig =
-            pool.getConfiguration(asset, reserveType);
+        DataTypes.ReserveConfigurationMap memory currentConfig = pool.getConfiguration(asset);
         DataTypes.ReserveBorrowConfigurationMap memory currentBorrowConfig =
-            pool.getBorrowConfiguration(asset, reserveType);
+            pool.getBorrowConfiguration(asset);
 
         //validation of the parameters: the LTV can
         //only be lower or equal than the liquidation threshold
@@ -188,7 +177,7 @@ contract MiniPoolConfigurator is VersionedInitializable, IMiniPoolConfigurator {
             //if the liquidation threshold is being set to 0,
             // the reserve is being disabled as collateral. To do so,
             //we need to ensure no liquidity is deposited
-            _checkNoLiquidity(asset, reserveType, pool);
+            _checkNoLiquidity(asset, pool);
         }
 
         currentConfig.setLtv(ltv);
@@ -201,287 +190,246 @@ contract MiniPoolConfigurator is VersionedInitializable, IMiniPoolConfigurator {
         currentBorrowConfig.setHighVolatilityLiquidationThreshold(liquidationThreshold);
         currentConfig.setLiquidationBonus(liquidationBonus);
 
-        pool.setConfiguration(asset, reserveType, currentConfig.data);
-        pool.setBorrowConfiguration(asset, reserveType, currentBorrowConfig.data);
+        pool.setConfiguration(asset, currentConfig.data);
+        pool.setBorrowConfiguration(asset, currentBorrowConfig.data);
 
-        emit CollateralConfigurationChanged(
-            asset, reserveType, ltv, liquidationThreshold, liquidationBonus
-        );
+        emit CollateralConfigurationChanged(asset, ltv, liquidationThreshold, liquidationBonus);
     }
 
     /**
      * @dev Activates a reserve
      * @param asset The address of the underlying asset of the reserve
-     * @param reserveType Whether the reserve is boosted by a vault
+     * @param pool Minipool address
      *
      */
-    function activateReserve(address asset, bool reserveType, IMiniPool pool)
-        external
-        onlyPoolAdmin
-    {
-        DataTypes.ReserveConfigurationMap memory currentConfig =
-            pool.getConfiguration(asset, reserveType);
+    function activateReserve(address asset, IMiniPool pool) external onlyPoolAdmin {
+        DataTypes.ReserveConfigurationMap memory currentConfig = pool.getConfiguration(asset);
 
         currentConfig.setActive(true);
 
-        pool.setConfiguration(asset, reserveType, currentConfig.data);
+        pool.setConfiguration(asset, currentConfig.data);
 
-        emit ReserveActivated(asset, reserveType);
+        emit ReserveActivated(asset);
     }
 
     /**
      * @dev Deactivates a reserve
      * @param asset The address of the underlying asset of the reserve
-     * @param reserveType Whether the reserve is boosted by a vault
+     * @param pool Minipool address
      *
      */
-    function deactivateReserve(address asset, bool reserveType, IMiniPool pool)
-        external
-        onlyPoolAdmin
-    {
-        _checkNoLiquidity(asset, reserveType, pool);
+    function deactivateReserve(address asset, IMiniPool pool) external onlyPoolAdmin {
+        _checkNoLiquidity(asset, pool);
 
-        DataTypes.ReserveConfigurationMap memory currentConfig =
-            pool.getConfiguration(asset, reserveType);
+        DataTypes.ReserveConfigurationMap memory currentConfig = pool.getConfiguration(asset);
 
         currentConfig.setActive(false);
 
-        pool.setConfiguration(asset, reserveType, currentConfig.data);
+        pool.setConfiguration(asset, currentConfig.data);
 
-        emit ReserveDeactivated(asset, reserveType);
+        emit ReserveDeactivated(asset);
     }
 
     /**
      * @dev Freezes a reserve. A frozen reserve doesn't allow any new deposit, or borrow
      *  but allows repayments, liquidations, and withdrawals
      * @param asset The address of the underlying asset of the reserve
-     * @param reserveType Whether the reserve is boosted by a vault
+     * @param pool Minipool address
      *
      */
-    function freezeReserve(address asset, bool reserveType, IMiniPool pool)
-        external
-        onlyPoolAdmin
-    {
-        DataTypes.ReserveConfigurationMap memory currentConfig =
-            pool.getConfiguration(asset, reserveType);
+    function freezeReserve(address asset, IMiniPool pool) external onlyPoolAdmin {
+        DataTypes.ReserveConfigurationMap memory currentConfig = pool.getConfiguration(asset);
 
         currentConfig.setFrozen(true);
 
-        pool.setConfiguration(asset, reserveType, currentConfig.data);
+        pool.setConfiguration(asset, currentConfig.data);
 
-        emit ReserveFrozen(asset, reserveType);
+        emit ReserveFrozen(asset);
     }
 
     /**
      * @dev Unfreezes a reserve
      * @param asset The address of the underlying asset of the reserve
-     * @param reserveType Whether the reserve is boosted by a vault
+     * @param pool Minipool address
      *
      */
-    function unfreezeReserve(address asset, bool reserveType, IMiniPool pool)
-        external
-        onlyPoolAdmin
-    {
-        DataTypes.ReserveConfigurationMap memory currentConfig =
-            pool.getConfiguration(asset, reserveType);
+    function unfreezeReserve(address asset, IMiniPool pool) external onlyPoolAdmin {
+        DataTypes.ReserveConfigurationMap memory currentConfig = pool.getConfiguration(asset);
 
         currentConfig.setFrozen(false);
 
-        pool.setConfiguration(asset, reserveType, currentConfig.data);
+        pool.setConfiguration(asset, currentConfig.data);
 
-        emit ReserveUnfrozen(asset, reserveType);
+        emit ReserveUnfrozen(asset);
     }
 
     /**
      * @dev Pause a reserve.
      * @param asset The address of the underlying asset of the reserve
-     * @param reserveType Whether the reserve is boosted by a vault
      * @param pool Minipool address
      *
      */
-    function pauseReserve(address asset, bool reserveType, IMiniPool pool) external onlyPoolAdmin {
-        DataTypes.ReserveConfigurationMap memory currentConfig =
-            pool.getConfiguration(asset, reserveType);
+    function pauseReserve(address asset, IMiniPool pool) external onlyPoolAdmin {
+        DataTypes.ReserveConfigurationMap memory currentConfig = pool.getConfiguration(asset);
 
         currentConfig.setPaused(true);
 
-        pool.setConfiguration(asset, reserveType, currentConfig.data);
+        pool.setConfiguration(asset, currentConfig.data);
 
-        emit ReservePaused(asset, reserveType);
+        emit ReservePaused(asset);
     }
 
     /**
      * @dev Unpause a reserve
      * @param asset The address of the underlying asset of the reserve
-     * @param reserveType Whether the reserve is boosted by a vault
      * @param pool Minipool address
      *
      */
-    function unpauseReserve(address asset, bool reserveType, IMiniPool pool)
-        external
-        onlyPoolAdmin
-    {
-        DataTypes.ReserveConfigurationMap memory currentConfig =
-            pool.getConfiguration(asset, reserveType);
+    function unpauseReserve(address asset, IMiniPool pool) external onlyPoolAdmin {
+        DataTypes.ReserveConfigurationMap memory currentConfig = pool.getConfiguration(asset);
 
         currentConfig.setPaused(false);
 
-        pool.setConfiguration(asset, reserveType, currentConfig.data);
+        pool.setConfiguration(asset, currentConfig.data);
 
-        emit ReserveUnpaused(asset, reserveType);
+        emit ReserveUnpaused(asset);
     }
 
     /**
      * @dev Enable Flash loan.
      * @param asset The address of the underlying asset of the reserve
-     * @param reserveType Whether the reserve is boosted by a vault
      * @param pool Minipool address
      *
      */
-    function enableFlashloan(address asset, bool reserveType, IMiniPool pool)
-        external
-        onlyPoolAdmin
-    {
-        DataTypes.ReserveConfigurationMap memory currentConfig =
-            pool.getConfiguration(asset, reserveType);
+    function enableFlashloan(address asset, IMiniPool pool) external onlyPoolAdmin {
+        DataTypes.ReserveConfigurationMap memory currentConfig = pool.getConfiguration(asset);
 
         currentConfig.setFlashLoanEnabled(true);
 
-        pool.setConfiguration(asset, reserveType, currentConfig.data);
+        pool.setConfiguration(asset, currentConfig.data);
 
-        emit EnableFlashloan(asset, reserveType);
+        emit EnableFlashloan(asset);
     }
 
     /**
      * @dev Disable Flash loan.
      * @param asset The address of the underlying asset of the reserve
-     * @param reserveType Whether the reserve is boosted by a vault
      * @param pool Minipool address
      *
      */
-    function disableFlashloan(address asset, bool reserveType, IMiniPool pool)
-        external
-        onlyPoolAdmin
-    {
-        DataTypes.ReserveConfigurationMap memory currentConfig =
-            pool.getConfiguration(asset, reserveType);
+    function disableFlashloan(address asset, IMiniPool pool) external onlyPoolAdmin {
+        DataTypes.ReserveConfigurationMap memory currentConfig = pool.getConfiguration(asset);
 
         currentConfig.setFlashLoanEnabled(false);
 
-        pool.setConfiguration(asset, reserveType, currentConfig.data);
+        pool.setConfiguration(asset, currentConfig.data);
 
-        emit DisableFlashloan(asset, reserveType);
+        emit DisableFlashloan(asset);
     }
 
     /**
      * @dev Updates the reserve factor of a reserve
      * @param asset The address of the underlying asset of the reserve
-     * @param reserveType Whether the reserve is boosted by a vault
      * @param reserveFactor The new reserve factor of the reserve
      *
      */
-    function setReserveFactor(
-        address asset,
-        bool reserveType,
-        uint256 reserveFactor,
-        IMiniPool pool
-    ) external onlyPoolAdmin {
-        DataTypes.ReserveConfigurationMap memory currentConfig =
-            pool.getConfiguration(asset, reserveType);
+    function setReserveFactor(address asset, uint256 reserveFactor, IMiniPool pool)
+        external
+        onlyPoolAdmin
+    {
+        DataTypes.ReserveConfigurationMap memory currentConfig = pool.getConfiguration(asset);
 
         currentConfig.setReserveFactor(reserveFactor);
 
-        pool.setConfiguration(asset, reserveType, currentConfig.data);
+        pool.setConfiguration(asset, currentConfig.data);
 
-        emit ReserveFactorChanged(asset, reserveType, reserveFactor);
+        emit ReserveFactorChanged(asset, reserveFactor);
     }
 
-    function setDepositCap(address asset, bool reserveType, uint256 depositCap, IMiniPool pool)
+    function setDepositCap(address asset, uint256 depositCap, IMiniPool pool)
         external
         onlyPoolAdmin
     {
-        DataTypes.ReserveConfigurationMap memory currentConfig =
-            pool.getConfiguration(asset, reserveType);
+        DataTypes.ReserveConfigurationMap memory currentConfig = pool.getConfiguration(asset);
 
         currentConfig.setDepositCap(depositCap);
 
-        pool.setConfiguration(asset, reserveType, currentConfig.data);
+        pool.setConfiguration(asset, currentConfig.data);
 
-        emit ReserveDepositCapChanged(asset, reserveType, depositCap);
+        emit ReserveDepositCapChanged(asset, depositCap);
     }
 
-    function setReserveVolatilityTier(address asset, bool reserveType, uint256 tier, IMiniPool pool)
+    function setReserveVolatilityTier(address asset, uint256 tier, IMiniPool pool)
         external
         onlyPoolAdmin
     {
         DataTypes.ReserveBorrowConfigurationMap memory currentBorrowConfig =
-            pool.getBorrowConfiguration(asset, reserveType);
+            pool.getBorrowConfiguration(asset);
 
         currentBorrowConfig.setVolatilityTier(tier);
 
-        pool.setBorrowConfiguration(asset, reserveType, currentBorrowConfig.data);
+        pool.setBorrowConfiguration(asset, currentBorrowConfig.data);
 
-        emit ReserveVolatilityTierChanged(asset, reserveType, tier);
+        emit ReserveVolatilityTierChanged(asset, tier);
     }
 
-    function setLowVolatilityLtv(address asset, bool reserveType, uint256 ltv, IMiniPool pool)
+    function setLowVolatilityLtv(address asset, uint256 ltv, IMiniPool pool)
         external
         onlyPoolAdmin
     {
         DataTypes.ReserveBorrowConfigurationMap memory currentBorrowConfig =
-            pool.getBorrowConfiguration(asset, reserveType);
+            pool.getBorrowConfiguration(asset);
 
         currentBorrowConfig.setLowVolatilityLtv(ltv);
 
-        pool.setBorrowConfiguration(asset, reserveType, currentBorrowConfig.data);
+        pool.setBorrowConfiguration(asset, currentBorrowConfig.data);
 
-        emit ReserveLowVolatilityLtvChanged(asset, reserveType, ltv);
+        emit ReserveLowVolatilityLtvChanged(asset, ltv);
     }
 
-    function setMediumVolatilityLtv(address asset, bool reserveType, uint256 ltv, IMiniPool pool)
+    function setMediumVolatilityLtv(address asset, uint256 ltv, IMiniPool pool)
         external
         onlyPoolAdmin
     {
         DataTypes.ReserveBorrowConfigurationMap memory currentBorrowConfig =
-            pool.getBorrowConfiguration(asset, reserveType);
+            pool.getBorrowConfiguration(asset);
 
         currentBorrowConfig.setMediumVolatilityLtv(ltv);
 
-        pool.setBorrowConfiguration(asset, reserveType, currentBorrowConfig.data);
+        pool.setBorrowConfiguration(asset, currentBorrowConfig.data);
 
-        emit ReserveMediumVolatilityLtvChanged(asset, reserveType, ltv);
+        emit ReserveMediumVolatilityLtvChanged(asset, ltv);
     }
 
-    function setHighVolatilityLtv(address asset, bool reserveType, uint256 ltv, IMiniPool pool)
+    function setHighVolatilityLtv(address asset, uint256 ltv, IMiniPool pool)
         external
         onlyPoolAdmin
     {
         // Store update params in array
         DataTypes.ReserveBorrowConfigurationMap memory currentBorrowConfig =
-            pool.getBorrowConfiguration(asset, reserveType);
+            pool.getBorrowConfiguration(asset);
 
         currentBorrowConfig.setHighVolatilityLtv(ltv);
 
-        pool.setBorrowConfiguration(asset, reserveType, currentBorrowConfig.data);
+        pool.setBorrowConfiguration(asset, currentBorrowConfig.data);
 
-        emit ReserveHighVolatilityLtvChanged(asset, reserveType, ltv);
+        emit ReserveHighVolatilityLtvChanged(asset, ltv);
     }
 
     /**
      * @dev Sets the interest rate strategy of a reserve
      * @param asset The address of the underlying asset of the reserve
-     * @param reserveType Whether the reserve is boosted by a vault
      * @param rateStrategyAddress The new address of the interest strategy contract
+     * @param pool Minipool address
      *
      */
     function setReserveInterestRateStrategyAddress(
         address asset,
-        bool reserveType,
         address rateStrategyAddress,
         IMiniPool pool
     ) external onlyPoolAdmin {
-        pool.setReserveInterestRateStrategyAddress(asset, reserveType, rateStrategyAddress);
-        emit ReserveInterestRateStrategyChanged(asset, reserveType, rateStrategyAddress);
+        pool.setReserveInterestRateStrategyAddress(asset, rateStrategyAddress);
+        emit ReserveInterestRateStrategyChanged(asset, rateStrategyAddress);
     }
 
     /**
@@ -493,8 +441,8 @@ contract MiniPoolConfigurator is VersionedInitializable, IMiniPoolConfigurator {
         pool.setPause(val);
     }
 
-    function _checkNoLiquidity(address asset, bool reserveType, IMiniPool pool) internal view {
-        DataTypes.MiniPoolReserveData memory reserveData = pool.getReserveData(asset, reserveType);
+    function _checkNoLiquidity(address asset, IMiniPool pool) internal view {
+        DataTypes.MiniPoolReserveData memory reserveData = pool.getReserveData(asset);
 
         uint256 availableLiquidity = IERC20Detailed(asset).balanceOf(reserveData.aTokenAddress);
 

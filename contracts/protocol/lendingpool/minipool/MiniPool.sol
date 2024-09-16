@@ -113,7 +113,7 @@ contract MiniPool is VersionedInitializable, IMiniPool, MiniPoolStorage {
      *   is a different wallet
      *
      */
-    function deposit(address asset, bool reserveType, uint256 amount, address onBehalfOf)
+    function deposit(address asset, uint256 amount, address onBehalfOf)
         public
         override
         whenNotPaused
@@ -130,7 +130,6 @@ contract MiniPool is VersionedInitializable, IMiniPool, MiniPoolStorage {
      * @dev Withdraws an `amount` of underlying asset from the reserve, burning the equivalent aTokens owned
      * E.g. User has 100 aUSDC, calls withdraw() and receives 100 USDC, burning the 100 aUSDC
      * @param asset The address of the underlying asset to withdraw
-     * @param reserveType Whether the reserve is boosted by a vault
      * @param amount The underlying amount to be withdrawn
      *   - Send the value type(uint256).max in order to withdraw the whole aToken balance
      * @param to Address that will receive the underlying, same as msg.sender if the user
@@ -139,14 +138,14 @@ contract MiniPool is VersionedInitializable, IMiniPool, MiniPoolStorage {
      * @return The final amount withdrawn
      *
      */
-    function withdraw(address asset, bool reserveType, uint256 amount, address to)
+    function withdraw(address asset, uint256 amount, address to)
         public
         override
         whenNotPaused
         returns (uint256)
     {
         return MiniPoolWithdrawLogic.withdraw(
-            MiniPoolWithdrawLogic.withdrawParams(asset, reserveType, amount, to, _reservesCount),
+            MiniPoolWithdrawLogic.withdrawParams(asset, amount, to, _reservesCount),
             _reserves,
             _usersConfig,
             _reservesList,
@@ -174,7 +173,7 @@ contract MiniPool is VersionedInitializable, IMiniPool, MiniPoolStorage {
      *
      */
 
-    function borrow(address asset, bool reserveType, uint256 amount, address onBehalfOf)
+    function borrow(address asset, uint256 amount, address onBehalfOf)
         external
         override
         whenNotPaused
@@ -192,7 +191,7 @@ contract MiniPool is VersionedInitializable, IMiniPool, MiniPoolStorage {
             vars.LendingPool = _addressesProvider.getLendingPool();
             ILendingPool(vars.LendingPool).miniPoolBorrow(
                 underlying,
-                reserveType,
+                true,
                 IAToken(asset).convertToAssets(amount - vars.availableLiquidity), // amount + availableLiquidity converted to asset
                 address(this),
                 ATokenNonRebasing(asset).ATOKEN_ADDRESS()
@@ -202,7 +201,7 @@ contract MiniPool is VersionedInitializable, IMiniPool, MiniPoolStorage {
 
             IERC20(underlying).approve(vars.LendingPool, vars.amountRecieved);
             ILendingPool(vars.LendingPool).deposit(
-                underlying, reserveType, vars.amountRecieved, address(this)
+                underlying, true, vars.amountRecieved, address(this)
             );
 
             vars.amountRecieved = IERC20(asset).balanceOf(address(this));
@@ -217,7 +216,6 @@ contract MiniPool is VersionedInitializable, IMiniPool, MiniPoolStorage {
         MiniPoolBorrowLogic.executeBorrow(
             MiniPoolBorrowLogic.ExecuteBorrowParams(
                 asset,
-                reserveType,
                 msg.sender,
                 onBehalfOf,
                 amount,
@@ -247,7 +245,6 @@ contract MiniPool is VersionedInitializable, IMiniPool, MiniPoolStorage {
      * @notice Repays a borrowed `amount` on a specific reserve, burning the equivalent debt tokens owned
      * - E.g. User repays 100 USDC, burning 100 variable debt tokens of the `onBehalfOf` address
      * @param asset The address of the borrowed underlying asset previously borrowed
-     * @param reserveType Whether the reserve is boosted by a vault
      * @param amount The amount to repay
      * - Send the value type(uint256).max in order to repay the whole debt for `asset`
      * @param onBehalfOf Address of the user who will get his debt reduced/removed. Should be the address of the
@@ -256,32 +253,29 @@ contract MiniPool is VersionedInitializable, IMiniPool, MiniPoolStorage {
      * @return The final amount repaid
      *
      */
-    function repay(address asset, bool reserveType, uint256 amount, address onBehalfOf)
+    function repay(address asset, uint256 amount, address onBehalfOf)
         external
         override
         whenNotPaused
         returns (uint256)
     {
         uint256 repayAmount = MiniPoolBorrowLogic.repay(
-            MiniPoolBorrowLogic.repayParams(
-                asset, reserveType, amount, onBehalfOf, _addressesProvider
-            ),
+            MiniPoolBorrowLogic.repayParams(asset, amount, onBehalfOf, _addressesProvider),
             _reserves,
             _usersConfig
         );
 
-        _repayLendingPool(asset, reserveType, amount);
+        _repayLendingPool(asset, amount);
         return repayAmount;
     }
 
     /**
      * @dev Allows depositors to enable/disable a specific deposited asset as collateral
      * @param asset The address of the underlying asset deposited
-     * @param reserveType Whether the reserve is boosted by a vault
      * @param useAsCollateral `true` if the user wants to use the deposit as collateral, `false` otherwise
      *
      */
-    function setUserUseReserveAsCollateral(address asset, bool reserveType, bool useAsCollateral)
+    function setUserUseReserveAsCollateral(address asset, bool useAsCollateral)
         external
         override
         whenNotPaused
@@ -291,7 +285,6 @@ contract MiniPool is VersionedInitializable, IMiniPool, MiniPoolStorage {
         MiniPoolValidationLogic.validateSetUseReserveAsCollateral(
             reserve,
             asset,
-            reserveType,
             useAsCollateral,
             _reserves,
             _usersConfig[msg.sender],
@@ -323,9 +316,7 @@ contract MiniPool is VersionedInitializable, IMiniPool, MiniPoolStorage {
      */
     function liquidationCall(
         address collateralAsset,
-        bool collateralAssetType,
         address debtAsset,
-        bool debtAssetType,
         address user,
         uint256 debtToCover,
         bool receiveAToken
@@ -333,19 +324,17 @@ contract MiniPool is VersionedInitializable, IMiniPool, MiniPoolStorage {
         MiniPoolLiquidationLogic.liquidationCall(
             MiniPoolLiquidationLogic.liquidationCallParams(
                 collateralAsset,
-                collateralAssetType,
                 debtAsset,
-                debtAssetType,
                 user,
                 debtToCover,
                 receiveAToken,
                 address(_addressesProvider)
             )
         );
-        _repayLendingPool(debtAsset, debtAssetType, debtToCover);
+        _repayLendingPool(debtAsset, debtToCover);
     }
 
-    function _repayLendingPool(address asset, bool reserveType, uint256 amount) internal {
+    function _repayLendingPool(address asset, uint256 amount) internal {
         DataTypes.MiniPoolReserveData storage reserve = _reserves[asset];
         repayVars memory vars;
         vars.aTokenAddress = reserve.aTokenAddress;
@@ -359,7 +348,7 @@ contract MiniPool is VersionedInitializable, IMiniPool, MiniPoolStorage {
                 }
                 MiniPoolWithdrawLogic.internalWithdraw(
                     MiniPoolWithdrawLogic.withdrawParams(
-                        asset, reserveType, amount, address(this), _reservesCount
+                        asset, amount, address(this), _reservesCount
                     ),
                     _reserves,
                     _usersConfig,
@@ -371,7 +360,7 @@ contract MiniPool is VersionedInitializable, IMiniPool, MiniPoolStorage {
                 amount = aToken.balanceOf(address(this)); // asset
                 aToken.approve(_addressesProvider.getLendingPool(), amount);
                 ILendingPool(_addressesProvider.getLendingPool()).repayWithATokens(
-                    vars.underlyingAsset, reserveType, amount, address(this)
+                    vars.underlyingAsset, true, amount, address(this)
                 ); // MUST use asset
             }
         }
@@ -382,7 +371,6 @@ contract MiniPool is VersionedInitializable, IMiniPool, MiniPoolStorage {
         address oracle;
         uint256 i;
         address currentAsset;
-        bool currentType;
         address currentATokenAddress;
         uint256 currentAmount;
         uint256 currentPremium;
@@ -433,7 +421,7 @@ contract MiniPool is VersionedInitializable, IMiniPool, MiniPoolStorage {
      * @return The state of the reserve
      *
      */
-    function getReserveData(address asset, bool reserveType)
+    function getReserveData(address asset)
         external
         view
         override
@@ -486,7 +474,7 @@ contract MiniPool is VersionedInitializable, IMiniPool, MiniPoolStorage {
      * @return The configuration of the reserve
      *
      */
-    function getConfiguration(address asset, bool reserveType)
+    function getConfiguration(address asset)
         external
         view
         override
@@ -498,11 +486,10 @@ contract MiniPool is VersionedInitializable, IMiniPool, MiniPoolStorage {
     /**
      * @dev Returns the borrow configuration of the reserve
      * @param asset The address of the underlying asset of the reserve
-     * @param reserveType The type of the reserve
      * @return The borrow configuration of the reserve
      *
      */
-    function getBorrowConfiguration(address asset, bool reserveType)
+    function getBorrowConfiguration(address asset)
         external
         view
         override
@@ -531,7 +518,7 @@ contract MiniPool is VersionedInitializable, IMiniPool, MiniPoolStorage {
      * @param asset The address of the underlying asset of the reserve
      * @return The reserve's normalized income
      */
-    function getReserveNormalizedIncome(address asset, bool reserveType)
+    function getReserveNormalizedIncome(address asset)
         external
         view
         virtual
@@ -546,7 +533,7 @@ contract MiniPool is VersionedInitializable, IMiniPool, MiniPoolStorage {
      * @param asset The address of the underlying asset of the reserve
      * @return The reserve normalized variable debt
      */
-    function getReserveNormalizedVariableDebt(address asset, bool reserveType)
+    function getReserveNormalizedVariableDebt(address asset)
         external
         view
         override
@@ -572,7 +559,7 @@ contract MiniPool is VersionedInitializable, IMiniPool, MiniPoolStorage {
 
         for (uint256 i = 0; i < _reservesCount; i++) {
             _activeReserves[i] = _reservesList[i].asset;
-            _activeReservesTypes[i] = _reservesList[i].reserveType;
+            _activeReservesTypes[i] = false;
         }
         return (_activeReserves, _activeReservesTypes);
     }
@@ -615,7 +602,6 @@ contract MiniPool is VersionedInitializable, IMiniPool, MiniPoolStorage {
      */
     function finalizeTransfer(
         address asset,
-        bool reserveType,
         address from,
         address to,
         uint256 amount,
@@ -624,14 +610,7 @@ contract MiniPool is VersionedInitializable, IMiniPool, MiniPoolStorage {
     ) external override whenNotPaused {
         MiniPoolWithdrawLogic.finalizeTransfer(
             MiniPoolWithdrawLogic.finalizeTransferParams(
-                asset,
-                reserveType,
-                from,
-                to,
-                amount,
-                balanceFromBefore,
-                balanceToBefore,
-                _reservesCount
+                asset, from, to, amount, balanceFromBefore, balanceToBefore, _reservesCount
             ),
             _reserves,
             _usersConfig,
@@ -662,22 +641,21 @@ contract MiniPool is VersionedInitializable, IMiniPool, MiniPoolStorage {
         _reserves[asset].init(
             aTokenAddress, aTokenID, variableDebtTokenID, interestRateStrategyAddress
         );
-        _addReserveToList(asset, false);
+        _addReserveToList(asset);
     }
 
     /**
      * @dev Updates the address of the interest rate strategy contract
      * - Only callable by the LendingPoolConfigurator contract
      * @param asset The address of the underlying asset of the reserve
-     * @param reserveType Whether the reserve is boosted by a vault
      * @param rateStrategyAddress The address of the interest rate strategy contract
      *
      */
-    function setReserveInterestRateStrategyAddress(
-        address asset,
-        bool reserveType,
-        address rateStrategyAddress
-    ) external override onlyMiniPoolConfigurator {
+    function setReserveInterestRateStrategyAddress(address asset, address rateStrategyAddress)
+        external
+        override
+        onlyMiniPoolConfigurator
+    {
         _reserves[asset].interestRateStrategyAddress = rateStrategyAddress;
     }
 
@@ -685,11 +663,10 @@ contract MiniPool is VersionedInitializable, IMiniPool, MiniPoolStorage {
      * @dev Sets the configuration bitmap of the reserve as a whole
      * - Only callable by the LendingPoolConfigurator contract
      * @param asset The address of the underlying asset of the reserve
-     * @param reserveType Whether the reserve is boosted by a vault
      * @param configuration The new configuration bitmap
      *
      */
-    function setConfiguration(address asset, bool reserveType, uint256 configuration)
+    function setConfiguration(address asset, uint256 configuration)
         external
         override
         onlyMiniPoolConfigurator
@@ -704,7 +681,7 @@ contract MiniPool is VersionedInitializable, IMiniPool, MiniPoolStorage {
      * @param borrowConfiguration The new borrow configuration bitmap
      *
      */
-    function setBorrowConfiguration(address asset, bool reserveType, uint256 borrowConfiguration)
+    function setBorrowConfiguration(address asset, uint256 borrowConfiguration)
         external
         override
         onlyMiniPoolConfigurator
@@ -727,7 +704,7 @@ contract MiniPool is VersionedInitializable, IMiniPool, MiniPoolStorage {
         }
     }
 
-    function _addReserveToList(address asset, bool reserveType) internal {
+    function _addReserveToList(address asset) internal {
         uint256 reservesCount = _reservesCount;
 
         require(reservesCount < _maxNumberOfReserves, Errors.LP_NO_MORE_RESERVES_ALLOWED);
@@ -736,7 +713,7 @@ contract MiniPool is VersionedInitializable, IMiniPool, MiniPoolStorage {
 
         if (!reserveAlreadyAdded) {
             _reserves[asset].id = uint8(reservesCount);
-            _reservesList[reservesCount] = DataTypes.ReserveReference(asset, reserveType);
+            _reservesList[reservesCount] = DataTypes.ReserveReference(asset, false);
 
             _reservesCount = reservesCount + 1;
         }

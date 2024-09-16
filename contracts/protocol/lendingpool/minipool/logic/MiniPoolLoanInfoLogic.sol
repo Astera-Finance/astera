@@ -107,12 +107,9 @@ library MiniPoolLoanInfoLogic {
         }
         vars.i = 0;
         length = params.collaterals.length;
-        //uint8[] memory rankedIDs = rankIDs(params.ltvs);
 
         DataTypes.LoanInfo storage loanInfo = _userLoanInfo[params.user][vars.loanID];
         loanInfo.relation = params.relationLoan;
-        //loanInfo.collateralInfo.collateralSnapshots = new DataTypes.snapshot[](length);
-        //loanInfo.debtInfo.debtSnapshots = new DataTypes.snapshot[](params.debts.length);
 
         for (vars.i; vars.i < length; vars.i++) {
             loanInfo.collateralInfo.collateralSnapshots[vars.i].reserveID =

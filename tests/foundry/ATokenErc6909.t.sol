@@ -336,9 +336,7 @@ contract ATokenErc6909Test is Common {
 
         /* Deposit aToken into the mini pool */
         tokenParams.aToken.approve(miniPool, 3 * maxValToBurn);
-        IMiniPool(miniPool).deposit(
-            address(tokenParams.aToken), true, 3 * maxValToBurn, address(this)
-        );
+        IMiniPool(miniPool).deposit(address(tokenParams.aToken), 3 * maxValToBurn, address(this));
 
         /* Borrow aToken from mini pool */
         console.log(
@@ -353,9 +351,9 @@ contract ATokenErc6909Test is Common {
             "1. underlyingToken after deposit %s ",
             tokenParams.token.balanceOf(address(tokenParams.aToken))
         );
-        IMiniPool(miniPool).borrow(address(tokenParams.aToken), true, maxValToBurn, address(this));
+        IMiniPool(miniPool).borrow(address(tokenParams.aToken), maxValToBurn, address(this));
         skip(timeDiff);
-        index = IMiniPool(miniPool).getReserveNormalizedIncome(address(tokenParams.aToken), true);
+        index = IMiniPool(miniPool).getReserveNormalizedIncome(address(tokenParams.aToken));
         console.log(">>>Index: ", index);
         assertApproxEqAbs(
             aErc6909Token.balanceOf(address(this), id),
@@ -518,9 +516,7 @@ contract ATokenErc6909Test is Common {
         );
 
         tokenParams.aToken.approve(miniPool, 4 * valToTransfer);
-        IMiniPool(miniPool).deposit(
-            address(tokenParams.aToken), true, 4 * valToTransfer, address(this)
-        );
+        IMiniPool(miniPool).deposit(address(tokenParams.aToken), 4 * valToTransfer, address(this));
         console.log(
             "2. aErc6909Token after deposit %s ",
             IERC20(aErc6909Token.getUnderlyingAsset(testParams.id)).balanceOf(
@@ -532,7 +528,7 @@ contract ATokenErc6909Test is Common {
             tokenParams.token.balanceOf(address(tokenParams.aToken))
         );
 
-        IMiniPool(miniPool).borrow(address(tokenParams.aToken), true, valToTransfer, address(this));
+        IMiniPool(miniPool).borrow(address(tokenParams.aToken), valToTransfer, address(this));
         vm.startPrank(miniPool);
         console.log("Balance before: ", aErc6909Token.balanceOf(address(this), testParams.id));
 
@@ -547,7 +543,7 @@ contract ATokenErc6909Test is Common {
         vm.stopPrank();
 
         skip(timeDiff);
-        index = IMiniPool(miniPool).getReserveNormalizedIncome(address(tokenParams.aToken), true);
+        index = IMiniPool(miniPool).getReserveNormalizedIncome(address(tokenParams.aToken));
         console.log("1. Choosen index: ", index);
 
         /* Additiveness check */
@@ -573,7 +569,7 @@ contract ATokenErc6909Test is Common {
         }
         console.log("Granuality: ", granuality);
         console.log("Granuality scaled: ", granuality.rayDiv(index));
-        index = IMiniPool(miniPool).getReserveNormalizedIncome(address(tokenParams.aToken), true);
+        index = IMiniPool(miniPool).getReserveNormalizedIncome(address(tokenParams.aToken));
         console.log("2. Choosen index: ", index);
         console.log(
             "Check balance of user.. %s vs %s",
@@ -745,9 +741,7 @@ contract ATokenErc6909Test is Common {
         );
 
         grainUnderlyingToken.approve(miniPool, 3 * valToTransfer);
-        IMiniPool(miniPool).deposit(
-            address(grainUnderlyingToken), true, 3 * valToTransfer, address(this)
-        );
+        IMiniPool(miniPool).deposit(address(grainUnderlyingToken), 3 * valToTransfer, address(this));
         console.log(
             "3. aErc6909Token after deposit %s ",
             IERC20(aErc6909Token.getUnderlyingAsset(id)).balanceOf(address(aErc6909Token))
@@ -843,9 +837,7 @@ contract ATokenErc6909Test is Common {
         );
 
         tokenParams.aToken.approve(miniPool, 3 * valToTransfer);
-        IMiniPool(miniPool).deposit(
-            address(tokenParams.aToken), true, 3 * valToTransfer, address(this)
-        );
+        IMiniPool(miniPool).deposit(address(tokenParams.aToken), 3 * valToTransfer, address(this));
         console.log(
             "3. aErc6909Token after deposit %s ",
             IERC20(aErc6909Token.getUnderlyingAsset(id)).balanceOf(address(aErc6909Token))
@@ -854,11 +846,11 @@ contract ATokenErc6909Test is Common {
             "3. underlyingToken after deposit %s ",
             tokenParams.token.balanceOf(address(tokenParams.aToken))
         );
-        index = IMiniPool(miniPool).getReserveNormalizedIncome(address(tokenParams.aToken), true);
+        index = IMiniPool(miniPool).getReserveNormalizedIncome(address(tokenParams.aToken));
         console.log("_____ index: ", index);
-        IMiniPool(miniPool).borrow(address(tokenParams.aToken), true, valToTransfer, address(this));
+        IMiniPool(miniPool).borrow(address(tokenParams.aToken), valToTransfer, address(this));
 
-        index = IMiniPool(miniPool).getReserveNormalizedIncome(address(tokenParams.aToken), true);
+        index = IMiniPool(miniPool).getReserveNormalizedIncome(address(tokenParams.aToken));
         console.log("______ index: ", index);
         //skip(timeDiff); // @issue2 when there is a different index due to value appreciation during time, the burning is not proper
         //index = IMiniPool(miniPool).getReserveNormalizedIncome(address(grainUnderlyingToken), false);

@@ -122,32 +122,24 @@ contract PausableFunctionsTest is Common {
             amount = erc20Tokens[idx].balanceOf(address(this));
             erc20Tokens[idx].approve(address(deployedContracts.lendingPool), amount);
             vm.expectRevert(bytes(Errors.LP_IS_PAUSED));
-            IMiniPool(miniPool).deposit(address(erc20Tokens[idx]), true, amount, address(this));
+            IMiniPool(miniPool).deposit(address(erc20Tokens[idx]), amount, address(this));
 
             vm.expectRevert(bytes(Errors.LP_IS_PAUSED));
-            IMiniPool(miniPool).withdraw(address(erc20Tokens[idx]), true, amount, address(this));
+            IMiniPool(miniPool).withdraw(address(erc20Tokens[idx]), amount, address(this));
 
             vm.expectRevert(bytes(Errors.LP_IS_PAUSED));
-            IMiniPool(miniPool).borrow(address(erc20Tokens[idx]), true, amount, address(this));
+            IMiniPool(miniPool).borrow(address(erc20Tokens[idx]), amount, address(this));
 
             vm.expectRevert(bytes(Errors.LP_IS_PAUSED));
-            IMiniPool(miniPool).repay(address(erc20Tokens[idx]), true, amount, address(this));
+            IMiniPool(miniPool).repay(address(erc20Tokens[idx]), amount, address(this));
 
             vm.expectRevert(bytes(Errors.LP_IS_PAUSED));
             IMiniPool(miniPool).liquidationCall(
-                address(erc20Tokens[idx]),
-                false,
-                address(erc20Tokens[idx]),
-                false,
-                address(this),
-                amount,
-                false
+                address(erc20Tokens[idx]), address(erc20Tokens[idx]), address(this), amount, false
             );
 
             vm.expectRevert(bytes(Errors.LP_IS_PAUSED));
-            IMiniPool(miniPool).setUserUseReserveAsCollateral(
-                address(erc20Tokens[idx]), false, true
-            );
+            IMiniPool(miniPool).setUserUseReserveAsCollateral(address(erc20Tokens[idx]), true);
         }
     }
 }

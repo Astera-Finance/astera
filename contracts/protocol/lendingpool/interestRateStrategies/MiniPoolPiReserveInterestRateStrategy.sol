@@ -86,7 +86,7 @@ contract MiniPoolPiReserveInterestRateStrategy is
             IMiniPoolAddressesProvider(_addressProvider).getMiniPoolToAERC6909(_getLendingPool())
         );
         DataTypes.MiniPoolReserveData memory reserve =
-            IMiniPool(_getLendingPool()).getReserveData(_asset, _assetReserveType);
+            IMiniPool(_getLendingPool()).getReserveData(_asset);
         uint256 availableLiquidity = IERC20(_asset).balanceOf(reserve.aTokenAddress);
         uint256 totalVariableDebt = aErc6909Token.totalSupply(reserve.variableDebtTokenID);
         uint256 utilizationRate = totalVariableDebt == 0

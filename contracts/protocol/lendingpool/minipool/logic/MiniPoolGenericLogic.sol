@@ -55,7 +55,6 @@ library MiniPoolGenericLogic {
      */
     function balanceDecreaseAllowed(
         address asset,
-        bool reserveType,
         address user,
         uint256 amount,
         mapping(address => DataTypes.MiniPoolReserveData) storage reservesData,
@@ -136,7 +135,6 @@ library MiniPoolGenericLogic {
         address underlyingAsset;
         bool healthFactorBelowThreshold;
         address currentReserveAddress;
-        bool currentReserveType;
         bool usageAsCollateralEnabled;
         bool userUsesReserveAsCollateral;
     }
@@ -172,7 +170,6 @@ library MiniPoolGenericLogic {
             }
 
             vars.currentReserveAddress = reserves[vars.i].asset;
-            vars.currentReserveType = reserves[vars.i].reserveType;
             DataTypes.MiniPoolReserveData storage currentReserve =
                 reservesData[vars.currentReserveAddress];
 

@@ -65,7 +65,6 @@ library MiniPoolValidationLogic {
      */
     struct ValidateWithdrawParams {
         address reserveAddress;
-        bool reserveType;
         uint256 amount;
         uint256 userBalance;
         uint256 reservesCount;
@@ -90,7 +89,6 @@ library MiniPoolValidationLogic {
         require(
             MiniPoolGenericLogic.balanceDecreaseAllowed(
                 validateParams.reserveAddress,
-                validateParams.reserveType,
                 msg.sender,
                 validateParams.amount,
                 reservesData,
@@ -236,7 +234,6 @@ library MiniPoolValidationLogic {
     function validateSetUseReserveAsCollateral(
         DataTypes.MiniPoolReserveData storage reserve,
         address reserveAddress,
-        bool reserveType,
         bool useAsCollateral,
         mapping(address => DataTypes.MiniPoolReserveData) storage reservesData,
         DataTypes.UserConfigurationMap storage userConfig,
@@ -254,7 +251,6 @@ library MiniPoolValidationLogic {
             useAsCollateral
                 || MiniPoolGenericLogic.balanceDecreaseAllowed(
                     reserveAddress,
-                    reserveType,
                     msg.sender,
                     underlyingBalance,
                     reservesData,

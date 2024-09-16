@@ -12,7 +12,6 @@ interface IMiniPoolConfigurator {
 
     struct UpdateATokenInput {
         address asset;
-        bool reserveType;
         address treasury;
         address incentivesController;
         string name;
@@ -23,7 +22,6 @@ interface IMiniPoolConfigurator {
 
     struct UpdateDebtTokenInput {
         address asset;
-        bool reserveType;
         address incentivesController;
         string name;
         string symbol;
@@ -35,7 +33,6 @@ interface IMiniPoolConfigurator {
      * @dev Emitted when a reserve is initialized.
      * @param asset The address of the underlying asset of the reserve
      * @param aToken The address of the associated aToken contract
-     * @param reserveType Whether the reserve is boosted by a vault
      * @param variableDebtToken The address of the associated variable rate debt token
      * @param interestRateStrategyAddress The address of the interest rate strategy for the reserve
      *
@@ -43,7 +40,6 @@ interface IMiniPoolConfigurator {
     event ReserveInitialized(
         address indexed asset,
         address indexed aToken,
-        bool reserveType,
         address variableDebtToken,
         address interestRateStrategyAddress
     );
@@ -51,108 +47,92 @@ interface IMiniPoolConfigurator {
     /**
      * @dev Emitted when borrowing is enabled on a reserve
      * @param asset The address of the underlying asset of the reserve
-     * @param reserveType Whether the reserve is boosted by a vault
      *
      */
-    event BorrowingEnabledOnReserve(address indexed asset, bool reserveType);
+    event BorrowingEnabledOnReserve(address indexed asset);
 
     /**
      * @dev Emitted when borrowing is disabled on a reserve
      * @param asset The address of the underlying asset of the reserve
-     * @param reserveType Whether the reserve is boosted by a vault
      *
      */
-    event BorrowingDisabledOnReserve(address indexed asset, bool reserveType);
+    event BorrowingDisabledOnReserve(address indexed asset);
 
     /**
      * @dev Emitted when the collateralization risk parameters for the specified asset are updated.
      * @param asset The address of the underlying asset of the reserve
-     * @param reserveType Whether the reserve is boosted by a vault
      * @param ltv The loan to value of the asset when used as collateral
      * @param liquidationThreshold The threshold at which loans using this asset as collateral will be considered undercollateralized
      * @param liquidationBonus The bonus liquidators receive to liquidate this asset
      *
      */
     event CollateralConfigurationChanged(
-        address indexed asset,
-        bool reserveType,
-        uint256 ltv,
-        uint256 liquidationThreshold,
-        uint256 liquidationBonus
+        address indexed asset, uint256 ltv, uint256 liquidationThreshold, uint256 liquidationBonus
     );
 
     /**
      * @dev Emitted when a reserve is activated
      * @param asset The address of the underlying asset of the reserve
-     * @param reserveType Whether the reserve is boosted by a vault
      *
      */
-    event ReserveActivated(address indexed asset, bool reserveType);
+    event ReserveActivated(address indexed asset);
 
     /**
      * @dev Emitted when a reserve is deactivated
      * @param asset The address of the underlying asset of the reserve
-     * @param reserveType Whether the reserve is boosted by a vault
      *
      */
-    event ReserveDeactivated(address indexed asset, bool reserveType);
+    event ReserveDeactivated(address indexed asset);
 
     /**
      * @dev Emitted when a reserve is frozen
      * @param asset The address of the underlying asset of the reserve
-     * @param reserveType Whether the reserve is boosted by a vault
      *
      */
-    event ReserveFrozen(address indexed asset, bool reserveType);
+    event ReserveFrozen(address indexed asset);
 
     /**
      * @dev Emitted when a reserve is unfrozen
      * @param asset The address of the underlying asset of the reserve
-     * @param reserveType Whether the reserve is boosted by a vault
      *
      */
-    event ReserveUnfrozen(address indexed asset, bool reserveType);
+    event ReserveUnfrozen(address indexed asset);
 
     /**
      * @dev Emitted when a reserve is paused
      * @param asset The address of the underlying asset of the reserve
-     * @param reserveType Whether the reserve is boosted by a vault
      *
      */
-    event ReservePaused(address indexed asset, bool reserveType);
+    event ReservePaused(address indexed asset);
 
     /**
      * @dev Emitted when a reserve is unpaused
      * @param asset The address of the underlying asset of the reserve
-     * @param reserveType Whether the reserve is boosted by a vault
      *
      */
-    event ReserveUnpaused(address indexed asset, bool reserveType);
+    event ReserveUnpaused(address indexed asset);
 
     /**
      * @dev Emitted when FL is enabled
      * @param asset The address of the underlying asset of the reserve
-     * @param reserveType Whether the reserve is boosted by a vault
      *
      */
-    event EnableFlashloan(address indexed asset, bool reserveType);
+    event EnableFlashloan(address indexed asset);
 
     /**
      * @dev Emitted when FL is disabled
      * @param asset The address of the underlying asset of the reserve
-     * @param reserveType Whether the reserve is boosted by a vault
      *
      */
-    event DisableFlashloan(address indexed asset, bool reserveType);
+    event DisableFlashloan(address indexed asset);
 
     /**
      * @dev Emitted when a reserve factor is updated
      * @param asset The address of the underlying asset of the reserve
-     * @param reserveType Whether the reserve is boosted by a vault
      * @param factor The new reserve factor
      *
      */
-    event ReserveFactorChanged(address indexed asset, bool reserveType, uint256 factor);
+    event ReserveFactorChanged(address indexed asset, uint256 factor);
 
     /**
      * @dev Emitted when a reserve volatility tier is updated
@@ -160,45 +140,40 @@ interface IMiniPoolConfigurator {
      * @param tier The new volatility tier
      *
      */
-    event ReserveVolatilityTierChanged(address indexed asset, bool reserveType, uint256 tier);
+    event ReserveVolatilityTierChanged(address indexed asset, uint256 tier);
 
     /**
      * @dev Emitted when a reserve's ltv is updated for a volatility tier
      * @param asset The address of the underlying asset of the reserve
      * @param ltv The LTV for that tier
      */
-    event ReserveLowVolatilityLtvChanged(address indexed asset, bool reserveType, uint256 ltv);
-    event ReserveMediumVolatilityLtvChanged(address indexed asset, bool reserveType, uint256 ltv);
-    event ReserveHighVolatilityLtvChanged(address indexed asset, bool reserveType, uint256 ltv);
+    event ReserveLowVolatilityLtvChanged(address indexed asset, uint256 ltv);
+    event ReserveMediumVolatilityLtvChanged(address indexed asset, uint256 ltv);
+    event ReserveHighVolatilityLtvChanged(address indexed asset, uint256 ltv);
 
     /**
      * @dev Emitted when the reserve decimals are updated
      * @param asset The address of the underlying asset of the reserve
-     * @param reserveType Whether the reserve is boosted by a vault
      * @param decimals The new decimals
      *
      */
-    event ReserveDecimalsChanged(address indexed asset, bool reserveType, uint256 decimals);
+    event ReserveDecimalsChanged(address indexed asset, uint256 decimals);
 
     /**
      * @dev Emitted when the reserve deposit cap is updated
      * @param asset The address of the underlying asset of the reserve
-     * @param reserveType Whether the reserve is boosted by a vault
      * @param depositCap The new depositCap, a 0 means no deposit cap
      *
      */
-    event ReserveDepositCapChanged(address indexed asset, bool reserveType, uint256 depositCap);
+    event ReserveDepositCapChanged(address indexed asset, uint256 depositCap);
 
     /**
      * @dev Emitted when a reserve interest strategy contract is updated
      * @param asset The address of the underlying asset of the reserve
-     * @param reserveType Whether the reserve is boosted by a vault
      * @param strategy The new address of the interest strategy contract
      *
      */
-    event ReserveInterestRateStrategyChanged(
-        address indexed asset, bool reserveType, address strategy
-    );
+    event ReserveInterestRateStrategyChanged(address indexed asset, address strategy);
 
     /**
      * @dev Emitted when an aToken implementation is upgraded
@@ -208,10 +183,7 @@ interface IMiniPoolConfigurator {
      *
      */
     event ATokenUpgraded(
-        address indexed asset,
-        address indexed proxy,
-        address indexed implementation,
-        bool reserveType
+        address indexed asset, address indexed proxy, address indexed implementation
     );
 
     /**
