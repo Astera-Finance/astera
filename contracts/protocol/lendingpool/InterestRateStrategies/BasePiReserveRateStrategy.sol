@@ -8,6 +8,7 @@ import {DataTypes} from "contracts/protocol/libraries/types/DataTypes.sol";
 import {ReserveConfiguration} from
     "contracts/protocol/libraries/configuration/ReserveConfiguration.sol";
 import {Ownable} from "contracts/dependencies/openzeppelin/contracts/Ownable.sol";
+import {Errors} from "../../libraries/helpers/Errors.sol";
 
 /**
  * @title PiReserveInterestRateStrategy contract
@@ -162,6 +163,9 @@ abstract contract BasePiReserveRateStrategy is Ownable {
         uint256 reserveFactor
     ) internal returns (uint256, uint256) {
         uint256 availableLiquidity = getAvailableLiquidity(reserve, aToken);
+        if (availableLiquidity + liquidityAdded < liquidityTaken) {
+            revert(Errors.LP_NOT_ENOUGH_LIQUIDITY_TO_BORROW);
+        }
         availableLiquidity = availableLiquidity + liquidityAdded - liquidityTaken;
         return
             _calculateInterestRates(reserve, availableLiquidity, totalVariableDebt, reserveFactor);

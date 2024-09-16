@@ -429,9 +429,15 @@ contract ATokenERC6909 is IncentivizedERC6909, VersionedInitializable {
     }
 
     function balanceOf(address user, uint256 id) public view override returns (uint256) {
-        return super.balanceOf(user, id).rayMul(
-            POOL.getReserveNormalizedIncome(_underlyingAssetAddresses[id], true)
-        );
+        if (isDebtToken(id)) {
+            return super.balanceOf(user, id).rayMul(
+                POOL.getReserveNormalizedVariableDebt(_underlyingAssetAddresses[id], true)
+            );
+        } else {
+            return super.balanceOf(user, id).rayMul(
+                POOL.getReserveNormalizedIncome(_underlyingAssetAddresses[id], true)
+            );
+        }
     }
 
     function handleRepayment(address user, address onBehalfOf, uint256 id, uint256 amount)

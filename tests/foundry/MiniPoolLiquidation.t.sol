@@ -353,12 +353,12 @@ contract MiniPoolLiquidationTest is MiniPoolDepositBorrowTest {
 
         TokenParams memory collateralParams = TokenParams(
             erc20Tokens[collateralOffset],
-            aTokens[collateralOffset],
+            aTokensWrapper[collateralOffset],
             oracle.getAssetPrice(address(erc20Tokens[collateralOffset]))
         );
         TokenParams memory borrowParams = TokenParams(
             erc20Tokens[borrowOffset],
-            aTokens[borrowOffset],
+            aTokensWrapper[borrowOffset],
             oracle.getAssetPrice(address(erc20Tokens[borrowOffset]))
         );
         address user = makeAddr("user");

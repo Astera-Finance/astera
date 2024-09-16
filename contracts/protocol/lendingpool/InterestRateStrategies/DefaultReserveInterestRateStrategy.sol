@@ -8,6 +8,7 @@ import {PercentageMath} from "../../libraries/math/PercentageMath.sol";
 import {ILendingPoolAddressesProvider} from "../../../interfaces/ILendingPoolAddressesProvider.sol";
 import {IERC20} from "../../../dependencies/openzeppelin/contracts/IERC20.sol";
 import {IAToken} from "../../../interfaces/IAToken.sol";
+import {Errors} from "../../libraries/helpers/Errors.sol";
 
 /**
  * @title DefaultReserveInterestRateStrategy contract
@@ -100,7 +101,9 @@ contract DefaultReserveInterestRateStrategy is IReserveInterestRateStrategy {
         uint256 reserveFactor
     ) external view override returns (uint256, uint256) {
         uint256 availableLiquidity = IAToken(aToken).getTotalManagedAssets();
-        //avoid stack too deep
+        if (availableLiquidity.add(liquidityAdded) < liquidityTaken) {
+            revert(Errors.LP_NOT_ENOUGH_LIQUIDITY_TO_BORROW);
+        }
         availableLiquidity = availableLiquidity.add(liquidityAdded).sub(liquidityTaken);
 
         return calculateInterestRates(reserve, availableLiquidity, totalVariableDebt, reserveFactor);
