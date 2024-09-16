@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: agpl-3.0
-pragma solidity ^0.8.23;
+pragma solidity 0.8.23;
 
 import {IAToken} from "contracts/interfaces/IAToken.sol";
 import {IVariableDebtToken} from "contracts/interfaces/IVariableDebtToken.sol";
@@ -7,9 +7,7 @@ import {ILendingPool} from "contracts/interfaces/ILendingPool.sol";
 import {ILendingPoolAddressesProvider} from "contracts/interfaces/ILendingPoolAddressesProvider.sol";
 import {IReserveInterestRateStrategy} from "contracts/interfaces/IReserveInterestRateStrategy.sol";
 import "contracts/protocol/lendingpool/interestRateStrategies/BasePiReserveRateStrategy.sol";
-
 import {IERC20} from "contracts/dependencies/openzeppelin/contracts/IERC20.sol";
-// import "forge-std/console.sol";
 
 /**
  * @title PiReserveInterestRateStrategy contract

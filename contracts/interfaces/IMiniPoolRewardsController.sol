@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.23;
+pragma solidity ^0.8.0;
 
 import {IMiniPoolRewardsDistributor} from "./IMiniPoolRewardsDistributor.sol";
 import {DistributionTypes} from "contracts/rewarder/DistributionTypes.sol";

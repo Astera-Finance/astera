@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: agpl-3.0
-pragma solidity ^0.8.20;
+pragma solidity 0.8.23;
 
 import {ILendingPool} from "contracts/interfaces/ILendingPool.sol";
 import {IDelegationToken} from "contracts/interfaces/IDelegationToken.sol";

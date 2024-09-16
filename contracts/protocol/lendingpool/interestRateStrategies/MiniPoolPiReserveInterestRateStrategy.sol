@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: agpl-3.0
-pragma solidity ^0.8.23;
+pragma solidity 0.8.23;
 
 import {IMiniPoolAddressesProvider} from "contracts/interfaces/IMiniPoolAddressesProvider.sol";
 import {IERC20} from "contracts/dependencies/openzeppelin/contracts/IERC20.sol";

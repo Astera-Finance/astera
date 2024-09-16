@@ -1,4 +1,4 @@
-pragma solidity ^0.8.20;
+pragma solidity ^0.8.0;
 
 import {ERC20} from "contracts/dependencies/openzeppelin/contracts/ERC20.sol";
 import {IERC20} from "contracts/dependencies/openzeppelin/contracts/IERC20.sol";

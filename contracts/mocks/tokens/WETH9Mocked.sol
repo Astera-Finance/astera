@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: agpl-3.0
-pragma solidity ^0.8.23;
+pragma solidity ^0.8.0;
 
 import {WETH9} from "contracts/mocks/dependencies/weth/WETH9.sol";
 

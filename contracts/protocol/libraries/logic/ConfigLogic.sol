@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: AGPL-3.0-only
-pragma solidity ^0.8.23;
+pragma solidity 0.8.23;
 
 import {SafeMath} from "contracts/dependencies/openzeppelin/contracts/SafeMath.sol";
 import {IERC20} from "contracts/dependencies/openzeppelin/contracts/IERC20.sol";

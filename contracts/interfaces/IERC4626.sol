@@ -1,6 +1,5 @@
 // SPDX-License-Identifier: agpl-3.0
-
-pragma solidity ^0.8.23;
+pragma solidity ^0.8.0;
 
 interface IERC4626 {
     function asset() external view returns (address assetTokenAddress);

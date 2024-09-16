@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: agpl-3.0
-pragma solidity ^0.8.23;
+pragma solidity ^0.8.0;
 
 interface IWETHGateway {
     function depositETH(address lendingPool, bool reserveType, address onBehalfOf)
