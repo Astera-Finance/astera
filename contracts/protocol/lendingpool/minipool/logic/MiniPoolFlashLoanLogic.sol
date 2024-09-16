@@ -6,7 +6,6 @@ import {SafeERC20} from "contracts/dependencies/openzeppelin/contracts/SafeERC20
 import {IPriceOracleGetter} from "contracts/interfaces/IPriceOracleGetter.sol";
 import {IMiniPoolAddressesProvider} from "contracts/interfaces/IMiniPoolAddressesProvider.sol";
 import {IVariableDebtToken} from "contracts/interfaces/IVariableDebtToken.sol";
-import {SafeMath} from "contracts/dependencies/openzeppelin/contracts/SafeMath.sol";
 import {WadRayMath} from "contracts/protocol/libraries/math/WadRayMath.sol";
 import {PercentageMath} from "contracts/protocol/libraries/math/PercentageMath.sol";
 import {Errors} from "contracts/protocol/libraries/helpers/Errors.sol";
@@ -26,7 +25,6 @@ import {MiniPoolBorrowLogic} from "./MiniPoolBorrowLogic.sol";
 import {IAERC6909} from "contracts/interfaces/IAERC6909.sol";
 
 library MiniPoolFlashLoanLogic {
-    using SafeMath for uint256;
     using WadRayMath for uint256;
     using PercentageMath for uint256;
     using SafeERC20 for IERC20;
@@ -197,7 +195,7 @@ library MiniPoolFlashLoanLogic {
             aTokenAddresses[i] = reserve.aTokenAddress;
 
             premiums[i] = DataTypes.InterestRateMode(modes[i]) == DataTypes.InterestRateMode.NONE
-                ? amounts[i].mul(_flashLoanPremiumTotal).div(10000)
+                ? amounts[i] * _flashLoanPremiumTotal / 10000
                 : 0;
 
             IAERC6909 aToken6909 = IAERC6909(aTokenAddresses[i]);

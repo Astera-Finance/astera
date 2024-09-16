@@ -3,7 +3,6 @@ pragma solidity 0.8.23;
 
 import {IERC20} from "contracts/dependencies/openzeppelin/contracts/IERC20.sol";
 import {SafeERC20} from "contracts/dependencies/openzeppelin/contracts/SafeERC20.sol";
-import {SafeMath} from "contracts/dependencies/openzeppelin/contracts/SafeMath.sol";
 import {IMiniPoolAddressesProvider} from "contracts/interfaces/IMiniPoolAddressesProvider.sol";
 import {IAERC6909} from "contracts/interfaces/IAERC6909.sol";
 import {IReserveInterestRateStrategy} from "contracts/interfaces/IReserveInterestRateStrategy.sol";
@@ -25,7 +24,6 @@ import {MiniPoolReserveLogic} from "./MiniPoolReserveLogic.sol";
  * @notice Implements the logic to deposit assets into the protocol
  */
 library MiniPoolDepositLogic {
-    using SafeMath for uint256;
     using WadRayMath for uint256;
     using PercentageMath for uint256;
     using SafeERC20 for IERC20;

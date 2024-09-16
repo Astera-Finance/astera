@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: agpl-3.0
 pragma solidity 0.8.23;
 
-import {SafeMath} from "contracts/dependencies/openzeppelin/contracts/SafeMath.sol";
 import {IAToken} from "contracts/interfaces/IAToken.sol";
 import {IAERC6909} from "contracts/interfaces/IAERC6909.sol";
 import {ILendingPool} from "contracts/interfaces/ILendingPool.sol";
@@ -27,7 +26,6 @@ import {IMiniPoolReserveInterestRateStrategy} from
  * @notice Implements the logic to update the reserves state
  */
 library MiniPoolReserveLogic {
-    using SafeMath for uint256;
     using WadRayMath for uint256;
     using PercentageMath for uint256;
     using ReserveLogic for DataTypes.ReserveData;
@@ -154,7 +152,7 @@ library MiniPoolReserveLogic {
     ) internal {
         uint256 amountToLiquidityRatio = amount.wadToRay().rayDiv(totalLiquidity.wadToRay());
 
-        uint256 result = amountToLiquidityRatio.add(WadRayMath.ray());
+        uint256 result = amountToLiquidityRatio + WadRayMath.ray();
 
         result = result.rayMul(reserve.liquidityIndex);
         require(result <= type(uint128).max, Errors.RL_LIQUIDITY_INDEX_OVERFLOW);
@@ -284,7 +282,7 @@ library MiniPoolReserveLogic {
         vars.currentVariableDebt = scaledVariableDebt.rayMul(newVariableBorrowIndex);
 
         //debt accrued is the sum of the current debt minus the sum of the debt at the last update
-        vars.totalDebtAccrued = vars.currentVariableDebt.sub(vars.previousVariableDebt);
+        vars.totalDebtAccrued = vars.currentVariableDebt - vars.previousVariableDebt;
 
         vars.amountToMint = vars.totalDebtAccrued.percentMul(vars.reserveFactor);
 

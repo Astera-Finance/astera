@@ -7,7 +7,6 @@ import {VersionedInitializable} from
     "contracts/protocol/libraries/upgradeability/VersionedInitializable.sol";
 import {IncentivizedERC20} from "../IncentivizedERC20.sol";
 import {Errors} from "contracts/protocol/libraries/helpers/Errors.sol";
-import {SafeMath} from "contracts/dependencies/openzeppelin/contracts/SafeMath.sol";
 
 /**
  * @title DebtTokenBase
@@ -19,8 +18,6 @@ abstract contract DebtTokenBase is
     VersionedInitializable,
     ICreditDelegationToken
 {
-    using SafeMath for uint256;
-
     mapping(address => mapping(address => uint256)) internal _borrowAllowances;
 
     /**
@@ -127,8 +124,9 @@ abstract contract DebtTokenBase is
     function _decreaseBorrowAllowance(address delegator, address delegatee, uint256 amount)
         internal
     {
-        uint256 newAllowance =
-            _borrowAllowances[delegator][delegatee].sub(amount, Errors.BORROW_ALLOWANCE_NOT_ENOUGH);
+        uint256 oldAllowance = _borrowAllowances[delegator][delegatee];
+        require(oldAllowance >= amount, Errors.BORROW_ALLOWANCE_NOT_ENOUGH);
+        uint256 newAllowance = oldAllowance - amount;
 
         _borrowAllowances[delegator][delegatee] = newAllowance;
 

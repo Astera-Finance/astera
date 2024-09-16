@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: agpl-3.0
 pragma solidity ^0.8.20;
 
-import {SafeMath} from "contracts/dependencies/openzeppelin/contracts/SafeMath.sol";
 import {IMiniPoolReserveInterestRateStrategy} from
     "contracts/interfaces/IMiniPoolReserveInterestRateStrategy.sol";
 import {WadRayMath} from "contracts/protocol/libraries/math/WadRayMath.sol";
@@ -25,7 +24,6 @@ import {IAERC6909} from "contracts/interfaces/IAERC6909.sol";
  */
 contract MiniPoolDefaultReserveInterestRateStrategy is IMiniPoolReserveInterestRateStrategy {
     using WadRayMath for uint256;
-    using SafeMath for uint256;
     using PercentageMath for uint256;
 
     /**
@@ -63,7 +61,7 @@ contract MiniPoolDefaultReserveInterestRateStrategy is IMiniPoolReserveInterestR
         uint256 variableRateSlope2
     ) {
         OPTIMAL_UTILIZATION_RATE = optimalUtilizationRate;
-        EXCESS_UTILIZATION_RATE = WadRayMath.ray().sub(optimalUtilizationRate);
+        EXCESS_UTILIZATION_RATE = WadRayMath.ray() - optimalUtilizationRate;
         addressesProvider = provider;
         _baseVariableBorrowRate = baseVariableBorrowRate;
         _variableRateSlope1 = variableRateSlope1;
@@ -83,7 +81,7 @@ contract MiniPoolDefaultReserveInterestRateStrategy is IMiniPoolReserveInterestR
     }
 
     function getMaxVariableBorrowRate() external view override returns (uint256) {
-        return _baseVariableBorrowRate.add(_variableRateSlope1).add(_variableRateSlope2);
+        return _baseVariableBorrowRate + _variableRateSlope1 + _variableRateSlope2;
     }
 
     /**
@@ -119,7 +117,7 @@ contract MiniPoolDefaultReserveInterestRateStrategy is IMiniPoolReserveInterestR
         }
 
         //avoid stack too deep
-        availableLiquidity = availableLiquidity.add(liquidityAdded).sub(liquidityTaken);
+        availableLiquidity = availableLiquidity + liquidityAdded - liquidityTaken;
 
         return calculateInterestRates(reserve, availableLiquidity, totalVariableDebt, reserveFactor);
     }
@@ -155,23 +153,21 @@ contract MiniPoolDefaultReserveInterestRateStrategy is IMiniPoolReserveInterestR
         vars.currentLiquidityRate = 0;
 
         vars.utilizationRate =
-            vars.totalDebt == 0 ? 0 : vars.totalDebt.rayDiv(availableLiquidity.add(vars.totalDebt));
+            vars.totalDebt == 0 ? 0 : vars.totalDebt.rayDiv(availableLiquidity + vars.totalDebt);
 
         if (vars.utilizationRate > OPTIMAL_UTILIZATION_RATE) {
             uint256 excessUtilizationRateRatio =
-                vars.utilizationRate.sub(OPTIMAL_UTILIZATION_RATE).rayDiv(EXCESS_UTILIZATION_RATE);
+                (vars.utilizationRate - OPTIMAL_UTILIZATION_RATE).rayDiv(EXCESS_UTILIZATION_RATE);
 
-            vars.currentVariableBorrowRate = _baseVariableBorrowRate.add(_variableRateSlope1).add(
-                _variableRateSlope2.rayMul(excessUtilizationRateRatio)
-            );
+            vars.currentVariableBorrowRate = _baseVariableBorrowRate + _variableRateSlope1
+                + _variableRateSlope2.rayMul(excessUtilizationRateRatio);
         } else {
-            vars.currentVariableBorrowRate = _baseVariableBorrowRate.add(
-                vars.utilizationRate.rayMul(_variableRateSlope1).rayDiv(OPTIMAL_UTILIZATION_RATE)
-            );
+            vars.currentVariableBorrowRate = _baseVariableBorrowRate
+                + vars.utilizationRate.rayMul(_variableRateSlope1).rayDiv(OPTIMAL_UTILIZATION_RATE);
         }
 
         vars.currentLiquidityRate = vars.currentVariableBorrowRate.rayMul(vars.utilizationRate)
-            .percentMul(PercentageMath.PERCENTAGE_FACTOR.sub(reserveFactor));
+            .percentMul(PercentageMath.PERCENTAGE_FACTOR - reserveFactor);
 
         return (vars.currentLiquidityRate, vars.currentVariableBorrowRate);
     }

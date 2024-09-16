@@ -7,7 +7,6 @@ import {IPriceOracleGetter} from "contracts/interfaces/IPriceOracleGetter.sol";
 import {ILendingPoolAddressesProvider} from "contracts/interfaces/ILendingPoolAddressesProvider.sol";
 import {IAToken} from "contracts/interfaces/IAToken.sol";
 import {IVariableDebtToken} from "contracts/interfaces/IVariableDebtToken.sol";
-import {SafeMath} from "contracts/dependencies/openzeppelin/contracts/SafeMath.sol";
 import {WadRayMath} from "contracts/protocol/libraries/math/WadRayMath.sol";
 import {PercentageMath} from "contracts/protocol/libraries/math/PercentageMath.sol";
 import {Errors} from "contracts/protocol/libraries/helpers/Errors.sol";
@@ -31,7 +30,6 @@ import {IFlowLimiter} from "contracts/interfaces/IFlowLimiter.sol";
  */
 library BorrowLogic {
     using ReserveLogic for DataTypes.ReserveData;
-    using SafeMath for uint256;
     using SafeERC20 for IERC20;
     using WadRayMath for uint256;
     using PercentageMath for uint256;
@@ -151,29 +149,27 @@ library BorrowLogic {
                     IERC20(currentReserve.aTokenAddress).balanceOf(params.user);
 
                 uint256 liquidityBalanceETH =
-                    vars.reserveUnitPrice.mul(vars.compoundedLiquidityBalance).div(vars.tokenUnit);
+                    vars.reserveUnitPrice * vars.compoundedLiquidityBalance / vars.tokenUnit;
 
-                vars.totalCollateralInETH = vars.totalCollateralInETH.add(liquidityBalanceETH);
+                vars.totalCollateralInETH = vars.totalCollateralInETH + liquidityBalanceETH;
 
-                vars.avgLtv = vars.avgLtv.add(liquidityBalanceETH.mul(vars.ltv));
-                vars.avgLiquidationThreshold = vars.avgLiquidationThreshold.add(
-                    liquidityBalanceETH.mul(vars.liquidationThreshold)
-                );
+                vars.avgLtv = vars.avgLtv + (liquidityBalanceETH * vars.ltv);
+                vars.avgLiquidationThreshold =
+                    vars.avgLiquidationThreshold + (liquidityBalanceETH * vars.liquidationThreshold);
             }
 
             if (userConfig.isBorrowing(vars.i)) {
                 vars.compoundedBorrowBalance =
                     IERC20(currentReserve.variableDebtTokenAddress).balanceOf(params.user);
 
-                vars.totalDebtInETH = vars.totalDebtInETH.add(
-                    vars.reserveUnitPrice.mul(vars.compoundedBorrowBalance).div(vars.tokenUnit)
-                );
+                vars.totalDebtInETH = vars.totalDebtInETH
+                    + (vars.reserveUnitPrice * vars.compoundedBorrowBalance / vars.tokenUnit);
             }
         }
 
-        vars.avgLtv = vars.totalCollateralInETH > 0 ? vars.avgLtv.div(vars.totalCollateralInETH) : 0;
+        vars.avgLtv = vars.totalCollateralInETH > 0 ? vars.avgLtv / vars.totalCollateralInETH : 0;
         vars.avgLiquidationThreshold = vars.totalCollateralInETH > 0
-            ? vars.avgLiquidationThreshold.div(vars.totalCollateralInETH)
+            ? vars.avgLiquidationThreshold / vars.totalCollateralInETH
             : 0;
 
         if (userRecentBorrow.getTimestamp() < params.lendingUpdateTimestamp) {
@@ -306,7 +302,7 @@ library BorrowLogic {
         view
         returns (uint256)
     {
-        return IPriceOracleGetter(oracle).getAssetPrice(asset).mul(amount).div(10 ** decimals);
+        return IPriceOracleGetter(oracle).getAssetPrice(asset) * amount / (10 ** decimals);
     }
 
     struct repayParams {
@@ -347,7 +343,7 @@ library BorrowLogic {
         address aToken = reserve.aTokenAddress;
         reserve.updateInterestRates(params.asset, aToken, paybackAmount, 0);
 
-        if (variableDebt.sub(paybackAmount) == 0) {
+        if (variableDebt - paybackAmount == 0) {
             _usersConfig[params.onBehalfOf].setBorrowing(reserve.id, false);
         }
 
@@ -386,7 +382,7 @@ library BorrowLogic {
         address aToken = reserve.aTokenAddress;
         reserve.updateInterestRates(params.asset, aToken, paybackAmount, 0);
 
-        if (variableDebt.sub(paybackAmount) == 0) {
+        if (variableDebt - paybackAmount == 0) {
             _usersConfig[params.onBehalfOf].setBorrowing(reserve.id, false);
         }
 

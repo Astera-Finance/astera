@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: AGPL-3.0-only
 pragma solidity 0.8.23;
 
-import {SafeMath} from "contracts/dependencies/openzeppelin/contracts/SafeMath.sol";
 import {IAERC6909} from "contracts/interfaces/IAERC6909.sol";
 import {IERC20} from "contracts/dependencies/openzeppelin/contracts/IERC20.sol";
 import {IMiniPoolAddressesProvider} from "contracts/interfaces/IMiniPoolAddressesProvider.sol";
@@ -25,7 +24,6 @@ import {MiniPoolValidationLogic} from "./MiniPoolValidationLogic.sol";
  * @notice Implements the logic to withdraw assets into the protocol
  */
 library MiniPoolWithdrawLogic {
-    using SafeMath for uint256;
     using WadRayMath for uint256;
     using PercentageMath for uint256;
     using MiniPoolReserveLogic for DataTypes.MiniPoolReserveData;
@@ -141,7 +139,7 @@ library MiniPoolWithdrawLogic {
         uint256 reserveId = reserves[params.asset].id;
 
         if (params.from != params.to) {
-            if (params.balanceFromBefore.sub(params.amount) == 0) {
+            if (params.balanceFromBefore - params.amount == 0) {
                 DataTypes.UserConfigurationMap storage fromConfig = usersConfig[params.from];
                 fromConfig.setUsingAsCollateral(reserveId, false);
                 emit ReserveUsedAsCollateralDisabled(params.asset, params.from);

@@ -2,7 +2,6 @@
 pragma solidity 0.8.23;
 
 import {Context} from "contracts/dependencies/openzeppelin/contracts/Context.sol";
-import {SafeMath} from "contracts/dependencies/openzeppelin/contracts/SafeMath.sol";
 import {IMiniPoolRewarder} from "contracts/interfaces/IMiniPoolRewarder.sol";
 import {ERC6909} from "lib/solady/src/tokens/ERC6909.sol";
 
@@ -13,7 +12,6 @@ import {ERC6909} from "lib/solady/src/tokens/ERC6909.sol";
  *
  */
 abstract contract IncentivizedERC6909 is Context, ERC6909 {
-    using SafeMath for uint256;
     ///     id      => name
 
     mapping(uint256 => string) private _name;
@@ -56,7 +54,7 @@ abstract contract IncentivizedERC6909 is Context, ERC6909 {
         returns (uint256 oldTotalSupply)
     {
         oldTotalSupply = _totalSupply[id];
-        _totalSupply[id] = _totalSupply[id].sub(amt);
+        _totalSupply[id] = _totalSupply[id] - amt;
     }
 
     function _incrementTotalSupply(uint256 id, uint256 amt)
@@ -65,7 +63,7 @@ abstract contract IncentivizedERC6909 is Context, ERC6909 {
         returns (uint256 oldTotalSupply)
     {
         oldTotalSupply = _totalSupply[id];
-        _totalSupply[id] = _totalSupply[id].add(amt);
+        _totalSupply[id] = _totalSupply[id] + amt;
     }
 
     function _setTokenURI(uint256 id, string memory tokenURI) internal virtual {

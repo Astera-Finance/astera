@@ -1,8 +1,6 @@
 // SPDX-License-Identifier: agpl-3.0
 pragma solidity 0.8.23;
 
-import {SignedSafeMath} from "contracts/dependencies/openzeppelin/contracts/SignedSafeMath.sol";
-import {SafeMath} from "contracts/dependencies/openzeppelin/contracts/SafeMath.sol";
 import {ILendingPool} from "contracts/interfaces/ILendingPool.sol";
 import {IAToken} from "contracts/interfaces/IAToken.sol";
 import {WadRayMath} from "contracts/protocol/libraries/math/WadRayMath.sol";
@@ -24,9 +22,7 @@ import {IMiniPool} from "contracts/interfaces/IMiniPool.sol";
  * @author Cod3x - 0xGoober
  */
 contract ATokenERC6909 is IncentivizedERC6909, VersionedInitializable {
-    using SafeMath for uint256;
     using WadRayMath for uint256;
-    using SignedSafeMath for int256;
     using ReserveLogic for DataTypes.ReserveData;
 
     uint256 public constant ATOKEN_REVISION = 0x1;
@@ -400,9 +396,9 @@ contract ATokenERC6909 is IncentivizedERC6909, VersionedInitializable {
         uint256 id,
         uint256 amount
     ) internal {
-        uint256 newAllowance = _borrowAllowances[id][delegator][delegatee].sub(
-            amount, Errors.BORROW_ALLOWANCE_NOT_ENOUGH
-        );
+        uint256 oldAllowance = _borrowAllowances[id][delegator][delegatee];
+        require(oldAllowance >= amount, Errors.BORROW_ALLOWANCE_NOT_ENOUGH);
+        uint256 newAllowance = oldAllowance - amount;
         _borrowAllowances[id][delegator][delegatee] = newAllowance;
     }
 

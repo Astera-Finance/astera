@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: agpl-3.0
 pragma solidity 0.8.23;
 
-import {SafeMath} from "contracts/dependencies/openzeppelin/contracts/SafeMath.sol";
 import {IERC20} from "contracts/dependencies/openzeppelin/contracts/IERC20.sol";
 import {SafeERC20} from "contracts/dependencies/openzeppelin/contracts/SafeERC20.sol";
 import {IAToken} from "contracts/interfaces/IAToken.sol";
@@ -23,7 +22,6 @@ import {DataTypes} from "contracts/protocol/libraries/types/DataTypes.sol";
  * @notice Implements the logic to save information of Loans
  */
 library LoanInfoLogic {
-    using SafeMath for uint256;
     using WadRayMath for uint256;
     using PercentageMath for uint256;
     using SafeERC20 for IERC20;

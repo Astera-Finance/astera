@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: agpl-3.0
 pragma solidity 0.8.23;
 
-import {SafeMath} from "contracts/dependencies/openzeppelin/contracts/SafeMath.sol";
 import {Address} from "contracts/dependencies/openzeppelin/contracts/Address.sol";
 import {IAERC6909} from "contracts/interfaces/IAERC6909.sol";
 import {IERC20} from "contracts/dependencies/openzeppelin/contracts/IERC20.sol";
@@ -52,7 +51,6 @@ import {MiniPoolLiquidationLogic} from "./logic/MiniPoolLiquidationLogic.sol";
  *
  */
 contract MiniPool is VersionedInitializable, IMiniPool, MiniPoolStorage {
-    using SafeMath for uint256;
     using WadRayMath for uint256;
     using PercentageMath for uint256;
     using SafeERC20 for IERC20;
@@ -195,7 +193,7 @@ contract MiniPool is VersionedInitializable, IMiniPool, MiniPoolStorage {
             ILendingPool(vars.LendingPool).miniPoolBorrow(
                 underlying,
                 reserveType,
-                IAToken(asset).convertToAssets(amount.sub(vars.availableLiquidity)), // amount + availableLiquidity converted to asset
+                IAToken(asset).convertToAssets(amount - vars.availableLiquidity), // amount + availableLiquidity converted to asset
                 address(this),
                 ATokenNonRebasing(asset).ATOKEN_ADDRESS()
             );

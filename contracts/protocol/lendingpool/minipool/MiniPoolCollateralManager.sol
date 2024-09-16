@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: agpl-3.0
 pragma solidity 0.8.23;
 
-import {SafeMath} from "contracts/dependencies/openzeppelin/contracts/SafeMath.sol";
 import {IERC20} from "contracts/dependencies/openzeppelin/contracts/IERC20.sol";
 import {IAToken} from "contracts/interfaces/IAToken.sol";
 import {IAERC6909} from "contracts/interfaces/IAERC6909.sol";
@@ -38,7 +37,6 @@ contract MiniPoolCollateralManager is
     MiniPoolStorage
 {
     using SafeERC20 for IERC20;
-    using SafeMath for uint256;
     using WadRayMath for uint256;
     using PercentageMath for uint256;
     using MiniPoolReserveLogic for DataTypes.MiniPoolReserveData;
@@ -290,19 +288,18 @@ contract MiniPoolCollateralManager is
 
         // This is the maximum possible amount of the selected collateral that can be liquidated, given the
         // max amount of liquidatable debt
-        vars.maxAmountCollateralToLiquidate = vars.debtAssetPrice.mul(debtToCover).mul(
-            10 ** vars.collateralDecimals
-        ).percentMul(vars.liquidationBonus).div(
-            vars.collateralPrice.mul(10 ** vars.debtAssetDecimals)
-        );
+        vars.maxAmountCollateralToLiquidate = (
+            (vars.debtAssetPrice * debtToCover * (10 ** vars.collateralDecimals)).percentMul(
+                vars.liquidationBonus
+            )
+        ) / (vars.collateralPrice * (10 ** vars.debtAssetDecimals));
 
         if (vars.maxAmountCollateralToLiquidate > userCollateralBalance) {
             collateralAmount = userCollateralBalance;
-            debtAmountNeeded = vars.collateralPrice.mul(collateralAmount).mul(
-                10 ** vars.debtAssetDecimals
-            ).div(vars.debtAssetPrice.mul(10 ** vars.collateralDecimals)).percentDiv(
-                vars.liquidationBonus
-            );
+            debtAmountNeeded = (
+                (vars.collateralPrice * collateralAmount * (10 ** vars.debtAssetDecimals))
+                    / (vars.debtAssetPrice * (10 ** vars.collateralDecimals))
+            ).percentDiv(vars.liquidationBonus);
         } else {
             collateralAmount = vars.maxAmountCollateralToLiquidate;
             debtAmountNeeded = debtToCover;

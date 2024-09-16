@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: agpl-3.0
 pragma solidity 0.8.23;
 
-import {SafeMath} from "contracts/dependencies/openzeppelin/contracts/SafeMath.sol";
 import {IERC20} from "contracts/dependencies/openzeppelin/contracts/IERC20.sol";
 import {ReserveLogic} from "./ReserveLogic.sol";
 import {GenericLogic} from "./GenericLogic.sol";
@@ -25,7 +24,6 @@ import {IAToken} from "contracts/interfaces/IAToken.sol";
  */
 library ValidationLogic {
     using ReserveLogic for DataTypes.ReserveData;
-    using SafeMath for uint256;
     using WadRayMath for uint256;
     using PercentageMath for uint256;
     using SafeERC20 for IERC20;
@@ -189,7 +187,7 @@ library ValidationLogic {
 
         //add the current already borrowed amount to the amount requested to calculate the total collateral needed.
         vars.amountOfCollateralNeededETH =
-            vars.userBorrowBalanceETH.add(validateParams.amountInETH).percentDiv(vars.currentLtv); //LTV is calculated in percentage
+            (vars.userBorrowBalanceETH + validateParams.amountInETH).percentDiv(vars.currentLtv); //LTV is calculated in percentage
 
         require(
             vars.amountOfCollateralNeededETH <= vars.userCollateralBalanceETH,

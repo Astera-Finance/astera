@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: agpl-3.0
 pragma solidity 0.8.23;
 
-import {SafeMath} from "contracts/dependencies/openzeppelin/contracts/SafeMath.sol";
 import {IERC20} from "contracts/dependencies/openzeppelin/contracts/IERC20.sol";
 import {SafeERC20} from "contracts/dependencies/openzeppelin/contracts/SafeERC20.sol";
 import {Address} from "contracts/dependencies/openzeppelin/contracts/Address.sol";
@@ -50,7 +49,6 @@ import {LiquidationLogic} from "contracts/protocol/libraries/logic/LiquidationLo
  *
  */
 contract LendingPool is VersionedInitializable, ILendingPool, LendingPoolStorage {
-    using SafeMath for uint256;
     using WadRayMath for uint256;
     using PercentageMath for uint256;
     using SafeERC20 for IERC20;

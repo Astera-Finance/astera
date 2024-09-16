@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: agpl-3.0
 pragma solidity 0.8.23;
 
-import {SafeMath} from "contracts/dependencies/openzeppelin/contracts/SafeMath.sol";
 import {IERC20} from "contracts/dependencies/openzeppelin/contracts/IERC20.sol";
 import {ReserveLogic} from "./ReserveLogic.sol";
 import {ReserveConfiguration} from
@@ -19,7 +18,6 @@ import {DataTypes} from "contracts/protocol/libraries/types/DataTypes.sol";
  */
 library GenericLogic {
     using ReserveLogic for DataTypes.ReserveData;
-    using SafeMath for uint256;
     using WadRayMath for uint256;
     using PercentageMath for uint256;
     using ReserveConfiguration for DataTypes.ReserveConfigurationMap;
@@ -89,19 +87,17 @@ library GenericLogic {
 
         vars.amountToDecreaseInETH = getAmountToDecreaseInEth(oracle, asset, amount, vars.decimals);
 
-        vars.collateralBalanceAfterDecrease =
-            vars.totalCollateralInETH.sub(vars.amountToDecreaseInETH);
+        vars.collateralBalanceAfterDecrease = vars.totalCollateralInETH - vars.amountToDecreaseInETH;
 
         //if there is a borrow, there can't be 0 collateral
         if (vars.collateralBalanceAfterDecrease == 0) {
             return false;
         }
 
-        vars.liquidationThresholdAfterDecrease = vars.totalCollateralInETH.mul(
-            vars.avgLiquidationThreshold
-        ).sub(vars.amountToDecreaseInETH.mul(vars.liquidationThreshold)).div(
-            vars.collateralBalanceAfterDecrease
-        );
+        vars.liquidationThresholdAfterDecrease = (
+            (vars.totalCollateralInETH * vars.avgLiquidationThreshold)
+                - (vars.amountToDecreaseInETH * vars.liquidationThreshold)
+        ) / vars.collateralBalanceAfterDecrease;
 
         uint256 healthFactorAfterDecrease = calculateHealthFactorFromBalances(
             vars.collateralBalanceAfterDecrease,
@@ -118,7 +114,7 @@ library GenericLogic {
         uint256 amount,
         uint256 decimals
     ) internal view returns (uint256) {
-        return IPriceOracleGetter(oracle).getAssetPrice(asset).mul(amount).div(10 ** decimals);
+        return IPriceOracleGetter(oracle).getAssetPrice(asset) * amount / (10 ** decimals);
     }
 
     struct CalculateUserAccountDataVars {
@@ -191,29 +187,27 @@ library GenericLogic {
                     IERC20(currentReserve.aTokenAddress).balanceOf(user);
 
                 uint256 liquidityBalanceETH =
-                    vars.reserveUnitPrice.mul(vars.compoundedLiquidityBalance).div(vars.tokenUnit);
+                    vars.reserveUnitPrice * vars.compoundedLiquidityBalance / vars.tokenUnit;
 
-                vars.totalCollateralInETH = vars.totalCollateralInETH.add(liquidityBalanceETH);
+                vars.totalCollateralInETH = vars.totalCollateralInETH + liquidityBalanceETH;
 
-                vars.avgLtv = vars.avgLtv.add(liquidityBalanceETH.mul(vars.ltv));
-                vars.avgLiquidationThreshold = vars.avgLiquidationThreshold.add(
-                    liquidityBalanceETH.mul(vars.liquidationThreshold)
-                );
+                vars.avgLtv = vars.avgLtv + (liquidityBalanceETH * vars.ltv);
+                vars.avgLiquidationThreshold =
+                    vars.avgLiquidationThreshold + (liquidityBalanceETH * vars.liquidationThreshold);
             }
 
             if (userConfig.isBorrowing(vars.i)) {
                 vars.compoundedBorrowBalance =
                     IERC20(currentReserve.variableDebtTokenAddress).balanceOf(user);
 
-                vars.totalDebtInETH = vars.totalDebtInETH.add(
-                    vars.reserveUnitPrice.mul(vars.compoundedBorrowBalance).div(vars.tokenUnit)
-                );
+                vars.totalDebtInETH = vars.totalDebtInETH
+                    + (vars.reserveUnitPrice * vars.compoundedBorrowBalance / vars.tokenUnit);
             }
         }
 
-        vars.avgLtv = vars.totalCollateralInETH > 0 ? vars.avgLtv.div(vars.totalCollateralInETH) : 0;
+        vars.avgLtv = vars.totalCollateralInETH > 0 ? vars.avgLtv / vars.totalCollateralInETH : 0;
         vars.avgLiquidationThreshold = vars.totalCollateralInETH > 0
-            ? vars.avgLiquidationThreshold.div(vars.totalCollateralInETH)
+            ? vars.avgLiquidationThreshold / vars.totalCollateralInETH
             : 0;
 
         vars.healthFactor = calculateHealthFactorFromBalances(
@@ -266,7 +260,7 @@ library GenericLogic {
             return 0;
         }
 
-        availableBorrowsETH = availableBorrowsETH.sub(totalDebtInETH);
+        availableBorrowsETH = availableBorrowsETH - totalDebtInETH;
         return availableBorrowsETH;
     }
 }

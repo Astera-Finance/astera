@@ -7,7 +7,6 @@ import {IPriceOracleGetter} from "contracts/interfaces/IPriceOracleGetter.sol";
 import {ILendingPoolAddressesProvider} from "contracts/interfaces/ILendingPoolAddressesProvider.sol";
 import {IAToken} from "contracts/interfaces/IAToken.sol";
 import {IVariableDebtToken} from "contracts/interfaces/IVariableDebtToken.sol";
-import {SafeMath} from "contracts/dependencies/openzeppelin/contracts/SafeMath.sol";
 import {WadRayMath} from "contracts/protocol/libraries/math/WadRayMath.sol";
 import {PercentageMath} from "contracts/protocol/libraries/math/PercentageMath.sol";
 import {Errors} from "contracts/protocol/libraries/helpers/Errors.sol";
@@ -26,7 +25,6 @@ import {IFlashLoanReceiver} from "contracts/flashloan/interfaces/IFlashLoanRecei
 import {BorrowLogic} from "./BorrowLogic.sol";
 
 library FlashLoanLogic {
-    using SafeMath for uint256;
     using WadRayMath for uint256;
     using PercentageMath for uint256;
     using SafeERC20 for IERC20;
@@ -198,7 +196,7 @@ library FlashLoanLogic {
             aTokenAddresses[i] = _reserves[assets[i]][reserveTypes[i]].aTokenAddress;
 
             premiums[i] = DataTypes.InterestRateMode(modes[i]) == DataTypes.InterestRateMode.NONE
-                ? amounts[i].mul(_flashLoanPremiumTotal).div(10000)
+                ? amounts[i] * _flashLoanPremiumTotal / 10000
                 : 0;
 
             IAToken(aTokenAddresses[i]).transferUnderlyingTo(receiverAddress, amounts[i]);

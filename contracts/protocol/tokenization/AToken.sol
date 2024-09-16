@@ -3,8 +3,6 @@ pragma solidity 0.8.23;
 
 import {IERC20} from "contracts/dependencies/openzeppelin/contracts/IERC20.sol";
 import {SafeERC20} from "contracts/dependencies/openzeppelin/contracts/SafeERC20.sol";
-import {SignedSafeMath} from "contracts/dependencies/openzeppelin/contracts/SignedSafeMath.sol";
-import {SafeMath} from "contracts/dependencies/openzeppelin/contracts/SafeMath.sol";
 import {ILendingPool} from "contracts/interfaces/ILendingPool.sol";
 import {IAToken} from "contracts/interfaces/IAToken.sol";
 import {WadRayMath} from "contracts/protocol/libraries/math/WadRayMath.sol";
@@ -28,8 +26,6 @@ contract AToken is
 {
     using WadRayMath for uint256;
     using SafeERC20 for IERC20;
-    using SignedSafeMath for int256;
-    using SafeMath for uint256;
 
     bytes public constant EIP712_REVISION = bytes("1");
     bytes32 internal constant EIP712_DOMAIN = keccak256(
@@ -160,7 +156,7 @@ contract AToken is
         uint256 amountScaled = amount.rayDiv(index);
         require(amountScaled != 0, Errors.CT_INVALID_BURN_AMOUNT);
         _rebalance(amount);
-        underlyingAmount = underlyingAmount.sub(amount);
+        underlyingAmount = underlyingAmount - amount;
         _burn(user, amountScaled);
 
         IERC20(_underlyingAsset).safeTransfer(receiverOfUnderlying, amount);
@@ -187,7 +183,7 @@ contract AToken is
 
         uint256 amountScaled = amount.rayDiv(index);
         require(amountScaled != 0, Errors.CT_INVALID_MINT_AMOUNT);
-        underlyingAmount = underlyingAmount.add(amount);
+        underlyingAmount = underlyingAmount + amount;
         _rebalance(0);
         _mint(user, amountScaled);
 
@@ -367,7 +363,7 @@ contract AToken is
         returns (uint256)
     {
         _rebalance(amount);
-        underlyingAmount = underlyingAmount.sub(amount);
+        underlyingAmount = underlyingAmount - amount;
         IERC20(_underlyingAsset).safeTransfer(target, amount);
         return amount;
     }
@@ -384,7 +380,7 @@ contract AToken is
         override
         onlyLendingPool
     {
-        underlyingAmount = underlyingAmount.add(amount);
+        underlyingAmount = underlyingAmount + amount;
     }
 
     /**
@@ -421,7 +417,7 @@ contract AToken is
             )
         );
         require(owner == ecrecover(digest, v, r, s), "INVALID_SIGNATURE");
-        _nonces[owner] = currentValidNonce.add(1);
+        _nonces[owner] = currentValidNonce + 1;
         _approve(owner, spender, value);
     }
 
