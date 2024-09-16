@@ -130,7 +130,9 @@ abstract contract IncentivizedERC20 is Context, IERC20, IERC20Detailed {
         returns (bool)
     {
         _transfer(sender, recipient, amount);
-        _approve(sender, _msgSender(), _allowances[sender][_msgSender()] - amount);
+        uint256 oldAllowance = _allowances[sender][_msgSender()];
+        require(oldAllowance >= amount, "ERC20: transfer amount exceeds allowance");
+        _approve(sender, _msgSender(), oldAllowance - amount);
         emit Transfer(sender, recipient, amount);
         return true;
     }
@@ -159,7 +161,9 @@ abstract contract IncentivizedERC20 is Context, IERC20, IERC20Detailed {
         virtual
         returns (bool)
     {
-        _approve(_msgSender(), spender, _allowances[_msgSender()][spender] - subtractedValue);
+        uint256 oldAllowance = _allowances[_msgSender()][spender];
+        require(oldAllowance >= subtractedValue, "ERC20: decreased allowance below zero");
+        _approve(_msgSender(), spender, oldAllowance - subtractedValue);
         return true;
     }
 
@@ -170,6 +174,7 @@ abstract contract IncentivizedERC20 is Context, IERC20, IERC20Detailed {
         _beforeTokenTransfer(sender, recipient, amount);
 
         uint256 oldSenderBalance = _balances[sender];
+        require(oldSenderBalance >= amount, "ERC20: transfer amount exceeds balance");
         _balances[sender] = oldSenderBalance - amount;
         uint256 oldRecipientBalance = _balances[recipient];
         _balances[recipient] = _balances[recipient] + amount;
@@ -210,6 +215,7 @@ abstract contract IncentivizedERC20 is Context, IERC20, IERC20Detailed {
         _totalSupply = oldTotalSupply - amount;
 
         uint256 oldAccountBalance = _balances[account];
+        require(oldAccountBalance >= amount, "ERC20: burn amount exceeds balance");
         _balances[account] = oldAccountBalance - amount;
 
         if (address(_getIncentivesController()) != address(0)) {
