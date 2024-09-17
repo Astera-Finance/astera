@@ -412,18 +412,15 @@ contract MiniPoolLiquidationTest is MiniPoolDepositBorrowTest {
             address liquidator = makeAddr("liquidator");
             borrowParams.token.transfer(liquidator, amountToLiquidate);
 
-            // uint256 userVariableDebt;
-            // (,address debtToken) = deployedContracts.protocolDataProvider.getReserveTokensAddresses(address(token1Params.token), true);
-            // console.log("MP userVariableDebt for user %s: %s", user, userVariableDebt);
-            // console.log("LP userVariableDebt for user %s: %s", user, userVariableDebt);
+            fixture_depositTokensToMainPool(amountToLiquidate, liquidator, borrowParams);
 
-            vm.startPrank(liquidator);
-            borrowParams.token.approve(miniPool, amountToLiquidate);
             console.log("address(collateralParams.token) : ", address(collateralParams.token));
+            vm.startPrank(liquidator);
+            borrowParams.aToken.approve(miniPool, amountToLiquidate);
             IMiniPool(miniPool).liquidationCall(
                 address(collateralParams.token),
                 true,
-                address(borrowParams.token),
+                address(borrowParams.aToken),
                 true,
                 user,
                 amountToLiquidate,
