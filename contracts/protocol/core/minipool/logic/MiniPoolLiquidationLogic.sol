@@ -27,7 +27,9 @@ library MiniPoolLiquidationLogic {
             abi.encodeWithSignature(
                 "liquidationCall(address,bool,address,bool,address,uint256,bool)",
                 params.collateralAsset,
+                true,
                 params.debtAsset,
+                true,
                 params.user,
                 params.debtToCover,
                 params.receiveAToken

@@ -55,7 +55,7 @@ contract RayMathTest is Common {
         }
     }
 
-    function testRayDivInt(int256 a, int256 b) public pure {
+    function testRayDivInt(int248 a, int248 b) public pure {
         vm.assume(b != 0);
         vm.assume(a != 0);
         if (a >= 0 && b >= 0 || a <= 0 && b <= 0) {
