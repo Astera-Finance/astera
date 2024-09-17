@@ -8,7 +8,7 @@ import {LendingPoolConfigurator} from
     "contracts/protocol/core/lendingpool/LendingPoolConfigurator.sol";
 import {AToken} from "contracts/protocol/tokenization/ERC20/AToken.sol";
 import {DefaultReserveInterestRateStrategy} from
-    "contracts/protocol/core/InterestRateStrategies/DefaultReserveInterestRateStrategy.sol";
+    "contracts/protocol/core/interestRateStrategies/DefaultReserveInterestRateStrategy.sol";
 import {Ownable} from "contracts/dependencies/openzeppelin/contracts/Ownable.sol";
 
 /**
