@@ -32,13 +32,11 @@ import "contracts/interfaces/IVariableDebtToken.sol";
 import "contracts/interfaces/IPriceOracleGetter.sol";
 
 import "contracts/misc/Treasury.sol";
-import "contracts/misc/Oracle.sol";
+import "contracts/protocol/core/Oracle.sol";
 import "contracts/misc/ProtocolDataProvider.sol";
 import "contracts/misc/UiPoolDataProviderV2.sol";
-import "contracts/misc/ChainlinkSourcesRegistry.sol";
 import "contracts/misc/RewardsVault.sol";
 import "contracts/misc/Timelock.sol";
-import "contracts/misc/WalletBalanceProvider.sol";
 import "contracts/misc/WETHGateway.sol";
 
 import "contracts/deployments/ATokensAndRatesHelper.sol";
@@ -46,29 +44,29 @@ import "contracts/deployments/ATokensAndRatesHelper.sol";
 import "contracts/protocol/configuration/LendingPoolAddressesProvider.sol";
 import "contracts/protocol/configuration/LendingPoolAddressesProviderRegistry.sol";
 
-import "contracts/protocol/lendingpool/LendingPoolCollateralManager.sol";
-import "contracts/protocol/lendingpool/interestRateStrategies/DefaultReserveInterestRateStrategy.sol";
-import "contracts/protocol/lendingpool/LendingPoolConfigurator.sol";
-import "contracts/protocol/lendingpool/LendingPoolStorage.sol";
+import "contracts/protocol/core/lendingpool/LendingPoolCollateralManager.sol";
+import "contracts/protocol/core/interestRateStrategies/DefaultReserveInterestRateStrategy.sol";
+import "contracts/protocol/core/lendingpool/LendingPoolConfigurator.sol";
+import "contracts/protocol/core/lendingpool/LendingPoolStorage.sol";
 
-import "contracts/protocol/tokenization/AToken.sol";
-import "contracts/protocol/tokenization/DelegationAwareAToken.sol";
-import "contracts/protocol/tokenization/VariableDebtToken.sol";
+import "contracts/protocol/tokenization/ERC20/AToken.sol";
+import "contracts/protocol/tokenization/ERC20/DelegationAwareAToken.sol";
+import "contracts/protocol/tokenization/ERC20/VariableDebtToken.sol";
 
-import "contracts/protocol/libraries/logic/BorrowLogic.sol";
-import "contracts/protocol/libraries/logic/GenericLogic.sol";
-import "contracts/protocol/libraries/logic/ReserveLogic.sol";
-import "contracts/protocol/libraries/logic/ValidationLogic.sol";
+import "contracts/protocol/core/lendingpool/logic/BorrowLogic.sol";
+import "contracts/protocol/core/lendingpool/logic/GenericLogic.sol";
+import "contracts/protocol/core/lendingpool/logic/ReserveLogic.sol";
+import "contracts/protocol/core/lendingpool/logic/ValidationLogic.sol";
 
-import "contracts/protocol/lendingpool/minipool/logic/MiniPoolBorrowLogic.sol";
-import "contracts/protocol/lendingpool/minipool/logic/MiniPoolDepositLogic.sol";
-import "contracts/protocol/lendingpool/minipool/logic/MiniPoolFlashLoanLogic.sol";
-import "contracts/protocol/lendingpool/minipool/logic/MiniPoolGenericLogic.sol";
-import "contracts/protocol/lendingpool/minipool/logic/MiniPoolLiquidationLogic.sol";
-import "contracts/protocol/lendingpool/minipool/logic/MiniPoolLoanInfoLogic.sol";
-import "contracts/protocol/lendingpool/minipool/logic/MiniPoolReserveLogic.sol";
-import "contracts/protocol/lendingpool/minipool/logic/MiniPoolValidationLogic.sol";
-import "contracts/protocol/lendingpool/minipool/logic/MiniPoolWithdrawLogic.sol";
+import "contracts/protocol/core/minipool/logic/MiniPoolBorrowLogic.sol";
+import "contracts/protocol/core/minipool/logic/MiniPoolDepositLogic.sol";
+import "contracts/protocol/core/minipool/logic/MiniPoolFlashLoanLogic.sol";
+import "contracts/protocol/core/minipool/logic/MiniPoolGenericLogic.sol";
+import "contracts/protocol/core/minipool/logic/MiniPoolLiquidationLogic.sol";
+import "contracts/protocol/core/minipool/logic/MiniPoolLoanInfoLogic.sol";
+import "contracts/protocol/core/minipool/logic/MiniPoolReserveLogic.sol";
+import "contracts/protocol/core/minipool/logic/MiniPoolValidationLogic.sol";
+import "contracts/protocol/core/minipool/logic/MiniPoolWithdrawLogic.sol";
 
 // Users are defined in users
 // Admin is address(this)

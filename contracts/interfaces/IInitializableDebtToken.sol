@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: agpl-3.0
-pragma solidity ^0.8.23;
+pragma solidity ^0.8.0;
 
 import {ILendingPool} from "./ILendingPool.sol";
 import {IRewarder} from "./IRewarder.sol";
@@ -7,7 +7,7 @@ import {IRewarder} from "./IRewarder.sol";
 /**
  * @title IInitializableDebtToken
  * @notice Interface for the initialize function common between debt tokens
- * @author Aave
+ * @author Cod3x
  *
  */
 interface IInitializableDebtToken {

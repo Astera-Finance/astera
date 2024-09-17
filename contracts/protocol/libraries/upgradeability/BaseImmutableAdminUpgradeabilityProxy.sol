@@ -1,11 +1,11 @@
 // SPDX-License-Identifier: agpl-3.0
-pragma solidity ^0.8.23;
+pragma solidity 0.8.23;
 
-import "../../../dependencies/openzeppelin/upgradeability/BaseUpgradeabilityProxy.sol";
+import "contracts/dependencies/openzeppelin/upgradeability/BaseUpgradeabilityProxy.sol";
 
 /**
  * @title BaseImmutableAdminUpgradeabilityProxy
- * @author Aave, inspired by the OpenZeppelin upgradeability proxy pattern
+ * @author Cod3x, inspired by the OpenZeppelin upgradeability proxy pattern
  * @dev This contract combines an upgradeability proxy with an authorization
  * mechanism for administrative tasks. The admin role is stored in an immutable, which
  * helps saving transactions costs
@@ -16,8 +16,8 @@ import "../../../dependencies/openzeppelin/upgradeability/BaseUpgradeabilityProx
 contract BaseImmutableAdminUpgradeabilityProxy is BaseUpgradeabilityProxy {
     address immutable ADMIN;
 
-    constructor(address admin) {
-        ADMIN = admin;
+    constructor(address admin_) {
+        ADMIN = admin_;
     }
 
     modifier ifAdmin() {

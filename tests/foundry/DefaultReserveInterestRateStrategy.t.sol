@@ -89,7 +89,7 @@ contract DefaultReserveInterestRateStrategyTest is Common {
         }
     }
 
-    function testCheckRatesAtHundredUtilizationRate() public {
+    function testCheckRatesAtHundredUtilizationRate() public view {
         uint256[] memory reserveFactors = new uint256[](erc20Tokens.length);
         for (uint32 idx = 0; idx < erc20Tokens.length; idx++) {
             uint256 currentLiquidityRate = 0;

@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: agpl-3.0
-pragma solidity ^0.8.23;
+pragma solidity ^0.8.0;
 
 import {IScaledBalanceToken} from "./IScaledBalanceToken.sol";
 import {IInitializableDebtToken} from "./IInitializableDebtToken.sol";
@@ -7,7 +7,7 @@ import {IRewarder} from "./IRewarder.sol";
 
 /**
  * @title IVariableDebtToken
- * @author Aave
+ * @author Cod3x
  * @notice Defines the basic interface for a variable debt token.
  *
  */

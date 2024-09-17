@@ -1,11 +1,15 @@
 // SPDX-License-Identifier: agpl-3.0
-pragma solidity ^0.8.20;
+pragma solidity ^0.8.0;
 
-import {IERC20} from "../dependencies/openzeppelin/contracts/IERC20.sol";
+import {IERC20} from "contracts/dependencies/openzeppelin/contracts/IERC20.sol";
 import {IScaledBalanceToken} from "./IScaledBalanceToken.sol";
 import {IInitializableAToken} from "./IInitializableAToken.sol";
 import {IRewarder} from "./IRewarder.sol";
 
+/**
+ * @title IAToken
+ * @author Cod3x
+ */
 interface IAToken is IERC20, IScaledBalanceToken, IInitializableAToken {
     /**
      * @dev Emitted after the mint action

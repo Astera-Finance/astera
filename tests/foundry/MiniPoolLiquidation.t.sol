@@ -7,7 +7,7 @@ import {WadRayMath} from "contracts/protocol/libraries/math/WadRayMath.sol";
 import {PercentageMath} from "contracts/protocol/libraries/math/PercentageMath.sol";
 import {ReserveConfiguration} from
     "contracts/protocol/libraries/configuration/ReserveConfiguration.sol";
-
+import "contracts/protocol/core/minipool/MiniPoolCollateralManager.sol";
 import "forge-std/StdUtils.sol";
 
 contract MiniPoolLiquidationTest is MiniPoolDepositBorrowTest {
@@ -109,9 +109,9 @@ contract MiniPoolLiquidationTest is MiniPoolDepositBorrowTest {
         }
 
         liquidationVars.collateralReserveDataBefore =
-            IMiniPool(miniPool).getReserveData(address(collateralParams.token), true);
+            IMiniPool(miniPool).getReserveData(address(collateralParams.token));
         liquidationVars.borrowReserveDataBefore =
-            IMiniPool(miniPool).getReserveData(address(borrowParams.token), true);
+            IMiniPool(miniPool).getReserveData(address(borrowParams.token));
 
         console.log("liquidityIndex: ", liquidationVars.borrowReserveDataBefore.liquidityIndex);
         console.log(
@@ -195,9 +195,7 @@ contract MiniPoolLiquidationTest is MiniPoolDepositBorrowTest {
             borrowParams.token.approve(miniPool, liquidationVars.amountToLiquidate);
             IMiniPool(miniPool).liquidationCall(
                 address(collateralParams.token),
-                true,
                 address(borrowParams.token),
-                true,
                 user,
                 liquidationVars.amountToLiquidate,
                 false
@@ -275,11 +273,11 @@ contract MiniPoolLiquidationTest is MiniPoolDepositBorrowTest {
 
         {
             liquidationVars.collateralReserveDataAfter =
-                IMiniPool(miniPool).getReserveData(address(collateralParams.token), true);
+                IMiniPool(miniPool).getReserveData(address(collateralParams.token));
             liquidationVars.borrowReserveDataAfter =
-                IMiniPool(miniPool).getReserveData(address(borrowParams.token), true);
+                IMiniPool(miniPool).getReserveData(address(borrowParams.token));
             DataTypes.ReserveConfigurationMap memory configuration =
-                IMiniPool(miniPool).getConfiguration(address(collateralParams.token), true);
+                IMiniPool(miniPool).getConfiguration(address(collateralParams.token));
             (,, liquidationVars.liquidationBonus,,) = configuration.getParamsMemory();
             liquidationVars.expectedCollateralLiquidated = borrowParams.price
                 * (liquidationVars.amountToLiquidate * liquidationVars.liquidationBonus / 10_000)
@@ -419,9 +417,7 @@ contract MiniPoolLiquidationTest is MiniPoolDepositBorrowTest {
             borrowParams.aToken.approve(miniPool, amountToLiquidate);
             IMiniPool(miniPool).liquidationCall(
                 address(collateralParams.token),
-                true,
                 address(borrowParams.aToken),
-                true,
                 user,
                 amountToLiquidate,
                 false

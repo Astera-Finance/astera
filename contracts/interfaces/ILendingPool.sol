@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: agpl-3.0
-pragma solidity ^0.8.23;
+pragma solidity ^0.8.0;
 
 import {ILendingPoolAddressesProvider} from "./ILendingPoolAddressesProvider.sol";
-import {DataTypes} from "../protocol/libraries/types/DataTypes.sol";
+import {DataTypes} from "contracts/protocol/libraries/types/DataTypes.sol";
 
 interface ILendingPool {
     /**
@@ -417,7 +417,7 @@ interface ILendingPool {
 
     function rebalance(address aTokenAddress) external;
 
-    function getTotalManagedAssets(address aTokenAddres) external view returns (uint256);
+    function getTotalManagedAssets(address aTokenAddress) external view returns (uint256);
     function updateFlashLoanFee(uint128 flashLoanPremiumTotal) external;
 
     function setRewarderForReserve(address asset, bool reserveType, address rewarder) external;

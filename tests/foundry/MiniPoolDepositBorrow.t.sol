@@ -76,7 +76,7 @@ contract MiniPoolDepositBorrowTest is Common {
         console.log("Amount: ", amount);
         console.log("Balance of aToken: ", aTokenDepositAmount);
         tokenParams.aToken.approve(address(miniPool), amount);
-        IMiniPool(miniPool).deposit(address(tokenParams.aToken), true, amount, user);
+        IMiniPool(miniPool).deposit(address(tokenParams.aToken), amount, user);
         console.log("User AToken balance shall be less by {amount}");
         assertEq(aTokenDepositAmount - amount, tokenParams.aToken.balanceOf(user), "11");
         console.log("User grain token 6909 balance shall be initial balance + amount");
@@ -99,7 +99,7 @@ contract MiniPoolDepositBorrowTest is Common {
         uint256 tokenBalance = tokenParams.token.balanceOf(user);
         tokenParams.token.approve(address(miniPool), amount);
         console.log("User balance after: ", tokenBalance);
-        IMiniPool(miniPool).deposit(address(tokenParams.token), true, amount, user);
+        IMiniPool(miniPool).deposit(address(tokenParams.token), amount, user);
         assertEq(tokenBalance - amount, tokenParams.token.balanceOf(user));
         assertEq(tokenUserBalance + amount, aErc6909Token.balanceOf(user, tokenId));
         vm.stopPrank();
@@ -228,7 +228,7 @@ contract MiniPoolDepositBorrowTest is Common {
             balances.totalSupply = aErc6909Token.scaledTotalSupply(2000 + borrowOffset);
             balances.debtToken = aErc6909Token.balanceOf(user, 2000 + borrowOffset);
             balances.token = borrowTokenParams.aToken.balanceOf(user);
-            IMiniPool(miniPool).borrow(address(borrowTokenParams.aToken), true, amount, user);
+            IMiniPool(miniPool).borrow(address(borrowTokenParams.aToken), amount, user);
             console.log("Total supply of debtAToken must be greater than before borrow");
             assertEq(
                 aErc6909Token.scaledTotalSupply(2000 + borrowOffset), balances.totalSupply + amount
@@ -245,7 +245,7 @@ contract MiniPoolDepositBorrowTest is Common {
             balances.totalSupply = aErc6909Token.scaledTotalSupply(2128 + borrowOffset);
             balances.debtToken = aErc6909Token.balanceOf(user, 2128 + borrowOffset);
             balances.token = borrowTokenParams.token.balanceOf(user);
-            IMiniPool(miniPool).borrow(address(borrowTokenParams.token), true, amount, user);
+            IMiniPool(miniPool).borrow(address(borrowTokenParams.token), amount, user);
             console.log("Balance of debtToken must be greater than before borrow");
             assertEq(
                 aErc6909Token.scaledTotalSupply(2128 + borrowOffset), balances.totalSupply + amount
@@ -344,7 +344,7 @@ contract MiniPoolDepositBorrowTest is Common {
             minNrOfTokens,
             collateralTokenParams.token.balanceOf(address(this))
         );
-        IMiniPool(miniPool).deposit(address(collateralTokenParams.token), true, minNrOfTokens, user);
+        IMiniPool(miniPool).deposit(address(collateralTokenParams.token), minNrOfTokens, user);
 
         (,,,,, uint256 healthFactorBefore) = IMiniPool(miniPool).getUserAccountData(user);
         Balances memory balances;
@@ -352,7 +352,7 @@ contract MiniPoolDepositBorrowTest is Common {
         balances.totalSupply = aErc6909Token.scaledTotalSupply(2000 + borrowOffset);
         balances.debtToken = aErc6909Token.balanceOf(user, 2000 + borrowOffset);
         balances.token = borrowTokenParams.aToken.balanceOf(user);
-        IMiniPool(miniPool).borrow(address(borrowTokenParams.aToken), true, amount, user);
+        IMiniPool(miniPool).borrow(address(borrowTokenParams.aToken), amount, user);
         console.log("Total supply of debtAToken must be greater than before borrow");
         assertEq(
             aErc6909Token.scaledTotalSupply(2000 + borrowOffset), balances.totalSupply + amount

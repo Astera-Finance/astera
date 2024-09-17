@@ -82,7 +82,7 @@ contract MiniPoolFlashloanTest is Common {
             console.log("Balance amount: ", amount);
             console.log("Balance grainAmount: ", grainTokenDepositAmount);
             tokenParams.aToken.approve(address(miniPool), amount);
-            IMiniPool(miniPool).deposit(address(tokenParams.aToken), true, amount, user);
+            IMiniPool(miniPool).deposit(address(tokenParams.aToken), amount, user);
             console.log("User AToken balance shall be less by {amount}");
             assertEq(grainTokenDepositAmount - amount, tokenParams.aToken.balanceOf(user), "11");
             console.log("User grain token 6909 balance shall be initial balance + amount");
@@ -98,7 +98,7 @@ contract MiniPoolFlashloanTest is Common {
             uint256 tokenBalance = tokenParams.token.balanceOf(user);
             tokenParams.token.approve(address(miniPool), amount);
             console.log("User balance after: ", tokenBalance);
-            IMiniPool(miniPool).deposit(address(tokenParams.token), true, amount, user);
+            IMiniPool(miniPool).deposit(address(tokenParams.token), amount, user);
             assertEq(tokenBalance - amount, tokenParams.token.balanceOf(user));
             assertEq(tokenUserBalance + amount, aErc6909Token.balanceOf(user, tokenId));
         }
@@ -199,7 +199,7 @@ contract MiniPoolFlashloanTest is Common {
             balances.totalSupply = aErc6909Token.scaledTotalSupply(2000 + borrowOffset);
             balances.debtToken = aErc6909Token.balanceOf(user, 2000 + borrowOffset);
             balances.token = borrowTokenParams.aToken.balanceOf(user);
-            IMiniPool(miniPool).borrow(address(borrowTokenParams.aToken), true, amount, user);
+            IMiniPool(miniPool).borrow(address(borrowTokenParams.aToken), amount, user);
             console.log("Total supply of debtAToken must be greater than before borrow");
             assertEq(
                 aErc6909Token.scaledTotalSupply(2000 + borrowOffset), balances.totalSupply + amount
@@ -216,7 +216,7 @@ contract MiniPoolFlashloanTest is Common {
             balances.totalSupply = aErc6909Token.scaledTotalSupply(2128 + borrowOffset);
             balances.debtToken = aErc6909Token.balanceOf(user, 2128 + borrowOffset);
             balances.token = borrowTokenParams.token.balanceOf(user);
-            IMiniPool(miniPool).borrow(address(borrowTokenParams.token), true, amount, user);
+            IMiniPool(miniPool).borrow(address(borrowTokenParams.token), amount, user);
             console.log("Balance of debtToken must be greater than before borrow");
             assertEq(
                 aErc6909Token.scaledTotalSupply(2128 + borrowOffset), balances.totalSupply + amount
@@ -315,7 +315,7 @@ contract MiniPoolFlashloanTest is Common {
             minNrOfTokens,
             collateralTokenParams.token.balanceOf(address(this))
         );
-        IMiniPool(miniPool).deposit(address(collateralTokenParams.token), true, minNrOfTokens, user);
+        IMiniPool(miniPool).deposit(address(collateralTokenParams.token), minNrOfTokens, user);
 
         (,,,,, uint256 healthFactorBefore) = IMiniPool(miniPool).getUserAccountData(user);
         Balances memory balances;
@@ -323,7 +323,7 @@ contract MiniPoolFlashloanTest is Common {
         balances.totalSupply = aErc6909Token.scaledTotalSupply(2000 + borrowOffset);
         balances.debtToken = aErc6909Token.balanceOf(user, 2000 + borrowOffset);
         balances.token = borrowTokenParams.aToken.balanceOf(user);
-        IMiniPool(miniPool).borrow(address(borrowTokenParams.aToken), true, amount, user);
+        IMiniPool(miniPool).borrow(address(borrowTokenParams.aToken), amount, user);
         console.log("Total supply of debtAToken must be greater than before borrow");
         assertEq(
             aErc6909Token.scaledTotalSupply(2000 + borrowOffset), balances.totalSupply + amount
@@ -436,17 +436,17 @@ contract MiniPoolFlashloanTest is Common {
         vm.startPrank(user);
         uint256 amtAUsdc = tokenParamsUsdc.aToken.balanceOf(address(user)) / 2;
         tokenParamsUsdc.aToken.approve(miniPool, amtAUsdc);
-        IMiniPool(miniPool).deposit(address(tokenParamsUsdc.aToken), true, amtAUsdc, user);
+        IMiniPool(miniPool).deposit(address(tokenParamsUsdc.aToken), amtAUsdc, user);
 
         uint256 amt = amountUsdc * 10;
         deal(address(tokenParamsUsdc.token), user, amt);
         tokenParamsUsdc.token.approve(miniPool, amt);
-        IMiniPool(miniPool).deposit(address(tokenParamsUsdc.token), true, amt, user);
+        IMiniPool(miniPool).deposit(address(tokenParamsUsdc.token), amt, user);
 
         amt = amountwBtc * 10;
         deal(address(tokenParamsWbtc.token), user, amt);
         tokenParamsWbtc.token.approve(miniPool, amt);
-        IMiniPool(miniPool).deposit(address(tokenParamsWbtc.token), true, amt, user);
+        IMiniPool(miniPool).deposit(address(tokenParamsWbtc.token), amt, user);
 
         vm.stopPrank();
 
@@ -595,7 +595,7 @@ contract MiniPoolFlashloanTest is Common {
         uint256 amt = 2e8;
         deal(address(tokenParamsWbtc.token), address(this), amt);
         tokenParamsWbtc.token.approve(miniPool, amt);
-        IMiniPool(miniPool).deposit(address(tokenParamsWbtc.token), true, amt, address(this));
+        IMiniPool(miniPool).deposit(address(tokenParamsWbtc.token), amt, address(this));
 
         /// FL
         address[] memory assets = new address[](1);
@@ -633,7 +633,7 @@ contract MiniPoolFlashloanTest is Common {
         uint256 amt = 2e8;
         deal(address(tokenParamsWbtc.token), address(this), amt);
         tokenParamsWbtc.token.approve(miniPool, amt);
-        IMiniPool(miniPool).deposit(address(tokenParamsWbtc.token), true, amt, address(this));
+        IMiniPool(miniPool).deposit(address(tokenParamsWbtc.token), amt, address(this));
 
         /// FL
         address[] memory assets = new address[](2);
@@ -678,7 +678,7 @@ contract MiniPoolFlashloanTest is Common {
         uint256 amt = 2e8;
         deal(address(tokenParamsWbtc.token), address(this), amt * 2);
         tokenParamsWbtc.token.approve(miniPool, amt);
-        IMiniPool(miniPool).deposit(address(tokenParamsWbtc.token), true, amt, address(this));
+        IMiniPool(miniPool).deposit(address(tokenParamsWbtc.token), amt, address(this));
 
         /// FL
         address[] memory assets = new address[](2);

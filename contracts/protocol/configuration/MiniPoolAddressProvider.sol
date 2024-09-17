@@ -1,14 +1,13 @@
-// SPDX-License-Identifier: agpl-3.0
-pragma solidity ^0.8.23;
+// SPDX-License-Identifier: BUSL-1.1
+pragma solidity 0.8.23;
 
-import {Ownable} from "../../dependencies/openzeppelin/contracts/Ownable.sol";
+import {Ownable} from "contracts/dependencies/openzeppelin/contracts/Ownable.sol";
 
 // Prettier ignore to prevent buidler flatter bug
 // prettier-ignore
 import {InitializableImmutableAdminUpgradeabilityProxy} from
-    "../libraries/upgradeability/InitializableImmutableAdminUpgradeabilityProxy.sol";
-
-import {ILendingPoolAddressesProvider} from "../../interfaces/ILendingPoolAddressesProvider.sol";
+    "contracts/protocol/libraries/upgradeability/InitializableImmutableAdminUpgradeabilityProxy.sol";
+import {ILendingPoolAddressesProvider} from "contracts/interfaces/ILendingPoolAddressesProvider.sol";
 import {IFlowLimiter} from "contracts/interfaces/IFlowLimiter.sol";
 
 /**
@@ -16,7 +15,7 @@ import {IFlowLimiter} from "contracts/interfaces/IFlowLimiter.sol";
  * @dev Main registry of addresses part of or connected to the protocol, including permissioned roles
  * - Acting also as factory of proxies and admin of those, so with right to change its implementations
  * - Owned by the Aave Governance
- * @author Aave
+ * @author Cod3x
  *
  */
 contract MiniPoolAddressesProvider is Ownable {
@@ -44,6 +43,10 @@ contract MiniPoolAddressesProvider is Ownable {
         _addresses[POOL_ADMIN] = provider.getPoolAdmin();
         _addresses[EMERGENCY_ADMIN] = provider.getEmergencyAdmin();
         _addresses[PRICE_ORACLE] = provider.getPriceOracle();
+    }
+
+    function getMiniPoolCount() external view returns (uint256) {
+        return _minipoolCount;
     }
 
     function getLendingPoolAddressesProvider() external view returns (address) {
@@ -101,7 +104,7 @@ contract MiniPoolAddressesProvider is Ownable {
 
     function upgradeMiniPool(address MiniPoolProxy) external onlyOwner {}
 
-    function deployMiniPool() external onlyOwner {
+    function deployMiniPool() external onlyOwner returns (uint256) {
         InitializableImmutableAdminUpgradeabilityProxy proxy =
             new InitializableImmutableAdminUpgradeabilityProxy(address(this));
 
@@ -118,7 +121,11 @@ contract MiniPoolAddressesProvider is Ownable {
 
         _miniPoolToAERC6909[address(proxy)] = address(aTokenProxy);
 
+        uint256 minipoolID = _minipoolCount;
+
         _minipoolCount++;
+
+        return minipoolID;
     }
 
     function getMiniPool(uint256 id) external view returns (address) {

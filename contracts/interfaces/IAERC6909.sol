@@ -1,10 +1,14 @@
 // SPDX-License-Identifier: agpl-3.0
-pragma solidity ^0.8.23;
+pragma solidity ^0.8.0;
 
-import "./IRewarder.sol";
+import "./IMiniPoolRewarder.sol";
 import "./IMiniPool.sol";
 import "./IERC6909.sol";
 
+/**
+ * @title IAERC6909
+ * @author Cod3x
+ */
 interface IAERC6909 is IERC6909 {
     function initialize(address provider, uint256 minipoolId) external;
     function initReserve(
@@ -13,7 +17,7 @@ interface IAERC6909 is IERC6909 {
         string calldata symbol,
         uint8 decimals
     ) external returns (uint256 aTokenID, uint256 debtTokenID, bool isTranche);
-    function setIncentivesController(IRewarder controller) external;
+    function setIncentivesController(IMiniPoolRewarder controller) external;
     function setPool(IMiniPool pool) external;
     function setUnderlyingAsset(uint256 id, address underlyingAsset) external;
     function getUnderlyingAsset(uint256 id) external view returns (address);

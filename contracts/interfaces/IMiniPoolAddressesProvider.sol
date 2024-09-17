@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: agpl-3.0
-pragma solidity ^0.8.23;
+pragma solidity ^0.8.0;
 
 interface IMiniPoolAddressesProvider {
     // Functions related to getting various addresses
@@ -20,7 +20,7 @@ interface IMiniPoolAddressesProvider {
     function getAToken6909Impl() external view returns (address);
 
     // Functions for MiniPool management
-    function deployMiniPool() external;
+    function deployMiniPool() external returns (uint256);
     function upgradeMiniPool(address MiniPoolProxy) external;
     function getMiniPool(uint256 id) external view returns (address);
 
@@ -31,4 +31,5 @@ interface IMiniPoolAddressesProvider {
     function getMiniPoolConfigurator() external view returns (address);
 
     function getFlowLimiter() external view returns (address);
+    function getMiniPoolCount() external view returns (uint256);
 }

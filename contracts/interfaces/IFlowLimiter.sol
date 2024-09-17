@@ -1,5 +1,5 @@
-// SPDX-License-Identifier: UNLICENSED
-pragma solidity ^0.8.23;
+// SPDX-License-Identifier: agpl-3.0
+pragma solidity ^0.8.0;
 
 import {IMiniPool} from "./IMiniPool.sol";
 
