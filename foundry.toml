@@ -11,6 +11,11 @@ solc_version = '0.8.23'
 show_progress = true
 fs_permissions = [{ access = "read-write", path = "./"}]
 ignored_error_codes = [3628]
+remappings = [
+    'forge-std/=lib/forge-std/src/',
+    'openzeppelin-contracts/=lib/openzeppelin-contracts/',
+    'solady/=lib/solady/src/',
+]
 
 [fmt]
 line_length = 100

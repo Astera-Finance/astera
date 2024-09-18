@@ -3,7 +3,7 @@ pragma solidity 0.8.23;
 
 import {Context} from "contracts/dependencies/openzeppelin/contracts/Context.sol";
 import {IMiniPoolRewarder} from "contracts/interfaces/IMiniPoolRewarder.sol";
-import {ERC6909} from "lib/solady/src/tokens/ERC6909.sol";
+import {ERC6909} from "solady/tokens/ERC6909.sol";
 
 /**
  * @title ERC6909
