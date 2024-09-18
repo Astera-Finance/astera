@@ -4,7 +4,7 @@ pragma solidity 0.8.23;
 import {IVariableDebtToken} from "contracts/interfaces/IVariableDebtToken.sol";
 import {WadRayMath} from "contracts/protocol/libraries/math/WadRayMath.sol";
 import {Errors} from "contracts/protocol/libraries/helpers/Errors.sol";
-import {DebtTokenBase} from "./base/DebtTokenBase.sol";
+import {DebtTokenBase} from "contracts/protocol/tokenization/ERC20/base/DebtTokenBase.sol";
 import {ILendingPool} from "contracts/interfaces/ILendingPool.sol";
 import {IRewarder} from "contracts/interfaces/IRewarder.sol";
 
