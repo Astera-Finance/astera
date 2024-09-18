@@ -9,6 +9,7 @@ import {InitializableImmutableAdminUpgradeabilityProxy} from
     "contracts/protocol/libraries/upgradeability/InitializableImmutableAdminUpgradeabilityProxy.sol";
 import {ILendingPoolAddressesProvider} from "contracts/interfaces/ILendingPoolAddressesProvider.sol";
 import {IFlowLimiter} from "contracts/interfaces/IFlowLimiter.sol";
+import {IMiniPoolAddressesProvider} from "contracts/interfaces/IMiniPoolAddressesProvider.sol";
 
 /**
  * @title LendingPoolAddressesProvider contract
@@ -18,7 +19,7 @@ import {IFlowLimiter} from "contracts/interfaces/IFlowLimiter.sol";
  * @author Cod3x
  *
  */
-contract MiniPoolAddressesProvider is Ownable {
+contract MiniPoolAddressesProvider is Ownable, IMiniPoolAddressesProvider {
     mapping(bytes32 => address) private _addresses;
 
     mapping(uint256 => address) private _minipools;

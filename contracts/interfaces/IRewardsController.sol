@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: agpl-3.0
 pragma solidity ^0.8.0;
 
-import {IRewardsDistributor} from "./IRewardsDistributor.sol";
+import {IRewardsDistributor} from "contracts/interfaces/IRewardsDistributor.sol";
 import {DistributionTypes} from "contracts/protocol/libraries/types/DistributionTypes.sol";
 
 interface IRewardsController is IRewardsDistributor {
