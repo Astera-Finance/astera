@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: agpl-3.0
 pragma solidity ^0.8.0;
 
-import {IMiniPoolRewardsDistributor} from "contracts/interfaces/IMiniPoolRewardsDistributor.sol";
-import {DistributionTypes} from "contracts/protocol/libraries/types/DistributionTypes.sol";
+import {IMiniPoolRewardsDistributor} from "../../contracts/interfaces/IMiniPoolRewardsDistributor.sol";
+import {DistributionTypes} from "../../contracts/protocol/libraries/types/DistributionTypes.sol";
 
 interface IMiniPoolRewardsController is IMiniPoolRewardsDistributor {
     event RewardsClaimed(

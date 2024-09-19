@@ -2,24 +2,24 @@
 pragma solidity 0.8.23;
 
 import {VersionedInitializable} from
-    "contracts/protocol/libraries/upgradeability/VersionedInitializable.sol";
+    "../../../../contracts/protocol/libraries/upgradeability/VersionedInitializable.sol";
 import {InitializableImmutableAdminUpgradeabilityProxy} from
-    "contracts/protocol/libraries/upgradeability/InitializableImmutableAdminUpgradeabilityProxy.sol";
+    "../../../../contracts/protocol/libraries/upgradeability/InitializableImmutableAdminUpgradeabilityProxy.sol";
 import {ReserveConfiguration} from
-    "contracts/protocol/libraries/configuration/ReserveConfiguration.sol";
+    "../../../../contracts/protocol/libraries/configuration/ReserveConfiguration.sol";
 import {ReserveBorrowConfiguration} from
-    "contracts/protocol/libraries/configuration/ReserveBorrowConfiguration.sol";
-import {ILendingPoolAddressesProvider} from "contracts/interfaces/ILendingPoolAddressesProvider.sol";
-import {ILendingPool} from "contracts/interfaces/ILendingPool.sol";
-import {IERC20Detailed} from "contracts/dependencies/openzeppelin/contracts/IERC20Detailed.sol";
-import {Errors} from "contracts/protocol/libraries/helpers/Errors.sol";
-import {PercentageMath} from "contracts/protocol/libraries/math/PercentageMath.sol";
-import {DataTypes} from "contracts/protocol/libraries/types/DataTypes.sol";
-import {IInitializableDebtToken} from "contracts/interfaces/IInitializableDebtToken.sol";
-import {IInitializableAToken} from "contracts/interfaces/IInitializableAToken.sol";
-import {IRewarder} from "contracts/interfaces/IRewarder.sol";
-import {ILendingPoolConfigurator} from "contracts/interfaces/ILendingPoolConfigurator.sol";
-import {IAToken} from "contracts/interfaces/IAToken.sol";
+    "../../../../contracts/protocol/libraries/configuration/ReserveBorrowConfiguration.sol";
+import {ILendingPoolAddressesProvider} from "../../../../contracts/interfaces/ILendingPoolAddressesProvider.sol";
+import {ILendingPool} from "../../../../contracts/interfaces/ILendingPool.sol";
+import {IERC20Detailed} from "../../../../contracts/dependencies/openzeppelin/contracts/IERC20Detailed.sol";
+import {Errors} from "../../../../contracts/protocol/libraries/helpers/Errors.sol";
+import {PercentageMath} from "../../../../contracts/protocol/libraries/math/PercentageMath.sol";
+import {DataTypes} from "../../../../contracts/protocol/libraries/types/DataTypes.sol";
+import {IInitializableDebtToken} from "../../../../contracts/interfaces/IInitializableDebtToken.sol";
+import {IInitializableAToken} from "../../../../contracts/interfaces/IInitializableAToken.sol";
+import {IRewarder} from "../../../../contracts/interfaces/IRewarder.sol";
+import {ILendingPoolConfigurator} from "../../../../contracts/interfaces/ILendingPoolConfigurator.sol";
+import {IAToken} from "../../../../contracts/interfaces/IAToken.sol";
 
 /**
  * @title LendingPoolConfigurator contract

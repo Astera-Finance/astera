@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: agpl-3.0
 pragma solidity 0.8.23;
 
-import {Errors} from "contracts/protocol/libraries/helpers/Errors.sol";
-import {DataTypes} from "contracts/protocol/libraries/types/DataTypes.sol";
+import {Errors} from "../../../../contracts/protocol/libraries/helpers/Errors.sol";
+import {DataTypes} from "../../../../contracts/protocol/libraries/types/DataTypes.sol";
 
 /**
  * @title ReserveConfiguration library

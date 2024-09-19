@@ -1,15 +1,15 @@
 // SPDX-License-Identifier: agpl-3.0
 pragma solidity 0.8.23;
 
-import {LendingPool} from "contracts/protocol/core/lendingpool/LendingPool.sol";
+import {LendingPool} from "../../contracts/protocol/core/lendingpool/LendingPool.sol";
 import {LendingPoolAddressesProvider} from
-    "contracts/protocol/configuration/LendingPoolAddressesProvider.sol";
+    "../../contracts/protocol/configuration/LendingPoolAddressesProvider.sol";
 import {LendingPoolConfigurator} from
-    "contracts/protocol/core/lendingpool/LendingPoolConfigurator.sol";
-import {AToken} from "contracts/protocol/tokenization/ERC20/AToken.sol";
+    "../../contracts/protocol/core/lendingpool/LendingPoolConfigurator.sol";
+import {AToken} from "../../contracts/protocol/tokenization/ERC20/AToken.sol";
 import {DefaultReserveInterestRateStrategy} from
-    "contracts/protocol/core/interestRateStrategies/DefaultReserveInterestRateStrategy.sol";
-import {Ownable} from "contracts/dependencies/openzeppelin/contracts/Ownable.sol";
+    "../../contracts/protocol/core/interestRateStrategies/DefaultReserveInterestRateStrategy.sol";
+import {Ownable} from "../../contracts/dependencies/openzeppelin/contracts/Ownable.sol";
 
 /**
  * @title ATokensAndRatesHelper

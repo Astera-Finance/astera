@@ -1,27 +1,27 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity 0.8.23;
 
-import {IERC20} from "contracts/dependencies/openzeppelin/contracts/IERC20.sol";
-import {SafeERC20} from "contracts/dependencies/openzeppelin/contracts/SafeERC20.sol";
-import {IPriceOracleGetter} from "contracts/interfaces/IPriceOracleGetter.sol";
-import {IMiniPoolAddressesProvider} from "contracts/interfaces/IMiniPoolAddressesProvider.sol";
-import {IAToken} from "contracts/interfaces/IAToken.sol";
-import {IAERC6909} from "contracts/interfaces/IAERC6909.sol";
-import {IVariableDebtToken} from "contracts/interfaces/IVariableDebtToken.sol";
-import {WadRayMath} from "contracts/protocol/libraries/math/WadRayMath.sol";
-import {PercentageMath} from "contracts/protocol/libraries/math/PercentageMath.sol";
-import {Errors} from "contracts/protocol/libraries/helpers/Errors.sol";
-import {DataTypes} from "contracts/protocol/libraries/types/DataTypes.sol";
+import {IERC20} from "../../../../../contracts/dependencies/openzeppelin/contracts/IERC20.sol";
+import {SafeERC20} from "../../../../../contracts/dependencies/openzeppelin/contracts/SafeERC20.sol";
+import {IPriceOracleGetter} from "../../../../../contracts/interfaces/IPriceOracleGetter.sol";
+import {IMiniPoolAddressesProvider} from "../../../../../contracts/interfaces/IMiniPoolAddressesProvider.sol";
+import {IAToken} from "../../../../../contracts/interfaces/IAToken.sol";
+import {IAERC6909} from "../../../../../contracts/interfaces/IAERC6909.sol";
+import {IVariableDebtToken} from "../../../../../contracts/interfaces/IVariableDebtToken.sol";
+import {WadRayMath} from "../../../../../contracts/protocol/libraries/math/WadRayMath.sol";
+import {PercentageMath} from "../../../../../contracts/protocol/libraries/math/PercentageMath.sol";
+import {Errors} from "../../../../../contracts/protocol/libraries/helpers/Errors.sol";
+import {DataTypes} from "../../../../../contracts/protocol/libraries/types/DataTypes.sol";
 import {MiniPoolGenericLogic} from "./MiniPoolGenericLogic.sol";
 import {MiniPoolReserveLogic} from "./MiniPoolReserveLogic.sol";
 import {MiniPoolValidationLogic} from "./MiniPoolValidationLogic.sol";
 import {ReserveConfiguration} from
-    "contracts/protocol/libraries/configuration/ReserveConfiguration.sol";
+    "../../../../../contracts/protocol/libraries/configuration/ReserveConfiguration.sol";
 import {ReserveBorrowConfiguration} from
-    "contracts/protocol/libraries/configuration/ReserveBorrowConfiguration.sol";
-import {UserConfiguration} from "contracts/protocol/libraries/configuration/UserConfiguration.sol";
-import {UserRecentBorrow} from "contracts/protocol/libraries/configuration/UserRecentBorrow.sol";
-import {Helpers} from "contracts/protocol/libraries/helpers/Helpers.sol";
+    "../../../../../contracts/protocol/libraries/configuration/ReserveBorrowConfiguration.sol";
+import {UserConfiguration} from "../../../../../contracts/protocol/libraries/configuration/UserConfiguration.sol";
+import {UserRecentBorrow} from "../../../../../contracts/protocol/libraries/configuration/UserRecentBorrow.sol";
+import {Helpers} from "../../../../../contracts/protocol/libraries/helpers/Helpers.sol";
 
 /**
  * @title BorrowLogic library

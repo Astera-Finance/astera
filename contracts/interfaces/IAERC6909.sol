@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: agpl-3.0
 pragma solidity ^0.8.0;
 
-import {IMiniPoolRewarder} from "contracts/interfaces/IMiniPoolRewarder.sol";
-import {IMiniPool} from "contracts/interfaces/IMiniPool.sol";
-import {IERC6909} from "contracts/interfaces/IERC6909.sol";
+import {IMiniPoolRewarder} from "../../contracts/interfaces/IMiniPoolRewarder.sol";
+import {IMiniPool} from "../../contracts/interfaces/IMiniPool.sol";
+import {IERC6909} from "../../contracts/interfaces/IERC6909.sol";
 
 /**
  * @title IAERC6909
