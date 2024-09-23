@@ -41,7 +41,7 @@ contract MiniPoolAddressProvider is Common {
             deployedContracts.lendingPoolConfigurator,
             deployedContracts.lendingPoolAddressesProvider
         );
-        mockedVaults = fixture_deployErc4626Mocks(tokens, address(deployedContracts.treasury));
+        mockedVaults = fixture_deployReaperVaultMocks(tokens, address(deployedContracts.treasury));
         erc20Tokens = fixture_getErc20Tokens(tokens);
         fixture_transferTokensToTestContract(erc20Tokens, 1_000_000 ether, address(this));
         miniPoolContracts = fixture_deployMiniPoolSetup(
