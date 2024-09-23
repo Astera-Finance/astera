@@ -2,15 +2,15 @@
 pragma solidity ^0.8.20;
 
 import {IMiniPoolReserveInterestRateStrategy} from
-    "contracts/interfaces/IMiniPoolReserveInterestRateStrategy.sol";
-import {WadRayMath} from "contracts/protocol/libraries/math/WadRayMath.sol";
-import {PercentageMath} from "contracts/protocol/libraries/math/PercentageMath.sol";
-import {ILendingPoolAddressesProvider} from "contracts/interfaces/ILendingPoolAddressesProvider.sol";
-import {IERC20} from "contracts/dependencies/openzeppelin/contracts/IERC20.sol";
-import {IMiniPoolAddressesProvider} from "contracts/interfaces/IMiniPoolAddressesProvider.sol";
-import {IFlowLimiter} from "contracts/interfaces/IFlowLimiter.sol";
-import {IAToken} from "contracts/interfaces/IAToken.sol";
-import {IAERC6909} from "contracts/interfaces/IAERC6909.sol";
+    "../../../../contracts/interfaces/IMiniPoolReserveInterestRateStrategy.sol";
+import {WadRayMath} from "../../../../contracts/protocol/libraries/math/WadRayMath.sol";
+import {PercentageMath} from "../../../../contracts/protocol/libraries/math/PercentageMath.sol";
+import {ILendingPoolAddressesProvider} from "../../../../contracts/interfaces/ILendingPoolAddressesProvider.sol";
+import {IERC20} from "../../../../contracts/dependencies/openzeppelin/contracts/IERC20.sol";
+import {IMiniPoolAddressesProvider} from "../../../../contracts/interfaces/IMiniPoolAddressesProvider.sol";
+import {IFlowLimiter} from "../../../../contracts/interfaces/IFlowLimiter.sol";
+import {IAToken} from "../../../../contracts/interfaces/IAToken.sol";
+import {IAERC6909} from "../../../../contracts/interfaces/IAERC6909.sol";
 
 /**
  * @title DefaultReserveInterestRateStrategy contract

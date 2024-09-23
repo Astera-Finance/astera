@@ -1,17 +1,17 @@
 // SPDX-License-Identifier: agpl-3.0
 pragma solidity 0.8.23;
 
-import {Ownable} from "contracts/dependencies/openzeppelin/contracts/Ownable.sol";
-import {IERC20} from "contracts/dependencies/openzeppelin/contracts/IERC20.sol";
-import {IWETH} from "contracts/interfaces/IWETH.sol";
-import {IWETHGateway} from "contracts/interfaces/IWETHGateway.sol";
-import {ILendingPool} from "contracts/interfaces/ILendingPool.sol";
-import {IAToken} from "contracts/interfaces/IAToken.sol";
+import {Ownable} from "../../contracts/dependencies/openzeppelin/contracts/Ownable.sol";
+import {IERC20} from "../../contracts/dependencies/openzeppelin/contracts/IERC20.sol";
+import {IWETH} from "../../contracts/interfaces/IWETH.sol";
+import {IWETHGateway} from "../../contracts/interfaces/IWETHGateway.sol";
+import {ILendingPool} from "../../contracts/interfaces/ILendingPool.sol";
+import {IAToken} from "../../contracts/interfaces/IAToken.sol";
 import {ReserveConfiguration} from
-    "contracts/protocol/libraries/configuration/ReserveConfiguration.sol";
-import {UserConfiguration} from "contracts/protocol/libraries/configuration/UserConfiguration.sol";
-import {Helpers} from "contracts/protocol/libraries/helpers/Helpers.sol";
-import {DataTypes} from "contracts/protocol/libraries/types/DataTypes.sol";
+    "../../contracts/protocol/libraries/configuration/ReserveConfiguration.sol";
+import {UserConfiguration} from "../../contracts/protocol/libraries/configuration/UserConfiguration.sol";
+import {Helpers} from "../../contracts/protocol/libraries/helpers/Helpers.sol";
+import {DataTypes} from "../../contracts/protocol/libraries/types/DataTypes.sol";
 
 /**
  * @title WETHGateway

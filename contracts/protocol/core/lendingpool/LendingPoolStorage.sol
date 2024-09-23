@@ -1,12 +1,12 @@
 // SPDX-License-Identifier: agpl-3.0
 pragma solidity 0.8.23;
 
-import {UserConfiguration} from "contracts/protocol/libraries/configuration/UserConfiguration.sol";
+import {UserConfiguration} from "../../../../contracts/protocol/libraries/configuration/UserConfiguration.sol";
 import {ReserveConfiguration} from
-    "contracts/protocol/libraries/configuration/ReserveConfiguration.sol";
-import {ReserveLogic} from "contracts/protocol/core/lendingpool/logic/ReserveLogic.sol";
-import {ILendingPoolAddressesProvider} from "contracts/interfaces/ILendingPoolAddressesProvider.sol";
-import {DataTypes} from "contracts/protocol/libraries/types/DataTypes.sol";
+    "../../../../contracts/protocol/libraries/configuration/ReserveConfiguration.sol";
+import {ReserveLogic} from "../../../../contracts/protocol/core/lendingpool/logic/ReserveLogic.sol";
+import {ILendingPoolAddressesProvider} from "../../../../contracts/interfaces/ILendingPoolAddressesProvider.sol";
+import {DataTypes} from "../../../../contracts/protocol/libraries/types/DataTypes.sol";
 
 /**
  * @title LendingPoolStorage

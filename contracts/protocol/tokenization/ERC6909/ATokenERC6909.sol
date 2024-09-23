@@ -1,19 +1,19 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity 0.8.23;
 
-import {ILendingPool} from "contracts/interfaces/ILendingPool.sol";
-import {IAToken} from "contracts/interfaces/IAToken.sol";
-import {WadRayMath} from "contracts/protocol/libraries/math/WadRayMath.sol";
-import {Errors} from "contracts/protocol/libraries/helpers/Errors.sol";
+import {ILendingPool} from "../../../../contracts/interfaces/ILendingPool.sol";
+import {IAToken} from "../../../../contracts/interfaces/IAToken.sol";
+import {WadRayMath} from "../../../../contracts/protocol/libraries/math/WadRayMath.sol";
+import {Errors} from "../../../../contracts/protocol/libraries/helpers/Errors.sol";
 import {VersionedInitializable} from
-    "contracts/protocol/libraries/upgradeability/VersionedInitializable.sol";
-import {DataTypes} from "contracts/protocol/libraries/types/DataTypes.sol";
-import {ReserveLogic} from "contracts/protocol/core/lendingpool/logic/ReserveLogic.sol";
-import {IncentivizedERC6909} from "./IncentivizedERC6909.sol";
-import {IMiniPoolRewarder} from "contracts/interfaces/IMiniPoolRewarder.sol";
-import {IERC20} from "contracts/dependencies/openzeppelin/contracts/IERC20.sol";
-import {IMiniPoolAddressesProvider} from "contracts/interfaces/IMiniPoolAddressesProvider.sol";
-import {IMiniPool} from "contracts/interfaces/IMiniPool.sol";
+    "../../../../contracts/protocol/libraries/upgradeability/VersionedInitializable.sol";
+import {DataTypes} from "../../../../contracts/protocol/libraries/types/DataTypes.sol";
+import {ReserveLogic} from "../../../../contracts/protocol/core/lendingpool/logic/ReserveLogic.sol";
+import {IncentivizedERC6909} from "../../../../contracts/protocol/tokenization/ERC6909/IncentivizedERC6909.sol";
+import {IMiniPoolRewarder} from "../../../../contracts/interfaces/IMiniPoolRewarder.sol";
+import {IERC20} from "../../../../contracts/dependencies/openzeppelin/contracts/IERC20.sol";
+import {IMiniPoolAddressesProvider} from "../../../../contracts/interfaces/IMiniPoolAddressesProvider.sol";
+import {IMiniPool} from "../../../../contracts/interfaces/IMiniPool.sol";
 
 /**
  * @title ERC6909-MultiToken Built to service all collateral and debt tokens for a specific MiniPool

@@ -1,17 +1,17 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity 0.8.23;
 
-import {IERC20} from "contracts/dependencies/openzeppelin/contracts/IERC20.sol";
-import {IAToken} from "contracts/interfaces/IAToken.sol";
-import {IAERC6909} from "contracts/interfaces/IAERC6909.sol";
+import {IERC20} from "../../../../../contracts/dependencies/openzeppelin/contracts/IERC20.sol";
+import {IAToken} from "../../../../../contracts/interfaces/IAToken.sol";
+import {IAERC6909} from "../../../../../contracts/interfaces/IAERC6909.sol";
 import {MiniPoolReserveLogic} from "./MiniPoolReserveLogic.sol";
 import {ReserveConfiguration} from
-    "contracts/protocol/libraries/configuration/ReserveConfiguration.sol";
-import {UserConfiguration} from "contracts/protocol/libraries/configuration/UserConfiguration.sol";
-import {WadRayMath} from "contracts/protocol/libraries/math/WadRayMath.sol";
-import {PercentageMath} from "contracts/protocol/libraries/math/PercentageMath.sol";
-import {IPriceOracleGetter} from "contracts/interfaces/IPriceOracleGetter.sol";
-import {DataTypes} from "contracts/protocol/libraries/types/DataTypes.sol";
+    "../../../../../contracts/protocol/libraries/configuration/ReserveConfiguration.sol";
+import {UserConfiguration} from "../../../../../contracts/protocol/libraries/configuration/UserConfiguration.sol";
+import {WadRayMath} from "../../../../../contracts/protocol/libraries/math/WadRayMath.sol";
+import {PercentageMath} from "../../../../../contracts/protocol/libraries/math/PercentageMath.sol";
+import {IPriceOracleGetter} from "../../../../../contracts/interfaces/IPriceOracleGetter.sol";
+import {DataTypes} from "../../../../../contracts/protocol/libraries/types/DataTypes.sol";
 
 /**
  * @title GenericLogic library

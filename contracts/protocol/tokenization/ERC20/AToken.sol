@@ -1,18 +1,18 @@
 // SPDX-License-Identifier: agpl-3.0
 pragma solidity 0.8.23;
 
-import {IERC20} from "contracts/dependencies/openzeppelin/contracts/IERC20.sol";
-import {SafeERC20} from "contracts/dependencies/openzeppelin/contracts/SafeERC20.sol";
-import {ILendingPool} from "contracts/interfaces/ILendingPool.sol";
-import {IAToken} from "contracts/interfaces/IAToken.sol";
-import {WadRayMath} from "contracts/protocol/libraries/math/WadRayMath.sol";
-import {Errors} from "contracts/protocol/libraries/helpers/Errors.sol";
+import {IERC20} from "../../../../contracts/dependencies/openzeppelin/contracts/IERC20.sol";
+import {SafeERC20} from "../../../../contracts/dependencies/openzeppelin/contracts/SafeERC20.sol";
+import {ILendingPool} from "../../../../contracts/interfaces/ILendingPool.sol";
+import {IAToken} from "../../../../contracts/interfaces/IAToken.sol";
+import {WadRayMath} from "../../../../contracts/protocol/libraries/math/WadRayMath.sol";
+import {Errors} from "../../../../contracts/protocol/libraries/helpers/Errors.sol";
 import {VersionedInitializable} from
-    "contracts/protocol/libraries/upgradeability/VersionedInitializable.sol";
-import {IncentivizedERC20} from "./IncentivizedERC20.sol";
-import {IRewarder} from "contracts/interfaces/IRewarder.sol";
-import {IERC4626} from "contracts/interfaces/IERC4626.sol";
-import {ATokenNonRebasing} from "./ATokenNonRebasing.sol";
+    "../../../../contracts/protocol/libraries/upgradeability/VersionedInitializable.sol";
+import {IncentivizedERC20} from "../../../../contracts/protocol/tokenization/ERC20/IncentivizedERC20.sol";
+import {IRewarder} from "../../../../contracts/interfaces/IRewarder.sol";
+import {IERC4626} from "../../../../contracts/interfaces/IERC4626.sol";
+import {ATokenNonRebasing} from "../../../../contracts/protocol/tokenization/ERC20/ATokenNonRebasing.sol";
 
 /**
  * @title Aave ERC20 AToken

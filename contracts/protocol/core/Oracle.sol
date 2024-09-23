@@ -1,14 +1,14 @@
 // SPDX-License-Identifier: agpl-3.0
 pragma solidity 0.8.23;
 
-import {Ownable} from "contracts/dependencies/openzeppelin/contracts/Ownable.sol";
-import {IERC20} from "contracts/dependencies/openzeppelin/contracts/IERC20.sol";
-import {IPriceOracleGetter} from "contracts/interfaces/IPriceOracleGetter.sol";
-import {IChainlinkAggregator} from "contracts/interfaces/IChainlinkAggregator.sol";
-import {SafeERC20} from "contracts/dependencies/openzeppelin/contracts/SafeERC20.sol";
-import {IAToken} from "contracts/interfaces/IAToken.sol";
-import {IMiniPool} from "contracts/interfaces/IMiniPool.sol";
-import {ATokenNonRebasing} from "contracts/protocol/tokenization/ERC20/ATokenNonRebasing.sol";
+import {Ownable} from "../../../contracts/dependencies/openzeppelin/contracts/Ownable.sol";
+import {IERC20} from "../../../contracts/dependencies/openzeppelin/contracts/IERC20.sol";
+import {IPriceOracleGetter} from "../../../contracts/interfaces/IPriceOracleGetter.sol";
+import {IChainlinkAggregator} from "../../../contracts/interfaces/IChainlinkAggregator.sol";
+import {SafeERC20} from "../../../contracts/dependencies/openzeppelin/contracts/SafeERC20.sol";
+import {IAToken} from "../../../contracts/interfaces/IAToken.sol";
+import {IMiniPool} from "../../../contracts/interfaces/IMiniPool.sol";
+import {ATokenNonRebasing} from "../../../contracts/protocol/tokenization/ERC20/ATokenNonRebasing.sol";
 
 /// @title Oracle
 /// @author Cod3x

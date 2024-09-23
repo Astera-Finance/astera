@@ -1,10 +1,10 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity 0.8.23;
 
-import {IMiniPoolRewardsDistributor} from "contracts/interfaces/IMiniPoolRewardsDistributor.sol";
-import {IERC20Detailed} from "contracts/dependencies/openzeppelin/contracts/IERC20Detailed.sol";
-import {IERC6909} from "contracts/interfaces/IERC6909.sol";
-import {DistributionTypes} from "contracts/protocol/libraries/types/DistributionTypes.sol";
+import {IMiniPoolRewardsDistributor} from "../../../../contracts/interfaces/IMiniPoolRewardsDistributor.sol";
+import {IERC20Detailed} from "../../../../contracts/dependencies/openzeppelin/contracts/IERC20Detailed.sol";
+import {IERC6909} from "../../../../contracts/interfaces/IERC6909.sol";
+import {DistributionTypes} from "../../../../contracts/protocol/libraries/types/DistributionTypes.sol";
 import {Ownable} from "lib/openzeppelin-contracts/contracts/access/Ownable.sol";
 
 /**

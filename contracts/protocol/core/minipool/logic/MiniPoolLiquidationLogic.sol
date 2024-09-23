@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity 0.8.23;
 
-import {ILendingPoolAddressesProvider} from "contracts/interfaces/ILendingPoolAddressesProvider.sol";
-import {Errors} from "contracts/protocol/libraries/helpers/Errors.sol";
+import {ILendingPoolAddressesProvider} from "../../../../../contracts/interfaces/ILendingPoolAddressesProvider.sol";
+import {Errors} from "../../../../../contracts/protocol/libraries/helpers/Errors.sol";
 
 /**
  * @title MiniPoolLiquidationLogic

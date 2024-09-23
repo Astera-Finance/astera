@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: agpl-3.0
 pragma solidity 0.8.23;
 
-import {AToken} from "./AToken.sol";
+import {AToken} from "../../../../contracts/protocol/tokenization/ERC20/AToken.sol";
 
 /**
  * @title ERC20 Non Rebasing AToken wrapper

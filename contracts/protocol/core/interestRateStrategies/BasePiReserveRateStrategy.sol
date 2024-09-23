@@ -1,14 +1,14 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity 0.8.23;
 
-// import {IReserveInterestRateStrategy} from "contracts/interfaces/IReserveInterestRateStrategy.sol";
-import {WadRayMath} from "contracts/protocol/libraries/math/WadRayMath.sol";
-import {PercentageMath} from "contracts/protocol/libraries/math/PercentageMath.sol";
-import {DataTypes} from "contracts/protocol/libraries/types/DataTypes.sol";
+// import {IReserveInterestRateStrategy} from "../../../../contracts/interfaces/IReserveInterestRateStrategy.sol";
+import {WadRayMath} from "../../../../contracts/protocol/libraries/math/WadRayMath.sol";
+import {PercentageMath} from "../../../../contracts/protocol/libraries/math/PercentageMath.sol";
+import {DataTypes} from "../../../../contracts/protocol/libraries/types/DataTypes.sol";
 import {ReserveConfiguration} from
-    "contracts/protocol/libraries/configuration/ReserveConfiguration.sol";
-import {Ownable} from "contracts/dependencies/openzeppelin/contracts/Ownable.sol";
-import {Errors} from "contracts/protocol/libraries/helpers/Errors.sol";
+    "../../../../contracts/protocol/libraries/configuration/ReserveConfiguration.sol";
+import {Ownable} from "../../../../contracts/dependencies/openzeppelin/contracts/Ownable.sol";
+import {Errors} from "../../../../contracts/protocol/libraries/helpers/Errors.sol";
 
 /**
  * @title PiReserveInterestRateStrategy contract

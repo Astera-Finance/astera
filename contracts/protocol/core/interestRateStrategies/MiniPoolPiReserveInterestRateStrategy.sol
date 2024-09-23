@@ -1,18 +1,18 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity 0.8.23;
 
-import {IMiniPoolAddressesProvider} from "contracts/interfaces/IMiniPoolAddressesProvider.sol";
-import {IERC20} from "contracts/dependencies/openzeppelin/contracts/IERC20.sol";
-import {IAERC6909} from "contracts/interfaces/IAERC6909.sol";
-import {IMiniPool} from "contracts/interfaces/IMiniPool.sol";
+import {IMiniPoolAddressesProvider} from "../../../../contracts/interfaces/IMiniPoolAddressesProvider.sol";
+import {IERC20} from "../../../../contracts/dependencies/openzeppelin/contracts/IERC20.sol";
+import {IAERC6909} from "../../../../contracts/interfaces/IAERC6909.sol";
+import {IMiniPool} from "../../../../contracts/interfaces/IMiniPool.sol";
 import {IMiniPoolReserveInterestRateStrategy} from
-    "contracts/interfaces/IMiniPoolReserveInterestRateStrategy.sol";
+    "../../../../contracts/interfaces/IMiniPoolReserveInterestRateStrategy.sol";
 import {
     BasePiReserveRateStrategy,
     WadRayMath,
     PercentageMath,
     DataTypes
-} from "contracts/protocol/core/interestRateStrategies/BasePiReserveRateStrategy.sol";
+} from "../../../../contracts/protocol/core/interestRateStrategies/BasePiReserveRateStrategy.sol";
 
 /**
  * @title PiReserveInterestRateStrategy contract

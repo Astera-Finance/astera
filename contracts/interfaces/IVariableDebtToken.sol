@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: agpl-3.0
 pragma solidity ^0.8.0;
 
-import {IScaledBalanceToken} from "./IScaledBalanceToken.sol";
-import {IInitializableDebtToken} from "./IInitializableDebtToken.sol";
-import {IRewarder} from "./IRewarder.sol";
+import {IScaledBalanceToken} from "../../contracts/interfaces/IScaledBalanceToken.sol";
+import {IInitializableDebtToken} from "../../contracts/interfaces/IInitializableDebtToken.sol";
+import {IRewarder} from "../../contracts/interfaces/IRewarder.sol";
 
 /**
  * @title IVariableDebtToken

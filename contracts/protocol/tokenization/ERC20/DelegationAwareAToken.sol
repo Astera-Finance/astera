@@ -1,11 +1,10 @@
 // SPDX-License-Identifier: agpl-3.0
 pragma solidity 0.8.23;
 
-import {ILendingPool} from "contracts/interfaces/ILendingPool.sol";
-import {IDelegationToken} from "contracts/interfaces/IDelegationToken.sol";
-import {Errors} from "contracts/protocol/libraries/helpers/Errors.sol";
-import {AToken} from "./AToken.sol";
-
+import {ILendingPool} from "../../../../contracts/interfaces/ILendingPool.sol";
+import {IDelegationToken} from "../../../../contracts/interfaces/IDelegationToken.sol";
+import {Errors} from "../../../../contracts/protocol/libraries/helpers/Errors.sol";
+import {AToken} from "../../../../contracts/protocol/tokenization/ERC20/AToken.sol";
 /**
  * @title Aave AToken enabled to delegate voting power of the underlying asset to a different address
  * @dev The underlying asset needs to be compatible with the COMP delegation interface

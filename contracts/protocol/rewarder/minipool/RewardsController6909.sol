@@ -1,11 +1,11 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity 0.8.23;
 
-import {IMiniPoolRewardsController} from "contracts/interfaces/IMiniPoolRewardsController.sol";
+import {IMiniPoolRewardsController} from "../../../../contracts/interfaces/IMiniPoolRewardsController.sol";
 import {RewardsDistributor6909} from "./RewardsDistributor6909.sol";
-import {IScaledBalanceToken} from "contracts/interfaces/IScaledBalanceToken.sol";
-import {IAERC6909} from "contracts/interfaces/IAERC6909.sol";
-import {DistributionTypes} from "contracts/protocol/libraries/types/DistributionTypes.sol";
+import {IScaledBalanceToken} from "../../../../contracts/interfaces/IScaledBalanceToken.sol";
+import {IAERC6909} from "../../../../contracts/interfaces/IAERC6909.sol";
+import {DistributionTypes} from "../../../../contracts/protocol/libraries/types/DistributionTypes.sol";
 
 /**
  * @title RewardsController6909

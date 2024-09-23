@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: agpl-3.0
 pragma solidity 0.8.23;
 
-import {IERC20} from "contracts/dependencies/openzeppelin/contracts/IERC20.sol";
-import {IERC6909} from "contracts/interfaces/IERC6909.sol";
-import {DataTypes} from "contracts/protocol/libraries/types/DataTypes.sol";
+import {IERC20} from "../../../../contracts/dependencies/openzeppelin/contracts/IERC20.sol";
+import {IERC6909} from "../../../../contracts/interfaces/IERC6909.sol";
+import {DataTypes} from "../../../../contracts/protocol/libraries/types/DataTypes.sol";
 
 /**
  * @title Helpers library

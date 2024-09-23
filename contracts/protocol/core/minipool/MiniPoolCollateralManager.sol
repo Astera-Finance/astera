@@ -1,26 +1,26 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity 0.8.23;
 
-import {IERC20} from "contracts/dependencies/openzeppelin/contracts/IERC20.sol";
-import {IAToken} from "contracts/interfaces/IAToken.sol";
-import {IAERC6909} from "contracts/interfaces/IAERC6909.sol";
-import {IVariableDebtToken} from "contracts/interfaces/IVariableDebtToken.sol";
-import {IPriceOracleGetter} from "contracts/interfaces/IPriceOracleGetter.sol";
-import {ILendingPoolCollateralManager} from "contracts/interfaces/ILendingPoolCollateralManager.sol";
+import {IERC20} from "../../../../contracts/dependencies/openzeppelin/contracts/IERC20.sol";
+import {IAToken} from "../../../../contracts/interfaces/IAToken.sol";
+import {IAERC6909} from "../../../../contracts/interfaces/IAERC6909.sol";
+import {IVariableDebtToken} from "../../../../contracts/interfaces/IVariableDebtToken.sol";
+import {IPriceOracleGetter} from "../../../../contracts/interfaces/IPriceOracleGetter.sol";
+import {ILendingPoolCollateralManager} from "../../../../contracts/interfaces/ILendingPoolCollateralManager.sol";
 import {VersionedInitializable} from
-    "contracts/protocol/libraries/upgradeability/VersionedInitializable.sol";
+    "../../../../contracts/protocol/libraries/upgradeability/VersionedInitializable.sol";
 import {MiniPoolGenericLogic} from "./logic/MiniPoolGenericLogic.sol";
-import {Helpers} from "contracts/protocol/libraries/helpers/Helpers.sol";
-import {WadRayMath} from "contracts/protocol/libraries/math/WadRayMath.sol";
-import {PercentageMath} from "contracts/protocol/libraries/math/PercentageMath.sol";
-import {SafeERC20} from "contracts/dependencies/openzeppelin/contracts/SafeERC20.sol";
-import {Errors} from "contracts/protocol/libraries/helpers/Errors.sol";
+import {Helpers} from "../../../../contracts/protocol/libraries/helpers/Helpers.sol";
+import {WadRayMath} from "../../../../contracts/protocol/libraries/math/WadRayMath.sol";
+import {PercentageMath} from "../../../../contracts/protocol/libraries/math/PercentageMath.sol";
+import {SafeERC20} from "../../../../contracts/dependencies/openzeppelin/contracts/SafeERC20.sol";
+import {Errors} from "../../../../contracts/protocol/libraries/helpers/Errors.sol";
 import {MiniPoolValidationLogic} from "./logic/MiniPoolValidationLogic.sol";
-import {UserConfiguration} from "contracts/protocol/libraries/configuration/UserConfiguration.sol";
+import {UserConfiguration} from "../../../../contracts/protocol/libraries/configuration/UserConfiguration.sol";
 import {ReserveConfiguration} from
-    "contracts/protocol/libraries/configuration/ReserveConfiguration.sol";
+    "../../../../contracts/protocol/libraries/configuration/ReserveConfiguration.sol";
 import {MiniPoolReserveLogic} from "./logic/MiniPoolReserveLogic.sol";
-import {DataTypes} from "contracts/protocol/libraries/types/DataTypes.sol";
+import {DataTypes} from "../../../../contracts/protocol/libraries/types/DataTypes.sol";
 import {MiniPoolStorage} from "./MiniPoolStorage.sol";
 
 /**

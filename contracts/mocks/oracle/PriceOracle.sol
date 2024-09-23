@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: agpl-3.0
 pragma solidity ^0.8.0;
 
-import {IPriceOracle} from "contracts/interfaces/IPriceOracle.sol";
+import {IPriceOracle} from "../../../contracts/interfaces/IPriceOracle.sol";
 
 contract PriceOracle is IPriceOracle {
     mapping(address => uint256) prices;
