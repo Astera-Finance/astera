@@ -30,55 +30,13 @@ import "forge-std/StdUtils.sol";
 // // }
 
 contract RehypothecationTest is Common, LendingPoolTest {
-    // DeployedContracts deployedContracts;
-    // ConfigAddresses configAddresses;
-    // ERC20[] erc20Tokens;
-
-    // function setUp() public {
-    //     opFork = vm.createSelectFork(RPC, FORK_BLOCK);
-    //     assertEq(vm.activeFork(), opFork);
-    //     deployedContracts = fixture_deployProtocol();
-    //     configAddresses = ConfigAddresses(
-    //         address(deployedContracts.protocolDataProvider),
-    //         address(deployedContracts.stableStrategy),
-    //         address(deployedContracts.volatileStrategy),
-    //         address(deployedContracts.treasury),
-    //         address(deployedContracts.rewarder),
-    //         address(deployedContracts.aTokensAndRatesHelper)
-    //     );
-    //     fixture_configureProtocol(
-    //         address(deployedContracts.lendingPool),
-    //         address(aToken),
-    //         configAddresses,
-    //         deployedContracts.lendingPoolConfigurator,
-    //         deployedContracts.lendingPoolAddressesProvider
-    //     );
-    //     mockedVaults = fixture_deployReaperVaultMocks(tokens, address(deployedContracts.treasury));
-    //     erc20Tokens = fixture_getErc20Tokens(tokens);
-    //     fixture_transferTokensToTestContract(erc20Tokens, 100_000 ether, address(this));
-    // }
-
     function testRebalance(uint256 idx) public {
         idx = bound(idx, 0, tokens.length - 1);
         ERC20 token = erc20Tokens[idx];
-        // address gibbons = makeAddr("gibbons");
         uint256 depositSize = 10 ** token.decimals();
-        // deal(address(token), gibbons, depositSize);
-        // vm.prank(gibbons);
+
         token.approve(address(deployedContracts.lendingPool), type(uint256).max);
-        // vm.prank(gibbons);
         deployedContracts.lendingPool.deposit(address(token), true, depositSize, address(this));
-        // vm.startPrank(admin);
-        // deployedContracts.lendingPoolConfigurator.setVault(
-        //     address(aTokens[idx]), address(mockedVaults[idx])
-        // );
-        // deployedContracts.lendingPoolConfigurator.setFarmingPct(address(aTokens[idx]), 2000);
-        // deployedContracts.lendingPoolConfigurator.setClaimingThreshold(
-        //     address(aTokens[idx]), 10 ** (token.decimals() - 1)
-        // );
-        // deployedContracts.lendingPoolConfigurator.setFarmingPctDrift(address(aTokens[idx]), 200);
-        // deployedContracts.lendingPoolConfigurator.setProfitHandler(address(aTokens[idx]), admin);
-        // vm.stopPrank();
         turnOnRehypothecation(
             deployedContracts.lendingPoolConfigurator,
             address(aTokens[idx]),
@@ -252,6 +210,96 @@ contract RehypothecationTest is Common, LendingPoolTest {
         uint256 depositSize;
         uint256 initialBalance;
         uint256 remainingPct;
+    }
+
+    function testRehypothecationWithVariousVaultReturns(uint256 vaultReturnPct, uint256 amount)
+        public
+    {
+        vaultReturnPct = bound(vaultReturnPct, 10, 19000); //0.01% to 200 %
+        for (uint8 idx = 0; idx < tokens.length; idx++) {
+            amount = bound(amount, 1e2, erc20Tokens[idx].balanceOf(address(this)));
+            TokenTypes memory tokenTypes = TokenTypes({
+                token: erc20Tokens[idx],
+                aToken: aTokens[idx],
+                debtToken: variableDebtTokens[idx]
+            });
+            TokenVars memory tokenVars = TokenVars({
+                vault: mockVaultUnits[idx],
+                depositSize: amount,
+                initialBalance: tokenTypes.token.balanceOf(address(this)),
+                remainingPct: 0
+            });
+            turnOnRehypothecation(
+                deployedContracts.lendingPoolConfigurator,
+                address(tokenTypes.aToken),
+                address(tokenVars.vault),
+                admin,
+                8000,
+                erc20Tokens[idx].balanceOf(address(this)), // make profit unreachable in this test
+                200
+            );
+            fixture_deposit(
+                tokenTypes.token,
+                tokenTypes.aToken,
+                address(this),
+                address(this),
+                tokenVars.depositSize
+            );
+            tokenVars.remainingPct = 10000 - (tokenTypes.aToken.farmingPct());
+
+            assertApproxEqAbs(
+                tokenTypes.token.balanceOf(address(tokenTypes.aToken)),
+                ((tokenVars.depositSize * tokenVars.remainingPct) + 5000) / 10000,
+                1,
+                "token amount in aToken is wrong"
+            );
+            uint256 expectedVaultBalance =
+                (tokenVars.depositSize * tokenTypes.aToken.farmingPct() + 5000) / 10000;
+            assertApproxEqAbs(
+                tokenTypes.token.balanceOf(address(tokenVars.vault)),
+                expectedVaultBalance,
+                1,
+                "token amount in vault is wrong"
+            );
+
+            uint256 absReturn =
+                tokenTypes.token.balanceOf(address(tokenVars.vault)) * vaultReturnPct / 10000;
+            deal(address(tokenTypes.token), address(tokenVars.vault), absReturn);
+            // aToken rebalance shall be done despite of negative (< vault balance) or positive return
+            console.log("Rebalancing for value: %s vs %s", absReturn, expectedVaultBalance);
+            vm.startPrank(admin);
+            if (absReturn < expectedVaultBalance + 2 && absReturn > expectedVaultBalance - 2) {
+                deployedContracts.lendingPoolConfigurator.rebalance(address(tokenTypes.aToken));
+                assertApproxEqAbs(
+                    tokenTypes.token.balanceOf(address(tokenVars.vault)),
+                    tokenTypes.token.balanceOf(address(tokenVars.vault)),
+                    1,
+                    "token amount in vault is not the same after rebalance"
+                );
+            } else if (absReturn < expectedVaultBalance) {
+                // Negative return
+                vm.expectRevert(); // @issue: TEMPORARY (this is an issue!!!)
+                deployedContracts.lendingPoolConfigurator.rebalance(address(tokenTypes.aToken));
+                // Refund
+                deal(address(tokenTypes.token), address(tokenVars.vault), expectedVaultBalance);
+                deployedContracts.lendingPoolConfigurator.rebalance(address(tokenTypes.aToken));
+                assertApproxEqAbs(
+                    tokenTypes.token.balanceOf(address(tokenVars.vault)),
+                    tokenTypes.token.balanceOf(address(tokenVars.vault)),
+                    1,
+                    "token amount in vault is wrong after rebalance and refund"
+                );
+            } else {
+                deployedContracts.lendingPoolConfigurator.rebalance(address(tokenTypes.aToken));
+                assertGt(
+                    tokenTypes.token.balanceOf(address(tokenVars.vault)),
+                    expectedVaultBalance,
+                    "token amount in vault is wrong after rebalance"
+                );
+            }
+
+            vm.stopPrank();
+        }
     }
 
     function testDepositBorrowRepayAndWithdrawWithRehypoOn(uint256 timeDiff) public {
