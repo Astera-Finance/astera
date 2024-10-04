@@ -15,7 +15,7 @@ import {UserConfiguration} from "../../contracts/protocol/libraries/configuratio
 import {DataTypes} from "../../contracts/protocol/libraries/types/DataTypes.sol";
 import {IChainlinkAggregator} from "../../contracts/interfaces/IChainlinkAggregator.sol";
 import {DefaultReserveInterestRateStrategy} from
-    "../../contracts/protocol/core/interestRateStrategies/DefaultReserveInterestRateStrategy.sol";
+    "../../contracts/protocol/core/interestRateStrategies/lendingpool/DefaultReserveInterestRateStrategy.sol";
 import {IERC20DetailedBytes} from "../../contracts/interfaces/IERC20DetailedBytes.sol";
 
 /**

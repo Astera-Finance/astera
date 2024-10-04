@@ -2,18 +2,18 @@
 pragma solidity ^0.8.20;
 
 import {IMiniPoolReserveInterestRateStrategy} from
-    "../../../../contracts/interfaces/IMiniPoolReserveInterestRateStrategy.sol";
-import {WadRayMath} from "../../../../contracts/protocol/libraries/math/WadRayMath.sol";
-import {PercentageMath} from "../../../../contracts/protocol/libraries/math/PercentageMath.sol";
+    "../../../../../contracts/interfaces/IMiniPoolReserveInterestRateStrategy.sol";
+import {WadRayMath} from "../../../../../contracts/protocol/libraries/math/WadRayMath.sol";
+import {PercentageMath} from "../../../../../contracts/protocol/libraries/math/PercentageMath.sol";
 import {ILendingPoolAddressesProvider} from
-    "../../../../contracts/interfaces/ILendingPoolAddressesProvider.sol";
-import {IERC20} from "../../../../contracts/dependencies/openzeppelin/contracts/IERC20.sol";
+    "../../../../../contracts/interfaces/ILendingPoolAddressesProvider.sol";
+import {IERC20} from "../../../../../contracts/dependencies/openzeppelin/contracts/IERC20.sol";
 import {IMiniPoolAddressesProvider} from
-    "../../../../contracts/interfaces/IMiniPoolAddressesProvider.sol";
-import {IFlowLimiter} from "../../../../contracts/interfaces/IFlowLimiter.sol";
-import {IAToken} from "../../../../contracts/interfaces/IAToken.sol";
-import {IAERC6909} from "../../../../contracts/interfaces/IAERC6909.sol";
-import {Errors} from "../../../../contracts/protocol/libraries/helpers/Errors.sol";
+    "../../../../../contracts/interfaces/IMiniPoolAddressesProvider.sol";
+import {IFlowLimiter} from "../../../../../contracts/interfaces/IFlowLimiter.sol";
+import {IAToken} from "../../../../../contracts/interfaces/IAToken.sol";
+import {IAERC6909} from "../../../../../contracts/interfaces/IAERC6909.sol";
+import {Errors} from "../../../../../contracts/protocol/libraries/helpers/Errors.sol";
 
 /**
  * @title DefaultReserveInterestRateStrategy contract
@@ -105,8 +105,8 @@ contract MiniPoolDefaultReserveInterestRateStrategy is IMiniPoolReserveInterestR
         uint256 reserveFactor
     ) external view override returns (uint256, uint256) {
         uint256 availableLiquidity;
-
-        if (IAERC6909(aToken).isTranche(IAERC6909(aToken).MINIPOOL_ID())) {
+        (,, bool isTranched) = IAERC6909(aToken).getIdForUnderlying(reserve);
+        if (isTranched) {
             IFlowLimiter flowLimiter = IFlowLimiter(_addressesProvider.getFlowLimiter());
             address underlying = IAToken(reserve).UNDERLYING_ASSET_ADDRESS();
             address minipool = IAERC6909(aToken).MINIPOOL_ADDRESS();

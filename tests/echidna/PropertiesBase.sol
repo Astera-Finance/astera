@@ -45,7 +45,7 @@ import "contracts/protocol/configuration/LendingPoolAddressesProvider.sol";
 import "contracts/protocol/configuration/LendingPoolAddressesProviderRegistry.sol";
 
 import "contracts/protocol/core/lendingpool/LendingPoolCollateralManager.sol";
-import "contracts/protocol/core/interestRateStrategies/DefaultReserveInterestRateStrategy.sol";
+import "contracts/protocol/core/interestRateStrategies/lendingpool/DefaultReserveInterestRateStrategy.sol";
 import "contracts/protocol/core/lendingpool/LendingPoolConfigurator.sol";
 import "contracts/protocol/core/lendingpool/LendingPoolStorage.sol";
 

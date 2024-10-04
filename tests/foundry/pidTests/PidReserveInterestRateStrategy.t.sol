@@ -4,8 +4,7 @@ pragma solidity ^0.8.0;
 import "../Common.sol";
 import "contracts/protocol/libraries/helpers/Errors.sol";
 import {WadRayMath} from "contracts/protocol/libraries/math/WadRayMath.sol";
-import "contracts/protocol/core/interestRateStrategies/PidReserveInterestRateStrategy.sol";
-import "contracts/protocol/core/interestRateStrategies/PiReserveInterestRateStrategy.sol";
+import "contracts/protocol/core/interestRateStrategies/lendingpool/PiReserveInterestRateStrategy.sol";
 import "openzeppelin-contracts/contracts/utils/Strings.sol";
 
 contract PidReserveInterestRateStrategyTest is Common {
