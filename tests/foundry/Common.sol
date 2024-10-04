@@ -97,7 +97,7 @@ contract Common is Test {
         MiniPoolDefaultReserveInterestRateStrategy volatileStrategy;
         MiniPoolPiReserveInterestRateStrategy piStrategy;
         ATokenERC6909 aToken6909Impl;
-        flowLimiter flowLimiter;
+        FlowLimiter flowLimiter;
     }
 
     struct TokenParams {
@@ -493,7 +493,7 @@ contract Common is Test {
             // console.log("Atoken address", _variableDebtToken);
             string memory debtToken = string.concat("debtToken", uintToString(idx));
             vm.label(_variableDebtToken, debtToken);
-            console.log("Debt token%s: %s", idx, _variableDebtToken);
+            console.log("Debt token %s: %s", idx, _variableDebtToken);
             _varDebtTokens[idx] = VariableDebtToken(_variableDebtToken);
         }
     }
@@ -575,7 +575,7 @@ contract Common is Test {
             ILendingPoolAddressesProvider(_lendingPoolAddressesProvider)
         );
         deployedMiniPoolContracts.aToken6909Impl = new ATokenERC6909();
-        deployedMiniPoolContracts.flowLimiter = new flowLimiter(
+        deployedMiniPoolContracts.flowLimiter = new FlowLimiter(
             ILendingPoolAddressesProvider(_lendingPoolAddressesProvider),
             IMiniPoolAddressesProvider(address(deployedMiniPoolContracts.miniPoolAddressesProvider)),
             ILendingPool(_lendingPool)

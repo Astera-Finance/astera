@@ -7,9 +7,11 @@ import {Ownable} from "../../../contracts/dependencies/openzeppelin/contracts/Ow
 // prettier-ignore
 import {InitializableImmutableAdminUpgradeabilityProxy} from
     "../../../contracts/protocol/libraries/upgradeability/InitializableImmutableAdminUpgradeabilityProxy.sol";
-import {ILendingPoolAddressesProvider} from "../../../contracts/interfaces/ILendingPoolAddressesProvider.sol";
+import {ILendingPoolAddressesProvider} from
+    "../../../contracts/interfaces/ILendingPoolAddressesProvider.sol";
 import {IFlowLimiter} from "../../../contracts/interfaces/IFlowLimiter.sol";
-import {IMiniPoolAddressesProvider} from "../../../contracts/interfaces/IMiniPoolAddressesProvider.sol";
+import {IMiniPoolAddressesProvider} from
+    "../../../contracts/interfaces/IMiniPoolAddressesProvider.sol";
 
 /**
  * @title LendingPoolAddressesProvider contract
@@ -27,23 +29,15 @@ contract MiniPoolAddressesProvider is Ownable, IMiniPoolAddressesProvider {
     mapping(uint256 => address) private _miniPoolToTreasury;
     uint256 private _minipoolCount;
 
-    bytes32 private constant LENDING_POOL = "LENDING_POOL";
     bytes32 private constant LENDING_POOL_ADDRESSES_PROVIDER = "LENDING_POOL_ADDRESSES_PROVIDER";
     bytes32 private constant MINI_POOL_CONFIGURATOR = "MINI_POOL_CONFIGURATOR";
-    bytes32 private constant POOL_ADMIN = "POOL_ADMIN";
-    bytes32 private constant EMERGENCY_ADMIN = "EMERGENCY_ADMIN";
     bytes32 private constant LENDING_POOL_COLLATERAL_MANAGER = "COLLATERAL_MANAGER";
-    bytes32 private constant PRICE_ORACLE = "PRICE_ORACLE";
 
     bytes32 private constant MINIPOOL_IMPL = "MINIPOOL_IMPL";
     bytes32 private constant ATOKEN6909_IMPL = "ATOKEN6909_IMPL";
 
     constructor(ILendingPoolAddressesProvider provider) Ownable(msg.sender) {
         _addresses[LENDING_POOL_ADDRESSES_PROVIDER] = address(provider);
-        _addresses[LENDING_POOL] = provider.getLendingPool();
-        _addresses[POOL_ADMIN] = provider.getPoolAdmin();
-        _addresses[EMERGENCY_ADMIN] = provider.getEmergencyAdmin();
-        _addresses[PRICE_ORACLE] = provider.getPriceOracle();
     }
 
     function getMiniPoolCount() external view returns (uint256) {
@@ -55,7 +49,8 @@ contract MiniPoolAddressesProvider is Ownable, IMiniPoolAddressesProvider {
     }
 
     function getLendingPool() external view returns (address) {
-        return _addresses[LENDING_POOL];
+        return ILendingPoolAddressesProvider(_addresses[LENDING_POOL_ADDRESSES_PROVIDER])
+            .getLendingPool();
     }
 
     function getLendingPoolConfigurator() external view returns (address) {
@@ -63,11 +58,13 @@ contract MiniPoolAddressesProvider is Ownable, IMiniPoolAddressesProvider {
     }
 
     function getPoolAdmin() external view returns (address) {
-        return _addresses[POOL_ADMIN];
+        return ILendingPoolAddressesProvider(_addresses[LENDING_POOL_ADDRESSES_PROVIDER])
+            .getPoolAdmin();
     }
 
     function getEmergencyAdmin() external view returns (address) {
-        return _addresses[EMERGENCY_ADMIN];
+        return ILendingPoolAddressesProvider(_addresses[LENDING_POOL_ADDRESSES_PROVIDER])
+            .getEmergencyAdmin();
     }
 
     function getLendingPoolCollateralManager() external view returns (address) {
@@ -75,7 +72,8 @@ contract MiniPoolAddressesProvider is Ownable, IMiniPoolAddressesProvider {
     }
 
     function getPriceOracle() external view returns (address) {
-        return _addresses[PRICE_ORACLE];
+        return ILendingPoolAddressesProvider(_addresses[LENDING_POOL_ADDRESSES_PROVIDER])
+            .getPriceOracle();
     }
 
     function getFlowLimiter() public view returns (address) {

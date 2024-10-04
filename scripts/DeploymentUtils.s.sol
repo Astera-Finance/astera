@@ -1,0 +1,457 @@
+// SPDX-License-Identifier: BUSL-1.1
+pragma solidity ^0.8.0;
+
+import "contracts/dependencies/openzeppelin/contracts/ERC20.sol";
+import "contracts/protocol/rewarder/lendingpool/Rewarder.sol";
+import "contracts/protocol/core/Oracle.sol";
+import "contracts/misc/ProtocolDataProvider.sol";
+import "contracts/misc/Treasury.sol";
+import "contracts/misc/UiPoolDataProviderV2.sol";
+import "contracts/misc/WETHGateway.sol";
+import "contracts/protocol/core/lendingpool/logic/ReserveLogic.sol";
+import "contracts/protocol/core/lendingpool/logic/GenericLogic.sol";
+import "contracts/protocol/core/lendingpool/logic/ValidationLogic.sol";
+import "contracts/protocol/configuration/LendingPoolAddressesProvider.sol";
+import "contracts/protocol/configuration/LendingPoolAddressesProviderRegistry.sol";
+import "contracts/protocol/core/interestRateStrategies/DefaultReserveInterestRateStrategy.sol";
+import "contracts/protocol/core/lendingpool/LendingPool.sol";
+import "contracts/protocol/core/lendingpool/LendingPoolCollateralManager.sol";
+import "contracts/protocol/core/lendingpool/LendingPoolConfigurator.sol";
+import "contracts/protocol/core/minipool/MiniPool.sol";
+import "contracts/protocol/configuration/MiniPoolAddressProvider.sol";
+import "contracts/protocol/core/minipool/MiniPoolConfigurator.sol";
+import "contracts/protocol/core/minipool/FlowLimiter.sol";
+
+import "contracts/deployments/ATokensAndRatesHelper.sol";
+import "contracts/protocol/tokenization/ERC20/AToken.sol";
+import "contracts/protocol/tokenization/ERC6909/ATokenERC6909.sol";
+import "contracts/protocol/tokenization/ERC20/VariableDebtToken.sol";
+import "contracts/mocks/tokens/MintableERC20.sol";
+import "contracts/mocks/tokens/WETH9Mocked.sol";
+import "contracts/mocks/oracle/MockAggregator.sol";
+import "contracts/mocks/tokens/MockVault.sol";
+// import "contracts/mocks/tokens/MockStrat.sol";
+import "contracts/mocks/tokens/ExternalContract.sol";
+import "contracts/mocks/dependencies/IStrategy.sol";
+import "contracts/mocks/dependencies/IExternalContract.sol";
+import {WadRayMath} from "contracts/protocol/libraries/math/WadRayMath.sol";
+
+import "contracts/protocol/core/interestRateStrategies/MiniPoolDefaultReserveInterestRate.sol";
+import "contracts/mocks/oracle/PriceOracle.sol";
+import "contracts/protocol/core/minipool/MiniPoolCollateralManager.sol";
+
+import "./DeployDataTypes.s.sol";
+
+import "forge-std/console.sol";
+
+import {Upgrades} from "lib/openzeppelin-foundry-upgrades/src/Upgrades.sol";
+
+contract DeploymentUtils {
+    address constant FOUNDRY_DEFAULT = 0x1804c8AB1F12E6bbf3894d4083f33e07309d1f38;
+    DeployedContracts contracts;
+
+    function deployLendingPoolInfra(
+        General memory _general,
+        OracleConfig memory _oracleConfig,
+        LinearStrategy memory _volatileStrat,
+        LinearStrategy memory _stableStrat,
+        PoolAddressesProviderConfig memory _poolAddressesProviderConfig,
+        PoolReserversConfig[] memory _poolReserversConfig,
+        address _weth,
+        address deployer
+    ) public {
+        Oracle oracle = _deployOracle(_oracleConfig);
+
+        _deployLendingPoolContracts(oracle, _poolAddressesProviderConfig, deployer); // TODO all functions shall return
+        contracts.rewarder = new Rewarder();
+
+        _deployStrategies(contracts.lendingPoolAddressesProvider, _volatileStrat, _stableStrat);
+        _deployTokensAndUtils(_weth, contracts.lendingPoolAddressesProvider);
+
+        _initAndConfigureReserves(contracts, _poolReserversConfig, _general, _oracleConfig);
+    }
+
+    function deployMiniPoolInfra(
+        OracleConfig memory _oracleConfig,
+        LinearStrategy memory _volatileStrat,
+        LinearStrategy memory _stableStrat,
+        PoolReserversConfig[] memory _poolReserversConfig,
+        uint256 _miniPoolId,
+        address _deployer
+    ) public {
+        _deployMiniPoolContracts(_deployer); // TODO all functions shall return
+        contracts.rewarder = new Rewarder();
+
+        _deployMiniPoolStrategies(contracts.miniPoolAddressesProvider, _volatileStrat, _stableStrat);
+
+        _initAndConfigureMiniPoolReserves(
+            contracts, _poolReserversConfig, _miniPoolId, _oracleConfig
+        );
+    }
+
+    function _deployStrategies(
+        ILendingPoolAddressesProvider _provider,
+        LinearStrategy memory _volatileStrat,
+        LinearStrategy memory _stableStrat
+    ) internal {
+        console.log(
+            ">>>>>>>>>>>>>>>>>>>>>> _volatileStrat.optimalUtilizationRate: ",
+            _volatileStrat.optimalUtilizationRate
+        );
+        contracts.volatileStrategy = new DefaultReserveInterestRateStrategy(
+            _provider,
+            _volatileStrat.optimalUtilizationRate,
+            _volatileStrat.baseVariableBorrowRate,
+            _volatileStrat.variableRateSlope1,
+            _volatileStrat.variableRateSlope2
+        );
+        contracts.stableStrategy = new DefaultReserveInterestRateStrategy(
+            _provider,
+            _stableStrat.optimalUtilizationRate,
+            _stableStrat.baseVariableBorrowRate,
+            _stableStrat.variableRateSlope1,
+            _stableStrat.variableRateSlope2
+        );
+    }
+
+    function _deployMiniPoolStrategies(
+        IMiniPoolAddressesProvider _provider,
+        LinearStrategy memory _volatileStrat,
+        LinearStrategy memory _stableStrat
+    ) internal {
+        contracts.miniPoolVolatileStrategy = new MiniPoolDefaultReserveInterestRateStrategy(
+            _provider,
+            _volatileStrat.optimalUtilizationRate,
+            _volatileStrat.baseVariableBorrowRate,
+            _volatileStrat.variableRateSlope1,
+            _volatileStrat.variableRateSlope2
+        );
+        contracts.miniPoolStableStrategy = new MiniPoolDefaultReserveInterestRateStrategy(
+            _provider,
+            _stableStrat.optimalUtilizationRate,
+            _stableStrat.baseVariableBorrowRate,
+            _stableStrat.variableRateSlope1,
+            _stableStrat.variableRateSlope2
+        );
+    }
+
+    function _deployOracle(OracleConfig memory oracleConfig) internal returns (Oracle) {
+        Oracle oracle = new Oracle(
+            oracleConfig.assets,
+            oracleConfig.sources,
+            oracleConfig.fallbackOracle,
+            oracleConfig.baseCurrency,
+            oracleConfig.baseCurrencyUnit
+        );
+        return oracle;
+    }
+
+    function _deployTokensAndUtils(
+        address weth,
+        LendingPoolAddressesProvider lendingPoolAddressesProvider
+    ) internal {
+        contracts.aToken = new AToken();
+        contracts.variableDebtToken = new VariableDebtToken();
+        contracts.wETHGateway = new WETHGateway(weth);
+        contracts.aTokenErc6909 = new ATokenERC6909();
+        contracts.treasury = new Treasury(lendingPoolAddressesProvider);
+    }
+
+    function _deployLendingPoolContracts(
+        Oracle oracle,
+        PoolAddressesProviderConfig memory poolAddressesProviderConfig,
+        address deployer
+    ) internal {
+        contracts.lendingPoolAddressesProviderRegistry = new LendingPoolAddressesProviderRegistry();
+        contracts.lendingPoolAddressesProvider =
+            new LendingPoolAddressesProvider(poolAddressesProviderConfig.marketId);
+        contracts.lendingPoolAddressesProviderRegistry.registerAddressesProvider(
+            address(contracts.lendingPoolAddressesProvider), 1
+        );
+
+        contracts.lendingPool = new LendingPool();
+        contracts.lendingPool.initialize(
+            ILendingPoolAddressesProvider(contracts.lendingPoolAddressesProvider)
+        );
+        contracts.lendingPoolAddressesProvider.setLendingPoolImpl(address(contracts.lendingPool));
+        address lendingPoolProxy = address(contracts.lendingPoolAddressesProvider.getLendingPool());
+        contracts.lendingPool = LendingPool(lendingPoolProxy);
+
+        contracts.lendingPoolConfigurator = new LendingPoolConfigurator();
+        contracts.lendingPoolAddressesProvider.setLendingPoolConfiguratorImpl(
+            address(contracts.lendingPoolConfigurator)
+        );
+        address lendingPoolConfiguratorProxy =
+            contracts.lendingPoolAddressesProvider.getLendingPoolConfigurator();
+        contracts.lendingPoolConfigurator = LendingPoolConfigurator(lendingPoolConfiguratorProxy);
+        contracts.aTokensAndRatesHelper = new ATokensAndRatesHelper(
+            payable(lendingPoolProxy),
+            address(contracts.lendingPoolAddressesProvider),
+            lendingPoolConfiguratorProxy
+        );
+
+        /* Pause the pool for the time of the deployment */
+        contracts.lendingPoolAddressesProvider.setEmergencyAdmin(deployer); // temporary the deployer
+        contracts.lendingPoolAddressesProvider.setPoolAdmin(deployer);
+        contracts.lendingPoolConfigurator.setPoolPause(true);
+
+        contracts.lendingPoolCollateralManager = new LendingPoolCollateralManager();
+        contracts.lendingPoolAddressesProvider.setPriceOracle(address(oracle));
+        contracts.protocolDataProvider =
+            new ProtocolDataProvider(contracts.lendingPoolAddressesProvider);
+    }
+
+    function _deployMiniPoolContracts(address deployer) internal {
+        contracts.miniPoolImpl = new MiniPool();
+        contracts.miniPoolAddressesProvider =
+            new MiniPoolAddressesProvider(contracts.lendingPoolAddressesProvider);
+        contracts.flowLimiter = new FlowLimiter(
+            contracts.lendingPoolAddressesProvider,
+            IMiniPoolAddressesProvider(address(contracts.miniPoolAddressesProvider)),
+            contracts.lendingPool
+        );
+        contracts.miniPoolConfigurator = new MiniPoolConfigurator();
+        contracts.miniPoolAddressesProvider.setMiniPoolConfigurator(
+            address(contracts.miniPoolConfigurator)
+        );
+        contracts.miniPoolConfigurator =
+            MiniPoolConfigurator(contracts.miniPoolAddressesProvider.getMiniPoolConfigurator());
+        contracts.miniPoolAddressesProvider.setMiniPoolImpl(address(contracts.miniPoolImpl));
+        contracts.miniPoolAddressesProvider.setAToken6909Impl(address(contracts.aTokenErc6909));
+        console.log("setting provider");
+        contracts.lendingPoolAddressesProvider.setMiniPoolAddressesProvider(
+            address(contracts.miniPoolAddressesProvider)
+        );
+        console.log("AFTER");
+        contracts.lendingPoolAddressesProvider.setFlowLimiter(address(contracts.flowLimiter));
+        contracts.miniPoolAddressesProvider.deployMiniPool();
+    }
+
+    function _initAndConfigureReserves(
+        DeployedContracts memory _contracts,
+        PoolReserversConfig[] memory _reservesConfig,
+        General memory _general,
+        OracleConfig memory oracleConfig
+    ) internal {
+        ILendingPoolConfigurator.InitReserveInput[] memory initInputParams =
+            new ILendingPoolConfigurator.InitReserveInput[](_reservesConfig.length);
+
+        for (uint8 idx = 0; idx < _reservesConfig.length; idx++) {
+            PoolReserversConfig memory reserveConfig = _reservesConfig[idx];
+            string memory tmpSymbol = ERC20(reserveConfig.tokenAddress).symbol();
+            address interestStrategy = keccak256(bytes(reserveConfig.interestStrat))
+                == keccak256(bytes("VOLATILE"))
+                ? address(_contracts.volatileStrategy)
+                : address(_contracts.stableStrategy);
+            initInputParams[idx] = ILendingPoolConfigurator.InitReserveInput({
+                aTokenImpl: address(_contracts.aToken),
+                variableDebtTokenImpl: address(_contracts.variableDebtToken),
+                underlyingAssetDecimals: ERC20(reserveConfig.tokenAddress).decimals(),
+                interestRateStrategyAddress: interestStrategy,
+                underlyingAsset: reserveConfig.tokenAddress,
+                reserveType: reserveConfig.reserveType,
+                treasury: address(_contracts.treasury),
+                incentivesController: address(_contracts.rewarder),
+                underlyingAssetName: tmpSymbol,
+                aTokenName: string.concat(_general.aTokenNamePrefix, tmpSymbol),
+                aTokenSymbol: string.concat(_general.aTokenSymbolPrefix, tmpSymbol),
+                variableDebtTokenName: string.concat(_general.debtTokenNamePrefix, tmpSymbol),
+                variableDebtTokenSymbol: string.concat(_general.debtTokenSymbolPrefix, tmpSymbol),
+                params: bytes(reserveConfig.params)
+            });
+        }
+        _contracts.lendingPoolConfigurator.batchInitReserve(initInputParams);
+
+        _configureReserves(_contracts, _reservesConfig);
+
+        Oracle oracle = Oracle(_contracts.lendingPoolAddressesProvider.getPriceOracle());
+        oracle.setAssetSources(oracleConfig.assets, oracleConfig.sources);
+        _contracts.lendingPoolConfigurator.setPoolPause(false);
+    }
+
+    function _configureReserves(
+        DeployedContracts memory _contracts,
+        PoolReserversConfig[] memory _reservesConfig
+    ) internal {
+        ATokensAndRatesHelper.ConfigureReserveInput[] memory inputConfigParams =
+            new ATokensAndRatesHelper.ConfigureReserveInput[](_reservesConfig.length);
+
+        for (uint8 idx = 0; idx < _reservesConfig.length; idx++) {
+            PoolReserversConfig memory reserveConfig = _reservesConfig[idx];
+            inputConfigParams[idx] = ATokensAndRatesHelper.ConfigureReserveInput({
+                asset: reserveConfig.tokenAddress,
+                reserveType: reserveConfig.reserveType,
+                baseLTV: reserveConfig.baseLtv,
+                liquidationThreshold: reserveConfig.liquidationThreshold,
+                liquidationBonus: reserveConfig.liquidationBonus,
+                reserveFactor: reserveConfig.reserveFactor,
+                borrowingEnabled: reserveConfig.borrowingEnabled
+            });
+        }
+        address tmpPoolAdmin = _contracts.lendingPoolAddressesProvider.getPoolAdmin();
+        _contracts.lendingPoolAddressesProvider.setPoolAdmin(
+            address(_contracts.aTokensAndRatesHelper)
+        );
+        _contracts.aTokensAndRatesHelper.configureReserves(inputConfigParams);
+        _contracts.lendingPoolAddressesProvider.setPoolAdmin(tmpPoolAdmin);
+    }
+
+    function _initAndConfigureMiniPoolReserves(
+        DeployedContracts memory _contracts,
+        PoolReserversConfig[] memory _reservesConfig,
+        uint256 _miniPoolId,
+        OracleConfig memory oracleConfig
+    ) internal returns (address aToken, address miniPool) {
+        IMiniPoolConfigurator.InitReserveInput[] memory initInputParams =
+            new IMiniPoolConfigurator.InitReserveInput[](_reservesConfig.length);
+
+        address mp = _contracts.miniPoolAddressesProvider.getMiniPool(_miniPoolId);
+        console.log("Getting ERC6909");
+        address aTokensErc6909Addr = _contracts.miniPoolAddressesProvider.getMiniPoolToAERC6909(mp);
+        for (uint8 idx = 0; idx < _reservesConfig.length; idx++) {
+            PoolReserversConfig memory reserveConfig = _reservesConfig[idx];
+            string memory tmpSymbol = ERC20(reserveConfig.tokenAddress).symbol();
+            string memory tmpName = ERC20(reserveConfig.tokenAddress).name();
+
+            address interestStrategy = keccak256(bytes(reserveConfig.interestStrat))
+                == keccak256(bytes("VOLATILE"))
+                ? address(_contracts.miniPoolVolatileStrategy)
+                : address(_contracts.miniPoolStableStrategy);
+
+            initInputParams[idx] = IMiniPoolConfigurator.InitReserveInput({
+                underlyingAssetDecimals: ERC20(reserveConfig.tokenAddress).decimals(),
+                interestRateStrategyAddress: interestStrategy,
+                underlyingAsset: reserveConfig.tokenAddress,
+                underlyingAssetName: tmpName,
+                underlyingAssetSymbol: tmpSymbol
+            });
+        }
+        console.log("Batching ... ");
+        _contracts.miniPoolConfigurator.batchInitReserve(initInputParams, IMiniPool(mp));
+        console.log("Configuring");
+        _configureMiniPoolReserves(_contracts, _reservesConfig, mp);
+        Oracle oracle = Oracle(_contracts.miniPoolAddressesProvider.getPriceOracle());
+        oracle.setAssetSources(oracleConfig.assets, oracleConfig.sources);
+        console.log("Asset set!!");
+        _contracts.lendingPoolConfigurator.setPoolPause(false);
+        return (aTokensErc6909Addr, mp);
+    }
+
+    function _configureMiniPoolReserves(
+        DeployedContracts memory _contracts,
+        PoolReserversConfig[] memory _reservesConfig,
+        address _mp
+    ) internal {
+        for (uint8 idx = 0; idx < _reservesConfig.length; idx++) {
+            PoolReserversConfig memory reserveConfig = _reservesConfig[idx];
+            _contracts.miniPoolConfigurator.configureReserveAsCollateral(
+                reserveConfig.tokenAddress,
+                reserveConfig.baseLtv,
+                reserveConfig.liquidationThreshold,
+                reserveConfig.liquidationBonus,
+                IMiniPool(_mp)
+            );
+
+            _contracts.miniPoolConfigurator.activateReserve(
+                reserveConfig.tokenAddress, IMiniPool(_mp)
+            );
+
+            _contracts.miniPoolConfigurator.enableBorrowingOnReserve(
+                reserveConfig.tokenAddress, IMiniPool(_mp)
+            );
+        }
+    }
+
+    function _transferOwnershipsAndRenounceRoles(Roles memory roles) internal {
+        //here is where we would set admin but there is no safe on testnet, so we pass in an EOA
+        contracts.lendingPoolAddressesProvider.setPoolAdmin(roles.poolAdmin);
+        contracts.lendingPoolAddressesProvider.setEmergencyAdmin(roles.emergencyAdmin);
+    }
+
+    //TODO
+    // function _configureMiniPool() internal {
+    //     contracts.miniPoolConfigurator.setReserveInterestRateStrategyAddress(
+    //         reserveConfig.tokenAddress, interestStrategy, IMiniPool(mp)
+    //     );
+    // }
+
+    function _deployERC20Mocks(
+        string[] memory names,
+        string[] memory symbols,
+        uint8[] memory decimals,
+        int256[] memory prices
+    ) internal returns (address[] memory, Oracle) {
+        address[] memory tokens = new address[](names.length);
+        address[] memory aggregators = new address[](names.length);
+        for (uint256 i = 0; i < names.length; i++) {
+            if (keccak256(abi.encodePacked(symbols[i])) == keccak256(abi.encodePacked("WETH"))) {
+                tokens[i] = address(_deployWETH9Mocked());
+            } else {
+                tokens[i] = address(_deployERC20Mock(names[i], symbols[i], decimals[i]));
+            }
+            aggregators[i] = address(_deployMockAggregator(tokens[i], prices[i]));
+        }
+        //mock tokens, mock aggregators, fallbackOracle, baseCurrency, baseCurrencyUnit
+        Oracle oracle = _deployOracle(tokens, aggregators, address(0), address(0), 100000000);
+        return (tokens, oracle);
+    }
+
+    function _deployERC20Mock(string memory name, string memory symbol, uint8 decimals)
+        internal
+        returns (MintableERC20)
+    {
+        MintableERC20 token = new MintableERC20(name, symbol, decimals);
+        return token;
+    }
+
+    function _deployWETH9Mocked() internal returns (WETH9Mocked) {
+        WETH9Mocked weth = new WETH9Mocked();
+        return weth;
+    }
+
+    /*function _deployMockVault() returns (MockVault) {
+    MockVault vault = new MockVault();
+    return vault;
+    }*/
+
+    function _deployMockAggregator(address token, int256 price) internal returns (MockAggregator) {
+        MockAggregator aggregator =
+            new MockAggregator(price, int256(int8(MintableERC20(token).decimals())));
+        return aggregator;
+    }
+
+    function _deployOracle(
+        address[] memory assets,
+        address[] memory sources,
+        address fallbackOracle,
+        address baseCurrency,
+        uint256 baseCurrencyUnit
+    ) internal returns (Oracle) {
+        Oracle oracle = new Oracle(assets, sources, fallbackOracle, baseCurrency, baseCurrencyUnit);
+        return oracle;
+    }
+
+    function _updateOracle(Oracle oracle, address[] memory assets, address[] memory sources)
+        internal
+    {
+        oracle.setAssetSources(assets, sources);
+    }
+
+    function _deployERC20MocksAndUpdateOracle(
+        string[] memory names,
+        string[] memory symbols,
+        uint8[] memory decimals,
+        int256[] memory prices,
+        Oracle oracle
+    ) internal returns (address[] memory) {
+        address[] memory tokens = new address[](names.length);
+        address[] memory aggregators = new address[](names.length);
+        for (uint256 i = 0; i < names.length; i++) {
+            tokens[i] = address(_deployERC20Mock(names[i], symbols[i], decimals[i]));
+
+            aggregators[i] = address(_deployMockAggregator(tokens[i], prices[i]));
+        }
+        _updateOracle(oracle, tokens, aggregators);
+        return tokens;
+    }
+}

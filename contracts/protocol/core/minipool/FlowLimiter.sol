@@ -1,8 +1,10 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity 0.8.23;
 
-import {ILendingPoolAddressesProvider} from "../../../../contracts/interfaces/ILendingPoolAddressesProvider.sol";
-import {IMiniPoolAddressesProvider} from "../../../../contracts/interfaces/IMiniPoolAddressesProvider.sol";
+import {ILendingPoolAddressesProvider} from
+    "../../../../contracts/interfaces/ILendingPoolAddressesProvider.sol";
+import {IMiniPoolAddressesProvider} from
+    "../../../../contracts/interfaces/IMiniPoolAddressesProvider.sol";
 import {IMiniPool} from "../../../../contracts/interfaces/IMiniPool.sol";
 import {ILendingPool} from "../../../../contracts/interfaces/ILendingPool.sol";
 import {IVariableDebtToken} from "../../../../contracts/interfaces/IVariableDebtToken.sol";
@@ -14,7 +16,7 @@ import {Errors} from "../../../../contracts/protocol/libraries/helpers/Errors.so
  * @notice This contract is used to Limit AND Facilitate the flow of funds into miniPools from the main Lending Pool
  * @author Cod3x
  */
-contract flowLimiter {
+contract FlowLimiter {
     ILendingPoolAddressesProvider public addressesProvider;
     IMiniPoolAddressesProvider public miniPoolAddressesProvider;
     ILendingPool public lendingPool;

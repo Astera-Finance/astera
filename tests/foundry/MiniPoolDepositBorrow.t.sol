@@ -325,7 +325,7 @@ contract MiniPoolDepositBorrowTest is Common {
                 address(borrowTokenParams.token), miniPool, currentFlow + amount
             );
             console.log(
-                "FlowLimiter results",
+                "flowLimiter results",
                 miniPoolContracts.flowLimiter.getFlowLimit(
                     address(borrowTokenParams.token), miniPool
                 )

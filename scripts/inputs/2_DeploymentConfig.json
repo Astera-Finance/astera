@@ -1,0 +1,81 @@
+{
+    "general": {
+        "aTokenNamePrefix": "Cod3x Lend ",
+        "aTokenSymbolPrefix": "cl",
+        "debtTokenNamePrefix": "Cod3x Lend variable debt bearing ",
+        "debtTokenSymbolPrefix": "variableDebt"
+    },
+    "roles": {
+        "emergencyAdmin": "0xA151CfCA393FE5Eec690feD2a2446DA5a073d01B",
+        "poolAdmin": "0x3151CfCA393FE5Eec690feD2a2446DA5a073d01B"
+    },
+    "poolAddressesProviderConfig": {
+        "marketId": "UV TestNet Market",
+        "poolId": 0
+    },
+    "poolReserversConfig": [
+        {
+            "baseLtv": 7000,
+            "borrowingEnabled": true,
+            "interestStrat": "VOLATILE",
+            "liquidationBonus": 10500,
+            "liquidationThreshold": 7500,
+            "params": "0x10",
+            "rates": 0.03e27,
+            "reserveFactor": 1500,
+            "reserveType": true,
+            "symbol": "WETH",
+            "tokenAddress": "0x82aF49447D8a07e3bd95BD0d56f35241523fBab1"
+        },
+        {
+            "baseLtv": 7000,
+            "borrowingEnabled": true,
+            "interestStrat": "STABLE",
+            "liquidationBonus": 10500,
+            "liquidationThreshold": 7500,
+            "params": "0x10",
+            "rates": 0.03e27,
+            "reserveFactor": 1500,
+            "reserveType": true,
+            "symbol": "USDC",
+            "tokenAddress": "0xaf88d065e77c8cC2239327C5EDb3A432268e5831"
+        }
+    ],
+    "volatileStrategy": {
+        "baseVariableBorrowRate": 0e27,
+        "optimalUtilizationRate": 0.45e27,
+        "variableRateSlope1": 0.07e27,
+        "variableRateSlope2": 3e27
+    },
+    "stableStrategy": {
+        "baseVariableBorrowRate": 0e27,
+        "optimalUtilizationRate": 0.75e27,
+        "variableRateSlope1": 0.01e27,
+        "variableRateSlope2": 0.1e27
+    },
+    "oracleConfig": {
+        "assets": [
+            "0x82aF49447D8a07e3bd95BD0d56f35241523fBab1",
+            "0xaf88d065e77c8cC2239327C5EDb3A432268e5831"
+        ],
+        "baseCurrency": "0x0000000000000000000000000000000000000000",
+        "baseCurrencyUnit": 1e18,
+        "fallbackOracle": "0x0000000000000000000000000000000000000000",
+        "sources": [
+            "0x639Fe6ab55C921f74e7fac1ee960C0B6293ba612",
+            "0x50834F3163758fcC1Df9973b6e91f0F0F0434aD3"
+        ]
+    },
+    "mockedToken": [
+        {
+            "decimals": 18,
+            "prices": 2.5e8,
+            "symbol": "WETH"
+        },
+        {
+            "decimals": 6,
+            "prices": 1e8,
+            "symbol": "USDC"
+        }
+    ]
+}
