@@ -1,10 +1,13 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity 0.8.23;
 
-import {IMiniPoolAddressesProvider} from "../../../../contracts/interfaces/IMiniPoolAddressesProvider.sol";
+import {IMiniPoolAddressesProvider} from
+    "../../../../contracts/interfaces/IMiniPoolAddressesProvider.sol";
 import {IERC20} from "../../../../contracts/dependencies/openzeppelin/contracts/IERC20.sol";
 import {IAERC6909} from "../../../../contracts/interfaces/IAERC6909.sol";
+import {IAToken} from "../../../../contracts/interfaces/IAToken.sol";
 import {IMiniPool} from "../../../../contracts/interfaces/IMiniPool.sol";
+import {IFlowLimiter} from "../../../../contracts/interfaces/IFlowLimiter.sol";
 import {IMiniPoolReserveInterestRateStrategy} from
     "../../../../contracts/interfaces/IMiniPoolReserveInterestRateStrategy.sol";
 import {
@@ -62,14 +65,20 @@ contract MiniPoolPiReserveInterestRateStrategy is
         public
         view
         override
-        returns (uint256)
+        returns (uint256 availableLiquidity)
     {
-        uint256 availableLiquidity = IERC20(asset).balanceOf(aToken);
+        if (IAERC6909(aToken).isTranche(IAERC6909(aToken).MINIPOOL_ID())) {
+            IFlowLimiter flowLimiter =
+                IFlowLimiter(IMiniPoolAddressesProvider(_addressProvider).getFlowLimiter());
+            address underlying = IAToken(asset).UNDERLYING_ASSET_ADDRESS();
+            address minipool = IAERC6909(aToken).MINIPOOL_ADDRESS();
 
-        // IAERC6909 aErc6909Token =
-        //     IAERC6909(IMiniPoolAddressesProvider(_provider).getMiniPoolToAERC6909(_getLendingPool()));
-        // uint256 availableLiquidity = aErc6909Token.totalSupply(reserve.variableDebtTokenID);
-        return availableLiquidity;
+            availableLiquidity = IERC20(asset).balanceOf(aToken)
+                + IAToken(asset).convertToShares(flowLimiter.getFlowLimit(underlying, minipool))
+                - IAToken(asset).convertToShares(flowLimiter.currentFlow(underlying, minipool));
+        } else {
+            availableLiquidity = IERC20(asset).balanceOf(aToken);
+        }
     }
 
     // ----------- view -----------
