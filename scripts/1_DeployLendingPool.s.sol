@@ -18,12 +18,27 @@ contract DeployLendingPool is Script, DeploymentUtils, Test {
     function writeJsonData(string memory root, string memory path) internal {
         vm.serializeAddress("lendingPoolContracts", "rewarder", address(contracts.rewarder));
         vm.serializeAddress("lendingPoolContracts", "treasury", address(contracts.treasury));
-        vm.serializeAddress(
-            "lendingPoolContracts", "stableStrategy", address(contracts.stableStrategy)
-        );
-        vm.serializeAddress(
-            "lendingPoolContracts", "volatileStrategy", address(contracts.volatileStrategy)
-        );
+        {
+            address[] memory stableAddresses = new address[](contracts.stableStrategies.length);
+            for (uint256 idx = 0; idx < contracts.stableStrategies.length; idx++) {
+                stableAddresses[idx] = address(contracts.stableStrategies[idx]);
+            }
+            vm.serializeAddress("lendingPoolContracts", "stableStrategies", stableAddresses);
+        }
+        {
+            address[] memory volatileAddresses = new address[](contracts.stableStrategies.length);
+            for (uint256 idx = 0; idx < contracts.volatileStrategies.length; idx++) {
+                volatileAddresses[idx] = address(contracts.volatileStrategies[idx]);
+            }
+            vm.serializeAddress("lendingPoolContracts", "volatileStrategies", volatileAddresses);
+        }
+        {
+            address[] memory piAddresses = new address[](contracts.piStrategies.length);
+            for (uint256 idx = 0; idx < contracts.piStrategies.length; idx++) {
+                piAddresses[idx] = address(contracts.piStrategies[idx]);
+            }
+            vm.serializeAddress("lendingPoolContracts", "piStrategies", piAddresses);
+        }
         vm.serializeAddress(
             "lendingPoolContracts", "protocolDataProvider", address(contracts.protocolDataProvider)
         );
@@ -87,10 +102,12 @@ contract DeployLendingPool is Script, DeploymentUtils, Test {
         );
         PoolReserversConfig[] memory poolReserversConfig =
             abi.decode(deploymentConfig.parseRaw(".poolReserversConfig"), (PoolReserversConfig[]));
-        LinearStrategy memory volatileStrategy =
-            abi.decode(deploymentConfig.parseRaw(".volatileStrategy"), (LinearStrategy));
-        LinearStrategy memory stableStrategy =
-            abi.decode(deploymentConfig.parseRaw(".stableStrategy"), (LinearStrategy));
+        LinearStrategy[] memory volatileStrategies =
+            abi.decode(deploymentConfig.parseRaw(".volatileStrategies"), (LinearStrategy[]));
+        LinearStrategy[] memory stableStrategies =
+            abi.decode(deploymentConfig.parseRaw(".stableStrategies"), (LinearStrategy[]));
+        PiStrategy[] memory piStrategies =
+            abi.decode(deploymentConfig.parseRaw(".piStrategies"), (PiStrategy[]));
         OracleConfig memory oracleConfig =
             abi.decode(deploymentConfig.parseRaw(".oracleConfig"), (OracleConfig));
 
@@ -106,8 +123,9 @@ contract DeployLendingPool is Script, DeploymentUtils, Test {
             deployLendingPoolInfra(
                 general,
                 oracleConfig,
-                volatileStrategy,
-                stableStrategy,
+                volatileStrategies,
+                stableStrategies,
+                piStrategies,
                 poolAddressesProviderConfig,
                 poolReserversConfig,
                 WETH_ARB,
@@ -150,8 +168,9 @@ contract DeployLendingPool is Script, DeploymentUtils, Test {
             deployLendingPoolInfra(
                 general,
                 oracleConfig,
-                volatileStrategy,
-                stableStrategy,
+                volatileStrategies,
+                stableStrategies,
+                piStrategies,
                 poolAddressesProviderConfig,
                 poolReserversConfig,
                 WETH_ARB,
@@ -159,13 +178,25 @@ contract DeployLendingPool is Script, DeploymentUtils, Test {
             );
             vm.stopBroadcast();
             writeJsonData(root, path);
-        } else if (vm.envOr("MAINNET", false)) {
-            //deploy to mainnet
-            string memory RPC = vm.envString("ARBITRUM");
-            console.log("HERE 3");
+        } else if (vm.envBool("MAINNET")) {
+            console.log("Mainnet Deployment");
+
+            vm.startBroadcast(vm.envUint("PRIVATE_KEY"));
+            deployLendingPoolInfra(
+                general,
+                oracleConfig,
+                volatileStrategies,
+                stableStrategies,
+                piStrategies,
+                poolAddressesProviderConfig,
+                poolReserversConfig,
+                WETH_ARB,
+                vm.addr(vm.envUint("PRIVATE_KEY"))
+            );
+            vm.stopBroadcast();
+            writeJsonData(root, path);
         } else {
-            console.log("HERE 4");
-            //deploy to a local node
+            console.log("No deployment type selected in .env");
         }
         return contracts;
     }

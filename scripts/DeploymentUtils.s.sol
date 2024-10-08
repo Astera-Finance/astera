@@ -14,6 +14,7 @@ import "contracts/protocol/core/lendingpool/logic/ValidationLogic.sol";
 import "contracts/protocol/configuration/LendingPoolAddressesProvider.sol";
 import "contracts/protocol/configuration/LendingPoolAddressesProviderRegistry.sol";
 import "contracts/protocol/core/interestRateStrategies/DefaultReserveInterestRateStrategy.sol";
+import "contracts/protocol/core/interestRateStrategies/PiReserveInterestRateStrategy.sol";
 import "contracts/protocol/core/lendingpool/LendingPool.sol";
 import "contracts/protocol/core/lendingpool/LendingPoolCollateralManager.sol";
 import "contracts/protocol/core/lendingpool/LendingPoolConfigurator.sol";
@@ -53,8 +54,9 @@ contract DeploymentUtils {
     function deployLendingPoolInfra(
         General memory _general,
         OracleConfig memory _oracleConfig,
-        LinearStrategy memory _volatileStrat,
-        LinearStrategy memory _stableStrat,
+        LinearStrategy[] memory _volatileStrats,
+        LinearStrategy[] memory _stableStrats,
+        PiStrategy[] memory _piStrategies,
         PoolAddressesProviderConfig memory _poolAddressesProviderConfig,
         PoolReserversConfig[] memory _poolReserversConfig,
         address _weth,
@@ -65,7 +67,9 @@ contract DeploymentUtils {
         _deployLendingPoolContracts(oracle, _poolAddressesProviderConfig, deployer); // TODO all functions shall return
         contracts.rewarder = new Rewarder();
 
-        _deployStrategies(contracts.lendingPoolAddressesProvider, _volatileStrat, _stableStrat);
+        _deployStrategies(
+            contracts.lendingPoolAddressesProvider, _volatileStrats, _stableStrats, _piStrategies
+        );
         _deployTokensAndUtils(_weth, contracts.lendingPoolAddressesProvider);
 
         _initAndConfigureReserves(contracts, _poolReserversConfig, _general, _oracleConfig);
@@ -73,8 +77,9 @@ contract DeploymentUtils {
 
     function deployMiniPoolInfra(
         OracleConfig memory _oracleConfig,
-        LinearStrategy memory _volatileStrat,
-        LinearStrategy memory _stableStrat,
+        LinearStrategy[] memory _volatileStrats,
+        LinearStrategy[] memory _stableStrats,
+        PiStrategy[] memory _piStrats,
         PoolReserversConfig[] memory _poolReserversConfig,
         uint256 _miniPoolId,
         address _deployer
@@ -82,7 +87,9 @@ contract DeploymentUtils {
         _deployMiniPoolContracts(_deployer); // TODO all functions shall return
         contracts.rewarder = new Rewarder();
 
-        _deployMiniPoolStrategies(contracts.miniPoolAddressesProvider, _volatileStrat, _stableStrat);
+        _deployMiniPoolStrategies(
+            contracts.miniPoolAddressesProvider, _volatileStrats, _stableStrats, _piStrats
+        );
 
         _initAndConfigureMiniPoolReserves(
             contracts, _poolReserversConfig, _miniPoolId, _oracleConfig
@@ -91,47 +98,105 @@ contract DeploymentUtils {
 
     function _deployStrategies(
         ILendingPoolAddressesProvider _provider,
-        LinearStrategy memory _volatileStrat,
-        LinearStrategy memory _stableStrat
+        LinearStrategy[] memory _volatileStrats,
+        LinearStrategy[] memory _stableStrats,
+        PiStrategy[] memory _piStrats
     ) internal {
-        console.log(
-            ">>>>>>>>>>>>>>>>>>>>>> _volatileStrat.optimalUtilizationRate: ",
-            _volatileStrat.optimalUtilizationRate
-        );
-        contracts.volatileStrategy = new DefaultReserveInterestRateStrategy(
+        // contracts.volatileStrategies =
+        //     new DefaultReserveInterestRateStrategy[](_volatileStrats.length);
+        // contracts.stableStrategies = new DefaultReserveInterestRateStrategy[](_stableStrats.length);
+        // contracts.piStrategies = new PiReserveInterestRateStrategy[](_piStrats.length);
+        for (uint8 idx = 0; idx < _volatileStrats.length; idx++) {
+            contracts.volatileStrategies.push(
+                _deployDefaultStrategy(_provider, _volatileStrats[idx])
+            );
+        }
+        for (uint8 idx = 0; idx < _stableStrats.length; idx++) {
+            contracts.stableStrategies.push(_deployDefaultStrategy(_provider, _stableStrats[idx]));
+        }
+        for (uint8 idx = 0; idx < _piStrats.length; idx++) {
+            contracts.piStrategies.push(_deployPiInterestStrategy(_provider, _piStrats[idx]));
+        }
+    }
+
+    function _deployDefaultStrategy(
+        ILendingPoolAddressesProvider _provider,
+        LinearStrategy memory _strat
+    ) internal returns (DefaultReserveInterestRateStrategy) {
+        return new DefaultReserveInterestRateStrategy(
             _provider,
-            _volatileStrat.optimalUtilizationRate,
-            _volatileStrat.baseVariableBorrowRate,
-            _volatileStrat.variableRateSlope1,
-            _volatileStrat.variableRateSlope2
+            _strat.optimalUtilizationRate,
+            _strat.baseVariableBorrowRate,
+            _strat.variableRateSlope1,
+            _strat.variableRateSlope2
         );
-        contracts.stableStrategy = new DefaultReserveInterestRateStrategy(
-            _provider,
-            _stableStrat.optimalUtilizationRate,
-            _stableStrat.baseVariableBorrowRate,
-            _stableStrat.variableRateSlope1,
-            _stableStrat.variableRateSlope2
+    }
+
+    function _deployPiInterestStrategy(
+        ILendingPoolAddressesProvider _provider,
+        PiStrategy memory _strategy
+    ) internal returns (PiReserveInterestRateStrategy) {
+        return new PiReserveInterestRateStrategy(
+            address(_provider),
+            _strategy.tokenAddress,
+            _strategy.assetReserveType,
+            _strategy.minControllerError,
+            _strategy.maxITimeAmp,
+            _strategy.optimalUtilizationRate,
+            _strategy.kp,
+            _strategy.ki
         );
     }
 
     function _deployMiniPoolStrategies(
         IMiniPoolAddressesProvider _provider,
-        LinearStrategy memory _volatileStrat,
-        LinearStrategy memory _stableStrat
+        LinearStrategy[] memory _volatileStrats,
+        LinearStrategy[] memory _stableStrats,
+        PiStrategy[] memory _piStrats
     ) internal {
-        contracts.miniPoolVolatileStrategy = new MiniPoolDefaultReserveInterestRateStrategy(
+        for (uint8 idx = 0; idx < _volatileStrats.length; idx++) {
+            contracts.miniPoolVolatileStrategies.push(
+                _deployMiniPoolStrategy(_provider, _volatileStrats[idx])
+            );
+        }
+        for (uint8 idx = 0; idx < _stableStrats.length; idx++) {
+            contracts.miniPoolStableStrategies.push(
+                _deployMiniPoolStrategy(_provider, _stableStrats[idx])
+            );
+        }
+        for (uint8 idx = 0; idx < _piStrats.length; idx++) {
+            contracts.miniPoolPiStrategies.push(
+                _deployMiniPoolPiInterestStrategy(_provider, _piStrats[idx])
+            );
+        }
+    }
+
+    function _deployMiniPoolStrategy(
+        IMiniPoolAddressesProvider _provider,
+        LinearStrategy memory _strat
+    ) internal returns (MiniPoolDefaultReserveInterestRateStrategy) {
+        return new MiniPoolDefaultReserveInterestRateStrategy(
             _provider,
-            _volatileStrat.optimalUtilizationRate,
-            _volatileStrat.baseVariableBorrowRate,
-            _volatileStrat.variableRateSlope1,
-            _volatileStrat.variableRateSlope2
+            _strat.optimalUtilizationRate,
+            _strat.baseVariableBorrowRate,
+            _strat.variableRateSlope1,
+            _strat.variableRateSlope2
         );
-        contracts.miniPoolStableStrategy = new MiniPoolDefaultReserveInterestRateStrategy(
-            _provider,
-            _stableStrat.optimalUtilizationRate,
-            _stableStrat.baseVariableBorrowRate,
-            _stableStrat.variableRateSlope1,
-            _stableStrat.variableRateSlope2
+    }
+
+    function _deployMiniPoolPiInterestStrategy(
+        IMiniPoolAddressesProvider _provider,
+        PiStrategy memory _strategy
+    ) internal returns (MiniPoolPiReserveInterestRateStrategy) {
+        return new MiniPoolPiReserveInterestRateStrategy(
+            address(_provider),
+            _strategy.tokenAddress,
+            _strategy.assetReserveType,
+            _strategy.minControllerError,
+            _strategy.maxITimeAmp,
+            _strategy.optimalUtilizationRate,
+            _strategy.kp,
+            _strategy.ki
         );
     }
 
@@ -239,10 +304,27 @@ contract DeploymentUtils {
         for (uint8 idx = 0; idx < _reservesConfig.length; idx++) {
             PoolReserversConfig memory reserveConfig = _reservesConfig[idx];
             string memory tmpSymbol = ERC20(reserveConfig.tokenAddress).symbol();
-            address interestStrategy = keccak256(bytes(reserveConfig.interestStrat))
-                == keccak256(bytes("VOLATILE"))
-                ? address(_contracts.volatileStrategy)
-                : address(_contracts.stableStrategy);
+
+            address interestStrategy;
+            if (keccak256(bytes(reserveConfig.interestStrat)) == keccak256(bytes("PI"))) {
+                require(
+                    _contracts.piStrategies[reserveConfig.interestStratId]._asset()
+                        == reserveConfig.tokenAddress,
+                    "Pi strat has different asset address than reserve"
+                );
+                interestStrategy = address(_contracts.piStrategies[reserveConfig.interestStratId]);
+            } else {
+                interestStrategy = keccak256(bytes(reserveConfig.interestStrat))
+                    == keccak256(bytes("VOLATILE"))
+                    ? address(_contracts.volatileStrategies[reserveConfig.interestStratId])
+                    : address(_contracts.stableStrategies[reserveConfig.interestStratId]);
+            }
+
+            console.log(
+                "PI STRATEGY: ->>>>>>>>> vs ",
+                interestStrategy,
+                address(_contracts.piStrategies[reserveConfig.interestStratId])
+            );
             initInputParams[idx] = ILendingPoolConfigurator.InitReserveInput({
                 aTokenImpl: address(_contracts.aToken),
                 variableDebtTokenImpl: address(_contracts.variableDebtToken),
@@ -313,10 +395,21 @@ contract DeploymentUtils {
             string memory tmpSymbol = ERC20(reserveConfig.tokenAddress).symbol();
             string memory tmpName = ERC20(reserveConfig.tokenAddress).name();
 
-            address interestStrategy = keccak256(bytes(reserveConfig.interestStrat))
-                == keccak256(bytes("VOLATILE"))
-                ? address(_contracts.miniPoolVolatileStrategy)
-                : address(_contracts.miniPoolStableStrategy);
+            address interestStrategy;
+            if (keccak256(bytes(reserveConfig.interestStrat)) == keccak256(bytes("PI"))) {
+                require(
+                    _contracts.miniPoolPiStrategies[reserveConfig.interestStratId]._asset()
+                        == reserveConfig.tokenAddress,
+                    "Pi strat has different asset address than reserve"
+                );
+                interestStrategy =
+                    address(_contracts.miniPoolPiStrategies[reserveConfig.interestStratId]);
+            } else {
+                interestStrategy = keccak256(bytes(reserveConfig.interestStrat))
+                    == keccak256(bytes("VOLATILE"))
+                    ? address(_contracts.miniPoolVolatileStrategies[reserveConfig.interestStratId])
+                    : address(_contracts.miniPoolStableStrategies[reserveConfig.interestStratId]);
+            }
 
             initInputParams[idx] = IMiniPoolConfigurator.InitReserveInput({
                 underlyingAssetDecimals: ERC20(reserveConfig.tokenAddress).decimals(),

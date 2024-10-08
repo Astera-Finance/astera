@@ -14,6 +14,7 @@
             "baseLtv": 7000,
             "borrowingEnabled": true,
             "interestStrat": "VOLATILE",
+            "interestStratId": 0,
             "liquidationBonus": 10500,
             "liquidationThreshold": 7500,
             "params": "0x10",
@@ -26,7 +27,8 @@
         {
             "baseLtv": 7000,
             "borrowingEnabled": true,
-            "interestStrat": "STABLE",
+            "interestStrat": "PI",
+            "interestStratId": 0,
             "liquidationBonus": 10500,
             "liquidationThreshold": 7500,
             "params": "0x10",
@@ -42,6 +44,7 @@
             "baseLtv": 7000,
             "borrowingEnabled": true,
             "interestStrat": "VOLATILE",
+            "interestStratId": 0,
             "liquidationBonus": 10500,
             "liquidationThreshold": 7500,
             "params": "0x10",
@@ -55,6 +58,7 @@
             "baseLtv": 7000,
             "borrowingEnabled": true,
             "interestStrat": "STABLE",
+            "interestStratId": 0,
             "liquidationBonus": 10500,
             "liquidationThreshold": 7500,
             "params": "0x10",
@@ -105,5 +109,13 @@
             "prices": 1e8,
             "symbol": "USDT"
         }
-    ]
+    ],
+    "piStrategy": {
+        "assetReserveType": true,
+        "minControllerError": -400e24,
+        "maxITimeAmp": 1728000,
+        "optimalUtilizationRate": 45e25,
+        "kp": 1e27,
+        "ki": 13e19
+    }
 }

@@ -12,8 +12,6 @@ import {DeployLendingPool} from "./1_DeployLendingPool.s.sol";
 contract DeployMiniPool is Script, Test, DeploymentUtils {
     using stdJson for string;
 
-    address WETH_ARB = 0x82aF49447D8a07e3bd95BD0d56f35241523fBab1;
-
     function writeJsonData(string memory root, string memory path) internal {
         /* Write important contracts into the file */
         vm.serializeAddress("miniPoolContracts", "miniPoolImpl", address(contracts.miniPoolImpl));
@@ -23,14 +21,32 @@ contract DeployMiniPool is Script, Test, DeploymentUtils {
             address(contracts.miniPoolAddressesProvider)
         );
         vm.serializeAddress("miniPoolContracts", "flowLimiter", address(contracts.flowLimiter));
-        vm.serializeAddress(
-            "miniPoolContracts",
-            "miniPoolVolatileStrategy",
-            address(contracts.miniPoolVolatileStrategy)
-        );
-        vm.serializeAddress(
-            "miniPoolContracts", "miniPoolStableStrategy", address(contracts.miniPoolStableStrategy)
-        );
+
+        {
+            address[] memory stableAddresses =
+                new address[](contracts.miniPoolStableStrategies.length);
+            for (uint256 idx = 0; idx < contracts.miniPoolStableStrategies.length; idx++) {
+                stableAddresses[idx] = address(contracts.miniPoolStableStrategies[idx]);
+            }
+            vm.serializeAddress("miniPoolContracts", "miniPoolStableStrategies", stableAddresses);
+        }
+        {
+            address[] memory volatileAddresses =
+                new address[](contracts.miniPoolVolatileStrategies.length);
+            for (uint256 idx = 0; idx < contracts.miniPoolVolatileStrategies.length; idx++) {
+                volatileAddresses[idx] = address(contracts.miniPoolVolatileStrategies[idx]);
+            }
+            vm.serializeAddress(
+                "miniPoolContracts", "miniPoolVolatileStrategies", volatileAddresses
+            );
+        }
+        {
+            address[] memory piAddresses = new address[](contracts.miniPoolPiStrategies.length);
+            for (uint256 idx = 0; idx < contracts.miniPoolPiStrategies.length; idx++) {
+                piAddresses[idx] = address(contracts.miniPoolPiStrategies[idx]);
+            }
+            vm.serializeAddress("miniPoolContracts", "miniPoolPiStrategies", piAddresses);
+        }
 
         string memory output = vm.serializeAddress(
             "miniPoolContracts", "miniPoolConfigurator", address(contracts.miniPoolConfigurator)
@@ -53,10 +69,13 @@ contract DeployMiniPool is Script, Test, DeploymentUtils {
         );
         PoolReserversConfig[] memory poolReserversConfig =
             abi.decode(deploymentConfig.parseRaw(".poolReserversConfig"), (PoolReserversConfig[]));
-        LinearStrategy memory volatileStrategy =
-            abi.decode(deploymentConfig.parseRaw(".volatileStrategy"), (LinearStrategy));
-        LinearStrategy memory stableStrategy =
-            abi.decode(deploymentConfig.parseRaw(".stableStrategy"), (LinearStrategy));
+        LinearStrategy[] memory volatileStrategies =
+            abi.decode(deploymentConfig.parseRaw(".volatileStrategies"), (LinearStrategy[]));
+        LinearStrategy[] memory stableStrategies =
+            abi.decode(deploymentConfig.parseRaw(".stableStrategies"), (LinearStrategy[]));
+
+        PiStrategy[] memory piStrategies =
+            abi.decode(deploymentConfig.parseRaw(".piStrategies"), (PiStrategy[]));
 
         OracleConfig memory oracleConfig =
             abi.decode(deploymentConfig.parseRaw(".oracleConfig"), (OracleConfig));
@@ -78,8 +97,9 @@ contract DeployMiniPool is Script, Test, DeploymentUtils {
             vm.startPrank(FOUNDRY_DEFAULT);
             deployMiniPoolInfra(
                 oracleConfig,
-                volatileStrategy,
-                stableStrategy,
+                volatileStrategies,
+                stableStrategies,
+                piStrategies,
                 poolReserversConfig,
                 poolAddressesProviderConfig.poolId,
                 FOUNDRY_DEFAULT
@@ -136,70 +156,48 @@ contract DeployMiniPool is Script, Test, DeploymentUtils {
             console.log("Deploying lending pool infra");
             deployMiniPoolInfra(
                 oracleConfig,
-                volatileStrategy,
-                stableStrategy,
+                volatileStrategies,
+                stableStrategies,
+                piStrategies,
                 poolReserversConfig,
                 poolAddressesProviderConfig.poolId,
                 vm.addr(vm.envUint("PRIVATE_KEY"))
             );
             vm.stopBroadcast();
             writeJsonData(root, path);
-        } else if (vm.envOr("MAINNET", false)) {
-            //deploy to mainnet
-            // /* Fork Identifier [ARBITRUM] */
-            // string memory RPC = vm.envString(vm.envString("LOCAL_FORK"));
-            // uint256 FORK_BLOCK = 257827379;
-            // uint256 arbFork;
-            // arbFork = vm.createSelectFork(RPC, FORK_BLOCK);
+        } else if (vm.envBool("MAINNET")) {
+            console.log("Mainnet Deployment");
+            /* Get deployed lending pool infra dontracts */
+            {
+                string memory outputPath =
+                    string.concat(root, "/scripts/outputs/1_LendingPoolContracts.json");
+                console.log("PATH: ", outputPath);
+                deploymentConfig = vm.readFile(outputPath);
+            }
 
-            // /* Config fetching */
-            // string memory root = vm.projectRoot();
-            // string memory path = string.concat(root, "/scripts/outputs/1_LendingPoolContracts.json");
-            // console.log("PATH: ", path);
-            // string memory deploymentConfig = vm.readFile(path);
-            // address lendingPool = deploymentConfig.readAddress(".lendingPool");
-            // address protocolDataProvider = deploymentConfig.readAddress(".protocolDataProvider");
-            // address lendingPoolAddressesProvider =
-            //     deploymentConfig.readAddress(".lendingPoolAddressesProvider");
-            // address treasury = deploymentConfig.readAddress(".treasury");
-            // address rewarder = deploymentConfig.readAddress(".rewarder");
-            // address aTokenErc6909 = deploymentConfig.readAddress(".aTokenErc6909");
+            contracts.lendingPoolAddressesProvider = LendingPoolAddressesProvider(
+                deploymentConfig.readAddress(".lendingPoolAddressesProvider")
+            );
+            contracts.lendingPool = LendingPool(deploymentConfig.readAddress(".lendingPool"));
+            contracts.aTokenErc6909 = ATokenERC6909(deploymentConfig.readAddress(".aTokenErc6909"));
+            contracts.lendingPoolConfigurator =
+                LendingPoolConfigurator(deploymentConfig.readAddress(".lendingPoolConfigurator"));
 
-            // /* Deployment */
-            // vm.startPrank(0x1804c8AB1F12E6bbf3894d4083f33e07309d1f38);
-            // deployMiniPoolInfra(
-            //     volatileStrategy,
-            //     stableStrategy,
-            //     poolReserversConfig,
-            //     address(contracts.lendingPoolAddressesProvider),
-            //     address(contracts.lendingPool),
-            //     address(contracts.aTokenErc6909),
-            //     poolAddressesProviderConfig.poolId,
-            //     0x1804c8AB1F12E6bbf3894d4083f33e07309d1f38
-            // );
-
-            // /* Write important contracts into the file */
-            // vm.serializeAddress("contracts", "miniPoolImpl", address(contracts.miniPoolImpl));
-            // vm.serializeAddress(
-            //     "contracts",
-            //     "miniPoolAddressesProvider",
-            //     address(contracts.miniPoolAddressesProvider)
-            // );
-            // vm.serializeAddress("contracts", "flowLimiter", address(contracts.flowLimiter));
-
-            // string memory output = vm.serializeAddress(
-            //     "contracts", "miniPoolConfigurator", address(contracts.miniPoolConfigurator)
-            // );
-
-            // vm.writeJson(output, "./scripts/outputs/2_MiniPoolContracts.json");
-
-            // path = string.concat(root, "/scripts/outputs/2_MiniPoolContracts.json");
-            // console.log("PROTOCOL DEPLOYED (check out addresses on %s)", path);
-
-            // vm.stopPrank();
+            vm.startBroadcast(vm.envUint("PRIVATE_KEY"));
+            console.log("Deploying lending pool infra");
+            deployMiniPoolInfra(
+                oracleConfig,
+                volatileStrategies,
+                stableStrategies,
+                piStrategies,
+                poolReserversConfig,
+                poolAddressesProviderConfig.poolId,
+                vm.addr(vm.envUint("PRIVATE_KEY"))
+            );
+            vm.stopBroadcast();
+            writeJsonData(root, path);
         } else {
-            console.log("HERE 4");
-            //deploy to a local node
+            console.log("No deployment type selected in .env");
         }
         return contracts;
     }

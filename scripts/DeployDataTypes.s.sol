@@ -17,8 +17,12 @@ import {LendingPoolAddressesProviderRegistry} from
     "contracts/protocol/configuration/LendingPoolAddressesProviderRegistry.sol";
 import {DefaultReserveInterestRateStrategy} from
     "contracts/protocol/core/interestRateStrategies/DefaultReserveInterestRateStrategy.sol";
+import {PiReserveInterestRateStrategy} from
+    "contracts/protocol/core/interestRateStrategies/PiReserveInterestRateStrategy.sol";
 import {MiniPoolDefaultReserveInterestRateStrategy} from
     "contracts/protocol/core/interestRateStrategies/MiniPoolDefaultReserveInterestRate.sol";
+import {MiniPoolPiReserveInterestRateStrategy} from
+    "contracts/protocol/core/interestRateStrategies/MiniPoolPiReserveInterestRateStrategy.sol";
 import {LendingPool} from "contracts/protocol/core/lendingpool/LendingPool.sol";
 import {LendingPoolCollateralManager} from
     "contracts/protocol/core/lendingpool/LendingPoolCollateralManager.sol";
@@ -56,10 +60,12 @@ struct DeployedContracts {
     LendingPool lendingPool;
     Treasury treasury;
     LendingPoolConfigurator lendingPoolConfigurator;
-    DefaultReserveInterestRateStrategy stableStrategy;
-    DefaultReserveInterestRateStrategy volatileStrategy;
-    MiniPoolDefaultReserveInterestRateStrategy miniPoolStableStrategy;
-    MiniPoolDefaultReserveInterestRateStrategy miniPoolVolatileStrategy;
+    DefaultReserveInterestRateStrategy[] stableStrategies;
+    DefaultReserveInterestRateStrategy[] volatileStrategies;
+    PiReserveInterestRateStrategy[] piStrategies;
+    MiniPoolDefaultReserveInterestRateStrategy[] miniPoolVolatileStrategies;
+    MiniPoolDefaultReserveInterestRateStrategy[] miniPoolStableStrategies;
+    MiniPoolPiReserveInterestRateStrategy[] miniPoolPiStrategies;
     ProtocolDataProvider protocolDataProvider;
     ATokensAndRatesHelper aTokensAndRatesHelper;
     AToken aToken;
@@ -120,6 +126,7 @@ struct PoolReserversConfig {
     uint256 baseLtv;
     bool borrowingEnabled;
     string interestStrat;
+    uint256 interestStratId;
     uint256 liquidationBonus;
     uint256 liquidationThreshold;
     string params;
@@ -135,6 +142,17 @@ struct LinearStrategy {
     uint256 optimalUtilizationRate;
     uint256 variableRateSlope1;
     uint256 variableRateSlope2;
+}
+
+struct PiStrategy {
+    bool assetReserveType;
+    uint256 ki;
+    uint256 kp;
+    int256 maxITimeAmp;
+    int256 minControllerError;
+    uint256 optimalUtilizationRate;
+    string symbol;
+    address tokenAddress;
 }
 
 struct OracleConfig {

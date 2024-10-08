@@ -2,8 +2,6 @@
 
 pragma solidity ^0.8.23;
 
-// import "./DeployArbTestNet.s.sol";
-// import "./localDeployConfig.s.sol";
 import "./DeployDataTypes.s.sol";
 import "./DeploymentUtils.s.sol";
 import "lib/forge-std/src/Test.sol";
@@ -14,11 +12,7 @@ import {DeployMiniPool} from "./2_DeployMiniPool.s.sol";
 contract AddAssets is Script, DeploymentUtils, Test {
     using stdJson for string;
 
-    address WETH_ARB = 0x82aF49447D8a07e3bd95BD0d56f35241523fBab1;
-
     function run() external returns (DeployedContracts memory) {
-        //vm.startBroadcast(vm.envUint("DEPLOYER"));
-
         // Config fetching
         string memory root = vm.projectRoot();
         string memory path = string.concat(root, "/scripts/inputs/3_AssetsToAdd.json");
@@ -37,9 +31,10 @@ contract AddAssets is Script, DeploymentUtils, Test {
         PoolReserversConfig[] memory miniPoolReserversConfig = abi.decode(
             deploymentConfig.parseRaw(".miniPoolReserversConfig"), (PoolReserversConfig[])
         );
-
         OracleConfig memory oracleConfig =
             abi.decode(deploymentConfig.parseRaw(".oracleConfig"), (OracleConfig));
+        PiStrategy memory piStrategy =
+            abi.decode(deploymentConfig.parseRaw(".piStrategy"), (PiStrategy));
 
         if (vm.envBool("LOCAL_FORK")) {
             /* Fork Identifier [ARBITRUM] */
@@ -59,7 +54,8 @@ contract AddAssets is Script, DeploymentUtils, Test {
             );
             vm.stopPrank();
         } else if (vm.envBool("TESTNET")) {
-            //Lending pool settings
+            console.log("Testnet deployment");
+            /* Lending pool settings */
             {
                 string memory outputPath =
                     string.concat(root, "/scripts/outputs/1_LendingPoolContracts.json");
@@ -159,7 +155,7 @@ contract AddAssets is Script, DeploymentUtils, Test {
                     prices[idx] = int256(mockedTokens[idx].prices);
                 }
 
-                // Deployment
+                /* Deployment */
                 console.log("Broadcasting....");
                 vm.startBroadcast(vm.envUint("PRIVATE_KEY"));
                 (address[] memory tokens,) = _deployERC20Mocks(symbols, symbols, decimals, prices);
@@ -176,6 +172,75 @@ contract AddAssets is Script, DeploymentUtils, Test {
                 contracts, miniPoolReserversConfig, poolAddressesProviderConfig.poolId, oracleConfig
             );
             vm.stopBroadcast();
+        } else if (vm.envBool("MAINNET")) {
+            console.log("Mainnet deployment");
+            /* Lending pool settings */
+            {
+                string memory outputPath =
+                    string.concat(root, "/scripts/outputs/1_LendingPoolContracts.json");
+                console.log("PATH: ", outputPath);
+                deploymentConfig = vm.readFile(outputPath);
+            }
+            {
+                string memory outputPath =
+                    string.concat(root, "/scripts/outputs/1_LendingPoolContracts.json");
+                console.log("PATH: ", outputPath);
+                deploymentConfig = vm.readFile(outputPath);
+            }
+
+            /* Ready lending pool contracts settings */
+            contracts.stableStrategy =
+                DefaultReserveInterestRateStrategy(deploymentConfig.readAddress(".stableStrategy"));
+            contracts.volatileStrategy = DefaultReserveInterestRateStrategy(
+                deploymentConfig.readAddress(".volatileStrategy")
+            );
+            contracts.aToken = AToken(deploymentConfig.readAddress(".aToken"));
+            contracts.variableDebtToken =
+                VariableDebtToken(deploymentConfig.readAddress(".variableDebtToken"));
+            contracts.treasury = Treasury(deploymentConfig.readAddress(".treasury"));
+            contracts.rewarder = Rewarder(deploymentConfig.readAddress(".rewarder"));
+            contracts.lendingPoolConfigurator =
+                LendingPoolConfigurator(deploymentConfig.readAddress(".lendingPoolConfigurator"));
+            contracts.lendingPoolAddressesProvider = LendingPoolAddressesProvider(
+                deploymentConfig.readAddress(".lendingPoolAddressesProvider")
+            );
+            contracts.aTokensAndRatesHelper =
+                ATokensAndRatesHelper(deploymentConfig.readAddress(".aTokensAndRatesHelper"));
+
+            /* Configure reserve */
+            vm.startBroadcast(vm.envUint("PRIVATE_KEY"));
+            _initAndConfigureReserves(contracts, lendingPoolReserversConfig, general, oracleConfig);
+            vm.stopBroadcast();
+
+            /* Mini pool settings */
+            {
+                string memory outputPath =
+                    string.concat(root, "/scripts/outputs/2_MiniPoolContracts.json");
+                console.log("PATH: ", outputPath);
+                deploymentConfig = vm.readFile(outputPath);
+            }
+            /* Ready mini pool contracts settings */
+            contracts.miniPoolAddressesProvider = MiniPoolAddressesProvider(
+                deploymentConfig.readAddress(".miniPoolAddressesProvider")
+            );
+            contracts.miniPoolConfigurator =
+                MiniPoolConfigurator(deploymentConfig.readAddress(".miniPoolConfigurator"));
+            contracts.miniPoolVolatileStrategy = MiniPoolDefaultReserveInterestRateStrategy(
+                deploymentConfig.readAddress(".miniPoolVolatileStrategy")
+            );
+
+            contracts.miniPoolStableStrategy = MiniPoolDefaultReserveInterestRateStrategy(
+                deploymentConfig.readAddress(".miniPoolStableStrategy")
+            );
+            /* Configuration */
+            vm.startBroadcast(vm.envUint("PRIVATE_KEY"));
+            console.log("Configuration ");
+            _initAndConfigureMiniPoolReserves(
+                contracts, miniPoolReserversConfig, poolAddressesProviderConfig.poolId, oracleConfig
+            );
+            vm.stopBroadcast();
+        } else {
+            console.log("No deployment type selected in .env");
         }
         return contracts;
     }
