@@ -63,11 +63,6 @@ contract DeployLendingPool is Script, DeploymentUtils, Test {
         );
         vm.serializeAddress(
             "lendingPoolContracts",
-            "lendingPoolAddressesProviderRegistry",
-            address(contracts.lendingPoolAddressesProviderRegistry)
-        );
-        vm.serializeAddress(
-            "lendingPoolContracts",
             "lendingPoolCollateralManager",
             address(contracts.lendingPoolCollateralManager)
         );
@@ -75,11 +70,6 @@ contract DeployLendingPool is Script, DeploymentUtils, Test {
             "lendingPoolContracts",
             "lendingPoolConfigurator",
             address(contracts.lendingPoolConfigurator)
-        );
-        string memory output = vm.serializeAddress(
-            "lendingPoolContracts",
-            "lendingPoolAddressesProviderRegistry",
-            address(contracts.lendingPoolAddressesProviderRegistry)
         );
 
         vm.writeJson(output, "./scripts/outputs/1_LendingPoolContracts.json");

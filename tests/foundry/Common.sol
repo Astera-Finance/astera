@@ -14,7 +14,6 @@ import "contracts/protocol/core/lendingpool/logic/ReserveLogic.sol";
 import "contracts/protocol/core/lendingpool/logic/GenericLogic.sol";
 import "contracts/protocol/core/lendingpool/logic/ValidationLogic.sol";
 import "contracts/protocol/configuration/LendingPoolAddressesProvider.sol";
-import "contracts/protocol/configuration/LendingPoolAddressesProviderRegistry.sol";
 import "contracts/protocol/core/interestRateStrategies/DefaultReserveInterestRateStrategy.sol";
 import "contracts/protocol/core/interestRateStrategies/PiReserveInterestRateStrategy.sol";
 import "contracts/protocol/core/interestRateStrategies/MiniPoolPiReserveInterestRateStrategy.sol";
@@ -76,7 +75,6 @@ contract Common is Test {
     }
 
     struct DeployedContracts {
-        LendingPoolAddressesProviderRegistry lendingPoolAddressesProviderRegistry;
         Rewarder rewarder;
         LendingPoolAddressesProvider lendingPoolAddressesProvider;
         LendingPool lendingPool;
@@ -263,12 +261,9 @@ contract Common is Test {
         //     anotherAddress := create(0, add(bytecode, 0x20), mload(bytecode))
         // }
         deployedContracts.rewarder = new Rewarder();
-        deployedContracts.lendingPoolAddressesProviderRegistry =
-            new LendingPoolAddressesProviderRegistry();
-        deployedContracts.lendingPoolAddressesProvider = new LendingPoolAddressesProvider(marketId);
-        deployedContracts.lendingPoolAddressesProviderRegistry.registerAddressesProvider(
-            address(deployedContracts.lendingPoolAddressesProvider), providerId
-        );
+
+        deployedContracts.lendingPoolAddressesProvider = new LendingPoolAddressesProvider();
+
         deployedContracts.lendingPoolAddressesProvider.setPoolAdmin(admin);
         deployedContracts.lendingPoolAddressesProvider.setEmergencyAdmin(admin);
 
@@ -580,19 +575,12 @@ contract Common is Test {
             IMiniPoolAddressesProvider(address(deployedMiniPoolContracts.miniPoolAddressesProvider)),
             ILendingPool(_lendingPool)
         );
-        address miniPoolConfigIMPL = address(new MiniPoolConfigurator());
+        address miniPoolConfigImpl = address(new MiniPoolConfigurator());
         deployedMiniPoolContracts.miniPoolAddressesProvider.setMiniPoolConfigurator(
-            miniPoolConfigIMPL
+            miniPoolConfigImpl
         );
         deployedMiniPoolContracts.miniPoolConfigurator = MiniPoolConfigurator(
             deployedMiniPoolContracts.miniPoolAddressesProvider.getMiniPoolConfigurator()
-        );
-
-        deployedMiniPoolContracts.miniPoolAddressesProvider.setMiniPoolImpl(
-            address(deployedMiniPoolContracts.miniPoolImpl)
-        );
-        deployedMiniPoolContracts.miniPoolAddressesProvider.setAToken6909Impl(
-            address(deployedMiniPoolContracts.aToken6909Impl)
         );
 
         ILendingPoolAddressesProvider(_lendingPoolAddressesProvider).setMiniPoolAddressesProvider(
@@ -601,7 +589,10 @@ contract Common is Test {
         ILendingPoolAddressesProvider(_lendingPoolAddressesProvider).setFlowLimiter(
             address(deployedMiniPoolContracts.flowLimiter)
         );
-        deployedMiniPoolContracts.miniPoolAddressesProvider.deployMiniPool();
+        deployedMiniPoolContracts.miniPoolAddressesProvider.deployMiniPool(
+            address(deployedMiniPoolContracts.miniPoolImpl),
+            address(deployedMiniPoolContracts.aToken6909Impl)
+        );
 
         /* Strategies */
         deployedMiniPoolContracts.stableStrategy = new MiniPoolDefaultReserveInterestRateStrategy(

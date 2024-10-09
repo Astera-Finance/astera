@@ -13,8 +13,6 @@ import {WETHGateway} from "contracts/misc/WETHGateway.sol";
 // import "contracts/protocol/core/lendingpool/logic/ValidationLogic.sol";
 import {LendingPoolAddressesProvider} from
     "contracts/protocol/configuration/LendingPoolAddressesProvider.sol";
-import {LendingPoolAddressesProviderRegistry} from
-    "contracts/protocol/configuration/LendingPoolAddressesProviderRegistry.sol";
 import {DefaultReserveInterestRateStrategy} from
     "contracts/protocol/core/interestRateStrategies/DefaultReserveInterestRateStrategy.sol";
 import {PiReserveInterestRateStrategy} from
@@ -54,7 +52,6 @@ import {WadRayMath} from "contracts/protocol/libraries/math/WadRayMath.sol";
 
 // Structures
 struct DeployedContracts {
-    LendingPoolAddressesProviderRegistry lendingPoolAddressesProviderRegistry;
     Rewarder rewarder;
     LendingPoolAddressesProvider lendingPoolAddressesProvider;
     LendingPool lendingPool;
@@ -72,6 +69,7 @@ struct DeployedContracts {
     VariableDebtToken variableDebtToken;
     WETHGateway wETHGateway;
     LendingPoolCollateralManager lendingPoolCollateralManager;
+    MiniPoolCollateralManager miniPoolCollateralManager;
     ATokenERC6909 aTokenErc6909;
     MiniPool miniPoolImpl;
     MiniPoolAddressesProvider miniPoolAddressesProvider;

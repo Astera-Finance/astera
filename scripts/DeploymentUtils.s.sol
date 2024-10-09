@@ -12,7 +12,6 @@ import "contracts/protocol/core/lendingpool/logic/ReserveLogic.sol";
 import "contracts/protocol/core/lendingpool/logic/GenericLogic.sol";
 import "contracts/protocol/core/lendingpool/logic/ValidationLogic.sol";
 import "contracts/protocol/configuration/LendingPoolAddressesProvider.sol";
-import "contracts/protocol/configuration/LendingPoolAddressesProviderRegistry.sol";
 import "contracts/protocol/core/interestRateStrategies/DefaultReserveInterestRateStrategy.sol";
 import "contracts/protocol/core/interestRateStrategies/PiReserveInterestRateStrategy.sol";
 import "contracts/protocol/core/lendingpool/LendingPool.sol";
@@ -227,12 +226,7 @@ contract DeploymentUtils {
         PoolAddressesProviderConfig memory poolAddressesProviderConfig,
         address deployer
     ) internal {
-        contracts.lendingPoolAddressesProviderRegistry = new LendingPoolAddressesProviderRegistry();
-        contracts.lendingPoolAddressesProvider =
-            new LendingPoolAddressesProvider(poolAddressesProviderConfig.marketId);
-        contracts.lendingPoolAddressesProviderRegistry.registerAddressesProvider(
-            address(contracts.lendingPoolAddressesProvider), 1
-        );
+        contracts.lendingPoolAddressesProvider = new LendingPoolAddressesProvider();
 
         contracts.lendingPool = new LendingPool();
         contracts.lendingPool.initialize(
@@ -261,6 +255,9 @@ contract DeploymentUtils {
         contracts.lendingPoolConfigurator.setPoolPause(true);
 
         contracts.lendingPoolCollateralManager = new LendingPoolCollateralManager();
+        contracts.lendingPoolAddressesProvider.setLendingPoolCollateralManager(
+            address(contracts.lendingPoolCollateralManager)
+        );
         contracts.lendingPoolAddressesProvider.setPriceOracle(address(oracle));
         contracts.protocolDataProvider =
             new ProtocolDataProvider(contracts.lendingPoolAddressesProvider);
@@ -281,15 +278,19 @@ contract DeploymentUtils {
         );
         contracts.miniPoolConfigurator =
             MiniPoolConfigurator(contracts.miniPoolAddressesProvider.getMiniPoolConfigurator());
-        contracts.miniPoolAddressesProvider.setMiniPoolImpl(address(contracts.miniPoolImpl));
-        contracts.miniPoolAddressesProvider.setAToken6909Impl(address(contracts.aTokenErc6909));
         console.log("setting provider");
         contracts.lendingPoolAddressesProvider.setMiniPoolAddressesProvider(
             address(contracts.miniPoolAddressesProvider)
         );
         console.log("AFTER");
         contracts.lendingPoolAddressesProvider.setFlowLimiter(address(contracts.flowLimiter));
-        contracts.miniPoolAddressesProvider.deployMiniPool();
+        contracts.miniPoolAddressesProvider.deployMiniPool(
+            address(contracts.miniPoolImpl), address(contracts.aTokenErc6909)
+        );
+        contracts.miniPoolCollateralManager = new MiniPoolCollateralManager();
+        contracts.miniPoolAddressesProvider.setMiniPoolCollateralManager(
+            address(contracts.miniPoolCollateralManager)
+        );
     }
 
     function _initAndConfigureReserves(
