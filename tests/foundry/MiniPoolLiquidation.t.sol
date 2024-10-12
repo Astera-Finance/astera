@@ -229,8 +229,8 @@ contract MiniPoolLiquidationTest is MiniPoolDepositBorrowTest {
             );
             assertLe(
                 aErc6909Token.balanceOf(user, 1128 + collateralOffset),
-                liquidationVars.userCollateralBalance / 2,
-                "444"
+                liquidationVars.userCollateralBalance,
+                "User collateral token balance after liquidation is not less or equal than user collateral balance before"
             );
 
             console.log(

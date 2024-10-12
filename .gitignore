@@ -9,6 +9,9 @@ inspo
 package-lock.json
 providers.json
 
+*outputs
+*broadcast
+
 # Hardhat
 hardhat.config.ts
 cache

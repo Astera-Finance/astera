@@ -29,19 +29,8 @@ contract LendingPoolAddressesProviderTest is Common {
         assertEq(vm.activeFork(), opFork);
     }
 
-    function testSetAndGetMarketId() public {
-        string memory newMarketId = "New Cod3x Lend Genesis Market";
-        LendingPoolAddressesProvider provider = new LendingPoolAddressesProvider(marketId);
-        assertEq(provider.getMarketId(), marketId);
-
-        vm.expectEmit(false, false, false, true);
-        emit MarketIdSet(newMarketId);
-        provider.setMarketId(newMarketId);
-        assertEq(provider.getMarketId(), newMarketId);
-    }
-
     function testSetAddressAsProxy() public {
-        LendingPoolAddressesProvider provider = new LendingPoolAddressesProvider(marketId);
+        LendingPoolAddressesProvider provider = new LendingPoolAddressesProvider();
         LendingPoolConfigurator lendingPool = new LendingPoolConfigurator();
         bytes32 id = bytes32(abi.encodePacked("RANDOM_PROXY"));
 
@@ -53,7 +42,7 @@ contract LendingPoolAddressesProviderTest is Common {
     function testSetAndGetAddress() public {
         address randomAddress = makeAddr("RandomAddr");
         bytes32 id = "RANDOM_PROXY";
-        LendingPoolAddressesProvider provider = new LendingPoolAddressesProvider(marketId);
+        LendingPoolAddressesProvider provider = new LendingPoolAddressesProvider();
         vm.expectEmit(true, false, false, true);
         emit AddressSet(id, randomAddress, false);
         provider.setAddress(id, randomAddress);
@@ -72,7 +61,7 @@ contract LendingPoolAddressesProviderTest is Common {
          * 1. LendingPoolAddressProvider must return proper address after setting new implementation and its address
          */
         bytes32 id = "LENDING_POOL";
-        LendingPoolAddressesProvider provider = new LendingPoolAddressesProvider(marketId);
+        LendingPoolAddressesProvider provider = new LendingPoolAddressesProvider();
         LendingPool lendingPool = new LendingPool();
 
         vm.expectEmit(true, false, false, false);
@@ -93,7 +82,7 @@ contract LendingPoolAddressesProviderTest is Common {
          * 1. LendingPoolAddressProvider must return proper address after setting new implementation and its address
          */
         bytes32 id = "LENDING_POOL_CONFIGURATOR";
-        LendingPoolAddressesProvider provider = new LendingPoolAddressesProvider(marketId);
+        LendingPoolAddressesProvider provider = new LendingPoolAddressesProvider();
         LendingPoolConfigurator lendingPoolConfigurator = new LendingPoolConfigurator();
 
         vm.expectEmit(true, false, false, false);
@@ -106,7 +95,7 @@ contract LendingPoolAddressesProviderTest is Common {
     }
 
     function testSetAndGetCollateralManager() public {
-        LendingPoolAddressesProvider provider = new LendingPoolAddressesProvider(marketId);
+        LendingPoolAddressesProvider provider = new LendingPoolAddressesProvider();
         address lendingPoolCollateralManager = makeAddr("LendingPoolCollateralManager");
 
         vm.expectEmit(false, false, false, false);
@@ -117,7 +106,7 @@ contract LendingPoolAddressesProviderTest is Common {
     }
 
     function testSetAndGetAdmins() public {
-        LendingPoolAddressesProvider provider = new LendingPoolAddressesProvider(marketId);
+        LendingPoolAddressesProvider provider = new LendingPoolAddressesProvider();
         address poolAdmin = makeAddr("PoolAdmin");
         address emergencyAdmin = makeAddr("EmergencyAdmin");
 
@@ -134,7 +123,7 @@ contract LendingPoolAddressesProviderTest is Common {
     }
 
     function testSetAndGetPriceOracle() public {
-        LendingPoolAddressesProvider provider = new LendingPoolAddressesProvider(marketId);
+        LendingPoolAddressesProvider provider = new LendingPoolAddressesProvider();
         address priceOracle = makeAddr("PriceOracle");
 
         vm.expectEmit(false, false, false, false);

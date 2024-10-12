@@ -20,45 +20,29 @@ interface ILendingPoolAddressesProvider {
     event ProxyCreated(bytes32 id, address indexed newAddress);
     event AddressSet(bytes32 id, address indexed newAddress, bool hasProxy);
 
-    function getMarketId() external view returns (string memory);
-
-    function setMarketId(string calldata marketId) external;
-
-    function setAddress(bytes32 id, address newAddress) external;
-
-    function setAddressAsProxy(bytes32 id, address impl) external;
-
+    // Functions related to getting various addresses
+    function getMiniPoolAddressesProvider() external view returns (address);
+    function getLendingPool() external view returns (address);
+    function getLendingPoolConfigurator() external view returns (address);
+    function getPoolAdmin() external view returns (address);
+    function getEmergencyAdmin() external view returns (address);
+    function getLendingPoolCollateralManager() external view returns (address);
+    function getPriceOracle() external view returns (address);
+    function getFlowLimiter() external view returns (address);
     function getAddress(bytes32 id) external view returns (address);
 
-    function getLendingPool() external view returns (address);
+    function setAddress(bytes32 id, address newAddress) external;
+    function setAddressAsProxy(bytes32 id, address impl) external;
 
+    //Functions related to implementaion management
     function setLendingPoolImpl(address pool) external;
-
-    function getLendingPoolConfigurator() external view returns (address);
-
     function setLendingPoolConfiguratorImpl(address configurator) external;
 
-    function getLendingPoolCollateralManager() external view returns (address);
-
+    //Functions related to proxies
     function setLendingPoolCollateralManager(address manager) external;
-
-    function getPoolAdmin() external view returns (address);
-
     function setPoolAdmin(address admin) external;
-
-    function getEmergencyAdmin() external view returns (address);
-
     function setEmergencyAdmin(address admin) external;
-
-    function getPriceOracle() external view returns (address);
-
     function setPriceOracle(address priceOracle) external;
-
-    function getMiniPoolAddressesProvider() external view returns (address);
-
     function setMiniPoolAddressesProvider(address provider) external;
-
-    function getFlowLimiter() external view returns (address);
-
     function setFlowLimiter(address flowLimiter) external;
 }

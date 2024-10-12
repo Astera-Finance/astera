@@ -369,7 +369,7 @@ contract MiniPoolConfiguratorTest is MiniPoolDepositBorrowTest {
         }
     }
 
-    struct flowLimiterTestLocalVars {
+    struct FlowLimiterTestLocalVars {
         IERC20 usdc;
         IERC20 grainUSDC;
         IERC20 debtUSDC;
@@ -386,7 +386,7 @@ contract MiniPoolConfiguratorTest is MiniPoolDepositBorrowTest {
     }
 
     function testFlowLimiter() public {
-        flowLimiterTestLocalVars memory vars;
+        FlowLimiterTestLocalVars memory vars;
         vars.user = makeAddr("user");
         vars.mpId = 0;
         vars.mp = miniPoolContracts.miniPoolAddressesProvider.getMiniPool(vars.mpId);
