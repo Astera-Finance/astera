@@ -38,7 +38,7 @@ interface IAERC6909 is IERC6909 {
     function getIdForUnderlying(address underlying)
         external
         view
-        returns (uint256 aTokenID, uint256 debtTokenID, bool isTranche);
+        returns (uint256 aTokenID, uint256 debtTokenID, bool isTranche, bool isInitialized);
     function mintToTreasury(uint256 id, uint256 amount, uint256 index) external;
     function mint(address user, address onBehalfOf, uint256 id, uint256 amount, uint256 index)
         external
