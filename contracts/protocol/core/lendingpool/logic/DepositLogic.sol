@@ -2,11 +2,13 @@
 pragma solidity 0.8.23;
 
 import {IERC20} from "../../../../../contracts/dependencies/openzeppelin/contracts/IERC20.sol";
-import {ILendingPoolAddressesProvider} from "../../../../../contracts/interfaces/ILendingPoolAddressesProvider.sol";
+import {ILendingPoolAddressesProvider} from
+    "../../../../../contracts/interfaces/ILendingPoolAddressesProvider.sol";
 import {SafeERC20} from "../../../../../contracts/dependencies/openzeppelin/contracts/SafeERC20.sol";
 import {IAToken} from "../../../../../contracts/interfaces/IAToken.sol";
 import {IVariableDebtToken} from "../../../../../contracts/interfaces/IVariableDebtToken.sol";
-import {IReserveInterestRateStrategy} from "../../../../../contracts/interfaces/IReserveInterestRateStrategy.sol";
+import {IReserveInterestRateStrategy} from
+    "../../../../../contracts/interfaces/IReserveInterestRateStrategy.sol";
 import {ReserveConfiguration} from
     "../../../../../contracts/protocol/libraries/configuration/ReserveConfiguration.sol";
 import {ReserveBorrowConfiguration} from
@@ -17,7 +19,8 @@ import {PercentageMath} from "../../../../../contracts/protocol/libraries/math/P
 import {Errors} from "../../../../../contracts/protocol/libraries/helpers/Errors.sol";
 import {DataTypes} from "../../../../../contracts/protocol/libraries/types/DataTypes.sol";
 import {ReserveLogic} from "./ReserveLogic.sol";
-import {UserConfiguration} from "../../../../../contracts/protocol/libraries/configuration/UserConfiguration.sol";
+import {UserConfiguration} from
+    "../../../../../contracts/protocol/libraries/configuration/UserConfiguration.sol";
 import {ValidationLogic} from "./ValidationLogic.sol";
 
 /**

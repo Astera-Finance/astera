@@ -8,7 +8,8 @@ import {IChainlinkAggregator} from "../../../contracts/interfaces/IChainlinkAggr
 import {SafeERC20} from "../../../contracts/dependencies/openzeppelin/contracts/SafeERC20.sol";
 import {IAToken} from "../../../contracts/interfaces/IAToken.sol";
 import {IMiniPool} from "../../../contracts/interfaces/IMiniPool.sol";
-import {ATokenNonRebasing} from "../../../contracts/protocol/tokenization/ERC20/ATokenNonRebasing.sol";
+import {ATokenNonRebasing} from
+    "../../../contracts/protocol/tokenization/ERC20/ATokenNonRebasing.sol";
 
 /// @title Oracle
 /// @author Cod3x

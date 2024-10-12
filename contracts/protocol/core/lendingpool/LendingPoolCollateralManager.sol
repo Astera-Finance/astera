@@ -5,7 +5,8 @@ import {IERC20} from "../../../../contracts/dependencies/openzeppelin/contracts/
 import {IAToken} from "../../../../contracts/interfaces/IAToken.sol";
 import {IVariableDebtToken} from "../../../../contracts/interfaces/IVariableDebtToken.sol";
 import {IPriceOracleGetter} from "../../../../contracts/interfaces/IPriceOracleGetter.sol";
-import {ILendingPoolCollateralManager} from "../../../../contracts/interfaces/ILendingPoolCollateralManager.sol";
+import {ILendingPoolCollateralManager} from
+    "../../../../contracts/interfaces/ILendingPoolCollateralManager.sol";
 import {VersionedInitializable} from
     "../../../../contracts/protocol/libraries/upgradeability/VersionedInitializable.sol";
 import {GenericLogic} from "../../../../contracts/protocol/core/lendingpool/logic/GenericLogic.sol";
@@ -14,8 +15,10 @@ import {WadRayMath} from "../../../../contracts/protocol/libraries/math/WadRayMa
 import {PercentageMath} from "../../../../contracts/protocol/libraries/math/PercentageMath.sol";
 import {SafeERC20} from "../../../../contracts/dependencies/openzeppelin/contracts/SafeERC20.sol";
 import {Errors} from "../../../../contracts/protocol/libraries/helpers/Errors.sol";
-import {ValidationLogic} from "../../../../contracts/protocol/core/lendingpool/logic/ValidationLogic.sol";
-import {UserConfiguration} from "../../../../contracts/protocol/libraries/configuration/UserConfiguration.sol";
+import {ValidationLogic} from
+    "../../../../contracts/protocol/core/lendingpool/logic/ValidationLogic.sol";
+import {UserConfiguration} from
+    "../../../../contracts/protocol/libraries/configuration/UserConfiguration.sol";
 import {ReserveConfiguration} from
     "../../../../contracts/protocol/libraries/configuration/ReserveConfiguration.sol";
 import {ReserveLogic} from "../../../../contracts/protocol/core/lendingpool/logic/ReserveLogic.sol";

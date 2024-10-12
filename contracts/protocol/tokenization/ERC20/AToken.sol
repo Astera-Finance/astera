@@ -9,10 +9,12 @@ import {WadRayMath} from "../../../../contracts/protocol/libraries/math/WadRayMa
 import {Errors} from "../../../../contracts/protocol/libraries/helpers/Errors.sol";
 import {VersionedInitializable} from
     "../../../../contracts/protocol/libraries/upgradeability/VersionedInitializable.sol";
-import {IncentivizedERC20} from "../../../../contracts/protocol/tokenization/ERC20/IncentivizedERC20.sol";
+import {IncentivizedERC20} from
+    "../../../../contracts/protocol/tokenization/ERC20/IncentivizedERC20.sol";
 import {IRewarder} from "../../../../contracts/interfaces/IRewarder.sol";
 import {IERC4626} from "../../../../contracts/interfaces/IERC4626.sol";
-import {ATokenNonRebasing} from "../../../../contracts/protocol/tokenization/ERC20/ATokenNonRebasing.sol";
+import {ATokenNonRebasing} from
+    "../../../../contracts/protocol/tokenization/ERC20/ATokenNonRebasing.sol";
 
 /**
  * @title Aave ERC20 AToken

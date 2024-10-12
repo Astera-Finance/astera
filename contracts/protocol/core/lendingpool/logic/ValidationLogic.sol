@@ -10,10 +10,12 @@ import {PercentageMath} from "../../../../../contracts/protocol/libraries/math/P
 import {SafeERC20} from "../../../../../contracts/dependencies/openzeppelin/contracts/SafeERC20.sol";
 import {ReserveConfiguration} from
     "../../../../../contracts/protocol/libraries/configuration/ReserveConfiguration.sol";
-import {UserConfiguration} from "../../../../../contracts/protocol/libraries/configuration/UserConfiguration.sol";
+import {UserConfiguration} from
+    "../../../../../contracts/protocol/libraries/configuration/UserConfiguration.sol";
 import {Errors} from "../../../../../contracts/protocol/libraries/helpers/Errors.sol";
 import {Helpers} from "../../../../../contracts/protocol/libraries/helpers/Helpers.sol";
-import {IReserveInterestRateStrategy} from "../../../../../contracts/interfaces/IReserveInterestRateStrategy.sol";
+import {IReserveInterestRateStrategy} from
+    "../../../../../contracts/interfaces/IReserveInterestRateStrategy.sol";
 import {DataTypes} from "../../../../../contracts/protocol/libraries/types/DataTypes.sol";
 import {IAToken} from "../../../../../contracts/interfaces/IAToken.sol";
 

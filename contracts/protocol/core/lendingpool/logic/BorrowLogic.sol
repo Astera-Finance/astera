@@ -4,7 +4,8 @@ pragma solidity 0.8.23;
 import {IERC20} from "../../../../../contracts/dependencies/openzeppelin/contracts/IERC20.sol";
 import {SafeERC20} from "../../../../../contracts/dependencies/openzeppelin/contracts/SafeERC20.sol";
 import {IPriceOracleGetter} from "../../../../../contracts/interfaces/IPriceOracleGetter.sol";
-import {ILendingPoolAddressesProvider} from "../../../../../contracts/interfaces/ILendingPoolAddressesProvider.sol";
+import {ILendingPoolAddressesProvider} from
+    "../../../../../contracts/interfaces/ILendingPoolAddressesProvider.sol";
 import {IAToken} from "../../../../../contracts/interfaces/IAToken.sol";
 import {IVariableDebtToken} from "../../../../../contracts/interfaces/IVariableDebtToken.sol";
 import {WadRayMath} from "../../../../../contracts/protocol/libraries/math/WadRayMath.sol";
@@ -18,8 +19,10 @@ import {ReserveConfiguration} from
     "../../../../../contracts/protocol/libraries/configuration/ReserveConfiguration.sol";
 import {ReserveBorrowConfiguration} from
     "../../../../../contracts/protocol/libraries/configuration/ReserveBorrowConfiguration.sol";
-import {UserConfiguration} from "../../../../../contracts/protocol/libraries/configuration/UserConfiguration.sol";
-import {UserRecentBorrow} from "../../../../../contracts/protocol/libraries/configuration/UserRecentBorrow.sol";
+import {UserConfiguration} from
+    "../../../../../contracts/protocol/libraries/configuration/UserConfiguration.sol";
+import {UserRecentBorrow} from
+    "../../../../../contracts/protocol/libraries/configuration/UserRecentBorrow.sol";
 import {Helpers} from "../../../../../contracts/protocol/libraries/helpers/Helpers.sol";
 import {IFlowLimiter} from "../../../../../contracts/interfaces/IFlowLimiter.sol";
 

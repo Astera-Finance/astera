@@ -1,11 +1,13 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity 0.8.23;
 
-import {UserConfiguration} from "../../../../contracts/protocol/libraries/configuration/UserConfiguration.sol";
+import {UserConfiguration} from
+    "../../../../contracts/protocol/libraries/configuration/UserConfiguration.sol";
 import {ReserveConfiguration} from
     "../../../../contracts/protocol/libraries/configuration/ReserveConfiguration.sol";
 import {ReserveLogic} from "../../../../contracts/protocol/core/lendingpool/logic/ReserveLogic.sol";
-import {IMiniPoolAddressesProvider} from "../../../../contracts/interfaces/IMiniPoolAddressesProvider.sol";
+import {IMiniPoolAddressesProvider} from
+    "../../../../contracts/interfaces/IMiniPoolAddressesProvider.sol";
 import {ILendingPool} from "../../../../contracts/interfaces/ILendingPool.sol";
 import {DataTypes} from "../../../../contracts/protocol/libraries/types/DataTypes.sol";
 

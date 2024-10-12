@@ -7,7 +7,8 @@ import {IAERC6909} from "../../../../../contracts/interfaces/IAERC6909.sol";
 import {MiniPoolReserveLogic} from "./MiniPoolReserveLogic.sol";
 import {ReserveConfiguration} from
     "../../../../../contracts/protocol/libraries/configuration/ReserveConfiguration.sol";
-import {UserConfiguration} from "../../../../../contracts/protocol/libraries/configuration/UserConfiguration.sol";
+import {UserConfiguration} from
+    "../../../../../contracts/protocol/libraries/configuration/UserConfiguration.sol";
 import {WadRayMath} from "../../../../../contracts/protocol/libraries/math/WadRayMath.sol";
 import {PercentageMath} from "../../../../../contracts/protocol/libraries/math/PercentageMath.sol";
 import {IPriceOracleGetter} from "../../../../../contracts/interfaces/IPriceOracleGetter.sol";

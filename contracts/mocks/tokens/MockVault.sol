@@ -3,7 +3,8 @@ pragma solidity ^0.8.0;
 
 import {ERC20} from "../../../contracts/dependencies/openzeppelin/contracts/ERC20.sol";
 import {IERC20} from "../../../contracts/dependencies/openzeppelin/contracts/IERC20.sol";
-import {IERC20Metadata} from "../../../contracts/dependencies/openzeppelin/contracts/IERC20Metadata.sol";
+import {IERC20Metadata} from
+    "../../../contracts/dependencies/openzeppelin/contracts/IERC20Metadata.sol";
 import {SafeERC20} from "../../../contracts/dependencies/openzeppelin/contracts/SafeERC20.sol";
 import {IStrategy} from "../../../contracts/mocks/dependencies/IStrategy.sol";
 import {IERC4626Events} from "./IERC4626Events.sol";

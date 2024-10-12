@@ -2,7 +2,8 @@
 pragma solidity 0.8.23;
 
 import "./BaseImmutableAdminUpgradeabilityProxy.sol";
-import "../../../../contracts/dependencies/openzeppelin/upgradeability/InitializableUpgradeabilityProxy.sol";
+import
+    "../../../../contracts/dependencies/openzeppelin/upgradeability/InitializableUpgradeabilityProxy.sol";
 
 /**
  * @title InitializableAdminUpgradeabilityProxy

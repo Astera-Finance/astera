@@ -2,10 +2,12 @@
 pragma solidity 0.8.23;
 
 import {ILendingPool} from "../../../../../contracts/interfaces/ILendingPool.sol";
-import {ICreditDelegationToken} from "../../../../../contracts/interfaces/ICreditDelegationToken.sol";
+import {ICreditDelegationToken} from
+    "../../../../../contracts/interfaces/ICreditDelegationToken.sol";
 import {VersionedInitializable} from
     "../../../../../contracts/protocol/libraries/upgradeability/VersionedInitializable.sol";
-import {IncentivizedERC20} from "../../../../../contracts/protocol/tokenization/ERC20/IncentivizedERC20.sol";
+import {IncentivizedERC20} from
+    "../../../../../contracts/protocol/tokenization/ERC20/IncentivizedERC20.sol";
 import {Errors} from "../../../../../contracts/protocol/libraries/helpers/Errors.sol";
 
 /**
