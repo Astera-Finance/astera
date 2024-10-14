@@ -3,9 +3,11 @@ pragma solidity 0.8.23;
 
 import {IERC20} from "../../../../../contracts/dependencies/openzeppelin/contracts/IERC20.sol";
 import {SafeERC20} from "../../../../../contracts/dependencies/openzeppelin/contracts/SafeERC20.sol";
-import {IMiniPoolAddressesProvider} from "../../../../../contracts/interfaces/IMiniPoolAddressesProvider.sol";
+import {IMiniPoolAddressesProvider} from
+    "../../../../../contracts/interfaces/IMiniPoolAddressesProvider.sol";
 import {IAERC6909} from "../../../../../contracts/interfaces/IAERC6909.sol";
-import {IReserveInterestRateStrategy} from "../../../../../contracts/interfaces/IReserveInterestRateStrategy.sol";
+import {IReserveInterestRateStrategy} from
+    "../../../../../contracts/interfaces/IReserveInterestRateStrategy.sol";
 import {ReserveConfiguration} from
     "../../../../../contracts/protocol/libraries/configuration/ReserveConfiguration.sol";
 import {ReserveBorrowConfiguration} from
@@ -15,7 +17,8 @@ import {WadRayMath} from "../../../../../contracts/protocol/libraries/math/WadRa
 import {PercentageMath} from "../../../../../contracts/protocol/libraries/math/PercentageMath.sol";
 import {Errors} from "../../../../../contracts/protocol/libraries/helpers/Errors.sol";
 import {DataTypes} from "../../../../../contracts/protocol/libraries/types/DataTypes.sol";
-import {UserConfiguration} from "../../../../../contracts/protocol/libraries/configuration/UserConfiguration.sol";
+import {UserConfiguration} from
+    "../../../../../contracts/protocol/libraries/configuration/UserConfiguration.sol";
 import {MiniPoolValidationLogic} from "./MiniPoolValidationLogic.sol";
 import {MiniPoolReserveLogic} from "./MiniPoolReserveLogic.sol";
 

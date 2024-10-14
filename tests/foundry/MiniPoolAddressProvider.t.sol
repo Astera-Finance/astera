@@ -3,12 +3,10 @@ pragma solidity ^0.8.0;
 
 import "./Common.sol";
 import "contracts/protocol/libraries/helpers/Errors.sol";
-// import {WadRayMath} from "contracts/protocol/libraries/math/WadRayMath.sol";
-// import {PercentageMath} from "contracts/protocol/libraries/math/PercentageMath.sol";
-// import {ReserveConfiguration} from "contracts/protocol/libraries/configuration/ReserveConfiguration.sol";
-
+import {MiniPoolCollateralManager} from
+    "contracts/protocol/core/minipool/MiniPoolCollateralManager.sol";
 import "forge-std/StdUtils.sol";
-// import {ILendingPool} from "contracts/interfaces/ILendingPool.sol";
+import {MockedContractToUpdate} from "contracts/mocks/dependencies/MockedContractToUpdate.sol";
 
 contract MiniPoolAddressProvider is Common {
     ERC20[] erc20Tokens;
@@ -65,27 +63,280 @@ contract MiniPoolAddressProvider is Common {
         vm.label(miniPool, "MiniPool");
     }
 
+    function testSetMiniPoolImpl() public {
+        /* Test update of existing impl */
+        {
+            address miniPoolImpl = address(new MockedContractToUpdate()); // Second version of aToken6909
+            /* Test update */
+            console.log("1. Impl: ", miniPoolImpl);
+            console.log(
+                "1. aToken6909Impl", miniPoolContracts.miniPoolAddressesProvider.getMiniPool(0)
+            );
+            miniPoolContracts.miniPoolAddressesProvider.setMiniPoolImpl(miniPoolImpl, 0);
+            address aToken6909Proxy = miniPoolContracts.miniPoolAddressesProvider.getMiniPool(0);
+            console.log("2. aToken6909Impl", aToken6909Proxy);
+            vm.startPrank(address(miniPoolContracts.miniPoolAddressesProvider));
+            assertEq(
+                miniPoolImpl,
+                InitializableImmutableAdminUpgradeabilityProxy(payable((aToken6909Proxy)))
+                    .implementation(),
+                "1 Wrong aToken"
+            );
+            vm.stopPrank();
+        }
+        /* Reverts */
+        {
+            MiniPoolAddressesProvider miniPoolAddressesProvider = new MiniPoolAddressesProvider(
+                ILendingPoolAddressesProvider(
+                    address(deployedContracts.lendingPoolAddressesProvider)
+                )
+            );
+            address miniPoolImpl = address(new MiniPool());
+
+            /* Set on not deployed miniPool */
+            console.log("Revert 1");
+            vm.expectRevert(bytes4(keccak256("PoolIdOutOfRange()")));
+            miniPoolAddressesProvider.setMiniPoolImpl(miniPoolImpl, 0);
+
+            /* Test setting impl with older or the same version (shall revert) */
+            console.log("Revert 2");
+            vm.expectRevert();
+            miniPoolContracts.miniPoolAddressesProvider.setMiniPoolImpl(miniPoolImpl, 0);
+
+            /* Test setting of the same address (shall revert) */
+            console.log("Revert 3");
+            miniPoolImpl = miniPoolContracts.miniPoolAddressesProvider.getMiniPool(0);
+            vm.expectRevert();
+            miniPoolContracts.miniPoolAddressesProvider.setMiniPoolImpl(miniPoolImpl, 0);
+
+            /* Set with Id out of range */
+            console.log("Revert 4");
+            address newMiniPoolImpl = address(new MockedContractToUpdate());
+            vm.expectRevert(bytes4(keccak256("PoolIdOutOfRange()")));
+            miniPoolContracts.miniPoolAddressesProvider.setMiniPoolImpl(newMiniPoolImpl, 2);
+        }
+    }
+
+    function testSetAToken6909Impl() public {
+        /* Test update of existing impl */
+        {
+            address aToken6909Impl = address(new MockedContractToUpdate()); // Second version of aToken6909
+            /* Test update */
+            console.log("1. Impl: ", aToken6909Impl);
+            console.log(
+                "1. aToken6909Impl", miniPoolContracts.miniPoolAddressesProvider.getAToken6909(0)
+            );
+            miniPoolContracts.miniPoolAddressesProvider.setAToken6909Impl(aToken6909Impl, 0);
+            address aToken6909Proxy = miniPoolContracts.miniPoolAddressesProvider.getAToken6909(0);
+            console.log("2. aToken6909Impl", aToken6909Proxy);
+            vm.startPrank(address(miniPoolContracts.miniPoolAddressesProvider));
+            assertEq(
+                aToken6909Impl,
+                InitializableImmutableAdminUpgradeabilityProxy(payable((aToken6909Proxy)))
+                    .implementation(),
+                "1 Wrong aToken"
+            );
+            vm.stopPrank();
+        }
+        /* Reverts */
+        {
+            MiniPoolAddressesProvider miniPoolAddressesProvider = new MiniPoolAddressesProvider(
+                ILendingPoolAddressesProvider(
+                    address(deployedContracts.lendingPoolAddressesProvider)
+                )
+            );
+            address aToken6909Impl = address(new ATokenERC6909());
+
+            /* Set on not deployed miniPool */
+            console.log("Revert 1");
+            vm.expectRevert(bytes4(keccak256("PoolIdOutOfRange()")));
+            miniPoolAddressesProvider.setAToken6909Impl(aToken6909Impl, 0);
+
+            /* Test setting impl with older or the same version (shall revert) */
+            console.log("Revert 2");
+            vm.expectRevert();
+            miniPoolContracts.miniPoolAddressesProvider.setAToken6909Impl(aToken6909Impl, 0);
+
+            /* Test setting of the same address (shall revert) */
+            console.log("Revert 3");
+            aToken6909Impl = miniPoolContracts.miniPoolAddressesProvider.getAToken6909(0);
+            vm.expectRevert();
+            miniPoolContracts.miniPoolAddressesProvider.setAToken6909Impl(aToken6909Impl, 0);
+
+            /* Set with Id out of range */
+            console.log("Revert 4");
+            address newAToken6909Impl = address(new MockedContractToUpdate());
+            vm.expectRevert(bytes4(keccak256("PoolIdOutOfRange()")));
+            miniPoolContracts.miniPoolAddressesProvider.setAToken6909Impl(newAToken6909Impl, 2);
+        }
+    }
+
     function testSetMiniPoolConfigurator() public {
         MiniPoolAddressesProvider miniPoolAddressesProvider = new MiniPoolAddressesProvider(
             ILendingPoolAddressesProvider(address(deployedContracts.lendingPoolAddressesProvider))
         );
-        address miniPoolConfigIMPL = address(new MiniPoolConfigurator());
-        console.log("1. MiniPoolConfigurator", miniPoolAddressesProvider.getMiniPoolConfigurator());
-        miniPoolAddressesProvider.setMiniPoolConfigurator(address(miniPoolConfigIMPL));
-        console.log("1. MiniPoolConfigurator", miniPoolAddressesProvider.getMiniPoolConfigurator());
+        /* Test update of existing impl */
+        {
+            address miniPoolConfigImpl = address(new MockedContractToUpdate()); // Second version of MiniPoolConfig
+            /* Test update */
+            console.log("1. Impl: ", miniPoolConfigImpl);
+            console.log(
+                "1. MiniPoolConfigurator",
+                miniPoolContracts.miniPoolAddressesProvider.getMiniPoolConfigurator()
+            );
+            miniPoolContracts.miniPoolAddressesProvider.setMiniPoolConfigurator(miniPoolConfigImpl);
+            address miniPoolConfigProxy =
+                miniPoolContracts.miniPoolAddressesProvider.getMiniPoolConfigurator();
+            console.log("2. MiniPoolConfigurator", miniPoolConfigProxy);
+            vm.prank(address(miniPoolContracts.miniPoolAddressesProvider));
+            assertEq(
+                InitializableImmutableAdminUpgradeabilityProxy(payable(miniPoolConfigProxy))
+                    .implementation(),
+                miniPoolConfigImpl,
+                "Wrong mini pool configurator"
+            );
+        }
+        /* Test initialization (with new address provider) */
+        {
+            address miniPoolConfigImpl = address(new MiniPoolConfigurator());
+            console.log("3. Impl: ", miniPoolConfigImpl);
+            console.log(
+                "3. MiniPoolConfigurator", miniPoolAddressesProvider.getMiniPoolConfigurator()
+            );
+            miniPoolAddressesProvider.setMiniPoolConfigurator(miniPoolConfigImpl);
+            address miniPoolConfigProxy = miniPoolAddressesProvider.getMiniPoolConfigurator();
+            console.log("2. MiniPoolConfigurator", miniPoolConfigProxy);
+            vm.prank(address(miniPoolAddressesProvider));
+            assertEq(
+                InitializableImmutableAdminUpgradeabilityProxy(payable(miniPoolConfigProxy))
+                    .implementation(),
+                miniPoolConfigImpl,
+                "Wrong mini pool configurator"
+            );
+            /* Set IMPL again - expect revert */
+            vm.expectRevert();
+            miniPoolAddressesProvider.setMiniPoolConfigurator(address(miniPoolConfigImpl));
+        }
+    }
 
-        /* Set IMPL again - expect revert */
-        console.log(
-            "2. MiniPoolConfigurator",
-            miniPoolContracts.miniPoolAddressesProvider.getMiniPoolConfigurator()
+    function testSimpleSetters() public {
+        // MiniPoolAddressesProvider miniPoolAddressesProvider = new MiniPoolAddressesProvider(
+        //     ILendingPoolAddressesProvider(address(deployedContracts.lendingPoolAddressesProvider))
+        // );
+        /* ***** Collateral Manager ***** */
+        {
+            address collateralManager = makeAddr("CollateralManager");
+            console.log(
+                "1. CollateralManager",
+                miniPoolContracts.miniPoolAddressesProvider.getMiniPoolCollateralManager()
+            );
+            miniPoolContracts.miniPoolAddressesProvider.setMiniPoolCollateralManager(
+                collateralManager
+            );
+            console.log(
+                "2. CollateralManager",
+                miniPoolContracts.miniPoolAddressesProvider.getMiniPoolCollateralManager()
+            );
+            assertEq(
+                miniPoolContracts.miniPoolAddressesProvider.getMiniPoolCollateralManager(),
+                collateralManager,
+                "Wrong collateral manager"
+            );
+        }
+        /* ***** Treasury ***** */
+        {
+            address treasury = makeAddr("Treasury");
+            console.log(
+                "1. Treasury", miniPoolContracts.miniPoolAddressesProvider.getMiniPoolTreasury(0)
+            );
+            miniPoolContracts.miniPoolAddressesProvider.setMiniPoolToTreasury(0, treasury);
+            console.log(
+                "2. Treasury", miniPoolContracts.miniPoolAddressesProvider.getMiniPoolTreasury(0)
+            );
+            assertEq(
+                miniPoolContracts.miniPoolAddressesProvider.getMiniPoolTreasury(0),
+                treasury,
+                "Wrong treasury"
+            );
+            /* Revert when try to get treasury from not existing id */
+            vm.expectRevert(bytes4(keccak256("PoolIdOutOfRange()")));
+            miniPoolContracts.miniPoolAddressesProvider.setMiniPoolToTreasury(10, treasury);
+        }
+
+        /* ***** Flow limit ***** */
+        {
+            uint256 flowLimit;
+            flowLimit = bound(
+                flowLimit,
+                miniPoolContracts.flowLimiter.currentFlow(
+                    tokens[0], address(miniPoolContracts.miniPoolImpl)
+                ) + 1,
+                1e27
+            );
+
+            console.log(
+                "1. FlowLimit",
+                miniPoolContracts.flowLimiter.getFlowLimit(
+                    tokens[0], address(miniPoolContracts.miniPoolImpl)
+                )
+            );
+            miniPoolContracts.miniPoolAddressesProvider.setFlowLimit(
+                tokens[0], address(miniPoolContracts.miniPoolImpl), flowLimit
+            );
+            console.log(
+                "2. FlowLimit",
+                miniPoolContracts.flowLimiter.getFlowLimit(
+                    tokens[0], address(miniPoolContracts.miniPoolImpl)
+                )
+            );
+            assertEq(
+                miniPoolContracts.flowLimiter.getFlowLimit(
+                    tokens[0], address(miniPoolContracts.miniPoolImpl)
+                ),
+                flowLimit,
+                "Wrong limits"
+            );
+            // vm.expectRevert();
+            // miniPoolAddressesProvider.setFlowLimit(
+            //     tokens[0], address(miniPoolContracts.miniPoolImpl), flowLimit
+            // );
+        }
+    }
+
+    function testMultipleDeployments() public {
+        address miniPoolImpl = address(new MiniPool());
+        address aTokenImpl = address(new ATokenERC6909());
+
+        address lastMiniPoolImpl = miniPoolContracts.miniPoolAddressesProvider.getMiniPool(0);
+        address lastAToken6909Impl = miniPoolContracts.miniPoolAddressesProvider.getAToken6909(0);
+
+        address[] memory miniPoolList =
+            miniPoolContracts.miniPoolAddressesProvider.getMiniPoolList();
+
+        miniPoolContracts.miniPoolAddressesProvider.deployMiniPool(miniPoolImpl, aTokenImpl);
+
+        assertTrue(
+            lastMiniPoolImpl != miniPoolContracts.miniPoolAddressesProvider.getMiniPool(1),
+            "LastMiniPoolImpl not updated"
         );
-        vm.expectRevert();
-        miniPoolContracts.miniPoolAddressesProvider.setMiniPoolConfigurator(
-            address(miniPoolConfigIMPL)
+        assertTrue(
+            lastAToken6909Impl != miniPoolContracts.miniPoolAddressesProvider.getAToken6909(1),
+            "LastAToken6909Impl not updated"
         );
-        console.log(
-            "2. MiniPoolConfigurator",
-            miniPoolContracts.miniPoolAddressesProvider.getMiniPoolConfigurator()
+        miniPoolList = miniPoolContracts.miniPoolAddressesProvider.getMiniPoolList();
+        assertEq(miniPoolList.length, 2, "Wrong mini pools number");
+        vm.prank(address(miniPoolContracts.miniPoolAddressesProvider));
+        assertEq(
+            InitializableImmutableAdminUpgradeabilityProxy(payable(miniPoolList[1])).implementation(
+            ),
+            miniPoolImpl,
+            "Wrong implementation after deployment"
+        );
+
+        assertEq(
+            miniPoolContracts.miniPoolAddressesProvider.getMiniPoolToAERC6909(miniPoolList[1]),
+            miniPoolContracts.miniPoolAddressesProvider.getAToken6909(1),
+            "Wrong AToken implementation after deployment"
         );
     }
 }

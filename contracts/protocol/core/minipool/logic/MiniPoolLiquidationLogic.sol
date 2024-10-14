@@ -1,7 +1,8 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity 0.8.23;
 
-import {ILendingPoolAddressesProvider} from "../../../../../contracts/interfaces/ILendingPoolAddressesProvider.sol";
+import {IMiniPoolAddressesProvider} from
+    "../../../../../contracts/interfaces/IMiniPoolAddressesProvider.sol";
 import {Errors} from "../../../../../contracts/protocol/libraries/helpers/Errors.sol";
 
 /**
@@ -19,8 +20,8 @@ library MiniPoolLiquidationLogic {
     }
 
     function liquidationCall(liquidationCallParams memory params) external {
-        address collateralManager = ILendingPoolAddressesProvider(params._addressesProvider)
-            .getLendingPoolCollateralManager();
+        address collateralManager =
+            IMiniPoolAddressesProvider(params._addressesProvider).getMiniPoolCollateralManager();
 
         //solium-disable-next-line
         (bool success, bytes memory result) = collateralManager.delegatecall(

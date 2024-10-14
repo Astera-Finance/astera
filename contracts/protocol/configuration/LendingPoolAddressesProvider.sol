@@ -6,7 +6,8 @@ import {Ownable} from "../../../contracts/dependencies/openzeppelin/contracts/Ow
 // prettier-ignore
 import {InitializableImmutableAdminUpgradeabilityProxy} from
     "../../../contracts/protocol/libraries/upgradeability/InitializableImmutableAdminUpgradeabilityProxy.sol";
-import {ILendingPoolAddressesProvider} from "../../../contracts/interfaces/ILendingPoolAddressesProvider.sol";
+import {ILendingPoolAddressesProvider} from
+    "../../../contracts/interfaces/ILendingPoolAddressesProvider.sol";
 
 /**
  * @title LendingPoolAddressesProvider contract
@@ -17,7 +18,6 @@ import {ILendingPoolAddressesProvider} from "../../../contracts/interfaces/ILend
  *
  */
 contract LendingPoolAddressesProvider is Ownable, ILendingPoolAddressesProvider {
-    string private _marketId;
     mapping(bytes32 => address) private _addresses;
 
     bytes32 private constant LENDING_POOL = "LENDING_POOL";
@@ -29,26 +29,7 @@ contract LendingPoolAddressesProvider is Ownable, ILendingPoolAddressesProvider 
     bytes32 private constant MINIPOOL_ADDRESSES_PROVIDER = "MINIPOOL_ADDRESSES_PROVIDER";
     bytes32 private constant FLOW_LIMITER = "FLOW_LIMITER";
 
-    constructor(string memory marketId) Ownable(msg.sender) {
-        _setMarketId(marketId);
-    }
-
-    /**
-     * @dev Returns the id of the Aave market to which this contracts points to
-     * @return The market id
-     *
-     */
-    function getMarketId() external view override returns (string memory) {
-        return _marketId;
-    }
-
-    /**
-     * @dev Allows to set the market which this LendingPoolAddressesProvider represents
-     * @param marketId The market id
-     */
-    function setMarketId(string memory marketId) external override onlyOwner {
-        _setMarketId(marketId);
-    }
+    constructor() Ownable(msg.sender) {}
 
     /**
      * @dev General function to update the implementation of a proxy registered with
@@ -205,11 +186,6 @@ contract LendingPoolAddressesProvider is Ownable, ILendingPoolAddressesProvider 
         } else {
             proxy.upgradeToAndCall(newAddress, params);
         }
-    }
-
-    function _setMarketId(string memory marketId) internal {
-        _marketId = marketId;
-        emit MarketIdSet(marketId);
     }
 
     function getMiniPoolAddressesProvider() external view override returns (address) {

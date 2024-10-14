@@ -17,16 +17,11 @@ import {Ownable} from "../../contracts/dependencies/openzeppelin/contracts/Ownab
  * @author Cod3x
  */
 contract ATokensAndRatesHelper is Ownable {
-    address payable private pool;
+    address private pool;
     address private addressesProvider;
     address private poolConfigurator;
 
     event deployedContracts(address aToken, address strategy);
-
-    struct InitDeploymentInput {
-        address asset;
-        uint256[4] rates;
-    }
 
     struct ConfigureReserveInput {
         address asset;
@@ -44,23 +39,6 @@ contract ATokensAndRatesHelper is Ownable {
         pool = _pool;
         addressesProvider = _addressesProvider;
         poolConfigurator = _poolConfigurator;
-    }
-
-    function initDeployment(InitDeploymentInput[] calldata inputParams) external onlyOwner {
-        for (uint256 i = 0; i < inputParams.length; i++) {
-            emit deployedContracts(
-                address(new AToken()),
-                address(
-                    new DefaultReserveInterestRateStrategy(
-                        LendingPoolAddressesProvider(addressesProvider),
-                        inputParams[i].rates[0],
-                        inputParams[i].rates[1],
-                        inputParams[i].rates[2],
-                        inputParams[i].rates[3]
-                    )
-                )
-            );
-        }
     }
 
     function configureReserves(ConfigureReserveInput[] calldata inputParams) external onlyOwner {

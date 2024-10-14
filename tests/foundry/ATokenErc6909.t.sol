@@ -878,7 +878,9 @@ contract ATokenErc6909Test is Common {
     }
 
     function testErc6909Initialize() public {
-        miniPoolContracts.miniPoolAddressesProvider.deployMiniPool();
+        miniPoolContracts.miniPoolAddressesProvider.deployMiniPool(
+            address(miniPoolContracts.miniPoolImpl), address(miniPoolContracts.aToken6909Impl)
+        );
         address[] memory reserves = new address[](1);
         reserves[0] = tokens[0];
 

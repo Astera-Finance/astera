@@ -6,7 +6,8 @@ import {IAToken} from "../../../../contracts/interfaces/IAToken.sol";
 import {IAERC6909} from "../../../../contracts/interfaces/IAERC6909.sol";
 import {IVariableDebtToken} from "../../../../contracts/interfaces/IVariableDebtToken.sol";
 import {IPriceOracleGetter} from "../../../../contracts/interfaces/IPriceOracleGetter.sol";
-import {ILendingPoolCollateralManager} from "../../../../contracts/interfaces/ILendingPoolCollateralManager.sol";
+import {ILendingPoolCollateralManager} from
+    "../../../../contracts/interfaces/ILendingPoolCollateralManager.sol";
 import {VersionedInitializable} from
     "../../../../contracts/protocol/libraries/upgradeability/VersionedInitializable.sol";
 import {MiniPoolGenericLogic} from "./logic/MiniPoolGenericLogic.sol";
@@ -16,7 +17,8 @@ import {PercentageMath} from "../../../../contracts/protocol/libraries/math/Perc
 import {SafeERC20} from "../../../../contracts/dependencies/openzeppelin/contracts/SafeERC20.sol";
 import {Errors} from "../../../../contracts/protocol/libraries/helpers/Errors.sol";
 import {MiniPoolValidationLogic} from "./logic/MiniPoolValidationLogic.sol";
-import {UserConfiguration} from "../../../../contracts/protocol/libraries/configuration/UserConfiguration.sol";
+import {UserConfiguration} from
+    "../../../../contracts/protocol/libraries/configuration/UserConfiguration.sol";
 import {ReserveConfiguration} from
     "../../../../contracts/protocol/libraries/configuration/ReserveConfiguration.sol";
 import {MiniPoolReserveLogic} from "./logic/MiniPoolReserveLogic.sol";

@@ -17,5 +17,13 @@ remappings = [
     'solady/=lib/solady/src/',
 ]
 
+
+[rpc_endpoints]
+sepolia = "${ARB_SEPOLIA}"
+
+[etherscan]
+sepolia = { key = "${ETHERSCAN_KEY}" }
+
 [fmt]
 line_length = 100
+

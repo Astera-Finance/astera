@@ -112,10 +112,6 @@ You can fine in `/echidna` 3 config files to run the fuzzer:
 - `setAddressAsProxy(bytes32 id, address implementationAddress)`
 - `setAddress(bytes32 id, address newAddress)`
 
-### LendingPoolAddressesProviderRegistry
-
-- `registerAddressesProvider(address provider, uint256 id)`
-- `unregisterAddressesProvider(address provider)`
 
 ### LendingPoolConfigurator
 

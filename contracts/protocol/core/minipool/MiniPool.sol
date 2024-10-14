@@ -5,7 +5,8 @@ import {Address} from "../../../../contracts/dependencies/openzeppelin/contracts
 import {IAERC6909} from "../../../../contracts/interfaces/IAERC6909.sol";
 import {IERC20} from "../../../../contracts/dependencies/openzeppelin/contracts/IERC20.sol";
 import {SafeERC20} from "../../../../contracts/dependencies/openzeppelin/contracts/SafeERC20.sol";
-import {IMiniPoolAddressesProvider} from "../../../../contracts/interfaces/IMiniPoolAddressesProvider.sol";
+import {IMiniPoolAddressesProvider} from
+    "../../../../contracts/interfaces/IMiniPoolAddressesProvider.sol";
 import {IFlowLimiter} from "../../../../contracts/interfaces/IFlowLimiter.sol";
 import {IAToken} from "../../../../contracts/interfaces/IAToken.sol";
 import {IFlashLoanReceiver} from "../../../../contracts/interfaces/IFlashLoanReceiver.sol";
@@ -21,11 +22,13 @@ import {MiniPoolGenericLogic} from "./logic/MiniPoolGenericLogic.sol";
 import {MiniPoolValidationLogic} from "./logic/MiniPoolValidationLogic.sol";
 import {ReserveConfiguration} from
     "../../../../contracts/protocol/libraries/configuration/ReserveConfiguration.sol";
-import {UserConfiguration} from "../../../../contracts/protocol/libraries/configuration/UserConfiguration.sol";
+import {UserConfiguration} from
+    "../../../../contracts/protocol/libraries/configuration/UserConfiguration.sol";
 import {DataTypes} from "../../../../contracts/protocol/libraries/types/DataTypes.sol";
 import {MiniPoolStorage} from "./MiniPoolStorage.sol";
 import {IMiniPool} from "../../../../contracts/interfaces/IMiniPool.sol";
-import {ATokenNonRebasing} from "../../../../contracts/protocol/tokenization/ERC20/ATokenNonRebasing.sol";
+import {ATokenNonRebasing} from
+    "../../../../contracts/protocol/tokenization/ERC20/ATokenNonRebasing.sol";
 
 import {MiniPoolDepositLogic} from "./logic/MiniPoolDepositLogic.sol";
 import {MiniPoolWithdrawLogic} from "./logic/MiniPoolWithdrawLogic.sol";
