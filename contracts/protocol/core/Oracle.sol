@@ -127,6 +127,7 @@ contract Oracle is IPriceOracleGetter, Ownable {
                 roundId == 0 || timestamp == 0 || timestamp > block.timestamp || price <= 0
                     || startedAt == 0 || block.timestamp - timestamp > _assetToTimeout[asset]
             ) {
+                require(address(_fallbackOracle) != address(0), Errors.O_PRICE_FEED_INCONSISTENCY);
                 finalPrice = _fallbackOracle.getAssetPrice(underlying);
             } else {
                 finalPrice = uint256(price);
