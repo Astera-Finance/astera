@@ -118,7 +118,7 @@ contract Oracle is IPriceOracleGetter, Ownable {
 
         // if `asset` is an aToken then convert the price from asset to share.
         if (asset != underlying) {
-            return ATokenNonRebasing(asset).convertToShares(finalPrice);
+            return ATokenNonRebasing(asset).convertToAssets(finalPrice);
         } else {
             return finalPrice;
         }
