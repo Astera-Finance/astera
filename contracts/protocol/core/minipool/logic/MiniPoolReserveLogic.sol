@@ -172,13 +172,14 @@ library MiniPoolReserveLogic {
      */
     function init(
         DataTypes.MiniPoolReserveData storage reserve,
+        address asset,
         IAERC6909 aTokenAddress,
         uint256 aTokenID,
         uint256 variableDebtTokenID,
         address interestRateStrategyAddress
     ) internal {
         require(
-            aTokenAddress.getUnderlyingAsset(reserve.aTokenID) == address(0),
+            aTokenAddress.getUnderlyingAsset(aTokenID) == asset,
             Errors.RL_RESERVE_ALREADY_INITIALIZED
         );
 

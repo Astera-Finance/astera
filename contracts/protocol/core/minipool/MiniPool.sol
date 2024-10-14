@@ -642,7 +642,7 @@ contract MiniPool is VersionedInitializable, IMiniPool, MiniPoolStorage {
     ) external override onlyMiniPoolConfigurator {
         require(Address.isContract(asset), Errors.LP_NOT_CONTRACT);
         _reserves[asset].init(
-            aTokenAddress, aTokenID, variableDebtTokenID, interestRateStrategyAddress
+            asset, aTokenAddress, aTokenID, variableDebtTokenID, interestRateStrategyAddress
         );
         _addReserveToList(asset);
     }
