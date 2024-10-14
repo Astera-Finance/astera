@@ -217,6 +217,10 @@ contract LendingPoolCollateralManager is
             msg.sender, debtReserve.aTokenAddress, vars.actualDebtToLiquidate
         );
 
+        IAToken(debtReserve.aTokenAddress).handleRepayment(
+            msg.sender, user, vars.actualDebtToLiquidate
+        );
+
         emit LiquidationCall(
             collateralAsset,
             debtAsset,

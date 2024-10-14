@@ -228,6 +228,10 @@ contract MiniPoolCollateralManager is
             msg.sender, debtReserve.aTokenAddress, vars.actualDebtToLiquidate
         );
 
+        IAERC6909(debtReserve.aTokenAddress).handleRepayment(
+            msg.sender, user, debtReserve.aTokenID, vars.actualDebtToLiquidate
+        );
+
         emit LiquidationCall(
             collateralAsset,
             debtAsset,
