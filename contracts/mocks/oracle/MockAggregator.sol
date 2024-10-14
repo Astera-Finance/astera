@@ -30,6 +30,20 @@ contract MockAggregator {
         emit AnswerUpdated(_newAnswer, 0, block.timestamp);
     }
 
+    function latestRoundData()
+        external
+        view
+        returns (
+            uint80 roundId,
+            int256 answer,
+            uint256 startedAt,
+            uint256 updatedAt,
+            uint80 answeredInRound
+        )
+    {
+        return (1, _latestAnswer, 1, block.timestamp, 0);
+    }
+
     // function getSubTokens() external view returns (address[] memory) {
     // TODO: implement mock for when multiple subtokens. Maybe we need to create diff mock contract
     // to call it from the migration for this case??

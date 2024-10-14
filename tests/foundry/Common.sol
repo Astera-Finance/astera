@@ -348,6 +348,7 @@ contract Common is Test {
         /* Prices to be changed here */
         ERC20[] memory erc20tokens = fixture_getErc20Tokens(tokens);
         int256[] memory prices = new int256[](4);
+        uint256[] memory timeouts = new uint256[](4);
         /* All chainlink price feeds have 8 decimals */
         prices[0] = int256(1 * 10 ** PRICE_FEED_DECIMALS); // USDC
         prices[1] = int256(67_000 * 10 ** PRICE_FEED_DECIMALS); // WBTC
@@ -358,9 +359,11 @@ contract Common is Test {
         // usdcPriceFeed = new MockAggregator(100000000, int256(uint256(mintableUsdc.decimals())));
         // wbtcPriceFeed = new MockAggregator(1600000000000, int256(uint256(mintableWbtc.decimals())));
         // ethPriceFeed = new MockAggregator(120000000000, int256(uint256(mintableWeth.decimals())));
-        (, aggregators) = fixture_getTokenPriceFeeds(erc20tokens, prices);
+        (, aggregators, timeouts) = fixture_getTokenPriceFeeds(erc20tokens, prices);
 
-        oracle = new Oracle(tokens, aggregators, FALLBACK_ORACLE, BASE_CURRENCY, BASE_CURRENCY_UNIT);
+        oracle = new Oracle(
+            tokens, aggregators, timeouts, FALLBACK_ORACLE, BASE_CURRENCY, BASE_CURRENCY_UNIT
+        );
 
         wETHGateway = new WETHGateway(WETH);
         lendingPoolCollateralManager = new LendingPoolCollateralManager();
@@ -513,16 +516,22 @@ contract Common is Test {
 
     function fixture_getTokenPriceFeeds(ERC20[] memory _tokens, int256[] memory _prices)
         public
-        returns (MockAggregator[] memory _priceFeedMocks, address[] memory _aggregators)
+        returns (
+            MockAggregator[] memory _priceFeedMocks,
+            address[] memory _aggregators,
+            uint256[] memory _timeouts
+        )
     {
         require(_tokens.length == _prices.length, "Length of params shall be equal");
 
         _priceFeedMocks = new MockAggregator[](_tokens.length);
         _aggregators = new address[](_tokens.length);
+        _timeouts = new uint256[](_tokens.length);
         for (uint32 idx; idx < _tokens.length; idx++) {
             _priceFeedMocks[idx] =
                 new MockAggregator(_prices[idx], int256(uint256(_tokens[idx].decimals())));
             _aggregators[idx] = address(_priceFeedMocks[idx]);
+            _timeouts[idx] = 0;
         }
     }
 

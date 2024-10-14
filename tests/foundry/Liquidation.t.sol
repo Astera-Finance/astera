@@ -142,6 +142,7 @@ contract LiquidationTest is Common {
         {
             priceIncrease = bound(priceIncrease, 800, 1_200); // 8-12%
             uint256 newPrice = (wbtcPrice + wbtcPrice * priceIncrease / 10_000);
+            uint256[] memory timeouts = new uint256[](4);
 
             int256[] memory prices = new int256[](4);
             prices[0] = int256(oracle.getAssetPrice(address(usdc)));
@@ -149,9 +150,9 @@ contract LiquidationTest is Common {
             prices[2] = int256(oracle.getAssetPrice(address(weth)));
             prices[3] = int256(oracle.getAssetPrice(address(dai)));
             address[] memory aggregators = new address[](4);
-            (, aggregators) = fixture_getTokenPriceFeeds(erc20Tokens, prices);
+            (, aggregators, timeouts) = fixture_getTokenPriceFeeds(erc20Tokens, prices);
 
-            oracle.setAssetSources(tokens, aggregators);
+            oracle.setAssetSources(tokens, aggregators, timeouts);
             wbtcPrice = newPrice;
         }
 
@@ -311,15 +312,17 @@ contract LiquidationTest is Common {
             newUsdcPrice = (usdcPrice - usdcPrice * priceDecrease / 10_000);
             // console.log("Price: ", newUsdcPrice);
 
+            uint256[] memory timeouts = new uint256[](4);
+
             int256[] memory prices = new int256[](4);
             prices[0] = int256(newUsdcPrice);
             prices[1] = int256(oracle.getAssetPrice(address(wbtc)));
             prices[2] = int256(oracle.getAssetPrice(address(weth)));
             prices[3] = int256(oracle.getAssetPrice(address(dai)));
             address[] memory aggregators = new address[](4);
-            (, aggregators) = fixture_getTokenPriceFeeds(erc20Tokens, prices);
+            (, aggregators, timeouts) = fixture_getTokenPriceFeeds(erc20Tokens, prices);
 
-            oracle.setAssetSources(tokens, aggregators);
+            oracle.setAssetSources(tokens, aggregators, timeouts);
             usdcPrice = newUsdcPrice;
         }
 
