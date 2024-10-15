@@ -190,12 +190,12 @@ contract MiniPool is VersionedInitializable, IMiniPool, MiniPoolStorage {
             amount > vars.availableLiquidity
                 && IAERC6909(reserve.aTokenAddress).isTranche(reserve.aTokenID)
         ) {
-            address underlying = IAToken(asset).UNDERLYING_ASSET_ADDRESS();
+            address underlying = ATokenNonRebasing(asset).UNDERLYING_ASSET_ADDRESS();
             vars.LendingPool = _addressesProvider.getLendingPool();
             ILendingPool(vars.LendingPool).miniPoolBorrow(
                 underlying,
                 true,
-                IAToken(asset).convertToAssets(amount - vars.availableLiquidity), // amount + availableLiquidity converted to asset
+                ATokenNonRebasing(asset).convertToAssets(amount - vars.availableLiquidity), // amount + availableLiquidity converted to asset
                 address(this),
                 ATokenNonRebasing(asset).ATOKEN_ADDRESS()
             );
@@ -342,9 +342,10 @@ contract MiniPool is VersionedInitializable, IMiniPool, MiniPoolStorage {
         repayVars memory vars;
         vars.aTokenAddress = reserve.aTokenAddress;
         if (IAERC6909(reserve.aTokenAddress).isTranche(reserve.aTokenID)) {
-            vars.underlyingAsset = IAToken(asset).UNDERLYING_ASSET_ADDRESS();
-            vars.underlyingDebt =
-                IAToken(asset).convertToShares(getCurrentLendingPoolDebt(vars.underlyingAsset)); // share
+            vars.underlyingAsset = ATokenNonRebasing(asset).UNDERLYING_ASSET_ADDRESS();
+            vars.underlyingDebt = ATokenNonRebasing(asset).convertToShares(
+                getCurrentLendingPoolDebt(vars.underlyingAsset)
+            ); // share
             if (vars.underlyingDebt != 0) {
                 if (vars.underlyingDebt < amount) {
                     amount = vars.underlyingDebt;

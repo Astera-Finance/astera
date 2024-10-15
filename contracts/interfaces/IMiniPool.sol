@@ -369,6 +369,7 @@ interface IMiniPool {
     ) external;
 
     function getReservesList() external view returns (address[] memory, bool[] memory);
+
     function getReservesCount() external view returns (uint256);
 
     function getAddressesProvider() external view returns (IMiniPoolAddressesProvider);

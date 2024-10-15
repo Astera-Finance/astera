@@ -561,9 +561,10 @@ contract LendingPool is VersionedInitializable, ILendingPool, LendingPoolStorage
     }
 
     /**
-     * @dev Validates and finalizes an aToken transfer
-     * - Only callable by the overlying aToken of the `asset`
+     * @notice Validates and finalizes an aToken transfer
+     * @dev Only callable by the overlying aToken of the `asset`
      * @param asset The address of the underlying asset of the aToken
+     * @param reserveType A boolean indicating whether the asset is boosted by a vault.
      * @param from The user from which the aTokens are transferred
      * @param to The user receiving the aTokens
      * @param amount The amount being transferred/withdrawn
@@ -732,7 +733,6 @@ contract LendingPool is VersionedInitializable, ILendingPool, LendingPoolStorage
         external
         view
         override
-        onlyLendingPoolConfigurator
         returns (uint256)
     {
         return IAToken(aTokenAddress).getTotalManagedAssets();
