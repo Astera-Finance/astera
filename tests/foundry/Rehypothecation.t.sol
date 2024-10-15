@@ -278,7 +278,6 @@ contract RehypothecationTest is Common, LendingPoolTest {
                 );
             } else if (absReturn < expectedVaultBalance) {
                 // Negative return
-                vm.expectRevert(); // @issue: TEMPORARY (this is an issue!!!)
                 deployedContracts.lendingPoolConfigurator.rebalance(address(tokenTypes.aToken));
                 // Refund
                 deal(address(tokenTypes.token), address(tokenVars.vault), expectedVaultBalance);

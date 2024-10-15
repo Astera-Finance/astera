@@ -534,7 +534,10 @@ contract AToken is
         uint256 toWithdraw;
         uint256 toDeposit;
         // if we have profit that's more than the threshold, record it for withdrawal and redistribution
-        if (sharesToAssets - currentAllocated >= claimingThreshold) {
+        if (
+            sharesToAssets > currentAllocated
+                && sharesToAssets - currentAllocated >= claimingThreshold
+        ) {
             profit = sharesToAssets - currentAllocated;
         }
         // what % of the final pool balance would the current allocation be?
