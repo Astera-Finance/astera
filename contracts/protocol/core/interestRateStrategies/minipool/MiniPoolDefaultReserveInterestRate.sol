@@ -111,9 +111,12 @@ contract MiniPoolDefaultReserveInterestRateStrategy is IMiniPoolReserveInterestR
             address underlying = IAToken(reserve).UNDERLYING_ASSET_ADDRESS();
             address minipool = IAERC6909(aToken).MINIPOOL_ADDRESS();
 
-            availableLiquidity = IERC20(reserve).balanceOf(aToken)
-                + IAToken(reserve).convertToShares(flowLimiter.getFlowLimit(underlying, minipool))
-                - IAToken(reserve).convertToShares(flowLimiter.currentFlow(underlying, minipool));
+            uint256 liquidity = IERC20(reserve).balanceOf(aToken)
+                + IAToken(reserve).convertToShares(flowLimiter.getFlowLimit(underlying, minipool));
+            uint256 currentFlow =
+                IAToken(reserve).convertToShares(flowLimiter.currentFlow(underlying, minipool));
+
+            availableLiquidity = liquidity > currentFlow ? liquidity - currentFlow : 0;
         } else {
             availableLiquidity = IERC20(reserve).balanceOf(aToken);
         }

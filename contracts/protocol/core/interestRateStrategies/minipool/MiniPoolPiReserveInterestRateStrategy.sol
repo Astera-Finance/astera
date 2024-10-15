@@ -80,9 +80,12 @@ contract MiniPoolPiReserveInterestRateStrategy is
             address underlying = IAToken(asset).UNDERLYING_ASSET_ADDRESS();
             address minipool = IAERC6909(aToken).MINIPOOL_ADDRESS();
 
-            availableLiquidity = IERC20(asset).balanceOf(aToken)
-                + IAToken(asset).convertToShares(flowLimiter.getFlowLimit(underlying, minipool))
-                - IAToken(asset).convertToShares(flowLimiter.currentFlow(underlying, minipool));
+            uint256 liquidity = IERC20(asset).balanceOf(aToken)
+                + IAToken(asset).convertToShares(flowLimiter.getFlowLimit(underlying, minipool));
+            uint256 currentFlow =
+                IAToken(asset).convertToShares(flowLimiter.currentFlow(underlying, minipool));
+
+            availableLiquidity = liquidity > currentFlow ? liquidity - currentFlow : 0;
         } else {
             availableLiquidity = IERC20(asset).balanceOf(aToken);
         }
