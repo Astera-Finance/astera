@@ -127,6 +127,7 @@ contract MiniPool is VersionedInitializable, IMiniPool, MiniPoolStorage {
             _usersConfig,
             _addressesProvider
         );
+        _repayLendingPool(asset);
     }
 
     /**
@@ -268,7 +269,7 @@ contract MiniPool is VersionedInitializable, IMiniPool, MiniPoolStorage {
             _usersConfig
         );
 
-        _repayLendingPool(asset, amount);
+        _repayLendingPool(asset);
         return repayAmount;
     }
 
@@ -334,10 +335,10 @@ contract MiniPool is VersionedInitializable, IMiniPool, MiniPoolStorage {
                 address(_addressesProvider)
             )
         );
-        _repayLendingPool(debtAsset, debtToCover);
+        _repayLendingPool(debtAsset);
     }
 
-    function _repayLendingPool(address asset, uint256 amount) internal {
+    function _repayLendingPool(address asset) internal {
         DataTypes.MiniPoolReserveData storage reserve = _reserves[asset];
         repayVars memory vars;
         vars.aTokenAddress = reserve.aTokenAddress;
@@ -347,9 +348,8 @@ contract MiniPool is VersionedInitializable, IMiniPool, MiniPoolStorage {
                 getCurrentLendingPoolDebt(vars.underlyingAsset)
             ); // share
             if (vars.underlyingDebt != 0) {
-                if (vars.underlyingDebt < amount) {
-                    amount = vars.underlyingDebt;
-                }
+                uint256 amount = vars.underlyingDebt;
+
                 MiniPoolWithdrawLogic.internalWithdraw(
                     MiniPoolWithdrawLogic.withdrawParams(
                         asset, amount, address(this), _reservesCount

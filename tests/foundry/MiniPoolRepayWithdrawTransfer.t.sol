@@ -942,7 +942,9 @@ contract MiniPoolRepayWithdrawTransferTest is MiniPoolDepositBorrowTest {
         uint256 amountUsdc = 100000 * (10 ** tokenParamsUsdc.token.decimals());
         uint256 amountwBtc = 1 * (10 ** tokenParamsWbtc.token.decimals());
 
-        miniPoolContracts.miniPoolAddressesProvider.setFlowLimit(address(tokenParamsUsdc.token), miniPool, 10000e6);
+        miniPoolContracts.miniPoolAddressesProvider.setFlowLimit(
+            address(tokenParamsUsdc.token), miniPool, 10000e6
+        );
 
         IAERC6909 aErc6909Token =
             IAERC6909(miniPoolContracts.miniPoolAddressesProvider.getMiniPoolToAERC6909(miniPool));
@@ -955,7 +957,6 @@ contract MiniPoolRepayWithdrawTransferTest is MiniPoolDepositBorrowTest {
 
         fixture_depositTokensToMainPool(amountwBtc, user2, tokenParamsWbtc);
         fixture_depositTokensToMainPool(amountUsdc, user2, tokenParamsUsdc);
-
 
         fixture_depositATokensToMiniPool(
             10_000e6, 1000 + USDC_OFFSET, user, tokenParamsUsdc, aErc6909Token
@@ -976,9 +977,7 @@ contract MiniPoolRepayWithdrawTransferTest is MiniPoolDepositBorrowTest {
         vm.startPrank(user2);
         uint256 balanceUsdcOwed = aErc6909Token.balanceOf(user2, 2000 + USDC_OFFSET);
         tokenParamsUsdc.aToken.approve(address(miniPool), balanceUsdcOwed);
-        IMiniPool(miniPool).repay(
-            address(tokenParamsUsdc.aToken), 1, user2
-        );
+        IMiniPool(miniPool).repay(address(tokenParamsUsdc.aToken), 1, user2);
         vm.stopPrank();
     }
 }
