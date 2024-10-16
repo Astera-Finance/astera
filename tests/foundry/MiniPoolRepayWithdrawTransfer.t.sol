@@ -930,4 +930,55 @@ contract MiniPoolRepayWithdrawTransferTest is MiniPoolDepositBorrowTest {
         );
         vm.stopPrank();
     }
+
+    // Zigtur H7
+    function testMinipoolIRStrategyOverflow() public {
+        address user = makeAddr("user");
+        address user2 = makeAddr("user2");
+
+        TokenParams memory tokenParamsUsdc = TokenParams(erc20Tokens[0], aTokensWrapper[0], 0);
+        TokenParams memory tokenParamsWbtc = TokenParams(erc20Tokens[1], aTokensWrapper[1], 0);
+
+        uint256 amountUsdc = 100000 * (10 ** tokenParamsUsdc.token.decimals());
+        uint256 amountwBtc = 1 * (10 ** tokenParamsWbtc.token.decimals());
+
+        miniPoolContracts.miniPoolAddressesProvider.setFlowLimit(address(tokenParamsUsdc.token), miniPool, 10000e6);
+
+        IAERC6909 aErc6909Token =
+            IAERC6909(miniPoolContracts.miniPoolAddressesProvider.getMiniPoolToAERC6909(miniPool));
+
+        uint256 USDC_OFFSET = 0;
+        uint256 WBTC_OFFSET = 1;
+
+        /* Deposit tests */
+        fixture_depositTokensToMainPool(amountUsdc, user, tokenParamsUsdc);
+
+        fixture_depositTokensToMainPool(amountwBtc, user2, tokenParamsWbtc);
+        fixture_depositTokensToMainPool(amountUsdc, user2, tokenParamsUsdc);
+
+
+        fixture_depositATokensToMiniPool(
+            10_000e6, 1000 + USDC_OFFSET, user, tokenParamsUsdc, aErc6909Token
+        );
+
+        // USDC price = 1,00000000
+        // WBTC price =  670000,0000000
+
+        fixture_depositATokensToMiniPool(
+            1e8, 1000 + WBTC_OFFSET, user2, tokenParamsWbtc, aErc6909Token
+        );
+
+        vm.prank(user2);
+        IMiniPool(miniPool).borrow(address(tokenParamsUsdc.aToken), 19_999e6, user2);
+
+        skip(100 days);
+
+        vm.startPrank(user2);
+        uint256 balanceUsdcOwed = aErc6909Token.balanceOf(user2, 2000 + USDC_OFFSET);
+        tokenParamsUsdc.aToken.approve(address(miniPool), balanceUsdcOwed);
+        IMiniPool(miniPool).repay(
+            address(tokenParamsUsdc.aToken), 1, user2
+        );
+        vm.stopPrank();
+    }
 }
