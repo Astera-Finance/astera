@@ -7,7 +7,7 @@ import {WadRayMath} from "contracts/protocol/libraries/math/WadRayMath.sol";
 import {PercentageMath} from "contracts/protocol/libraries/math/PercentageMath.sol";
 import {ReserveConfiguration} from
     "contracts/protocol/libraries/configuration/ReserveConfiguration.sol";
-
+import "contracts/protocol/core/minipool/MiniPoolCollateralManager.sol";
 import "forge-std/StdUtils.sol";
 
 contract MiniPoolRepayWithdrawTransferTest is MiniPoolDepositBorrowTest {
@@ -980,4 +980,97 @@ contract MiniPoolRepayWithdrawTransferTest is MiniPoolDepositBorrowTest {
         IMiniPool(miniPool).repay(address(tokenParamsUsdc.aToken), 1, user2);
         vm.stopPrank();
     }
+
+    // Zigtur H6
+    function testMinipoolFlowBorrowTreasurySendATokenRemainder() public {
+        address user = makeAddr("user");
+        address user2 = makeAddr("user2");
+
+        TokenParams memory tokenParamsUsdc = TokenParams(erc20Tokens[0], aTokensWrapper[0], 0);
+        TokenParams memory tokenParamsWbtc = TokenParams(erc20Tokens[1], aTokensWrapper[1], 0);
+
+        uint256 amountUsdc = 100000 * (10 ** tokenParamsUsdc.token.decimals());
+        uint256 amountwBtc = 1 * (10 ** tokenParamsWbtc.token.decimals());
+
+        miniPoolContracts.miniPoolAddressesProvider.setFlowLimit(
+            address(tokenParamsUsdc.token), miniPool, 10000e6
+        );
+
+        logMinipoolFlow(address(tokenParamsUsdc.token), user2);
+
+        IAERC6909 aErc6909Token =
+            IAERC6909(miniPoolContracts.miniPoolAddressesProvider.getMiniPoolToAERC6909(miniPool));
+
+        uint256 USDC_OFFSET = 0;
+        uint256 WBTC_OFFSET = 1;
+
+        /* Deposit tests */
+        fixture_depositTokensToMainPool(amountUsdc, user, tokenParamsUsdc);
+
+        fixture_depositTokensToMainPool(amountwBtc, user2, tokenParamsWbtc);
+        fixture_depositTokensToMainPool(amountUsdc, user2, tokenParamsUsdc);
+
+        fixture_depositATokensToMiniPool(
+            10_000e6, 1000 + USDC_OFFSET, user, tokenParamsUsdc, aErc6909Token
+        );
+
+        // USDC price = 1,00000000
+        // WBTC price =  670000,0000000
+
+        fixture_depositATokensToMiniPool(
+            1e8, 1000 + WBTC_OFFSET, user2, tokenParamsWbtc, aErc6909Token
+        );
+
+        vm.prank(user2);
+        IMiniPool(miniPool).borrow(address(tokenParamsUsdc.aToken), 15_000e6, user2);
+
+        logMinipoolFlow(address(tokenParamsUsdc.token), user2);
+
+        skip(10 days);
+
+        logMinipoolFlow(address(tokenParamsUsdc.token), user2);
+
+        vm.startPrank(user2);
+        uint256 balanceUsdcOwed = aErc6909Token.balanceOf(user2, 2000 + USDC_OFFSET);
+        tokenParamsUsdc.aToken.approve(address(miniPool), balanceUsdcOwed);
+        IMiniPool(miniPool).repay(address(tokenParamsUsdc.aToken), balanceUsdcOwed, user2);
+        vm.stopPrank();
+
+        logMinipoolFlow(address(tokenParamsUsdc.token), user2);
+
+        address treasury = miniPoolContracts.miniPoolAddressesProvider.getMiniPoolTreasury(0);
+        uint256 treasuryBalance = aErc6909Token.balanceOf(treasury, 1000 + USDC_OFFSET);
+
+        assertEq(
+            0,
+            IAERC6909(miniPoolContracts.miniPoolAddressesProvider.getMiniPoolToAERC6909(miniPool))
+                .balanceOf(address(IMiniPool(miniPool)), 1000 + USDC_OFFSET)
+        );
+
+        assertLt(0, treasuryBalance);
+        console.log("treasuryBalance :: ", treasuryBalance);
+    }
+
+    function logMinipoolFlow(address asset, address user) public view {
+        (,,,,, uint256 hf) = IMiniPool(miniPool).getUserAccountData(user);
+        console.log("hf ::: %18e", hf);
+        console.log(
+            "ERC20DebtTokens ::: %6e",
+            FlowLimiter(miniPoolContracts.miniPoolAddressesProvider.getFlowLimiter()).currentFlow(
+                asset, address(IMiniPool(miniPool))
+            )
+        );
+        console.log(
+            "ERC6909 AToken  ::: %6e",
+            IAERC6909(miniPoolContracts.miniPoolAddressesProvider.getMiniPoolToAERC6909(miniPool))
+                .balanceOf(address(IMiniPool(miniPool)), 1000 + 0)
+        );
+        console.log("---");
+    }
+
+    // function changePrice(address asset, uint256 newPrice) public {
+    //     address collateralSource = oracle.getSourceOfAsset(asset);
+    //     MockAggregator agg = MockAggregator(collateralSource);
+    //     agg.setLastAnswer(int256(newPrice));
+    // }
 }

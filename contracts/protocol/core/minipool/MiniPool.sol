@@ -366,6 +366,17 @@ contract MiniPool is VersionedInitializable, IMiniPool, MiniPoolStorage {
                 ILendingPool(_addressesProvider.getLendingPool()).repayWithATokens(
                     vars.underlyingAsset, true, amount, address(this)
                 ); // MUST use asset
+
+                if (getCurrentLendingPoolDebt(vars.underlyingAsset) == 0) {
+                    // Send the remaining AERC6909 to Treasury. This is due to Minipool IR > Lending IR.
+                    uint256 aTokenId = reserve.aTokenID;
+                    IAERC6909 aToken6909 = IAERC6909(reserve.aTokenAddress);
+                    aToken6909.transfer(
+                        _addressesProvider.getMiniPoolTreasury(_minipoolId),
+                        aTokenId,
+                        aToken6909.balanceOf(address(this), aTokenId)
+                    );
+                }
             }
         }
     }
