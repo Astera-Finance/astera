@@ -48,7 +48,8 @@ import {WadRayMath} from "contracts/protocol/libraries/math/WadRayMath.sol";
 
 // import "contracts/protocol/core/minipool/MiniPoolDefaultReserveInterestRate.sol";
 // import "contracts/mocks/oracle/PriceOracle.sol";
-// import "contracts/protocol/core/minipool/MiniPoolCollateralManager.sol";
+import {MiniPoolCollateralManager} from
+    "contracts/protocol/core/minipool/MiniPoolCollateralManager.sol";
 
 // Structures
 struct DeployedContracts {
@@ -167,19 +168,29 @@ struct MockedToken {
     string symbol;
 }
 
-// struct LendingPoolInfra {
-//     address lendingPoolAddressesProvider;
-//     address lendingPool;
-//     address aTokenErc6909;
-//     address lendingPoolConfigurator;
-// }
+struct NewPeripherial {
+    bool configure;
+    address newAddress;
+    bool reserveType;
+    string symbol;
+    address tokenAddress;
+}
 
-/*   
- "piStrategy": {},
- "miniPoolReserves": {} 
- */
-// struct PiStrategy {
+struct Rehypothecation {
+    uint256 claimingThreshold;
+    bool configure;
+    uint256 drift;
+    uint256 farmingPct;
+    address profitHandler;
+    bool reserveType;
+    string symbol;
+    address tokenAddress;
+    address vault;
+}
 
+// struct JsonMockedTokens {
+//     address tokenAddress;
+//     string symbol;
 // }
 
 struct DeploymentConfig {
@@ -189,6 +200,11 @@ struct DeploymentConfig {
     PoolReserversConfig[] poolReserversConfig;
     LinearStrategy volatileStrategy;
     LinearStrategy stableStrategy;
+}
+
+struct MockAddresses {
+    address[] mockedTokens;
+    address[] deployedTokens;
 }
 
 // PoolAddressesProviderConfig poolAddressesProviderConfig;

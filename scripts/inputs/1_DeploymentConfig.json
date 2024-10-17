@@ -5,10 +5,6 @@
         "debtTokenNamePrefix": "Cod3x Lend variable debt bearing ",
         "debtTokenSymbolPrefix": "variableDebt"
     },
-    "roles": {
-        "emergencyAdmin": "0xA151CfCA393FE5Eec690feD2a2446DA5a073d01B",
-        "poolAdmin": "0x3151CfCA393FE5Eec690feD2a2446DA5a073d01B"
-    },
     "poolAddressesProviderConfig": {
         "marketId": "UV TestNet Market",
         "poolId": 0
@@ -67,12 +63,5 @@
         "sources": [
             "0x639Fe6ab55C921f74e7fac1ee960C0B6293ba612"
         ]
-    },
-    "mockedToken": [
-        {
-            "decimals": 18,
-            "prices": 2.5e8,
-            "symbol": "WETH"
-        }
-    ]
+    }
 }

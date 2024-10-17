@@ -1,0 +1,74 @@
+{
+    "treasury": [
+        {
+            "configure": false,
+            "newAddress": "0x2f2a2543B76A4166549F7aaB2e75Bef0aefC5AAf",
+            "reserveType": true,
+            "symbol": "USDC",
+            "tokenAddress": "0xaf88d065e77c8cC2239327C5EDb3A432268e5831"
+        },
+        {
+            "configure": true,
+            "newAddress": "0x2f2a2543B76A4166549F7aaB2e75Bef0aefC5AAf",
+            "reserveType": true,
+            "symbol": "WETH",
+            "tokenAddress": "0x82aF49447D8a07e3bd95BD0d56f35241523fBab1"
+        }
+    ],
+    "vault": [
+        {
+            "configure": false,
+            "newAddress": "0x2f2a2543B76A4166549F7aaB2e75Bef0aefC5AAf",
+            "reserveType": true,
+            "symbol": "USDC",
+            "tokenAddress": "0xaf88d065e77c8cC2239327C5EDb3A432268e5831"
+        },
+        {
+            "configure": true,
+            "newAddress": "0x2f2a2543B76A4166549F7aaB2e75Bef0aefC5AAf",
+            "reserveType": true,
+            "symbol": "WETH",
+            "tokenAddress": "0x82aF49447D8a07e3bd95BD0d56f35241523fBab1"
+        }
+    ],
+    "rewarder": [
+        {
+            "configure": false,
+            "newAddress": "0x2f2a2543B76A4166549F7aaB2e75Bef0aefC5AAf",
+            "reserveType": true,
+            "symbol": "USDC",
+            "tokenAddress": "0xaf88d065e77c8cC2239327C5EDb3A432268e5831"
+        },
+        {
+            "configure": true,
+            "newAddress": "0x2f2a2543B76A4166549F7aaB2e75Bef0aefC5AAf",
+            "reserveType": true,
+            "symbol": "WETH",
+            "tokenAddress": "0x82aF49447D8a07e3bd95BD0d56f35241523fBab1"
+        }
+    ],
+    "rehypothecation": [
+        {
+            "claimingThreshold": 1e8,
+            "configure": false,
+            "drift": 200,
+            "farmingPct": 2000,
+            "profitHandler": "0x2f2a2543B76A4166549F7aaB2e75Bef0aefC5AAf",
+            "reserveType": true,
+            "symbol": "USDC",
+            "tokenAddress": "0xaf88d065e77c8cC2239327C5EDb3A432268e5831",
+            "vault": "0x2f2a2543B76A4166549F7aaB2e75Bef0aefC5AAf"
+        },
+        {
+            "claimingThreshold": 1e8,
+            "configure": true,
+            "drift": 200,
+            "farmingPct": 2000,
+            "profitHandler": "0x2f2a2543B76A4166549F7aaB2e75Bef0aefC5AAf",
+            "reserveType": true,
+            "symbol": "WETH",
+            "tokenAddress": "0x82aF49447D8a07e3bd95BD0d56f35241523fBab1",
+            "vault": "0x2f2a2543B76A4166549F7aaB2e75Bef0aefC5AAf"
+        }
+    ]
+}

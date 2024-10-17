@@ -41,6 +41,7 @@ import "contracts/mocks/oracle/PriceOracle.sol";
 import "contracts/protocol/core/minipool/MiniPoolCollateralManager.sol";
 
 import "./DeployDataTypes.s.sol";
+import {DataTypes} from "../contracts/protocol/libraries/types/DataTypes.sol";
 
 import "forge-std/console.sol";
 
@@ -63,7 +64,7 @@ contract DeploymentUtils {
     ) public {
         Oracle oracle = _deployOracle(_oracleConfig);
 
-        _deployLendingPoolContracts(oracle, _poolAddressesProviderConfig, deployer); // TODO all functions shall return
+        _deployLendingPoolContracts(oracle, _poolAddressesProviderConfig, deployer);
         contracts.rewarder = new Rewarder();
 
         _deployStrategies(
@@ -83,7 +84,7 @@ contract DeploymentUtils {
         uint256 _miniPoolId,
         address _deployer
     ) public {
-        _deployMiniPoolContracts(_deployer); // TODO all functions shall return
+        _deployMiniPoolContracts(_deployer);
         contracts.rewarder = new Rewarder();
 
         _deployMiniPoolStrategies(
@@ -101,10 +102,6 @@ contract DeploymentUtils {
         LinearStrategy[] memory _stableStrats,
         PiStrategy[] memory _piStrats
     ) internal {
-        // contracts.volatileStrategies =
-        //     new DefaultReserveInterestRateStrategy[](_volatileStrats.length);
-        // contracts.stableStrategies = new DefaultReserveInterestRateStrategy[](_stableStrats.length);
-        // contracts.piStrategies = new PiReserveInterestRateStrategy[](_piStrats.length);
         for (uint8 idx = 0; idx < _volatileStrats.length; idx++) {
             contracts.volatileStrategies.push(
                 _deployDefaultStrategy(_provider, _volatileStrats[idx])
@@ -278,11 +275,9 @@ contract DeploymentUtils {
         );
         contracts.miniPoolConfigurator =
             MiniPoolConfigurator(contracts.miniPoolAddressesProvider.getMiniPoolConfigurator());
-        console.log("setting provider");
         contracts.lendingPoolAddressesProvider.setMiniPoolAddressesProvider(
             address(contracts.miniPoolAddressesProvider)
         );
-        console.log("AFTER");
         contracts.lendingPoolAddressesProvider.setFlowLimiter(address(contracts.flowLimiter));
         contracts.miniPoolAddressesProvider.deployMiniPool(
             address(contracts.miniPoolImpl), address(contracts.aTokenErc6909)
@@ -291,6 +286,40 @@ contract DeploymentUtils {
         contracts.miniPoolAddressesProvider.setMiniPoolCollateralManager(
             address(contracts.miniPoolCollateralManager)
         );
+    }
+
+    function _changeStrategies(
+        DeployedContracts memory _contracts,
+        PoolReserversConfig[] memory _reservesConfig
+    ) public {
+        for (uint8 idx = 0; idx < _reservesConfig.length; idx++) {
+            PoolReserversConfig memory reserveConfig = _reservesConfig[idx];
+            address interestStrategy = _determineInterestStrat(_contracts, reserveConfig);
+            _contracts.lendingPoolConfigurator.setReserveInterestRateStrategyAddress(
+                reserveConfig.tokenAddress, reserveConfig.reserveType, interestStrategy
+            );
+        }
+    }
+
+    function _determineInterestStrat(
+        DeployedContracts memory _contracts,
+        PoolReserversConfig memory _reserveConfig
+    ) internal returns (address) {
+        address interestStrategy;
+        if (keccak256(bytes(_reserveConfig.interestStrat)) == keccak256(bytes("PI"))) {
+            require(
+                _contracts.piStrategies[_reserveConfig.interestStratId]._asset()
+                    == _reserveConfig.tokenAddress,
+                "Pi strat has different asset address than reserve"
+            );
+            interestStrategy = address(_contracts.piStrategies[_reserveConfig.interestStratId]);
+        } else {
+            interestStrategy = keccak256(bytes(_reserveConfig.interestStrat))
+                == keccak256(bytes("VOLATILE"))
+                ? address(_contracts.volatileStrategies[_reserveConfig.interestStratId])
+                : address(_contracts.stableStrategies[_reserveConfig.interestStratId]);
+        }
+        return interestStrategy;
     }
 
     function _initAndConfigureReserves(
@@ -306,26 +335,8 @@ contract DeploymentUtils {
             PoolReserversConfig memory reserveConfig = _reservesConfig[idx];
             string memory tmpSymbol = ERC20(reserveConfig.tokenAddress).symbol();
 
-            address interestStrategy;
-            if (keccak256(bytes(reserveConfig.interestStrat)) == keccak256(bytes("PI"))) {
-                require(
-                    _contracts.piStrategies[reserveConfig.interestStratId]._asset()
-                        == reserveConfig.tokenAddress,
-                    "Pi strat has different asset address than reserve"
-                );
-                interestStrategy = address(_contracts.piStrategies[reserveConfig.interestStratId]);
-            } else {
-                interestStrategy = keccak256(bytes(reserveConfig.interestStrat))
-                    == keccak256(bytes("VOLATILE"))
-                    ? address(_contracts.volatileStrategies[reserveConfig.interestStratId])
-                    : address(_contracts.stableStrategies[reserveConfig.interestStratId]);
-            }
+            address interestStrategy = _determineInterestStrat(_contracts, reserveConfig);
 
-            console.log(
-                "PI STRATEGY: ->>>>>>>>> vs ",
-                interestStrategy,
-                address(_contracts.piStrategies[reserveConfig.interestStratId])
-            );
             initInputParams[idx] = ILendingPoolConfigurator.InitReserveInput({
                 aTokenImpl: address(_contracts.aToken),
                 variableDebtTokenImpl: address(_contracts.variableDebtToken),
@@ -343,6 +354,7 @@ contract DeploymentUtils {
                 params: bytes(reserveConfig.params)
             });
         }
+        console.log("Batch init");
         _contracts.lendingPoolConfigurator.batchInitReserve(initInputParams);
 
         _configureReserves(_contracts, _reservesConfig);
@@ -379,6 +391,42 @@ contract DeploymentUtils {
         _contracts.lendingPoolAddressesProvider.setPoolAdmin(tmpPoolAdmin);
     }
 
+    function _changeMiniPoolStrategies(
+        DeployedContracts memory _contracts,
+        PoolReserversConfig[] memory _reservesConfig,
+        address _miniPool
+    ) public {
+        for (uint8 idx = 0; idx < _reservesConfig.length; idx++) {
+            PoolReserversConfig memory reserveConfig = _reservesConfig[idx];
+            address interestStrategy = _determineMiniPoolInterestStrat(_contracts, reserveConfig);
+            _contracts.miniPoolConfigurator.setReserveInterestRateStrategyAddress(
+                reserveConfig.tokenAddress, interestStrategy, IMiniPool(_miniPool)
+            );
+        }
+    }
+
+    function _determineMiniPoolInterestStrat(
+        DeployedContracts memory _contracts,
+        PoolReserversConfig memory _reserveConfig
+    ) internal returns (address) {
+        address interestStrategy;
+        if (keccak256(bytes(_reserveConfig.interestStrat)) == keccak256(bytes("PI"))) {
+            require(
+                _contracts.miniPoolPiStrategies[_reserveConfig.interestStratId]._asset()
+                    == _reserveConfig.tokenAddress,
+                "Mini pool Pi strat has different asset address than reserve"
+            );
+            interestStrategy =
+                address(_contracts.miniPoolPiStrategies[_reserveConfig.interestStratId]);
+        } else {
+            interestStrategy = keccak256(bytes(_reserveConfig.interestStrat))
+                == keccak256(bytes("VOLATILE"))
+                ? address(_contracts.miniPoolVolatileStrategies[_reserveConfig.interestStratId])
+                : address(_contracts.miniPoolStableStrategies[_reserveConfig.interestStratId]);
+        }
+        return interestStrategy;
+    }
+
     function _initAndConfigureMiniPoolReserves(
         DeployedContracts memory _contracts,
         PoolReserversConfig[] memory _reservesConfig,
@@ -396,21 +444,7 @@ contract DeploymentUtils {
             string memory tmpSymbol = ERC20(reserveConfig.tokenAddress).symbol();
             string memory tmpName = ERC20(reserveConfig.tokenAddress).name();
 
-            address interestStrategy;
-            if (keccak256(bytes(reserveConfig.interestStrat)) == keccak256(bytes("PI"))) {
-                require(
-                    _contracts.miniPoolPiStrategies[reserveConfig.interestStratId]._asset()
-                        == reserveConfig.tokenAddress,
-                    "Pi strat has different asset address than reserve"
-                );
-                interestStrategy =
-                    address(_contracts.miniPoolPiStrategies[reserveConfig.interestStratId]);
-            } else {
-                interestStrategy = keccak256(bytes(reserveConfig.interestStrat))
-                    == keccak256(bytes("VOLATILE"))
-                    ? address(_contracts.miniPoolVolatileStrategies[reserveConfig.interestStratId])
-                    : address(_contracts.miniPoolStableStrategies[reserveConfig.interestStratId]);
-            }
+            address interestStrategy = _determineMiniPoolInterestStrat(_contracts, reserveConfig);
 
             initInputParams[idx] = IMiniPoolConfigurator.InitReserveInput({
                 underlyingAssetDecimals: ERC20(reserveConfig.tokenAddress).decimals(),
@@ -461,13 +495,6 @@ contract DeploymentUtils {
         contracts.lendingPoolAddressesProvider.setPoolAdmin(roles.poolAdmin);
         contracts.lendingPoolAddressesProvider.setEmergencyAdmin(roles.emergencyAdmin);
     }
-
-    //TODO
-    // function _configureMiniPool() internal {
-    //     contracts.miniPoolConfigurator.setReserveInterestRateStrategyAddress(
-    //         reserveConfig.tokenAddress, interestStrategy, IMiniPool(mp)
-    //     );
-    // }
 
     function _deployERC20Mocks(
         string[] memory names,
@@ -547,5 +574,83 @@ contract DeploymentUtils {
         }
         _updateOracle(oracle, tokens, aggregators);
         return tokens;
+    }
+
+    function _changePeripherials(
+        NewPeripherial[] memory treasury,
+        NewPeripherial[] memory vault,
+        NewPeripherial[] memory rewarder
+    ) internal {
+        require(treasury.length == vault.length, "Lengths of settings must be the same");
+        require(treasury.length == rewarder.length, "Lengths settings must be the same");
+
+        for (uint8 idx = 0; idx < treasury.length; idx++) {
+            if (treasury[idx].configure == true) {
+                DataTypes.ReserveData memory data = contracts.lendingPool.getReserveData(
+                    treasury[idx].tokenAddress, treasury[idx].reserveType
+                );
+                require(
+                    data.aTokenAddress != address(0), "tokenAddress not available in lendingPool"
+                );
+                contracts.lendingPoolConfigurator.setTreasury(
+                    treasury[idx].tokenAddress, treasury[idx].reserveType, treasury[idx].newAddress
+                );
+            }
+            if (vault[idx].configure == true) {
+                DataTypes.ReserveData memory data = contracts.lendingPool.getReserveData(
+                    vault[idx].tokenAddress, vault[idx].reserveType
+                );
+                require(
+                    data.aTokenAddress != address(0), "tokenAddress not available in lendingPool"
+                );
+                contracts.lendingPoolConfigurator.setVault(
+                    data.aTokenAddress, vault[idx].newAddress
+                );
+            }
+            if (rewarder[idx].configure == true) {
+                DataTypes.ReserveData memory data = contracts.lendingPool.getReserveData(
+                    rewarder[idx].tokenAddress, rewarder[idx].reserveType
+                );
+                require(
+                    data.aTokenAddress != address(0), "tokenAddress not available in lendingPool"
+                );
+                contracts.lendingPoolConfigurator.setRewarderForReserve(
+                    rewarder[idx].tokenAddress, rewarder[idx].reserveType, rewarder[idx].newAddress
+                );
+            }
+        }
+    }
+
+    function _turnOnRehypothecation(Rehypothecation[] memory rehypothecationSettings) internal {
+        for (uint8 idx = 0; idx < rehypothecationSettings.length; idx++) {
+            Rehypothecation memory rehypothecationSetting = rehypothecationSettings[idx];
+            if (rehypothecationSetting.configure == true) {
+                DataTypes.ReserveData memory reserveData = contracts.lendingPool.getReserveData(
+                    rehypothecationSetting.tokenAddress, rehypothecationSetting.reserveType
+                );
+                require(
+                    reserveData.aTokenAddress != address(0),
+                    "aTokenAddress not available in lendingPool"
+                );
+                if (address(AToken(reserveData.aTokenAddress).vault()) == address(0)) {
+                    contracts.lendingPoolConfigurator.setVault(
+                        reserveData.aTokenAddress, rehypothecationSetting.vault
+                    );
+                }
+
+                contracts.lendingPoolConfigurator.setFarmingPct(
+                    reserveData.aTokenAddress, rehypothecationSetting.farmingPct
+                );
+                contracts.lendingPoolConfigurator.setClaimingThreshold(
+                    reserveData.aTokenAddress, rehypothecationSetting.claimingThreshold
+                );
+                contracts.lendingPoolConfigurator.setFarmingPctDrift(
+                    reserveData.aTokenAddress, rehypothecationSetting.drift
+                );
+                contracts.lendingPoolConfigurator.setProfitHandler(
+                    reserveData.aTokenAddress, rehypothecationSetting.profitHandler
+                );
+            }
+        }
     }
 }

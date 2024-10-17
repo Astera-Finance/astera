@@ -28,7 +28,7 @@
             "baseLtv": 7000,
             "borrowingEnabled": true,
             "interestStrat": "PI",
-            "interestStratId": 0,
+            "interestStratId": 2,
             "liquidationBonus": 10500,
             "liquidationThreshold": 7500,
             "params": "0x10",
@@ -85,37 +85,5 @@
             "0xd0C7101eACbB49F3deCcCc166d238410D6D46d57",
             "0x3f3f5dF88dC9F13eac63DF89EC16ef6e7E25DdE7"
         ]
-    },
-    "lendingPoolMockedToken": [
-        {
-            "decimals": 6,
-            "prices": 1e8,
-            "symbol": "USDC"
-        },
-        {
-            "decimals": 8,
-            "prices": 64e8,
-            "symbol": "WBTC"
-        }
-    ],
-    "miniPoolMockedToken": [
-        {
-            "decimals": 8,
-            "prices": 64e8,
-            "symbol": "WBTC"
-        },
-        {
-            "decimals": 18,
-            "prices": 1e8,
-            "symbol": "USDT"
-        }
-    ],
-    "piStrategy": {
-        "assetReserveType": true,
-        "minControllerError": -400e24,
-        "maxITimeAmp": 1728000,
-        "optimalUtilizationRate": 45e25,
-        "kp": 1e27,
-        "ki": 13e19
     }
 }

@@ -11,7 +11,8 @@
         {
             "baseLtv": 7000,
             "borrowingEnabled": true,
-            "interestStrat": "VOLATILE",
+            "interestStrat": "PI",
+            "interestStratId": 1,
             "liquidationBonus": 10400,
             "liquidationThreshold": 7400,
             "params": "0x10",
@@ -24,7 +25,8 @@
         {
             "baseLtv": 7000,
             "borrowingEnabled": true,
-            "interestStrat": "STABLE",
+            "interestStrat": "PI",
+            "interestStratId": 2,
             "liquidationBonus": 10500,
             "liquidationThreshold": 7400,
             "params": "0x10",
@@ -39,7 +41,8 @@
         {
             "baseLtv": 7000,
             "borrowingEnabled": true,
-            "interestStrat": "VOLATILE",
+            "interestStrat": "PI",
+            "interestStratId": 2,
             "liquidationBonus": 10500,
             "liquidationThreshold": 7700,
             "params": "0x10",
@@ -52,7 +55,8 @@
         {
             "baseLtv": 7000,
             "borrowingEnabled": true,
-            "interestStrat": "STABLE",
+            "interestStrat": "PI",
+            "interestStratId": 3,
             "liquidationBonus": 10500,
             "liquidationThreshold": 7100,
             "params": "0x10",
@@ -61,30 +65,6 @@
             "reserveType": true,
             "symbol": "USDT",
             "tokenAddress": "0xFd086bC7CD5C481DCC9C85ebE478A1C0b69FCbb9"
-        }
-    ],
-    "lendingPoolMockedToken": [
-        {
-            "decimals": 6,
-            "prices": 1e8,
-            "symbol": "USDC"
-        },
-        {
-            "decimals": 8,
-            "prices": 64e8,
-            "symbol": "WBTC"
-        }
-    ],
-    "miniPoolMockedToken": [
-        {
-            "decimals": 8,
-            "prices": 64e8,
-            "symbol": "WBTC"
-        },
-        {
-            "decimals": 18,
-            "prices": 1e8,
-            "symbol": "USDT"
         }
     ]
 }

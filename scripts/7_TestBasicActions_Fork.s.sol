@@ -9,8 +9,9 @@ import "./DeploymentUtils.s.sol";
 import "lib/forge-std/src/Test.sol";
 import "lib/forge-std/src/Script.sol";
 import "lib/forge-std/src/console.sol";
-import {AddAssets} from "./3_AddAssets.s.sol";
+import {AddAssets} from "./4_AddAssets.s.sol";
 import {WadRayMath} from "contracts/protocol/libraries/math/WadRayMath.sol";
+import {DataTypes} from "../contracts/protocol/libraries/types/DataTypes.sol";
 
 contract TestBasicActions is Script, DeploymentUtils, Test {
     using stdJson for string;
@@ -143,7 +144,11 @@ contract TestBasicActions is Script, DeploymentUtils, Test {
         (,,,, uint256 reserveFactors,,,,) = contracts
             .protocolDataProvider
             .getReserveConfigurationData(address(borrowToken.token), true);
-        (, uint256 expectedBorrowRate) = contracts.volatileStrategy.calculateInterestRates(
+        DataTypes.ReserveData memory data =
+            contracts.lendingPool.getReserveData(address(borrowToken.token), true);
+        (, uint256 expectedBorrowRate) = DefaultReserveInterestRateStrategy(
+            data.interestRateStrategyAddress
+        ).calculateInterestRates(
             address(borrowToken.token),
             address(borrowToken.aToken),
             0,
@@ -172,33 +177,34 @@ contract TestBasicActions is Script, DeploymentUtils, Test {
     }
 
     function testBorrowRepay(
-        TokenTypes memory usdcTypes,
-        TokenTypes memory wbtcTypes,
+        TokenTypes memory collateralTypes,
+        TokenTypes memory borrowTypes,
         uint256 usdcDepositAmount
     ) public {
         address user = makeAddr("user");
 
-        (uint256 maxBorrowTokenToBorrowInCollateralUnit) =
-            fixture_depositAndBorrow(usdcTypes, wbtcTypes, user, address(this), usdcDepositAmount);
+        (uint256 maxBorrowTokenToBorrowInCollateralUnit) = fixture_depositAndBorrow(
+            collateralTypes, borrowTypes, user, address(this), usdcDepositAmount
+        );
 
         /* Main user repays his debt */
-        uint256 wbtcBalanceBeforeRepay = wbtcTypes.token.balanceOf(address(this));
-        uint256 wbtcDebtBeforeRepay = wbtcTypes.debtToken.balanceOf(address(this));
-        wbtcTypes.token.approve(
+        uint256 wbtcBalanceBeforeRepay = borrowTypes.token.balanceOf(address(this));
+        uint256 wbtcDebtBeforeRepay = borrowTypes.debtToken.balanceOf(address(this));
+        borrowTypes.token.approve(
             address(contracts.lendingPool), maxBorrowTokenToBorrowInCollateralUnit
         );
         contracts.lendingPool.repay(
-            address(wbtcTypes.token), true, maxBorrowTokenToBorrowInCollateralUnit, address(this)
+            address(borrowTypes.token), true, maxBorrowTokenToBorrowInCollateralUnit, address(this)
         );
         /* Main user's balance should be the same as before borrowing */
         assertEq(
             wbtcBalanceBeforeRepay,
-            wbtcTypes.token.balanceOf(address(this)) + maxBorrowTokenToBorrowInCollateralUnit,
+            borrowTypes.token.balanceOf(address(this)) + maxBorrowTokenToBorrowInCollateralUnit,
             "User after repayment has less borrowed tokens"
         );
         assertEq(
             wbtcDebtBeforeRepay,
-            wbtcTypes.debtToken.balanceOf(address(this)) + maxBorrowTokenToBorrowInCollateralUnit,
+            borrowTypes.debtToken.balanceOf(address(this)) + maxBorrowTokenToBorrowInCollateralUnit,
             "User after repayment has less debt"
         );
     }
@@ -432,7 +438,7 @@ contract TestBasicActions is Script, DeploymentUtils, Test {
 
             // Config fetching
             string memory root = vm.projectRoot();
-            string memory path = string.concat(root, "/scripts/inputs/5_TestConfig.json");
+            string memory path = string.concat(root, "/scripts/inputs/7_TestConfig.json");
             console.log("PATH: ", path);
             string memory deploymentConfig = vm.readFile(path);
 
@@ -449,14 +455,14 @@ contract TestBasicActions is Script, DeploymentUtils, Test {
             VariableDebtToken variableDebtToken =
                 fixture_getVarDebtToken(collateral, contracts.protocolDataProvider);
 
-            TokenTypes memory usdcTypes =
+            TokenTypes memory collateralTypes =
                 TokenTypes({token: ERC20(collateral), aToken: aToken, debtToken: variableDebtToken});
 
             aToken = fixture_getAToken(borrowAsset, contracts.protocolDataProvider);
 
             variableDebtToken = fixture_getVarDebtToken(borrowAsset, contracts.protocolDataProvider);
 
-            TokenTypes memory wbtcTypes = TokenTypes({
+            TokenTypes memory borrowTypes = TokenTypes({
                 token: ERC20(borrowAsset),
                 aToken: aToken,
                 debtToken: variableDebtToken
@@ -464,8 +470,8 @@ contract TestBasicActions is Script, DeploymentUtils, Test {
 
             // vm.startPrank(FOUNDRY_DEFAULT);
             /* Test borrow repay */
-            deal(address(usdcTypes.token), address(this), 2 * depositAmount);
-            // testBorrowRepay(usdcTypes, wbtcTypes, depositAmount);
+            deal(address(collateralTypes.token), address(this), 2 * depositAmount);
+            // testBorrowRepay(collateralTypes, borrowTypes, depositAmount);
             address mp =
                 contracts.miniPoolAddressesProvider.getMiniPool(poolAddressesProviderConfig.poolId);
 
@@ -476,6 +482,8 @@ contract TestBasicActions is Script, DeploymentUtils, Test {
             TokenParams memory wbtcParams = TokenParams({token: ERC20(borrowAsset), aToken: aToken});
             testMultipleUsersBorrowRepayAndWithdraw(usdcParams, wbtcParams, mp);
             // vm.stopPrank();
+        } else {
+            console.log("Test only available for mainnet fork");
         }
     }
 }

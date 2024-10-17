@@ -22,7 +22,7 @@ remappings = [
 sepolia = "${ARB_SEPOLIA}"
 
 [etherscan]
-sepolia = { key = "${ETHERSCAN_KEY}" }
+sepolia = { key = "${ETHERSCAN_KEY}", url = "https://api-sepolia.etherscan.io/api" }
 
 [fmt]
 line_length = 100
