@@ -1,7 +1,7 @@
 # 📜 **Table of Contents**
-1. [🔍 Overview](#-overview)
-2. [💡 How to Use Scripts](#-how-to-use-scripts)
-3. [🛠️ Configuration Files](#-configuration-files)
+1. [🔍 Overview](#overview)
+2. [💡 How to Use Scripts](#how-to-use-scripts)
+3. [🛠️ Configuration Files](#configuration-files)
    - [🧪 0_MockedTokens](#0_mockedtokens)
    - [🏗️ 1_DeploymentConfig (Main Pool)](#1_deploymentconfig)
    - [🏗️ 2_DeploymentConfig (Mini Pool)](#2_deploymentconfig)
@@ -9,8 +9,9 @@
    - [💰 4_AssetsToAdd](#4_assetstoadd)
    - [🔧 5_Reconfigure](#5_reconfigure)
    - [🏦 6_ChangePeripherials](#6_changeperipherials)
-   - [🧪 7_TestConfig](#7_testconfig)
-4. [📤 Output Files](#-output-files)
+   - [🔧 7_TransferOwnerships](#7_transferownerships)
+   - [🧪 8_TestConfig](#8_testconfig)
+4. [📤 Output Files](#output-files)
    - [🧪 0_MockedTokens Output](#0_mockedtokens)
    - [🏦 1_LendingPoolContracts](#1_lendingpoolcontracts)
    - [🏦 2_MiniPoolContracts](#2_minipoolcontracts)
@@ -18,7 +19,7 @@
 
 ### Overview
 Scripts allow to deploy Cod3x-Lend infrastructure and properly configure it.
-The deployment process involves configuration files (./input/<Nr>_<InputJsonName>.json) and corresponding scripts (./<Nr>_<ScriptName>.s.sol). Typically, the scripts should be executed in numerical order. They generate output json files with deployed contract addresses that can be used by next script without the need to configure manually. Each script file requires at least one configuration file to be available and properly configured (example configurations with all descriptions are available [here](#-configuration-files)). The scripts may require also more json files as an inputs generated from previous scripts and available in `./outputs` folder.
+The deployment process involves configuration files `./input/<Nr>_<InputJsonName>.json` and corresponding scripts `(./<Nr>_<ScriptName>.s.sol)`. Typically, the scripts should be executed in numerical order. They generate output json files with deployed contract addresses that can be used by next script without the need to configure manually. Each script file requires at least one configuration file to be available and properly configured (example configurations with all descriptions are available [here](#configuration-files)). The scripts may require also more json files as an inputs generated from previous scripts and available in `./outputs` folder.
 
 ![alt text](./imgs/Configuration.png)
 
@@ -27,18 +28,19 @@ The deployment process involves configuration files (./input/<Nr>_<InputJsonName
 2. **Write data into configuration file scripts/inputs/<nr>_<configName>.json**
 3. **Run the script:**
    - **Fork**:
-     - compatible script numbers <Nr> to run (1 - 7)
+     - compatible script numbers <Nr> to run (1 - 8)
      - local fork runs also the previous script in order to get all necessary contracts so in this variant the order doesn't matter - it is possible to run script with last number without running scripts with prior numbers
      - configuration with corresponding number shall be filled
      - run `forge script scripts/<nr>_<scriptName>.s.sol`
    - **Testnet**: 
-      - compatible script numbers <Nr> to run (0 - 6)
+      - compatible script numbers <Nr> to run (0 - 7)
       - there is need to have executed script 0_DeployMocks.s.sol in order to have ERC20 token mocks
       - there is need to have already executed script with previous <Nr>
       - import env variables via `source .env`
-      - run `forge script scripts/<nr>_<scriptName>.s.sol --chain-id <chainId> --rpc-url $<RPC_URL> -vvvv --broadcast`
+      - run `forge script scripts/<nr>_<scriptName>.s.sol --chain-id <chainId> --rpc-url $<RPC_URL> -vvvv --broadcast` for deployment
+      - run `forge script scripts/5_Reconfigure.s.sol --chain-id 421614 --rpc-url $ARB_SEPOLIA --etherscan-api-key $ETHERSCAN_KEY --broadcast -vvvv --sender 0x3151CfCA393FE5Eec690feD2a2446DA5a073d01B`
    - **Mainnet**:
-      - compatible script numbers <Nr> to run (1 - 6)
+      - compatible script numbers <Nr> to run (1 - 7)
 
 ### Configuration files
 **Important !!** All params listed inside json's keys MUST be in alphabetical order !
@@ -596,7 +598,23 @@ The deployment process involves configuration files (./input/<Nr>_<InputJsonName
         ]
     }
     ```
-##### **7_TestConfig**
+##### **7_TransferOwnerships**
+   - Shall be run at the end of configuration in order to transfer all contracts ownerships 
+   - Example:
+   ```json
+   {
+       "roles": {
+           "addressesProviderOwner": "0x3151CfCA393FE5Eec690feD2a2446DA5a073d01B",
+           "emergencyAdmin": "0x3151CfCA393FE5Eec690feD2a2446DA5a073d01B",
+           "oracleOwner": "0x3151CfCA393FE5Eec690feD2a2446DA5a073d01B",
+           "piInterestStrategiesOwner": "0x3151CfCA393FE5Eec690feD2a2446DA5a073d01B",
+           "poolAdmin": "0x3151CfCA393FE5Eec690feD2a2446DA5a073d01B",
+           "rewarderOwner": "0x3151CfCA393FE5Eec690feD2a2446DA5a073d01B",
+           "treasuryOwner": "0x3151CfCA393FE5Eec690feD2a2446DA5a073d01B"
+       }
+   }
+   ```
+##### **8_TestConfig**
   - Can be run only for local fork (currently)
   - Shall be used to test basic actions for deployed contracts
   - Example:

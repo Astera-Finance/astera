@@ -59,6 +59,8 @@ contract DeployMiniPool is Script, Test, DeploymentUtils {
     }
 
     function run() external returns (DeployedContracts memory) {
+        console.log("2_DeployMiniPool");
+
         string memory root = vm.projectRoot();
         string memory path = string.concat(root, "/scripts/inputs/2_DeploymentConfig.json");
         console.log("PATH: ", path);

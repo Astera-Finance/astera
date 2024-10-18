@@ -62,9 +62,9 @@ contract DeploymentUtils {
         address _weth,
         address deployer
     ) public {
-        Oracle oracle = _deployOracle(_oracleConfig);
+        contracts.oracle = _deployOracle(_oracleConfig);
 
-        _deployLendingPoolContracts(oracle, _poolAddressesProviderConfig, deployer);
+        _deployLendingPoolContracts(_poolAddressesProviderConfig, deployer);
         contracts.rewarder = new Rewarder();
 
         _deployStrategies(
@@ -219,11 +219,11 @@ contract DeploymentUtils {
     }
 
     function _deployLendingPoolContracts(
-        Oracle oracle,
         PoolAddressesProviderConfig memory poolAddressesProviderConfig,
         address deployer
     ) internal {
         contracts.lendingPoolAddressesProvider = new LendingPoolAddressesProvider();
+        console.log("provider's owner: ", contracts.lendingPoolAddressesProvider.owner());
 
         contracts.lendingPool = new LendingPool();
         contracts.lendingPool.initialize(
@@ -255,7 +255,7 @@ contract DeploymentUtils {
         contracts.lendingPoolAddressesProvider.setLendingPoolCollateralManager(
             address(contracts.lendingPoolCollateralManager)
         );
-        contracts.lendingPoolAddressesProvider.setPriceOracle(address(oracle));
+        contracts.lendingPoolAddressesProvider.setPriceOracle(address(contracts.oracle));
         contracts.protocolDataProvider =
             new ProtocolDataProvider(contracts.lendingPoolAddressesProvider);
     }
@@ -491,9 +491,19 @@ contract DeploymentUtils {
     }
 
     function _transferOwnershipsAndRenounceRoles(Roles memory roles) internal {
-        //here is where we would set admin but there is no safe on testnet, so we pass in an EOA
         contracts.lendingPoolAddressesProvider.setPoolAdmin(roles.poolAdmin);
         contracts.lendingPoolAddressesProvider.setEmergencyAdmin(roles.emergencyAdmin);
+        contracts.lendingPoolAddressesProvider.transferOwnership(roles.addressesProviderOwner);
+        contracts.miniPoolAddressesProvider.transferOwnership(roles.addressesProviderOwner);
+        contracts.rewarder.transferOwnership(roles.rewarderOwner);
+        contracts.treasury.transferOwnership(roles.treasuryOwner);
+        contracts.oracle.transferOwnership(roles.oracleOwner);
+        for (uint256 idx = 0; idx < contracts.piStrategies.length; idx++) {
+            contracts.piStrategies[idx].transferOwnership(roles.piInterestStrategiesOwner);
+        }
+        for (uint256 idx = 0; idx < contracts.miniPoolPiStrategies.length; idx++) {
+            contracts.miniPoolPiStrategies[idx].transferOwnership(roles.piInterestStrategiesOwner);
+        }
     }
 
     function _deployERC20Mocks(

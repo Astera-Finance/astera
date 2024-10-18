@@ -16,6 +16,7 @@ contract DeployLendingPool is Script, DeploymentUtils, Test {
     address WETH_ARB = 0x82aF49447D8a07e3bd95BD0d56f35241523fBab1;
 
     function writeJsonData(string memory root, string memory path) internal {
+        vm.serializeAddress("lendingPoolContracts", "oracle", address(contracts.oracle));
         vm.serializeAddress("lendingPoolContracts", "rewarder", address(contracts.rewarder));
         vm.serializeAddress("lendingPoolContracts", "treasury", address(contracts.treasury));
         {
@@ -80,13 +81,14 @@ contract DeployLendingPool is Script, DeploymentUtils, Test {
     }
 
     function run() external returns (DeployedContracts memory) {
+        console.log("1_DeployLendingPool");
         // Config fetching
         string memory root = vm.projectRoot();
         string memory path = string.concat(root, "/scripts/inputs/1_DeploymentConfig.json");
         console.log("PATH: ", path);
         string memory deploymentConfig = vm.readFile(path);
         General memory general = abi.decode(deploymentConfig.parseRaw(".general"), (General));
-        // Roles memory roles = abi.decode(deploymentConfig.parseRaw(".roles"), (Roles));
+
         PoolAddressesProviderConfig memory poolAddressesProviderConfig = abi.decode(
             deploymentConfig.parseRaw(".poolAddressesProviderConfig"), (PoolAddressesProviderConfig)
         );

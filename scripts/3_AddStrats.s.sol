@@ -81,6 +81,8 @@ contract AddStrats is Script, DeploymentUtils, Test {
     }
 
     function run() external returns (DeployedContracts memory) {
+        console.log("3_AddStrats");
+
         // Config fetching
         string memory root = vm.projectRoot();
         string memory path = string.concat(root, "/scripts/inputs/3_StratsToAdd.json");

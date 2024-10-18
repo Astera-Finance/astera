@@ -1,8 +1,4 @@
 {
-    "roles": {
-        "poolAdmin": "0x3151CfCA393FE5Eec690feD2a2446DA5a073d01B",
-        "emergencyAdmin": "0x3151CfCA393FE5Eec690feD2a2446DA5a073d01B"
-    },
     "poolAddressesProviderConfig": {
         "marketId": "UV TestNet Market",
         "poolId": 0

@@ -15,13 +15,13 @@ contract Reconfigure is Script, DeploymentUtils, Test {
     using stdJson for string;
 
     function run() external returns (DeployedContracts memory) {
+        console.log("5_Reconfigure");
+
         // Config fetching
         string memory root = vm.projectRoot();
         string memory path = string.concat(root, "/scripts/inputs/5_Reconfigure.json");
         console.log("PATH: ", path);
         string memory deploymentConfig = vm.readFile(path);
-
-        Roles memory roles = abi.decode(deploymentConfig.parseRaw(".roles"), (Roles));
 
         PoolAddressesProviderConfig memory poolAddressesProviderConfig = abi.decode(
             deploymentConfig.parseRaw(".poolAddressesProviderConfig"), (PoolAddressesProviderConfig)
@@ -65,7 +65,7 @@ contract Reconfigure is Script, DeploymentUtils, Test {
 
             vm.stopPrank();
         } else if (vm.envBool("TESTNET")) {
-            console.log("Testnet Deployment");
+            console.log("Testnet");
             /* *********** Lending pool settings *********** */
             {
                 string memory outputPath =
@@ -157,7 +157,7 @@ contract Reconfigure is Script, DeploymentUtils, Test {
             _configureMiniPoolReserves(contracts, miniPoolReserversConfig, mp);
             vm.stopBroadcast();
         } else if (vm.envBool("MAINNET")) {
-            console.log("Mainnet Deployment");
+            console.log("Mainnet");
             /* *********** Lending pool settings *********** */
             {
                 string memory outputPath =

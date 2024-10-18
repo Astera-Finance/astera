@@ -63,6 +63,8 @@ contract AddAssets is Script, DeploymentUtils, Test {
     }
 
     function run() external returns (DeployedContracts memory) {
+        console.log("4_AddAssets");
+
         // Config fetching
         string memory root = vm.projectRoot();
         string memory path = string.concat(root, "/scripts/inputs/4_AssetsToAdd.json");
@@ -106,7 +108,7 @@ contract AddAssets is Script, DeploymentUtils, Test {
             );
             vm.stopPrank();
         } else if (vm.envBool("TESTNET")) {
-            console.log("Testnet deployment");
+            console.log("Testnet");
 
             /* Lending pool settings */
             {
@@ -209,7 +211,7 @@ contract AddAssets is Script, DeploymentUtils, Test {
             );
             vm.stopBroadcast();
         } else if (vm.envBool("MAINNET")) {
-            console.log("Mainnet deployment");
+            console.log("Mainnet");
             /* Lending pool settings */
             {
                 string memory outputPath =

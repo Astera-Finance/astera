@@ -17,6 +17,8 @@ contract ChangePeripherials is Script, DeploymentUtils, Test {
     using stdJson for string;
 
     function run() external returns (DeployedContracts memory) {
+        console.log("6_ChangePeripherials");
+
         // Config fetching
         string memory root = vm.projectRoot();
         string memory path = string.concat(root, "/scripts/inputs/6_ChangePeripherials.json");
@@ -54,7 +56,7 @@ contract ChangePeripherials is Script, DeploymentUtils, Test {
             _turnOnRehypothecation(rehypothecation);
             vm.stopPrank();
         } else if (vm.envBool("TESTNET")) {
-            console.log("Testnet Deployment");
+            console.log("Testnet");
             /* *********** Lending pool settings *********** */
             {
                 string memory outputPath =
@@ -114,7 +116,7 @@ contract ChangePeripherials is Script, DeploymentUtils, Test {
             _turnOnRehypothecation(rehypothecation);
             vm.stopBroadcast();
         } else if (vm.envBool("MAINNET")) {
-            console.log("Mainnet Deployment");
+            console.log("Mainnet");
             /* *********** Lending pool settings *********** */
             {
                 string memory outputPath =

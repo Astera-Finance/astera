@@ -31,23 +31,13 @@ import {MiniPoolAddressesProvider} from
     "contracts/protocol/configuration/MiniPoolAddressProvider.sol";
 import {MiniPoolConfigurator} from "contracts/protocol/core/minipool/MiniPoolConfigurator.sol";
 import {FlowLimiter} from "contracts/protocol/core/minipool/FlowLimiter.sol";
-
 import {ATokensAndRatesHelper} from "contracts/deployments/ATokensAndRatesHelper.sol";
 import {AToken} from "contracts/protocol/tokenization/ERC20/AToken.sol";
 import {ATokenERC6909} from "contracts/protocol/tokenization/ERC6909/ATokenERC6909.sol";
 import {VariableDebtToken} from "contracts/protocol/tokenization/ERC20/VariableDebtToken.sol";
-// import "contracts/mocks/tokens/MintableERC20.sol";
-// import "contracts/mocks/tokens/WETH9Mocked.sol";
-// import "contracts/mocks/oracle/MockAggregator.sol";
-// import "contracts/mocks/tokens/MockVault.sol";
-// import "contracts/mocks/tokens/MockStrat.sol";
-// import {ExternalContract} from "contracts/mocks/tokens/ExternalContract.sol";
+import {Oracle} from "contracts/protocol/core/Oracle.sol";
 import {IStrategy} from "contracts/mocks/dependencies/IStrategy.sol";
-// import "contracts/mocks/dependencies/IExternalContract.sol";
 import {WadRayMath} from "contracts/protocol/libraries/math/WadRayMath.sol";
-
-// import "contracts/protocol/core/minipool/MiniPoolDefaultReserveInterestRate.sol";
-// import "contracts/mocks/oracle/PriceOracle.sol";
 import {MiniPoolCollateralManager} from
     "contracts/protocol/core/minipool/MiniPoolCollateralManager.sol";
 
@@ -76,6 +66,7 @@ struct DeployedContracts {
     MiniPoolAddressesProvider miniPoolAddressesProvider;
     MiniPoolConfigurator miniPoolConfigurator;
     FlowLimiter flowLimiter;
+    Oracle oracle;
 }
 
 struct TokenParams {
@@ -112,8 +103,13 @@ struct General {
 }
 
 struct Roles {
+    address addressesProviderOwner;
     address emergencyAdmin;
+    address oracleOwner;
+    address piInterestStrategiesOwner;
     address poolAdmin;
+    address rewarderOwner;
+    address treasuryOwner;
 }
 
 struct PoolAddressesProviderConfig {
