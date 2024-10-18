@@ -18,12 +18,8 @@ import {MiniPoolReserveLogic} from "./MiniPoolReserveLogic.sol";
 import {MiniPoolValidationLogic} from "./MiniPoolValidationLogic.sol";
 import {ReserveConfiguration} from
     "../../../../../contracts/protocol/libraries/configuration/ReserveConfiguration.sol";
-import {ReserveBorrowConfiguration} from
-    "../../../../../contracts/protocol/libraries/configuration/ReserveBorrowConfiguration.sol";
 import {UserConfiguration} from
     "../../../../../contracts/protocol/libraries/configuration/UserConfiguration.sol";
-import {UserRecentBorrow} from
-    "../../../../../contracts/protocol/libraries/configuration/UserRecentBorrow.sol";
 import {Helpers} from "../../../../../contracts/protocol/libraries/helpers/Helpers.sol";
 
 /**
@@ -37,9 +33,7 @@ library MiniPoolBorrowLogic {
     using WadRayMath for uint256;
     using PercentageMath for uint256;
     using ReserveConfiguration for DataTypes.ReserveConfigurationMap;
-    using ReserveBorrowConfiguration for DataTypes.ReserveBorrowConfigurationMap;
     using UserConfiguration for DataTypes.UserConfigurationMap;
-    using UserRecentBorrow for DataTypes.UserRecentBorrowMap;
     using MiniPoolValidationLogic for MiniPoolValidationLogic.ValidateBorrowParams;
 
     event Borrow(
@@ -84,7 +78,6 @@ library MiniPoolBorrowLogic {
     struct CalculateUserAccountDataVolatileParams {
         address user;
         uint256 reservesCount;
-        uint256 lendingUpdateTimestamp;
         address oracle;
     }
 
@@ -100,7 +93,6 @@ library MiniPoolBorrowLogic {
         CalculateUserAccountDataVolatileParams memory params,
         mapping(address => DataTypes.MiniPoolReserveData) storage reservesData,
         DataTypes.UserConfigurationMap memory userConfig,
-        DataTypes.UserRecentBorrowMap storage userRecentBorrow,
         mapping(uint256 => DataTypes.ReserveReference) storage reserves
     ) external view returns (uint256, uint256, uint256, uint256, uint256) {
         CalculateUserAccountDataVolatileVars memory vars;
@@ -108,28 +100,18 @@ library MiniPoolBorrowLogic {
         if (userConfig.isEmpty()) {
             return (0, 0, 0, 0, type(uint256).max);
         }
-        // Get the user's volatility tier
-        vars.userVolatility =
-            calculateUserVolatilityTier(reservesData, userConfig, reserves, params.reservesCount);
 
         for (vars.i = 0; vars.i < params.reservesCount; vars.i++) {
-            vars.currentReserveAddress = reserves[vars.i].asset;
-            DataTypes.MiniPoolReserveData storage currentReserve =
-                reservesData[vars.currentReserveAddress];
-            // basically get same data as user account collateral, but with different LTVs being used depending on user's most volatile asset
             if (!userConfig.isUsingAsCollateralOrBorrowing(vars.i)) {
                 continue;
             }
-            (, vars.liquidationThreshold,, vars.decimals,) =
-                currentReserve.configuration.getParams();
 
-            if (vars.userVolatility == 0) {
-                vars.ltv = currentReserve.borrowConfiguration.getLowVolatilityLtv();
-            } else if (vars.userVolatility == 1) {
-                vars.ltv = currentReserve.borrowConfiguration.getMediumVolatilityLtv();
-            } else if (vars.userVolatility == 2) {
-                vars.ltv = currentReserve.borrowConfiguration.getHighVolatilityLtv();
-            }
+            vars.currentReserveAddress = reserves[vars.i].asset;
+            DataTypes.MiniPoolReserveData storage currentReserve =
+                reservesData[vars.currentReserveAddress];
+
+            (vars.ltv, vars.liquidationThreshold,, vars.decimals,) =
+                currentReserve.configuration.getParams();
 
             vars.tokenUnit = 10 ** vars.decimals;
 
@@ -166,22 +148,9 @@ library MiniPoolBorrowLogic {
             ? vars.avgLiquidationThreshold / vars.totalCollateralInETH
             : 0;
 
-        if (userRecentBorrow.getTimestamp() < params.lendingUpdateTimestamp) {
-            /// Calculate health factor using new total collateral, new totalDebt, olf avgLiqThres
-            vars.healthFactor = MiniPoolGenericLogic.calculateHealthFactorFromBalances(
-                vars.totalCollateralInETH,
-                vars.totalDebtInETH,
-                userRecentBorrow.getAverageLiquidationThreshold()
-            );
-        } else {
-            vars.healthFactor = MiniPoolGenericLogic.calculateHealthFactorFromBalances(
-                vars.totalCollateralInETH, vars.totalDebtInETH, vars.avgLiquidationThreshold
-            );
-        }
-
-        userRecentBorrow.setAverageLtv(vars.avgLtv);
-        userRecentBorrow.setAverageLiquidationThreshold(vars.avgLiquidationThreshold);
-        userRecentBorrow.setTimestamp(block.timestamp);
+        vars.healthFactor = MiniPoolGenericLogic.calculateHealthFactorFromBalances(
+            vars.totalCollateralInETH, vars.totalDebtInETH, vars.avgLiquidationThreshold
+        );
 
         return (
             vars.totalCollateralInETH,
@@ -190,27 +159,6 @@ library MiniPoolBorrowLogic {
             vars.avgLiquidationThreshold,
             vars.healthFactor
         );
-    }
-
-    function calculateUserVolatilityTier(
-        mapping(address => DataTypes.MiniPoolReserveData) storage reservesData,
-        DataTypes.UserConfigurationMap memory userConfig,
-        mapping(uint256 => DataTypes.ReserveReference) storage reserves,
-        uint256 reservesCount
-    ) internal view returns (uint256 userVolatility) {
-        for (uint256 i; i < reservesCount; i++) {
-            address currentReserveAddress = reserves[i].asset;
-            DataTypes.MiniPoolReserveData storage currentReserve =
-                reservesData[currentReserveAddress];
-            if (!userConfig.isUsingAsCollateralOrBorrowing(i)) {
-                continue;
-            }
-            uint256 currentReserveVolatility =
-                currentReserve.borrowConfiguration.getVolatilityTier();
-            if (userVolatility < currentReserveVolatility) {
-                userVolatility = currentReserveVolatility;
-            }
-        }
     }
 
     struct ExecuteBorrowParams {
@@ -231,14 +179,12 @@ library MiniPoolBorrowLogic {
         ExecuteBorrowParams memory vars,
         mapping(address => DataTypes.MiniPoolReserveData) storage reserves,
         mapping(uint256 => DataTypes.ReserveReference) storage reservesList,
-        mapping(address => DataTypes.UserConfigurationMap) storage usersConfig,
-        mapping(address => DataTypes.UserRecentBorrowMap) storage _usersRecentBorrow
+        mapping(address => DataTypes.UserConfigurationMap) storage usersConfig
     ) external {
         DataTypes.MiniPoolReserveData storage reserve = reserves[vars.asset];
         require(reserve.configuration.getActive(), Errors.VL_NO_ACTIVE_RESERVE);
 
         DataTypes.UserConfigurationMap storage userConfig = usersConfig[vars.onBehalfOf];
-        DataTypes.UserRecentBorrowMap storage userRecentBorrow = _usersRecentBorrow[vars.onBehalfOf];
 
         MiniPoolValidationLogic.ValidateBorrowParams memory validateBorrowParams;
 
@@ -253,7 +199,7 @@ library MiniPoolBorrowLogic {
             validateBorrowParams.reservesCount = vars.reservesCount;
             validateBorrowParams.oracle = oracle;
             MiniPoolValidationLogic.validateBorrow(
-                validateBorrowParams, reserve, reserves, userConfig, reservesList, userRecentBorrow
+                validateBorrowParams, reserve, reserves, userConfig, reservesList
             );
         }
 

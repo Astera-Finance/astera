@@ -109,7 +109,6 @@ library MiniPoolValidationLogic {
      * @param amount The amount to be borrowed
      * @param amountInETH The amount to be borrowed, in ETH
      * @param reservesCount
-     * @param lendingUpdateTimestamp
      * @param oracle The price oracle
      */
     struct ValidateBorrowParams {
@@ -118,7 +117,6 @@ library MiniPoolValidationLogic {
         uint256 amount;
         uint256 amountInETH;
         uint256 reservesCount;
-        uint256 lendingUpdateTimestamp;
         address oracle;
     }
 
@@ -153,14 +151,12 @@ library MiniPoolValidationLogic {
         DataTypes.MiniPoolReserveData storage reserve,
         mapping(address => DataTypes.MiniPoolReserveData) storage reservesData,
         DataTypes.UserConfigurationMap storage userConfig,
-        mapping(uint256 => DataTypes.ReserveReference) storage reserves,
-        DataTypes.UserRecentBorrowMap storage userRecentBorrow
+        mapping(uint256 => DataTypes.ReserveReference) storage reserves
     ) internal view {
         ValidateBorrowLocalVars memory vars;
         MiniPoolBorrowLogic.CalculateUserAccountDataVolatileParams memory params;
         params.user = validateParams.userAddress;
         params.reservesCount = validateParams.reservesCount;
-        params.lendingUpdateTimestamp = validateParams.lendingUpdateTimestamp;
         params.oracle = validateParams.oracle;
 
         (vars.isActive, vars.isFrozen, vars.borrowingEnabled) = reserve.configuration.getFlags();
@@ -177,7 +173,7 @@ library MiniPoolValidationLogic {
             vars.currentLiquidationThreshold,
             vars.healthFactor
         ) = MiniPoolBorrowLogic.calculateUserAccountDataVolatile(
-            params, reservesData, userConfig, userRecentBorrow, reserves
+            params, reservesData, userConfig, reserves
         );
 
         require(vars.userCollateralBalanceETH > 0, Errors.VL_COLLATERAL_BALANCE_IS_0);

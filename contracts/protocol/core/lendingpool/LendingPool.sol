@@ -187,8 +187,7 @@ contract LendingPool is VersionedInitializable, ILendingPool, LendingPoolStorage
             ),
             _reserves,
             _reservesList,
-            _usersConfig,
-            _usersRecentBorrow
+            _usersConfig
         );
     }
 
@@ -350,7 +349,6 @@ contract LendingPool is VersionedInitializable, ILendingPool, LendingPoolStorage
             }),
             _reservesList,
             _usersConfig,
-            _usersRecentBorrow,
             _reserves
         );
     }
@@ -445,22 +443,6 @@ contract LendingPool is VersionedInitializable, ILendingPool, LendingPoolStorage
         returns (DataTypes.ReserveConfigurationMap memory)
     {
         return _reserves[asset][reserveType].configuration;
-    }
-
-    /**
-     * @dev Returns the borrow configuration of the reserve
-     * @param asset The address of the underlying asset of the reserve
-     * @param reserveType The type of the reserve
-     * @return The borrow configuration of the reserve
-     *
-     */
-    function getBorrowConfiguration(address asset, bool reserveType)
-        external
-        view
-        override
-        returns (DataTypes.ReserveBorrowConfigurationMap memory)
-    {
-        return _reserves[asset][reserveType].borrowConfiguration;
     }
 
     /**
@@ -653,22 +635,6 @@ contract LendingPool is VersionedInitializable, ILendingPool, LendingPoolStorage
         onlyLendingPoolConfigurator
     {
         _reserves[asset][reserveType].configuration.data = configuration;
-    }
-
-    /**
-     * @dev Sets the borrow configuration bitmap of the reserve as a whole
-     * - Only callable by the LendingPoolConfigurator contract
-     * @param asset The address of the underlying asset of the reserve
-     * @param borrowConfiguration The new borrow configuration bitmap
-     *
-     */
-    function setBorrowConfiguration(address asset, bool reserveType, uint256 borrowConfiguration)
-        external
-        override
-        onlyLendingPoolConfigurator
-    {
-        _reserves[asset][reserveType].borrowConfiguration.data = borrowConfiguration;
-        _lendingUpdateTimestamp = block.timestamp;
     }
 
     /**

@@ -109,7 +109,6 @@ library ValidationLogic {
      * @param amount The amount to be borrowed
      * @param amountInETH The amount to be borrowed, in ETH
      * @param reservesCount
-     * @param lendingUpdateTimestamp
      * @param oracle The price oracle
      */
     struct ValidateBorrowParams {
@@ -118,7 +117,6 @@ library ValidationLogic {
         uint256 amount;
         uint256 amountInETH;
         uint256 reservesCount;
-        uint256 lendingUpdateTimestamp;
         address oracle;
     }
 
@@ -153,14 +151,12 @@ library ValidationLogic {
         DataTypes.ReserveData storage reserve,
         mapping(address => mapping(bool => DataTypes.ReserveData)) storage reservesData,
         DataTypes.UserConfigurationMap storage userConfig,
-        mapping(uint256 => DataTypes.ReserveReference) storage reserves,
-        DataTypes.UserRecentBorrowMap storage userRecentBorrow
+        mapping(uint256 => DataTypes.ReserveReference) storage reserves
     ) internal view {
         ValidateBorrowLocalVars memory vars;
         BorrowLogic.CalculateUserAccountDataVolatileParams memory params;
         params.user = validateParams.userAddress;
         params.reservesCount = validateParams.reservesCount;
-        params.lendingUpdateTimestamp = validateParams.lendingUpdateTimestamp;
         params.oracle = validateParams.oracle;
 
         (vars.isActive, vars.isFrozen, vars.borrowingEnabled) = reserve.configuration.getFlags();
@@ -176,9 +172,7 @@ library ValidationLogic {
             vars.currentLtv,
             vars.currentLiquidationThreshold,
             vars.healthFactor
-        ) = BorrowLogic.calculateUserAccountDataVolatile(
-            params, reservesData, userConfig, userRecentBorrow, reserves
-        );
+        ) = BorrowLogic.calculateUserAccountDataVolatile(params, reservesData, userConfig, reserves);
 
         require(vars.userCollateralBalanceETH > 0, Errors.VL_COLLATERAL_BALANCE_IS_0);
 

@@ -330,45 +330,6 @@ contract MiniPoolConfiguratorTest is MiniPoolDepositBorrowTest {
         }
     }
 
-    function testSetReserveVolatilityTier(uint256 tier) public {
-        tier = bound(tier, 0, MAX_VALID_VOLATILITY_TIER);
-        for (uint32 idx; idx < erc20Tokens.length; idx++) {
-            vm.expectEmit(); //true, false, false, false
-            emit ReserveVolatilityTierChanged(address(erc20Tokens[idx]), tier);
-            vm.prank(admin);
-            miniPoolContracts.miniPoolConfigurator.setReserveVolatilityTier(
-                address(erc20Tokens[idx]), tier, IMiniPool(miniPool)
-            );
-        }
-    }
-
-    function testSetReserveVolatilitiesLtv(uint256 ltv) public {
-        ltv = bound(ltv, 0, MAX_VALID_LTV);
-        for (uint32 idx; idx < erc20Tokens.length; idx++) {
-            /* Low volatility */
-            vm.expectEmit(); //true, false, false, false
-            emit ReserveLowVolatilityLtvChanged(address(erc20Tokens[idx]), ltv);
-            vm.prank(admin);
-            miniPoolContracts.miniPoolConfigurator.setLowVolatilityLtv(
-                address(erc20Tokens[idx]), ltv, IMiniPool(miniPool)
-            );
-            /* Medium volatility */
-            vm.expectEmit(); //true, false, false, false
-            emit ReserveMediumVolatilityLtvChanged(address(erc20Tokens[idx]), ltv);
-            vm.prank(admin);
-            miniPoolContracts.miniPoolConfigurator.setMediumVolatilityLtv(
-                address(erc20Tokens[idx]), ltv, IMiniPool(miniPool)
-            );
-            /* High volatility */
-            vm.expectEmit(); //true, false, false, false
-            emit ReserveHighVolatilityLtvChanged(address(erc20Tokens[idx]), ltv);
-            vm.prank(admin);
-            miniPoolContracts.miniPoolConfigurator.setHighVolatilityLtv(
-                address(erc20Tokens[idx]), ltv, IMiniPool(miniPool)
-            );
-        }
-    }
-
     struct FlowLimiterTestLocalVars {
         IERC20 usdc;
         IERC20 grainUSDC;

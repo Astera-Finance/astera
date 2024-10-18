@@ -347,28 +347,6 @@ interface ILendingPool {
         returns (DataTypes.ReserveConfigurationMap memory);
 
     /**
-     * @notice Sets the borrowing configuration for a specific reserve.
-     * @dev Updates the borrow configuration of the specified reserve.
-     * @param reserve The address of the underlying asset of the reserve.
-     * @param reserveType Whether the reserve is boosted by a vault.
-     * @param borrowConfiguration The new borrow configuration to be set.
-     */
-    function setBorrowConfiguration(address reserve, bool reserveType, uint256 borrowConfiguration)
-        external;
-
-    /**
-     * @dev Returns the borrow configuration of the reserve
-     * @param asset The address of the underlying asset of the reserve
-     * @param reserveType The type of the reserve
-     * @return The borrow configuration of the reserve
-     *
-     */
-    function getBorrowConfiguration(address asset, bool reserveType)
-        external
-        view
-        returns (DataTypes.ReserveBorrowConfigurationMap memory);
-
-    /**
      * @dev Returns the configuration of the user across all the reserves
      * @param user The user address
      * @return The configuration of the user

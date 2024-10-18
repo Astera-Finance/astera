@@ -10,8 +10,6 @@ library DataTypes {
     struct ReserveData {
         //stores the reserve configuration
         ReserveConfigurationMap configuration;
-        //stores the reserve borrow configuration
-        ReserveBorrowConfigurationMap borrowConfiguration;
         //the liquidity index. Expressed in ray
         uint128 liquidityIndex;
         //variable borrow index. Expressed in ray
@@ -33,8 +31,6 @@ library DataTypes {
     struct MiniPoolReserveData {
         //stores the reserve configuration
         ReserveConfigurationMap configuration;
-        //stores the reserve borrow configuration
-        ReserveBorrowConfigurationMap borrowConfiguration;
         //the liquidity index. Expressed in ray
         uint128 liquidityIndex;
         //variable borrow index. Expressed in ray
@@ -73,27 +69,7 @@ library DataTypes {
         bool reserveType; // if the reserve is vault-boosted
     }
 
-    struct ReserveBorrowConfigurationMap {
-        //bit 0-15: Low LTV
-        //bit 16-31: Low Liq. Threshold
-        //bit 32-47: Medium LTV
-        //bit 48-63: Medium Liq. Threshold
-        //bit 64-79: High LTV
-        //bit 80-95: High Liq. Threshold
-        //bit 96-98: Volatility tier
-        uint256 data;
-    }
-
-    // struct UserData {
-    //   UserConfigurationMap userConfiguration;
-    //   UserRecentBorrowMap userRecentBorrow;
-    // }
-
     struct UserConfigurationMap {
-        uint256 data;
-    }
-
-    struct UserRecentBorrowMap {
         uint256 data;
     }
 

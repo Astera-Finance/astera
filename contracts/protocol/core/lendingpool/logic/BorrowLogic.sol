@@ -17,12 +17,8 @@ import {ReserveLogic} from "./ReserveLogic.sol";
 import {ValidationLogic} from "./ValidationLogic.sol";
 import {ReserveConfiguration} from
     "../../../../../contracts/protocol/libraries/configuration/ReserveConfiguration.sol";
-import {ReserveBorrowConfiguration} from
-    "../../../../../contracts/protocol/libraries/configuration/ReserveBorrowConfiguration.sol";
 import {UserConfiguration} from
     "../../../../../contracts/protocol/libraries/configuration/UserConfiguration.sol";
-import {UserRecentBorrow} from
-    "../../../../../contracts/protocol/libraries/configuration/UserRecentBorrow.sol";
 import {Helpers} from "../../../../../contracts/protocol/libraries/helpers/Helpers.sol";
 import {IFlowLimiter} from "../../../../../contracts/interfaces/IFlowLimiter.sol";
 
@@ -37,9 +33,7 @@ library BorrowLogic {
     using WadRayMath for uint256;
     using PercentageMath for uint256;
     using ReserveConfiguration for DataTypes.ReserveConfigurationMap;
-    using ReserveBorrowConfiguration for DataTypes.ReserveBorrowConfigurationMap;
     using UserConfiguration for DataTypes.UserConfigurationMap;
-    using UserRecentBorrow for DataTypes.UserRecentBorrowMap;
     using ValidationLogic for ValidationLogic.ValidateBorrowParams;
 
     event Borrow(
@@ -83,7 +77,6 @@ library BorrowLogic {
     struct CalculateUserAccountDataVolatileParams {
         address user;
         uint256 reservesCount;
-        uint256 lendingUpdateTimestamp;
         address oracle;
     }
 
@@ -99,7 +92,6 @@ library BorrowLogic {
         CalculateUserAccountDataVolatileParams memory params,
         mapping(address => mapping(bool => DataTypes.ReserveData)) storage reservesData,
         DataTypes.UserConfigurationMap memory userConfig,
-        DataTypes.UserRecentBorrowMap storage userRecentBorrow,
         mapping(uint256 => DataTypes.ReserveReference) storage reserves
     ) external view returns (uint256, uint256, uint256, uint256, uint256) {
         CalculateUserAccountDataVolatileVars memory vars;
@@ -107,41 +99,19 @@ library BorrowLogic {
         if (userConfig.isEmpty()) {
             return (0, 0, 0, 0, type(uint256).max);
         }
-        // Get the user's volatility tier
-        vars.userVolatility =
-            calculateUserVolatilityTier(reservesData, userConfig, reserves, params.reservesCount);
-        // for (vars.i = 0; vars.i < params.reservesCount; vars.i++) {
-        //   vars.currentReserveAddress = reserves[vars.i];
-        //   DataTypes.ReserveData storage currentReserve = reservesData[vars.currentReserveAddress];
-
-        //   if (!userConfig.isUsingAsCollateralOrBorrowing(vars.i)) {
-        //     continue;
-        //   }
-
-        //   if (vars.userVolatility < currentReserve.borrowConfiguration.getVolatilityTier()) {
-        //     vars.userVolatility = currentReserve.borrowConfiguration.getVolatilityTier();
-        //   }
-        // }
 
         for (vars.i = 0; vars.i < params.reservesCount; vars.i++) {
+            if (!userConfig.isUsingAsCollateralOrBorrowing(vars.i)) {
+                continue;
+            }
+
             vars.currentReserveAddress = reserves[vars.i].asset;
             vars.currentReserveType = reserves[vars.i].reserveType;
             DataTypes.ReserveData storage currentReserve =
                 reservesData[vars.currentReserveAddress][vars.currentReserveType];
-            // basically get same data as user account collateral, but with different LTVs being used depending on user's most volatile asset
-            if (!userConfig.isUsingAsCollateralOrBorrowing(vars.i)) {
-                continue;
-            }
-            (, vars.liquidationThreshold,, vars.decimals,) =
-                currentReserve.configuration.getParams();
 
-            if (vars.userVolatility == 0) {
-                vars.ltv = currentReserve.borrowConfiguration.getLowVolatilityLtv();
-            } else if (vars.userVolatility == 1) {
-                vars.ltv = currentReserve.borrowConfiguration.getMediumVolatilityLtv();
-            } else if (vars.userVolatility == 2) {
-                vars.ltv = currentReserve.borrowConfiguration.getHighVolatilityLtv();
-            }
+            (vars.ltv, vars.liquidationThreshold,, vars.decimals,) =
+                currentReserve.configuration.getParams();
 
             vars.tokenUnit = 10 ** vars.decimals;
             vars.reserveUnitPrice =
@@ -175,22 +145,9 @@ library BorrowLogic {
             ? vars.avgLiquidationThreshold / vars.totalCollateralInETH
             : 0;
 
-        if (userRecentBorrow.getTimestamp() < params.lendingUpdateTimestamp) {
-            /// Calculate health factor using new total collateral, new totalDebt, olf avgLiqThres
-            vars.healthFactor = GenericLogic.calculateHealthFactorFromBalances(
-                vars.totalCollateralInETH,
-                vars.totalDebtInETH,
-                userRecentBorrow.getAverageLiquidationThreshold()
-            );
-        } else {
-            vars.healthFactor = GenericLogic.calculateHealthFactorFromBalances(
-                vars.totalCollateralInETH, vars.totalDebtInETH, vars.avgLiquidationThreshold
-            );
-        }
-
-        userRecentBorrow.setAverageLtv(vars.avgLtv);
-        userRecentBorrow.setAverageLiquidationThreshold(vars.avgLiquidationThreshold);
-        userRecentBorrow.setTimestamp(block.timestamp);
+        vars.healthFactor = GenericLogic.calculateHealthFactorFromBalances(
+            vars.totalCollateralInETH, vars.totalDebtInETH, vars.avgLiquidationThreshold
+        );
 
         return (
             vars.totalCollateralInETH,
@@ -199,28 +156,6 @@ library BorrowLogic {
             vars.avgLiquidationThreshold,
             vars.healthFactor
         );
-    }
-
-    function calculateUserVolatilityTier(
-        mapping(address => mapping(bool => DataTypes.ReserveData)) storage reservesData,
-        DataTypes.UserConfigurationMap memory userConfig,
-        mapping(uint256 => DataTypes.ReserveReference) storage reserves,
-        uint256 reservesCount
-    ) internal view returns (uint256 userVolatility) {
-        for (uint256 i; i < reservesCount; i++) {
-            address currentReserveAddress = reserves[i].asset;
-            bool currentReserveType = reserves[i].reserveType;
-            DataTypes.ReserveData storage currentReserve =
-                reservesData[currentReserveAddress][currentReserveType];
-            if (!userConfig.isUsingAsCollateralOrBorrowing(i)) {
-                continue;
-            }
-            uint256 currentReserveVolatility =
-                currentReserve.borrowConfiguration.getVolatilityTier();
-            if (userVolatility < currentReserveVolatility) {
-                userVolatility = currentReserveVolatility;
-            }
-        }
     }
 
     struct ExecuteBorrowParams {
@@ -239,14 +174,12 @@ library BorrowLogic {
         ExecuteBorrowParams memory vars,
         mapping(address => mapping(bool => DataTypes.ReserveData)) storage reserves,
         mapping(uint256 => DataTypes.ReserveReference) storage reservesList,
-        mapping(address => DataTypes.UserConfigurationMap) storage usersConfig,
-        mapping(address => DataTypes.UserRecentBorrowMap) storage _usersRecentBorrow
+        mapping(address => DataTypes.UserConfigurationMap) storage usersConfig
     ) internal {
         DataTypes.ReserveData storage reserve = reserves[vars.asset][vars.reserveType];
         require(reserve.configuration.getActive(), Errors.VL_NO_ACTIVE_RESERVE);
 
         DataTypes.UserConfigurationMap storage userConfig = usersConfig[vars.onBehalfOf];
-        DataTypes.UserRecentBorrowMap storage userRecentBorrow = _usersRecentBorrow[vars.onBehalfOf];
 
         ValidationLogic.ValidateBorrowParams memory validateBorrowParams;
 
@@ -260,7 +193,7 @@ library BorrowLogic {
         validateBorrowParams.reservesCount = vars.reservesCount;
         validateBorrowParams.oracle = oracle;
         ValidationLogic.validateBorrow(
-            validateBorrowParams, reserve, reserves, userConfig, reservesList, userRecentBorrow
+            validateBorrowParams, reserve, reserves, userConfig, reservesList
         );
 
         reserve.updateState();

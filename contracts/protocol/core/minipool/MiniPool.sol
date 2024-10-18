@@ -233,8 +233,7 @@ contract MiniPool is VersionedInitializable, IMiniPool, MiniPoolStorage {
             ),
             _reserves,
             _reservesList,
-            _usersConfig,
-            _usersRecentBorrow
+            _usersConfig
         );
     }
 
@@ -426,7 +425,6 @@ contract MiniPool is VersionedInitializable, IMiniPool, MiniPoolStorage {
             ),
             _reservesList,
             _usersConfig,
-            _usersRecentBorrow,
             _reserves
         );
     }
@@ -497,21 +495,6 @@ contract MiniPool is VersionedInitializable, IMiniPool, MiniPoolStorage {
         returns (DataTypes.ReserveConfigurationMap memory)
     {
         return _reserves[asset].configuration;
-    }
-
-    /**
-     * @dev Returns the borrow configuration of the reserve
-     * @param asset The address of the underlying asset of the reserve
-     * @return The borrow configuration of the reserve
-     *
-     */
-    function getBorrowConfiguration(address asset)
-        external
-        view
-        override
-        returns (DataTypes.ReserveBorrowConfigurationMap memory)
-    {
-        return _reserves[asset].borrowConfiguration;
     }
 
     /**
@@ -688,22 +671,6 @@ contract MiniPool is VersionedInitializable, IMiniPool, MiniPoolStorage {
         onlyMiniPoolConfigurator
     {
         _reserves[asset].configuration.data = configuration;
-    }
-
-    /**
-     * @dev Sets the borrow configuration bitmap of the reserve as a whole
-     * - Only callable by the LendingPoolConfigurator contract
-     * @param asset The address of the underlying asset of the reserve
-     * @param borrowConfiguration The new borrow configuration bitmap
-     *
-     */
-    function setBorrowConfiguration(address asset, uint256 borrowConfiguration)
-        external
-        override
-        onlyMiniPoolConfigurator
-    {
-        _reserves[asset].borrowConfiguration.data = borrowConfiguration;
-        _lendingUpdateTimestamp = block.timestamp;
     }
 
     /**
