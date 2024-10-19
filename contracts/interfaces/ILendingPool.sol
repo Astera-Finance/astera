@@ -432,7 +432,7 @@ interface ILendingPool {
         address aTokenAddress
     ) external;
 
-    function repayWithATokens(address asset, bool reserveType, uint256 amount, address onBehalfOf)
+    function repayWithATokens(address asset, bool reserveType, uint256 amount)
         external
         returns (uint256);
 
