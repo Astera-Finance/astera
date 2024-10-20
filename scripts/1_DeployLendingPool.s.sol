@@ -13,8 +13,6 @@ import "lib/forge-std/src/console.sol";
 contract DeployLendingPool is Script, DeploymentUtils, Test {
     using stdJson for string;
 
-    address WETH_ARB = 0x82aF49447D8a07e3bd95BD0d56f35241523fBab1;
-
     function writeJsonData(string memory root, string memory path) internal {
         vm.serializeAddress("lendingPoolContracts", "oracle", address(contracts.oracle));
         vm.serializeAddress("lendingPoolContracts", "rewarder", address(contracts.rewarder));
@@ -88,7 +86,6 @@ contract DeployLendingPool is Script, DeploymentUtils, Test {
         console.log("PATH: ", path);
         string memory deploymentConfig = vm.readFile(path);
         General memory general = abi.decode(deploymentConfig.parseRaw(".general"), (General));
-
         PoolAddressesProviderConfig memory poolAddressesProviderConfig = abi.decode(
             deploymentConfig.parseRaw(".poolAddressesProviderConfig"), (PoolAddressesProviderConfig)
         );
@@ -120,7 +117,6 @@ contract DeployLendingPool is Script, DeploymentUtils, Test {
                 piStrategies,
                 poolAddressesProviderConfig,
                 poolReserversConfig,
-                WETH_ARB,
                 FOUNDRY_DEFAULT
             );
             vm.stopPrank();
@@ -168,7 +164,6 @@ contract DeployLendingPool is Script, DeploymentUtils, Test {
                 piStrategies,
                 poolAddressesProviderConfig,
                 poolReserversConfig,
-                WETH_ARB,
                 vm.addr(vm.envUint("PRIVATE_KEY"))
             );
             vm.stopBroadcast();
@@ -188,7 +183,6 @@ contract DeployLendingPool is Script, DeploymentUtils, Test {
                 piStrategies,
                 poolAddressesProviderConfig,
                 poolReserversConfig,
-                WETH_ARB,
                 vm.addr(vm.envUint("PRIVATE_KEY"))
             );
             vm.stopBroadcast();

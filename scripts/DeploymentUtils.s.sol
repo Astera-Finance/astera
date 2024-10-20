@@ -12,8 +12,10 @@ import "contracts/protocol/core/lendingpool/logic/ReserveLogic.sol";
 import "contracts/protocol/core/lendingpool/logic/GenericLogic.sol";
 import "contracts/protocol/core/lendingpool/logic/ValidationLogic.sol";
 import "contracts/protocol/configuration/LendingPoolAddressesProvider.sol";
-import "contracts/protocol/core/interestRateStrategies/DefaultReserveInterestRateStrategy.sol";
-import "contracts/protocol/core/interestRateStrategies/PiReserveInterestRateStrategy.sol";
+import
+    "contracts/protocol/core/interestRateStrategies/lendingpool/DefaultReserveInterestRateStrategy.sol";
+import
+    "contracts/protocol/core/interestRateStrategies/lendingpool/PiReserveInterestRateStrategy.sol";
 import "contracts/protocol/core/lendingpool/LendingPool.sol";
 import "contracts/protocol/core/lendingpool/LendingPoolCollateralManager.sol";
 import "contracts/protocol/core/lendingpool/LendingPoolConfigurator.sol";
@@ -30,22 +32,18 @@ import "contracts/mocks/tokens/MintableERC20.sol";
 import "contracts/mocks/tokens/WETH9Mocked.sol";
 import "contracts/mocks/oracle/MockAggregator.sol";
 import "contracts/mocks/tokens/MockVault.sol";
-// import "contracts/mocks/tokens/MockStrat.sol";
 import "contracts/mocks/tokens/ExternalContract.sol";
 import "contracts/mocks/dependencies/IStrategy.sol";
 import "contracts/mocks/dependencies/IExternalContract.sol";
 import {WadRayMath} from "contracts/protocol/libraries/math/WadRayMath.sol";
-
-import "contracts/protocol/core/interestRateStrategies/MiniPoolDefaultReserveInterestRate.sol";
+import
+    "contracts/protocol/core/interestRateStrategies/minipool/MiniPoolDefaultReserveInterestRate.sol";
 import "contracts/mocks/oracle/PriceOracle.sol";
 import "contracts/protocol/core/minipool/MiniPoolCollateralManager.sol";
-
 import "./DeployDataTypes.s.sol";
 import {DataTypes} from "../contracts/protocol/libraries/types/DataTypes.sol";
 
 import "forge-std/console.sol";
-
-import {Upgrades} from "lib/openzeppelin-foundry-upgrades/src/Upgrades.sol";
 
 contract DeploymentUtils {
     address constant FOUNDRY_DEFAULT = 0x1804c8AB1F12E6bbf3894d4083f33e07309d1f38;
@@ -59,7 +57,6 @@ contract DeploymentUtils {
         PiStrategy[] memory _piStrategies,
         PoolAddressesProviderConfig memory _poolAddressesProviderConfig,
         PoolReserversConfig[] memory _poolReserversConfig,
-        address _weth,
         address deployer
     ) public {
         contracts.oracle = _deployOracle(_oracleConfig);
@@ -70,7 +67,7 @@ contract DeploymentUtils {
         _deployStrategies(
             contracts.lendingPoolAddressesProvider, _volatileStrats, _stableStrats, _piStrategies
         );
-        _deployTokensAndUtils(_weth, contracts.lendingPoolAddressesProvider);
+        _deployTokensAndUtils(_general.wethAddress, contracts.lendingPoolAddressesProvider);
 
         _initAndConfigureReserves(contracts, _poolReserversConfig, _general, _oracleConfig);
     }
@@ -88,7 +85,11 @@ contract DeploymentUtils {
         contracts.rewarder = new Rewarder();
 
         _deployMiniPoolStrategies(
-            contracts.miniPoolAddressesProvider, _volatileStrats, _stableStrats, _piStrats
+            contracts.miniPoolAddressesProvider,
+            _miniPoolId,
+            _volatileStrats,
+            _stableStrats,
+            _piStrats
         );
 
         _initAndConfigureMiniPoolReserves(
@@ -146,6 +147,7 @@ contract DeploymentUtils {
 
     function _deployMiniPoolStrategies(
         IMiniPoolAddressesProvider _provider,
+        uint256 miniPoolId,
         LinearStrategy[] memory _volatileStrats,
         LinearStrategy[] memory _stableStrats,
         PiStrategy[] memory _piStrats
@@ -162,7 +164,7 @@ contract DeploymentUtils {
         }
         for (uint8 idx = 0; idx < _piStrats.length; idx++) {
             contracts.miniPoolPiStrategies.push(
-                _deployMiniPoolPiInterestStrategy(_provider, _piStrats[idx])
+                _deployMiniPoolPiInterestStrategy(_provider, miniPoolId, _piStrats[idx])
             );
         }
     }
@@ -182,10 +184,12 @@ contract DeploymentUtils {
 
     function _deployMiniPoolPiInterestStrategy(
         IMiniPoolAddressesProvider _provider,
+        uint256 miniPoolId,
         PiStrategy memory _strategy
     ) internal returns (MiniPoolPiReserveInterestRateStrategy) {
         return new MiniPoolPiReserveInterestRateStrategy(
             address(_provider),
+            miniPoolId,
             _strategy.tokenAddress,
             _strategy.assetReserveType,
             _strategy.minControllerError,
@@ -540,11 +544,6 @@ contract DeploymentUtils {
         return weth;
     }
 
-    /*function _deployMockVault() returns (MockVault) {
-    MockVault vault = new MockVault();
-    return vault;
-    }*/
-
     function _deployMockAggregator(address token, int256 price) internal returns (MockAggregator) {
         MockAggregator aggregator =
             new MockAggregator(price, int256(int8(MintableERC20(token).decimals())));
@@ -566,24 +565,6 @@ contract DeploymentUtils {
         internal
     {
         oracle.setAssetSources(assets, sources);
-    }
-
-    function _deployERC20MocksAndUpdateOracle(
-        string[] memory names,
-        string[] memory symbols,
-        uint8[] memory decimals,
-        int256[] memory prices,
-        Oracle oracle
-    ) internal returns (address[] memory) {
-        address[] memory tokens = new address[](names.length);
-        address[] memory aggregators = new address[](names.length);
-        for (uint256 i = 0; i < names.length; i++) {
-            tokens[i] = address(_deployERC20Mock(names[i], symbols[i], decimals[i]));
-
-            aggregators[i] = address(_deployMockAggregator(tokens[i], prices[i]));
-        }
-        _updateOracle(oracle, tokens, aggregators);
-        return tokens;
     }
 
     function _changePeripherials(

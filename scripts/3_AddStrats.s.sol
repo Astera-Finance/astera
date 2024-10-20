@@ -88,7 +88,10 @@ contract AddStrats is Script, DeploymentUtils, Test {
         string memory path = string.concat(root, "/scripts/inputs/3_StratsToAdd.json");
         console.log("PATH: ", path);
         string memory deploymentConfig = vm.readFile(path);
-
+        PoolAddressesProviderConfig memory poolAddressesProviderConfig = abi.decode(
+            deploymentConfig.parseRaw(".poolAddressesProviderConfig"), (PoolAddressesProviderConfig)
+        );
+        uint256 miniPoolId = poolAddressesProviderConfig.poolId;
         LinearStrategy[] memory volatileStrategies =
             abi.decode(deploymentConfig.parseRaw(".volatileStrategies"), (LinearStrategy[]));
         LinearStrategy[] memory stableStrategies =
@@ -123,6 +126,7 @@ contract AddStrats is Script, DeploymentUtils, Test {
             );
             _deployMiniPoolStrategies(
                 contracts.miniPoolAddressesProvider,
+                miniPoolId,
                 miniPoolVolatileStrategies,
                 miniPoolStableStrategies,
                 miniPoolPiStrategies
@@ -271,6 +275,7 @@ contract AddStrats is Script, DeploymentUtils, Test {
             );
             _deployMiniPoolStrategies(
                 contracts.miniPoolAddressesProvider,
+                miniPoolId,
                 miniPoolVolatileStrategies,
                 miniPoolStableStrategies,
                 miniPoolPiStrategies
@@ -369,6 +374,7 @@ contract AddStrats is Script, DeploymentUtils, Test {
             );
             _deployMiniPoolStrategies(
                 contracts.miniPoolAddressesProvider,
+                miniPoolId,
                 miniPoolVolatileStrategies,
                 miniPoolStableStrategies,
                 miniPoolPiStrategies

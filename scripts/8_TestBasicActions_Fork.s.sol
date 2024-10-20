@@ -17,8 +17,6 @@ contract TestBasicActions is Script, DeploymentUtils, Test {
     using stdJson for string;
     using WadRayMath for uint256;
 
-    address WETH_ARB = 0x82aF49447D8a07e3bd95BD0d56f35241523fBab1;
-
     struct TokenTypes {
         ERC20 token;
         AToken aToken;
@@ -438,7 +436,7 @@ contract TestBasicActions is Script, DeploymentUtils, Test {
 
             // Config fetching
             string memory root = vm.projectRoot();
-            string memory path = string.concat(root, "/scripts/inputs/7_TestConfig.json");
+            string memory path = string.concat(root, "/scripts/inputs/8_TestConfig.json");
             console.log("PATH: ", path);
             string memory deploymentConfig = vm.readFile(path);
 

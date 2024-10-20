@@ -3,14 +3,9 @@ pragma solidity ^0.8.0;
 
 import {ERC20} from "contracts/dependencies/openzeppelin/contracts/ERC20.sol";
 import {Rewarder} from "contracts/protocol/rewarder/lendingpool/Rewarder.sol";
-// import "contracts/protocol/core/Oracle.sol";
 import {ProtocolDataProvider} from "contracts/misc/ProtocolDataProvider.sol";
 import {Treasury} from "contracts/misc/Treasury.sol";
-// import "contracts/misc/UiPoolDataProviderV2.sol";
 import {WETHGateway} from "contracts/misc/WETHGateway.sol";
-// import "contracts/protocol/core/lendingpool/logic/ReserveLogic.sol";
-// import "contracts/protocol/core/lendingpool/logic/GenericLogic.sol";
-// import "contracts/protocol/core/lendingpool/logic/ValidationLogic.sol";
 import {LendingPoolAddressesProvider} from
     "contracts/protocol/configuration/LendingPoolAddressesProvider.sol";
 import {DefaultReserveInterestRateStrategy} from
@@ -31,7 +26,6 @@ import {MiniPoolAddressesProvider} from
     "contracts/protocol/configuration/MiniPoolAddressProvider.sol";
 import {MiniPoolConfigurator} from "contracts/protocol/core/minipool/MiniPoolConfigurator.sol";
 import {FlowLimiter} from "contracts/protocol/core/minipool/FlowLimiter.sol";
-
 import {ATokensAndRatesHelper} from "contracts/deployments/ATokensAndRatesHelper.sol";
 import {AToken} from "contracts/protocol/tokenization/ERC20/AToken.sol";
 import {ATokenERC6909} from "contracts/protocol/tokenization/ERC6909/ATokenERC6909.sol";
@@ -76,23 +70,6 @@ struct TokenParams {
     uint256 price;
 }
 
-struct ConfigParams {
-    uint256[] baseLTVs;
-    uint256[] liquidationThresholds;
-    uint256[] liquidationBonuses;
-    uint256[] reserveFactors;
-    bool[] borrowingEnabled;
-    bool[] reserveTypes;
-    bool[] isStableStrategy;
-}
-
-struct MiniPoolConfigParams {
-    address[] mainPoolAssets;
-    ConfigParams mainPoolConfig;
-    address[] miniPoolAssets;
-    ConfigParams miniPoolConfig;
-}
-
 /**
  * DEPLOYMENT CONFIG STRUCTURES ******************
  */
@@ -101,6 +78,7 @@ struct General {
     string aTokenSymbolPrefix;
     string debtTokenNamePrefix;
     string debtTokenSymbolPrefix;
+    address wethAddress;
 }
 
 struct Roles {
@@ -184,26 +162,3 @@ struct Rehypothecation {
     address tokenAddress;
     address vault;
 }
-
-// struct JsonMockedTokens {
-//     address tokenAddress;
-//     string symbol;
-// }
-
-struct DeploymentConfig {
-    General general;
-    Roles roles;
-    PoolAddressesProviderConfig poolAddressesProviderConfig;
-    PoolReserversConfig[] poolReserversConfig;
-    LinearStrategy volatileStrategy;
-    LinearStrategy stableStrategy;
-}
-
-struct MockAddresses {
-    address[] mockedTokens;
-    address[] deployedTokens;
-}
-
-// PoolAddressesProviderConfig poolAddressesProviderConfig;
-
-// LinearStrategy linearStrategy;
