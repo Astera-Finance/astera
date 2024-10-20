@@ -5,7 +5,8 @@ import {IERC20} from "../../../../../contracts/dependencies/openzeppelin/contrac
 import {SafeERC20} from "../../../../../contracts/dependencies/openzeppelin/contracts/SafeERC20.sol";
 import {IAToken} from "../../../../../contracts/interfaces/IAToken.sol";
 import {IVariableDebtToken} from "../../../../../contracts/interfaces/IVariableDebtToken.sol";
-import {IReserveInterestRateStrategy} from "../../../../../contracts/interfaces/IReserveInterestRateStrategy.sol";
+import {IReserveInterestRateStrategy} from
+    "../../../../../contracts/interfaces/IReserveInterestRateStrategy.sol";
 import {ReserveConfiguration} from
     "../../../../../contracts/protocol/libraries/configuration/ReserveConfiguration.sol";
 import {ReserveBorrowConfiguration} from

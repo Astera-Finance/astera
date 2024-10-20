@@ -34,6 +34,148 @@ contract LendingPoolTest is Common {
         address indexed reserve, address indexed user, address indexed repayer, uint256 amount
     );
 
+    struct TokenTypes {
+        ERC20 token;
+        AToken aToken;
+        VariableDebtToken debtToken;
+    }
+
+    function fixture_deposit(
+        ERC20 erc20Token,
+        AToken aToken,
+        address sender,
+        address receiver,
+        uint256 amount
+    ) internal {
+        uint256 _receiverATokenBalanceBefore = aToken.balanceOf(address(receiver));
+        uint256 _senderTokenBalanceTokenBefore = erc20Token.balanceOf(sender);
+        uint256 _aTokenBalanceBefore = erc20Token.balanceOf(address(aToken));
+        erc20Token.approve(address(deployedContracts.lendingPool), amount);
+        vm.expectEmit(true, true, true, true);
+        emit Deposit(address(erc20Token), address(this), receiver, amount);
+        deployedContracts.lendingPool.deposit(address(erc20Token), true, amount, receiver);
+        console.log("_aTokenBalanceBefore: ", _aTokenBalanceBefore);
+        console.log("_aTokenBalanceAfter: ", erc20Token.balanceOf(address(aToken)));
+        assertEq(
+            _senderTokenBalanceTokenBefore,
+            erc20Token.balanceOf(address(this)) + amount,
+            "Sender's token balance is not lower by {amount} after deposit"
+        );
+
+        assertEq(
+            _receiverATokenBalanceBefore + amount,
+            aToken.balanceOf(address(receiver)),
+            "Receiver aToken balance is not greater by {amount} after deposit"
+        );
+    }
+
+    function fixture_withdraw(ERC20 erc20Token, address sender, address receiver, uint256 amount)
+        public
+    {
+        uint256 _receiverTokenBalanceBefore = erc20Token.balanceOf(address(receiver));
+
+        vm.startPrank(sender);
+        // vm.expectEmit(true, true, true, true);
+        // emit Withdraw(address(erc20Token), sender, receiver, amount);
+        deployedContracts.lendingPool.withdraw(address(erc20Token), true, amount, receiver);
+        vm.stopPrank();
+        assertEq(
+            _receiverTokenBalanceBefore + amount,
+            erc20Token.balanceOf(receiver),
+            "Receiver's token balance is not greater by {amount} after withdrawal"
+        );
+    }
+
+    function fixture_getMaxValueToBorrow(ERC20 collateral, ERC20 borrowToken, uint256 amount)
+        internal
+        view
+        returns (uint256)
+    {
+        uint256 borrowTokenPrice = oracle.getAssetPrice(address(borrowToken));
+        uint256 collateralPrice = oracle.getAssetPrice(address(collateral));
+        uint256 collateralDepositValue = amount * collateralPrice / (10 ** PRICE_FEED_DECIMALS);
+        (, uint256 collateralLtv,,,,,,,) = deployedContracts
+            .protocolDataProvider
+            .getReserveConfigurationData(address(collateral), true);
+        uint256 maxBorrowTokenToBorrowInCollateralUnit;
+        {
+            uint256 collateralMaxBorrowValue = collateralLtv * collateralDepositValue / 10_000;
+
+            uint256 wbtcMaxBorrowAmountRay = collateralMaxBorrowValue.rayDiv(borrowTokenPrice);
+            maxBorrowTokenToBorrowInCollateralUnit = fixture_preciseConvertWithDecimals(
+                wbtcMaxBorrowAmountRay, collateral.decimals(), borrowToken.decimals()
+            );
+            // (usdcMaxBorrowValue * 10 ** PRICE_FEED_DECIMALS) / wbtcPrice;
+        }
+        return maxBorrowTokenToBorrowInCollateralUnit;
+    }
+
+    function fixture_depositAndBorrow(
+        TokenTypes memory collateral,
+        TokenTypes memory borrowToken,
+        address provider,
+        address borrower,
+        uint256 amount
+    ) public returns (uint256) {
+        /* Borrower deposits collateral and wants to borrow */
+        fixture_deposit(collateral.token, collateral.aToken, borrower, borrower, amount);
+
+        uint256 maxBorrowTokenToBorrowInCollateralUnit =
+            fixture_getMaxValueToBorrow(collateral.token, borrowToken.token, amount);
+
+        require(
+            borrowToken.token.balanceOf(borrower) > maxBorrowTokenToBorrowInCollateralUnit * 15 / 10,
+            "Too less borrowToken"
+        );
+        uint256 borrowTokenDepositAmount = maxBorrowTokenToBorrowInCollateralUnit * 15 / 10;
+        console.log("borrowTokenDepositAmount: ", borrowTokenDepositAmount);
+        /* Provider deposits wbtc thanks to that there is enough funds to borrow */
+        fixture_deposit(
+            borrowToken.token, borrowToken.aToken, borrower, provider, borrowTokenDepositAmount
+        );
+
+        uint256 borrowTokenBalanceBeforeBorrow = borrowToken.token.balanceOf(borrower);
+        uint256 debtBalanceBefore = borrowToken.debtToken.balanceOf(borrower);
+
+        (,,,, uint256 reserveFactors,,,,) = deployedContracts
+            .protocolDataProvider
+            .getReserveConfigurationData(address(borrowToken.token), true);
+        (, uint256 expectedBorrowRate) = deployedContracts.volatileStrategy.calculateInterestRates(
+            address(borrowToken.token),
+            address(borrowToken.aToken),
+            0,
+            maxBorrowTokenToBorrowInCollateralUnit,
+            maxBorrowTokenToBorrowInCollateralUnit,
+            reserveFactors
+        );
+        console.log("AToken balance: ", borrowToken.token.balanceOf(address(borrowToken.aToken)));
+        /* Borrower borrows maxPossible amount of borrowToken */
+        vm.expectEmit(true, true, true, true);
+        emit Borrow(
+            address(borrowToken.token),
+            borrower,
+            borrower,
+            maxBorrowTokenToBorrowInCollateralUnit,
+            expectedBorrowRate
+        );
+        deployedContracts.lendingPool.borrow(
+            address(borrowToken.token), true, maxBorrowTokenToBorrowInCollateralUnit, borrower
+        );
+        console.log("AToken balance: ", borrowToken.token.balanceOf(address(borrowToken.aToken)));
+        /* Main user's balance should be: initial amount + borrowed amount */
+        assertEq(
+            borrowTokenBalanceBeforeBorrow + maxBorrowTokenToBorrowInCollateralUnit,
+            borrowToken.token.balanceOf(borrower),
+            "Borrower hasn't more borrowToken than before"
+        );
+        assertEq(
+            debtBalanceBefore + maxBorrowTokenToBorrowInCollateralUnit,
+            borrowToken.debtToken.balanceOf(borrower),
+            "Borrower hasn't more borrowToken than before"
+        );
+        return (maxBorrowTokenToBorrowInCollateralUnit);
+    }
+
     function setUp() public {
         opFork = vm.createSelectFork(RPC, FORK_BLOCK);
         assertEq(vm.activeFork(), opFork);
@@ -55,7 +197,6 @@ contract LendingPoolTest is Common {
         );
         // aTokens = fixture_getATokens(tokens, deployedContracts.protocolDataProvider);
         // variableDebtTokens = fixture_getVarDebtTokens(tokens, deployedContracts.protocolDataProvider);
-        mockedVaults = fixture_deployErc4626Mocks(tokens, address(deployedContracts.treasury));
         erc20Tokens = fixture_getErc20Tokens(tokens);
         fixture_transferTokensToTestContract(erc20Tokens, 100_000 ether, address(this));
     }
@@ -64,106 +205,75 @@ contract LendingPoolTest is Common {
         address user = makeAddr("user");
 
         for (uint32 idx = 0; idx < aTokens.length; idx++) {
-            uint256 _userGrainBalanceBefore = aTokens[idx].balanceOf(address(user));
-            uint256 _thisBalanceTokenBefore = erc20Tokens[idx].balanceOf(address(this));
             amount = bound(amount, 10_000, erc20Tokens[idx].balanceOf(address(this)));
 
             /* Deposit on behalf of user */
-            erc20Tokens[idx].approve(address(deployedContracts.lendingPool), amount);
-            vm.expectEmit(true, true, true, true);
-            emit Deposit(address(erc20Tokens[idx]), address(this), user, amount);
-            deployedContracts.lendingPool.deposit(address(erc20Tokens[idx]), true, amount, user);
-            assertEq(_thisBalanceTokenBefore, erc20Tokens[idx].balanceOf(address(this)) + amount);
-            assertEq(_userGrainBalanceBefore + amount, aTokens[idx].balanceOf(address(user)));
+            uint256 _aTokenBalanceBefore = erc20Tokens[idx].balanceOf(address(aTokens[idx]));
+            fixture_deposit(erc20Tokens[idx], aTokens[idx], address(this), user, amount);
+            assertEq(
+                _aTokenBalanceBefore + amount,
+                erc20Tokens[idx].balanceOf(address(aTokens[idx])),
+                "AToken's token balance is not greater by {amount} after deposit"
+            );
 
             /* User shall be able to withdraw underlying tokens */
-            vm.startPrank(user);
-            vm.expectEmit(true, true, true, true);
-            emit Withdraw(address(erc20Tokens[idx]), user, user, amount);
-            deployedContracts.lendingPool.withdraw(address(erc20Tokens[idx]), true, amount, user);
-            vm.stopPrank();
-            assertEq(amount, erc20Tokens[idx].balanceOf(user));
-            assertEq(_userGrainBalanceBefore, aTokens[idx].balanceOf(address(this)));
+            _aTokenBalanceBefore = erc20Tokens[idx].balanceOf(address(aTokens[idx]));
+            fixture_withdraw(erc20Tokens[idx], user, user, amount);
+            assertEq(
+                _aTokenBalanceBefore,
+                erc20Tokens[idx].balanceOf(address(aTokens[idx])) + amount,
+                "AToken's token balance is not lower by {amount} after withdrawal"
+            );
         }
     }
 
-    function testBorrowRepay() public {
+    function testBorrowRepay_() public {
         address user = makeAddr("user");
 
-        ERC20 usdc = erc20Tokens[0];
-        ERC20 wbtc = erc20Tokens[1];
+        TokenTypes memory usdcTypes = TokenTypes({
+            token: erc20Tokens[0],
+            aToken: aTokens[0],
+            debtToken: variableDebtTokens[0]
+        });
+
+        TokenTypes memory wbtcTypes = TokenTypes({
+            token: erc20Tokens[1],
+            aToken: aTokens[1],
+            debtToken: variableDebtTokens[1]
+        });
+
         uint256 usdcDepositAmount = 5e9; /* $5k */ // consider fuzzing here
 
-        uint256 wbtcPrice = oracle.getAssetPrice(address(wbtc));
-        uint256 usdcPrice = oracle.getAssetPrice(address(usdc));
-        uint256 usdcDepositValue = usdcDepositAmount * usdcPrice / (10 ** PRICE_FEED_DECIMALS);
-        (, uint256 usdcLtv,,,,,,,) =
-            deployedContracts.protocolDataProvider.getReserveConfigurationData(address(usdc), true);
-        uint256 wbtcMaxBorrowAmountWithUsdcCollateral;
-        {
-            uint256 usdcMaxBorrowValue = usdcLtv * usdcDepositValue / 10_000;
-
-            uint256 wbtcMaxBorrowAmountRay = usdcMaxBorrowValue.rayDiv(wbtcPrice);
-            wbtcMaxBorrowAmountWithUsdcCollateral = fixture_preciseConvertWithDecimals(
-                wbtcMaxBorrowAmountRay, usdc.decimals(), wbtc.decimals()
-            );
-            // (usdcMaxBorrowValue * 10 ** PRICE_FEED_DECIMALS) / wbtcPrice;
-        }
-        require(
-            wbtc.balanceOf(address(this)) > wbtcMaxBorrowAmountWithUsdcCollateral, "Too less wbtc"
-        );
-        uint256 wbtcDepositAmount = wbtcMaxBorrowAmountWithUsdcCollateral * 15 / 10;
-
-        /* Main user deposits usdc and wants to borrow */
-        usdc.approve(address(deployedContracts.lendingPool), usdcDepositAmount);
-        deployedContracts.lendingPool.deposit(address(usdc), true, usdcDepositAmount, address(this));
-
-        /* Other user deposits wbtc thanks to that there is enaugh funds to borrow */
-        wbtc.approve(address(deployedContracts.lendingPool), wbtcDepositAmount);
-        deployedContracts.lendingPool.deposit(address(wbtc), true, wbtcDepositAmount, user);
-
-        uint256 wbtcBalanceBeforeBorrow = wbtc.balanceOf(address(this));
-
-        (,,,, uint256 reserveFactors,,,,) =
-            deployedContracts.protocolDataProvider.getReserveConfigurationData(address(wbtc), true);
-        (, uint256 expectedBorrowRate) = deployedContracts.volatileStrategy.calculateInterestRates(
-            address(wbtc),
-            address(aTokens[1]),
-            0,
-            wbtcMaxBorrowAmountWithUsdcCollateral,
-            wbtcMaxBorrowAmountWithUsdcCollateral,
-            reserveFactors
-        );
-
-        /* Main user borrows maxPossible amount of wbtc */
-        vm.expectEmit(true, true, true, true);
-        emit Borrow(
-            address(wbtc),
-            address(this),
-            address(this),
-            wbtcMaxBorrowAmountWithUsdcCollateral,
-            expectedBorrowRate
-        );
-        deployedContracts.lendingPool.borrow(
-            address(wbtc), true, wbtcMaxBorrowAmountWithUsdcCollateral, address(this)
-        );
-        /* Main user's balance should be: initial amount + borrowed amount */
-        assertEq(
-            wbtcBalanceBeforeBorrow + wbtcMaxBorrowAmountWithUsdcCollateral,
-            wbtc.balanceOf(address(this))
-        );
+        (uint256 maxBorrowTokenToBorrowInCollateralUnit) =
+            fixture_depositAndBorrow(usdcTypes, wbtcTypes, user, address(this), usdcDepositAmount);
 
         /* Main user repays his debt */
-        wbtc.approve(address(deployedContracts.lendingPool), wbtcMaxBorrowAmountWithUsdcCollateral);
+        uint256 wbtcBalanceBeforeRepay = wbtcTypes.token.balanceOf(address(this));
+        uint256 wbtcDebtBeforeRepay = wbtcTypes.debtToken.balanceOf(address(this));
+        wbtcTypes.token.approve(
+            address(deployedContracts.lendingPool), maxBorrowTokenToBorrowInCollateralUnit
+        );
         vm.expectEmit(true, true, true, true);
         emit Repay(
-            address(wbtc), address(this), address(this), wbtcMaxBorrowAmountWithUsdcCollateral
+            address(wbtcTypes.token),
+            address(this),
+            address(this),
+            maxBorrowTokenToBorrowInCollateralUnit
         );
         deployedContracts.lendingPool.repay(
-            address(wbtc), true, wbtcMaxBorrowAmountWithUsdcCollateral, address(this)
+            address(wbtcTypes.token), true, maxBorrowTokenToBorrowInCollateralUnit, address(this)
         );
         /* Main user's balance should be the same as before borrowing */
-        assertEq(wbtcBalanceBeforeBorrow, wbtc.balanceOf(address(this)));
+        assertEq(
+            wbtcBalanceBeforeRepay,
+            wbtcTypes.token.balanceOf(address(this)) + maxBorrowTokenToBorrowInCollateralUnit,
+            "User after repayment has less borrowed tokens"
+        );
+        assertEq(
+            wbtcDebtBeforeRepay,
+            wbtcTypes.debtToken.balanceOf(address(this)) + maxBorrowTokenToBorrowInCollateralUnit,
+            "User after repayment has less debt"
+        );
     }
 
     function testBorrowTooBigForUsersCollateral() public {

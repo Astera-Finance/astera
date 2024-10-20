@@ -14,9 +14,12 @@ import "contracts/protocol/core/lendingpool/logic/ReserveLogic.sol";
 import "contracts/protocol/core/lendingpool/logic/GenericLogic.sol";
 import "contracts/protocol/core/lendingpool/logic/ValidationLogic.sol";
 import "contracts/protocol/configuration/LendingPoolAddressesProvider.sol";
-import "contracts/protocol/core/interestRateStrategies/DefaultReserveInterestRateStrategy.sol";
-import "contracts/protocol/core/interestRateStrategies/PiReserveInterestRateStrategy.sol";
-import "contracts/protocol/core/interestRateStrategies/MiniPoolPiReserveInterestRateStrategy.sol";
+import
+    "contracts/protocol/core/interestRateStrategies/lendingpool/DefaultReserveInterestRateStrategy.sol";
+import
+    "contracts/protocol/core/interestRateStrategies/lendingpool/PiReserveInterestRateStrategy.sol";
+import
+    "contracts/protocol/core/interestRateStrategies/minipool/MiniPoolPiReserveInterestRateStrategy.sol";
 import "contracts/protocol/core/lendingpool/LendingPool.sol";
 import "contracts/protocol/core/lendingpool/LendingPoolCollateralManager.sol";
 import "contracts/protocol/core/lendingpool/LendingPoolConfigurator.sol";
@@ -38,8 +41,10 @@ import "contracts/mocks/dependencies/IStrategy.sol";
 import "contracts/mocks/dependencies/IExternalContract.sol";
 import {WadRayMath} from "contracts/protocol/libraries/math/WadRayMath.sol";
 
-import "contracts/protocol/core/interestRateStrategies/MiniPoolDefaultReserveInterestRate.sol";
+import
+    "contracts/protocol/core/interestRateStrategies/minipool/MiniPoolDefaultReserveInterestRate.sol";
 import "contracts/mocks/oracle/PriceOracle.sol";
+import "contracts/mocks/tokens/MockVaultUnit.sol";
 
 struct ReserveDataParams {
     uint256 availableLiquidity;
@@ -206,7 +211,8 @@ contract Common is Test {
     VariableDebtToken[] public variableDebtTokens;
     ATokenERC6909[] public aTokensErc6909;
 
-    MockERC4626[] public mockedVaults;
+    MockReaperVault2[] public mockedVaults;
+    MockVaultUnit[] public mockVaultUnits;
     PidConfig public defaultPidConfig = PidConfig({
         asset: DAI,
         assetReserveType: true,
@@ -347,7 +353,8 @@ contract Common is Test {
         prices[1] = int256(67_000 * 10 ** PRICE_FEED_DECIMALS); // WBTC
         prices[2] = int256(3700 * 10 ** PRICE_FEED_DECIMALS); // ETH
         prices[3] = int256(1 * 10 ** PRICE_FEED_DECIMALS); // DAI
-        mockedVaults = fixture_deployErc4626Mocks(tokens, _treasury);
+        mockedVaults = fixture_deployReaperVaultMocks(tokens, _treasury);
+        mockVaultUnits = fixture_deployVaultUnits(tokens);
         // usdcPriceFeed = new MockAggregator(100000000, int256(uint256(mintableUsdc.decimals())));
         // wbtcPriceFeed = new MockAggregator(1600000000000, int256(uint256(mintableWbtc.decimals())));
         // ethPriceFeed = new MockAggregator(120000000000, int256(uint256(mintableWeth.decimals())));
@@ -519,14 +526,25 @@ contract Common is Test {
         }
     }
 
-    function fixture_deployErc4626Mocks(address[] memory _tokens, address _treasury)
+    function fixture_deployReaperVaultMocks(address[] memory _tokens, address _treasury)
         public
-        returns (MockERC4626[] memory)
+        returns (MockReaperVault2[] memory)
     {
-        MockERC4626[] memory _mockedVaults = new MockERC4626[](_tokens.length);
+        MockReaperVault2[] memory _mockedVaults = new MockReaperVault2[](_tokens.length);
         for (uint32 idx = 0; idx < _tokens.length; idx++) {
             _mockedVaults[idx] =
-                new MockERC4626(_tokens[idx], "Mock ERC4626", "mock", TVL_CAP, _treasury);
+                new MockReaperVault2(_tokens[idx], "Mock ERC4626", "mock", TVL_CAP, _treasury);
+        }
+        return _mockedVaults;
+    }
+
+    function fixture_deployVaultUnits(address[] memory _tokens)
+        public
+        returns (MockVaultUnit[] memory)
+    {
+        MockVaultUnit[] memory _mockedVaults = new MockVaultUnit[](_tokens.length);
+        for (uint32 idx = 0; idx < _tokens.length; idx++) {
+            _mockedVaults[idx] = new MockVaultUnit(IERC20(_tokens[idx]));
         }
         return _mockedVaults;
     }
@@ -611,6 +629,7 @@ contract Common is Test {
         );
         deployedMiniPoolContracts.piStrategy = new MiniPoolPiReserveInterestRateStrategy(
             _lendingPoolAddressesProvider,
+            0, // minipool ID
             defaultPidConfig.asset,
             defaultPidConfig.assetReserveType,
             defaultPidConfig.minControllerError,
@@ -797,5 +816,23 @@ contract Common is Test {
 
         uint256 expectedVariableDebtTokenBalance = scaledVariableDebt.rayMul(normalizedDebt);
         return expectedVariableDebtTokenBalance;
+    }
+
+    function turnOnRehypothecation(
+        LendingPoolConfigurator _lendingPoolConfigurator,
+        address _aToken,
+        address _vaultAddr,
+        address _profitHandler,
+        uint256 _farmingPct,
+        uint256 _claimingThreshold,
+        uint256 _drift
+    ) public {
+        vm.startPrank(admin);
+        _lendingPoolConfigurator.setVault(_aToken, _vaultAddr);
+        _lendingPoolConfigurator.setFarmingPct(_aToken, _farmingPct);
+        _lendingPoolConfigurator.setClaimingThreshold(_aToken, _claimingThreshold);
+        _lendingPoolConfigurator.setFarmingPctDrift(_aToken, _drift);
+        _lendingPoolConfigurator.setProfitHandler(_aToken, _profitHandler);
+        vm.stopPrank();
     }
 }

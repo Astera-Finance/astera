@@ -10,6 +10,7 @@ import {AToken} from "../../../../contracts/protocol/tokenization/ERC20/AToken.s
  * @dev The underlying asset needs to be compatible with the COMP delegation interface
  * @author Cod3x
  */
+
 contract DelegationAwareAToken is AToken {
     modifier onlyPoolAdmin() {
         require(

@@ -2,15 +2,18 @@
 pragma solidity ^0.8.20;
 
 import {IMiniPoolReserveInterestRateStrategy} from
-    "../../../../contracts/interfaces/IMiniPoolReserveInterestRateStrategy.sol";
-import {WadRayMath} from "../../../../contracts/protocol/libraries/math/WadRayMath.sol";
-import {PercentageMath} from "../../../../contracts/protocol/libraries/math/PercentageMath.sol";
-import {ILendingPoolAddressesProvider} from "../../../../contracts/interfaces/ILendingPoolAddressesProvider.sol";
-import {IERC20} from "../../../../contracts/dependencies/openzeppelin/contracts/IERC20.sol";
-import {IMiniPoolAddressesProvider} from "../../../../contracts/interfaces/IMiniPoolAddressesProvider.sol";
-import {IFlowLimiter} from "../../../../contracts/interfaces/IFlowLimiter.sol";
-import {IAToken} from "../../../../contracts/interfaces/IAToken.sol";
-import {IAERC6909} from "../../../../contracts/interfaces/IAERC6909.sol";
+    "../../../../../contracts/interfaces/IMiniPoolReserveInterestRateStrategy.sol";
+import {WadRayMath} from "../../../../../contracts/protocol/libraries/math/WadRayMath.sol";
+import {PercentageMath} from "../../../../../contracts/protocol/libraries/math/PercentageMath.sol";
+import {ILendingPoolAddressesProvider} from
+    "../../../../../contracts/interfaces/ILendingPoolAddressesProvider.sol";
+import {IERC20} from "../../../../../contracts/dependencies/openzeppelin/contracts/IERC20.sol";
+import {IMiniPoolAddressesProvider} from
+    "../../../../../contracts/interfaces/IMiniPoolAddressesProvider.sol";
+import {IFlowLimiter} from "../../../../../contracts/interfaces/IFlowLimiter.sol";
+import {IAToken} from "../../../../../contracts/interfaces/IAToken.sol";
+import {IAERC6909} from "../../../../../contracts/interfaces/IAERC6909.sol";
+import {Errors} from "../../../../../contracts/protocol/libraries/helpers/Errors.sol";
 
 /**
  * @title DefaultReserveInterestRateStrategy contract
@@ -18,7 +21,7 @@ import {IAERC6909} from "../../../../contracts/interfaces/IAERC6909.sol";
  * @dev The model of interest rate is based on 2 slopes, one before the `OPTIMAL_UTILIZATION_RATE`
  * point of utilization and another from that one to 100%
  * - An instance of this same contract, can't be used across different Aave markets, due to the caching
- *   of the LendingPoolAddressesProvider
+ *   of the MiniPoolAddressesProvider
  * @author Cod3x
  *
  */
@@ -41,8 +44,7 @@ contract MiniPoolDefaultReserveInterestRateStrategy is IMiniPoolReserveInterestR
      */
     uint256 public immutable EXCESS_UTILIZATION_RATE;
 
-    IMiniPoolAddressesProvider public immutable addressesProvider;
-    ILendingPoolAddressesProvider public immutable lendingPoolAddressesProvider;
+    IMiniPoolAddressesProvider public immutable _addressesProvider;
 
     // Base variable borrow rate when Utilization rate = 0. Expressed in ray
     uint256 internal immutable _baseVariableBorrowRate;
@@ -62,7 +64,7 @@ contract MiniPoolDefaultReserveInterestRateStrategy is IMiniPoolReserveInterestR
     ) {
         OPTIMAL_UTILIZATION_RATE = optimalUtilizationRate_;
         EXCESS_UTILIZATION_RATE = WadRayMath.ray() - optimalUtilizationRate_;
-        addressesProvider = provider_;
+        _addressesProvider = provider_;
         _baseVariableBorrowRate = baseVariableBorrowRate_;
         _variableRateSlope1 = variableRateSlope1_;
         _variableRateSlope2 = variableRateSlope2_;
@@ -103,9 +105,9 @@ contract MiniPoolDefaultReserveInterestRateStrategy is IMiniPoolReserveInterestR
         uint256 reserveFactor
     ) external view override returns (uint256, uint256) {
         uint256 availableLiquidity;
-
-        if (IAERC6909(aToken).isTranche(IAERC6909(aToken).MINIPOOL_ID())) {
-            IFlowLimiter flowLimiter = IFlowLimiter(addressesProvider.getFlowLimiter());
+        (,, bool isTranched) = IAERC6909(aToken).getIdForUnderlying(reserve);
+        if (isTranched) {
+            IFlowLimiter flowLimiter = IFlowLimiter(_addressesProvider.getFlowLimiter());
             address underlying = IAToken(reserve).UNDERLYING_ASSET_ADDRESS();
             address minipool = IAERC6909(aToken).MINIPOOL_ADDRESS();
 
@@ -114,6 +116,10 @@ contract MiniPoolDefaultReserveInterestRateStrategy is IMiniPoolReserveInterestR
                 - IAToken(reserve).convertToShares(flowLimiter.currentFlow(underlying, minipool));
         } else {
             availableLiquidity = IERC20(reserve).balanceOf(aToken);
+        }
+
+        if (availableLiquidity + liquidityAdded < liquidityTaken) {
+            revert(Errors.LP_NOT_ENOUGH_LIQUIDITY_TO_BORROW);
         }
 
         //avoid stack too deep

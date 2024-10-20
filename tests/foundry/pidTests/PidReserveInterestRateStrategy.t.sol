@@ -4,8 +4,8 @@ pragma solidity ^0.8.0;
 import "../Common.sol";
 import "contracts/protocol/libraries/helpers/Errors.sol";
 import {WadRayMath} from "contracts/protocol/libraries/math/WadRayMath.sol";
-import "contracts/protocol/core/interestRateStrategies/PidReserveInterestRateStrategy.sol";
-import "contracts/protocol/core/interestRateStrategies/PiReserveInterestRateStrategy.sol";
+import
+    "contracts/protocol/core/interestRateStrategies/lendingpool/PiReserveInterestRateStrategy.sol";
 import "openzeppelin-contracts/contracts/utils/Strings.sol";
 
 contract PidReserveInterestRateStrategyTest is Common {
@@ -69,7 +69,7 @@ contract PidReserveInterestRateStrategyTest is Common {
         aTokens = fixture_getATokens(tokens, deployedContracts.protocolDataProvider);
         variableDebtTokens =
             fixture_getVarDebtTokens(tokens, deployedContracts.protocolDataProvider);
-        mockedVaults = fixture_deployErc4626Mocks(tokens, address(deployedContracts.treasury));
+        mockedVaults = fixture_deployReaperVaultMocks(tokens, address(deployedContracts.treasury));
         erc20Tokens = fixture_getErc20Tokens(tokens);
         fixture_transferTokensToTestContract(erc20Tokens, 100_000_000 ether, address(this));
 

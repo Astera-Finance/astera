@@ -1,40 +1,16 @@
-// // SPDX-License-Identifier: BUSL-1.1
-// pragma solidity ^0.8.0;
+// SPDX-License-Identifier: BUSL-1.1
+pragma solidity ^0.8.0;
 
-// import "./Common.sol";
-// // import "forge-std/Test.sol";
-// // import "forge-std/console.sol";
-// // import "contracts/dependencies/openzeppelin/contracts/ERC20.sol";
-// // import "contracts/protocol/rewarder/lendingpool/Rewarder.sol";
-// // import "contracts/protocol/core/Oracle.sol";
-// // import "contracts/misc/ProtocolDataProvider.sol";
-// // import "contracts/misc/Treasury.sol";
-// // import "contracts/misc/UiPoolDataProviderV2.sol";
-// // import "contracts/misc/WETHGateway.sol";
-// // import "contracts/protocol/core/lendingpool/logic/ReserveLogic.sol";
-// // import "contracts/protocol/core/lendingpool/logic/GenericLogic.sol";
-// // import "contracts/protocol/core/lendingpool/logic/ValidationLogic.sol";
-// // import "contracts/protocol/configuration/LendingPoolAddressesProvider.sol";
-// // import "contracts/protocol/configuration/LendingPoolAddressesProviderRegistry.sol";
-// // import "contracts/protocol/core/interestRateStrategies/DefaultReserveInterestRateStrategy.sol";
-// // import "contracts/protocol/core/lendingpool/LendingPool.sol";
-// // import "contracts/protocol/core/lendingpool/LendingPoolCollateralManager.sol";
-// // import "contracts/protocol/core/lendingpool/LendingPoolConfigurator.sol";
+import "./MiniPoolDepositBorrow.t.sol";
+import "contracts/protocol/libraries/helpers/Errors.sol";
+import {WadRayMath} from "contracts/protocol/libraries/math/WadRayMath.sol";
+import {PercentageMath} from "contracts/protocol/libraries/math/PercentageMath.sol";
+import {ReserveConfiguration} from
+    "contracts/protocol/libraries/configuration/ReserveConfiguration.sol";
+import {LendingPoolTest} from "./LendingPool.t.sol";
+import {MockStrategy} from "../../contracts/mocks/tokens/MockStrategy.sol";
 
-// // import "contracts/treasury/GranaryTreasury.sol";
-// // import "contracts/deployments/StableAndVariableTokensHelper.sol";
-
-// // import "contracts/deployments/ATokensAndRatesHelper.sol";
-// // import "contracts/protocol/tokenization/ERC20/AToken.sol";
-// // import "contracts/protocol/tokenization/ERC20/VariableDebtToken.sol";
-// // import "contracts/mocks/tokens/MintableERC20.sol";
-// // import "contracts/mocks/tokens/WETH9Mocked.sol";
-// // import "contracts/mocks/oracle/MockAggregator.sol";
-// // import "contracts/mocks/tokens/MockVault.sol";
-// // import "contracts/mocks/tokens/MockStrat.sol";
-// // import "contracts/mocks/tokens/ExternalContract.sol";
-// // import "contracts/mocks/dependencies/IStrategy.sol";
-// // import "contracts/mocks/dependencies/IExternalContract.sol";
+import "forge-std/StdUtils.sol";
 
 // // struct InitReserveInput {
 // //     address aTokenImpl;
@@ -53,271 +29,586 @@
 // //     bytes params;
 // // }
 
-// contract Rehypothecation is Common {
-//     function setUp() public {
-//         // Forking
-//         opFork = vm.createSelectFork(RPC, FORK_BLOCK);
-//         assertEq(vm.activeFork(), opFork);
+contract RehypothecationTest is Common, LendingPoolTest {
+    function testRebalance(uint256 idx) public {
+        idx = bound(idx, 0, tokens.length - 1);
+        ERC20 token = erc20Tokens[idx];
+        uint256 depositSize = 10 ** token.decimals();
 
-//         MintableERC20 mintableUsdc = new MintableERC20("Test Usdc", "USDC", 6);
-//         MintableERC20 mintableWbtc = new MintableERC20("Test Wbtc", "WBTC", 8);
-//         WETH9Mocked mintableWeth = new WETH9Mocked();
+        token.approve(address(deployedContracts.lendingPool), type(uint256).max);
+        deployedContracts.lendingPool.deposit(address(token), true, depositSize, address(this));
+        turnOnRehypothecation(
+            deployedContracts.lendingPoolConfigurator,
+            address(aTokens[idx]),
+            address(mockVaultUnits[idx]),
+            admin,
+            2000,
+            10 ** (token.decimals() - 1),
+            200
+        );
 
-//         usdcPriceFeed = new MockAggregator(100000000, int256(uint256(mintableUsdc.decimals())));
-//         wbtcPriceFeed = new MockAggregator(1600000000000, int256(uint256(mintableWbtc.decimals())));
-//         ethPriceFeed = new MockAggregator(120000000000, int256(uint256(mintableWeth.decimals())));
-//         aggregators = [address(usdcPriceFeed), address(wbtcPriceFeed), address(ethPriceFeed)];
+        assertEq(token.balanceOf(address(aTokens[idx])), depositSize);
 
-//         rewarder = new Rewarder();
-//         // bytes memory args = abi.encode();
-//         // bytes memory bytecode = abi.encodePacked(vm.getCode("contracts/incentives/Rewarder.sol:Rewarder"));
-//         // address anotherAddress;
-//         // assembly {
-//         //     anotherAddress := create(0, add(bytecode, 0x20), mload(bytecode))
-//         // }
+        vm.startPrank(admin);
+        deployedContracts.lendingPoolConfigurator.setPoolPause(true);
+        deployedContracts.lendingPoolConfigurator.rebalance(address(aTokens[idx]));
+        vm.stopPrank();
 
-//         lendingPoolAddressesProviderRegistry = new LendingPoolAddressesProviderRegistry();
-//         lendingPoolAddressesProvider = new LendingPoolAddressesProvider(marketId);
-//         lendingPoolAddressesProviderRegistry.registerAddressesProvider(
-//             address(lendingPoolAddressesProvider), providerId
-//         );
-//         lendingPoolAddressesProvider.setPoolAdmin(admin);
-//         lendingPoolAddressesProvider.setEmergencyAdmin(admin);
+        uint256 remainingPct = 10000 - (aTokens[idx].farmingPct());
+        assertEq(token.balanceOf(address(aTokens[idx])), depositSize * remainingPct / 10000);
+        assertEq(aTokens[idx].getTotalManagedAssets(), depositSize);
+    }
 
-//         // reserveLogic = address(new ReserveLogic());
-//         // genericLogic = address(new GenericLogic());
-//         // validationLogic = address(new ValidationLogic());
-//         lendingPool = new LendingPool();
-//         lendingPool.initialize(ILendingPoolAddressesProvider(lendingPoolAddressesProvider));
-//         lendingPoolAddressesProvider.setLendingPoolImpl(address(lendingPool));
-//         lendingPoolProxyAddress = address(lendingPoolAddressesProvider.getLendingPool());
-//         lendingPoolProxy = LendingPool(lendingPoolProxyAddress);
-//         treasury = new Treasury(lendingPoolAddressesProvider);
-//         // granaryTreasury = new GranaryTreasury(ILendingPoolAddressesProvider(lendingPoolAddressesProvider));
+    function testDepositAndWithdrawYield(uint256 timeDiff) public {
+        timeDiff = 100 days; // bound(timeDiff, 0, 1000 days);
+        // idx = bound(idx, 0, tokens.length - 1);
+        TokenTypes memory usdcTypes = TokenTypes({
+            token: erc20Tokens[0],
+            aToken: aTokens[0],
+            debtToken: variableDebtTokens[0]
+        });
 
-//         lendingPoolConfigurator = new LendingPoolConfigurator();
-//         lendingPoolAddressesProvider.setLendingPoolConfiguratorImpl(address(lendingPoolConfigurator));
-//         lendingPoolConfiguratorProxyAddress = lendingPoolAddressesProvider.getLendingPoolConfigurator();
-//         lendingPoolConfiguratorProxy = LendingPoolConfigurator(lendingPoolConfiguratorProxyAddress);
-//         vm.prank(admin);
-//         lendingPoolConfiguratorProxy.setPoolPause(true);
+        TokenTypes memory wbtcTypes = TokenTypes({
+            token: erc20Tokens[1],
+            aToken: aTokens[1],
+            debtToken: variableDebtTokens[1]
+        });
+        MockVaultUnit wbtcVault = mockVaultUnits[1];
+        uint256 depositSize = 10000 * 10 ** usdcTypes.token.decimals();
 
-//         // stableAndVariableTokensHelper = new StableAndVariableTokensHelper(lendingPoolProxyAddress, address(lendingPoolAddressesProvider));
-//         aTokensAndRatesHelper =
-//         new ATokensAndRatesHelper(payable(lendingPoolProxyAddress), address(lendingPoolAddressesProvider), lendingPoolConfiguratorProxyAddress);
+        address user = makeAddr("user");
 
-//         aToken = new AToken();
-//         variableDebtToken = new VariableDebtToken();
-//         // stableDebtToken = new StableDebtToken();
-//         oracle = new Oracle(tokens, aggregators, FALLBACK_ORACLE, BASE_CURRENCY, BASE_CURRENCY_UNIT);
-//         lendingPoolAddressesProvider.setPriceOracle(address(oracle));
-//         protocolDataProvider = new ProtocolDataProvider(lendingPoolAddressesProvider);
-//         //@todo uiPoolDataProviderV2 = new UiPoolDataProviderV2(IChainlinkAggregator(ethPriceFeed), IChainlinkAggregator(ethPriceFeed));
-//         wETHGateway = new WETHGateway(address(weth));
-//         stableStrategy = new DefaultReserveInterestRateStrategy(
-//             lendingPoolAddressesProvider,
-//             sStrat[0],
-//             sStrat[1],
-//             sStrat[2],
-//             sStrat[3]
-//         );
-//         volatileStrategy = new DefaultReserveInterestRateStrategy(
-//             lendingPoolAddressesProvider,
-//             volStrat[0],
-//             volStrat[1],
-//             volStrat[2],
-//             volStrat[3]
-//         );
+        uint256 initialAdminBalance = wbtcTypes.token.balanceOf(address(admin));
+        uint256 availableFundsAfterBorrow;
+        {
+            (uint256 maxBorrowTokenToBorrowInCollateralUnit) =
+                fixture_depositAndBorrow(usdcTypes, wbtcTypes, user, address(this), depositSize);
 
-//         initInputParams.push(
-//             ILendingPoolConfigurator.InitReserveInput({
-//                 aTokenImpl: address(aToken),
-//                 variableDebtTokenImpl: address(variableDebtToken),
-//                 underlyingAssetDecimals: 6,
-//                 interestRateStrategyAddress: address(stableStrategy),
-//                 underlyingAsset: tokens[0],
-//                 reserveType: reserveTypes[0],
-//                 treasury: address(treasury),
-//                 incentivesController: address(rewarder),
-//                 underlyingAssetName: "USDC",
-//                 aTokenName: "Granary USDC",
-//                 aTokenSymbol: "grainUSDC",
-//                 variableDebtTokenName: "Granary variable debt bearing USDC",
-//                 variableDebtTokenSymbol: "variableDebtUSDC",
-//                 params: "0x10"
-//             })
-//         );
-//         initInputParams.push(
-//             ILendingPoolConfigurator.InitReserveInput({
-//                 aTokenImpl: address(aToken),
-//                 variableDebtTokenImpl: address(variableDebtToken),
-//                 underlyingAssetDecimals: 8,
-//                 interestRateStrategyAddress: address(volatileStrategy),
-//                 underlyingAsset: tokens[1],
-//                 reserveType: reserveTypes[1],
-//                 treasury: address(treasury),
-//                 incentivesController: address(rewarder),
-//                 underlyingAssetName: "WBTC",
-//                 aTokenName: "Granary WBTC",
-//                 aTokenSymbol: "grainWBTC",
-//                 variableDebtTokenName: "Granary variable debt bearing WBTC",
-//                 variableDebtTokenSymbol: "variableDebtWBTC",
-//                 params: "0x10"
-//             })
-//         );
-//         initInputParams.push(
-//             ILendingPoolConfigurator.InitReserveInput({
-//                 aTokenImpl: address(aToken),
-//                 variableDebtTokenImpl: address(variableDebtToken),
-//                 underlyingAssetDecimals: 18,
-//                 interestRateStrategyAddress: address(volatileStrategy),
-//                 underlyingAsset: tokens[2],
-//                 reserveType: reserveTypes[2],
-//                 treasury: address(treasury),
-//                 incentivesController: address(rewarder),
-//                 underlyingAssetName: "ETH",
-//                 aTokenName: "Granary ETH",
-//                 aTokenSymbol: "grainETH",
-//                 variableDebtTokenName: "Granary variable debt bearing ETH",
-//                 variableDebtTokenSymbol: "variableDebtETH",
-//                 params: "0x10"
-//             })
-//         );
-//         vm.prank(admin);
-//         lendingPoolConfiguratorProxy.batchInitReserve(initInputParams);
+            turnOnRehypothecation(
+                deployedContracts.lendingPoolConfigurator,
+                address(wbtcTypes.aToken),
+                address(wbtcVault),
+                admin,
+                2000,
+                10 ** (wbtcTypes.token.decimals() - 3), // 0.001 WBTC
+                200
+            );
 
-//         inputConfigParams.push(
-//             ATokensAndRatesHelper.ConfigureReserveInput({
-//                 asset: tokens[0],
-//                 reserveType: reserveTypes[0],
-//                 baseLTV: 8000,
-//                 liquidationThreshold: 8500,
-//                 liquidationBonus: 10500,
-//                 reserveFactor: 1500,
-//                 borrowingEnabled: true
-//             })
-//         );
+            uint256 maxValToBorrow =
+                fixture_getMaxValueToBorrow(usdcTypes.token, wbtcTypes.token, depositSize);
+            console.log("maxValToBorrow: ", maxValToBorrow);
+            console.log(
+                "maxBorrowTokenToBorrowInCollateralUnit: ", maxBorrowTokenToBorrowInCollateralUnit
+            );
+            availableFundsAfterBorrow = (maxBorrowTokenToBorrowInCollateralUnit * 15 / 10)
+                - maxBorrowTokenToBorrowInCollateralUnit;
+        }
+        // Starting here, vault should be able to handle asset
+        assertEq(
+            wbtcTypes.token.balanceOf(address(wbtcTypes.aToken)),
+            availableFundsAfterBorrow,
+            "WBTC amount wrong"
+        );
+        assertEq(
+            usdcTypes.token.balanceOf(address(usdcTypes.aToken)), depositSize, "USDC amount wrong"
+        );
 
-//         inputConfigParams.push(
-//             ATokensAndRatesHelper.ConfigureReserveInput({
-//                 asset: tokens[1],
-//                 reserveType: reserveTypes[1],
-//                 baseLTV: 8000,
-//                 liquidationThreshold: 8500,
-//                 liquidationBonus: 10500,
-//                 reserveFactor: 1500,
-//                 borrowingEnabled: true
-//             })
-//         );
+        uint256 remainingPct = 10000 - (wbtcTypes.aToken.farmingPct());
+        console.log("1. WBTC amount: ", wbtcTypes.token.balanceOf(address(wbtcTypes.aToken)));
+        vm.prank(admin);
+        deployedContracts.lendingPoolConfigurator.rebalance(address(wbtcTypes.aToken));
+        console.log("2. WBTC amount: ", wbtcTypes.token.balanceOf(address(wbtcTypes.aToken)));
+        console.log("2. ", (availableFundsAfterBorrow * remainingPct));
+        assertApproxEqAbs(
+            wbtcTypes.token.balanceOf(address(wbtcTypes.aToken)),
+            ((availableFundsAfterBorrow * remainingPct) + 5000) / 10000,
+            1,
+            "WBTC amount after rebalance is wrong"
+        );
+        uint256 vaultBalanceAfterFirstRebalance = wbtcTypes.token.balanceOf(address(wbtcVault));
+        uint256 tokenBalanceAfterFirstRebalance =
+            wbtcTypes.token.balanceOf(address(wbtcTypes.aToken));
 
-//         inputConfigParams.push(
-//             ATokensAndRatesHelper.ConfigureReserveInput({
-//                 asset: tokens[2],
-//                 reserveType: reserveTypes[2],
-//                 baseLTV: 8000,
-//                 liquidationThreshold: 8500,
-//                 liquidationBonus: 10500,
-//                 reserveFactor: 1500,
-//                 borrowingEnabled: true
-//             })
-//         );
+        assertEq(
+            vaultBalanceAfterFirstRebalance,
+            availableFundsAfterBorrow * (wbtcTypes.aToken.farmingPct()) / 10000,
+            "WBTC vault amount after rebalance is wrong"
+        );
+        console.log("1. Balance in vault: ", vaultBalanceAfterFirstRebalance);
+        console.log(
+            "1. totalSupply: %s, totalAsset: %s", wbtcVault.totalSupply(), wbtcVault.totalAssets()
+        );
+        console.log("TimeDiff: ", timeDiff);
+        skip(timeDiff);
 
-//         lendingPoolAddressesProvider.setPoolAdmin(address(aTokensAndRatesHelper));
-//         aTokensAndRatesHelper.configureReserves(inputConfigParams);
-//         lendingPoolAddressesProvider.setPoolAdmin(admin);
+        // Artificially increasing balance of vault should result in yield for the graintoken
+        uint256 yieldAmount;
+        {
+            uint256 index = deployedContracts.lendingPool.getReserveNormalizedIncome(
+                address(wbtcTypes.token), true
+            );
+            console.log("index: ", index);
+            yieldAmount = index * wbtcVault.totalSupply() / 1e27 - wbtcVault.totalSupply();
+            console.log("yieldAmount: ", yieldAmount);
+            console.log(
+                "1.5 BEFORE: totalSupply: %s, totalAsset: %s",
+                wbtcVault.totalSupply(),
+                wbtcVault.totalAssets()
+            );
+            deal(
+                address(wbtcTypes.token), address(wbtcVault), wbtcVault.totalSupply() + yieldAmount
+            );
+            console.log(
+                "1.5 AFTER DEAL: totalSupply: %s, totalAsset: %s",
+                wbtcVault.totalSupply(),
+                wbtcVault.totalAssets()
+            );
+        }
 
-//         lendingPoolCollateralManager = new LendingPoolCollateralManager();
-//         lendingPoolAddressesProvider.setLendingPoolCollateralManager(address(lendingPoolCollateralManager));
-//         wETHGateway.authorizeLendingPool(lendingPoolProxyAddress);
+        console.log("2. Balance in vault: ", wbtcTypes.token.balanceOf(address(wbtcVault)));
+        console.log(
+            "2. totalSupply: %s, totalAsset: %s", wbtcVault.totalSupply(), wbtcVault.totalAssets()
+        );
+        skip(timeDiff);
+        console.log("3. Balance in vault: ", wbtcTypes.token.balanceOf(address(wbtcVault)));
+        console.log(
+            "3. totalSupply: %s, totalAsset: %s", wbtcVault.totalSupply(), wbtcVault.totalAssets()
+        );
 
-//         (address USDCATokenAddress, address USDCVariableDebtToken) =
-//             protocolDataProvider.getReserveTokensAddresses(address(usdc), false);
-//         grainUSDC = AToken(USDCATokenAddress);
-//         variableDebtUSDC = VariableDebtToken(USDCVariableDebtToken);
+        vm.prank(admin);
+        deployedContracts.lendingPoolConfigurator.rebalance(address(wbtcTypes.aToken));
+        assertApproxEqAbs(
+            tokenBalanceAfterFirstRebalance,
+            wbtcTypes.token.balanceOf(address(wbtcTypes.aToken)),
+            1,
+            "Token's balance is not the same as before rebalance"
+        );
+        console.log(
+            "Vault balance %s vs expected: %s",
+            wbtcTypes.token.balanceOf(address(wbtcVault)),
+            vaultBalanceAfterFirstRebalance
+        );
+        assertApproxEqAbs(
+            wbtcTypes.token.balanceOf(address(wbtcVault)),
+            vaultBalanceAfterFirstRebalance,
+            1,
+            "Vault balance is not the same as before rebalance"
+        );
+        console.log(
+            "Admin balance %s vs profit: %s", wbtcTypes.token.balanceOf(address(admin)), yieldAmount
+        );
+        assertApproxEqAbs(
+            wbtcTypes.token.balanceOf(address(admin)),
+            initialAdminBalance + yieldAmount,
+            1,
+            "Profit handler doesn't have profit"
+        );
+    }
 
-//         (address WBTCATokenAddress, address WBTCVariableDebtTokenAddress) =
-//             protocolDataProvider.getReserveTokensAddresses(address(wbtc), false);
-//         grainWBTC = AToken(WBTCATokenAddress);
-//         variableDebtWBTC = VariableDebtToken(WBTCVariableDebtTokenAddress);
+    struct TokenVars {
+        MockVaultUnit vault;
+        uint256 depositSize;
+        uint256 initialBalance;
+        uint256 remainingPct;
+    }
 
-//         (address ETHATokenAddress, address ETHVariableDebtTokenAddress) =
-//             protocolDataProvider.getReserveTokensAddresses(address(weth), false);
-//         grainETH = AToken(ETHATokenAddress);
-//         variableDebtETH = VariableDebtToken(ETHVariableDebtTokenAddress);
+    function testRehypothecationWithVariousVaultReturns(uint256 vaultReturnPct, uint256 amount)
+        public
+    {
+        vaultReturnPct = bound(vaultReturnPct, 10, 19000); //0.01% to 200 %
+        for (uint8 idx = 0; idx < tokens.length; idx++) {
+            amount = bound(amount, 1e2, erc20Tokens[idx].balanceOf(address(this)));
+            TokenTypes memory tokenTypes = TokenTypes({
+                token: erc20Tokens[idx],
+                aToken: aTokens[idx],
+                debtToken: variableDebtTokens[idx]
+            });
+            TokenVars memory tokenVars = TokenVars({
+                vault: mockVaultUnits[idx],
+                depositSize: amount,
+                initialBalance: tokenTypes.token.balanceOf(address(this)),
+                remainingPct: 0
+            });
+            turnOnRehypothecation(
+                deployedContracts.lendingPoolConfigurator,
+                address(tokenTypes.aToken),
+                address(tokenVars.vault),
+                admin,
+                8000,
+                erc20Tokens[idx].balanceOf(address(this)), // make profit unreachable in this test
+                200
+            );
+            fixture_deposit(
+                tokenTypes.token,
+                tokenTypes.aToken,
+                address(this),
+                address(this),
+                tokenVars.depositSize
+            );
+            tokenVars.remainingPct = 10000 - (tokenTypes.aToken.farmingPct());
 
-//         vm.prank(admin);
-//         lendingPoolConfiguratorProxy.setPoolPause(false);
-//     }
+            assertApproxEqAbs(
+                tokenTypes.token.balanceOf(address(tokenTypes.aToken)),
+                ((tokenVars.depositSize * tokenVars.remainingPct) + 5000) / 10000,
+                1,
+                "token amount in aToken is wrong"
+            );
+            uint256 expectedVaultBalance =
+                (tokenVars.depositSize * tokenTypes.aToken.farmingPct() + 5000) / 10000;
+            assertApproxEqAbs(
+                tokenTypes.token.balanceOf(address(tokenVars.vault)),
+                expectedVaultBalance,
+                1,
+                "token amount in vault is wrong"
+            );
 
-//     function testRebalance() public {
-//         address gibbons = makeAddr("gibbons");
-//         uint256 usdcDepositSize = 100 * 1e6;
-//         deal(address(usdc), gibbons, usdcDepositSize);
-//         vm.prank(gibbons);
-//         usdc.approve(lendingPoolProxyAddress, type(uint256).max);
-//         vm.prank(gibbons);
-//         lendingPoolProxy.deposit(address(usdc), false, usdcDepositSize, gibbons);
-//         MockERC4626 usdcMockERC4626 = MockERC4626(deployMockErc4626(address(usdc)));
-//         vm.startPrank(admin);
-//         lendingPoolConfiguratorProxy.setVault(address(grainUSDC), address(usdcMockERC4626));
-//         lendingPoolConfiguratorProxy.setFarmingPct(address(grainUSDC), 2000);
-//         lendingPoolConfiguratorProxy.setClaimingThreshold(address(grainUSDC), 1e6);
-//         lendingPoolConfiguratorProxy.setFarmingPctDrift(address(grainUSDC), 200);
-//         lendingPoolConfiguratorProxy.setProfitHandler(address(grainUSDC), admin);
-//         vm.stopPrank();
+            uint256 absReturn =
+                tokenTypes.token.balanceOf(address(tokenVars.vault)) * vaultReturnPct / 10000;
+            deal(address(tokenTypes.token), address(tokenVars.vault), absReturn);
+            // aToken rebalance shall be done despite of negative (< vault balance) or positive return
+            console.log("Rebalancing for value: %s vs %s", absReturn, expectedVaultBalance);
+            vm.startPrank(admin);
+            if (absReturn < expectedVaultBalance + 2 && absReturn > expectedVaultBalance - 2) {
+                deployedContracts.lendingPoolConfigurator.rebalance(address(tokenTypes.aToken));
+                assertApproxEqAbs(
+                    tokenTypes.token.balanceOf(address(tokenVars.vault)),
+                    tokenTypes.token.balanceOf(address(tokenVars.vault)),
+                    1,
+                    "token amount in vault is not the same after rebalance"
+                );
+            } else if (absReturn < expectedVaultBalance) {
+                // Negative return
+                vm.expectRevert(); // @issue: TEMPORARY (this is an issue!!!)
+                deployedContracts.lendingPoolConfigurator.rebalance(address(tokenTypes.aToken));
+                // Refund
+                deal(address(tokenTypes.token), address(tokenVars.vault), expectedVaultBalance);
+                deployedContracts.lendingPoolConfigurator.rebalance(address(tokenTypes.aToken));
+                assertApproxEqAbs(
+                    tokenTypes.token.balanceOf(address(tokenVars.vault)),
+                    tokenTypes.token.balanceOf(address(tokenVars.vault)),
+                    1,
+                    "token amount in vault is wrong after rebalance and refund"
+                );
+            } else {
+                deployedContracts.lendingPoolConfigurator.rebalance(address(tokenTypes.aToken));
+                assertGt(
+                    tokenTypes.token.balanceOf(address(tokenVars.vault)),
+                    expectedVaultBalance,
+                    "token amount in vault is wrong after rebalance"
+                );
+            }
 
-//         assertEq(usdc.balanceOf(address(grainUSDC)), usdcDepositSize);
+            vm.stopPrank();
+        }
+    }
 
-//         vm.startPrank(admin);
-//         lendingPoolConfiguratorProxy.setPoolPause(true);
-//         lendingPoolConfiguratorProxy.rebalance(address(grainUSDC));
-//         vm.stopPrank();
+    function testDepositBorrowRepayAndWithdrawWithRehypoOn(uint256 timeDiff) public {
+        timeDiff = 100 days; // bound(timeDiff, 0, 1000 days);
+        // idx = bound(idx, 0, tokens.length - 1);
+        TokenTypes memory usdcTypes = TokenTypes({
+            token: erc20Tokens[0],
+            aToken: aTokens[0],
+            debtToken: variableDebtTokens[0]
+        });
 
-//         uint256 remainingPct = 10000 - (grainUSDC.farmingPct());
-//         assertEq(usdc.balanceOf(address(grainUSDC)), usdcDepositSize * remainingPct / 10000);
-//         assertEq(grainUSDC.getTotalManagedAssets(), usdcDepositSize);
-//     }
+        TokenTypes memory wbtcTypes = TokenTypes({
+            token: erc20Tokens[1],
+            aToken: aTokens[1],
+            debtToken: variableDebtTokens[1]
+        });
 
-//     function testDepositAndWithdrawYield() public {
-//         address yankovic = makeAddr("yankovic");
-//         uint256 usdcDepositSize = 100 * 1e6;
-//         vm.label(address(usdc), "usdc");
-//         deal(address(usdc), yankovic, usdcDepositSize);
-//         vm.startPrank(yankovic);
-//         usdc.approve(lendingPoolProxyAddress, type(uint256).max);
-//         lendingPoolProxy.deposit(address(usdc), false, usdcDepositSize, yankovic);
-//         vm.stopPrank();
-//         vm.startPrank(admin);
-//         MockERC4626 usdcMockERC4626 = MockERC4626(deployMockErc4626(address(usdc)));
-//         vm.label(address(usdcMockERC4626), "usdcMockERC4626");
-//         ExternalContract externalContract = new ExternalContract(address(usdc));
-//         ReaperStrategy usdcReaperStrategy =
-//             new ReaperStrategy(address(usdcMockERC4626), address(usdc), address(externalContract));
-//         vm.label(address(usdcReaperStrategy), "strategy");
-//         lendingPoolConfiguratorProxy.setVault(address(grainUSDC), address(usdcMockERC4626));
-//         lendingPoolConfiguratorProxy.setFarmingPct(address(grainUSDC), 2000);
-//         lendingPoolConfiguratorProxy.setClaimingThreshold(address(grainUSDC), 1e6);
-//         lendingPoolConfiguratorProxy.setFarmingPctDrift(address(grainUSDC), 200);
-//         lendingPoolConfiguratorProxy.setProfitHandler(address(grainUSDC), admin);
-//         vm.stopPrank();
-//         // Starting here, vault should be able to handle asset
-//         assertEq(usdc.balanceOf(address(grainUSDC)), usdcDepositSize);
+        TokenVars memory usdcVars = TokenVars({
+            vault: mockVaultUnits[0],
+            depositSize: 10000 * 10 ** usdcTypes.token.decimals(),
+            initialBalance: usdcTypes.token.balanceOf(address(this)),
+            remainingPct: 0
+        });
+        TokenVars memory wbtcVars = TokenVars({
+            vault: mockVaultUnits[1],
+            depositSize: 10 ** (wbtcTypes.token.decimals() - 1),
+            initialBalance: wbtcTypes.token.balanceOf(address(this)),
+            remainingPct: 0
+        });
 
-//         uint256 remainingPct = 10000 - (grainUSDC.farmingPct());
-//         vm.prank(admin);
-//         lendingPoolConfiguratorProxy.rebalance(address(grainUSDC));
-//         assertEq(usdc.balanceOf(address(grainUSDC)), usdcDepositSize * remainingPct / 10000);
+        console.log("INITIAL USDC: ", usdcVars.initialBalance);
+        console.log("INITIAL WBTC: ", wbtcVars.initialBalance);
 
-//         // Artificially increasing balance of vault should result in yield for the graintoken
-//         deal(address(usdc), address(usdcReaperStrategy), usdcDepositSize / 2);
-//         console.log(usdcDepositSize);
-//         console.log(usdc.balanceOf(address(usdcReaperStrategy)));
-//         vm.prank(admin);
-//         lendingPoolConfiguratorProxy.rebalance(address(grainUSDC));
-//     }
+        address user = makeAddr("user");
 
-//     function deployMockErc4626(address token) public returns (address mockERC4626) {
-//         uint8 decimals = ERC20(token).decimals();
-//         mockERC4626 = address(new MockERC4626(token,'Mock ERC4626', 'mock', 1e27, address(treasury)));
-//     }
-// }
+        uint256 availableFundsAfterBorrow;
+        uint256 maxBorrowTokenToBorrowInCollateralUnit;
+        {
+            turnOnRehypothecation(
+                deployedContracts.lendingPoolConfigurator,
+                address(usdcTypes.aToken),
+                address(usdcVars.vault),
+                admin,
+                2000,
+                10 ** (usdcTypes.token.decimals()), // 1 USDC
+                200
+            );
+
+            turnOnRehypothecation(
+                deployedContracts.lendingPoolConfigurator,
+                address(wbtcTypes.aToken),
+                address(wbtcVars.vault),
+                admin,
+                2000,
+                10 ** (wbtcTypes.token.decimals() - 3), // 0.001 WBTC
+                200
+            );
+
+            maxBorrowTokenToBorrowInCollateralUnit = fixture_depositAndBorrow(
+                usdcTypes, wbtcTypes, user, address(this), usdcVars.depositSize
+            );
+            console.log(
+                "maxBorrowTokenToBorrowInCollateralUnit: ", maxBorrowTokenToBorrowInCollateralUnit
+            );
+            availableFundsAfterBorrow = (maxBorrowTokenToBorrowInCollateralUnit * 15 / 10)
+                - maxBorrowTokenToBorrowInCollateralUnit;
+        }
+        // Starting here, vault should be able to handle asset
+        usdcVars.remainingPct = 10000 - (usdcTypes.aToken.farmingPct());
+        wbtcVars.remainingPct = 10000 - (wbtcTypes.aToken.farmingPct());
+
+        assertApproxEqAbs(
+            usdcTypes.token.balanceOf(address(usdcTypes.aToken)),
+            ((usdcVars.depositSize * usdcVars.remainingPct) + 5000) / 10000,
+            1,
+            "USDC amount in aToken is wrong"
+        );
+
+        assertApproxEqAbs(
+            wbtcTypes.token.balanceOf(address(wbtcTypes.aToken)),
+            ((availableFundsAfterBorrow * wbtcVars.remainingPct) + 5000) / 10000,
+            1,
+            "WBTC amount in aToken is wrong"
+        );
+
+        assertApproxEqAbs(
+            usdcTypes.token.balanceOf(address(usdcVars.vault)),
+            ((usdcVars.depositSize * usdcTypes.aToken.farmingPct()) + 5000) / 10000,
+            1,
+            "USDC amount in vault is wrong"
+        );
+
+        assertApproxEqAbs(
+            wbtcTypes.token.balanceOf(address(wbtcVars.vault)),
+            ((availableFundsAfterBorrow * wbtcTypes.aToken.farmingPct()) + 5000) / 10000,
+            1,
+            "WBTC amount in vault is wrong"
+        );
+
+        uint256 wbtcBalanceBeforeRepay = wbtcTypes.token.balanceOf(address(this));
+        uint256 wbtcDebtBeforeRepay = wbtcTypes.debtToken.balanceOf(address(this));
+        console.log("wbtcBalanceBeforeRepay: ", wbtcBalanceBeforeRepay);
+        console.log("wbtcDebtBeforeRepay: ", wbtcDebtBeforeRepay);
+
+        console.log(
+            "maxBorrowTokenToBorrowInCollateralUnit %s vs availableFundsAfterBorrow %s",
+            maxBorrowTokenToBorrowInCollateralUnit,
+            availableFundsAfterBorrow
+        );
+
+        wbtcTypes.token.approve(
+            address(deployedContracts.lendingPool), maxBorrowTokenToBorrowInCollateralUnit
+        );
+        deployedContracts.lendingPool.repay(
+            address(wbtcTypes.token), true, maxBorrowTokenToBorrowInCollateralUnit, address(this)
+        );
+        assertEq(
+            wbtcBalanceBeforeRepay,
+            wbtcTypes.token.balanceOf(address(this)) + maxBorrowTokenToBorrowInCollateralUnit,
+            "User after repayment has less borrowed tokens"
+        );
+        assertEq(
+            wbtcDebtBeforeRepay,
+            wbtcTypes.debtToken.balanceOf(address(this)) + maxBorrowTokenToBorrowInCollateralUnit,
+            "User after repayment has less debt"
+        );
+        console.log("Debt: ", wbtcTypes.debtToken.balanceOf(address(this)));
+
+        fixture_withdraw(usdcTypes.token, address(this), address(this), usdcVars.depositSize);
+        fixture_withdraw(
+            wbtcTypes.token,
+            user,
+            address(this),
+            availableFundsAfterBorrow + maxBorrowTokenToBorrowInCollateralUnit
+        );
+
+        assertEq(
+            usdcVars.initialBalance,
+            usdcTypes.token.balanceOf(address(this)),
+            "Balance of usdc at the end is not equal to initial balance"
+        );
+
+        assertEq(
+            wbtcVars.initialBalance,
+            wbtcTypes.token.balanceOf(address(this)),
+            "Balance of wbtc at the end is not equal to initial balance"
+        );
+    }
+
+    /* TEST UNUSED DUE TO LACK OF COMPATIBILITY WITH VAULTV2 BUT CAN BE REUSED IN THE FUTURE */
+    // function testDepositAndWithdrawYield(uint256 timeDiff) public {
+    //     timeDiff = 100 days; //bound(timeDiff, 0, 1000 days);
+    //     // idx = bound(idx, 0, tokens.length - 1);
+    //     TokenTypes memory usdcTypes = TokenTypes({
+    //         token: erc20Tokens[0],
+    //         aToken: aTokens[0],
+    //         debtToken: variableDebtTokens[0]
+    //     });
+
+    //     TokenTypes memory wbtcTypes = TokenTypes({
+    //         token: erc20Tokens[1],
+    //         aToken: aTokens[1],
+    //         debtToken: variableDebtTokens[1]
+    //     });
+    //     MockVaultUnit wbtcVault = mockVaultUnits[1];
+    //     uint256 depositSize = 10000 * 10 ** usdcTypes.token.decimals();
+    //     MockStrategy strat = new MockStrategy(address(wbtcTypes.token), address(wbtcVault));
+    //     // mockVaultUnits[1].addStrategy(address(strat), 1000, 8000);
+    //     // usdcTypes.token.approve(address(deployedContracts.lendingPool), type(uint256).max);
+    //     // deployedContracts.lendingPool.deposit(
+    //     //     address(usdcTypes.token), true, depositSize, address(this)
+    //     // );
+    //     address user = makeAddr("user");
+
+    //     uint256 initialAdminBalance = usdcTypes.token.balanceOf(address(admin));
+    //     uint256 availableFundsAfterBorrow;
+    //     {
+    //         (uint256 maxBorrowTokenToBorrowInCollateralUnit) =
+    //             fixture_depositAndBorrow(usdcTypes, wbtcTypes, user, address(this), depositSize);
+
+    //         turnOnRehypothecation(
+    //             deployedContracts.lendingPoolConfigurator,
+    //             address(wbtcTypes.aToken),
+    //             address(wbtcVault),
+    //             admin,
+    //             2000,
+    //             10 ** (wbtcTypes.token.decimals() - 3), // 0.001 WBTC
+    //             200
+    //         );
+
+    //         uint256 maxValToBorrow =
+    //             fixture_getMaxValueToBorrow(usdcTypes.token, wbtcTypes.token, depositSize);
+    //         console.log("maxValToBorrow: ", maxValToBorrow);
+    //         console.log(
+    //             "maxBorrowTokenToBorrowInCollateralUnit: ", maxBorrowTokenToBorrowInCollateralUnit
+    //         );
+    //         availableFundsAfterBorrow = (maxBorrowTokenToBorrowInCollateralUnit * 15 / 10)
+    //             - maxBorrowTokenToBorrowInCollateralUnit;
+    //     }
+    //     // Starting here, vault should be able to handle asset
+    //     assertEq(
+    //         wbtcTypes.token.balanceOf(address(wbtcTypes.aToken)),
+    //         availableFundsAfterBorrow,
+    //         "WBTC amount wrong"
+    //     );
+    //     assertEq(
+    //         usdcTypes.token.balanceOf(address(usdcTypes.aToken)), depositSize, "USDC amount wrong"
+    //     );
+
+    //     uint256 remainingPct = 10000 - (wbtcTypes.aToken.farmingPct());
+    //     console.log("1. WBTC amount: ", wbtcTypes.token.balanceOf(address(wbtcTypes.aToken)));
+    //     vm.prank(admin);
+    //     deployedContracts.lendingPoolConfigurator.rebalance(address(wbtcTypes.aToken));
+    //     console.log("2. WBTC amount: ", wbtcTypes.token.balanceOf(address(wbtcTypes.aToken)));
+    //     console.log("2. ", (availableFundsAfterBorrow * remainingPct));
+    //     assertApproxEqAbs(
+    //         wbtcTypes.token.balanceOf(address(wbtcTypes.aToken)),
+    //         ((availableFundsAfterBorrow * remainingPct) + 5000) / 10000,
+    //         1,
+    //         "WBTC amount after rebalance is wrong"
+    //     );
+    //     uint256 vaultBalanceAfterFirstRebalance = wbtcTypes.token.balanceOf(address(wbtcVault));
+    //     assertApproxEqAbs(
+    //         wbtcTypes.token.balanceOf(address(wbtcVault)),
+    //         ((2000 * vaultBalanceAfterFirstRebalance) + 5000) / 10000,
+    //         1,
+    //         "Remaining amount in the vault after harvest is wrong"
+    //     );
+    //     // assertEq(vaultBalanceAfterFirstRebalance, wbtcVault.balance());
+    //     uint256 tokenBalanceAfterFirstRebalance =
+    //         wbtcTypes.token.balanceOf(address(wbtcTypes.aToken));
+
+    //     // assertEq(
+    //     //     tokenBalanceAfterFirstRebalance,
+    //     //     maxValToBorrow * remainingPct / 10000,
+    //     //     "WBTC amount after rebalance is wrong"
+    //     // );
+    //     // assertEq(
+    //     //     vaultBalanceAfterFirstRebalance,
+    //     //     availableFundsAfterBorrow * (wbtcTypes.aToken.farmingPct()) / 10000,
+    //     //     "WBTC vault amount after rebalance is wrong"
+    //     // );
+    //     console.log("1. Balance in vault: ", vaultBalanceAfterFirstRebalance);
+    //     console.log(
+    //         "1. totalSupply: %s, totalAsset: %s", wbtcVault.totalSupply(), wbtcVault.totalAssets()
+    //     );
+    //     console.log("TimeDiff: ", timeDiff);
+    //     skip(timeDiff);
+
+    //     // Artificially increasing balance of vault should result in yield for the graintoken
+    //     uint256 yieldAmount;
+    //     {
+    //         uint256 index = deployedContracts.lendingPool.getReserveNormalizedIncome(
+    //             address(wbtcTypes.token), true
+    //         );
+    //         console.log("index: ", index);
+    //         yieldAmount = index * wbtcVault.totalSupply() / 1e27 - wbtcVault.totalSupply();
+    //         console.log("yieldAmount: ", yieldAmount);
+    //         console.log(
+    //             "1.5 BEFORE: totalSupply: %s, totalAsset: %s",
+    //             wbtcVault.totalSupply(),
+    //             wbtcVault.totalAssets()
+    //         );
+    //         deal(
+    //             address(wbtcTypes.token), address(wbtcVault), wbtcVault.totalSupply() + yieldAmount
+    //         );
+    //         console.log(
+    //             "1.5 AFTER DEAL: totalSupply: %s, totalAsset: %s",
+    //             wbtcVault.totalSupply(),
+    //             wbtcVault.totalAssets()
+    //         );
+    //     }
+
+    //     console.log("2. Balance in vault: ", wbtcTypes.token.balanceOf(address(wbtcVault)));
+    //     console.log(
+    //         "2. totalSupply: %s, totalAsset: %s", wbtcVault.totalSupply(), wbtcVault.totalAssets()
+    //     );
+    //     skip(timeDiff);
+    //     strat.harvest();
+    //     console.log("3. Balance in vault: ", wbtcTypes.token.balanceOf(address(wbtcVault)));
+    //     console.log(
+    //         "3. totalSupply: %s, totalAsset: %s", wbtcVault.totalSupply(), wbtcVault.totalAssets()
+    //     );
+
+    //     vm.prank(admin);
+    //     deployedContracts.lendingPoolConfigurator.rebalance(address(wbtcTypes.aToken));
+    //     assertEq(
+    //         tokenBalanceAfterFirstRebalance,
+    //         wbtcTypes.token.balanceOf(address(wbtcTypes.aToken)),
+    //         "Token's balance is not the same as before rebalance"
+    //     );
+    //     console.log(
+    //         "Vault balance %s vs expected: %s",
+    //         wbtcTypes.token.balanceOf(address(wbtcVault)),
+    //         vaultBalanceAfterFirstRebalance
+    //     );
+    //     // assertEq(
+    //     //     wbtcTypes.token.balanceOf(address(wbtcVault)),
+    //     //     depositSize * (wbtcTypes.aToken.farmingPct()) / 10000,
+    //     //     "Vault balance is not the same as before rebalance"
+    //     // );
+    //     console.log(
+    //         "Admin balance %s vs profit: %s", wbtcTypes.token.balanceOf(address(admin)), yieldAmount
+    //     );
+    //     // assertEq(
+    //     //     wbtcTypes.token.balanceOf(address(admin)),
+    //     //     initialAdminBalance + yieldAmount,
+    //     //     "Profit handler doesn't have profit"
+    //     // );
+    //     assert(false);
+    // }
+}

@@ -4,8 +4,8 @@ pragma solidity ^0.8.0;
 import "../Common.sol";
 import "contracts/protocol/libraries/helpers/Errors.sol";
 import {WadRayMath} from "contracts/protocol/libraries/math/WadRayMath.sol";
-import "contracts/protocol/core/interestRateStrategies/PidReserveInterestRateStrategy.sol";
-import "contracts/protocol/core/interestRateStrategies/MiniPoolPiReserveInterestRateStrategy.sol";
+import
+    "contracts/protocol/core/interestRateStrategies/minipool/MiniPoolPiReserveInterestRateStrategy.sol";
 import "openzeppelin-contracts/contracts/utils/Strings.sol";
 
 contract MiniPoolPidReserveInterestRateStrategyTest is Common {
@@ -50,6 +50,7 @@ contract MiniPoolPidReserveInterestRateStrategyTest is Common {
         console.log("MiniPoolPiReserveInterestRateStrategy deployment: ");
         miniPoolPidStrat = new MiniPoolPiReserveInterestRateStrategy(
             address(deployedMiniPoolContracts.miniPoolAddressesProvider),
+            0, // minipool ID
             DAI,
             true,
             -400e24, //-192e24, // min rate == 0.5%
@@ -81,7 +82,7 @@ contract MiniPoolPidReserveInterestRateStrategyTest is Common {
 
         aTokens = fixture_getATokens(tokens, deployedContracts.protocolDataProvider);
         // variableDebtTokens = fixture_getVarDebtTokens(tokens, deployedContracts.protocolDataProvider);
-        mockedVaults = fixture_deployErc4626Mocks(tokens, address(deployedContracts.treasury));
+        mockedVaults = fixture_deployReaperVaultMocks(tokens, address(deployedContracts.treasury));
         erc20Tokens = fixture_getErc20Tokens(tokens);
         fixture_transferTokensToTestContract(erc20Tokens, 100_000_000 ether, address(this));
         console.log("strat address: ", address(miniPoolPidStrat));

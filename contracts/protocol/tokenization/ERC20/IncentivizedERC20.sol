@@ -3,7 +3,8 @@ pragma solidity 0.8.23;
 
 import {Context} from "../../../../contracts/dependencies/openzeppelin/contracts/Context.sol";
 import {IERC20} from "../../../../contracts/dependencies/openzeppelin/contracts/IERC20.sol";
-import {IERC20Detailed} from "../../../../contracts/dependencies/openzeppelin/contracts/IERC20Detailed.sol";
+import {IERC20Detailed} from
+    "../../../../contracts/dependencies/openzeppelin/contracts/IERC20Detailed.sol";
 import {IRewarder} from "../../../../contracts/interfaces/IRewarder.sol";
 
 /**

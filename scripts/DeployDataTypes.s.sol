@@ -14,13 +14,13 @@ import {WETHGateway} from "contracts/misc/WETHGateway.sol";
 import {LendingPoolAddressesProvider} from
     "contracts/protocol/configuration/LendingPoolAddressesProvider.sol";
 import {DefaultReserveInterestRateStrategy} from
-    "contracts/protocol/core/interestRateStrategies/DefaultReserveInterestRateStrategy.sol";
+    "contracts/protocol/core/interestRateStrategies/lendingpool/DefaultReserveInterestRateStrategy.sol";
 import {PiReserveInterestRateStrategy} from
-    "contracts/protocol/core/interestRateStrategies/PiReserveInterestRateStrategy.sol";
+    "contracts/protocol/core/interestRateStrategies/lendingpool/PiReserveInterestRateStrategy.sol";
 import {MiniPoolDefaultReserveInterestRateStrategy} from
-    "contracts/protocol/core/interestRateStrategies/MiniPoolDefaultReserveInterestRate.sol";
+    "contracts/protocol/core/interestRateStrategies/minipool/MiniPoolDefaultReserveInterestRate.sol";
 import {MiniPoolPiReserveInterestRateStrategy} from
-    "contracts/protocol/core/interestRateStrategies/MiniPoolPiReserveInterestRateStrategy.sol";
+    "contracts/protocol/core/interestRateStrategies/minipool/MiniPoolPiReserveInterestRateStrategy.sol";
 import {LendingPool} from "contracts/protocol/core/lendingpool/LendingPool.sol";
 import {LendingPoolCollateralManager} from
     "contracts/protocol/core/lendingpool/LendingPoolCollateralManager.sol";
@@ -31,6 +31,7 @@ import {MiniPoolAddressesProvider} from
     "contracts/protocol/configuration/MiniPoolAddressProvider.sol";
 import {MiniPoolConfigurator} from "contracts/protocol/core/minipool/MiniPoolConfigurator.sol";
 import {FlowLimiter} from "contracts/protocol/core/minipool/FlowLimiter.sol";
+
 import {ATokensAndRatesHelper} from "contracts/deployments/ATokensAndRatesHelper.sol";
 import {AToken} from "contracts/protocol/tokenization/ERC20/AToken.sol";
 import {ATokenERC6909} from "contracts/protocol/tokenization/ERC6909/ATokenERC6909.sol";

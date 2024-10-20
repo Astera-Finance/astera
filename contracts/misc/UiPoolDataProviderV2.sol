@@ -1,8 +1,10 @@
 // SPDX-License-Identifier: agpl-3.0
 pragma solidity 0.8.23;
 
-import {IERC20Detailed} from "../../contracts/dependencies/openzeppelin/contracts/IERC20Detailed.sol";
-import {ILendingPoolAddressesProvider} from "../../contracts/interfaces/ILendingPoolAddressesProvider.sol";
+import {IERC20Detailed} from
+    "../../contracts/dependencies/openzeppelin/contracts/IERC20Detailed.sol";
+import {ILendingPoolAddressesProvider} from
+    "../../contracts/interfaces/ILendingPoolAddressesProvider.sol";
 import {IUiPoolDataProviderV2} from "../../contracts/interfaces/IUiPoolDataProviderV2.sol";
 import {ILendingPool} from "../../contracts/interfaces/ILendingPool.sol";
 import {IOracle} from "../../contracts/interfaces/IOracle.sol";
@@ -11,11 +13,12 @@ import {IVariableDebtToken} from "../../contracts/interfaces/IVariableDebtToken.
 import {WadRayMath} from "../../contracts/protocol/libraries/math/WadRayMath.sol";
 import {ReserveConfiguration} from
     "../../contracts/protocol/libraries/configuration/ReserveConfiguration.sol";
-import {UserConfiguration} from "../../contracts/protocol/libraries/configuration/UserConfiguration.sol";
+import {UserConfiguration} from
+    "../../contracts/protocol/libraries/configuration/UserConfiguration.sol";
 import {DataTypes} from "../../contracts/protocol/libraries/types/DataTypes.sol";
 import {IChainlinkAggregator} from "../../contracts/interfaces/IChainlinkAggregator.sol";
 import {DefaultReserveInterestRateStrategy} from
-    "../../contracts/protocol/core/interestRateStrategies/DefaultReserveInterestRateStrategy.sol";
+    "../../contracts/protocol/core/interestRateStrategies/lendingpool/DefaultReserveInterestRateStrategy.sol";
 import {IERC20DetailedBytes} from "../../contracts/interfaces/IERC20DetailedBytes.sol";
 
 /**

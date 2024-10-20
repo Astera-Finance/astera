@@ -1,13 +1,21 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity 0.8.23;
 
-import {IAToken} from "../../../../contracts/interfaces/IAToken.sol";
-import {IVariableDebtToken} from "../../../../contracts/interfaces/IVariableDebtToken.sol";
-import {ILendingPool} from "../../../../contracts/interfaces/ILendingPool.sol";
-import {ILendingPoolAddressesProvider} from "../../../../contracts/interfaces/ILendingPoolAddressesProvider.sol";
-import {IReserveInterestRateStrategy} from "../../../../contracts/interfaces/IReserveInterestRateStrategy.sol";
-import "../../../../contracts/protocol/core/interestRateStrategies/BasePiReserveRateStrategy.sol";
-import {IERC20} from "../../../../contracts/dependencies/openzeppelin/contracts/IERC20.sol";
+import {IMiniPoolAddressesProvider} from
+    "../../../../../contracts/interfaces/IMiniPoolAddressesProvider.sol";
+import {IERC20} from "../../../../../contracts/dependencies/openzeppelin/contracts/IERC20.sol";
+import {IAERC6909} from "../../../../../contracts/interfaces/IAERC6909.sol";
+import {IAToken} from "../../../../../contracts/interfaces/IAToken.sol";
+import {IMiniPool} from "../../../../../contracts/interfaces/IMiniPool.sol";
+import {IFlowLimiter} from "../../../../../contracts/interfaces/IFlowLimiter.sol";
+import {IMiniPoolReserveInterestRateStrategy} from
+    "../../../../../contracts/interfaces/IMiniPoolReserveInterestRateStrategy.sol";
+import {
+    BasePiReserveRateStrategy,
+    WadRayMath,
+    PercentageMath,
+    DataTypes
+} from "../../../../../contracts/protocol/core/interestRateStrategies/BasePiReserveRateStrategy.sol";
 
 /**
  * @title PiReserveInterestRateStrategy contract
@@ -19,16 +27,19 @@ import {IERC20} from "../../../../contracts/dependencies/openzeppelin/contracts/
  * needs to be associated with only one market.
  * @author Cod3x
  */
-contract PiReserveInterestRateStrategy is
+contract MiniPoolPiReserveInterestRateStrategy is
     BasePiReserveRateStrategy,
-    IReserveInterestRateStrategy
+    IMiniPoolReserveInterestRateStrategy
 {
     using WadRayMath for uint256;
     using WadRayMath for int256;
     using PercentageMath for uint256;
 
+    uint256 public _minipoolId;
+
     constructor(
         address provider,
+        uint256 minipoolId,
         address asset,
         bool assetReserveType,
         int256 minControllerError,
@@ -47,19 +58,34 @@ contract PiReserveInterestRateStrategy is
             kp,
             ki
         )
-    {}
-
-    function _getLendingPool() internal view override returns (address) {
-        return ILendingPoolAddressesProvider(_addressProvider).getLendingPool();
+    {
+        _minipoolId = minipoolId;
     }
 
-    function getAvailableLiquidity(address, address aToken)
+    function _getLendingPool() internal view override returns (address) {
+        return IMiniPoolAddressesProvider(_addressProvider).getMiniPool(_minipoolId);
+    }
+
+    function getAvailableLiquidity(address asset, address aToken)
         public
         view
         override
-        returns (uint256)
+        returns (uint256 availableLiquidity)
     {
-        return IAToken(aToken).getTotalManagedAssets();
+        (,, bool isTranched) = IAERC6909(aToken).getIdForUnderlying(asset);
+
+        if (isTranched) {
+            IFlowLimiter flowLimiter =
+                IFlowLimiter(IMiniPoolAddressesProvider(_addressProvider).getFlowLimiter());
+            address underlying = IAToken(asset).UNDERLYING_ASSET_ADDRESS();
+            address minipool = IAERC6909(aToken).MINIPOOL_ADDRESS();
+
+            availableLiquidity = IERC20(asset).balanceOf(aToken)
+                + IAToken(asset).convertToShares(flowLimiter.getFlowLimit(underlying, minipool))
+                - IAToken(asset).convertToShares(flowLimiter.currentFlow(underlying, minipool));
+        } else {
+            availableLiquidity = IERC20(asset).balanceOf(aToken);
+        }
     }
 
     // ----------- view -----------
@@ -72,11 +98,13 @@ contract PiReserveInterestRateStrategy is
      */
     function getCurrentInterestRates() public view override returns (uint256, uint256, uint256) {
         // utilization
-        DataTypes.ReserveData memory reserve =
-            ILendingPool(_getLendingPool()).getReserveData(_asset, _assetReserveType);
-        uint256 availableLiquidity = getAvailableLiquidity(_asset, reserve.aTokenAddress);
-        uint256 totalVariableDebt = IVariableDebtToken(reserve.variableDebtTokenAddress)
-            .scaledTotalSupply().rayMul(reserve.variableBorrowIndex);
+        IAERC6909 aErc6909Token = IAERC6909(
+            IMiniPoolAddressesProvider(_addressProvider).getMiniPoolToAERC6909(_getLendingPool())
+        );
+        DataTypes.MiniPoolReserveData memory reserve =
+            IMiniPool(_getLendingPool()).getReserveData(_asset);
+        uint256 availableLiquidity = IERC20(_asset).balanceOf(reserve.aTokenAddress);
+        uint256 totalVariableDebt = aErc6909Token.totalSupply(reserve.variableDebtTokenID);
         uint256 utilizationRate = totalVariableDebt == 0
             ? 0
             : totalVariableDebt.rayDiv(availableLiquidity + totalVariableDebt);
@@ -89,7 +117,6 @@ contract PiReserveInterestRateStrategy is
         uint256 currentLiquidityRate = getLiquidityRate(
             currentVariableBorrowRate, utilizationRate, getReserveFactor(reserve.configuration)
         );
-
         return (currentLiquidityRate, currentVariableBorrowRate, utilizationRate);
     }
 

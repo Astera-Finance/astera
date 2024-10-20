@@ -33,7 +33,7 @@ contract VariableDebtTokenTest is Common {
         );
         variableDebtTokens =
             fixture_getVarDebtTokens(tokens, deployedContracts.protocolDataProvider);
-        mockedVaults = fixture_deployErc4626Mocks(tokens, address(deployedContracts.treasury));
+        mockedVaults = fixture_deployReaperVaultMocks(tokens, address(deployedContracts.treasury));
         erc20Tokens = fixture_getErc20Tokens(tokens);
         fixture_transferTokensToTestContract(erc20Tokens, 100_000 ether, address(this));
     }
