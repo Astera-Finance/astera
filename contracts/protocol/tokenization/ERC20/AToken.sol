@@ -598,7 +598,11 @@ contract AToken is
     }
 
     function setVault(address _vault) external override onlyLendingPool {
-        require(address(vault) == address(0), "84");
+        if(address(vault) != address(0)){
+            if(IERC20(address(vault)).balanceOf(address(this)) == 0){
+                revert("84");
+            }
+        }
         require(IERC4626(_vault).asset() == _underlyingAsset, "83");
         vault = IERC4626(_vault);
         IERC20(_underlyingAsset).forceApprove(address(vault), type(uint256).max);
