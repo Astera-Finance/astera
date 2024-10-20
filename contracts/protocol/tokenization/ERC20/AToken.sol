@@ -125,8 +125,9 @@ contract AToken is
         _treasury = treasury;
         _underlyingAsset = underlyingAsset;
         _incentivesController = incentivesController;
-
-        _aTokenWrapper = address(new ATokenNonRebasing(address(this)));
+        if(_aTokenWrapper == address(0)){
+            _aTokenWrapper = address(new ATokenNonRebasing(address(this)));
+        }
 
         emit Initialized(
             underlyingAsset,
