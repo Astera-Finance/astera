@@ -315,22 +315,16 @@ contract ATokenERC6909 is IncentivizedERC6909, VersionedInitializable {
         returns (uint256 aTokenID, uint256 debtTokenID, bool isTrancheRet, bool initialized)
     {
         (aTokenID, debtTokenID, isTrancheRet) = _getIdForUnderlying(underlying);
-        if (isTrancheRet == false) {
-            DataTypes.MiniPoolReserveData memory reserveData =
-                IMiniPool(POOL).getReserveData(underlying);
-            if (reserveData.id != 0) {
+        if (_underlyingAssetAddresses[aTokenID] != address(0)) {
+            initialized = true;
+            if (!isTrancheRet) {
+                DataTypes.MiniPoolReserveData memory reserveData =
+                    IMiniPool(POOL).getReserveData(underlying);
                 aTokenID = reserveData.aTokenID;
                 debtTokenID = reserveData.variableDebtTokenID;
-                initialized = true;
-            } else {
-                initialized = false;
             }
         }
-        if (isTrancheRet == true) {
-            if (_underlyingAssetAddresses[aTokenID] != address(0)) {
-                initialized = true;
-            }
-        }
+
         return (aTokenID, debtTokenID, isTrancheRet, initialized);
     }
 
