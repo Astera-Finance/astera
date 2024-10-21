@@ -17,8 +17,6 @@ import {MiniPoolDefaultReserveInterestRateStrategy} from
 import {MiniPoolPiReserveInterestRateStrategy} from
     "contracts/protocol/core/interestRateStrategies/minipool/MiniPoolPiReserveInterestRateStrategy.sol";
 import {LendingPool} from "contracts/protocol/core/lendingpool/LendingPool.sol";
-import {LendingPoolCollateralManager} from
-    "contracts/protocol/core/lendingpool/LendingPoolCollateralManager.sol";
 import {LendingPoolConfigurator} from
     "contracts/protocol/core/lendingpool/LendingPoolConfigurator.sol";
 import {MiniPool} from "contracts/protocol/core/minipool/MiniPool.sol";
@@ -33,8 +31,6 @@ import {VariableDebtToken} from "contracts/protocol/tokenization/ERC20/VariableD
 import {Oracle} from "contracts/protocol/core/Oracle.sol";
 import {IStrategy} from "contracts/mocks/dependencies/IStrategy.sol";
 import {WadRayMath} from "contracts/protocol/libraries/math/WadRayMath.sol";
-import {MiniPoolCollateralManager} from
-    "contracts/protocol/core/minipool/MiniPoolCollateralManager.sol";
 
 // Structures
 struct DeployedContracts {
@@ -54,8 +50,6 @@ struct DeployedContracts {
     AToken aToken;
     VariableDebtToken variableDebtToken;
     WETHGateway wETHGateway;
-    LendingPoolCollateralManager lendingPoolCollateralManager;
-    MiniPoolCollateralManager miniPoolCollateralManager;
     ATokenERC6909 aTokenErc6909;
     MiniPool miniPoolImpl;
     MiniPoolAddressesProvider miniPoolAddressesProvider;

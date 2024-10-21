@@ -14,7 +14,7 @@ pragma solidity 0.8.23;
  *  - LP = LendingPool
  *  - LPC = LendingPoolConfiguration
  *  - RL = ReserveLogic
- *  - LPCM = LendingPoolCollateralManager
+ *  - LPCM = Liquidation
  *  - P = Pausable
  * <<<<<<< HEAD
  *  - O = Oracle

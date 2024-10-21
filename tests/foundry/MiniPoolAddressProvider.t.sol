@@ -3,8 +3,6 @@ pragma solidity ^0.8.0;
 
 import "./Common.sol";
 import "contracts/protocol/libraries/helpers/Errors.sol";
-import {MiniPoolCollateralManager} from
-    "contracts/protocol/core/minipool/MiniPoolCollateralManager.sol";
 import "forge-std/StdUtils.sol";
 import {MockedContractToUpdate} from "contracts/mocks/dependencies/MockedContractToUpdate.sol";
 
@@ -223,26 +221,6 @@ contract MiniPoolAddressProvider is Common {
         // MiniPoolAddressesProvider miniPoolAddressesProvider = new MiniPoolAddressesProvider(
         //     ILendingPoolAddressesProvider(address(deployedContracts.lendingPoolAddressesProvider))
         // );
-        /* ***** Collateral Manager ***** */
-        {
-            address collateralManager = makeAddr("CollateralManager");
-            console.log(
-                "1. CollateralManager",
-                miniPoolContracts.miniPoolAddressesProvider.getMiniPoolCollateralManager()
-            );
-            miniPoolContracts.miniPoolAddressesProvider.setMiniPoolCollateralManager(
-                collateralManager
-            );
-            console.log(
-                "2. CollateralManager",
-                miniPoolContracts.miniPoolAddressesProvider.getMiniPoolCollateralManager()
-            );
-            assertEq(
-                miniPoolContracts.miniPoolAddressesProvider.getMiniPoolCollateralManager(),
-                collateralManager,
-                "Wrong collateral manager"
-            );
-        }
         /* ***** Treasury ***** */
         {
             address treasury = makeAddr("Treasury");

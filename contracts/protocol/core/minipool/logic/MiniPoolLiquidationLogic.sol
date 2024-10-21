@@ -10,8 +10,6 @@ import {IAToken} from "../../../../../contracts/interfaces/IAToken.sol";
 import {IAERC6909} from "../../../../../contracts/interfaces/IAERC6909.sol";
 import {IVariableDebtToken} from "../../../../../contracts/interfaces/IVariableDebtToken.sol";
 import {IPriceOracleGetter} from "../../../../../contracts/interfaces/IPriceOracleGetter.sol";
-import {ILendingPoolCollateralManager} from
-    "../../../../../contracts/interfaces/ILendingPoolCollateralManager.sol";
 import {VersionedInitializable} from
     "../../../../../contracts/protocol/libraries/upgradeability/VersionedInitializable.sol";
 import {MiniPoolGenericLogic} from

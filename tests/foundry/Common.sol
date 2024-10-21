@@ -21,7 +21,6 @@ import
 import
     "contracts/protocol/core/interestRateStrategies/minipool/MiniPoolPiReserveInterestRateStrategy.sol";
 import "contracts/protocol/core/lendingpool/LendingPool.sol";
-import "contracts/protocol/core/lendingpool/LendingPoolCollateralManager.sol";
 import "contracts/protocol/core/lendingpool/LendingPoolConfigurator.sol";
 import "contracts/protocol/core/minipool/MiniPool.sol";
 import "contracts/protocol/configuration/MiniPoolAddressProvider.sol";
@@ -205,7 +204,6 @@ contract Common is Test {
     VariableDebtToken public variableDebtToken;
     ATokenERC6909 public aTokenErc6909;
 
-    LendingPoolCollateralManager public lendingPoolCollateralManager;
     AToken[] public aTokens;
     AToken[] public aTokensWrapper;
     VariableDebtToken[] public variableDebtTokens;
@@ -366,7 +364,6 @@ contract Common is Test {
         );
 
         wETHGateway = new WETHGateway(WETH);
-        lendingPoolCollateralManager = new LendingPoolCollateralManager();
     }
 
     function fixture_configureProtocol(
@@ -378,9 +375,6 @@ contract Common is Test {
     ) public {
         fixture_configureReserves(
             configAddresses, lendingPoolConfiguratorProxy, lendingPoolAddressesProvider, _aToken
-        );
-        lendingPoolAddressesProvider.setLendingPoolCollateralManager(
-            address(lendingPoolCollateralManager)
         );
         wETHGateway.authorizeLendingPool(ledingPool);
 

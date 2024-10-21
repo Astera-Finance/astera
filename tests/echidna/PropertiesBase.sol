@@ -22,7 +22,6 @@ import "contracts/interfaces/IInitializableAToken.sol";
 import "contracts/interfaces/IInitializableDebtToken.sol";
 import "contracts/interfaces/ILendingPool.sol";
 import "contracts/interfaces/ILendingPoolAddressesProvider.sol";
-import "contracts/interfaces/ILendingPoolCollateralManager.sol";
 import "contracts/interfaces/ILendingPoolConfigurator.sol";
 import "contracts/interfaces/IReserveInterestRateStrategy.sol";
 import "contracts/interfaces/IRewarder.sol";
@@ -42,7 +41,6 @@ import "contracts/deployments/ATokensAndRatesHelper.sol";
 
 import "contracts/protocol/configuration/LendingPoolAddressesProvider.sol";
 
-import "contracts/protocol/core/lendingpool/LendingPoolCollateralManager.sol";
 import "contracts/protocol/core/interestRateStrategies/lendingpool/DefaultReserveInterestRateStrategy.sol";
 import "contracts/protocol/core/lendingpool/LendingPoolConfigurator.sol";
 import "contracts/protocol/core/lendingpool/LendingPoolStorage.sol";
@@ -104,7 +102,6 @@ contract PropertiesBase is PropertiesAsserts, MarketParams {
     ProtocolDataProvider internal protocolDataProvider;
     UiPoolDataProviderV2 internal uiPoolDataProviderV2;
     WETHGateway internal wethGateway;
-    LendingPoolCollateralManager internal poolCollManager;
 
     constructor() {
         /// mocks
@@ -202,9 +199,6 @@ contract PropertiesBase is PropertiesAsserts, MarketParams {
         }
         provider.setPoolAdmin(address(aHelper));
         aHelper.configureReserves(configureReserveInput);
-
-        poolCollManager = new LendingPoolCollateralManager();
-        provider.setLendingPoolCollateralManager(address(poolCollManager));
         wethGateway.authorizeLendingPool(address(pool));
 
         for (uint256 i = 0; i < totalNbTokens; i++) {
