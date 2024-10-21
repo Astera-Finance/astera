@@ -325,13 +325,17 @@ contract MiniPool is VersionedInitializable, IMiniPool, MiniPoolStorage {
         bool receiveAToken
     ) external override whenNotPaused {
         MiniPoolLiquidationLogic.liquidationCall(
+            _reserves,
+            _usersConfig,
+            _reservesList,
             MiniPoolLiquidationLogic.liquidationCallParams(
+                address(_addressesProvider),
+                _reservesCount,
                 collateralAsset,
                 debtAsset,
                 user,
                 debtToCover,
-                receiveAToken,
-                address(_addressesProvider)
+                receiveAToken
             )
         );
         _repayLendingPool(debtAsset);
