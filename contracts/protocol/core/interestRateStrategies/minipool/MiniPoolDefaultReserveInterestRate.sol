@@ -105,7 +105,7 @@ contract MiniPoolDefaultReserveInterestRateStrategy is IMiniPoolReserveInterestR
         uint256 reserveFactor
     ) external view override returns (uint256, uint256) {
         uint256 availableLiquidity;
-        (,, bool isTranched) = IAERC6909(aToken).getIdForUnderlying(reserve);
+        (,, bool isTranched,) = IAERC6909(aToken).getIdForUnderlying(reserve);
         if (isTranched) {
             IFlowLimiter flowLimiter = IFlowLimiter(_addressesProvider.getFlowLimiter());
             address underlying = IAToken(reserve).UNDERLYING_ASSET_ADDRESS();

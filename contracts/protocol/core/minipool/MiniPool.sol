@@ -363,7 +363,7 @@ contract MiniPool is VersionedInitializable, IMiniPool, MiniPoolStorage {
                 amount = aToken.balanceOf(address(this)); // asset
                 aToken.approve(_addressesProvider.getLendingPool(), amount);
                 ILendingPool(_addressesProvider.getLendingPool()).repayWithATokens(
-                    vars.underlyingAsset, true, amount, address(this)
+                    vars.underlyingAsset, true, amount
                 ); // MUST use asset
 
                 IAERC6909 aToken6909 = IAERC6909(reserve.aTokenAddress);

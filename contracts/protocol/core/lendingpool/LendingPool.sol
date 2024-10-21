@@ -217,14 +217,14 @@ contract LendingPool is VersionedInitializable, ILendingPool, LendingPoolStorage
         );
     }
 
-    function repayWithATokens(address asset, bool reserveType, uint256 amount, address onBehalfOf)
+    function repayWithATokens(address asset, bool reserveType, uint256 amount)
         external
         override
         whenNotPaused
         returns (uint256)
     {
         return BorrowLogic.repayWithAtokens(
-            BorrowLogic.repayParams(asset, reserveType, amount, onBehalfOf, _addressesProvider),
+            BorrowLogic.repayParams(asset, reserveType, amount, msg.sender, _addressesProvider),
             _reserves,
             _usersConfig
         );

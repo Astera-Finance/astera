@@ -540,10 +540,9 @@ interface ILendingPool {
      * @param asset The address of the underlying asset of the reserve.
      * @param reserveType Whether the reserve is boosted by a vault.
      * @param amount The amount to repay.
-     * @param onBehalfOf The address of the user whose debt will be reduced.
      * @return The final amount repaid.
      */
-    function repayWithATokens(address asset, bool reserveType, uint256 amount, address onBehalfOf)
+    function repayWithATokens(address asset, bool reserveType, uint256 amount)
         external
         returns (uint256);
 
