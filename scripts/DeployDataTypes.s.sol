@@ -3,14 +3,9 @@ pragma solidity ^0.8.0;
 
 import {ERC20} from "contracts/dependencies/openzeppelin/contracts/ERC20.sol";
 import {Rewarder} from "contracts/protocol/rewarder/lendingpool/Rewarder.sol";
-// import "contracts/protocol/core/Oracle.sol";
 import {ProtocolDataProvider} from "contracts/misc/ProtocolDataProvider.sol";
 import {Treasury} from "contracts/misc/Treasury.sol";
-// import "contracts/misc/UiPoolDataProviderV2.sol";
 import {WETHGateway} from "contracts/misc/WETHGateway.sol";
-// import "contracts/protocol/core/lendingpool/logic/ReserveLogic.sol";
-// import "contracts/protocol/core/lendingpool/logic/GenericLogic.sol";
-// import "contracts/protocol/core/lendingpool/logic/ValidationLogic.sol";
 import {LendingPoolAddressesProvider} from
     "contracts/protocol/configuration/LendingPoolAddressesProvider.sol";
 import {DefaultReserveInterestRateStrategy} from
@@ -31,25 +26,15 @@ import {MiniPoolAddressesProvider} from
     "contracts/protocol/configuration/MiniPoolAddressProvider.sol";
 import {MiniPoolConfigurator} from "contracts/protocol/core/minipool/MiniPoolConfigurator.sol";
 import {FlowLimiter} from "contracts/protocol/core/minipool/FlowLimiter.sol";
-
-
 import {ATokensAndRatesHelper} from "contracts/deployments/ATokensAndRatesHelper.sol";
 import {AToken} from "contracts/protocol/tokenization/ERC20/AToken.sol";
 import {ATokenERC6909} from "contracts/protocol/tokenization/ERC6909/ATokenERC6909.sol";
 import {VariableDebtToken} from "contracts/protocol/tokenization/ERC20/VariableDebtToken.sol";
-// import "contracts/mocks/tokens/MintableERC20.sol";
-// import "contracts/mocks/tokens/WETH9Mocked.sol";
-// import "contracts/mocks/oracle/MockAggregator.sol";
-// import "contracts/mocks/tokens/MockVault.sol";
-// import "contracts/mocks/tokens/MockStrat.sol";
-// import {ExternalContract} from "contracts/mocks/tokens/ExternalContract.sol";
+import {Oracle} from "contracts/protocol/core/Oracle.sol";
 import {IStrategy} from "contracts/mocks/dependencies/IStrategy.sol";
-// import "contracts/mocks/dependencies/IExternalContract.sol";
 import {WadRayMath} from "contracts/protocol/libraries/math/WadRayMath.sol";
-
-// import "contracts/protocol/core/minipool/MiniPoolDefaultReserveInterestRate.sol";
-// import "contracts/mocks/oracle/PriceOracle.sol";
-// import "contracts/protocol/core/minipool/MiniPoolCollateralManager.sol";
+import {MiniPoolCollateralManager} from
+    "contracts/protocol/core/minipool/MiniPoolCollateralManager.sol";
 
 // Structures
 struct DeployedContracts {
@@ -76,29 +61,13 @@ struct DeployedContracts {
     MiniPoolAddressesProvider miniPoolAddressesProvider;
     MiniPoolConfigurator miniPoolConfigurator;
     FlowLimiter flowLimiter;
+    Oracle oracle;
 }
 
 struct TokenParams {
     ERC20 token;
     AToken aToken;
     uint256 price;
-}
-
-struct ConfigParams {
-    uint256[] baseLTVs;
-    uint256[] liquidationThresholds;
-    uint256[] liquidationBonuses;
-    uint256[] reserveFactors;
-    bool[] borrowingEnabled;
-    bool[] reserveTypes;
-    bool[] isStableStrategy;
-}
-
-struct MiniPoolConfigParams {
-    address[] mainPoolAssets;
-    ConfigParams mainPoolConfig;
-    address[] miniPoolAssets;
-    ConfigParams miniPoolConfig;
 }
 
 /**
@@ -109,11 +78,17 @@ struct General {
     string aTokenSymbolPrefix;
     string debtTokenNamePrefix;
     string debtTokenSymbolPrefix;
+    address wethAddress;
 }
 
 struct Roles {
+    address addressesProviderOwner;
     address emergencyAdmin;
+    address oracleOwner;
+    address piInterestStrategiesOwner;
     address poolAdmin;
+    address rewarderOwner;
+    address treasuryOwner;
 }
 
 struct PoolAddressesProviderConfig {
@@ -168,30 +143,22 @@ struct MockedToken {
     string symbol;
 }
 
-// struct LendingPoolInfra {
-//     address lendingPoolAddressesProvider;
-//     address lendingPool;
-//     address aTokenErc6909;
-//     address lendingPoolConfigurator;
-// }
-
-/*   
- "piStrategy": {},
- "miniPoolReserves": {} 
- */
-// struct PiStrategy {
-
-// }
-
-struct DeploymentConfig {
-    General general;
-    Roles roles;
-    PoolAddressesProviderConfig poolAddressesProviderConfig;
-    PoolReserversConfig[] poolReserversConfig;
-    LinearStrategy volatileStrategy;
-    LinearStrategy stableStrategy;
+struct NewPeripherial {
+    bool configure;
+    address newAddress;
+    bool reserveType;
+    string symbol;
+    address tokenAddress;
 }
 
-// PoolAddressesProviderConfig poolAddressesProviderConfig;
-
-// LinearStrategy linearStrategy;
+struct Rehypothecation {
+    uint256 claimingThreshold;
+    bool configure;
+    uint256 drift;
+    uint256 farmingPct;
+    address profitHandler;
+    bool reserveType;
+    string symbol;
+    address tokenAddress;
+    address vault;
+}

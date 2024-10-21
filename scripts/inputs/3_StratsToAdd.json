@@ -1,4 +1,8 @@
 {
+    "poolAddressesProviderConfig": {
+        "marketId": "UV TestNet Market",
+        "poolId": 0
+    },
     "volatileStrategies": [
         {
             "baseVariableBorrowRate": 0e27,

@@ -1,7 +1,9 @@
 {
-    "roles": {
-        "poolAdmin": "0x3151CfCA393FE5Eec690feD2a2446DA5a073d01B",
-        "emergencyAdmin": "0x3151CfCA393FE5Eec690feD2a2446DA5a073d01B"
+    "general": {
+        "aTokenNamePrefix": "Cod3x Lend ",
+        "aTokenSymbolPrefix": "cl",
+        "debtTokenNamePrefix": "Cod3x Lend variable debt bearing ",
+        "debtTokenSymbolPrefix": "variableDebt"
     },
     "poolAddressesProviderConfig": {
         "marketId": "UV TestNet Market",
@@ -12,10 +14,11 @@
             "baseLtv": 7000,
             "borrowingEnabled": true,
             "interestStrat": "VOLATILE",
-            "liquidationBonus": 10400,
-            "liquidationThreshold": 7400,
+            "interestStratId": 0,
+            "liquidationBonus": 10500,
+            "liquidationThreshold": 7500,
             "params": "0x10",
-            "rates": 0.04e27,
+            "rates": 0.03e27,
             "reserveFactor": 1500,
             "reserveType": true,
             "symbol": "WBTC",
@@ -24,9 +27,10 @@
         {
             "baseLtv": 7000,
             "borrowingEnabled": true,
-            "interestStrat": "STABLE",
+            "interestStrat": "PI",
+            "interestStratId": 2,
             "liquidationBonus": 10500,
-            "liquidationThreshold": 7400,
+            "liquidationThreshold": 7500,
             "params": "0x10",
             "rates": 0.03e27,
             "reserveFactor": 1500,
@@ -40,10 +44,11 @@
             "baseLtv": 7000,
             "borrowingEnabled": true,
             "interestStrat": "VOLATILE",
+            "interestStratId": 0,
             "liquidationBonus": 10500,
-            "liquidationThreshold": 7700,
+            "liquidationThreshold": 7500,
             "params": "0x10",
-            "rates": 0.02e27,
+            "rates": 0.03e27,
             "reserveFactor": 1500,
             "reserveType": true,
             "symbol": "WBTC",
@@ -53,38 +58,32 @@
             "baseLtv": 7000,
             "borrowingEnabled": true,
             "interestStrat": "STABLE",
+            "interestStratId": 0,
             "liquidationBonus": 10500,
-            "liquidationThreshold": 7100,
+            "liquidationThreshold": 7500,
             "params": "0x10",
             "rates": 0.03e27,
-            "reserveFactor": 1600,
+            "reserveFactor": 1500,
             "reserveType": true,
             "symbol": "USDT",
             "tokenAddress": "0xFd086bC7CD5C481DCC9C85ebE478A1C0b69FCbb9"
         }
     ],
-    "lendingPoolMockedToken": [
-        {
-            "decimals": 6,
-            "prices": 1e8,
-            "symbol": "USDC"
-        },
-        {
-            "decimals": 8,
-            "prices": 64e8,
-            "symbol": "WBTC"
-        }
-    ],
-    "miniPoolMockedToken": [
-        {
-            "decimals": 8,
-            "prices": 64e8,
-            "symbol": "WBTC"
-        },
-        {
-            "decimals": 18,
-            "prices": 1e8,
-            "symbol": "USDT"
-        }
-    ]
+    "oracleConfig": {
+        "assets": [
+            "0x82aF49447D8a07e3bd95BD0d56f35241523fBab1",
+            "0xaf88d065e77c8cC2239327C5EDb3A432268e5831",
+            "0x2f2a2543B76A4166549F7aaB2e75Bef0aefC5B0f",
+            "0xFd086bC7CD5C481DCC9C85ebE478A1C0b69FCbb9"
+        ],
+        "baseCurrency": "0x0000000000000000000000000000000000000000",
+        "baseCurrencyUnit": 1e18,
+        "fallbackOracle": "0x0000000000000000000000000000000000000000",
+        "sources": [
+            "0x639Fe6ab55C921f74e7fac1ee960C0B6293ba612",
+            "0x50834F3163758fcC1Df9973b6e91f0F0F0434aD3",
+            "0xd0C7101eACbB49F3deCcCc166d238410D6D46d57",
+            "0x3f3f5dF88dC9F13eac63DF89EC16ef6e7E25DdE7"
+        ]
+    }
 }

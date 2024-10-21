@@ -13,9 +13,8 @@ import "lib/forge-std/src/console.sol";
 contract DeployLendingPool is Script, DeploymentUtils, Test {
     using stdJson for string;
 
-    address WETH_ARB = 0x82aF49447D8a07e3bd95BD0d56f35241523fBab1;
-
     function writeJsonData(string memory root, string memory path) internal {
+        vm.serializeAddress("lendingPoolContracts", "oracle", address(contracts.oracle));
         vm.serializeAddress("lendingPoolContracts", "rewarder", address(contracts.rewarder));
         vm.serializeAddress("lendingPoolContracts", "treasury", address(contracts.treasury));
         {
@@ -66,7 +65,7 @@ contract DeployLendingPool is Script, DeploymentUtils, Test {
             "lendingPoolCollateralManager",
             address(contracts.lendingPoolCollateralManager)
         );
-        vm.serializeAddress(
+        string memory output = vm.serializeAddress(
             "lendingPoolContracts",
             "lendingPoolConfigurator",
             address(contracts.lendingPoolConfigurator)
@@ -80,13 +79,13 @@ contract DeployLendingPool is Script, DeploymentUtils, Test {
     }
 
     function run() external returns (DeployedContracts memory) {
+        console.log("1_DeployLendingPool");
         // Config fetching
         string memory root = vm.projectRoot();
         string memory path = string.concat(root, "/scripts/inputs/1_DeploymentConfig.json");
         console.log("PATH: ", path);
         string memory deploymentConfig = vm.readFile(path);
         General memory general = abi.decode(deploymentConfig.parseRaw(".general"), (General));
-        Roles memory roles = abi.decode(deploymentConfig.parseRaw(".roles"), (Roles));
         PoolAddressesProviderConfig memory poolAddressesProviderConfig = abi.decode(
             deploymentConfig.parseRaw(".poolAddressesProviderConfig"), (PoolAddressesProviderConfig)
         );
@@ -118,7 +117,6 @@ contract DeployLendingPool is Script, DeploymentUtils, Test {
                 piStrategies,
                 poolAddressesProviderConfig,
                 poolReserversConfig,
-                WETH_ARB,
                 FOUNDRY_DEFAULT
             );
             vm.stopPrank();
@@ -127,32 +125,35 @@ contract DeployLendingPool is Script, DeploymentUtils, Test {
             /* Write important contracts into the file */
         } else if (vm.envBool("TESTNET")) {
             console.log("Testnet Deployment");
-            //deploy to testnet
-            MockedToken[] memory mockedTokens =
-                abi.decode(deploymentConfig.parseRaw(".mockedToken"), (MockedToken[]));
+            /* Read all mocks deployed */
+            string memory path = string.concat(root, "/scripts/outputs/0_MockedTokens.json");
+            console.log("PATH: ", path);
+            string memory config = vm.readFile(path);
+            address[] memory mockedTokens = config.readAddressArray(".mockedTokens");
 
-            require(mockedTokens.length == poolReserversConfig.length, "Wrong config in Json");
+            require(
+                mockedTokens.length >= poolReserversConfig.length,
+                "There are not enough mocked tokens. Deploy mocks.. "
+            );
             {
-                string[] memory symbols = new string[](poolReserversConfig.length);
-                uint8[] memory decimals = new uint8[](poolReserversConfig.length);
-                int256[] memory prices = new int256[](poolReserversConfig.length);
-
                 for (uint8 idx = 0; idx < poolReserversConfig.length; idx++) {
-                    symbols[idx] = mockedTokens[idx].symbol;
-                    decimals[idx] = uint8(mockedTokens[idx].decimals);
-                    prices[idx] = int256(mockedTokens[idx].prices);
-                }
-
-                // Deployment
-                console.log("Broadcasting....");
-                vm.startBroadcast(vm.envUint("PRIVATE_KEY"));
-                (address[] memory tokens,) = _deployERC20Mocks(symbols, symbols, decimals, prices);
-                vm.stopBroadcast();
-
-                for (uint8 idx = 0; idx < poolReserversConfig.length; idx++) {
-                    poolReserversConfig[idx].tokenAddress = address(tokens[idx]);
+                    for (uint8 i = 0; i < mockedTokens.length; i++) {
+                        if (
+                            keccak256(abi.encodePacked(ERC20(mockedTokens[i]).symbol()))
+                                == keccak256(abi.encodePacked(poolReserversConfig[idx].symbol))
+                        ) {
+                            poolReserversConfig[idx].tokenAddress = address(mockedTokens[i]);
+                            piStrategies[idx].tokenAddress = address(mockedTokens[i]);
+                            break;
+                        }
+                    }
+                    require(
+                        poolReserversConfig[idx].tokenAddress != address(0),
+                        "Mocked token not assigned"
+                    );
                 }
             }
+            /* Deploy to testnet */
             vm.startBroadcast(vm.envUint("PRIVATE_KEY"));
             console.log("Deploying lending pool infra");
             deployLendingPoolInfra(
@@ -163,14 +164,16 @@ contract DeployLendingPool is Script, DeploymentUtils, Test {
                 piStrategies,
                 poolAddressesProviderConfig,
                 poolReserversConfig,
-                WETH_ARB,
                 vm.addr(vm.envUint("PRIVATE_KEY"))
             );
             vm.stopBroadcast();
+
+            /* Write data */
             writeJsonData(root, path);
         } else if (vm.envBool("MAINNET")) {
             console.log("Mainnet Deployment");
 
+            /* Deploy to the mainnet */
             vm.startBroadcast(vm.envUint("PRIVATE_KEY"));
             deployLendingPoolInfra(
                 general,
@@ -180,7 +183,6 @@ contract DeployLendingPool is Script, DeploymentUtils, Test {
                 piStrategies,
                 poolAddressesProviderConfig,
                 poolReserversConfig,
-                WETH_ARB,
                 vm.addr(vm.envUint("PRIVATE_KEY"))
             );
             vm.stopBroadcast();
