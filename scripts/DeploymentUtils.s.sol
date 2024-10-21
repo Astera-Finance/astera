@@ -36,7 +36,7 @@ import "contracts/mocks/dependencies/IStrategy.sol";
 import "contracts/mocks/dependencies/IExternalContract.sol";
 import {WadRayMath} from "contracts/protocol/libraries/math/WadRayMath.sol";
 
-import "contracts/protocol/core/interestRateStrategies/MiniPoolDefaultReserveInterestRate.sol";
+import "contracts/protocol/core/interestRateStrategies/minipool/MiniPoolDefaultReserveInterestRate.sol";
 import "contracts/mocks/oracle/PriceOracle.sol";
 import "contracts/protocol/core/minipool/MiniPoolCollateralManager.sol";
 
