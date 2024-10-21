@@ -13,12 +13,6 @@ interface IMiniPoolAddressesProvider {
     event MiniPoolCollateralManagerUpdated(address indexed newAddress);
     event TreasurySet(address indexed treasury, uint256 miniPoolId);
 
-    // Errors
-    error NoMiniPoolIdForAddress();
-    error NoImplOfAToken6909();
-    error PoolIdOutOfRange();
-    error NotAllowedIds();
-
     // Functions related to getting various addresses
     function getMiniPoolCount() external view returns (uint256);
     function getLendingPoolAddressesProvider() external view returns (address);

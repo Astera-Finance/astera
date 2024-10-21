@@ -12,6 +12,7 @@ import {ILendingPoolAddressesProvider} from
 import {IFlowLimiter} from "../../../contracts/interfaces/IFlowLimiter.sol";
 import {IMiniPoolAddressesProvider} from
     "../../../contracts/interfaces/IMiniPoolAddressesProvider.sol";
+import {Errors} from "../libraries/helpers/Errors.sol";
 
 /**
  * @title LendingPoolAddressesProvider contract
@@ -30,7 +31,7 @@ contract MiniPoolAddressesProvider is Ownable, IMiniPoolAddressesProvider {
 
     modifier poolIdCheck(uint256 poolId) {
         if (poolId >= _miniPoolCount) {
-            revert PoolIdOutOfRange();
+            revert(Errors.PAP_POOL_ID_OUT_OF_RANGE);
         }
         _;
     }
@@ -103,7 +104,7 @@ contract MiniPoolAddressesProvider is Ownable, IMiniPoolAddressesProvider {
                 return id;
             }
         }
-        revert NoMiniPoolIdForAddress();
+        revert(Errors.PAP_NO_MINI_POOL_ID_FOR_ADDRESS);
     }
 
     function getMiniPoolToAERC6909(address miniPool) external view returns (address) {

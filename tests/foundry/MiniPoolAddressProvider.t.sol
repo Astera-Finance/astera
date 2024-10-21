@@ -95,7 +95,7 @@ contract MiniPoolAddressProvider is Common {
 
             /* Set on not deployed miniPool */
             console.log("Revert 1");
-            vm.expectRevert(bytes4(keccak256("PoolIdOutOfRange()")));
+            vm.expectRevert(bytes(Errors.PAP_POOL_ID_OUT_OF_RANGE));
             miniPoolAddressesProvider.setMiniPoolImpl(miniPoolImpl, 0);
 
             /* Test setting impl with older or the same version (shall revert) */
@@ -112,7 +112,7 @@ contract MiniPoolAddressProvider is Common {
             /* Set with Id out of range */
             console.log("Revert 4");
             address newMiniPoolImpl = address(new MockedContractToUpdate());
-            vm.expectRevert(bytes4(keccak256("PoolIdOutOfRange()")));
+            vm.expectRevert(bytes(Errors.PAP_POOL_ID_OUT_OF_RANGE));
             miniPoolContracts.miniPoolAddressesProvider.setMiniPoolImpl(newMiniPoolImpl, 2);
         }
     }
@@ -149,7 +149,7 @@ contract MiniPoolAddressProvider is Common {
 
             /* Set on not deployed miniPool */
             console.log("Revert 1");
-            vm.expectRevert(bytes4(keccak256("PoolIdOutOfRange()")));
+            vm.expectRevert(bytes(Errors.PAP_POOL_ID_OUT_OF_RANGE));
             miniPoolAddressesProvider.setAToken6909Impl(aToken6909Impl, 0);
 
             /* Test setting impl with older or the same version (shall revert) */
@@ -166,7 +166,7 @@ contract MiniPoolAddressProvider is Common {
             /* Set with Id out of range */
             console.log("Revert 4");
             address newAToken6909Impl = address(new MockedContractToUpdate());
-            vm.expectRevert(bytes4(keccak256("PoolIdOutOfRange()")));
+            vm.expectRevert(bytes(Errors.PAP_POOL_ID_OUT_OF_RANGE));
             miniPoolContracts.miniPoolAddressesProvider.setAToken6909Impl(newAToken6909Impl, 2);
         }
     }
@@ -259,7 +259,7 @@ contract MiniPoolAddressProvider is Common {
                 "Wrong treasury"
             );
             /* Revert when try to get treasury from not existing id */
-            vm.expectRevert(bytes4(keccak256("PoolIdOutOfRange()")));
+            vm.expectRevert(bytes(Errors.PAP_POOL_ID_OUT_OF_RANGE));
             miniPoolContracts.miniPoolAddressesProvider.setMiniPoolToTreasury(10, treasury);
         }
 
@@ -338,5 +338,15 @@ contract MiniPoolAddressProvider is Common {
             miniPoolContracts.miniPoolAddressesProvider.getAToken6909(1),
             "Wrong AToken implementation after deployment"
         );
+
+        assertEq(
+            1,
+            miniPoolContracts.miniPoolAddressesProvider.getMiniPoolId(
+                miniPoolContracts.miniPoolAddressesProvider.getMiniPool(1)
+            )
+        );
+        /* getMiniPool shall revert when id not found */
+        vm.expectRevert(bytes(Errors.PAP_NO_MINI_POOL_ID_FOR_ADDRESS));
+        miniPoolContracts.miniPoolAddressesProvider.getMiniPoolId(makeAddr("Random"));
     }
 }
