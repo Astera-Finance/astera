@@ -116,6 +116,7 @@ library Errors {
     string public constant O_PRICE_FEED_INCONSISTENCY = "97";
     string public constant PAP_NO_MINI_POOL_ID_FOR_ADDRESS = "98";
     string public constant PAP_POOL_ID_OUT_OF_RANGE = "99";
+    string public constant AT_VAULT_NOT_EMPTY = "100";
 
     enum CollateralManagerErrors {
         NO_ERROR,
