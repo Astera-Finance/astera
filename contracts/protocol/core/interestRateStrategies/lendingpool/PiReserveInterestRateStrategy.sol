@@ -59,9 +59,9 @@ contract PiReserveInterestRateStrategy is
         public
         view
         override
-        returns (uint256)
+        returns (uint256, address, uint256)
     {
-        return IAToken(aToken).getTotalManagedAssets();
+        return (IAToken(aToken).getTotalManagedAssets(), address(0), 0);
     }
 
     // ----------- view -----------
@@ -76,7 +76,7 @@ contract PiReserveInterestRateStrategy is
         // utilization
         DataTypes.ReserveData memory reserve =
             ILendingPool(_getLendingPool()).getReserveData(_asset, _assetReserveType);
-        uint256 availableLiquidity = getAvailableLiquidity(_asset, reserve.aTokenAddress);
+        (uint256 availableLiquidity,,) = getAvailableLiquidity(_asset, reserve.aTokenAddress);
         uint256 totalVariableDebt = IVariableDebtToken(reserve.variableDebtTokenAddress)
             .scaledTotalSupply().rayMul(reserve.variableBorrowIndex);
         uint256 utilizationRate = totalVariableDebt == 0
@@ -105,6 +105,18 @@ contract PiReserveInterestRateStrategy is
         return type(uint256).max;
     }
 
+    /**
+     * @dev Calculates the interest rates depending on the reserve's state and configurations
+     * @param reserve The address of the reserve
+     * @param aToken The address of the reserve aToken
+     * @param liquidityAdded The liquidity added during the operation
+     * @param liquidityTaken The liquidity taken during the operation
+     * @param totalVariableDebt The total borrowed from the reserve at a variable rate
+     * @param reserveFactor The reserve portion of the interest that goes to the treasury of the market
+     * @return currentLiquidityRate The liquidity rate
+     * @return currentVariableBorrowRate The variable borrow rate
+     *
+     */
     function calculateInterestRates(
         address reserve,
         address aToken,
@@ -112,20 +124,14 @@ contract PiReserveInterestRateStrategy is
         uint256 liquidityTaken, //! since this function is not view anymore we need to make sure liquidityTaken is removed at the end
         uint256 totalVariableDebt,
         uint256 reserveFactor
-    ) external override onlyLendingPool returns (uint256, uint256) {
-        return _calculateInterestRates(
+    )
+        external
+        override
+        onlyLendingPool
+        returns (uint256 currentLiquidityRate, uint256 currentVariableBorrowRate)
+    {
+        (currentLiquidityRate, currentVariableBorrowRate,,,) = _calculateInterestRates(
             reserve, aToken, liquidityAdded, liquidityTaken, totalVariableDebt, reserveFactor
-        );
-    }
-
-    function calculateInterestRates(
-        address,
-        uint256 availableLiquidity,
-        uint256 totalVariableDebt,
-        uint256 reserveFactor
-    ) internal returns (uint256, uint256) {
-        return _calculateInterestRates(
-            address(0), availableLiquidity, totalVariableDebt, reserveFactor
         );
     }
 }

@@ -31,7 +31,7 @@ pip install -r tests/foundry/pidTests/requirements.txt
 
 ```sh
 cd tests/foundry/pidTests/
-touch datas/output.csv
+mkdir data/
 sudo chmod +x execSimualtion.sh
 ./execSimualtion.sh
 ```
