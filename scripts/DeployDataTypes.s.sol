@@ -135,6 +135,7 @@ struct OracleConfig {
     uint256 baseCurrencyUnit;
     address fallbackOracle;
     address[] sources;
+    uint256[] timeouts;
 }
 
 struct MockedToken {

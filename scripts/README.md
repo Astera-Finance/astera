@@ -33,14 +33,17 @@ The deployment process involves configuration files `./input/<Nr>_<InputJsonName
      - configuration with corresponding number shall be filled
      - run `forge script scripts/<nr>_<scriptName>.s.sol`
    - **Testnet**: 
-      - compatible script numbers <Nr> to run (0 - 7)
+      - compatible script numbers `<Nr>` to run (0 - 7)
       - there is need to have executed script 0_DeployMocks.s.sol in order to have ERC20 token mocks
-      - there is need to have already executed script with previous <Nr>
+      - there is need to have already executed script with previous `<Nr>`
       - import env variables via `source .env`
       - run `forge script scripts/<nr>_<scriptName>.s.sol --chain-id <chainId> --rpc-url $<RPC_URL> -vvvv --broadcast` for deployment
-      - run `forge script scripts/5_Reconfigure.s.sol --chain-id 421614 --rpc-url $ARB_SEPOLIA --etherscan-api-key $ETHERSCAN_KEY --broadcast -vvvv --sender 0x3151CfCA393FE5Eec690feD2a2446DA5a073d01B`
+      - run `forge script scripts/<nr>_<scriptName>.s.sol --chain-id $<RPC_URL> --rpc-url $<RPC_URL> --etherscan-api-key $ETHERSCAN_KEY --broadcast -vvvv --sender <sender address>` if sender is required
+      - run `forge script scripts/<nr>_<scriptName>.s.sol --chain-id 84532 --rpc-url $<RPC_URL> --broadcast -vvvv --private-key $PRIVATE_KEY` if sender is required
    - **Mainnet**:
       - compatible script numbers <Nr> to run (1 - 7)
+   - **Tests**
+     - `forge script scripts/8_TestBasicActions_Staging.s.sol --chain-id 84532 --rpc-url $BASE_SEPOLIA_RPC_URL --broadcast -vvvv --private-keys $USER1_PRIVATE_KEY --private-keys $USER2_PRIVATE_KEY --private-keys $DIST_PRIVATE_KEY --sender <EoaAddress>`
 
 ### Configuration files
 **Important !!** All params listed inside json's keys MUST be in alphabetical order !

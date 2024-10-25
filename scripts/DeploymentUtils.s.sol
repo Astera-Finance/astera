@@ -204,6 +204,7 @@ contract DeploymentUtils {
         Oracle oracle = new Oracle(
             oracleConfig.assets,
             oracleConfig.sources,
+            oracleConfig.timeouts,
             oracleConfig.fallbackOracle,
             oracleConfig.baseCurrency,
             oracleConfig.baseCurrencyUnit
@@ -364,7 +365,7 @@ contract DeploymentUtils {
         _configureReserves(_contracts, _reservesConfig);
 
         Oracle oracle = Oracle(_contracts.lendingPoolAddressesProvider.getPriceOracle());
-        oracle.setAssetSources(oracleConfig.assets, oracleConfig.sources);
+        oracle.setAssetSources(oracleConfig.assets, oracleConfig.sources, oracleConfig.timeouts);
         _contracts.lendingPoolConfigurator.setPoolPause(false);
     }
 
@@ -463,7 +464,7 @@ contract DeploymentUtils {
         console.log("Configuring");
         _configureMiniPoolReserves(_contracts, _reservesConfig, mp);
         Oracle oracle = Oracle(_contracts.miniPoolAddressesProvider.getPriceOracle());
-        oracle.setAssetSources(oracleConfig.assets, oracleConfig.sources);
+        oracle.setAssetSources(oracleConfig.assets, oracleConfig.sources, oracleConfig.timeouts);
         console.log("Asset set!!");
         _contracts.lendingPoolConfigurator.setPoolPause(false);
         return (aTokensErc6909Addr, mp);
@@ -518,6 +519,7 @@ contract DeploymentUtils {
     ) internal returns (address[] memory, Oracle) {
         address[] memory tokens = new address[](names.length);
         address[] memory aggregators = new address[](names.length);
+        uint256[] memory timeouts = new uint256[](names.length);
         for (uint256 i = 0; i < names.length; i++) {
             if (keccak256(abi.encodePacked(symbols[i])) == keccak256(abi.encodePacked("WETH"))) {
                 tokens[i] = address(_deployWETH9Mocked());
@@ -525,9 +527,11 @@ contract DeploymentUtils {
                 tokens[i] = address(_deployERC20Mock(names[i], symbols[i], decimals[i]));
             }
             aggregators[i] = address(_deployMockAggregator(tokens[i], prices[i]));
+            timeouts[i] = type(uint256).max;
         }
         //mock tokens, mock aggregators, fallbackOracle, baseCurrency, baseCurrencyUnit
-        Oracle oracle = _deployOracle(tokens, aggregators, address(0), address(0), 100000000);
+        Oracle oracle =
+            _deployOracle(tokens, aggregators, timeouts, address(0), address(0), 100000000);
         return (tokens, oracle);
     }
 
@@ -553,18 +557,23 @@ contract DeploymentUtils {
     function _deployOracle(
         address[] memory assets,
         address[] memory sources,
+        uint256[] memory timeouts,
         address fallbackOracle,
         address baseCurrency,
         uint256 baseCurrencyUnit
     ) internal returns (Oracle) {
-        Oracle oracle = new Oracle(assets, sources, fallbackOracle, baseCurrency, baseCurrencyUnit);
+        Oracle oracle =
+            new Oracle(assets, sources, timeouts, fallbackOracle, baseCurrency, baseCurrencyUnit);
         return oracle;
     }
 
-    function _updateOracle(Oracle oracle, address[] memory assets, address[] memory sources)
-        internal
-    {
-        oracle.setAssetSources(assets, sources);
+    function _updateOracle(
+        Oracle oracle,
+        address[] memory assets,
+        uint256[] memory timeouts,
+        address[] memory sources
+    ) internal {
+        oracle.setAssetSources(assets, sources, timeouts);
     }
 
     function _changePeripherials(

@@ -151,6 +151,7 @@ contract AddAssets is Script, DeploymentUtils, Test {
                                 == keccak256(abi.encodePacked(lendingPoolReserversConfig[idx].symbol))
                         ) {
                             lendingPoolReserversConfig[idx].tokenAddress = address(mockedTokens[i]);
+                            oracleConfig.assets[idx] = address(mockedTokens[i]);
                             break;
                         }
                     }
