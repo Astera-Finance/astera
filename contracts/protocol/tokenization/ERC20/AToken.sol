@@ -125,8 +125,9 @@ contract AToken is
         _treasury = treasury;
         _underlyingAsset = underlyingAsset;
         _incentivesController = incentivesController;
-
-        _aTokenWrapper = address(new ATokenNonRebasing(address(this)));
+        if (_aTokenWrapper == address(0)) {
+            _aTokenWrapper = address(new ATokenNonRebasing(address(this)));
+        }
 
         emit Initialized(
             underlyingAsset,
@@ -534,7 +535,10 @@ contract AToken is
         uint256 toWithdraw;
         uint256 toDeposit;
         // if we have profit that's more than the threshold, record it for withdrawal and redistribution
-        if (sharesToAssets - currentAllocated >= claimingThreshold) {
+        if (
+            sharesToAssets > currentAllocated
+                && sharesToAssets - currentAllocated >= claimingThreshold
+        ) {
             profit = sharesToAssets - currentAllocated;
         }
         // what % of the final pool balance would the current allocation be?
@@ -597,7 +601,10 @@ contract AToken is
     }
 
     function setVault(address _vault) external override onlyLendingPool {
-        require(address(vault) == address(0), "84");
+        require(address(_vault) != address(0), "84");
+        if (address(vault) != address(0)) {
+            require(IERC20(address(vault)).balanceOf(address(this)) == 0, Errors.AT_VAULT_NOT_EMPTY);
+        }
         require(IERC4626(_vault).asset() == _underlyingAsset, "83");
         vault = IERC4626(_vault);
         IERC20(_underlyingAsset).forceApprove(address(vault), type(uint256).max);

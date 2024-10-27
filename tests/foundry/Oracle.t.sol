@@ -39,15 +39,17 @@ contract OracleTest is Common {
     function testSetFallbackOracle() public {
         ERC20[] memory erc20tokens = fixture_getErc20Tokens(tokens);
         int256[] memory prices = new int256[](4);
+        uint256[] memory timeouts = new uint256[](4);
         // All chainlink price feeds have 8 decimals
         prices[0] = int256(95 * 10 ** PRICE_FEED_DECIMALS - 1); // USDC
         prices[1] = int256(63_000 * 10 ** PRICE_FEED_DECIMALS); // WBTC
         prices[2] = int256(3300 * 10 ** PRICE_FEED_DECIMALS); // ETH
         prices[3] = int256(95 * 10 ** PRICE_FEED_DECIMALS - 1); // DAI
-        (, aggregators) = fixture_getTokenPriceFeeds(erc20tokens, prices);
+        (, aggregators, timeouts) = fixture_getTokenPriceFeeds(erc20tokens, prices);
 
-        Oracle fallbackOracle =
-            new Oracle(tokens, aggregators, ZERO_ADDRESS, ZERO_ADDRESS, BASE_CURRENCY_UNIT);
+        Oracle fallbackOracle = new Oracle(
+            tokens, aggregators, timeouts, ZERO_ADDRESS, ZERO_ADDRESS, BASE_CURRENCY_UNIT
+        );
 
         oracle.setFallbackOracle(address(fallbackOracle));
         assertEq(address(fallbackOracle), oracle.getFallbackOracle());
@@ -59,14 +61,17 @@ contract OracleTest is Common {
 
         ERC20[] memory erc20tokens = fixture_getErc20Tokens(tokens);
         int256[] memory prices = new int256[](4);
+        uint256[] memory timeouts = new uint256[](4);
+
         // All chainlink price feeds have 8 decimals
         prices[0] = int256(95 * 10 ** PRICE_FEED_DECIMALS - 1); // USDC
         prices[1] = int256(63_000 * 10 ** PRICE_FEED_DECIMALS); // WBTC
         prices[2] = int256(3300 * 10 ** PRICE_FEED_DECIMALS); // ETH
         prices[3] = int256(95 * 10 ** PRICE_FEED_DECIMALS - 1); // DAI
-        (, aggregators) = fixture_getTokenPriceFeeds(erc20tokens, prices);
+        (, aggregators, timeouts) = fixture_getTokenPriceFeeds(erc20tokens, prices);
 
-        Oracle _oracle = new Oracle(tokens, aggregators, ZERO_ADDRESS, usdcAddress, baseCurrency);
+        Oracle _oracle =
+            new Oracle(tokens, aggregators, timeouts, ZERO_ADDRESS, usdcAddress, baseCurrency);
 
         assertEq(_oracle.getAssetPrice(usdcAddress), baseCurrency);
     }
@@ -75,18 +80,19 @@ contract OracleTest is Common {
         address usdcAddress = address(tokens[0]);
         address[] memory assets = new address[](1);
         assets[0] = usdcAddress;
+        uint256[] memory timeouts = new uint256[](1);
         ERC20[] memory erc20tokens = fixture_getErc20Tokens(assets);
         int256[] memory prices = new int256[](1);
 
         prices[0] = int256(0); // USDC
-        (, aggregators) = fixture_getTokenPriceFeeds(erc20tokens, prices);
-        oracle.setAssetSources(assets, aggregators);
+        (, aggregators, timeouts) = fixture_getTokenPriceFeeds(erc20tokens, prices);
+        oracle.setAssetSources(assets, aggregators, timeouts);
         vm.expectRevert();
         oracle.getAssetPrice(usdcAddress);
 
         prices[0] = int256(1 * 10 ** PRICE_FEED_DECIMALS);
-        (, aggregators) = fixture_getTokenPriceFeeds(erc20tokens, prices);
-        oracle.setAssetSources(assets, aggregators);
+        (, aggregators, timeouts) = fixture_getTokenPriceFeeds(erc20tokens, prices);
+        oracle.setAssetSources(assets, aggregators, timeouts);
         assertEq(oracle.getAssetPrice(usdcAddress), uint256(prices[0]));
     }
 }

@@ -187,8 +187,7 @@ contract LendingPool is VersionedInitializable, ILendingPool, LendingPoolStorage
             ),
             _reserves,
             _reservesList,
-            _usersConfig,
-            _usersRecentBorrow
+            _usersConfig
         );
     }
 
@@ -218,14 +217,14 @@ contract LendingPool is VersionedInitializable, ILendingPool, LendingPoolStorage
         );
     }
 
-    function repayWithATokens(address asset, bool reserveType, uint256 amount, address onBehalfOf)
+    function repayWithATokens(address asset, bool reserveType, uint256 amount)
         external
         override
         whenNotPaused
         returns (uint256)
     {
         return BorrowLogic.repayWithAtokens(
-            BorrowLogic.repayParams(asset, reserveType, amount, onBehalfOf, _addressesProvider),
+            BorrowLogic.repayParams(asset, reserveType, amount, msg.sender, _addressesProvider),
             _reserves,
             _usersConfig
         );
@@ -271,7 +270,9 @@ contract LendingPool is VersionedInitializable, ILendingPool, LendingPoolStorage
      * - The caller (liquidator) covers `debtToCover` amount of debt of the user getting liquidated, and receives
      *   a proportionally amount of the `collateralAsset` plus a bonus to cover market risk
      * @param collateralAsset The address of the underlying asset used as collateral, to receive as result of the liquidation
+     * @param collateralAssetType The reserve type of the underlying used as collateral
      * @param debtAsset The address of the underlying borrowed asset to be repaid with the liquidation
+     * @param debtAssetType The reserve type of the underlying borrowed asset to be repaid with the liquidation
      * @param user The address of the borrower getting liquidated
      * @param debtToCover The debt amount of borrowed `asset` the liquidator wants to cover
      * @param receiveAToken `true` if the liquidators wants to receive the collateral aTokens, `false` if he wants
@@ -291,15 +292,19 @@ contract LendingPool is VersionedInitializable, ILendingPool, LendingPoolStorage
             revert(Errors.VL_MINIPOOL_CANNOT_BE_LIQUIDATED);
         }
         LiquidationLogic.liquidationCall(
+            _reserves,
+            _usersConfig,
+            _reservesList,
             LiquidationLogic.liquidationCallParams(
+                address(_addressesProvider),
+                _reservesCount,
                 collateralAsset,
                 collateralAssetType,
                 debtAsset,
                 debtAssetType,
                 user,
                 debtToCover,
-                receiveAToken,
-                address(_addressesProvider)
+                receiveAToken
             )
         );
     }
@@ -350,7 +355,6 @@ contract LendingPool is VersionedInitializable, ILendingPool, LendingPoolStorage
             }),
             _reservesList,
             _usersConfig,
-            _usersRecentBorrow,
             _reserves
         );
     }
@@ -445,22 +449,6 @@ contract LendingPool is VersionedInitializable, ILendingPool, LendingPoolStorage
         returns (DataTypes.ReserveConfigurationMap memory)
     {
         return _reserves[asset][reserveType].configuration;
-    }
-
-    /**
-     * @dev Returns the borrow configuration of the reserve
-     * @param asset The address of the underlying asset of the reserve
-     * @param reserveType The type of the reserve
-     * @return The borrow configuration of the reserve
-     *
-     */
-    function getBorrowConfiguration(address asset, bool reserveType)
-        external
-        view
-        override
-        returns (DataTypes.ReserveBorrowConfigurationMap memory)
-    {
-        return _reserves[asset][reserveType].borrowConfiguration;
     }
 
     /**
@@ -561,9 +549,10 @@ contract LendingPool is VersionedInitializable, ILendingPool, LendingPoolStorage
     }
 
     /**
-     * @dev Validates and finalizes an aToken transfer
-     * - Only callable by the overlying aToken of the `asset`
+     * @notice Validates and finalizes an aToken transfer
+     * @dev Only callable by the overlying aToken of the `asset`
      * @param asset The address of the underlying asset of the aToken
+     * @param reserveType A boolean indicating whether the asset is boosted by a vault.
      * @param from The user from which the aTokens are transferred
      * @param to The user receiving the aTokens
      * @param amount The amount being transferred/withdrawn
@@ -655,22 +644,6 @@ contract LendingPool is VersionedInitializable, ILendingPool, LendingPoolStorage
     }
 
     /**
-     * @dev Sets the borrow configuration bitmap of the reserve as a whole
-     * - Only callable by the LendingPoolConfigurator contract
-     * @param asset The address of the underlying asset of the reserve
-     * @param borrowConfiguration The new borrow configuration bitmap
-     *
-     */
-    function setBorrowConfiguration(address asset, bool reserveType, uint256 borrowConfiguration)
-        external
-        override
-        onlyLendingPoolConfigurator
-    {
-        _reserves[asset][reserveType].borrowConfiguration.data = borrowConfiguration;
-        _lendingUpdateTimestamp = block.timestamp;
-    }
-
-    /**
      * @dev Set the _pause state of a reserve
      * - Only callable by the LendingPoolConfigurator contract
      * @param val `true` to pause the reserve, `false` to un-pause it
@@ -732,7 +705,6 @@ contract LendingPool is VersionedInitializable, ILendingPool, LendingPoolStorage
         external
         view
         override
-        onlyLendingPoolConfigurator
         returns (uint256)
     {
         return IAToken(aTokenAddress).getTotalManagedAssets();

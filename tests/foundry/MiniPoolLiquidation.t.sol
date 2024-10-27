@@ -7,7 +7,6 @@ import {WadRayMath} from "contracts/protocol/libraries/math/WadRayMath.sol";
 import {PercentageMath} from "contracts/protocol/libraries/math/PercentageMath.sol";
 import {ReserveConfiguration} from
     "contracts/protocol/libraries/configuration/ReserveConfiguration.sol";
-import "contracts/protocol/core/minipool/MiniPoolCollateralManager.sol";
 import "forge-std/StdUtils.sol";
 
 contract MiniPoolLiquidationTest is MiniPoolDepositBorrowTest {
@@ -99,14 +98,6 @@ contract MiniPoolLiquidationTest is MiniPoolDepositBorrowTest {
 
         (,,,,, liquidationVars.healthFactor) = IMiniPool(miniPool).getUserAccountData(user);
         console.log("3. Health factor: ", liquidationVars.healthFactor);
-
-        {
-            address miniPoolCollateralManager = address(new MiniPoolCollateralManager());
-            vm.prank(miniPoolContracts.miniPoolAddressesProvider.owner());
-            miniPoolContracts.miniPoolAddressesProvider.setMiniPoolCollateralManager(
-                miniPoolCollateralManager
-            );
-        }
 
         liquidationVars.collateralReserveDataBefore =
             IMiniPool(miniPool).getReserveData(address(collateralParams.token));
@@ -385,12 +376,6 @@ contract MiniPoolLiquidationTest is MiniPoolDepositBorrowTest {
 
         (,,,,, healthFactor) = IMiniPool(miniPool).getUserAccountData(user);
         console.log("2. MiniPool User healthFactor for user %s: %e", user, healthFactor);
-
-        address miniPoolCollateralManager = address(new MiniPoolCollateralManager());
-        vm.prank(miniPoolContracts.miniPoolAddressesProvider.owner());
-        miniPoolContracts.miniPoolAddressesProvider.setMiniPoolCollateralManager(
-            miniPoolCollateralManager
-        );
 
         /**
          * LIQUIDATION PROCESS - START ***********

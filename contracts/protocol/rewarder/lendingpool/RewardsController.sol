@@ -22,7 +22,8 @@ abstract contract RewardsController is RewardsDistributor, IRewardsController {
     mapping(address => bool) internal _isMiniPool;
     //aToken => ERC6909 => last Reported (totalSupply(ID) - balanceOf(ERC6909))
     mapping(address => mapping(address => uint256)) internal lastReportedDiff;
-    uint256 internal _totalDiff;
+    //aToken => totalDiff
+    mapping(address => uint256) internal _totalDiff;
     uint256 internal _totalTrackedMiniPools;
     address public rewardForwarder;
 
@@ -78,16 +79,20 @@ abstract contract RewardsController is RewardsDistributor, IRewardsController {
         refreshMiniPoolData();
         //if user is an ERC6909 aToken, this will only be true for aTokens
         if (_isAtokenERC6909[user] == true) {
-            (uint256 assetID,,) = IAERC6909(user).getIdForUnderlying(msg.sender);
+            (uint256 assetID,,, bool isInitialized) = IAERC6909(user).getIdForUnderlying(msg.sender);
             //for trancheATokens we calculate the total supply of the AERC6909 ID for the assetID
             //we subtract the current balance
+            assert(isInitialized);
             uint256 totalSupplyAsset = IAERC6909(user).scaledTotalSupply(assetID);
             uint256 diff = totalSupplyAsset - userBalance;
-            _totalDiff = _totalDiff - lastReportedDiff[msg.sender][user] + diff;
+            _totalDiff[msg.sender] =
+                _totalDiff[msg.sender] - lastReportedDiff[msg.sender][user] + diff;
             lastReportedDiff[msg.sender][user] = diff;
             userBalance = totalSupplyAsset;
         }
-        _updateUserRewardsPerAssetInternal(msg.sender, user, userBalance, totalSupply + _totalDiff);
+        _updateUserRewardsPerAssetInternal(
+            msg.sender, user, userBalance, totalSupply + _totalDiff[msg.sender]
+        );
     }
 
     function refreshMiniPoolData() internal {

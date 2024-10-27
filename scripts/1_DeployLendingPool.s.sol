@@ -60,11 +60,6 @@ contract DeployLendingPool is Script, DeploymentUtils, Test {
             "lendingPoolAddressesProvider",
             address(contracts.lendingPoolAddressesProvider)
         );
-        vm.serializeAddress(
-            "lendingPoolContracts",
-            "lendingPoolCollateralManager",
-            address(contracts.lendingPoolCollateralManager)
-        );
         string memory output = vm.serializeAddress(
             "lendingPoolContracts",
             "lendingPoolConfigurator",

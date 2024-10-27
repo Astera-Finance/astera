@@ -26,7 +26,6 @@ contract MiniPoolStorage {
 
     mapping(address => DataTypes.MiniPoolReserveData) internal _reserves;
     mapping(address => DataTypes.UserConfigurationMap) internal _usersConfig;
-    mapping(address => DataTypes.UserRecentBorrowMap) internal _usersRecentBorrow;
 
     // the list of the available reserves, structured as a mapping for gas savings reasons
     mapping(uint256 => DataTypes.ReserveReference) internal _reservesList;
@@ -43,6 +42,4 @@ contract MiniPoolStorage {
     uint256 internal _flashLoanPremiumTotal;
 
     uint256 internal _maxNumberOfReserves;
-
-    uint256 internal _lendingUpdateTimestamp; // track the last update made to the protocol parameters relative to borrowing
 }

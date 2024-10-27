@@ -16,12 +16,8 @@ import {MiniPoolReserveLogic} from "./MiniPoolReserveLogic.sol";
 import {MiniPoolValidationLogic} from "./MiniPoolValidationLogic.sol";
 import {ReserveConfiguration} from
     "../../../../../contracts/protocol/libraries/configuration/ReserveConfiguration.sol";
-import {ReserveBorrowConfiguration} from
-    "../../../../../contracts/protocol/libraries/configuration/ReserveBorrowConfiguration.sol";
 import {UserConfiguration} from
     "../../../../../contracts/protocol/libraries/configuration/UserConfiguration.sol";
-import {UserRecentBorrow} from
-    "../../../../../contracts/protocol/libraries/configuration/UserRecentBorrow.sol";
 import {Helpers} from "../../../../../contracts/protocol/libraries/helpers/Helpers.sol";
 import {IFlashLoanReceiver} from "../../../../../contracts/interfaces/IFlashLoanReceiver.sol"; // Add this line
 import {MiniPoolBorrowLogic} from "./MiniPoolBorrowLogic.sol";
@@ -95,7 +91,6 @@ library MiniPoolFlashLoanLogic {
         FlashLoanParams memory flashLoanParams,
         mapping(uint256 => DataTypes.ReserveReference) storage reservesList,
         mapping(address => DataTypes.UserConfigurationMap) storage usersConfig,
-        mapping(address => DataTypes.UserRecentBorrowMap) storage usersRecentBorrow,
         mapping(address => DataTypes.MiniPoolReserveData) storage reserves
     ) external {
         FlashLoanLocalVars memory vars;
@@ -170,8 +165,7 @@ library MiniPoolFlashLoanLogic {
                     ),
                     reserves,
                     reservesList,
-                    usersConfig,
-                    usersRecentBorrow
+                    usersConfig
                 );
             }
 

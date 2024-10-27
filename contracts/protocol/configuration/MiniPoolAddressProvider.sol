@@ -42,7 +42,6 @@ contract MiniPoolAddressesProvider is Ownable, IMiniPoolAddressesProvider {
 
     bytes32 private constant LENDING_POOL_ADDRESSES_PROVIDER = "LENDING_POOL_ADDRESSES_PROVIDER";
     bytes32 private constant MINI_POOL_CONFIGURATOR = "MINI_POOL_CONFIGURATOR";
-    bytes32 private constant MINI_POOL_COLLATERAL_MANAGER = "COLLATERAL_MANAGER";
 
     constructor(ILendingPoolAddressesProvider provider) Ownable(msg.sender) {
         _addresses[LENDING_POOL_ADDRESSES_PROVIDER] = address(provider);
@@ -70,10 +69,6 @@ contract MiniPoolAddressesProvider is Ownable, IMiniPoolAddressesProvider {
     function getEmergencyAdmin() external view returns (address) {
         return ILendingPoolAddressesProvider(_addresses[LENDING_POOL_ADDRESSES_PROVIDER])
             .getEmergencyAdmin();
-    }
-
-    function getMiniPoolCollateralManager() external view returns (address) {
-        return _addresses[MINI_POOL_COLLATERAL_MANAGER];
     }
 
     function getPriceOracle() external view returns (address) {
@@ -252,11 +247,6 @@ contract MiniPoolAddressesProvider is Ownable, IMiniPoolAddressesProvider {
     function setMiniPoolConfigurator(address configuratorImpl) external onlyOwner {
         _updateImpl(MINI_POOL_CONFIGURATOR, configuratorImpl);
         emit MiniPoolConfiguratorUpdated(configuratorImpl);
-    }
-
-    function setMiniPoolCollateralManager(address collateralManager) external onlyOwner {
-        _addresses[MINI_POOL_COLLATERAL_MANAGER] = collateralManager;
-        emit MiniPoolCollateralManagerUpdated(collateralManager);
     }
 
     function setMiniPoolToTreasury(uint256 id, address treasury)

@@ -17,7 +17,6 @@ import
 import
     "contracts/protocol/core/interestRateStrategies/lendingpool/PiReserveInterestRateStrategy.sol";
 import "contracts/protocol/core/lendingpool/LendingPool.sol";
-import "contracts/protocol/core/lendingpool/LendingPoolCollateralManager.sol";
 import "contracts/protocol/core/lendingpool/LendingPoolConfigurator.sol";
 import "contracts/protocol/core/minipool/MiniPool.sol";
 import "contracts/protocol/configuration/MiniPoolAddressProvider.sol";
@@ -36,10 +35,8 @@ import "contracts/mocks/tokens/ExternalContract.sol";
 import "contracts/mocks/dependencies/IStrategy.sol";
 import "contracts/mocks/dependencies/IExternalContract.sol";
 import {WadRayMath} from "contracts/protocol/libraries/math/WadRayMath.sol";
-import
-    "contracts/protocol/core/interestRateStrategies/minipool/MiniPoolDefaultReserveInterestRate.sol";
+import "contracts/protocol/core/interestRateStrategies/minipool/MiniPoolDefaultReserveInterestRate.sol";
 import "contracts/mocks/oracle/PriceOracle.sol";
-import "contracts/protocol/core/minipool/MiniPoolCollateralManager.sol";
 import "./DeployDataTypes.s.sol";
 import {DataTypes} from "../contracts/protocol/libraries/types/DataTypes.sol";
 
@@ -256,10 +253,6 @@ contract DeploymentUtils {
         contracts.lendingPoolAddressesProvider.setPoolAdmin(deployer);
         contracts.lendingPoolConfigurator.setPoolPause(true);
 
-        contracts.lendingPoolCollateralManager = new LendingPoolCollateralManager();
-        contracts.lendingPoolAddressesProvider.setLendingPoolCollateralManager(
-            address(contracts.lendingPoolCollateralManager)
-        );
         contracts.lendingPoolAddressesProvider.setPriceOracle(address(contracts.oracle));
         contracts.protocolDataProvider =
             new ProtocolDataProvider(contracts.lendingPoolAddressesProvider);
@@ -286,10 +279,6 @@ contract DeploymentUtils {
         contracts.lendingPoolAddressesProvider.setFlowLimiter(address(contracts.flowLimiter));
         contracts.miniPoolAddressesProvider.deployMiniPool(
             address(contracts.miniPoolImpl), address(contracts.aTokenErc6909)
-        );
-        contracts.miniPoolCollateralManager = new MiniPoolCollateralManager();
-        contracts.miniPoolAddressesProvider.setMiniPoolCollateralManager(
-            address(contracts.miniPoolCollateralManager)
         );
     }
 

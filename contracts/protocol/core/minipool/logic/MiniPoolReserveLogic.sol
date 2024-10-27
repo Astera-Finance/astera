@@ -8,8 +8,6 @@ import {IReserveInterestRateStrategy} from
     "../../../../../contracts/interfaces/IReserveInterestRateStrategy.sol";
 import {ReserveConfiguration} from
     "../../../../../contracts/protocol/libraries/configuration/ReserveConfiguration.sol";
-import {ReserveBorrowConfiguration} from
-    "../../../../../contracts/protocol/libraries/configuration/ReserveBorrowConfiguration.sol";
 import {MathUtils} from "../../../../../contracts/protocol/libraries/math/MathUtils.sol";
 import {WadRayMath} from "../../../../../contracts/protocol/libraries/math/WadRayMath.sol";
 import {PercentageMath} from "../../../../../contracts/protocol/libraries/math/PercentageMath.sol";
@@ -52,7 +50,6 @@ library MiniPoolReserveLogic {
 
     using MiniPoolReserveLogic for DataTypes.MiniPoolReserveData;
     using ReserveConfiguration for DataTypes.ReserveConfigurationMap;
-    using ReserveBorrowConfiguration for DataTypes.ReserveBorrowConfigurationMap;
 
     /**
      * @dev Returns the ongoing normalized income for the reserve
@@ -172,13 +169,14 @@ library MiniPoolReserveLogic {
      */
     function init(
         DataTypes.MiniPoolReserveData storage reserve,
+        address asset,
         IAERC6909 aTokenAddress,
         uint256 aTokenID,
         uint256 variableDebtTokenID,
         address interestRateStrategyAddress
     ) internal {
         require(
-            aTokenAddress.getUnderlyingAsset(reserve.aTokenID) == address(0),
+            aTokenAddress.getUnderlyingAsset(aTokenID) == asset,
             Errors.RL_RESERVE_ALREADY_INITIALIZED
         );
 

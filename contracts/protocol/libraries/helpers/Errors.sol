@@ -14,9 +14,13 @@ pragma solidity 0.8.23;
  *  - LP = LendingPool
  *  - LPC = LendingPoolConfiguration
  *  - RL = ReserveLogic
- *  - LPCM = LendingPoolCollateralManager
+ *  - LPCM = Liquidation
  *  - P = Pausable
+ * <<<<<<< HEAD
+ *  - O = Oracle
+ * =======
  *  - PAP = PoolAddressesProvider
+ * >>>>>>> deploymentScripts
  */
 library Errors {
     //common errors
@@ -108,8 +112,11 @@ library Errors {
     string public constant VL_FLASHLOAN_DISABLED = "93";
     string public constant LPC_FLASHLOAN_PREMIUM_INVALID = "94";
     string public constant VL_TRANCHED_ASSET_CANNOT_BE_FLASHLOAN = "95";
-    string public constant PAP_NO_MINI_POOL_ID_FOR_ADDRESS = "96";
-    string public constant PAP_POOL_ID_OUT_OF_RANGE = "97";
+    string public constant O_INCONSISTENT_PARAMS_LENGTH = "96";
+    string public constant O_PRICE_FEED_INCONSISTENCY = "97";
+    string public constant PAP_NO_MINI_POOL_ID_FOR_ADDRESS = "98";
+    string public constant PAP_POOL_ID_OUT_OF_RANGE = "99";
+    string public constant AT_VAULT_NOT_EMPTY = "100";
 
     enum CollateralManagerErrors {
         NO_ERROR,

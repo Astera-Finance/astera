@@ -104,13 +104,13 @@ abstract contract BasePiReserveRateStrategy is Ownable {
      * @notice Returns available liquidity in the pool for specific asset.
      * @param asset - address of asset
      * @param aToken - address of aToken
-     * @return availableLiquidity
+     * @return availableLiquidity, the underlying (if tranched) and the current flow (if tranched)
      */
     function getAvailableLiquidity(address asset, address aToken)
         public
         view
         virtual
-        returns (uint256)
+        returns (uint256, address, uint256)
     {}
     /**
      * @notice The view version of `calculateInterestRates()`.
@@ -151,8 +151,11 @@ abstract contract BasePiReserveRateStrategy is Ownable {
      * @param liquidityTaken The liquidity taken during the operation
      * @param totalVariableDebt The total borrowed from the reserve at a variable rate
      * @param reserveFactor The reserve portion of the interest that goes to the treasury of the market
-     * @return The liquidity rate and the variable borrow rate
-     *
+     * @return currentLiquidityRate The liquidity rate
+     * @return currentVariableBorrowRate The variable borrow rate
+     * @return utilization The utilization rate
+     * @return underlying The underlying (if tranched)
+     * @return currentFlow The current flow (if tranched)
      */
     function _calculateInterestRates(
         address reserve,
@@ -161,13 +164,23 @@ abstract contract BasePiReserveRateStrategy is Ownable {
         uint256 liquidityTaken, //! since this function is not view anymore we need to make sure liquidityTaken is removed at the end
         uint256 totalVariableDebt,
         uint256 reserveFactor
-    ) internal returns (uint256, uint256) {
-        uint256 availableLiquidity = getAvailableLiquidity(reserve, aToken);
+    )
+        internal
+        returns (
+            uint256 currentLiquidityRate,
+            uint256 currentVariableBorrowRate,
+            uint256 utilization,
+            address underlying,
+            uint256 currentFlow
+        )
+    {
+        uint256 availableLiquidity;
+        (availableLiquidity, underlying, currentFlow) = getAvailableLiquidity(reserve, aToken);
         if (availableLiquidity + liquidityAdded < liquidityTaken) {
             revert(Errors.LP_NOT_ENOUGH_LIQUIDITY_TO_BORROW);
         }
         availableLiquidity = availableLiquidity + liquidityAdded - liquidityTaken;
-        return
+        (currentLiquidityRate, currentVariableBorrowRate, utilization) =
             _calculateInterestRates(reserve, availableLiquidity, totalVariableDebt, reserveFactor);
     }
 
@@ -186,7 +199,7 @@ abstract contract BasePiReserveRateStrategy is Ownable {
         uint256 availableLiquidity,
         uint256 totalVariableDebt,
         uint256 reserveFactor
-    ) internal returns (uint256, uint256) {
+    ) internal returns (uint256, uint256, uint256) {
         uint256 utilizationRate = totalVariableDebt == 0
             ? 0
             : totalVariableDebt.rayDiv(availableLiquidity + totalVariableDebt);
@@ -195,7 +208,7 @@ abstract contract BasePiReserveRateStrategy is Ownable {
         if (utilizationRate == 0) {
             _errI = 0;
             _lastTimestamp = block.timestamp;
-            return (0, 0);
+            return (0, 0, 0);
         }
 
         // PID state update
@@ -211,7 +224,7 @@ abstract contract BasePiReserveRateStrategy is Ownable {
         emit PidLog(
             utilizationRate, currentLiquidityRate, currentVariableBorrowRate, err, controllerErr
         );
-        return (currentLiquidityRate, currentVariableBorrowRate);
+        return (currentLiquidityRate, currentVariableBorrowRate, utilizationRate);
     }
 
     // ----------- helpers -----------

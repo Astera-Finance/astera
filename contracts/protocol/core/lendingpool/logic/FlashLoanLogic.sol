@@ -17,12 +17,8 @@ import {ReserveLogic} from "./ReserveLogic.sol";
 import {ValidationLogic} from "./ValidationLogic.sol";
 import {ReserveConfiguration} from
     "../../../../../contracts/protocol/libraries/configuration/ReserveConfiguration.sol";
-import {ReserveBorrowConfiguration} from
-    "../../../../../contracts/protocol/libraries/configuration/ReserveBorrowConfiguration.sol";
 import {UserConfiguration} from
     "../../../../../contracts/protocol/libraries/configuration/UserConfiguration.sol";
-import {UserRecentBorrow} from
-    "../../../../../contracts/protocol/libraries/configuration/UserRecentBorrow.sol";
 import {Helpers} from "../../../../../contracts/protocol/libraries/helpers/Helpers.sol";
 import {IFlashLoanReceiver} from "../../../../../contracts/interfaces/IFlashLoanReceiver.sol"; // Add this line
 import {BorrowLogic} from "./BorrowLogic.sol";
@@ -98,7 +94,6 @@ library FlashLoanLogic {
         FlashLoanParams memory flashLoanParams,
         mapping(uint256 => DataTypes.ReserveReference) storage reservesList,
         mapping(address => DataTypes.UserConfigurationMap) storage usersConfig,
-        mapping(address => DataTypes.UserRecentBorrowMap) storage usersRecentBorrow,
         mapping(address => mapping(bool => DataTypes.ReserveData)) storage reserves
     ) external {
         FlashLoanLocalVars memory vars;
@@ -172,8 +167,7 @@ library FlashLoanLogic {
                     ),
                     reserves,
                     reservesList,
-                    usersConfig,
-                    usersRecentBorrow
+                    usersConfig
                 );
             }
 

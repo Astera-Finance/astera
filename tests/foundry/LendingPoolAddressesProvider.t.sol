@@ -19,7 +19,6 @@ contract LendingPoolAddressesProviderTest is Common {
     event ConfigurationAdminUpdated(address indexed newAddress);
     event EmergencyAdminUpdated(address indexed newAddress);
     event LendingPoolConfiguratorUpdated(address indexed newAddress);
-    event LendingPoolCollateralManagerUpdated(address indexed newAddress);
     event PriceOracleUpdated(address indexed newAddress);
     event ProxyCreated(bytes32 id, address indexed newAddress);
     event AddressSet(bytes32 id, address indexed newAddress, bool hasProxy);
@@ -94,17 +93,6 @@ contract LendingPoolAddressesProviderTest is Common {
         assertEq(provider.getLendingPoolConfigurator(), address(lendingPoolConfigurator));
     }
 
-    function testSetAndGetCollateralManager() public {
-        LendingPoolAddressesProvider provider = new LendingPoolAddressesProvider();
-        address lendingPoolCollateralManager = makeAddr("LendingPoolCollateralManager");
-
-        vm.expectEmit(false, false, false, false);
-        emit LendingPoolCollateralManagerUpdated(address(lendingPoolCollateralManager));
-        provider.setLendingPoolCollateralManager(address(lendingPoolCollateralManager));
-
-        assertEq(provider.getLendingPoolCollateralManager(), lendingPoolCollateralManager);
-    }
-
     function testSetAndGetAdmins() public {
         LendingPoolAddressesProvider provider = new LendingPoolAddressesProvider();
         address poolAdmin = makeAddr("PoolAdmin");
@@ -163,9 +151,6 @@ contract LendingPoolAddressesProviderTest is Common {
 
     //     vm.expectRevert();
     //     provider.setLendingPoolConfiguratorImpl(nonsecureAddress);
-
-    //     vm.expectRevert();
-    //     provider.setLendingPoolCollateralManager(nonsecureAddress);
 
     //     vm.expectRevert();
     //     provider.setPoolAdmin(nonsecureAddress);

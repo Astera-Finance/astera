@@ -24,7 +24,6 @@ contract LendingPoolAddressesProvider is Ownable, ILendingPoolAddressesProvider 
     bytes32 private constant LENDING_POOL_CONFIGURATOR = "LENDING_POOL_CONFIGURATOR";
     bytes32 private constant POOL_ADMIN = "POOL_ADMIN";
     bytes32 private constant EMERGENCY_ADMIN = "EMERGENCY_ADMIN";
-    bytes32 private constant LENDING_POOL_COLLATERAL_MANAGER = "COLLATERAL_MANAGER";
     bytes32 private constant PRICE_ORACLE = "PRICE_ORACLE";
     bytes32 private constant MINIPOOL_ADDRESSES_PROVIDER = "MINIPOOL_ADDRESSES_PROVIDER";
     bytes32 private constant FLOW_LIMITER = "FLOW_LIMITER";
@@ -106,27 +105,6 @@ contract LendingPoolAddressesProvider is Ownable, ILendingPoolAddressesProvider 
     function setLendingPoolConfiguratorImpl(address configurator) external override onlyOwner {
         _updateImpl(LENDING_POOL_CONFIGURATOR, configurator);
         emit LendingPoolConfiguratorUpdated(configurator);
-    }
-
-    /**
-     * @dev Returns the address of the LendingPoolCollateralManager. Since the manager is used
-     * through delegateCall within the LendingPool contract, the proxy contract pattern does not work properly hence
-     * the addresses are changed directly
-     * @return The address of the LendingPoolCollateralManager
-     *
-     */
-    function getLendingPoolCollateralManager() external view override returns (address) {
-        return getAddress(LENDING_POOL_COLLATERAL_MANAGER);
-    }
-
-    /**
-     * @dev Updates the address of the LendingPoolCollateralManager
-     * @param manager The new LendingPoolCollateralManager address
-     *
-     */
-    function setLendingPoolCollateralManager(address manager) external override onlyOwner {
-        _addresses[LENDING_POOL_COLLATERAL_MANAGER] = manager;
-        emit LendingPoolCollateralManagerUpdated(manager);
     }
 
     /**
