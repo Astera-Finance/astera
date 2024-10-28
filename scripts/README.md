@@ -39,17 +39,19 @@ The deployment process involves configuration files `./input/<Nr>_<InputJsonName
       - import env variables via `source .env`
       - run `forge script scripts/<nr>_<scriptName>.s.sol --chain-id <chainId> --rpc-url $<RPC_URL> -vvvv --broadcast` for deployment
       - run `forge script scripts/<nr>_<scriptName>.s.sol --chain-id $<RPC_URL> --rpc-url $<RPC_URL> --etherscan-api-key $ETHERSCAN_KEY --broadcast -vvvv --sender <sender address>` if sender is required
-      - run `forge script scripts/<nr>_<scriptName>.s.sol --chain-id 84532 --rpc-url $<RPC_URL> --broadcast -vvvv --private-key $PRIVATE_KEY` if sender is required
+      - run `forge script scripts/<nr>_<scriptName>.s.sol --chain-id <chainId> --rpc-url $<RPC_URL> --broadcast -vvvv --private-key $PRIVATE_KEY` if sender is required
    - **Mainnet**:
       - compatible script numbers <Nr> to run (1 - 7)
-   - **Tests**
-     - `forge script scripts/8_TestBasicActions_Staging.s.sol --chain-id 84532 --rpc-url $BASE_SEPOLIA_RPC_URL --broadcast -vvvv --private-keys $USER1_PRIVATE_KEY --private-keys $USER2_PRIVATE_KEY --private-keys $DIST_PRIVATE_KEY --sender <EoaAddress>`
+   - **Mainnet/Testnet tests**
+     - `forge script scripts/<nr>_<scriptName>.s.sol --chain-id <chainId> --rpc-url $<RPC_URL> --broadcast -vvvv --private-keys $USER1_PRIVATE_KEY --private-keys $USER2_PRIVATE_KEY --private-keys $DIST_PRIVATE_KEY --sender <EoaAddress>`
+   - **Verification**
+     - Blockscout - `forge script scripts/<nr>_<scriptName>.s.sol --chain-id <chainId> --rpc-url $$<RPC_URL> --resume --verify --verifier blockscout --verifier-url $<VerifierUrl> --private-key $PRIVATE_KEY`
 
 ### Configuration files
 **Important !!** All params listed inside json's keys MUST be in alphabetical order !
 ##### **0_MockedTokens**
   - Shall be used only for testnet deployments or for new tokens in mainnet 
-  - Shall contain all tokens we want to use in next scripts with token symbols the same that will be used in reserve configuration
+  - Shall contain all not deplyed tokens we want to use in next scripts with token symbols the same that will be used in reserve configuration
   - Example:
     ```json
     {
@@ -545,14 +547,14 @@ The deployment process involves configuration files `./input/<Nr>_<InputJsonName
         ],
         "vault": [
             {
-                "configure": false, // determine whether treasury needs to be changed for this asset
+                "configure": false, // determine whether vault needs to be changed for this asset
                 "newAddress": "0x2f2a2543B76A4166549F7aaB2e75Bef0aefC5AAf", // new vault asset
                 "reserveType": true,
                 "symbol": "USDC",
                 "tokenAddress": "0xaf88d065e77c8cC2239327C5EDb3A432268e5831"
             },
             {
-                "configure": true, // determine whether treasury needs to be changed for this asset
+                "configure": true, // determine whether vault needs to be changed for this asset
                 "newAddress": "0x2f2a2543B76A4166549F7aaB2e75Bef0aefC5AAf", // new vault asset
                 "reserveType": true,
                 "symbol": "WETH",
@@ -561,14 +563,14 @@ The deployment process involves configuration files `./input/<Nr>_<InputJsonName
         ],
         "rewarder": [
             {
-                "configure": false, // determine whether treasury needs to be changed for this asset
+                "configure": false, // determine whether rewarder needs to be changed for this asset
                 "newAddress": "0x2f2a2543B76A4166549F7aaB2e75Bef0aefC5AAf", // new rewarder asset
                 "reserveType": true,
                 "symbol": "USDC",
                 "tokenAddress": "0xaf88d065e77c8cC2239327C5EDb3A432268e5831"
             },
             {
-                "configure": true, // determine whether treasury needs to be changed for this asset
+                "configure": true, // determine whether rewarder needs to be changed for this asset
                 "newAddress": "0x2f2a2543B76A4166549F7aaB2e75Bef0aefC5AAf", // new rewarder asset
                 "reserveType": true,
                 "symbol": "WETH",
@@ -578,7 +580,7 @@ The deployment process involves configuration files `./input/<Nr>_<InputJsonName
         "rehypothecation": [
             {
                 "claimingThreshold": 1e8,
-                "configure": false, // determine whether treasury needs to be changed for this asset
+                "configure": false, // determine whether rehypothecation needs to be changed for this asset
                 "drift": 200,
                 "farmingPct": 2000,
                 "profitHandler": "0x2f2a2543B76A4166549F7aaB2e75Bef0aefC5AAf",
@@ -589,7 +591,7 @@ The deployment process involves configuration files `./input/<Nr>_<InputJsonName
             },
             {
                 "claimingThreshold": 1e8,
-                "configure": true, // determine whether treasury needs to be changed for this asset
+                "configure": true, // determine whether rehypothecation needs to be changed for this asset
                 "drift": 200,
                 "farmingPct": 2000,
                 "profitHandler": "0x2f2a2543B76A4166549F7aaB2e75Bef0aefC5AAf",
@@ -618,7 +620,7 @@ The deployment process involves configuration files `./input/<Nr>_<InputJsonName
    }
    ```
 ##### **8_TestConfig**
-  - Can be run only for local fork (currently)
+  - Can be in script for fork tests (8_TestBasicActions_Fork.s) or staginf tests (8_TestBasicActions_Staging.s)
   - Shall be used to test basic actions for deployed contracts
   - Example:
     ```json
@@ -700,6 +702,7 @@ The deployment process involves configuration files `./input/<Nr>_<InputJsonName
 ##### **3_DeployedStrategies**
   - List of all strategies deployed so far 
   - Used by 4_AddAssets.s, 5_Reconfigure.s ***in correct order !***
+  - Addresses in the array corresponds with the symbols in the array
   - Example:
   ```json
     {
