@@ -89,7 +89,7 @@ contract PropertiesBase is PropertiesAsserts, MarketParams {
     AToken[] internal aTokens;
     VariableDebtToken[] internal debtTokens;
 
-    // AAVE contracts
+    // Cod3x Lend contracts
     IRewarder internal rewarder;
     LendingPoolAddressesProvider internal provider;
     MockLendingPool internal pool;
@@ -114,7 +114,7 @@ contract PropertiesBase is PropertiesAsserts, MarketParams {
             aggregators.push(a);
         }
 
-        /// setup AAVE
+        /// setup Cod3x Lend
         rewarder = IRewarder(address(0));
         provider = new LendingPoolAddressesProvider();
         provider.setPoolAdmin(address(this));

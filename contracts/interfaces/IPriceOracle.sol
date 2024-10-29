@@ -4,7 +4,7 @@ pragma solidity ^0.8.0;
 /**
  *
  * @title IPriceOracle interface
- * @notice Interface for the Aave price oracle.
+ * @notice Interface for the price oracle.
  */
 interface IPriceOracle {
     /**

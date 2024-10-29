@@ -39,7 +39,7 @@ import {LiquidationLogic} from
 
 /**
  * @title LendingPool contract
- * @dev Main point of interaction with an Aave protocol's market
+ * @dev Main point of interaction with an Cod3x Lend protocol's market
  * - Users can:
  *   # Deposit
  *   # Withdraw
@@ -326,7 +326,6 @@ contract LendingPool is VersionedInitializable, ILendingPool, LendingPoolStorage
      * @dev Allows smartcontracts to access the liquidity of the pool within one transaction,
      * as long as the amount taken plus a fee is returned.
      * IMPORTANT There are security concerns for developers of flashloan receiver contracts that must be kept into consideration.
-     * For further details please visit https://developers.aave.com
      * @param flashLoanParams struct containing receiverAddress, onBehalfOf, assets, amounts
      * @param modes Types of the debt to open if the flash loan is not returned:
      *   0 -> Don't open any debt, just revert if funds can't be transferred from the receiver

@@ -83,7 +83,6 @@ library MiniPoolFlashLoanLogic {
      * @dev Allows smartcontracts to access the liquidity of the pool within one transaction,
      * as long as the amount taken plus a fee is returned.
      * IMPORTANT There are security concerns for developers of flashloan receiver contracts that must be kept into consideration.
-     * For further details please visit https://developers.aave.com
      * @param flashLoanParams struct containing receiverAddress, onBehalfOf, assets, amounts
      *
      */
