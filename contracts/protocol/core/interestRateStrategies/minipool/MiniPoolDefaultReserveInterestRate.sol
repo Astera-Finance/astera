@@ -101,7 +101,7 @@ contract MiniPoolDefaultReserveInterestRateStrategy is IMiniPoolReserveInterestR
 
     /**
      * @dev Calculates the interest rates depending on the reserve's state and configurations
-     * @param reserve The address of the reserve
+     * @param asset The address of the asset
      * @param aToken The address of the reserve aToken
      * @param liquidityAdded The liquidity added during the operation
      * @param liquidityTaken The liquidity taken during the operation
@@ -111,7 +111,7 @@ contract MiniPoolDefaultReserveInterestRateStrategy is IMiniPoolReserveInterestR
      *
      */
     function calculateInterestRates(
-        address reserve,
+        address asset,
         address aToken,
         uint256 liquidityAdded,
         uint256 liquidityTaken,
@@ -120,18 +120,18 @@ contract MiniPoolDefaultReserveInterestRateStrategy is IMiniPoolReserveInterestR
     ) external view override returns (uint256, uint256) {
         CalcInterestRatesLocalVars1 memory vars;
 
-        (,, vars.isTranched,) = IAERC6909(aToken).getIdForUnderlying(reserve);
+        (,, vars.isTranched,) = IAERC6909(aToken).getIdForUnderlying(asset);
         if (vars.isTranched) {
             IFlowLimiter flowLimiter = IFlowLimiter(_addressesProvider.getFlowLimiter());
-            vars.underlying = IAToken(reserve).UNDERLYING_ASSET_ADDRESS();
+            vars.underlying = IAToken(asset).UNDERLYING_ASSET_ADDRESS();
             address minipool = IAERC6909(aToken).MINIPOOL_ADDRESS();
             vars.currentFlow = flowLimiter.currentFlow(vars.underlying, minipool);
 
-            vars.availableLiquidity = IERC20(reserve).balanceOf(aToken)
-                + IAToken(reserve).convertToShares(flowLimiter.getFlowLimit(vars.underlying, minipool))
-                - IAToken(reserve).convertToShares(vars.currentFlow);
+            vars.availableLiquidity = IERC20(asset).balanceOf(aToken)
+                + IAToken(asset).convertToShares(flowLimiter.getFlowLimit(vars.underlying, minipool))
+                - IAToken(asset).convertToShares(vars.currentFlow);
         } else {
-            vars.availableLiquidity = IERC20(reserve).balanceOf(aToken);
+            vars.availableLiquidity = IERC20(asset).balanceOf(aToken);
         }
 
         if (vars.availableLiquidity + liquidityAdded < liquidityTaken) {

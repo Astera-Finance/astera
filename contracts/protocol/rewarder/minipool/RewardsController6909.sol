@@ -46,7 +46,6 @@ abstract contract RewardsController6909 is RewardsDistributor6909, IMiniPoolRewa
         _configureAssets(config);
     }
 
-    //@AUDIT
     function handleAction(uint256 assetID, address user, uint256 totalSupply, uint256 userBalance)
         external
         override
