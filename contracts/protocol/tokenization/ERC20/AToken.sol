@@ -603,7 +603,7 @@ contract AToken is
     function setVault(address _vault) external override onlyLendingPool {
         require(address(_vault) != address(0), "84");
         if (address(vault) != address(0)) {
-            require(IERC20(address(vault)).balanceOf(address(this)) == 0, Errors.AT_VAULT_NOT_EMPTY);
+            require(farmingBal == 0, Errors.AT_VAULT_NOT_EMPTY);
         }
         require(IERC4626(_vault).asset() == _underlyingAsset, "83");
         vault = IERC4626(_vault);

@@ -378,7 +378,7 @@ contract MiniPool is VersionedInitializable, IMiniPool, MiniPoolStorage {
                     aToken6909.transfer(
                         _addressesProvider.getMiniPoolTreasury(_minipoolId),
                         aTokenId,
-                        aToken6909.balanceOf(address(this), aTokenId)
+                        remainingBalance
                     );
                 }
             }
