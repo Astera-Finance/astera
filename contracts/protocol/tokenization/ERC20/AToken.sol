@@ -578,40 +578,40 @@ contract AToken is
     }
 
     function setFarmingPct(uint256 _farmingPct) external override onlyLendingPool {
-        require(address(vault) != address(0), "84");
-        require(_farmingPct <= 10000, "82");
+        require(address(vault) != address(0), Errors.AT_VAULT_NOT_INITIALIZED);
+        require(_farmingPct <= 10000, Errors.AT_INVALID_AMOUNT);
         farmingPct = _farmingPct;
     }
 
     function setClaimingThreshold(uint256 _claimingThreshold) external override onlyLendingPool {
-        require(address(vault) != address(0), "84");
+        require(address(vault) != address(0), Errors.AT_VAULT_NOT_INITIALIZED);
         claimingThreshold = _claimingThreshold;
     }
 
     function setFarmingPctDrift(uint256 _farmingPctDrift) external override onlyLendingPool {
-        require(_farmingPctDrift <= 10000, "82");
-        require(address(vault) != address(0), "84");
+        require(_farmingPctDrift <= 10000, Errors.AT_INVALID_AMOUNT);
+        require(address(vault) != address(0), Errors.AT_VAULT_NOT_INITIALIZED);
         farmingPctDrift = _farmingPctDrift;
     }
 
     function setProfitHandler(address _profitHandler) external override onlyLendingPool {
-        require(_profitHandler != address(0), "83");
-        require(address(vault) != address(0), "84");
+        require(_profitHandler != address(0), Errors.AT_INVALID_ADDRESS);
+        require(address(vault) != address(0), Errors.AT_VAULT_NOT_INITIALIZED);
         profitHandler = _profitHandler;
     }
 
     function setVault(address _vault) external override onlyLendingPool {
-        require(address(_vault) != address(0), "84");
+        require(address(_vault) != address(0), Errors.AT_INVALID_ADDRESS);
         if (address(vault) != address(0)) {
             require(farmingBal == 0, Errors.AT_VAULT_NOT_EMPTY);
         }
-        require(IERC4626(_vault).asset() == _underlyingAsset, "83");
+        require(IERC4626(_vault).asset() == _underlyingAsset, Errors.AT_INVALID_ADDRESS);
         vault = IERC4626(_vault);
         IERC20(_underlyingAsset).forceApprove(address(vault), type(uint256).max);
     }
 
     function setTreasury(address treasury) external override onlyLendingPool {
-        require(treasury != address(0), "85");
+        require(treasury != address(0), Errors.AT_INVALID_ADDRESS);
         _treasury = treasury;
     }
 
@@ -620,7 +620,7 @@ contract AToken is
         override
         onlyLendingPool
     {
-        require(incentivesController != address(0), "85");
+        require(incentivesController != address(0), Errors.AT_INVALID_ADDRESS);
         _incentivesController = IRewarder(incentivesController);
     }
 

@@ -221,7 +221,7 @@ contract LendingPoolConfiguratorTest is Common {
         deployedContracts.lendingPoolConfigurator.setVault(aTokenAddress, address(mockedVaults[0]));
 
         /* set vault negative - 84 */
-        vm.expectRevert(bytes("84"));
+        vm.expectRevert(bytes(Errors.AT_INVALID_ADDRESS));
         deployedContracts.lendingPoolConfigurator.setVault(aTokenAddress, address(0));
 
         /* set farming pct positive */
@@ -234,7 +234,7 @@ contract LendingPoolConfiguratorTest is Common {
 
         /* set farming pct negative - 82 */
         farmingPct = bound(farmingPct, 10001, type(uint256).max);
-        vm.expectRevert(bytes("82"));
+        vm.expectRevert(bytes(Errors.AT_INVALID_AMOUNT));
         deployedContracts.lendingPoolConfigurator.setFarmingPct(aTokenAddress, farmingPct);
 
         /* set claiming threshold positive */
@@ -262,7 +262,7 @@ contract LendingPoolConfiguratorTest is Common {
 
         /* set farming pct drift negative - 82 */
         farmingPct = bound(farmingPct, 10001, type(uint256).max);
-        vm.expectRevert(bytes("82"));
+        vm.expectRevert(bytes(Errors.AT_INVALID_AMOUNT));
         deployedContracts.lendingPoolConfigurator.setFarmingPctDrift(aTokenAddress, farmingPct);
 
         /* set profit handler positive */
@@ -278,7 +278,7 @@ contract LendingPoolConfiguratorTest is Common {
 
         /* set profit handler negative - 83 */
         profitHandler = address(0);
-        vm.expectRevert(bytes("83"));
+        vm.expectRevert(bytes(Errors.AT_INVALID_ADDRESS));
         deployedContracts.lendingPoolConfigurator.setProfitHandler(aTokenAddress, profitHandler);
 
         vm.stopPrank();

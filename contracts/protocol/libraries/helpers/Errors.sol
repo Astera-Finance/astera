@@ -96,6 +96,7 @@ library Errors {
     string public constant LP_INCONSISTENT_PARAMS_LENGTH = "74";
     string public constant UL_INVALID_INDEX = "77";
     string public constant LP_NOT_CONTRACT = "78";
+    string public constant AT_VAULT_NOT_INITIALIZED = "79";
     string public constant SDT_BURN_EXCEEDS_BALANCE = "80";
     string public constant RC_INVALID_DEPOSIT_CAP = "81";
     string public constant RC_INVALID_VOLATILITY_TIER = "82";
@@ -117,17 +118,4 @@ library Errors {
     string public constant PAP_NO_MINI_POOL_ID_FOR_ADDRESS = "98";
     string public constant PAP_POOL_ID_OUT_OF_RANGE = "99";
     string public constant AT_VAULT_NOT_EMPTY = "100";
-
-    enum CollateralManagerErrors {
-        NO_ERROR,
-        NO_COLLATERAL_AVAILABLE,
-        COLLATERAL_CANNOT_BE_LIQUIDATED,
-        CURRRENCY_NOT_BORROWED,
-        HEALTH_FACTOR_ABOVE_THRESHOLD,
-        NOT_ENOUGH_LIQUIDITY,
-        NO_ACTIVE_RESERVE,
-        HEALTH_FACTOR_LOWER_THAN_LIQUIDATION_THRESHOLD,
-        INVALID_EQUAL_ASSETS_TO_SWAP,
-        FROZEN_RESERVE
-    }
 }
