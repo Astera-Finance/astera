@@ -34,7 +34,6 @@ import "contracts/protocol/core/Oracle.sol";
 import "contracts/misc/ProtocolDataProvider.sol";
 import "contracts/misc/UiPoolDataProviderV2.sol";
 import "contracts/misc/RewardsVault.sol";
-import "contracts/misc/Timelock.sol";
 import "contracts/misc/WETHGateway.sol";
 
 import "contracts/deployments/ATokensAndRatesHelper.sol";
@@ -46,7 +45,6 @@ import "contracts/protocol/core/lendingpool/LendingPoolConfigurator.sol";
 import "contracts/protocol/core/lendingpool/LendingPoolStorage.sol";
 
 import "contracts/protocol/tokenization/ERC20/AToken.sol";
-import "contracts/protocol/tokenization/ERC20/DelegationAwareAToken.sol";
 import "contracts/protocol/tokenization/ERC20/VariableDebtToken.sol";
 
 import "contracts/protocol/core/lendingpool/logic/BorrowLogic.sol";
