@@ -121,8 +121,6 @@ contract AddAssets is Script, DeploymentUtils, Test {
             contracts.aToken = AToken(deploymentConfig.readAddress(".aToken"));
             contracts.variableDebtToken =
                 VariableDebtToken(deploymentConfig.readAddress(".variableDebtToken"));
-            contracts.treasury = Treasury(deploymentConfig.readAddress(".treasury"));
-            contracts.rewarder = Rewarder(deploymentConfig.readAddress(".rewarder"));
             contracts.lendingPoolConfigurator =
                 LendingPoolConfigurator(deploymentConfig.readAddress(".lendingPoolConfigurator"));
             contracts.lendingPoolAddressesProvider = LendingPoolAddressesProvider(
@@ -231,8 +229,6 @@ contract AddAssets is Script, DeploymentUtils, Test {
             contracts.aToken = AToken(deploymentConfig.readAddress(".aToken"));
             contracts.variableDebtToken =
                 VariableDebtToken(deploymentConfig.readAddress(".variableDebtToken"));
-            contracts.treasury = Treasury(deploymentConfig.readAddress(".treasury"));
-            contracts.rewarder = Rewarder(deploymentConfig.readAddress(".rewarder"));
             contracts.lendingPoolConfigurator =
                 LendingPoolConfigurator(deploymentConfig.readAddress(".lendingPoolConfigurator"));
             contracts.lendingPoolAddressesProvider = LendingPoolAddressesProvider(

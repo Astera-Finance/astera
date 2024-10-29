@@ -9,12 +9,25 @@ import "./DeploymentUtils.s.sol";
 import "lib/forge-std/src/Test.sol";
 import "lib/forge-std/src/Script.sol";
 import "lib/forge-std/src/console.sol";
-import {DeployLendingPool} from "./1_DeployLendingPool.s.sol";
+import {DeployMiniPool} from "./2_DeployMiniPool.s.sol";
 import {DataTypes} from "../contracts/protocol/libraries/types/DataTypes.sol";
 import {ERC4626Mock} from "lib/openzeppelin-contracts/contracts/mocks/token/ERC4626Mock.sol";
 
 contract ChangePeripherials is Script, DeploymentUtils, Test {
     using stdJson for string;
+
+    function writeJsonData(string memory root, string memory path) internal {
+        /* Write important contracts into the file */
+        vm.serializeAddress("peripherials", "rewarder", address(contracts.rewarder));
+
+        string memory output =
+            vm.serializeAddress("peripherials", "rewarder6909", address(contracts.rewarder6909));
+
+        vm.writeJson(output, "./scripts/outputs/6_DeployedPeripherials.json");
+
+        path = string.concat(root, "/scripts/outputs/6_DeployedPeripherials.json");
+        console.log("PROTOCOL DEPLOYED (check out addresses on %s)", path);
+    }
 
     function run() external returns (DeployedContracts memory) {
         console.log("6_ChangePeripherials");
@@ -30,9 +43,13 @@ contract ChangePeripherials is Script, DeploymentUtils, Test {
             abi.decode(config.parseRaw(".treasury"), (NewPeripherial[]));
         NewPeripherial[] memory rewarder =
             abi.decode(config.parseRaw(".rewarder"), (NewPeripherial[]));
+        NewPeripherial[] memory rewarder6909 =
+            abi.decode(config.parseRaw(".rewarder6909"), (NewPeripherial[]));
 
         Rehypothecation[] memory rehypothecation =
             abi.decode(config.parseRaw(".rehypothecation"), (Rehypothecation[]));
+
+        uint256 miniPoolId = config.readUint(".miniPoolId");
 
         require(treasury.length == rehypothecation.length, "Lengths settings must be the same");
 
@@ -44,15 +61,15 @@ contract ChangePeripherials is Script, DeploymentUtils, Test {
             arbFork = vm.createSelectFork(RPC, FORK_BLOCK);
 
             /* Config fetching */
-            DeployLendingPool deployLendingPool = new DeployLendingPool();
-            contracts = deployLendingPool.run();
+            DeployMiniPool deployMiniPool = new DeployMiniPool();
+            contracts = deployMiniPool.run();
 
             vm.startPrank(FOUNDRY_DEFAULT);
             for (uint8 idx = 0; idx < vault.length; idx++) {
                 vault[idx].newAddress = address(new ERC4626Mock(vault[idx].tokenAddress));
             }
 
-            _changePeripherials(treasury, vault, rewarder);
+            _changePeripherials(treasury, vault, rewarder, rewarder6909, miniPoolId);
             _turnOnRehypothecation(rehypothecation);
             vm.stopPrank();
         } else if (vm.envBool("TESTNET")) {
@@ -70,9 +87,9 @@ contract ChangePeripherials is Script, DeploymentUtils, Test {
                 LendingPoolConfigurator(config.readAddress(".lendingPoolConfigurator"));
 
             /* Read all mocks deployed */
-            string memory path = string.concat(root, "/scripts/outputs/0_MockedTokens.json");
+            path = string.concat(root, "/scripts/outputs/0_MockedTokens.json");
             console.log("PATH: ", path);
-            string memory config = vm.readFile(path);
+            config = vm.readFile(path);
             address[] memory mockedTokens = config.readAddressArray(".mockedTokens");
 
             require(
@@ -95,6 +112,7 @@ contract ChangePeripherials is Script, DeploymentUtils, Test {
                             rehypothecation[idx].tokenAddress = address(mockedTokens[i]);
                             treasury[idx].tokenAddress = address(mockedTokens[i]);
                             rewarder[idx].tokenAddress = address(mockedTokens[i]);
+                            rewarder6909[idx].tokenAddress = address(mockedTokens[i]);
                             break;
                         }
                     }
@@ -104,6 +122,9 @@ contract ChangePeripherials is Script, DeploymentUtils, Test {
                     );
                     require(treasury[idx].tokenAddress != address(0), "Mocked token not assigned");
                     require(rewarder[idx].tokenAddress != address(0), "Mocked token not assigned");
+                    require(
+                        rewarder6909[idx].tokenAddress != address(0), "Mocked token not assigned"
+                    );
                 }
             }
 
@@ -112,7 +133,7 @@ contract ChangePeripherials is Script, DeploymentUtils, Test {
             for (uint8 idx = 0; idx < vault.length; idx++) {
                 vault[idx].newAddress = address(new ERC4626Mock(vault[idx].tokenAddress));
             }
-            _changePeripherials(treasury, vault, rewarder);
+            _changePeripherials(treasury, vault, rewarder, rewarder6909, miniPoolId);
             _turnOnRehypothecation(rehypothecation);
             vm.stopBroadcast();
         } else if (vm.envBool("MAINNET")) {
@@ -131,11 +152,12 @@ contract ChangePeripherials is Script, DeploymentUtils, Test {
 
             /* Change peripherials */
             vm.startBroadcast(vm.envUint("PRIVATE_KEY"));
-            _changePeripherials(treasury, vault, rewarder);
+            _changePeripherials(treasury, vault, rewarder, rewarder6909, miniPoolId);
             _turnOnRehypothecation(rehypothecation);
             vm.stopBroadcast();
         } else {
             console.log("No deployment type selected in .env");
         }
+        writeJsonData(root, path);
     }
 }

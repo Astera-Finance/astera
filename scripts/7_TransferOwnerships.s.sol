@@ -52,7 +52,7 @@ contract TransferOwnerships is Script, DeploymentUtils, Test {
                 deploymentConfig.readAddress(".lendingPoolAddressesProvider")
             );
             contracts.rewarder = Rewarder(deploymentConfig.readAddress(".rewarder"));
-            contracts.treasury = Treasury(deploymentConfig.readAddress(".treasury"));
+            // contracts.treasury = Treasury(deploymentConfig.readAddress(".treasury"));
             contracts.oracle = Oracle(deploymentConfig.readAddress(".oracle"));
 
             /* *********** Mini pool settings *********** */
@@ -107,7 +107,7 @@ contract TransferOwnerships is Script, DeploymentUtils, Test {
                 deploymentConfig.readAddress(".lendingPoolAddressesProvider")
             );
             contracts.rewarder = Rewarder(deploymentConfig.readAddress(".rewarder"));
-            contracts.treasury = Treasury(deploymentConfig.readAddress(".treasury"));
+            // contracts.treasury = Treasury(deploymentConfig.readAddress(".treasury"));
 
             /* *********** Mini pool settings *********** */
             {

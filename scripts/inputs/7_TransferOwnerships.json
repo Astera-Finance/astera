@@ -5,7 +5,6 @@
         "oracleOwner": "0x3151CfCA393FE5Eec690feD2a2446DA5a073d01B",
         "piInterestStrategiesOwner": "0x3151CfCA393FE5Eec690feD2a2446DA5a073d01B",
         "poolAdmin": "0x3151CfCA393FE5Eec690feD2a2446DA5a073d01B",
-        "rewarderOwner": "0x3151CfCA393FE5Eec690feD2a2446DA5a073d01B",
-        "treasuryOwner": "0x3151CfCA393FE5Eec690feD2a2446DA5a073d01B"
+        "rewarderOwner": "0x3151CfCA393FE5Eec690feD2a2446DA5a073d01B"
     }
 }

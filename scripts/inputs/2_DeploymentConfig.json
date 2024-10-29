@@ -3,7 +3,9 @@
         "aTokenNamePrefix": "Cod3x Lend ",
         "aTokenSymbolPrefix": "cl",
         "debtTokenNamePrefix": "Cod3x Lend variable debt bearing ",
-        "debtTokenSymbolPrefix": "variableDebt"
+        "debtTokenSymbolPrefix": "variableDebt",
+        "treasury": "0x3151CfCA393FE5Eec690feD2a2446DA5a073d01B",
+        "wethAddress": "0x82aF49447D8a07e3bd95BD0d56f35241523fBab1"
     },
     "poolAddressesProviderConfig": {
         "marketId": "UV TestNet Market",

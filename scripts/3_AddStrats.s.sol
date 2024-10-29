@@ -364,7 +364,7 @@ contract AddStrats is Script, DeploymentUtils, Test {
                 deploymentConfig.readAddress(".miniPoolAddressesProvider")
             );
 
-            /* Deploy on the testnet */
+            /* Deploy on the mainnet */
             vm.startBroadcast(vm.envUint("PRIVATE_KEY"));
             _deployStrategies(
                 contracts.lendingPoolAddressesProvider,

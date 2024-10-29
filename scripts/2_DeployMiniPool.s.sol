@@ -66,9 +66,6 @@ contract DeployMiniPool is Script, Test, DeploymentUtils {
         console.log("PATH: ", path);
         string memory config = vm.readFile(path);
 
-        PoolAddressesProviderConfig memory poolAddressesProviderConfig = abi.decode(
-            config.parseRaw(".poolAddressesProviderConfig"), (PoolAddressesProviderConfig)
-        );
         PoolReserversConfig[] memory poolReserversConfig =
             abi.decode(config.parseRaw(".poolReserversConfig"), (PoolReserversConfig[]));
         LinearStrategy[] memory volatileStrategies =
@@ -103,7 +100,6 @@ contract DeployMiniPool is Script, Test, DeploymentUtils {
                 stableStrategies,
                 piStrategies,
                 poolReserversConfig,
-                poolAddressesProviderConfig.poolId,
                 FOUNDRY_DEFAULT
             );
             vm.stopPrank();
@@ -166,7 +162,6 @@ contract DeployMiniPool is Script, Test, DeploymentUtils {
                 stableStrategies,
                 piStrategies,
                 poolReserversConfig,
-                poolAddressesProviderConfig.poolId,
                 vm.addr(vm.envUint("PRIVATE_KEY"))
             );
             vm.stopBroadcast();
@@ -198,7 +193,6 @@ contract DeployMiniPool is Script, Test, DeploymentUtils {
                 stableStrategies,
                 piStrategies,
                 poolReserversConfig,
-                poolAddressesProviderConfig.poolId,
                 vm.addr(vm.envUint("PRIVATE_KEY"))
             );
             vm.stopBroadcast();

@@ -15,8 +15,6 @@ contract DeployLendingPool is Script, DeploymentUtils, Test {
 
     function writeJsonData(string memory root, string memory path) internal {
         vm.serializeAddress("lendingPoolContracts", "oracle", address(contracts.oracle));
-        vm.serializeAddress("lendingPoolContracts", "rewarder", address(contracts.rewarder));
-        vm.serializeAddress("lendingPoolContracts", "treasury", address(contracts.treasury));
         {
             address[] memory stableAddresses = new address[](contracts.stableStrategies.length);
             for (uint256 idx = 0; idx < contracts.stableStrategies.length; idx++) {
@@ -121,7 +119,7 @@ contract DeployLendingPool is Script, DeploymentUtils, Test {
         } else if (vm.envBool("TESTNET")) {
             console.log("Testnet Deployment");
             /* Read all mocks deployed */
-            string memory path = string.concat(root, "/scripts/outputs/0_MockedTokens.json");
+            path = string.concat(root, "/scripts/outputs/0_MockedTokens.json");
             console.log("PATH: ", path);
             string memory config = vm.readFile(path);
             address[] memory mockedTokens = config.readAddressArray(".mockedTokens");

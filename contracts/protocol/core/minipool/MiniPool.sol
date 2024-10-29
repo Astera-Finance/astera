@@ -35,6 +35,7 @@ import {MiniPoolWithdrawLogic} from "./logic/MiniPoolWithdrawLogic.sol";
 import {MiniPoolBorrowLogic} from "./logic/MiniPoolBorrowLogic.sol";
 import {MiniPoolFlashLoanLogic} from "./logic/MiniPoolFlashLoanLogic.sol";
 import {MiniPoolLiquidationLogic} from "./logic/MiniPoolLiquidationLogic.sol";
+import {IMiniPoolRewarder} from "../../../../contracts/interfaces/IMiniPoolRewarder.sol";
 
 /**
  * @title MiniPool contract
@@ -709,4 +710,12 @@ contract MiniPool is VersionedInitializable, IMiniPool, MiniPoolStorage {
     function getCurrentLendingPoolDebt(address asset) public view returns (uint256) {
         return IFlowLimiter(_addressesProvider.getFlowLimiter()).currentFlow(asset, address(this));
     }
+
+    function setRewarderForReserve(address asset, address rewarder) external {
+        IAERC6909(_reserves[asset].aTokenAddress).setIncentivesController(
+            IMiniPoolRewarder(rewarder)
+        );
+    }
+
+    // Missing flashloan fee -> Treasury is in addresses provider
 }

@@ -386,4 +386,13 @@ contract MiniPoolConfigurator is VersionedInitializable, IMiniPoolConfigurator {
             Errors.LPC_RESERVE_LIQUIDITY_NOT_0
         );
     }
+
+    function setRewarderForReserve(address asset, address rewarder, IMiniPool pool)
+        external
+        onlyPoolAdmin
+    {
+        pool.setRewarderForReserve(asset, rewarder);
+    }
+
+    // Missing Treasury, updateFlashloanPremiumTotal
 }

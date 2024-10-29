@@ -132,6 +132,10 @@ contract ATokenERC6909 is IncentivizedERC6909, VersionedInitializable {
         return INCENTIVES_CONTROLLER;
     }
 
+    function getIncentivesController() external view returns (IMiniPoolRewarder) {
+        return _getIncentivesController();
+    }
+
     function setIncentivesController(IMiniPoolRewarder controller) external {
         require(msg.sender == address(POOL), Errors.CT_CALLER_MUST_BE_LENDING_POOL);
         INCENTIVES_CONTROLLER = controller;

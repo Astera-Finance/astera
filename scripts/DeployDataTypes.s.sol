@@ -3,9 +3,9 @@ pragma solidity ^0.8.0;
 
 import {ERC20} from "contracts/dependencies/openzeppelin/contracts/ERC20.sol";
 import {Rewarder} from "contracts/protocol/rewarder/lendingpool/Rewarder.sol";
+import {Rewarder6909} from "contracts/protocol/rewarder/minipool/Rewarder6909.sol";
 import {ProtocolDataProvider} from "contracts/misc/ProtocolDataProvider.sol";
 import {Treasury} from "contracts/misc/Treasury.sol";
-import {WETHGateway} from "contracts/misc/WETHGateway.sol";
 import {LendingPoolAddressesProvider} from
     "contracts/protocol/configuration/LendingPoolAddressesProvider.sol";
 import {DefaultReserveInterestRateStrategy} from
@@ -35,6 +35,7 @@ import {WadRayMath} from "contracts/protocol/libraries/math/WadRayMath.sol";
 // Structures
 struct DeployedContracts {
     Rewarder rewarder;
+    Rewarder6909 rewarder6909;
     LendingPoolAddressesProvider lendingPoolAddressesProvider;
     LendingPool lendingPool;
     Treasury treasury;
@@ -49,7 +50,6 @@ struct DeployedContracts {
     ATokensAndRatesHelper aTokensAndRatesHelper;
     AToken aToken;
     VariableDebtToken variableDebtToken;
-    WETHGateway wETHGateway;
     ATokenERC6909 aTokenErc6909;
     MiniPool miniPoolImpl;
     MiniPoolAddressesProvider miniPoolAddressesProvider;
@@ -72,6 +72,7 @@ struct General {
     string aTokenSymbolPrefix;
     string debtTokenNamePrefix;
     string debtTokenSymbolPrefix;
+    address treasury;
     address wethAddress;
 }
 
