@@ -288,7 +288,13 @@ contract ATokenERC6909 is IncentivizedERC6909, VersionedInitializable {
         return id >= DEBT_TOKEN_ADDRESSABLE_ID;
     }
 
-    function _getIdForUnderlying(address underlying)
+    function isTranched(uint256 id) public view returns (bool) {
+        uint256 offset = ILendingPool(_addressesProvider.getLendingPool()).MAX_NUMBER_RESERVES();
+        return ATOKEN_ADDRESSABLE_ID <= id && id < offset + ATOKEN_ADDRESSABLE_ID
+            || DEBT_TOKEN_ADDRESSABLE_ID <= id && id < offset + DEBT_TOKEN_ADDRESSABLE_ID;
+    }
+
+    function _getNextIdForUnderlying(address underlying)
         internal
         view
         returns (uint256, uint256, bool)
@@ -310,12 +316,10 @@ contract ATokenERC6909 is IncentivizedERC6909, VersionedInitializable {
         view
         returns (uint256 aTokenID, uint256 debtTokenID, bool isTrancheRet)
     {
-        (aTokenID, debtTokenID, isTrancheRet) = _getIdForUnderlying(underlying);
+        (aTokenID, debtTokenID, isTrancheRet) = _getNextIdForUnderlying(underlying);
         require(
             _underlyingAssetAddresses[aTokenID] == address(0), Errors.RL_RESERVE_ALREADY_INITIALIZED
         );
-
-        return (aTokenID, debtTokenID, isTrancheRet);
     }
 
     function getIdForUnderlying(address underlying)
@@ -323,17 +327,15 @@ contract ATokenERC6909 is IncentivizedERC6909, VersionedInitializable {
         view
         returns (uint256 aTokenID, uint256 debtTokenID, bool isTrancheRet)
     {
-        isTrancheRet = _determineIfAToken(underlying, _addressesProvider.getLendingPool());
         DataTypes.MiniPoolReserveData memory reserveData =
             IMiniPool(POOL).getReserveData(underlying);
         aTokenID = reserveData.aTokenID;
         debtTokenID = reserveData.variableDebtTokenID;
+        isTrancheRet = isTranched(aTokenID);
 
         require(
             _underlyingAssetAddresses[aTokenID] != address(0), Errors.RL_RESERVE_NOT_INITIALIZED
         );
-
-        return (aTokenID, debtTokenID, isTrancheRet);
     }
 
     function _determineIfAToken(address underlying, address MLP) internal view returns (bool) {
