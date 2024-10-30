@@ -185,7 +185,7 @@ contract MiniPoolPiReserveInterestRateStrategy is
                         (r.currentLiquidityRate * DELTA_TIME_MARGIN / SECONDS_PER_YEAR)
                             + WadRayMath.ray()
                     ) / SECONDS_PER_YEAR
-            ).percentMul(10_100); // * 101% => +1% safety margin.
+            );
 
             // `&& utilizationRate != 0` to avoid 0 division. It's safe since the minipool flow is
             // always owed to a user. Since the debt is repaid as soon as possible if
