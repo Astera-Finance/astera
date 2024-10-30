@@ -175,6 +175,7 @@ contract MiniPoolRewarderTest is Common {
             } else {
                 reserves[idx] = address(aTokens[idx - tokens.length].WRAPPER_ADDRESS());
             }
+            console.log("reserves[idx] : ", reserves[idx]);
         }
         configAddresses.protocolDataProvider = address(miniPoolContracts.miniPoolAddressesProvider);
         configAddresses.stableStrategy = address(miniPoolContracts.stableStrategy);

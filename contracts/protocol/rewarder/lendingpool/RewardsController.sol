@@ -7,6 +7,7 @@ import {IScaledBalanceToken} from "../../../../contracts/interfaces/IScaledBalan
 import {DistributionTypes} from
     "../../../../contracts/protocol/libraries/types/DistributionTypes.sol";
 import {IAERC6909} from "../../../../contracts/interfaces/IAERC6909.sol";
+import "../../../../contracts/interfaces/IAToken.sol";
 import {IMiniPoolAddressesProvider} from
     "../../../../contracts/interfaces/IMiniPoolAddressesProvider.sol";
 
@@ -79,7 +80,8 @@ abstract contract RewardsController is RewardsDistributor, IRewardsController {
         refreshMiniPoolData();
         //if user is an ERC6909 aToken, this will only be true for aTokens
         if (_isAtokenERC6909[user] == true) {
-            (uint256 assetID,,) = IAERC6909(user).getIdForUnderlying(msg.sender);
+            (uint256 assetID,,) =
+                IAERC6909(user).getIdForUnderlying(IAToken(msg.sender).WRAPPER_ADDRESS());
             //for trancheATokens we calculate the total supply of the AERC6909 ID for the assetID
             //we subtract the current balance
             uint256 totalSupplyAsset = IAERC6909(user).scaledTotalSupply(assetID);
