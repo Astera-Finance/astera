@@ -315,7 +315,7 @@ library MiniPoolReserveLogic {
         uint256 newVariableBorrowIndex = variableBorrowIndex;
 
         //only cumulating if there is any income being produced
-        if (currentLiquidityRate > 0) {
+        if (currentLiquidityRate != 0) {
             uint256 cumulatedLiquidityInterest =
                 MathUtils.calculateLinearInterest(currentLiquidityRate, timestamp);
             newLiquidityIndex = cumulatedLiquidityInterest.rayMul(liquidityIndex);
@@ -323,8 +323,6 @@ library MiniPoolReserveLogic {
 
             reserve.liquidityIndex = uint128(newLiquidityIndex);
 
-            //as the liquidity rate might come only from stable rate loans, we need to ensure
-            //that there is actual variable debt before accumulating
             if (scaledVariableDebt != 0) {
                 uint256 cumulatedVariableBorrowInterest = MathUtils.calculateCompoundedInterest(
                     reserve.currentVariableBorrowRate, timestamp
