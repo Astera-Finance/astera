@@ -375,11 +375,14 @@ contract MiniPool is VersionedInitializable, IMiniPool, MiniPoolStorage {
                 uint256 remainingBalance = aToken6909.balanceOf(address(this), aTokenId);
                 if (getCurrentLendingPoolDebt(vars.underlyingAsset) == 0 && remainingBalance != 0) {
                     // Send the remaining AERC6909 to Treasury. This is due to Minipool IR > Lending IR.
-                    aToken6909.transfer(
-                        _addressesProvider.getMiniPoolTreasury(_minipoolId),
-                        aTokenId,
-                        remainingBalance
+                    this.withdraw(
+                        asset, remainingBalance, _addressesProvider.getMiniPoolTreasury(_minipoolId)
                     );
+                    // aToken6909.transfer(
+                    //     _addressesProvider.getMiniPoolTreasury(_minipoolId),
+                    //     aTokenId,
+                    //     remainingBalance
+                    // );
                 }
             }
         }
