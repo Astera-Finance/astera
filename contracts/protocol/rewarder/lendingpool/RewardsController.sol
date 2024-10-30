@@ -79,10 +79,9 @@ abstract contract RewardsController is RewardsDistributor, IRewardsController {
         refreshMiniPoolData();
         //if user is an ERC6909 aToken, this will only be true for aTokens
         if (_isAtokenERC6909[user] == true) {
-            (uint256 assetID,,, bool isInitialized) = IAERC6909(user).getIdForUnderlying(msg.sender);
+            (uint256 assetID,,) = IAERC6909(user).getIdForUnderlying(msg.sender);
             //for trancheATokens we calculate the total supply of the AERC6909 ID for the assetID
             //we subtract the current balance
-            assert(isInitialized);
             uint256 totalSupplyAsset = IAERC6909(user).scaledTotalSupply(assetID);
             uint256 diff = totalSupplyAsset - userBalance;
             _totalDiff[msg.sender] =

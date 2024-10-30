@@ -107,16 +107,12 @@ contract ATokenERC6909 is IncentivizedERC6909, VersionedInitializable {
         string memory name,
         string memory symbol,
         uint8 decimals
-    )
-        external
-        returns (uint256 aTokenID, uint256 debtTokenID, bool isTrancheRet, bool isInitialized)
-    {
+    ) external returns (uint256 aTokenID, uint256 debtTokenID, bool isTrancheRet) {
         require(
             msg.sender == address(_addressesProvider.getMiniPoolConfigurator()),
             Errors.LP_CALLER_NOT_LENDING_POOL_CONFIGURATOR
         );
-        (aTokenID, debtTokenID, isTrancheRet, isInitialized) = getIdForUnderlying(underlyingAsset);
-        require(isInitialized == false, Errors.RL_RESERVE_ALREADY_INITIALIZED);
+        (aTokenID, debtTokenID, isTrancheRet) = getNextIdForUnderlying(underlyingAsset);
         if (isTrancheRet) {
             _totalTrancheTokens++;
             _isTranche[aTokenID] = true;
@@ -309,23 +305,35 @@ contract ATokenERC6909 is IncentivizedERC6909, VersionedInitializable {
         }
     }
 
+    function getNextIdForUnderlying(address underlying)
+        public
+        view
+        returns (uint256 aTokenID, uint256 debtTokenID, bool isTrancheRet)
+    {
+        (aTokenID, debtTokenID, isTrancheRet) = _getIdForUnderlying(underlying);
+        require(
+            _underlyingAssetAddresses[aTokenID] == address(0), Errors.RL_RESERVE_ALREADY_INITIALIZED
+        );
+
+        return (aTokenID, debtTokenID, isTrancheRet);
+    }
+
     function getIdForUnderlying(address underlying)
         public
         view
-        returns (uint256 aTokenID, uint256 debtTokenID, bool isTrancheRet, bool initialized)
+        returns (uint256 aTokenID, uint256 debtTokenID, bool isTrancheRet)
     {
-        (aTokenID, debtTokenID, isTrancheRet) = _getIdForUnderlying(underlying);
-        if (_underlyingAssetAddresses[aTokenID] != address(0)) {
-            initialized = true;
-            if (!isTrancheRet) {
-                DataTypes.MiniPoolReserveData memory reserveData =
-                    IMiniPool(POOL).getReserveData(underlying);
-                aTokenID = reserveData.aTokenID;
-                debtTokenID = reserveData.variableDebtTokenID;
-            }
-        }
+        isTrancheRet = _determineIfAToken(underlying, _addressesProvider.getLendingPool());
+        DataTypes.MiniPoolReserveData memory reserveData =
+            IMiniPool(POOL).getReserveData(underlying);
+        aTokenID = reserveData.aTokenID;
+        debtTokenID = reserveData.variableDebtTokenID;
 
-        return (aTokenID, debtTokenID, isTrancheRet, initialized);
+        require(
+            _underlyingAssetAddresses[aTokenID] != address(0), Errors.RL_RESERVE_NOT_INITIALIZED
+        );
+
+        return (aTokenID, debtTokenID, isTrancheRet);
     }
 
     function _determineIfAToken(address underlying, address MLP) internal view returns (bool) {

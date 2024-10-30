@@ -1062,11 +1062,11 @@ contract MiniPoolRepayWithdrawTransferTest is MiniPoolDepositBorrowTest {
         uint256 BrAssetLp = 1e27;
         uint256 LrAssetLp = 1e26;
 
-        MockLendingpoolReserveInterestRateStrategy MockLendingpoolReserveInterestRateStrategy = new MockLendingpoolReserveInterestRateStrategy(
+        MockLendingpoolReserveInterestRateStrategy mockLendingpoolReserveInterestRateStrategy = new MockLendingpoolReserveInterestRateStrategy(
             deployedContracts.lendingPoolAddressesProvider, BrAssetLp, LrAssetLp
         );
 
-        MockMinipoolReserveInterestRateStrategy MockMinipoolReserveInterestRateStrategy = new MockMinipoolReserveInterestRateStrategy(
+        MockMinipoolReserveInterestRateStrategy mockMinipoolReserveInterestRateStrategy = new MockMinipoolReserveInterestRateStrategy(
             miniPoolContracts.miniPoolAddressesProvider, 1e27, 0
         );
 
@@ -1088,13 +1088,13 @@ contract MiniPoolRepayWithdrawTransferTest is MiniPoolDepositBorrowTest {
         ).setReserveInterestRateStrategyAddress(
             address(tokenParamsUsdc.token),
             true,
-            address(MockLendingpoolReserveInterestRateStrategy)
+            address(mockLendingpoolReserveInterestRateStrategy)
         );
 
         MiniPoolConfigurator(miniPoolContracts.miniPoolAddressesProvider.getMiniPoolConfigurator())
             .setReserveInterestRateStrategyAddress(
             address(tokenParamsUsdc.aToken),
-            address(MockMinipoolReserveInterestRateStrategy),
+            address(mockMinipoolReserveInterestRateStrategy),
             IMiniPool(miniPool)
         );
         vm.stopPrank();

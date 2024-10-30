@@ -120,7 +120,7 @@ contract MiniPoolDefaultReserveInterestRateStrategy is IMiniPoolReserveInterestR
     ) external view override returns (uint256, uint256) {
         CalcInterestRatesLocalVars1 memory vars;
 
-        (,, vars.isTranched,) = IAERC6909(aToken).getIdForUnderlying(asset);
+        (,, vars.isTranched) = IAERC6909(aToken).getIdForUnderlying(asset);
         if (vars.isTranched) {
             IFlowLimiter flowLimiter = IFlowLimiter(_addressesProvider.getFlowLimiter());
             vars.underlying = IAToken(asset).UNDERLYING_ASSET_ADDRESS();

@@ -77,7 +77,7 @@ contract MiniPoolPiReserveInterestRateStrategy is
         override
         returns (uint256 availableLiquidity, address underlying, uint256 currentFlow)
     {
-        (,, bool isTranched,) = IAERC6909(aToken).getIdForUnderlying(asset);
+        (,, bool isTranched) = IAERC6909(aToken).getIdForUnderlying(asset);
 
         if (isTranched) {
             IFlowLimiter flowLimiter =
