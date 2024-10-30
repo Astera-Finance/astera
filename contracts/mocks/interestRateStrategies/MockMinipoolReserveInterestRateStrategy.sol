@@ -120,7 +120,7 @@ contract MockMinipoolReserveInterestRateStrategy {
                         (r.currentLiquidityRate * DELTA_TIME_MARGIN / SECONDS_PER_YEAR)
                             + WadRayMath.ray()
                     ) / SECONDS_PER_YEAR
-            ).percentMul(10_100); // * 101% => +1% safety margin.
+            );
 
             if (currentLiquidityRate < minLiquidityRate) {
                 return (minLiquidityRate, currentBorrowRate);
