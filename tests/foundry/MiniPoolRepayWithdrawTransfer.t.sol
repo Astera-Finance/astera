@@ -1009,6 +1009,8 @@ contract MiniPoolRepayWithdrawTransferTest is MiniPoolDepositBorrowTest {
         uint256 USDC_OFFSET = 0;
         uint256 WBTC_OFFSET = 1;
 
+        miniPoolContracts.miniPoolAddressesProvider.setMiniPoolToTreasury(0, address(0x1111));
+
         /* Deposit tests */
         fixture_depositTokensToMainPool(amountUsdc, user, tokenParamsUsdc);
 
@@ -1044,15 +1046,15 @@ contract MiniPoolRepayWithdrawTransferTest is MiniPoolDepositBorrowTest {
         logMinipoolFlow(address(tokenParamsUsdc.token), user2);
 
         address treasury = miniPoolContracts.miniPoolAddressesProvider.getMiniPoolTreasury(0);
-        uint256 treasuryBalance = aErc6909Token.balanceOf(treasury, 1000 + USDC_OFFSET);
+        uint256 treasuryBalance = aTokens[0].balanceOf(treasury);
 
         assertEq(
             0,
             IAERC6909(miniPoolContracts.miniPoolAddressesProvider.getMiniPoolToAERC6909(miniPool))
-                .balanceOf(address(IMiniPool(miniPool)), 1000 + USDC_OFFSET)
+                .balanceOf(address(IMiniPool(miniPool)), 1000 + USDC_OFFSET), "1"
         );
 
-        assertLt(0, treasuryBalance);
+        assertGt(treasuryBalance, 0, "2");
         console.log("treasuryBalance :: ", treasuryBalance);
     }
 
