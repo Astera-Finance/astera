@@ -16,6 +16,7 @@ import {IERC20} from "../../../../contracts/dependencies/openzeppelin/contracts/
 import {IMiniPoolAddressesProvider} from
     "../../../../contracts/interfaces/IMiniPoolAddressesProvider.sol";
 import {IMiniPool} from "../../../../contracts/interfaces/IMiniPool.sol";
+import "openzeppelin-contracts/contracts/utils/Strings.sol";
 
 /**
  * @title ERC6909-MultiToken Built to service all collateral and debt tokens for a specific MiniPool
@@ -77,8 +78,18 @@ contract ATokenERC6909 is IncentivizedERC6909, VersionedInitializable {
         require(bytes(symbol).length != 0);
         require(decimals != 0);
         require(id < DEBT_TOKEN_ADDRESSABLE_ID, Errors.AT_INVALID_ATOKEN_ID);
-        _setName(id, string.concat("Cod3x Lend Interest Bearing ", name));
-        _setSymbol(id, string.concat("grain", symbol));
+        _setName(
+            id,
+            string.concat(
+                "Cod3x Lend Minipool ", string.concat(Strings.toString(_minipoolId), name)
+            )
+        );
+        _setSymbol(
+            id,
+            string.concat(
+                string.concat("cl-", Strings.toString(_minipoolId)), string.concat("-", symbol)
+            )
+        ); // cl-{minipoolId}-{symbol}
         _setDecimals(id, decimals);
         _setUnderlyingAsset(id, underlyingAsset);
         emit TokenInitialized(id, name, symbol, decimals, underlyingAsset);
