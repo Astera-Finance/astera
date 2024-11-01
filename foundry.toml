@@ -8,7 +8,7 @@ ignored_warnings_from = ["tests/"]
 optimizer = true
 optimizer_runs = 200
 solc_version = '0.8.23'
-show_progress = false
+show_progress = true
 fs_permissions = [{ access = "read-write", path = "./"}]
 ignored_error_codes = [3628]
 remappings = [
@@ -27,3 +27,5 @@ sepolia = { key = "${ETHERSCAN_KEY}", url = "https://api-sepolia.etherscan.io/ap
 [fmt]
 line_length = 100
 
+[fuzz]
+runs = 256

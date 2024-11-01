@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity 0.8.23;
 
+import "forge-std/console.sol";
+
 import {Address} from "../../../../contracts/dependencies/openzeppelin/contracts/Address.sol";
 import {IAERC6909} from "../../../../contracts/interfaces/IAERC6909.sol";
 import {IERC20} from "../../../../contracts/dependencies/openzeppelin/contracts/IERC20.sol";
@@ -62,6 +64,10 @@ contract MiniPool is VersionedInitializable, IMiniPool, MiniPoolStorage {
     using UserConfiguration for DataTypes.UserConfigurationMap;
 
     uint256 public constant MINIPOOL_REVISION = 0x1;
+
+    /// @dev In the super rare scenario of a rounding error occurring during minipool flow borrow,
+    /// this variable ensures that we can do at least 100_000 transactions on minipool in the current block.
+    uint256 public constant ERROR_REMAINDER_MARGIN = 100_000;
 
     modifier whenNotPaused() {
         _whenNotPaused();
@@ -345,11 +351,12 @@ contract MiniPool is VersionedInitializable, IMiniPool, MiniPoolStorage {
         DataTypes.MiniPoolReserveData storage reserve = _reserves[asset];
         repayVars memory vars;
         vars.aTokenAddress = reserve.aTokenAddress;
-        if (IAERC6909(reserve.aTokenAddress).isTranche(reserve.aTokenID)) {
+        if (IAERC6909(vars.aTokenAddress).isTranche(reserve.aTokenID)) {
             vars.underlyingAsset = ATokenNonRebasing(asset).UNDERLYING_ASSET_ADDRESS();
             vars.underlyingDebt = ATokenNonRebasing(asset).convertToShares(
                 getCurrentLendingPoolDebt(vars.underlyingAsset)
             ); // share
+
             if (vars.underlyingDebt != 0) {
                 uint256 amount = vars.underlyingDebt;
 
@@ -369,16 +376,25 @@ contract MiniPool is VersionedInitializable, IMiniPool, MiniPoolStorage {
                 ILendingPool(_addressesProvider.getLendingPool()).repayWithATokens(
                     vars.underlyingAsset, true, amount
                 ); // MUST use asset
+            }
 
-                IAERC6909 aToken6909 = IAERC6909(reserve.aTokenAddress);
-                uint256 aTokenId = reserve.aTokenID;
-                uint256 remainingBalance = aToken6909.balanceOf(address(this), aTokenId);
-                if (getCurrentLendingPoolDebt(vars.underlyingAsset) == 0 && remainingBalance != 0) {
-                    // Withdraw the remaining AERC6909 to Treasury. This is due to Minipool IR > Lending IR.
-                    this.withdraw(
-                        asset, remainingBalance, _addressesProvider.getMiniPoolTreasury(_minipoolId)
-                    );
-                }
+            uint256 aTokenId = reserve.aTokenID;
+            uint256 remainingBalance =
+                IAERC6909(vars.aTokenAddress).balanceOf(address(this), aTokenId);
+
+            if (
+                getCurrentLendingPoolDebt(vars.underlyingAsset) == 0
+                    && remainingBalance > ERROR_REMAINDER_MARGIN /* We leave ERROR_REMAINDER_MARGIN of aToken wei in the minipool to mitigate rounding errors. */
+                    && IERC20(asset).balanceOf(vars.aTokenAddress)
+                        > remainingBalance - ERROR_REMAINDER_MARGIN /* Check if there is enough liquidity to withdraw. */
+            ) {
+                // Withdraw the remaining AERC6909 to Treasury. This is due to Minipool IR > Lending IR.
+                // `this.` modifies the execution context => msg.sender == address(this)
+                this.withdraw(
+                    asset,
+                    remainingBalance - ERROR_REMAINDER_MARGIN,
+                    _addressesProvider.getMiniPoolTreasury(_minipoolId)
+                );
             }
         }
     }
