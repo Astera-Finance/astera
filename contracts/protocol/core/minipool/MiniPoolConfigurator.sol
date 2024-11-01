@@ -256,38 +256,6 @@ contract MiniPoolConfigurator is VersionedInitializable, IMiniPoolConfigurator {
     }
 
     /**
-     * @dev Pause a reserve.
-     * @param asset The address of the underlying asset of the reserve
-     * @param pool Minipool address
-     *
-     */
-    function pauseReserve(address asset, IMiniPool pool) external onlyPoolAdmin {
-        DataTypes.ReserveConfigurationMap memory currentConfig = pool.getConfiguration(asset);
-
-        currentConfig.setPaused(true);
-
-        pool.setConfiguration(asset, currentConfig.data);
-
-        emit ReservePaused(asset);
-    }
-
-    /**
-     * @dev Unpause a reserve
-     * @param asset The address of the underlying asset of the reserve
-     * @param pool Minipool address
-     *
-     */
-    function unpauseReserve(address asset, IMiniPool pool) external onlyPoolAdmin {
-        DataTypes.ReserveConfigurationMap memory currentConfig = pool.getConfiguration(asset);
-
-        currentConfig.setPaused(false);
-
-        pool.setConfiguration(asset, currentConfig.data);
-
-        emit ReserveUnpaused(asset);
-    }
-
-    /**
      * @dev Enable Flash loan.
      * @param asset The address of the underlying asset of the reserve
      * @param pool Minipool address

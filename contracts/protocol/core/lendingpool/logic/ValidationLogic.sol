@@ -283,7 +283,7 @@ library ValidationLogic {
      */
     function validateFlashloanSimple(DataTypes.ReserveData storage reserve) internal view {
         DataTypes.ReserveConfigurationMap storage configuration = reserve.configuration;
-        require(!configuration.getPaused(), Errors.VL_RESERVE_PAUSED);
+        require(!configuration.getFrozen(), Errors.VL_RESERVE_FROZEN);
         require(configuration.getActive(), Errors.VL_RESERVE_INACTIVE);
         require(configuration.getFlashLoanEnabled(), Errors.VL_FLASHLOAN_DISABLED);
     }

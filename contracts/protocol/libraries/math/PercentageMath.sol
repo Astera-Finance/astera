@@ -12,8 +12,8 @@ import {Errors} from "../../../../contracts/protocol/libraries/helpers/Errors.so
  *
  */
 library PercentageMath {
-    uint256 constant PERCENTAGE_FACTOR = 1e4; //percentage plus two decimals
-    uint256 constant HALF_PERCENT = PERCENTAGE_FACTOR / 2;
+    uint256 internal constant PERCENTAGE_FACTOR = 1e4; //percentage plus two decimals
+    uint256 internal constant HALF_PERCENT = PERCENTAGE_FACTOR / 2;
 
     /**
      * @dev Executes a percentage multiplication

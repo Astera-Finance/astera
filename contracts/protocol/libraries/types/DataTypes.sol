@@ -18,9 +18,11 @@ library DataTypes {
         uint128 currentLiquidityRate;
         //the current variable borrow rate. Expressed in ray
         uint128 currentVariableBorrowRate;
+        //timestamp of last update
         uint40 lastUpdateTimestamp;
         //tokens addresses
         address aTokenAddress;
+        //variableDebtToken address
         address variableDebtTokenAddress;
         //address of the interest rate strategy
         address interestRateStrategyAddress;
@@ -39,10 +41,13 @@ library DataTypes {
         uint128 currentLiquidityRate;
         //the current variable borrow rate. Expressed in ray
         uint128 currentVariableBorrowRate;
+        //timestamp of last update
         uint40 lastUpdateTimestamp;
         //tokens addresses
         address aTokenAddress;
+        //ERC6909 aToken ID.
         uint256 aTokenID;
+        //ERC6909 debt token ID.
         uint256 variableDebtTokenID;
         //address of the interest rate strategy
         address interestRateStrategyAddress;
@@ -58,9 +63,10 @@ library DataTypes {
         //bit 56: Reserve is active
         //bit 57: reserve is frozen
         //bit 58: borrowing is enabled
-        //bit 59: stable rate borrowing enabled
-        //bit 60-63: reserved
-        //bit 64-79: reserve factor
+        //bit 59: Flashloan is enabled
+        //bit 60-75: reserve factor
+        //bit 76-83: deposit cap
+        //bit 84-255: unused
         uint256 data;
     }
 

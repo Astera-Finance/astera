@@ -359,40 +359,6 @@ contract LendingPoolConfigurator is VersionedInitializable, ILendingPoolConfigur
     }
 
     /**
-     * @dev Pause a reserve.
-     * @param asset The address of the underlying asset of the reserve
-     * @param reserveType Whether the reserve is boosted by a vault
-     *
-     */
-    function pauseReserve(address asset, bool reserveType) external onlyPoolAdmin {
-        DataTypes.ReserveConfigurationMap memory currentConfig =
-            pool.getConfiguration(asset, reserveType);
-
-        currentConfig.setPaused(true);
-
-        pool.setConfiguration(asset, reserveType, currentConfig.data);
-
-        emit ReservePaused(asset, reserveType);
-    }
-
-    /**
-     * @dev Unpause a reserve
-     * @param asset The address of the underlying asset of the reserve
-     * @param reserveType Whether the reserve is boosted by a vault
-     *
-     */
-    function unpauseReserve(address asset, bool reserveType) external onlyPoolAdmin {
-        DataTypes.ReserveConfigurationMap memory currentConfig =
-            pool.getConfiguration(asset, reserveType);
-
-        currentConfig.setPaused(false);
-
-        pool.setConfiguration(asset, reserveType, currentConfig.data);
-
-        emit ReserveUnpaused(asset, reserveType);
-    }
-
-    /**
      * @dev Enable Flash loan.
      * @param asset The address of the underlying asset of the reserve
      * @param reserveType Whether the reserve is boosted by a vault
