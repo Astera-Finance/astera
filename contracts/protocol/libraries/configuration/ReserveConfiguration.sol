@@ -38,9 +38,9 @@ library ReserveConfiguration {
     uint256 internal constant IS_ACTIVE_START_BIT_POSITION = 56;
     uint256 internal constant IS_FROZEN_START_BIT_POSITION = 57;
     uint256 internal constant BORROWING_ENABLED_START_BIT_POSITION = 58;
-    uint256 internal constant RESERVE_FACTOR_START_BIT_POSITION = 64;
-    uint256 internal constant DEPOSIT_CAP_START_BIT_POSITION = 80;
-    uint256 internal constant FLASHLOAN_ENABLED_START_BIT_POSITION = 63;
+    uint256 internal constant FLASHLOAN_ENABLED_START_BIT_POSITION = 59;
+    uint256 internal constant RESERVE_FACTOR_START_BIT_POSITION = 60;
+    uint256 internal constant DEPOSIT_CAP_START_BIT_POSITION = 76;
 
     uint256 internal constant MAX_VALID_LTV = 65535;
     uint256 internal constant MAX_VALID_LIQUIDATION_THRESHOLD = 65535;
