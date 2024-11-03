@@ -74,8 +74,8 @@ contract MiniPoolRewarderTest is Common {
     ) public {
         DistributionTypes.MiniPoolRewardsConfigInput[] memory configs =
             new DistributionTypes.MiniPoolRewardsConfigInput[](1);
-        DistributionTypes.asset6909 memory asset =
-            DistributionTypes.asset6909(aTokensErc6909Addr, assetID);
+        DistributionTypes.Asset6909 memory asset =
+            DistributionTypes.Asset6909(aTokensErc6909Addr, assetID);
         configs[0] = DistributionTypes.MiniPoolRewardsConfigInput(
             emissionsPerSecond,
             1000 ether,
@@ -364,11 +364,11 @@ contract MiniPoolRewarderTest is Common {
         assertGe(user3Rewards[0], 20 ether);
 
         // This is checking BTC rewards for the miniPool aTokens and VariableDebtTokens
-        DistributionTypes.asset6909[] memory assets = new DistributionTypes.asset6909[](4);
-        assets[0] = DistributionTypes.asset6909(aTokensErc6909Addr, 1129); //BTC
-        assets[1] = DistributionTypes.asset6909(aTokensErc6909Addr, 2129); //BTC debt
-        assets[2] = DistributionTypes.asset6909(aTokensErc6909Addr, 1002); //Wrapper WETH
-        assets[3] = DistributionTypes.asset6909(aTokensErc6909Addr, 2002); //Wrapper WETH debt
+        DistributionTypes.Asset6909[] memory assets = new DistributionTypes.Asset6909[](4);
+        assets[0] = DistributionTypes.Asset6909(aTokensErc6909Addr, 1129); //BTC
+        assets[1] = DistributionTypes.Asset6909(aTokensErc6909Addr, 2129); //BTC debt
+        assets[2] = DistributionTypes.Asset6909(aTokensErc6909Addr, 1002); //Wrapper WETH
+        assets[3] = DistributionTypes.Asset6909(aTokensErc6909Addr, 2002); //Wrapper WETH debt
 
         uint256 rewardsBalance =
             rewarder.getUserRewardsBalance(assets, user3, address(rewardTokens[0]));
@@ -466,11 +466,11 @@ contract MiniPoolRewarderTest is Common {
         assertEq(user3Rewards[0], 20 ether);
 
         // This is checking BTC rewards for the miniPool aTokens and VariableDebtTokens
-        DistributionTypes.asset6909[] memory assets = new DistributionTypes.asset6909[](4);
-        assets[0] = DistributionTypes.asset6909(aTokensErc6909Addr, 1129); //BTC
-        assets[1] = DistributionTypes.asset6909(aTokensErc6909Addr, 2129); //BTC debt
-        assets[2] = DistributionTypes.asset6909(aTokensErc6909Addr, 1002); //Wrapper WETH
-        assets[3] = DistributionTypes.asset6909(aTokensErc6909Addr, 2002); //Wrapper WETH debt
+        DistributionTypes.Asset6909[] memory assets = new DistributionTypes.Asset6909[](4);
+        assets[0] = DistributionTypes.Asset6909(aTokensErc6909Addr, 1129); //BTC
+        assets[1] = DistributionTypes.Asset6909(aTokensErc6909Addr, 2129); //BTC debt
+        assets[2] = DistributionTypes.Asset6909(aTokensErc6909Addr, 1002); //Wrapper WETH
+        assets[3] = DistributionTypes.Asset6909(aTokensErc6909Addr, 2002); //Wrapper WETH debt
         uint256 user3RewardsMiniPool =
             rewarder.getUserRewardsBalance(assets, user3, address(rewardTokens[0]));
         console.log("user3RewardsMiniPool", user3RewardsMiniPool);

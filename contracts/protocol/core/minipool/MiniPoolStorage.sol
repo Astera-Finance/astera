@@ -30,11 +30,6 @@ contract MiniPoolStorage {
     // the list of the available reserves, structured as a mapping for gas savings reasons
     mapping(uint256 => DataTypes.ReserveReference) internal _reservesList;
 
-    //      userAddr -> loanID -> LoanInfo
-    mapping(address => mapping(uint256 => DataTypes.LoanInfo)) internal _userLoanInfo;
-    //      userAddr -> numLoanIds (max uint8)
-    mapping(address => uint8) internal _userLoanInfoCount;
-
     uint256 internal _reservesCount;
 
     bool internal _paused;

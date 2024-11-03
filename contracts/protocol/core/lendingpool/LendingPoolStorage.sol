@@ -29,11 +29,6 @@ contract LendingPoolStorage {
 
     mapping(address => bool) internal _miniPoolsWithActiveLoans;
 
-    //      userAddr -> loanID -> LoanInfo
-    mapping(address => mapping(uint256 => DataTypes.LoanInfo)) internal _userLoanInfo;
-    //      userAddr -> numLoanIds (max uint8)
-    mapping(address => uint8) internal _userLoanInfoCount;
-
     uint256 internal _reservesCount;
 
     bool internal _paused;
