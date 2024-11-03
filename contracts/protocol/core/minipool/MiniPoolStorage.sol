@@ -28,7 +28,7 @@ contract MiniPoolStorage {
     mapping(address => DataTypes.UserConfigurationMap) internal _usersConfig;
 
     // the list of the available reserves, structured as a mapping for gas savings reasons
-    mapping(uint256 => DataTypes.ReserveReference) internal _reservesList;
+    mapping(uint256 => address) internal _reservesList;
 
     uint256 internal _reservesCount;
 

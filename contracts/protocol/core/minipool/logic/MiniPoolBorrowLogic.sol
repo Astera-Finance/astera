@@ -93,7 +93,7 @@ library MiniPoolBorrowLogic {
         CalculateUserAccountDataVolatileParams memory params,
         mapping(address => DataTypes.MiniPoolReserveData) storage reservesData,
         DataTypes.UserConfigurationMap memory userConfig,
-        mapping(uint256 => DataTypes.ReserveReference) storage reserves
+        mapping(uint256 => address) storage reserves
     ) external view returns (uint256, uint256, uint256, uint256, uint256) {
         CalculateUserAccountDataVolatileVars memory vars;
 
@@ -106,7 +106,7 @@ library MiniPoolBorrowLogic {
                 continue;
             }
 
-            vars.currentReserveAddress = reserves[vars.i].asset;
+            vars.currentReserveAddress = reserves[vars.i];
             DataTypes.MiniPoolReserveData storage currentReserve =
                 reservesData[vars.currentReserveAddress];
 
@@ -178,7 +178,7 @@ library MiniPoolBorrowLogic {
     function executeBorrow(
         ExecuteBorrowParams memory vars,
         mapping(address => DataTypes.MiniPoolReserveData) storage reserves,
-        mapping(uint256 => DataTypes.ReserveReference) storage reservesList,
+        mapping(uint256 => address) storage reservesList,
         mapping(address => DataTypes.UserConfigurationMap) storage usersConfig
     ) external {
         DataTypes.MiniPoolReserveData storage reserve = reserves[vars.asset];

@@ -56,7 +56,7 @@ library MiniPoolWithdrawLogic {
         withdrawParams memory params,
         mapping(address => DataTypes.MiniPoolReserveData) storage reservesData,
         mapping(address => DataTypes.UserConfigurationMap) storage usersConfig,
-        mapping(uint256 => DataTypes.ReserveReference) storage reserves,
+        mapping(uint256 => address) storage reserves,
         IMiniPoolAddressesProvider addressesProvider
     ) external returns (uint256) {
         DataTypes.MiniPoolReserveData storage reserve = reservesData[params.asset];
@@ -119,7 +119,7 @@ library MiniPoolWithdrawLogic {
         finalizeTransferParams memory params,
         mapping(address => DataTypes.MiniPoolReserveData) storage reserves,
         mapping(address => DataTypes.UserConfigurationMap) storage usersConfig,
-        mapping(uint256 => DataTypes.ReserveReference) storage reservesList,
+        mapping(uint256 => address) storage reservesList,
         IMiniPoolAddressesProvider addressesProvider
     ) internal {
         require(
@@ -156,7 +156,7 @@ library MiniPoolWithdrawLogic {
         withdrawParams memory params,
         mapping(address => DataTypes.MiniPoolReserveData) storage reservesData,
         mapping(address => DataTypes.UserConfigurationMap) storage usersConfig,
-        mapping(uint256 => DataTypes.ReserveReference) storage reserves,
+        mapping(uint256 => address) storage reserves,
         IMiniPoolAddressesProvider addressesProvider
     ) internal returns (uint256) {
         DataTypes.MiniPoolReserveData storage reserve = reservesData[params.asset];

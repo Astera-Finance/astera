@@ -60,7 +60,7 @@ library MiniPoolGenericLogic {
         uint256 amount,
         mapping(address => DataTypes.MiniPoolReserveData) storage reservesData,
         DataTypes.UserConfigurationMap storage userConfig,
-        mapping(uint256 => DataTypes.ReserveReference) storage reserves,
+        mapping(uint256 => address) storage reserves,
         uint256 reservesCount,
         address oracle
     ) external view returns (bool) {
@@ -156,7 +156,7 @@ library MiniPoolGenericLogic {
         address user,
         mapping(address => DataTypes.MiniPoolReserveData) storage reservesData,
         DataTypes.UserConfigurationMap memory userConfig,
-        mapping(uint256 => DataTypes.ReserveReference) storage reserves,
+        mapping(uint256 => address) storage reserves,
         uint256 reservesCount,
         address oracle
     ) internal view returns (uint256, uint256, uint256, uint256, uint256) {
@@ -170,7 +170,7 @@ library MiniPoolGenericLogic {
                 continue;
             }
 
-            vars.currentReserveAddress = reserves[vars.i].asset;
+            vars.currentReserveAddress = reserves[vars.i];
             DataTypes.MiniPoolReserveData storage currentReserve =
                 reservesData[vars.currentReserveAddress];
 

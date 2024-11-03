@@ -88,7 +88,7 @@ library MiniPoolFlashLoanLogic {
      */
     function flashLoan(
         FlashLoanParams memory flashLoanParams,
-        mapping(uint256 => DataTypes.ReserveReference) storage reservesList,
+        mapping(uint256 => address) storage reservesList,
         mapping(address => DataTypes.UserConfigurationMap) storage usersConfig,
         mapping(address => DataTypes.MiniPoolReserveData) storage reserves
     ) external {

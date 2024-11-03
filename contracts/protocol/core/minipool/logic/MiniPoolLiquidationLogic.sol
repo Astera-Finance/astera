@@ -122,7 +122,7 @@ library MiniPoolLiquidationLogic {
     function liquidationCall(
         mapping(address => DataTypes.MiniPoolReserveData) storage reserves,
         mapping(address => DataTypes.UserConfigurationMap) storage usersConfig,
-        mapping(uint256 => DataTypes.ReserveReference) storage reservesList,
+        mapping(uint256 => address) storage reservesList,
         liquidationCallParams memory params
     ) external {
         DataTypes.MiniPoolReserveData storage collateralReserve = reserves[params.collateralAsset];

@@ -574,7 +574,7 @@ contract MiniPool is VersionedInitializable, IMiniPool, MiniPoolStorage {
         bool[] memory _activeReservesTypes = new bool[](_reservesCount);
 
         for (uint256 i = 0; i < _reservesCount; i++) {
-            _activeReserves[i] = _reservesList[i].asset;
+            _activeReserves[i] = _reservesList[i];
             _activeReservesTypes[i] = false;
         }
         return (_activeReserves, _activeReservesTypes);
@@ -709,11 +709,11 @@ contract MiniPool is VersionedInitializable, IMiniPool, MiniPoolStorage {
 
         require(reservesCount < _maxNumberOfReserves, Errors.LP_NO_MORE_RESERVES_ALLOWED);
 
-        bool reserveAlreadyAdded = _reserves[asset].id != 0 || _reservesList[0].asset == asset;
+        bool reserveAlreadyAdded = _reserves[asset].id != 0 || _reservesList[0] == asset;
 
         if (!reserveAlreadyAdded) {
             _reserves[asset].id = uint8(reservesCount);
-            _reservesList[reservesCount] = DataTypes.ReserveReference(asset, false);
+            _reservesList[reservesCount] = asset;
 
             _reservesCount = reservesCount + 1;
         }

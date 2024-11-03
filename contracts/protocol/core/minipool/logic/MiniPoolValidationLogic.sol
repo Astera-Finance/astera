@@ -77,7 +77,7 @@ library MiniPoolValidationLogic {
         ValidateWithdrawParams memory validateParams,
         mapping(address => DataTypes.MiniPoolReserveData) storage reservesData,
         DataTypes.UserConfigurationMap storage userConfig,
-        mapping(uint256 => DataTypes.ReserveReference) storage reserves
+        mapping(uint256 => address) storage reserves
     ) internal view {
         require(validateParams.amount != 0, Errors.VL_INVALID_AMOUNT);
         require(
@@ -151,7 +151,7 @@ library MiniPoolValidationLogic {
         DataTypes.MiniPoolReserveData storage reserve,
         mapping(address => DataTypes.MiniPoolReserveData) storage reservesData,
         DataTypes.UserConfigurationMap storage userConfig,
-        mapping(uint256 => DataTypes.ReserveReference) storage reserves
+        mapping(uint256 => address) storage reserves
     ) internal view {
         ValidateBorrowLocalVars memory vars;
         MiniPoolBorrowLogic.CalculateUserAccountDataVolatileParams memory params;
@@ -235,7 +235,7 @@ library MiniPoolValidationLogic {
         bool useAsCollateral,
         mapping(address => DataTypes.MiniPoolReserveData) storage reservesData,
         DataTypes.UserConfigurationMap storage userConfig,
-        mapping(uint256 => DataTypes.ReserveReference) storage reserves,
+        mapping(uint256 => address) storage reserves,
         uint256 reservesCount,
         address oracle
     ) internal view {
@@ -345,7 +345,7 @@ library MiniPoolValidationLogic {
         address from,
         mapping(address => DataTypes.MiniPoolReserveData) storage reservesData,
         DataTypes.UserConfigurationMap storage userConfig,
-        mapping(uint256 => DataTypes.ReserveReference) storage reserves,
+        mapping(uint256 => address) storage reserves,
         uint256 reservesCount,
         address oracle
     ) internal view {
