@@ -90,9 +90,9 @@ library BorrowLogic {
      */
     function calculateUserAccountDataVolatile(
         CalculateUserAccountDataVolatileParams memory params,
-        mapping(address => mapping(bool => DataTypes.ReserveData)) storage reservesData,
+        mapping(address => mapping(bool => DataTypes.ReserveData)) storage reserves,
         DataTypes.UserConfigurationMap memory userConfig,
-        mapping(uint256 => DataTypes.ReserveReference) storage reserves
+        mapping(uint256 => DataTypes.ReserveReference) storage reservesList
     ) external view returns (uint256, uint256, uint256, uint256, uint256) {
         CalculateUserAccountDataVolatileVars memory vars;
 
@@ -105,10 +105,10 @@ library BorrowLogic {
                 continue;
             }
 
-            vars.currentReserveAddress = reserves[vars.i].asset;
-            vars.currentReserveType = reserves[vars.i].reserveType;
+            vars.currentReserveAddress = reservesList[vars.i].asset;
+            vars.currentReserveType = reservesList[vars.i].reserveType;
             DataTypes.ReserveData storage currentReserve =
-                reservesData[vars.currentReserveAddress][vars.currentReserveType];
+                reserves[vars.currentReserveAddress][vars.currentReserveType];
 
             (vars.ltv, vars.liquidationThreshold,, vars.decimals,) =
                 currentReserve.configuration.getParams();

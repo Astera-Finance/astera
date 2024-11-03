@@ -91,9 +91,9 @@ library MiniPoolBorrowLogic {
      */
     function calculateUserAccountDataVolatile(
         CalculateUserAccountDataVolatileParams memory params,
-        mapping(address => DataTypes.MiniPoolReserveData) storage reservesData,
+        mapping(address => DataTypes.MiniPoolReserveData) storage reserves,
         DataTypes.UserConfigurationMap memory userConfig,
-        mapping(uint256 => address) storage reserves
+        mapping(uint256 => address) storage reservesList
     ) external view returns (uint256, uint256, uint256, uint256, uint256) {
         CalculateUserAccountDataVolatileVars memory vars;
 
@@ -106,9 +106,9 @@ library MiniPoolBorrowLogic {
                 continue;
             }
 
-            vars.currentReserveAddress = reserves[vars.i];
+            vars.currentReserveAddress = reservesList[vars.i];
             DataTypes.MiniPoolReserveData storage currentReserve =
-                reservesData[vars.currentReserveAddress];
+                reserves[vars.currentReserveAddress];
 
             (vars.ltv, vars.liquidationThreshold,, vars.decimals,) =
                 currentReserve.configuration.getParams();
