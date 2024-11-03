@@ -57,7 +57,6 @@ import "contracts/protocol/core/minipool/logic/MiniPoolDepositLogic.sol";
 import "contracts/protocol/core/minipool/logic/MiniPoolFlashLoanLogic.sol";
 import "contracts/protocol/core/minipool/logic/MiniPoolGenericLogic.sol";
 import "contracts/protocol/core/minipool/logic/MiniPoolLiquidationLogic.sol";
-import "contracts/protocol/core/minipool/logic/MiniPoolLoanInfoLogic.sol";
 import "contracts/protocol/core/minipool/logic/MiniPoolReserveLogic.sol";
 import "contracts/protocol/core/minipool/logic/MiniPoolValidationLogic.sol";
 import "contracts/protocol/core/minipool/logic/MiniPoolWithdrawLogic.sol";
