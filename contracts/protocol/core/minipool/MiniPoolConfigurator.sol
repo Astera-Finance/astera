@@ -344,33 +344,6 @@ contract MiniPoolConfigurator is VersionedInitializable, IMiniPoolConfigurator {
         pool.setPause(val);
     }
 
-    /**
-     * @dev sets new pool for aErc6909 token
-     * @param asset underlying asset address
-     * @param newPool new pool that will be used
-     * @param oldPool old pool that is used to set a new one
-     */
-    function setPool(address asset, IMiniPool newPool, IMiniPool oldPool)
-        external
-        onlyEmergencyAdmin
-    {
-        oldPool.setPool(asset, newPool);
-    }
-
-    /**
-     * @dev sets new underlying for aErc6909 token
-     * @param asset reserve asset address
-     * @param id token id in erc6909
-     * @param underlyingAsset new underlying asset to set in aErc6909
-     * @param pool pool for interaction
-     */
-    function setUnderlyingAsset(address asset, uint256 id, address underlyingAsset, IMiniPool pool)
-        external
-        onlyEmergencyAdmin
-    {
-        pool.setUnderlyingAsset(asset, id, underlyingAsset);
-    }
-
     function _checkNoLiquidity(address asset, IMiniPool pool) internal view {
         DataTypes.MiniPoolReserveData memory reserveData = pool.getReserveData(asset);
 

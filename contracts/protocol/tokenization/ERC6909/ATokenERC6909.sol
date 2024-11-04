@@ -147,16 +147,6 @@ contract ATokenERC6909 is IncentivizedERC6909, VersionedInitializable {
         INCENTIVES_CONTROLLER = controller;
     }
 
-    function setPool(IMiniPool pool) external {
-        require(msg.sender == address(POOL), Errors.CT_CALLER_MUST_BE_LENDING_POOL);
-        POOL = pool;
-    }
-
-    function setUnderlyingAsset(uint256 id, address underlyingAsset) external {
-        require(msg.sender == address(POOL), Errors.CT_CALLER_MUST_BE_LENDING_POOL);
-        _setUnderlyingAsset(id, underlyingAsset);
-    }
-
     function _setUnderlyingAsset(uint256 id, address underlyingAsset) internal {
         require(underlyingAsset != address(0), Errors.LP_NOT_CONTRACT);
         _underlyingAssetAddresses[id] = underlyingAsset;

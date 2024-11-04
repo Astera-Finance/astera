@@ -107,7 +107,7 @@ contract MiniPool is VersionedInitializable, IMiniPool, MiniPoolStorage {
     {
         _addressesProvider = provider;
         _minipoolId = minipoolID;
-        _flashLoanPremiumTotal = 1;
+        _updateFlashLoanFee(9);
         _maxNumberOfReserves = 128;
     }
 
@@ -681,17 +681,6 @@ contract MiniPool is VersionedInitializable, IMiniPool, MiniPoolStorage {
         } else {
             emit Unpaused();
         }
-    }
-
-    function setPool(address asset, IMiniPool newPool) external onlyMiniPoolConfigurator {
-        IAERC6909(_reserves[asset].aTokenAddress).setPool(newPool);
-    }
-
-    function setUnderlyingAsset(address asset, uint256 id, address underlyingAsset)
-        external
-        onlyMiniPoolConfigurator
-    {
-        IAERC6909(_reserves[asset].aTokenAddress).setUnderlyingAsset(id, underlyingAsset);
     }
 
     function _addReserveToList(address asset) internal {

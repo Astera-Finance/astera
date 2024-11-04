@@ -6,7 +6,7 @@ test = 'tests/foundry'
 cache_path = 'cache_forge'
 ignored_warnings_from = ["tests/"]
 optimizer = true
-optimizer_runs = 333333333
+optimizer_runs = 10000
 solc_version = '0.8.23'
 show_progress = true
 fs_permissions = [{ access = "read-write", path = "./"}]
