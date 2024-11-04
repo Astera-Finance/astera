@@ -55,7 +55,7 @@ library ValidationLogic {
      * @param reserveAddress The address of the reserve
      * @param amount The amount to be withdrawn
      * @param userBalance The balance of the user
-     * @param reservesData The reserves state
+     * @param reserves The reserves state
      * @param userConfig The user configuration
      * @param reserves The addresses of the reserves
      * @param reservesCount The number of reserves
@@ -72,9 +72,9 @@ library ValidationLogic {
 
     function validateWithdraw(
         ValidateWithdrawParams memory validateParams,
-        mapping(address => mapping(bool => DataTypes.ReserveData)) storage reservesData,
+        mapping(address => mapping(bool => DataTypes.ReserveData)) storage reserves,
         DataTypes.UserConfigurationMap storage userConfig,
-        mapping(uint256 => DataTypes.ReserveReference) storage reserves
+        mapping(uint256 => DataTypes.ReserveReference) storage reservesList
     ) internal view {
         require(validateParams.amount != 0, Errors.VL_INVALID_AMOUNT);
         require(
@@ -82,7 +82,7 @@ library ValidationLogic {
             Errors.VL_NOT_ENOUGH_AVAILABLE_USER_BALANCE
         );
 
-        (bool isActive,,) = reservesData[validateParams.reserveAddress][validateParams.reserveType]
+        (bool isActive,,) = reserves[validateParams.reserveAddress][validateParams.reserveType]
             .configuration
             .getFlags();
         require(isActive, Errors.VL_NO_ACTIVE_RESERVE);
@@ -93,9 +93,9 @@ library ValidationLogic {
                 validateParams.reserveType,
                 msg.sender,
                 validateParams.amount,
-                reservesData,
-                userConfig,
                 reserves,
+                userConfig,
+                reservesList,
                 validateParams.reservesCount,
                 validateParams.oracle
             ),
@@ -104,21 +104,17 @@ library ValidationLogic {
     }
 
     /**
-     * @param asset The address of the asset to borrow
      * @param userAddress The address of the user
      * @param amount The amount to be borrowed
      * @param amountInETH The amount to be borrowed, in ETH
      * @param reservesCount
-     * @param lendingUpdateTimestamp
      * @param oracle The price oracle
      */
     struct ValidateBorrowParams {
-        address asset;
         address userAddress;
         uint256 amount;
         uint256 amountInETH;
         uint256 reservesCount;
-        uint256 lendingUpdateTimestamp;
         address oracle;
     }
 
@@ -128,14 +124,7 @@ library ValidationLogic {
         uint256 amountOfCollateralNeededETH;
         uint256 userCollateralBalanceETH;
         uint256 userBorrowBalanceETH;
-        uint256 availableLiquidity;
         uint256 healthFactor;
-        uint256 amountOfCollateralNeededETHIsolated;
-        uint256 userCollateralBalanceETHIsolated;
-        uint256 userBorrowBalanceETHIsolated;
-        uint256 currentLtvIsolated;
-        uint256 currentLiquidationThresholdIsolated;
-        uint256 healthFactorIsolated;
         bool isActive;
         bool isFrozen;
         bool borrowingEnabled;
@@ -144,23 +133,21 @@ library ValidationLogic {
     /**
      * @dev Validates a borrow action
      * @param reserve The reserve state from which the user is borrowing
-     * @param reservesData The state of all the reserves
+     * @param reserves The state of all the reserves
      * @param userConfig The state of the user for the specific reserve
-     * @param reserves The addresses of all the active reserves
+     * @param reservesList The addresses of all the active reserves
      */
     function validateBorrow(
         ValidateBorrowParams memory validateParams,
         DataTypes.ReserveData storage reserve,
-        mapping(address => mapping(bool => DataTypes.ReserveData)) storage reservesData,
+        mapping(address => mapping(bool => DataTypes.ReserveData)) storage reserves,
         DataTypes.UserConfigurationMap storage userConfig,
-        mapping(uint256 => DataTypes.ReserveReference) storage reserves,
-        DataTypes.UserRecentBorrowMap storage userRecentBorrow
+        mapping(uint256 => DataTypes.ReserveReference) storage reservesList
     ) internal view {
         ValidateBorrowLocalVars memory vars;
         BorrowLogic.CalculateUserAccountDataVolatileParams memory params;
         params.user = validateParams.userAddress;
         params.reservesCount = validateParams.reservesCount;
-        params.lendingUpdateTimestamp = validateParams.lendingUpdateTimestamp;
         params.oracle = validateParams.oracle;
 
         (vars.isActive, vars.isFrozen, vars.borrowingEnabled) = reserve.configuration.getFlags();
@@ -176,9 +163,7 @@ library ValidationLogic {
             vars.currentLtv,
             vars.currentLiquidationThreshold,
             vars.healthFactor
-        ) = BorrowLogic.calculateUserAccountDataVolatile(
-            params, reservesData, userConfig, userRecentBorrow, reserves
-        );
+        ) = BorrowLogic.calculateUserAccountDataVolatile(params, reserves, userConfig, reservesList);
 
         require(vars.userCollateralBalanceETH > 0, Errors.VL_COLLATERAL_BALANCE_IS_0);
 
@@ -228,9 +213,9 @@ library ValidationLogic {
      * @dev Validates the action of setting an asset as collateral
      * @param reserve The state of the reserve that the user is enabling or disabling as collateral
      * @param reserveAddress The address of the reserve
-     * @param reservesData The data of all the reserves
+     * @param reserves The data of all the reserves
      * @param userConfig The state of the user for the specific reserve
-     * @param reserves The addresses of all the active reserves
+     * @param reservesList The addresses of all the active reserves
      * @param oracle The price oracle
      */
     function validateSetUseReserveAsCollateral(
@@ -238,9 +223,9 @@ library ValidationLogic {
         address reserveAddress,
         bool reserveType,
         bool useAsCollateral,
-        mapping(address => mapping(bool => DataTypes.ReserveData)) storage reservesData,
+        mapping(address => mapping(bool => DataTypes.ReserveData)) storage reserves,
         DataTypes.UserConfigurationMap storage userConfig,
-        mapping(uint256 => DataTypes.ReserveReference) storage reserves,
+        mapping(uint256 => DataTypes.ReserveReference) storage reservesList,
         uint256 reservesCount,
         address oracle
     ) internal view {
@@ -255,9 +240,9 @@ library ValidationLogic {
                     reserveType,
                     msg.sender,
                     underlyingBalance,
-                    reservesData,
-                    userConfig,
                     reserves,
+                    userConfig,
+                    reservesList,
                     reservesCount,
                     oracle
                 ),
@@ -267,19 +252,19 @@ library ValidationLogic {
 
     /**
      * @notice Validates a flashloan action.
-     * @param reservesData The state of all the reserves
+     * @param reserves The state of all the reserves
      * @param assets The assets being flash-borrowed
      * @param amounts The amounts for each asset being borrowed
      */
     function validateFlashloan(
-        mapping(address => mapping(bool => DataTypes.ReserveData)) storage reservesData,
+        mapping(address => mapping(bool => DataTypes.ReserveData)) storage reserves,
         bool[] memory reserveType,
         address[] memory assets,
         uint256[] memory amounts
     ) internal view {
         require(assets.length == amounts.length, Errors.VL_INCONSISTENT_FLASHLOAN_PARAMS);
         for (uint256 i = 0; i < assets.length; i++) {
-            validateFlashloanSimple(reservesData[assets[i]][reserveType[i]]);
+            validateFlashloanSimple(reserves[assets[i]][reserveType[i]]);
         }
     }
 
@@ -289,7 +274,7 @@ library ValidationLogic {
      */
     function validateFlashloanSimple(DataTypes.ReserveData storage reserve) internal view {
         DataTypes.ReserveConfigurationMap storage configuration = reserve.configuration;
-        require(!configuration.getPaused(), Errors.VL_RESERVE_PAUSED);
+        require(!configuration.getFrozen(), Errors.VL_RESERVE_FROZEN);
         require(configuration.getActive(), Errors.VL_RESERVE_INACTIVE);
         require(configuration.getFlashLoanEnabled(), Errors.VL_FLASHLOAN_DISABLED);
     }
@@ -309,22 +294,16 @@ library ValidationLogic {
         DataTypes.UserConfigurationMap storage userConfig,
         uint256 userHealthFactor,
         uint256 userVariableDebt
-    ) internal view returns (uint256, string memory) {
+    ) internal view {
         if (
             !collateralReserve.configuration.getActive()
                 || !principalReserve.configuration.getActive()
         ) {
-            return (
-                uint256(Errors.CollateralManagerErrors.NO_ACTIVE_RESERVE),
-                Errors.VL_NO_ACTIVE_RESERVE
-            );
+            revert(Errors.VL_NO_ACTIVE_RESERVE);
         }
 
         if (userHealthFactor >= GenericLogic.HEALTH_FACTOR_LIQUIDATION_THRESHOLD) {
-            return (
-                uint256(Errors.CollateralManagerErrors.HEALTH_FACTOR_ABOVE_THRESHOLD),
-                Errors.LPCM_HEALTH_FACTOR_NOT_BELOW_THRESHOLD
-            );
+            revert(Errors.LPCM_HEALTH_FACTOR_NOT_BELOW_THRESHOLD);
         }
 
         bool isCollateralEnabled = collateralReserve.configuration.getLiquidationThreshold() > 0
@@ -332,40 +311,32 @@ library ValidationLogic {
 
         //if collateral isn't enabled as collateral by user, it cannot be liquidated
         if (!isCollateralEnabled) {
-            return (
-                uint256(Errors.CollateralManagerErrors.COLLATERAL_CANNOT_BE_LIQUIDATED),
-                Errors.LPCM_COLLATERAL_CANNOT_BE_LIQUIDATED
-            );
+            revert(Errors.LPCM_COLLATERAL_CANNOT_BE_LIQUIDATED);
         }
 
         if (userVariableDebt == 0) {
-            return (
-                uint256(Errors.CollateralManagerErrors.CURRRENCY_NOT_BORROWED),
-                Errors.LPCM_SPECIFIED_CURRENCY_NOT_BORROWED_BY_USER
-            );
+            revert(Errors.LPCM_SPECIFIED_CURRENCY_NOT_BORROWED_BY_USER);
         }
-
-        return (uint256(Errors.CollateralManagerErrors.NO_ERROR), Errors.LPCM_NO_ERRORS);
     }
 
     /**
      * @dev Validates an aToken transfer
      * @param from The user from which the aTokens are being transferred
-     * @param reservesData The state of all the reserves
+     * @param reserves The state of all the reserves
      * @param userConfig The state of the user for the specific reserve
-     * @param reserves The addresses of all the active reserves
+     * @param reservesList The addresses of all the active reserves
      * @param oracle The price oracle
      */
     function validateTransfer(
         address from,
-        mapping(address => mapping(bool => DataTypes.ReserveData)) storage reservesData,
+        mapping(address => mapping(bool => DataTypes.ReserveData)) storage reserves,
         DataTypes.UserConfigurationMap storage userConfig,
-        mapping(uint256 => DataTypes.ReserveReference) storage reserves,
+        mapping(uint256 => DataTypes.ReserveReference) storage reservesList,
         uint256 reservesCount,
         address oracle
     ) internal view {
         (,,,, uint256 healthFactor) = GenericLogic.calculateUserAccountData(
-            from, reservesData, userConfig, reserves, reservesCount, oracle
+            from, reserves, userConfig, reservesList, reservesCount, oracle
         );
 
         require(

@@ -16,12 +16,8 @@ import {MiniPoolReserveLogic} from "./MiniPoolReserveLogic.sol";
 import {MiniPoolValidationLogic} from "./MiniPoolValidationLogic.sol";
 import {ReserveConfiguration} from
     "../../../../../contracts/protocol/libraries/configuration/ReserveConfiguration.sol";
-import {ReserveBorrowConfiguration} from
-    "../../../../../contracts/protocol/libraries/configuration/ReserveBorrowConfiguration.sol";
 import {UserConfiguration} from
     "../../../../../contracts/protocol/libraries/configuration/UserConfiguration.sol";
-import {UserRecentBorrow} from
-    "../../../../../contracts/protocol/libraries/configuration/UserRecentBorrow.sol";
 import {Helpers} from "../../../../../contracts/protocol/libraries/helpers/Helpers.sol";
 import {IFlashLoanReceiver} from "../../../../../contracts/interfaces/IFlashLoanReceiver.sol"; // Add this line
 import {MiniPoolBorrowLogic} from "./MiniPoolBorrowLogic.sol";
@@ -53,13 +49,8 @@ library MiniPoolFlashLoanLogic {
         uint256 i;
         address currentAsset;
         uint256 currentAmount;
-        uint256[] totalPremiums;
-        uint256 flashloanPremiumTotal;
-        address oracle;
         address currentATokenAddress;
         uint256 currentPremium;
-        uint256 currentAmountPlusPremium;
-        address debtToken;
     }
 
     struct FlashLoanRepaymentParams {
@@ -87,15 +78,13 @@ library MiniPoolFlashLoanLogic {
      * @dev Allows smartcontracts to access the liquidity of the pool within one transaction,
      * as long as the amount taken plus a fee is returned.
      * IMPORTANT There are security concerns for developers of flashloan receiver contracts that must be kept into consideration.
-     * For further details please visit https://developers.aave.com
      * @param flashLoanParams struct containing receiverAddress, onBehalfOf, assets, amounts
      *
      */
     function flashLoan(
         FlashLoanParams memory flashLoanParams,
-        mapping(uint256 => DataTypes.ReserveReference) storage reservesList,
+        mapping(uint256 => address) storage reservesList,
         mapping(address => DataTypes.UserConfigurationMap) storage usersConfig,
-        mapping(address => DataTypes.UserRecentBorrowMap) storage usersRecentBorrow,
         mapping(address => DataTypes.MiniPoolReserveData) storage reserves
     ) external {
         FlashLoanLocalVars memory vars;
@@ -170,8 +159,7 @@ library MiniPoolFlashLoanLogic {
                     ),
                     reserves,
                     reservesList,
-                    usersConfig,
-                    usersRecentBorrow
+                    usersConfig
                 );
             }
 

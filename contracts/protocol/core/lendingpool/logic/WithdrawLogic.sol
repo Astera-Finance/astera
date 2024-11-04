@@ -11,8 +11,6 @@ import {IReserveInterestRateStrategy} from
     "../../../../../contracts/interfaces/IReserveInterestRateStrategy.sol";
 import {ReserveConfiguration} from
     "../../../../../contracts/protocol/libraries/configuration/ReserveConfiguration.sol";
-import {ReserveBorrowConfiguration} from
-    "../../../../../contracts/protocol/libraries/configuration/ReserveBorrowConfiguration.sol";
 import {MathUtils} from "../../../../../contracts/protocol/libraries/math/MathUtils.sol";
 import {WadRayMath} from "../../../../../contracts/protocol/libraries/math/WadRayMath.sol";
 import {PercentageMath} from "../../../../../contracts/protocol/libraries/math/PercentageMath.sol";
@@ -58,12 +56,12 @@ library WithdrawLogic {
 
     function withdraw(
         withdrawParams memory params,
-        mapping(address => mapping(bool => DataTypes.ReserveData)) storage reservesData,
+        mapping(address => mapping(bool => DataTypes.ReserveData)) storage reserves,
         mapping(address => DataTypes.UserConfigurationMap) storage usersConfig,
-        mapping(uint256 => DataTypes.ReserveReference) storage reserves,
+        mapping(uint256 => DataTypes.ReserveReference) storage reservesList,
         ILendingPoolAddressesProvider addressesProvider
     ) internal returns (uint256) {
-        DataTypes.ReserveData storage reserve = reservesData[params.asset][params.reserveType];
+        DataTypes.ReserveData storage reserve = reserves[params.asset][params.reserveType];
         withdrawLocalVars memory localVars;
 
         {
@@ -86,9 +84,9 @@ library WithdrawLogic {
                 params.reservesCount,
                 addressesProvider.getPriceOracle()
             ),
-            reservesData,
+            reserves,
             usersConfig[msg.sender],
-            reserves
+            reservesList
         );
 
         reserve.updateState();

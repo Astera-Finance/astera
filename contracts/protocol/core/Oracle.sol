@@ -10,13 +10,14 @@ import {IAToken} from "../../../contracts/interfaces/IAToken.sol";
 import {IMiniPool} from "../../../contracts/interfaces/IMiniPool.sol";
 import {ATokenNonRebasing} from
     "../../../contracts/protocol/tokenization/ERC20/ATokenNonRebasing.sol";
+import {Errors} from "../../../contracts/protocol/libraries/helpers/Errors.sol";
 
 /// @title Oracle
 /// @author Cod3x
 /// @notice Proxy smart contract to get the price of an asset from a price source, with Chainlink Aggregator
 ///         smart contracts as primary option
 /// - If the returned price by a Chainlink aggregator is <= 0, the call is forwarded to a fallbackOracle
-/// - Owned by the Aave governance system, allowed to add sources for assets, replace them
+/// - Owned by the Cod3x Governance system, allowed to add sources for assets, replace them
 ///   and change the fallbackOracle
 contract Oracle is IPriceOracleGetter, Ownable {
     using SafeERC20 for IERC20;
@@ -25,7 +26,8 @@ contract Oracle is IPriceOracleGetter, Ownable {
     event AssetSourceUpdated(address indexed asset, address indexed source);
     event FallbackOracleUpdated(address indexed fallbackOracle);
 
-    mapping(address => IChainlinkAggregator) private assetsSources;
+    mapping(address => IChainlinkAggregator) private _assetsSources;
+    mapping(address => uint256) private _assetToTimeout;
     IPriceOracleGetter private _fallbackOracle;
     address public immutable BASE_CURRENCY;
     uint256 public immutable BASE_CURRENCY_UNIT;
@@ -40,29 +42,32 @@ contract Oracle is IPriceOracleGetter, Ownable {
     constructor(
         address[] memory assets,
         address[] memory sources,
+        uint256[] memory timeouts,
         address fallbackOracle,
         address baseCurrency,
         uint256 baseCurrencyUnit
     ) Ownable(msg.sender) {
         _setFallbackOracle(fallbackOracle);
-        _setAssetsSources(assets, sources);
+        _setAssetsSources(assets, sources, timeouts);
         BASE_CURRENCY = baseCurrency;
         BASE_CURRENCY_UNIT = baseCurrencyUnit;
         emit BaseCurrencySet(baseCurrency, baseCurrencyUnit);
     }
 
-    /// @notice External function called by the Aave governance to set or replace sources of assets
+    /// @notice External function called by the Cod3x Governance to set or replace sources of assets
     /// @param assets The addresses of the assets
     /// @param sources The address of the source of each asset
-    function setAssetSources(address[] calldata assets, address[] calldata sources)
-        external
-        onlyOwner
-    {
-        _setAssetsSources(assets, sources);
+    /// @param timeouts The chainlink timeout of each asset
+    function setAssetSources(
+        address[] calldata assets,
+        address[] calldata sources,
+        uint256[] calldata timeouts
+    ) external onlyOwner {
+        _setAssetsSources(assets, sources, timeouts);
     }
 
     /// @notice Sets the fallbackOracle
-    /// - Callable only by the Aave governance
+    /// - Callable only by the Cod3x Governance
     /// @param fallbackOracle The address of the fallbackOracle
     function setFallbackOracle(address fallbackOracle) external onlyOwner {
         _setFallbackOracle(fallbackOracle);
@@ -71,10 +76,16 @@ contract Oracle is IPriceOracleGetter, Ownable {
     /// @notice Internal function to set the sources for each asset
     /// @param assets The addresses of the assets
     /// @param sources The address of the source of each asset
-    function _setAssetsSources(address[] memory assets, address[] memory sources) internal {
-        require(assets.length == sources.length, "INCONSISTENT_PARAMS_LENGTH");
+    /// @param timeouts The chainlink timeout of each asset
+    function _setAssetsSources(
+        address[] memory assets,
+        address[] memory sources,
+        uint256[] memory timeouts
+    ) internal {
+        require(assets.length == sources.length, Errors.O_INCONSISTENT_PARAMS_LENGTH);
         for (uint256 i = 0; i < assets.length; i++) {
-            assetsSources[assets[i]] = IChainlinkAggregator(sources[i]);
+            _assetsSources[assets[i]] = IChainlinkAggregator(sources[i]);
+            _assetToTimeout[assets[i]] = timeouts[i] == 0 ? type(uint256).max : timeouts[i];
             emit AssetSourceUpdated(assets[i], sources[i]);
         }
     }
@@ -100,7 +111,7 @@ contract Oracle is IPriceOracleGetter, Ownable {
             underlying = asset;
         }
 
-        IChainlinkAggregator source = assetsSources[underlying];
+        IChainlinkAggregator source = _assetsSources[underlying];
         uint256 finalPrice;
 
         if (underlying == BASE_CURRENCY) {
@@ -108,17 +119,24 @@ contract Oracle is IPriceOracleGetter, Ownable {
         } else if (address(source) == address(0)) {
             finalPrice = _fallbackOracle.getAssetPrice(underlying);
         } else {
-            int256 price = IChainlinkAggregator(source).latestAnswer();
-            if (price > 0) {
-                finalPrice = uint256(price);
-            } else {
+            (uint80 roundId, int256 price, uint256 startedAt, uint256 timestamp,) =
+                IChainlinkAggregator(source).latestRoundData();
+
+            // Chainlink integrity checks
+            if (
+                roundId == 0 || timestamp == 0 || timestamp > block.timestamp || price <= 0
+                    || startedAt == 0 || block.timestamp - timestamp > _assetToTimeout[asset]
+            ) {
+                require(address(_fallbackOracle) != address(0), Errors.O_PRICE_FEED_INCONSISTENCY);
                 finalPrice = _fallbackOracle.getAssetPrice(underlying);
+            } else {
+                finalPrice = uint256(price);
             }
         }
 
         // if `asset` is an aToken then convert the price from asset to share.
         if (asset != underlying) {
-            return ATokenNonRebasing(asset).convertToShares(finalPrice);
+            return ATokenNonRebasing(asset).convertToAssets(finalPrice);
         } else {
             return finalPrice;
         }
@@ -138,7 +156,7 @@ contract Oracle is IPriceOracleGetter, Ownable {
     /// @param asset The address of the asset
     /// @return address The address of the source
     function getSourceOfAsset(address asset) external view returns (address) {
-        return address(assetsSources[asset]);
+        return address(_assetsSources[asset]);
     }
 
     /// @notice Gets the address of the fallback oracle

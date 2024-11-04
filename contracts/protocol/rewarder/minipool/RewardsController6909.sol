@@ -46,7 +46,6 @@ abstract contract RewardsController6909 is RewardsDistributor6909, IMiniPoolRewa
         _configureAssets(config);
     }
 
-    //@AUDIT
     function handleAction(uint256 assetID, address user, uint256 totalSupply, uint256 userBalance)
         external
         override
@@ -55,7 +54,7 @@ abstract contract RewardsController6909 is RewardsDistributor6909, IMiniPoolRewa
     }
 
     function claimRewards(
-        DistributionTypes.asset6909[] calldata assets,
+        DistributionTypes.Asset6909[] calldata assets,
         uint256 amount,
         address to,
         address reward
@@ -65,7 +64,7 @@ abstract contract RewardsController6909 is RewardsDistributor6909, IMiniPoolRewa
     }
 
     function claimRewardsOnBehalf(
-        DistributionTypes.asset6909[] calldata assets,
+        DistributionTypes.Asset6909[] calldata assets,
         uint256 amount,
         address user,
         address to,
@@ -77,14 +76,14 @@ abstract contract RewardsController6909 is RewardsDistributor6909, IMiniPoolRewa
     }
 
     function claimRewardsToSelf(
-        DistributionTypes.asset6909[] calldata assets,
+        DistributionTypes.Asset6909[] calldata assets,
         uint256 amount,
         address reward
     ) external override returns (uint256) {
         return _claimRewards(assets, amount, msg.sender, msg.sender, msg.sender, reward);
     }
 
-    function claimAllRewards(DistributionTypes.asset6909[] calldata assets, address to)
+    function claimAllRewards(DistributionTypes.Asset6909[] calldata assets, address to)
         external
         override
         returns (address[] memory rewardTokens, uint256[] memory claimedAmounts)
@@ -94,7 +93,7 @@ abstract contract RewardsController6909 is RewardsDistributor6909, IMiniPoolRewa
     }
 
     function claimAllRewardsOnBehalf(
-        DistributionTypes.asset6909[] calldata assets,
+        DistributionTypes.Asset6909[] calldata assets,
         address user,
         address to
     )
@@ -108,7 +107,7 @@ abstract contract RewardsController6909 is RewardsDistributor6909, IMiniPoolRewa
         return _claimAllRewards(assets, msg.sender, user, to);
     }
 
-    function claimAllRewardsToSelf(DistributionTypes.asset6909[] calldata assets)
+    function claimAllRewardsToSelf(DistributionTypes.Asset6909[] calldata assets)
         external
         override
         returns (address[] memory rewardTokens, uint256[] memory claimedAmounts)
@@ -116,7 +115,7 @@ abstract contract RewardsController6909 is RewardsDistributor6909, IMiniPoolRewa
         return _claimAllRewards(assets, msg.sender, msg.sender, msg.sender);
     }
 
-    function _getUserStake(DistributionTypes.asset6909[] calldata assets, address user)
+    function _getUserStake(DistributionTypes.Asset6909[] calldata assets, address user)
         internal
         view
         override
@@ -132,7 +131,7 @@ abstract contract RewardsController6909 is RewardsDistributor6909, IMiniPoolRewa
     }
 
     function _claimRewards(
-        DistributionTypes.asset6909[] calldata assets,
+        DistributionTypes.Asset6909[] calldata assets,
         uint256 amount,
         address claimer,
         address user,
@@ -163,7 +162,7 @@ abstract contract RewardsController6909 is RewardsDistributor6909, IMiniPoolRewa
     }
 
     function _claimAllRewards(
-        DistributionTypes.asset6909[] calldata assets,
+        DistributionTypes.Asset6909[] calldata assets,
         address claimer,
         address user,
         address to

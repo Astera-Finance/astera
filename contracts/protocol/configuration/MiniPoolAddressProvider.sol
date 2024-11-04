@@ -12,12 +12,13 @@ import {ILendingPoolAddressesProvider} from
 import {IFlowLimiter} from "../../../contracts/interfaces/IFlowLimiter.sol";
 import {IMiniPoolAddressesProvider} from
     "../../../contracts/interfaces/IMiniPoolAddressesProvider.sol";
+import {Errors} from "../libraries/helpers/Errors.sol";
 
 /**
  * @title LendingPoolAddressesProvider contract
  * @dev Main registry of addresses part of or connected to the protocol, including permissioned roles
  * - Acting also as factory of proxies and admin of those, so with right to change its implementations
- * - Owned by the Aave Governance
+ * - Owned by the Cod3x Governance
  * @author Cod3x
  *
  */
@@ -30,7 +31,7 @@ contract MiniPoolAddressesProvider is Ownable, IMiniPoolAddressesProvider {
 
     modifier poolIdCheck(uint256 poolId) {
         if (poolId >= _miniPoolCount) {
-            revert PoolIdOutOfRange();
+            revert(Errors.PAP_POOL_ID_OUT_OF_RANGE);
         }
         _;
     }
@@ -41,7 +42,6 @@ contract MiniPoolAddressesProvider is Ownable, IMiniPoolAddressesProvider {
 
     bytes32 private constant LENDING_POOL_ADDRESSES_PROVIDER = "LENDING_POOL_ADDRESSES_PROVIDER";
     bytes32 private constant MINI_POOL_CONFIGURATOR = "MINI_POOL_CONFIGURATOR";
-    bytes32 private constant MINI_POOL_COLLATERAL_MANAGER = "COLLATERAL_MANAGER";
 
     constructor(ILendingPoolAddressesProvider provider) Ownable(msg.sender) {
         _addresses[LENDING_POOL_ADDRESSES_PROVIDER] = address(provider);
@@ -69,10 +69,6 @@ contract MiniPoolAddressesProvider is Ownable, IMiniPoolAddressesProvider {
     function getEmergencyAdmin() external view returns (address) {
         return ILendingPoolAddressesProvider(_addresses[LENDING_POOL_ADDRESSES_PROVIDER])
             .getEmergencyAdmin();
-    }
-
-    function getMiniPoolCollateralManager() external view returns (address) {
-        return _addresses[MINI_POOL_COLLATERAL_MANAGER];
     }
 
     function getPriceOracle() external view returns (address) {
@@ -103,7 +99,7 @@ contract MiniPoolAddressesProvider is Ownable, IMiniPoolAddressesProvider {
                 return id;
             }
         }
-        revert NoMiniPoolIdForAddress();
+        revert(Errors.PAP_NO_MINI_POOL_ID_FOR_ADDRESS);
     }
 
     function getMiniPoolToAERC6909(address miniPool) external view returns (address) {
@@ -251,11 +247,6 @@ contract MiniPoolAddressesProvider is Ownable, IMiniPoolAddressesProvider {
     function setMiniPoolConfigurator(address configuratorImpl) external onlyOwner {
         _updateImpl(MINI_POOL_CONFIGURATOR, configuratorImpl);
         emit MiniPoolConfiguratorUpdated(configuratorImpl);
-    }
-
-    function setMiniPoolCollateralManager(address collateralManager) external onlyOwner {
-        _addresses[MINI_POOL_COLLATERAL_MANAGER] = collateralManager;
-        emit MiniPoolCollateralManagerUpdated(collateralManager);
     }
 
     function setMiniPoolToTreasury(uint256 id, address treasury)

@@ -9,8 +9,6 @@ import {IReserveInterestRateStrategy} from
     "../../../../../contracts/interfaces/IReserveInterestRateStrategy.sol";
 import {ReserveConfiguration} from
     "../../../../../contracts/protocol/libraries/configuration/ReserveConfiguration.sol";
-import {ReserveBorrowConfiguration} from
-    "../../../../../contracts/protocol/libraries/configuration/ReserveBorrowConfiguration.sol";
 import {MathUtils} from "../../../../../contracts/protocol/libraries/math/MathUtils.sol";
 import {WadRayMath} from "../../../../../contracts/protocol/libraries/math/WadRayMath.sol";
 import {PercentageMath} from "../../../../../contracts/protocol/libraries/math/PercentageMath.sol";
@@ -46,7 +44,6 @@ library ReserveLogic {
 
     using ReserveLogic for DataTypes.ReserveData;
     using ReserveConfiguration for DataTypes.ReserveConfigurationMap;
-    using ReserveBorrowConfiguration for DataTypes.ReserveBorrowConfigurationMap;
 
     /**
      * @dev Returns the ongoing normalized income for the reserve
@@ -63,7 +60,6 @@ library ReserveLogic {
     {
         uint40 timestamp = reserve.lastUpdateTimestamp;
 
-        //solium-disable-next-line
         if (timestamp == uint40(block.timestamp)) {
             //if the index was updated in the same block, no need to perform any calculation
             return reserve.liquidityIndex;
@@ -91,7 +87,6 @@ library ReserveLogic {
     {
         uint40 timestamp = reserve.lastUpdateTimestamp;
 
-        //solium-disable-next-line
         if (timestamp == uint40(block.timestamp)) {
             //if the index was updated in the same block, no need to perform any calculation
             return reserve.variableBorrowIndex;
@@ -180,7 +175,6 @@ library ReserveLogic {
     }
 
     struct UpdateInterestRatesLocalVars {
-        uint256 availableLiquidity;
         uint256 newLiquidityRate;
         uint256 newVariableRate;
         uint256 totalVariableDebt;
@@ -326,7 +320,6 @@ library ReserveLogic {
             reserve.variableBorrowIndex = uint128(newVariableBorrowIndex);
         }
 
-        //solium-disable-next-line
         reserve.lastUpdateTimestamp = uint40(block.timestamp);
         return (newLiquidityIndex, newVariableBorrowIndex);
     }

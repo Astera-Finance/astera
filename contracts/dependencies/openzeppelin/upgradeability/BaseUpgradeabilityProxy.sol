@@ -31,7 +31,6 @@ contract BaseUpgradeabilityProxy is Proxy {
      */
     function _implementation() internal view override returns (address impl) {
         bytes32 slot = IMPLEMENTATION_SLOT;
-        //solium-disable-next-line
         assembly {
             impl := sload(slot)
         }
@@ -58,7 +57,6 @@ contract BaseUpgradeabilityProxy is Proxy {
 
         bytes32 slot = IMPLEMENTATION_SLOT;
 
-        //solium-disable-next-line
         assembly {
             sstore(slot, newImplementation)
         }

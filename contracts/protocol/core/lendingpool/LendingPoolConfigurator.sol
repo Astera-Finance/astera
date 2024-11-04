@@ -7,8 +7,6 @@ import {InitializableImmutableAdminUpgradeabilityProxy} from
     "../../../../contracts/protocol/libraries/upgradeability/InitializableImmutableAdminUpgradeabilityProxy.sol";
 import {ReserveConfiguration} from
     "../../../../contracts/protocol/libraries/configuration/ReserveConfiguration.sol";
-import {ReserveBorrowConfiguration} from
-    "../../../../contracts/protocol/libraries/configuration/ReserveBorrowConfiguration.sol";
 import {ILendingPoolAddressesProvider} from
     "../../../../contracts/interfaces/ILendingPoolAddressesProvider.sol";
 import {ILendingPool} from "../../../../contracts/interfaces/ILendingPool.sol";
@@ -27,13 +25,12 @@ import {IAToken} from "../../../../contracts/interfaces/IAToken.sol";
 /**
  * @title LendingPoolConfigurator contract
  * @author Cod3x
- * @dev Implements the configuration methods for the Aave protocol
+ * @dev Implements the configuration methods for the Cod3x Lend protocol
  *
  */
 contract LendingPoolConfigurator is VersionedInitializable, ILendingPoolConfigurator {
     using PercentageMath for uint256;
     using ReserveConfiguration for DataTypes.ReserveConfigurationMap;
-    using ReserveBorrowConfiguration for DataTypes.ReserveBorrowConfigurationMap;
 
     ILendingPoolAddressesProvider internal addressesProvider;
     ILendingPool internal pool;
@@ -250,8 +247,6 @@ contract LendingPoolConfigurator is VersionedInitializable, ILendingPoolConfigur
     ) external onlyPoolAdmin {
         DataTypes.ReserveConfigurationMap memory currentConfig =
             pool.getConfiguration(asset, reserveType);
-        DataTypes.ReserveBorrowConfigurationMap memory currentBorrowConfig =
-            pool.getBorrowConfiguration(asset, reserveType);
 
         //validation of the parameters: the LTV can
         //only be lower or equal than the liquidation threshold
@@ -282,17 +277,10 @@ contract LendingPoolConfigurator is VersionedInitializable, ILendingPoolConfigur
         }
 
         currentConfig.setLtv(ltv);
-        currentBorrowConfig.setLowVolatilityLtv(ltv);
-        currentBorrowConfig.setMediumVolatilityLtv(ltv);
-        currentBorrowConfig.setHighVolatilityLtv(ltv);
         currentConfig.setLiquidationThreshold(liquidationThreshold);
-        currentBorrowConfig.setLowVolatilityLiquidationThreshold(liquidationThreshold);
-        currentBorrowConfig.setMediumVolatilityLiquidationThreshold(liquidationThreshold);
-        currentBorrowConfig.setHighVolatilityLiquidationThreshold(liquidationThreshold);
         currentConfig.setLiquidationBonus(liquidationBonus);
 
         pool.setConfiguration(asset, reserveType, currentConfig.data);
-        pool.setBorrowConfiguration(asset, reserveType, currentBorrowConfig.data);
 
         emit CollateralConfigurationChanged(
             asset, reserveType, ltv, liquidationThreshold, liquidationBonus
@@ -371,40 +359,6 @@ contract LendingPoolConfigurator is VersionedInitializable, ILendingPoolConfigur
     }
 
     /**
-     * @dev Pause a reserve.
-     * @param asset The address of the underlying asset of the reserve
-     * @param reserveType Whether the reserve is boosted by a vault
-     *
-     */
-    function pauseReserve(address asset, bool reserveType) external onlyPoolAdmin {
-        DataTypes.ReserveConfigurationMap memory currentConfig =
-            pool.getConfiguration(asset, reserveType);
-
-        currentConfig.setPaused(true);
-
-        pool.setConfiguration(asset, reserveType, currentConfig.data);
-
-        emit ReservePaused(asset, reserveType);
-    }
-
-    /**
-     * @dev Unpause a reserve
-     * @param asset The address of the underlying asset of the reserve
-     * @param reserveType Whether the reserve is boosted by a vault
-     *
-     */
-    function unpauseReserve(address asset, bool reserveType) external onlyPoolAdmin {
-        DataTypes.ReserveConfigurationMap memory currentConfig =
-            pool.getConfiguration(asset, reserveType);
-
-        currentConfig.setPaused(false);
-
-        pool.setConfiguration(asset, reserveType, currentConfig.data);
-
-        emit ReserveUnpaused(asset, reserveType);
-    }
-
-    /**
      * @dev Enable Flash loan.
      * @param asset The address of the underlying asset of the reserve
      * @param reserveType Whether the reserve is boosted by a vault
@@ -471,63 +425,6 @@ contract LendingPoolConfigurator is VersionedInitializable, ILendingPoolConfigur
         pool.setConfiguration(asset, reserveType, currentConfig.data);
 
         emit ReserveDepositCapChanged(asset, reserveType, depositCap);
-    }
-
-    function setReserveVolatilityTier(address asset, bool reserveType, uint256 tier)
-        external
-        onlyPoolAdmin
-    {
-        DataTypes.ReserveBorrowConfigurationMap memory currentBorrowConfig =
-            pool.getBorrowConfiguration(asset, reserveType);
-
-        currentBorrowConfig.setVolatilityTier(tier);
-
-        pool.setBorrowConfiguration(asset, reserveType, currentBorrowConfig.data);
-
-        emit ReserveVolatilityTierChanged(asset, reserveType, tier);
-    }
-
-    function setLowVolatilityLtv(address asset, bool reserveType, uint256 ltv)
-        external
-        onlyPoolAdmin
-    {
-        DataTypes.ReserveBorrowConfigurationMap memory currentBorrowConfig =
-            pool.getBorrowConfiguration(asset, reserveType);
-
-        currentBorrowConfig.setLowVolatilityLtv(ltv);
-
-        pool.setBorrowConfiguration(asset, reserveType, currentBorrowConfig.data);
-
-        emit ReserveLowVolatilityLtvChanged(asset, reserveType, ltv);
-    }
-
-    function setMediumVolatilityLtv(address asset, bool reserveType, uint256 ltv)
-        external
-        onlyPoolAdmin
-    {
-        DataTypes.ReserveBorrowConfigurationMap memory currentBorrowConfig =
-            pool.getBorrowConfiguration(asset, reserveType);
-
-        currentBorrowConfig.setMediumVolatilityLtv(ltv);
-
-        pool.setBorrowConfiguration(asset, reserveType, currentBorrowConfig.data);
-
-        emit ReserveMediumVolatilityLtvChanged(asset, reserveType, ltv);
-    }
-
-    function setHighVolatilityLtv(address asset, bool reserveType, uint256 ltv)
-        external
-        onlyPoolAdmin
-    {
-        // Store update params in array
-        DataTypes.ReserveBorrowConfigurationMap memory currentBorrowConfig =
-            pool.getBorrowConfiguration(asset, reserveType);
-
-        currentBorrowConfig.setHighVolatilityLtv(ltv);
-
-        pool.setBorrowConfiguration(asset, reserveType, currentBorrowConfig.data);
-
-        emit ReserveHighVolatilityLtvChanged(asset, reserveType, ltv);
     }
 
     /**

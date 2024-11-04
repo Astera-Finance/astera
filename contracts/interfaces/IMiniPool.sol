@@ -240,7 +240,6 @@ interface IMiniPool {
     struct FlashLoanParams {
         address receiverAddress;
         address[] assets;
-        bool[] reserveTypes;
         address onBehalfOf;
     }
 
@@ -248,11 +247,10 @@ interface IMiniPool {
      * @dev Allows smartcontracts to access the liquidity of the pool within one transaction,
      * as long as the amount taken plus a fee is returned.
      * IMPORTANT There are security concerns for developers of flashloan receiver contracts that must be kept into consideration.
-     * For further details please visit https://developers.aave.com
      * @param flashLoanParams struct containing receiverAddress, onBehalfOf
      * @param modes Types of the debt to open if the flash loan is not returned:
-     *   0 -> Don't open any debt, just revert if funds can't be transferred from the receiver
-     *   2 -> Open debt at variable rate for the value of the amount flash-borrowed to the `onBehalfOf` address
+     *   0    -> Don't open any debt, just revert if funds can't be transferred from the receiver
+     *   =! 0 -> Open debt at variable rate for the value of the amount flash-borrowed to the `onBehalfOf` address
      * @param params Variadic packed params to pass to the receiver as extra information
      *
      */
@@ -310,19 +308,6 @@ interface IMiniPool {
         view
         returns (DataTypes.ReserveConfigurationMap memory);
 
-    function setBorrowConfiguration(address reserve, uint256 borrowConfiguration) external;
-
-    /**
-     * @dev Returns the borrow configuration of the reserve
-     * @param asset The address of the underlying asset of the reserve
-     * @return The borrow configuration of the reserve
-     *
-     */
-    function getBorrowConfiguration(address asset)
-        external
-        view
-        returns (DataTypes.ReserveBorrowConfigurationMap memory);
-
     /**
      * @dev Returns the configuration of the user across all the reserves
      * @param user The user address
@@ -369,6 +354,7 @@ interface IMiniPool {
     ) external;
 
     function getReservesList() external view returns (address[] memory, bool[] memory);
+
     function getReservesCount() external view returns (uint256);
 
     function getAddressesProvider() external view returns (IMiniPoolAddressesProvider);
@@ -380,4 +366,12 @@ interface IMiniPool {
     function setPause(bool val) external;
 
     function paused() external view returns (bool);
+
+    function setRewarderForReserve(address asset, address rewarder) external;
+
+    /**
+     * @dev Update flahloan premium total
+     * @param flashLoanPremiumTotal - premiom for flashloan
+     */
+    function updateFlashLoanFee(uint128 flashLoanPremiumTotal) external;
 }

@@ -35,6 +35,7 @@ import {MiniPoolWithdrawLogic} from "./logic/MiniPoolWithdrawLogic.sol";
 import {MiniPoolBorrowLogic} from "./logic/MiniPoolBorrowLogic.sol";
 import {MiniPoolFlashLoanLogic} from "./logic/MiniPoolFlashLoanLogic.sol";
 import {MiniPoolLiquidationLogic} from "./logic/MiniPoolLiquidationLogic.sol";
+import {IMiniPoolRewarder} from "../../../../contracts/interfaces/IMiniPoolRewarder.sol";
 
 /**
  * @title MiniPool contract
@@ -62,6 +63,10 @@ contract MiniPool is VersionedInitializable, IMiniPool, MiniPoolStorage {
     using UserConfiguration for DataTypes.UserConfigurationMap;
 
     uint256 public constant MINIPOOL_REVISION = 0x1;
+
+    /// @dev In the super rare scenario of a rounding error occurring during minipool flow borrow,
+    /// this variable ensures that we can do at least 100_000 transactions on minipool in the current block.
+    uint256 public constant ERROR_REMAINDER_MARGIN = 100_000;
 
     modifier whenNotPaused() {
         _whenNotPaused();
@@ -102,7 +107,7 @@ contract MiniPool is VersionedInitializable, IMiniPool, MiniPoolStorage {
     {
         _addressesProvider = provider;
         _minipoolId = minipoolID;
-        _flashLoanPremiumTotal = 1;
+        _updateFlashLoanFee(9);
         _maxNumberOfReserves = 128;
     }
 
@@ -127,6 +132,7 @@ contract MiniPool is VersionedInitializable, IMiniPool, MiniPoolStorage {
             _usersConfig,
             _addressesProvider
         );
+        _repayLendingPool(asset);
     }
 
     /**
@@ -156,9 +162,9 @@ contract MiniPool is VersionedInitializable, IMiniPool, MiniPoolStorage {
         );
     }
 
-    struct borrowVars {
+    struct borrowVarsLocalVars {
         uint256 availableLiquidity;
-        uint256 amountRecieved;
+        uint256 amountReceived;
         address onBehalfOf;
         address aTokenAddress;
         address LendingPool;
@@ -182,7 +188,7 @@ contract MiniPool is VersionedInitializable, IMiniPool, MiniPoolStorage {
         whenNotPaused
     {
         DataTypes.MiniPoolReserveData storage reserve = _reserves[asset];
-        borrowVars memory vars;
+        borrowVarsLocalVars memory vars;
         vars.aTokenAddress = reserve.aTokenAddress;
         require(vars.aTokenAddress != address(0), "Reserve not initialized");
         vars.availableLiquidity = IERC20(asset).balanceOf(vars.aTokenAddress);
@@ -190,26 +196,26 @@ contract MiniPool is VersionedInitializable, IMiniPool, MiniPoolStorage {
             amount > vars.availableLiquidity
                 && IAERC6909(reserve.aTokenAddress).isTranche(reserve.aTokenID)
         ) {
-            address underlying = IAToken(asset).UNDERLYING_ASSET_ADDRESS();
+            address underlying = ATokenNonRebasing(asset).UNDERLYING_ASSET_ADDRESS();
             vars.LendingPool = _addressesProvider.getLendingPool();
             ILendingPool(vars.LendingPool).miniPoolBorrow(
                 underlying,
                 true,
-                IAToken(asset).convertToAssets(amount - vars.availableLiquidity), // amount + availableLiquidity converted to asset
+                ATokenNonRebasing(asset).convertToAssets(amount - vars.availableLiquidity), // amount + availableLiquidity converted to asset
                 address(this),
                 ATokenNonRebasing(asset).ATOKEN_ADDRESS()
             );
 
-            vars.amountRecieved = IERC20(underlying).balanceOf(address(this));
+            vars.amountReceived = IERC20(underlying).balanceOf(address(this));
 
-            IERC20(underlying).approve(vars.LendingPool, vars.amountRecieved);
+            IERC20(underlying).approve(vars.LendingPool, vars.amountReceived);
             ILendingPool(vars.LendingPool).deposit(
-                underlying, true, vars.amountRecieved, address(this)
+                underlying, true, vars.amountReceived, address(this)
             );
 
-            vars.amountRecieved = IERC20(asset).balanceOf(address(this));
+            vars.amountReceived = IERC20(asset).balanceOf(address(this));
             MiniPoolDepositLogic.internalDeposit(
-                MiniPoolDepositLogic.DepositParams(asset, vars.amountRecieved, address(this)),
+                MiniPoolDepositLogic.DepositParams(asset, vars.amountReceived, address(this)),
                 _reserves,
                 _usersConfig,
                 _addressesProvider
@@ -232,16 +238,8 @@ contract MiniPool is VersionedInitializable, IMiniPool, MiniPoolStorage {
             ),
             _reserves,
             _reservesList,
-            _usersConfig,
-            _usersRecentBorrow
+            _usersConfig
         );
-    }
-
-    struct repayVars {
-        uint256 repayAmount;
-        address aTokenAddress;
-        address underlyingAsset;
-        uint256 underlyingDebt;
     }
 
     /**
@@ -268,7 +266,7 @@ contract MiniPool is VersionedInitializable, IMiniPool, MiniPoolStorage {
             _usersConfig
         );
 
-        _repayLendingPool(asset, amount);
+        _repayLendingPool(asset);
         return repayAmount;
     }
 
@@ -325,30 +323,35 @@ contract MiniPool is VersionedInitializable, IMiniPool, MiniPoolStorage {
         bool receiveAToken
     ) external override whenNotPaused {
         MiniPoolLiquidationLogic.liquidationCall(
+            _reserves,
+            _usersConfig,
+            _reservesList,
             MiniPoolLiquidationLogic.liquidationCallParams(
+                address(_addressesProvider),
+                _reservesCount,
                 collateralAsset,
                 debtAsset,
                 user,
                 debtToCover,
-                receiveAToken,
-                address(_addressesProvider)
+                receiveAToken
             )
         );
-        _repayLendingPool(debtAsset, debtToCover);
+        _repayLendingPool(debtAsset);
     }
 
-    function _repayLendingPool(address asset, uint256 amount) internal {
+    function _repayLendingPool(address asset) internal {
         DataTypes.MiniPoolReserveData storage reserve = _reserves[asset];
-        repayVars memory vars;
-        vars.aTokenAddress = reserve.aTokenAddress;
-        if (IAERC6909(reserve.aTokenAddress).isTranche(reserve.aTokenID)) {
-            vars.underlyingAsset = IAToken(asset).UNDERLYING_ASSET_ADDRESS();
-            vars.underlyingDebt =
-                IAToken(asset).convertToShares(getCurrentLendingPoolDebt(vars.underlyingAsset)); // share
-            if (vars.underlyingDebt != 0) {
-                if (vars.underlyingDebt < amount) {
-                    amount = vars.underlyingDebt;
-                }
+        address aTokenAddress = reserve.aTokenAddress;
+        address underlyingAsset;
+
+        if (IAERC6909(aTokenAddress).isTranche(reserve.aTokenID)) {
+            underlyingAsset = ATokenNonRebasing(asset).UNDERLYING_ASSET_ADDRESS();
+            uint256 underlyingDebt =
+                ATokenNonRebasing(asset).convertToShares(getCurrentLendingPoolDebt(underlyingAsset)); // share
+
+            if (underlyingDebt != 0) {
+                uint256 amount = underlyingDebt;
+
                 MiniPoolWithdrawLogic.internalWithdraw(
                     MiniPoolWithdrawLogic.withdrawParams(
                         asset, amount, address(this), _reservesCount
@@ -363,33 +366,38 @@ contract MiniPool is VersionedInitializable, IMiniPool, MiniPoolStorage {
                 amount = aToken.balanceOf(address(this)); // asset
                 aToken.approve(_addressesProvider.getLendingPool(), amount);
                 ILendingPool(_addressesProvider.getLendingPool()).repayWithATokens(
-                    vars.underlyingAsset, true, amount, address(this)
+                    underlyingAsset, true, amount
                 ); // MUST use asset
             }
-        }
-    }
 
-    struct FlashLoanLocalVars {
-        IFlashLoanReceiver receiver;
-        address oracle;
-        uint256 i;
-        address currentAsset;
-        address currentATokenAddress;
-        uint256 currentAmount;
-        uint256 currentPremium;
-        uint256 currentAmountPlusPremium;
-        address debtToken;
+            uint256 aTokenId = reserve.aTokenID;
+            uint256 remainingBalance = IAERC6909(aTokenAddress).balanceOf(address(this), aTokenId);
+
+            if (
+                getCurrentLendingPoolDebt(underlyingAsset) == 0
+                    && remainingBalance > ERROR_REMAINDER_MARGIN /* We leave ERROR_REMAINDER_MARGIN of aToken wei in the minipool to mitigate rounding errors. */
+                    && IERC20(asset).balanceOf(aTokenAddress)
+                        > remainingBalance - ERROR_REMAINDER_MARGIN /* Check if there is enough liquidity to withdraw. */
+            ) {
+                // Withdraw the remaining AERC6909 to Treasury. This is due to Minipool IR > Lending IR.
+                // `this.` modifies the execution context => msg.sender == address(this)
+                this.withdraw(
+                    asset,
+                    remainingBalance - ERROR_REMAINDER_MARGIN,
+                    _addressesProvider.getMiniPoolTreasury(_minipoolId)
+                );
+            }
+        }
     }
 
     /**
      * @dev Allows smartcontracts to access the liquidity of the pool within one transaction,
      * as long as the amount taken plus a fee is returned.
      * IMPORTANT There are security concerns for developers of flashloan receiver contracts that must be kept into consideration.
-     * For further details please visit https://developers.aave.com
      * @param flashLoanParams struct containing receiverAddress, onBehalfOf, assets, amounts
      * @param modes Types of the debt to open if the flash loan is not returned:
-     *   0 -> Don't open any debt, just revert if funds can't be transferred from the receiver
-     *   2 -> Open debt at variable rate for the value of the amount flash-borrowed to the `onBehalfOf` address
+     *   0    -> Don't open any debt, just revert if funds can't be transferred from the receiver
+     *   =! 0 -> Open debt at variable rate for the value of the amount flash-borrowed to the `onBehalfOf` address
      * @param params Variadic packed params to pass to the receiver as extra information
      *
      */
@@ -413,7 +421,6 @@ contract MiniPool is VersionedInitializable, IMiniPool, MiniPoolStorage {
             ),
             _reservesList,
             _usersConfig,
-            _usersRecentBorrow,
             _reserves
         );
     }
@@ -487,21 +494,6 @@ contract MiniPool is VersionedInitializable, IMiniPool, MiniPoolStorage {
     }
 
     /**
-     * @dev Returns the borrow configuration of the reserve
-     * @param asset The address of the underlying asset of the reserve
-     * @return The borrow configuration of the reserve
-     *
-     */
-    function getBorrowConfiguration(address asset)
-        external
-        view
-        override
-        returns (DataTypes.ReserveBorrowConfigurationMap memory)
-    {
-        return _reserves[asset].borrowConfiguration;
-    }
-
-    /**
      * @dev Returns the configuration of the user across all the reserves
      * @param user The user address
      * @return The configuration of the user
@@ -561,7 +553,7 @@ contract MiniPool is VersionedInitializable, IMiniPool, MiniPoolStorage {
         bool[] memory _activeReservesTypes = new bool[](_reservesCount);
 
         for (uint256 i = 0; i < _reservesCount; i++) {
-            _activeReserves[i] = _reservesList[i].asset;
+            _activeReserves[i] = _reservesList[i];
             _activeReservesTypes[i] = false;
         }
         return (_activeReserves, _activeReservesTypes);
@@ -642,7 +634,7 @@ contract MiniPool is VersionedInitializable, IMiniPool, MiniPoolStorage {
     ) external override onlyMiniPoolConfigurator {
         require(Address.isContract(asset), Errors.LP_NOT_CONTRACT);
         _reserves[asset].init(
-            aTokenAddress, aTokenID, variableDebtTokenID, interestRateStrategyAddress
+            asset, aTokenAddress, aTokenID, variableDebtTokenID, interestRateStrategyAddress
         );
         _addReserveToList(asset);
     }
@@ -678,22 +670,6 @@ contract MiniPool is VersionedInitializable, IMiniPool, MiniPoolStorage {
     }
 
     /**
-     * @dev Sets the borrow configuration bitmap of the reserve as a whole
-     * - Only callable by the LendingPoolConfigurator contract
-     * @param asset The address of the underlying asset of the reserve
-     * @param borrowConfiguration The new borrow configuration bitmap
-     *
-     */
-    function setBorrowConfiguration(address asset, uint256 borrowConfiguration)
-        external
-        override
-        onlyMiniPoolConfigurator
-    {
-        _reserves[asset].borrowConfiguration.data = borrowConfiguration;
-        _lendingUpdateTimestamp = block.timestamp;
-    }
-
-    /**
      * @dev Set the _pause state of a reserve
      * - Only callable by the LendingPoolConfigurator contract
      * @param val `true` to pause the reserve, `false` to un-pause it
@@ -712,11 +688,11 @@ contract MiniPool is VersionedInitializable, IMiniPool, MiniPoolStorage {
 
         require(reservesCount < _maxNumberOfReserves, Errors.LP_NO_MORE_RESERVES_ALLOWED);
 
-        bool reserveAlreadyAdded = _reserves[asset].id != 0 || _reservesList[0].asset == asset;
+        bool reserveAlreadyAdded = _reserves[asset].id != 0 || _reservesList[0] == asset;
 
         if (!reserveAlreadyAdded) {
             _reserves[asset].id = uint8(reservesCount);
-            _reservesList[reservesCount] = DataTypes.ReserveReference(asset, false);
+            _reservesList[reservesCount] = asset;
 
             _reservesCount = reservesCount + 1;
         }
@@ -724,5 +700,22 @@ contract MiniPool is VersionedInitializable, IMiniPool, MiniPoolStorage {
 
     function getCurrentLendingPoolDebt(address asset) public view returns (uint256) {
         return IFlowLimiter(_addressesProvider.getFlowLimiter()).currentFlow(asset, address(this));
+    }
+
+    function setRewarderForReserve(address asset, address rewarder)
+        external
+        onlyMiniPoolConfigurator
+    {
+        IAERC6909(_reserves[asset].aTokenAddress).setIncentivesController(
+            IMiniPoolRewarder(rewarder)
+        );
+    }
+
+    function updateFlashLoanFee(uint128 flashLoanPremiumTotal) external onlyMiniPoolConfigurator {
+        _updateFlashLoanFee(flashLoanPremiumTotal);
+    }
+
+    function _updateFlashLoanFee(uint128 flashLoanPremiumTotal) internal {
+        _flashLoanPremiumTotal = flashLoanPremiumTotal;
     }
 }

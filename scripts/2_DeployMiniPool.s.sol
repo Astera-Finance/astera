@@ -59,34 +59,33 @@ contract DeployMiniPool is Script, Test, DeploymentUtils {
     }
 
     function run() external returns (DeployedContracts memory) {
+        console.log("2_DeployMiniPool");
+
         string memory root = vm.projectRoot();
         string memory path = string.concat(root, "/scripts/inputs/2_DeploymentConfig.json");
         console.log("PATH: ", path);
-        string memory deploymentConfig = vm.readFile(path);
+        string memory config = vm.readFile(path);
 
-        PoolAddressesProviderConfig memory poolAddressesProviderConfig = abi.decode(
-            deploymentConfig.parseRaw(".poolAddressesProviderConfig"), (PoolAddressesProviderConfig)
-        );
         PoolReserversConfig[] memory poolReserversConfig =
-            abi.decode(deploymentConfig.parseRaw(".poolReserversConfig"), (PoolReserversConfig[]));
+            abi.decode(config.parseRaw(".poolReserversConfig"), (PoolReserversConfig[]));
         LinearStrategy[] memory volatileStrategies =
-            abi.decode(deploymentConfig.parseRaw(".volatileStrategies"), (LinearStrategy[]));
+            abi.decode(config.parseRaw(".volatileStrategies"), (LinearStrategy[]));
         LinearStrategy[] memory stableStrategies =
-            abi.decode(deploymentConfig.parseRaw(".stableStrategies"), (LinearStrategy[]));
+            abi.decode(config.parseRaw(".stableStrategies"), (LinearStrategy[]));
 
         PiStrategy[] memory piStrategies =
-            abi.decode(deploymentConfig.parseRaw(".piStrategies"), (PiStrategy[]));
+            abi.decode(config.parseRaw(".piStrategies"), (PiStrategy[]));
 
         OracleConfig memory oracleConfig =
-            abi.decode(deploymentConfig.parseRaw(".oracleConfig"), (OracleConfig));
+            abi.decode(config.parseRaw(".oracleConfig"), (OracleConfig));
 
         if (vm.envBool("LOCAL_FORK")) {
-            /* Fork Identifier [ARBITRUM] */
+            /* Fork Identifier */
             {
-                string memory RPC = vm.envString("ARBITRUM_RPC_URL");
-                uint256 FORK_BLOCK = 257827379;
-                uint256 arbFork;
-                arbFork = vm.createSelectFork(RPC, FORK_BLOCK);
+                string memory RPC = vm.envString("BASE_RPC_URL");
+                uint256 FORK_BLOCK = 21838058;
+                uint256 fork;
+                fork = vm.createSelectFork(RPC, FORK_BLOCK);
             }
 
             /* Config fetching */
@@ -95,76 +94,76 @@ contract DeployMiniPool is Script, Test, DeploymentUtils {
 
             /* Deployment */
             vm.startPrank(FOUNDRY_DEFAULT);
+            contracts.oracle.setAssetSources(
+                oracleConfig.assets, oracleConfig.sources, oracleConfig.timeouts
+            );
             deployMiniPoolInfra(
-                oracleConfig,
                 volatileStrategies,
                 stableStrategies,
                 piStrategies,
                 poolReserversConfig,
-                poolAddressesProviderConfig.poolId,
                 FOUNDRY_DEFAULT
             );
             vm.stopPrank();
-
-            /* Write important contracts into the file */
-            writeJsonData(root, path);
         } else if (vm.envBool("TESTNET")) {
             console.log("Testnet Deployment");
-            /* Mocked tokens deployment */
+
+            /* Read all mocks deployed */
+            string memory path = string.concat(root, "/scripts/outputs/0_MockedTokens.json");
+            console.log("PATH: ", path);
+            string memory config = vm.readFile(path);
+            address[] memory mockedTokens = config.readAddressArray(".mockedTokens");
+            contracts.oracle = Oracle(config.readAddress(".mockedOracle"));
+
+            require(
+                mockedTokens.length >= poolReserversConfig.length,
+                "There are not enough mocked tokens. Deploy mocks.. "
+            );
             {
-                MockedToken[] memory mockedTokens =
-                    abi.decode(deploymentConfig.parseRaw(".mockedToken"), (MockedToken[]));
-
-                require(mockedTokens.length == poolReserversConfig.length, "Wrong config in Json");
-                string[] memory symbols = new string[](poolReserversConfig.length);
-                uint8[] memory decimals = new uint8[](poolReserversConfig.length);
-                int256[] memory prices = new int256[](poolReserversConfig.length);
-
                 for (uint8 idx = 0; idx < poolReserversConfig.length; idx++) {
-                    symbols[idx] = mockedTokens[idx].symbol;
-                    decimals[idx] = uint8(mockedTokens[idx].decimals);
-                    prices[idx] = int256(mockedTokens[idx].prices);
-                }
-
-                // Deployment
-                console.log("Broadcasting....");
-                vm.startBroadcast(vm.envUint("PRIVATE_KEY"));
-                (address[] memory tokens,) = _deployERC20Mocks(symbols, symbols, decimals, prices);
-                vm.stopBroadcast();
-
-                for (uint8 idx = 0; idx < poolReserversConfig.length; idx++) {
-                    poolReserversConfig[idx].tokenAddress = address(tokens[idx]);
+                    for (uint8 i = 0; i < mockedTokens.length; i++) {
+                        if (
+                            keccak256(abi.encodePacked(ERC20(mockedTokens[i]).symbol()))
+                                == keccak256(abi.encodePacked(poolReserversConfig[idx].symbol))
+                        ) {
+                            poolReserversConfig[idx].tokenAddress = address(mockedTokens[i]);
+                            piStrategies[idx].tokenAddress = address(mockedTokens[i]);
+                            break;
+                        }
+                    }
+                    require(
+                        poolReserversConfig[idx].tokenAddress != address(0),
+                        "Mocked token not assigned"
+                    );
                 }
             }
 
+            /* Read all lending pool contracts deployed */
             {
                 string memory outputPath =
                     string.concat(root, "/scripts/outputs/1_LendingPoolContracts.json");
                 console.log("PATH: ", outputPath);
-                deploymentConfig = vm.readFile(outputPath);
+                config = vm.readFile(outputPath);
             }
 
-            contracts.lendingPoolAddressesProvider = LendingPoolAddressesProvider(
-                deploymentConfig.readAddress(".lendingPoolAddressesProvider")
-            );
-            contracts.lendingPool = LendingPool(deploymentConfig.readAddress(".lendingPool"));
-            contracts.aTokenErc6909 = ATokenERC6909(deploymentConfig.readAddress(".aTokenErc6909"));
+            contracts.lendingPoolAddressesProvider =
+                LendingPoolAddressesProvider(config.readAddress(".lendingPoolAddressesProvider"));
+            contracts.lendingPool = LendingPool(config.readAddress(".lendingPool"));
+            contracts.aTokenErc6909 = ATokenERC6909(config.readAddress(".aTokenErc6909"));
             contracts.lendingPoolConfigurator =
-                LendingPoolConfigurator(deploymentConfig.readAddress(".lendingPoolConfigurator"));
+                LendingPoolConfigurator(config.readAddress(".lendingPoolConfigurator"));
 
+            /* Deploy on testnet */
             vm.startBroadcast(vm.envUint("PRIVATE_KEY"));
             console.log("Deploying lending pool infra");
             deployMiniPoolInfra(
-                oracleConfig,
                 volatileStrategies,
                 stableStrategies,
                 piStrategies,
                 poolReserversConfig,
-                poolAddressesProviderConfig.poolId,
                 vm.addr(vm.envUint("PRIVATE_KEY"))
             );
             vm.stopBroadcast();
-            writeJsonData(root, path);
         } else if (vm.envBool("MAINNET")) {
             console.log("Mainnet Deployment");
             /* Get deployed lending pool infra dontracts */
@@ -172,33 +171,35 @@ contract DeployMiniPool is Script, Test, DeploymentUtils {
                 string memory outputPath =
                     string.concat(root, "/scripts/outputs/1_LendingPoolContracts.json");
                 console.log("PATH: ", outputPath);
-                deploymentConfig = vm.readFile(outputPath);
+                config = vm.readFile(outputPath);
             }
-
-            contracts.lendingPoolAddressesProvider = LendingPoolAddressesProvider(
-                deploymentConfig.readAddress(".lendingPoolAddressesProvider")
-            );
-            contracts.lendingPool = LendingPool(deploymentConfig.readAddress(".lendingPool"));
-            contracts.aTokenErc6909 = ATokenERC6909(deploymentConfig.readAddress(".aTokenErc6909"));
+            contracts.lendingPoolAddressesProvider =
+                LendingPoolAddressesProvider(config.readAddress(".lendingPoolAddressesProvider"));
+            contracts.lendingPool = LendingPool(config.readAddress(".lendingPool"));
+            contracts.aTokenErc6909 = ATokenERC6909(config.readAddress(".aTokenErc6909"));
             contracts.lendingPoolConfigurator =
-                LendingPoolConfigurator(deploymentConfig.readAddress(".lendingPoolConfigurator"));
+                LendingPoolConfigurator(config.readAddress(".lendingPoolConfigurator"));
 
+            /* Deploy on mainnet */
             vm.startBroadcast(vm.envUint("PRIVATE_KEY"));
-            console.log("Deploying lending pool infra");
+            console.log("Deploying mini pool infra");
+            contracts.oracle = Oracle(contracts.miniPoolAddressesProvider.getPriceOracle());
+            contracts.oracle.setAssetSources(
+                oracleConfig.assets, oracleConfig.sources, oracleConfig.timeouts
+            );
             deployMiniPoolInfra(
-                oracleConfig,
                 volatileStrategies,
                 stableStrategies,
                 piStrategies,
                 poolReserversConfig,
-                poolAddressesProviderConfig.poolId,
                 vm.addr(vm.envUint("PRIVATE_KEY"))
             );
             vm.stopBroadcast();
-            writeJsonData(root, path);
         } else {
             console.log("No deployment type selected in .env");
         }
+        /* Write important contracts into the file */
+        writeJsonData(root, path);
         return contracts;
     }
 }

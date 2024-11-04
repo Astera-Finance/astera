@@ -7,8 +7,6 @@ import {InitializableImmutableAdminUpgradeabilityProxy} from
     "../../../../contracts/protocol/libraries/upgradeability/InitializableImmutableAdminUpgradeabilityProxy.sol";
 import {ReserveConfiguration} from
     "../../../../contracts/protocol/libraries/configuration/ReserveConfiguration.sol";
-import {ReserveBorrowConfiguration} from
-    "../../../../contracts/protocol/libraries/configuration/ReserveBorrowConfiguration.sol";
 import {ILendingPoolAddressesProvider} from
     "../../../../contracts/interfaces/ILendingPoolAddressesProvider.sol";
 import {ILendingPool} from "../../../../contracts/interfaces/ILendingPool.sol";
@@ -31,14 +29,13 @@ import {IMiniPool} from "../../../../contracts/interfaces/IMiniPool.sol";
 /**
  * @title LendingPoolConfigurator contract
  * @author Cod3x
- * @dev Implements the configuration methods for the Aave protocol
+ * @dev Implements the configuration methods for the Cod3x Lend Lendingpool
  *
  */
 
 contract MiniPoolConfigurator is VersionedInitializable, IMiniPoolConfigurator {
     using PercentageMath for uint256;
     using ReserveConfiguration for DataTypes.ReserveConfigurationMap;
-    using ReserveBorrowConfiguration for DataTypes.ReserveBorrowConfigurationMap;
 
     IMiniPoolAddressesProvider public addressesProvider;
 
@@ -153,8 +150,6 @@ contract MiniPoolConfigurator is VersionedInitializable, IMiniPoolConfigurator {
         IMiniPool pool
     ) external onlyPoolAdmin {
         DataTypes.ReserveConfigurationMap memory currentConfig = pool.getConfiguration(asset);
-        DataTypes.ReserveBorrowConfigurationMap memory currentBorrowConfig =
-            pool.getBorrowConfiguration(asset);
 
         //validation of the parameters: the LTV can
         //only be lower or equal than the liquidation threshold
@@ -185,17 +180,10 @@ contract MiniPoolConfigurator is VersionedInitializable, IMiniPoolConfigurator {
         }
 
         currentConfig.setLtv(ltv);
-        currentBorrowConfig.setLowVolatilityLtv(ltv);
-        currentBorrowConfig.setMediumVolatilityLtv(ltv);
-        currentBorrowConfig.setHighVolatilityLtv(ltv);
         currentConfig.setLiquidationThreshold(liquidationThreshold);
-        currentBorrowConfig.setLowVolatilityLiquidationThreshold(liquidationThreshold);
-        currentBorrowConfig.setMediumVolatilityLiquidationThreshold(liquidationThreshold);
-        currentBorrowConfig.setHighVolatilityLiquidationThreshold(liquidationThreshold);
         currentConfig.setLiquidationBonus(liquidationBonus);
 
         pool.setConfiguration(asset, currentConfig.data);
-        pool.setBorrowConfiguration(asset, currentBorrowConfig.data);
 
         emit CollateralConfigurationChanged(asset, ltv, liquidationThreshold, liquidationBonus);
     }
@@ -268,38 +256,6 @@ contract MiniPoolConfigurator is VersionedInitializable, IMiniPoolConfigurator {
     }
 
     /**
-     * @dev Pause a reserve.
-     * @param asset The address of the underlying asset of the reserve
-     * @param pool Minipool address
-     *
-     */
-    function pauseReserve(address asset, IMiniPool pool) external onlyPoolAdmin {
-        DataTypes.ReserveConfigurationMap memory currentConfig = pool.getConfiguration(asset);
-
-        currentConfig.setPaused(true);
-
-        pool.setConfiguration(asset, currentConfig.data);
-
-        emit ReservePaused(asset);
-    }
-
-    /**
-     * @dev Unpause a reserve
-     * @param asset The address of the underlying asset of the reserve
-     * @param pool Minipool address
-     *
-     */
-    function unpauseReserve(address asset, IMiniPool pool) external onlyPoolAdmin {
-        DataTypes.ReserveConfigurationMap memory currentConfig = pool.getConfiguration(asset);
-
-        currentConfig.setPaused(false);
-
-        pool.setConfiguration(asset, currentConfig.data);
-
-        emit ReserveUnpaused(asset);
-    }
-
-    /**
      * @dev Enable Flash loan.
      * @param asset The address of the underlying asset of the reserve
      * @param pool Minipool address
@@ -363,63 +319,6 @@ contract MiniPoolConfigurator is VersionedInitializable, IMiniPoolConfigurator {
         emit ReserveDepositCapChanged(asset, depositCap);
     }
 
-    function setReserveVolatilityTier(address asset, uint256 tier, IMiniPool pool)
-        external
-        onlyPoolAdmin
-    {
-        DataTypes.ReserveBorrowConfigurationMap memory currentBorrowConfig =
-            pool.getBorrowConfiguration(asset);
-
-        currentBorrowConfig.setVolatilityTier(tier);
-
-        pool.setBorrowConfiguration(asset, currentBorrowConfig.data);
-
-        emit ReserveVolatilityTierChanged(asset, tier);
-    }
-
-    function setLowVolatilityLtv(address asset, uint256 ltv, IMiniPool pool)
-        external
-        onlyPoolAdmin
-    {
-        DataTypes.ReserveBorrowConfigurationMap memory currentBorrowConfig =
-            pool.getBorrowConfiguration(asset);
-
-        currentBorrowConfig.setLowVolatilityLtv(ltv);
-
-        pool.setBorrowConfiguration(asset, currentBorrowConfig.data);
-
-        emit ReserveLowVolatilityLtvChanged(asset, ltv);
-    }
-
-    function setMediumVolatilityLtv(address asset, uint256 ltv, IMiniPool pool)
-        external
-        onlyPoolAdmin
-    {
-        DataTypes.ReserveBorrowConfigurationMap memory currentBorrowConfig =
-            pool.getBorrowConfiguration(asset);
-
-        currentBorrowConfig.setMediumVolatilityLtv(ltv);
-
-        pool.setBorrowConfiguration(asset, currentBorrowConfig.data);
-
-        emit ReserveMediumVolatilityLtvChanged(asset, ltv);
-    }
-
-    function setHighVolatilityLtv(address asset, uint256 ltv, IMiniPool pool)
-        external
-        onlyPoolAdmin
-    {
-        // Store update params in array
-        DataTypes.ReserveBorrowConfigurationMap memory currentBorrowConfig =
-            pool.getBorrowConfiguration(asset);
-
-        currentBorrowConfig.setHighVolatilityLtv(ltv);
-
-        pool.setBorrowConfiguration(asset, currentBorrowConfig.data);
-
-        emit ReserveHighVolatilityLtvChanged(asset, ltv);
-    }
-
     /**
      * @dev Sets the interest rate strategy of a reserve
      * @param asset The address of the underlying asset of the reserve
@@ -454,5 +353,23 @@ contract MiniPoolConfigurator is VersionedInitializable, IMiniPoolConfigurator {
             availableLiquidity == 0 && reserveData.currentLiquidityRate == 0,
             Errors.LPC_RESERVE_LIQUIDITY_NOT_0
         );
+    }
+
+    function setRewarderForReserve(address asset, address rewarder, IMiniPool pool)
+        external
+        onlyPoolAdmin
+    {
+        pool.setRewarderForReserve(asset, rewarder);
+    }
+
+    function updateFlashloanPremiumTotal(uint128 newFlashloanPremiumTotal, IMiniPool pool)
+        external
+        onlyPoolAdmin
+    {
+        require(
+            newFlashloanPremiumTotal <= PercentageMath.PERCENTAGE_FACTOR,
+            Errors.LPC_FLASHLOAN_PREMIUM_INVALID
+        );
+        pool.updateFlashLoanFee(newFlashloanPremiumTotal);
     }
 }

@@ -5,23 +5,27 @@ import "../../../../contracts/dependencies/openzeppelin/upgradeability/BaseUpgra
 
 /**
  * @title BaseImmutableAdminUpgradeabilityProxy
- * @author Cod3x, inspired by the OpenZeppelin upgradeability proxy pattern
- * @dev This contract combines an upgradeability proxy with an authorization
- * mechanism for administrative tasks. The admin role is stored in an immutable, which
- * helps saving transactions costs
+ * @author Aave, inspired by the OpenZeppelin upgradeability proxy pattern
+ * @notice This contract combines an upgradeability proxy with an authorization
+ * mechanism for administrative tasks.
+ * @dev The admin role is stored in an immutable, which helps saving transactions costs
  * All external functions in this contract must be guarded by the
  * `ifAdmin` modifier. See ethereum/solidity#3864 for a Solidity
  * feature proposal that would enable this to be done automatically.
  */
 contract BaseImmutableAdminUpgradeabilityProxy is BaseUpgradeabilityProxy {
-    address immutable ADMIN;
+    address internal immutable _admin;
 
-    constructor(address admin_) {
-        ADMIN = admin_;
+    /**
+     * @dev Constructor.
+     * @param admin The address of the admin
+     */
+    constructor(address admin) {
+        _admin = admin;
     }
 
     modifier ifAdmin() {
-        if (msg.sender == ADMIN) {
+        if (msg.sender == _admin) {
             _;
         } else {
             _fallback();
@@ -29,13 +33,15 @@ contract BaseImmutableAdminUpgradeabilityProxy is BaseUpgradeabilityProxy {
     }
 
     /**
+     * @notice Return the admin address
      * @return The address of the proxy admin.
      */
     function admin() external ifAdmin returns (address) {
-        return ADMIN;
+        return _admin;
     }
 
     /**
+     * @notice Return the implementation address
      * @return The address of the implementation.
      */
     function implementation() external ifAdmin returns (address) {
@@ -43,19 +49,19 @@ contract BaseImmutableAdminUpgradeabilityProxy is BaseUpgradeabilityProxy {
     }
 
     /**
-     * @dev Upgrade the backing implementation of the proxy.
-     * Only the admin can call this function.
-     * @param newImplementation Address of the new implementation.
+     * @notice Upgrade the backing implementation of the proxy.
+     * @dev Only the admin can call this function.
+     * @param newImplementation The address of the new implementation.
      */
     function upgradeTo(address newImplementation) external ifAdmin {
         _upgradeTo(newImplementation);
     }
 
     /**
-     * @dev Upgrade the backing implementation of the proxy and call a function
+     * @notice Upgrade the backing implementation of the proxy and call a function
      * on the new implementation.
-     * This is useful to initialize the proxied contract.
-     * @param newImplementation Address of the new implementation.
+     * @dev This is useful to initialize the proxied contract.
+     * @param newImplementation The address of the new implementation.
      * @param data Data to send as msg.data in the low level call.
      * It should include the signature and the parameters of the function to be called, as described in
      * https://solidity.readthedocs.io/en/v0.4.24/abi-spec.html#function-selector-and-argument-encoding.
@@ -71,10 +77,10 @@ contract BaseImmutableAdminUpgradeabilityProxy is BaseUpgradeabilityProxy {
     }
 
     /**
-     * @dev Only fall back when the sender is not the admin.
+     * @notice Only fall back when the sender is not the admin.
      */
     function _willFallback() internal virtual override {
-        require(msg.sender != ADMIN, "Cannot call fallback function from the proxy admin");
+        require(msg.sender != _admin, "Cannot call fallback function from the proxy admin");
         super._willFallback();
     }
 }

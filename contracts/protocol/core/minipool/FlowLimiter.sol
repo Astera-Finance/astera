@@ -40,7 +40,10 @@ contract FlowLimiter {
     }
 
     function getFlowLimit(address asset, address miniPool) external view returns (uint256) {
-        return miniPoolMaxDebt[asset][miniPool];
+        uint256 currentFlow_ = currentFlow(asset, miniPool);
+        uint256 miniPoolMaxDebt_ = miniPoolMaxDebt[asset][miniPool];
+
+        return currentFlow_ > miniPoolMaxDebt_ ? currentFlow_ : miniPoolMaxDebt_;
     }
 
     function currentFlow(address asset, address miniPool) public view returns (uint256) {

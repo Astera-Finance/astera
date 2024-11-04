@@ -83,10 +83,6 @@ contract ATokenErc6909Test is Common {
             vm.expectRevert(bytes(Errors.CT_CALLER_MUST_BE_LENDING_POOL));
             aErc6909Token.setIncentivesController(IMiniPoolRewarder(addr));
             vm.expectRevert(bytes(Errors.CT_CALLER_MUST_BE_LENDING_POOL));
-            aErc6909Token.setPool(IMiniPool(addr));
-            vm.expectRevert(bytes(Errors.CT_CALLER_MUST_BE_LENDING_POOL));
-            aErc6909Token.setUnderlyingAsset(11, addr);
-            vm.expectRevert(bytes(Errors.CT_CALLER_MUST_BE_LENDING_POOL));
             aErc6909Token.transferUnderlyingTo(addr, 11, 1);
             vm.expectRevert(bytes(Errors.CT_CALLER_MUST_BE_LENDING_POOL));
             aErc6909Token.mintToTreasury(1, 11, 1);

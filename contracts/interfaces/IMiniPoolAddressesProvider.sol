@@ -10,14 +10,7 @@ interface IMiniPoolAddressesProvider {
     event ProxyCreated(bytes32 id, address indexed newAddress);
     event AddressSet(bytes32 id, address indexed newAddress, bool hasProxy);
     event MiniPoolConfiguratorUpdated(address indexed newAddress);
-    event MiniPoolCollateralManagerUpdated(address indexed newAddress);
     event TreasurySet(address indexed treasury, uint256 miniPoolId);
-
-    // Errors
-    error NoMiniPoolIdForAddress();
-    error NoImplOfAToken6909();
-    error PoolIdOutOfRange();
-    error NotAllowedIds();
 
     // Functions related to getting various addresses
     function getMiniPoolCount() external view returns (uint256);
@@ -25,7 +18,6 @@ interface IMiniPoolAddressesProvider {
     function getLendingPool() external view returns (address);
     function getPoolAdmin() external view returns (address);
     function getEmergencyAdmin() external view returns (address);
-    function getMiniPoolCollateralManager() external view returns (address);
     function getPriceOracle() external view returns (address);
     function getFlowLimiter() external view returns (address);
 
@@ -44,7 +36,6 @@ interface IMiniPoolAddressesProvider {
     function setMiniPoolImpl(address impl, uint256 miniPoolId) external;
     function setAToken6909Impl(address impl, uint256 miniPoolId) external;
     function deployMiniPool(address miniPoolImpl, address aTokenImpl) external returns (uint256);
-    function setMiniPoolCollateralManager(address collateralManager) external;
     function setMiniPoolToTreasury(uint256 id, address treasury) external;
     function setMiniPoolConfigurator(address configuratorImpl) external;
 }

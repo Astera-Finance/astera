@@ -9,19 +9,19 @@ import "./DeploymentUtils.s.sol";
 import "lib/forge-std/src/Test.sol";
 import "lib/forge-std/src/Script.sol";
 import "lib/forge-std/src/console.sol";
-import {AddAssets} from "./3_AddAssets.s.sol";
+import {AddAssets} from "./4_AddAssets.s.sol";
 
 contract Reconfigure is Script, DeploymentUtils, Test {
     using stdJson for string;
 
     function run() external returns (DeployedContracts memory) {
+        console.log("5_Reconfigure");
+
         // Config fetching
         string memory root = vm.projectRoot();
-        string memory path = string.concat(root, "/scripts/inputs/4_Reconfigure.json");
+        string memory path = string.concat(root, "/scripts/inputs/5_Reconfigure.json");
         console.log("PATH: ", path);
         string memory deploymentConfig = vm.readFile(path);
-
-        Roles memory roles = abi.decode(deploymentConfig.parseRaw(".roles"), (Roles));
 
         PoolAddressesProviderConfig memory poolAddressesProviderConfig = abi.decode(
             deploymentConfig.parseRaw(".poolAddressesProviderConfig"), (PoolAddressesProviderConfig)
@@ -36,11 +36,11 @@ contract Reconfigure is Script, DeploymentUtils, Test {
         );
 
         if (vm.envBool("LOCAL_FORK")) {
-            /* Fork Identifier [ARBITRUM] */
-            string memory RPC = vm.envString("ARBITRUM_RPC_URL");
-            uint256 FORK_BLOCK = 257827379;
-            uint256 arbFork;
-            arbFork = vm.createSelectFork(RPC, FORK_BLOCK);
+            /* Fork Identifier */
+            string memory RPC = vm.envString("BASE_RPC_URL");
+            uint256 FORK_BLOCK = 21838058;
+            uint256 fork;
+            fork = vm.createSelectFork(RPC, FORK_BLOCK);
 
             /* Config fetching */
             AddAssets addAssets = new AddAssets();
@@ -48,13 +48,16 @@ contract Reconfigure is Script, DeploymentUtils, Test {
 
             vm.startPrank(FOUNDRY_DEFAULT);
             _configureReserves(contracts, lendingPoolReserversConfig);
+            _changeStrategies(contracts, lendingPoolReserversConfig);
+
             address mp =
                 contracts.miniPoolAddressesProvider.getMiniPool(poolAddressesProviderConfig.poolId);
             _configureMiniPoolReserves(contracts, miniPoolReserversConfig, mp);
+            _changeMiniPoolStrategies(contracts, miniPoolReserversConfig, mp);
 
             vm.stopPrank();
         } else if (vm.envBool("TESTNET")) {
-            console.log("Testnet Deployment");
+            console.log("Testnet");
             /* *********** Lending pool settings *********** */
             {
                 string memory outputPath =
@@ -66,42 +69,42 @@ contract Reconfigure is Script, DeploymentUtils, Test {
             contracts.lendingPoolAddressesProvider = LendingPoolAddressesProvider(
                 deploymentConfig.readAddress(".lendingPoolAddressesProvider")
             );
+            contracts.lendingPoolConfigurator =
+                LendingPoolConfigurator(deploymentConfig.readAddress(".lendingPoolConfigurator"));
             contracts.aTokensAndRatesHelper =
                 ATokensAndRatesHelper(deploymentConfig.readAddress(".aTokensAndRatesHelper"));
 
-            /* Mocked tokens deployment */
+            /* Read all mocks deployed */
+            string memory path = string.concat(root, "/scripts/outputs/0_MockedTokens.json");
+            console.log("PATH: ", path);
+            string memory config = vm.readFile(path);
+            address[] memory mockedTokens = config.readAddressArray(".mockedTokens");
+
+            require(
+                mockedTokens.length >= lendingPoolReserversConfig.length,
+                "There are not enough mocked tokens. Deploy mocks.. "
+            );
             {
-                deploymentConfig = vm.readFile(path);
-                MockedToken[] memory mockedTokens = abi.decode(
-                    deploymentConfig.parseRaw(".lendingPoolReserversConfig"), (MockedToken[])
-                );
-
-                require(
-                    mockedTokens.length == lendingPoolReserversConfig.length, "Wrong config in Json"
-                );
-                string[] memory symbols = new string[](lendingPoolReserversConfig.length);
-                uint8[] memory decimals = new uint8[](lendingPoolReserversConfig.length);
-                int256[] memory prices = new int256[](lendingPoolReserversConfig.length);
-
                 for (uint8 idx = 0; idx < lendingPoolReserversConfig.length; idx++) {
-                    symbols[idx] = mockedTokens[idx].symbol;
-                    decimals[idx] = uint8(mockedTokens[idx].decimals);
-                    prices[idx] = int256(mockedTokens[idx].prices);
-                }
-
-                // Deployment
-                console.log("Broadcasting....");
-                vm.startBroadcast(vm.envUint("PRIVATE_KEY"));
-                (address[] memory tokens,) = _deployERC20Mocks(symbols, symbols, decimals, prices);
-                vm.stopBroadcast();
-
-                for (uint8 idx = 0; idx < lendingPoolReserversConfig.length; idx++) {
-                    lendingPoolReserversConfig[idx].tokenAddress = address(tokens[idx]);
+                    for (uint8 i = 0; i < mockedTokens.length; i++) {
+                        if (
+                            keccak256(abi.encodePacked(ERC20(mockedTokens[i]).symbol()))
+                                == keccak256(abi.encodePacked(lendingPoolReserversConfig[idx].symbol))
+                        ) {
+                            lendingPoolReserversConfig[idx].tokenAddress = address(mockedTokens[i]);
+                            break;
+                        }
+                    }
+                    require(
+                        lendingPoolReserversConfig[idx].tokenAddress != address(0),
+                        "Mocked token not assigned"
+                    );
                 }
             }
 
             /* Reconfigure */
             vm.startBroadcast(vm.envUint("PRIVATE_KEY"));
+            console.log("Reconfiguring..");
             _configureReserves(contracts, lendingPoolReserversConfig);
             vm.stopBroadcast();
 
@@ -119,34 +122,26 @@ contract Reconfigure is Script, DeploymentUtils, Test {
             contracts.miniPoolConfigurator =
                 MiniPoolConfigurator(deploymentConfig.readAddress(".miniPoolConfigurator"));
 
-            /* Mocked tokens deployment */
+            /* Mini pool mocks assignment */
+            require(
+                mockedTokens.length >= miniPoolReserversConfig.length,
+                "There are not enough mocked tokens. Deploy mocks.. "
+            );
             {
-                deploymentConfig = vm.readFile(path);
-                MockedToken[] memory mockedTokens = abi.decode(
-                    deploymentConfig.parseRaw(".miniPoolReserversConfig"), (MockedToken[])
-                );
-
-                require(
-                    mockedTokens.length == miniPoolReserversConfig.length, "Wrong config in Json"
-                );
-                string[] memory symbols = new string[](miniPoolReserversConfig.length);
-                uint8[] memory decimals = new uint8[](miniPoolReserversConfig.length);
-                int256[] memory prices = new int256[](miniPoolReserversConfig.length);
-
                 for (uint8 idx = 0; idx < miniPoolReserversConfig.length; idx++) {
-                    symbols[idx] = mockedTokens[idx].symbol;
-                    decimals[idx] = uint8(mockedTokens[idx].decimals);
-                    prices[idx] = int256(mockedTokens[idx].prices);
-                }
-
-                // Deployment
-                console.log("Broadcasting....");
-                vm.startBroadcast(vm.envUint("PRIVATE_KEY"));
-                (address[] memory tokens,) = _deployERC20Mocks(symbols, symbols, decimals, prices);
-                vm.stopBroadcast();
-
-                for (uint8 idx = 0; idx < miniPoolReserversConfig.length; idx++) {
-                    miniPoolReserversConfig[idx].tokenAddress = address(tokens[idx]);
+                    for (uint8 i = 0; i < mockedTokens.length; i++) {
+                        if (
+                            keccak256(abi.encodePacked(ERC20(mockedTokens[i]).symbol()))
+                                == keccak256(abi.encodePacked(miniPoolReserversConfig[idx].symbol))
+                        ) {
+                            miniPoolReserversConfig[idx].tokenAddress = address(mockedTokens[i]);
+                            break;
+                        }
+                    }
+                    require(
+                        miniPoolReserversConfig[idx].tokenAddress != address(0),
+                        "Mocked token not assigned"
+                    );
                 }
             }
 
@@ -157,7 +152,7 @@ contract Reconfigure is Script, DeploymentUtils, Test {
             _configureMiniPoolReserves(contracts, miniPoolReserversConfig, mp);
             vm.stopBroadcast();
         } else if (vm.envBool("MAINNET")) {
-            console.log("Mainnet Deployment");
+            console.log("Mainnet");
             /* *********** Lending pool settings *********** */
             {
                 string memory outputPath =
