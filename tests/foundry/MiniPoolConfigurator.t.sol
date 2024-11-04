@@ -94,6 +94,14 @@ contract MiniPoolConfiguratorTest is MiniPoolDepositBorrowTest {
         miniPoolContracts.miniPoolConfigurator.setRewarderForReserve(
             tokenAddress, randomAddress, IMiniPool(randomAddress)
         );
+        vm.expectRevert(bytes("33"));
+        miniPoolContracts.miniPoolConfigurator.updateFlashloanPremiumTotal(
+            uint128(randomNumber), IMiniPool(randomAddress)
+        );
+        vm.expectRevert(bytes("33"));
+        miniPoolContracts.miniPoolConfigurator.setRewarderForReserve(
+            tokenAddress, randomAddress, IMiniPool(randomAddress)
+        );
     }
 
     function testDisableBorrowingOnReserve() public {

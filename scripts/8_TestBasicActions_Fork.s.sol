@@ -491,7 +491,7 @@ contract TestBasicActions is Script, DeploymentUtils, Test {
         //vm.startBroadcast(vm.envUint("DEPLOYER"));
 
         if (vm.envBool("LOCAL_FORK")) {
-            /* Fork Identifier [ARBITRUM] */
+            /* Fork Identifier */
             string memory RPC = vm.envString("BASE_RPC_URL");
             uint256 FORK_BLOCK = 21838058;
             uint256 fork;

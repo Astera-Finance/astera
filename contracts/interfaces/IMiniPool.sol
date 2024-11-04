@@ -385,4 +385,10 @@ interface IMiniPool {
      * @param underlyingAsset underlying asset for aERC6909 token
      */
     function setUnderlyingAsset(address asset, uint256 id, address underlyingAsset) external;
+
+    /**
+     * @dev Update flahloan premium total
+     * @param flashLoanPremiumTotal - premiom for flashloan
+     */
+    function updateFlashLoanFee(uint128 flashLoanPremiumTotal) external;
 }

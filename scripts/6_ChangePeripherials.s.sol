@@ -54,7 +54,7 @@ contract ChangePeripherials is Script, DeploymentUtils, Test {
         require(treasury.length == rehypothecation.length, "Lengths settings must be the same");
 
         if (vm.envBool("LOCAL_FORK")) {
-            /* Fork Identifier [ARBITRUM] */
+            /* Fork Identifier */
             string memory RPC = vm.envString("BASE_RPC_URL");
             uint256 FORK_BLOCK = 21838058;
             uint256 fork;

@@ -421,5 +421,14 @@ contract MiniPoolConfigurator is VersionedInitializable, IMiniPoolConfigurator {
         pool.setRewarderForReserve(asset, rewarder);
     }
 
-    // Missing Treasury, updateFlashloanPremiumTotal
+    function updateFlashloanPremiumTotal(uint128 newFlashloanPremiumTotal, IMiniPool pool)
+        external
+        onlyPoolAdmin
+    {
+        require(
+            newFlashloanPremiumTotal <= PercentageMath.PERCENTAGE_FACTOR,
+            Errors.LPC_FLASHLOAN_PREMIUM_INVALID
+        );
+        pool.updateFlashLoanFee(newFlashloanPremiumTotal);
+    }
 }

@@ -80,7 +80,7 @@ contract DeployMiniPool is Script, Test, DeploymentUtils {
             abi.decode(config.parseRaw(".oracleConfig"), (OracleConfig));
 
         if (vm.envBool("LOCAL_FORK")) {
-            /* Fork Identifier [ARBITRUM] */
+            /* Fork Identifier */
             {
                 string memory RPC = vm.envString("BASE_RPC_URL");
                 uint256 FORK_BLOCK = 21838058;

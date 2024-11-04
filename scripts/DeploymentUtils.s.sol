@@ -596,7 +596,6 @@ contract DeploymentUtils {
                     data.aTokenAddress, vault[idx].newAddress
                 );
             }
-            console.log("rewarder", address(rewarder[idx].tokenAddress));
             if (rewarder[idx].configure == true) {
                 DataTypes.ReserveData memory data = contracts.lendingPool.getReserveData(
                     rewarder[idx].tokenAddress, rewarder[idx].reserveType
@@ -625,14 +624,16 @@ contract DeploymentUtils {
                 }
             }
             if (rewarder6909[idx].configure == true) {
-                console.log("Getting Mini pool... ");
                 address mp = contracts.miniPoolAddressesProvider.getMiniPool(_miniPoolId);
                 DataTypes.MiniPoolReserveData memory data =
                     IMiniPool(mp).getReserveData(rewarder6909[idx].tokenAddress);
                 require(
                     data.aTokenAddress != address(0), "tokenAddress not available in lendingPool"
                 );
-                if (address(AToken(data.aTokenAddress).getIncentivesController()) == address(0)) {
+                if (
+                    address(ATokenERC6909(data.aTokenAddress).getIncentivesController())
+                        == address(0)
+                ) {
                     if (address(contracts.rewarder6909) == address(0)) {
                         // There is no rewarder -> deploy new one
                         contracts.rewarder6909 = new Rewarder6909();

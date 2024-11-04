@@ -25,7 +25,7 @@ contract TransferOwnerships is Script, DeploymentUtils, Test {
         Roles memory roles = abi.decode(deploymentConfig.parseRaw(".roles"), (Roles));
 
         if (vm.envBool("LOCAL_FORK")) {
-            /* Fork Identifier [ARBITRUM] */
+            /* Fork Identifier */
             string memory RPC = vm.envString("BASE_RPC_URL");
             uint256 FORK_BLOCK = 21838058;
             uint256 fork;

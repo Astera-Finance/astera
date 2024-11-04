@@ -722,7 +722,10 @@ contract MiniPool is VersionedInitializable, IMiniPool, MiniPoolStorage {
         return IFlowLimiter(_addressesProvider.getFlowLimiter()).currentFlow(asset, address(this));
     }
 
-    function setRewarderForReserve(address asset, address rewarder) external {
+    function setRewarderForReserve(address asset, address rewarder)
+        external
+        onlyMiniPoolConfigurator
+    {
         IAERC6909(_reserves[asset].aTokenAddress).setIncentivesController(
             IMiniPoolRewarder(rewarder)
         );
