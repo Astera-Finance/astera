@@ -18,7 +18,7 @@ library DistributionTypes {
         uint88 emissionPerSecond;
         uint256 totalSupply;
         uint32 distributionEnd;
-        asset6909 asset;
+        Asset6909 asset;
         address reward;
     }
 
@@ -29,12 +29,12 @@ library DistributionTypes {
     }
 
     struct UserMiniPoolAssetInput {
-        asset6909 asset;
+        Asset6909 asset;
         uint256 userBalance;
         uint256 totalSupply;
     }
 
-    struct asset6909 {
+    struct Asset6909 {
         address market6909;
         uint256 assetID;
     }

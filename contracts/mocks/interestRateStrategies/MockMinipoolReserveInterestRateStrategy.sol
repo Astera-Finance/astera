@@ -20,7 +20,6 @@ import {ReserveConfiguration} from
     "../../../contracts/protocol/libraries/configuration/ReserveConfiguration.sol";
 import {IMiniPool} from "../../../contracts/interfaces/IMiniPool.sol";
 import {MathUtils} from "../../../contracts/protocol/libraries/math/MathUtils.sol";
-import "forge-std/console.sol";
 
 /**
  * @title MockMinipoolReserveInterestRateStrategy contract
@@ -72,7 +71,7 @@ contract MockMinipoolReserveInterestRateStrategy {
         uint256 reserveFactor
     ) external view returns (uint256, uint256) {
         uint256 availableLiquidity;
-        (,, bool isTranched,) = IAERC6909(aToken).getIdForUnderlying(reserve);
+        (,, bool isTranched) = IAERC6909(aToken).getIdForUnderlying(reserve);
         if (isTranched) {
             IFlowLimiter flowLimiter = IFlowLimiter(addressesProvider.getFlowLimiter());
             address underlying = IAToken(reserve).UNDERLYING_ASSET_ADDRESS();
@@ -120,7 +119,7 @@ contract MockMinipoolReserveInterestRateStrategy {
                         (r.currentLiquidityRate * DELTA_TIME_MARGIN / SECONDS_PER_YEAR)
                             + WadRayMath.ray()
                     ) / SECONDS_PER_YEAR
-            ).percentMul(10_100); // * 101% => +1% safety margin.
+            ); //.percentMul(10_100); // * 101% => +1% safety margin.
 
             if (currentLiquidityRate < minLiquidityRate) {
                 return (minLiquidityRate, currentBorrowRate);

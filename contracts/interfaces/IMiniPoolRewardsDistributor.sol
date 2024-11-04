@@ -59,17 +59,17 @@ interface IMiniPoolRewardsDistributor {
         returns (uint256);
 
     function getUserRewardsBalance(
-        DistributionTypes.asset6909[] calldata assets,
+        DistributionTypes.Asset6909[] calldata assets,
         address user,
         address reward
     ) external view returns (uint256);
 
-    function getAllUserRewardsBalance(DistributionTypes.asset6909[] calldata assets, address user)
+    function getAllUserRewardsBalance(DistributionTypes.Asset6909[] calldata assets, address user)
         external
         view
         returns (address[] memory, uint256[] memory);
 
-    function getAssetDecimals(DistributionTypes.asset6909 calldata asset)
+    function getAssetDecimals(DistributionTypes.Asset6909 calldata asset)
         external
         view
         returns (uint8);

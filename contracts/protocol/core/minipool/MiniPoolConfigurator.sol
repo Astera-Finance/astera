@@ -29,7 +29,7 @@ import {IMiniPool} from "../../../../contracts/interfaces/IMiniPool.sol";
 /**
  * @title LendingPoolConfigurator contract
  * @author Cod3x
- * @dev Implements the configuration methods for the Aave protocol
+ * @dev Implements the configuration methods for the Cod3x Lend Lendingpool
  *
  */
 
@@ -253,38 +253,6 @@ contract MiniPoolConfigurator is VersionedInitializable, IMiniPoolConfigurator {
         pool.setConfiguration(asset, currentConfig.data);
 
         emit ReserveUnfrozen(asset);
-    }
-
-    /**
-     * @dev Pause a reserve.
-     * @param asset The address of the underlying asset of the reserve
-     * @param pool Minipool address
-     *
-     */
-    function pauseReserve(address asset, IMiniPool pool) external onlyPoolAdmin {
-        DataTypes.ReserveConfigurationMap memory currentConfig = pool.getConfiguration(asset);
-
-        currentConfig.setPaused(true);
-
-        pool.setConfiguration(asset, currentConfig.data);
-
-        emit ReservePaused(asset);
-    }
-
-    /**
-     * @dev Unpause a reserve
-     * @param asset The address of the underlying asset of the reserve
-     * @param pool Minipool address
-     *
-     */
-    function unpauseReserve(address asset, IMiniPool pool) external onlyPoolAdmin {
-        DataTypes.ReserveConfigurationMap memory currentConfig = pool.getConfiguration(asset);
-
-        currentConfig.setPaused(false);
-
-        pool.setConfiguration(asset, currentConfig.data);
-
-        emit ReserveUnpaused(asset);
     }
 
     /**

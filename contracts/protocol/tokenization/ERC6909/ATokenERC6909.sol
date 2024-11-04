@@ -16,6 +16,7 @@ import {IERC20} from "../../../../contracts/dependencies/openzeppelin/contracts/
 import {IMiniPoolAddressesProvider} from
     "../../../../contracts/interfaces/IMiniPoolAddressesProvider.sol";
 import {IMiniPool} from "../../../../contracts/interfaces/IMiniPool.sol";
+import "openzeppelin-contracts/contracts/utils/Strings.sol";
 
 /**
  * @title ERC6909-MultiToken Built to service all collateral and debt tokens for a specific MiniPool
@@ -56,7 +57,6 @@ contract ATokenERC6909 is IncentivizedERC6909, VersionedInitializable {
         require(address(provider) != address(0), Errors.LP_NOT_CONTRACT);
         uint256 chainId;
 
-        //solium-disable-next-line
         assembly {
             chainId := chainid()
         }
@@ -77,8 +77,18 @@ contract ATokenERC6909 is IncentivizedERC6909, VersionedInitializable {
         require(bytes(symbol).length != 0);
         require(decimals != 0);
         require(id < DEBT_TOKEN_ADDRESSABLE_ID, Errors.AT_INVALID_ATOKEN_ID);
-        _setName(id, string.concat("Cod3x Lend Interest Bearing ", name));
-        _setSymbol(id, string.concat("grain", symbol));
+        _setName(
+            id,
+            string.concat(
+                "Cod3x Lend Minipool ", string.concat(Strings.toString(_minipoolId), name)
+            )
+        );
+        _setSymbol(
+            id,
+            string.concat(
+                string.concat("cl-", Strings.toString(_minipoolId)), string.concat("-", symbol)
+            )
+        ); // cl-{minipoolId}-{symbol}
         _setDecimals(id, decimals);
         _setUnderlyingAsset(id, underlyingAsset);
         emit TokenInitialized(id, name, symbol, decimals, underlyingAsset);
@@ -107,16 +117,12 @@ contract ATokenERC6909 is IncentivizedERC6909, VersionedInitializable {
         string memory name,
         string memory symbol,
         uint8 decimals
-    )
-        external
-        returns (uint256 aTokenID, uint256 debtTokenID, bool isTrancheRet, bool isInitialized)
-    {
+    ) external returns (uint256 aTokenID, uint256 debtTokenID, bool isTrancheRet) {
         require(
             msg.sender == address(_addressesProvider.getMiniPoolConfigurator()),
             Errors.LP_CALLER_NOT_LENDING_POOL_CONFIGURATOR
         );
-        (aTokenID, debtTokenID, isTrancheRet, isInitialized) = getIdForUnderlying(underlyingAsset);
-        require(isInitialized == false, Errors.RL_RESERVE_ALREADY_INITIALIZED);
+        (aTokenID, debtTokenID, isTrancheRet) = getNextIdForUnderlying(underlyingAsset);
         if (isTrancheRet) {
             _totalTrancheTokens++;
             _isTranche[aTokenID] = true;
@@ -296,7 +302,7 @@ contract ATokenERC6909 is IncentivizedERC6909, VersionedInitializable {
         return id >= DEBT_TOKEN_ADDRESSABLE_ID;
     }
 
-    function _getIdForUnderlying(address underlying)
+    function _getNextIdForUnderlying(address underlying)
         internal
         view
         returns (uint256, uint256, bool)
@@ -313,23 +319,31 @@ contract ATokenERC6909 is IncentivizedERC6909, VersionedInitializable {
         }
     }
 
+    function getNextIdForUnderlying(address underlying)
+        public
+        view
+        returns (uint256 aTokenID, uint256 debtTokenID, bool isTrancheRet)
+    {
+        (aTokenID, debtTokenID, isTrancheRet) = _getNextIdForUnderlying(underlying);
+        require(
+            _underlyingAssetAddresses[aTokenID] == address(0), Errors.RL_RESERVE_ALREADY_INITIALIZED
+        );
+    }
+
     function getIdForUnderlying(address underlying)
         public
         view
-        returns (uint256 aTokenID, uint256 debtTokenID, bool isTrancheRet, bool initialized)
+        returns (uint256 aTokenID, uint256 debtTokenID, bool isTrancheRet)
     {
-        (aTokenID, debtTokenID, isTrancheRet) = _getIdForUnderlying(underlying);
-        if (_underlyingAssetAddresses[aTokenID] != address(0)) {
-            initialized = true;
-            if (!isTrancheRet) {
-                DataTypes.MiniPoolReserveData memory reserveData =
-                    IMiniPool(POOL).getReserveData(underlying);
-                aTokenID = reserveData.aTokenID;
-                debtTokenID = reserveData.variableDebtTokenID;
-            }
-        }
+        DataTypes.MiniPoolReserveData memory reserveData =
+            IMiniPool(POOL).getReserveData(underlying);
+        aTokenID = reserveData.aTokenID;
+        debtTokenID = reserveData.variableDebtTokenID;
+        isTrancheRet = isTranche(aTokenID);
 
-        return (aTokenID, debtTokenID, isTrancheRet, initialized);
+        require(
+            _underlyingAssetAddresses[aTokenID] != address(0), Errors.RL_RESERVE_NOT_INITIALIZED
+        );
     }
 
     function _determineIfAToken(address underlying, address MLP) internal view returns (bool) {

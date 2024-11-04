@@ -23,7 +23,7 @@ import {ILendingPool} from "../../../../../contracts/interfaces/ILendingPool.sol
  * @notice Implements the calculation of the interest rates depending on the reserve state
  * @dev The model of interest rate is based on 2 slopes, one before the `OPTIMAL_UTILIZATION_RATE`
  * point of utilization and another from that one to 100%
- * - An instance of this same contract, can't be used across different Aave markets, due to the caching
+ * - An instance of this same contract, can't be used across different Cod3x Lend markets, due to the caching
  *   of the MiniPoolAddressesProvider
  * @author Cod3x
  *
@@ -101,7 +101,7 @@ contract MiniPoolDefaultReserveInterestRateStrategy is IMiniPoolReserveInterestR
 
     /**
      * @dev Calculates the interest rates depending on the reserve's state and configurations
-     * @param reserve The address of the reserve
+     * @param asset The address of the asset
      * @param aToken The address of the reserve aToken
      * @param liquidityAdded The liquidity added during the operation
      * @param liquidityTaken The liquidity taken during the operation
@@ -111,7 +111,7 @@ contract MiniPoolDefaultReserveInterestRateStrategy is IMiniPoolReserveInterestR
      *
      */
     function calculateInterestRates(
-        address reserve,
+        address asset,
         address aToken,
         uint256 liquidityAdded,
         uint256 liquidityTaken,
@@ -120,18 +120,18 @@ contract MiniPoolDefaultReserveInterestRateStrategy is IMiniPoolReserveInterestR
     ) external view override returns (uint256, uint256) {
         CalcInterestRatesLocalVars1 memory vars;
 
-        (,, vars.isTranched,) = IAERC6909(aToken).getIdForUnderlying(reserve);
+        (,, vars.isTranched) = IAERC6909(aToken).getIdForUnderlying(asset);
         if (vars.isTranched) {
             IFlowLimiter flowLimiter = IFlowLimiter(_addressesProvider.getFlowLimiter());
-            vars.underlying = IAToken(reserve).UNDERLYING_ASSET_ADDRESS();
+            vars.underlying = IAToken(asset).UNDERLYING_ASSET_ADDRESS();
             address minipool = IAERC6909(aToken).MINIPOOL_ADDRESS();
             vars.currentFlow = flowLimiter.currentFlow(vars.underlying, minipool);
 
-            vars.availableLiquidity = IERC20(reserve).balanceOf(aToken)
-                + IAToken(reserve).convertToShares(flowLimiter.getFlowLimit(vars.underlying, minipool))
-                - IAToken(reserve).convertToShares(vars.currentFlow);
+            vars.availableLiquidity = IERC20(asset).balanceOf(aToken)
+                + IAToken(asset).convertToShares(flowLimiter.getFlowLimit(vars.underlying, minipool))
+                - IAToken(asset).convertToShares(vars.currentFlow);
         } else {
-            vars.availableLiquidity = IERC20(reserve).balanceOf(aToken);
+            vars.availableLiquidity = IERC20(asset).balanceOf(aToken);
         }
 
         if (vars.availableLiquidity + liquidityAdded < liquidityTaken) {
@@ -215,7 +215,7 @@ contract MiniPoolDefaultReserveInterestRateStrategy is IMiniPoolReserveInterestR
                         (r.currentLiquidityRate * DELTA_TIME_MARGIN / SECONDS_PER_YEAR)
                             + WadRayMath.ray()
                     ) / SECONDS_PER_YEAR
-            ).percentMul(10_100); // * 101% => +1% safety margin.
+            );
 
             // `&& vars.utilizationRate != 0` to avoid 0 division. It's safe since the minipool flow is
             // always owed to a user. Since the debt is repaid as soon as possible if

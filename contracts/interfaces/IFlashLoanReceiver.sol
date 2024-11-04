@@ -7,7 +7,7 @@ import {ILendingPool} from "../../contracts/interfaces/ILendingPool.sol";
 
 /**
  * @title IFlashLoanReceiver interface
- * @notice Interface for the Aave fee IFlashLoanReceiver.
+ * @notice Interface for the fee IFlashLoanReceiver.
  * @author Cod3x
  * @dev implement this interface to develop a flashloan-compatible flashLoanReceiver contract
  *

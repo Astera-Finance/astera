@@ -34,7 +34,6 @@ import "contracts/protocol/core/Oracle.sol";
 import "contracts/misc/ProtocolDataProvider.sol";
 import "contracts/misc/UiPoolDataProviderV2.sol";
 import "contracts/misc/RewardsVault.sol";
-import "contracts/misc/Timelock.sol";
 import "contracts/misc/WETHGateway.sol";
 
 import "contracts/deployments/ATokensAndRatesHelper.sol";
@@ -46,7 +45,6 @@ import "contracts/protocol/core/lendingpool/LendingPoolConfigurator.sol";
 import "contracts/protocol/core/lendingpool/LendingPoolStorage.sol";
 
 import "contracts/protocol/tokenization/ERC20/AToken.sol";
-import "contracts/protocol/tokenization/ERC20/DelegationAwareAToken.sol";
 import "contracts/protocol/tokenization/ERC20/VariableDebtToken.sol";
 
 import "contracts/protocol/core/lendingpool/logic/BorrowLogic.sol";
@@ -59,7 +57,6 @@ import "contracts/protocol/core/minipool/logic/MiniPoolDepositLogic.sol";
 import "contracts/protocol/core/minipool/logic/MiniPoolFlashLoanLogic.sol";
 import "contracts/protocol/core/minipool/logic/MiniPoolGenericLogic.sol";
 import "contracts/protocol/core/minipool/logic/MiniPoolLiquidationLogic.sol";
-import "contracts/protocol/core/minipool/logic/MiniPoolLoanInfoLogic.sol";
 import "contracts/protocol/core/minipool/logic/MiniPoolReserveLogic.sol";
 import "contracts/protocol/core/minipool/logic/MiniPoolValidationLogic.sol";
 import "contracts/protocol/core/minipool/logic/MiniPoolWithdrawLogic.sol";
@@ -89,7 +86,7 @@ contract PropertiesBase is PropertiesAsserts, MarketParams {
     AToken[] internal aTokens;
     VariableDebtToken[] internal debtTokens;
 
-    // AAVE contracts
+    // Cod3x Lend contracts
     IRewarder internal rewarder;
     LendingPoolAddressesProvider internal provider;
     MockLendingPool internal pool;
@@ -114,7 +111,7 @@ contract PropertiesBase is PropertiesAsserts, MarketParams {
             aggregators.push(a);
         }
 
-        /// setup AAVE
+        /// setup Cod3x Lend
         rewarder = IRewarder(address(0));
         provider = new LendingPoolAddressesProvider();
         provider.setPoolAdmin(address(this));

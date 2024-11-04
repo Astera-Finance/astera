@@ -146,7 +146,7 @@ abstract contract BasePiReserveRateStrategy is Ownable {
 
     /**
      * @dev Calculates the interest rates depending on the reserve's state and configurations
-     * @param reserve The address of the reserve
+     * @param asset The address of the asset
      * @param liquidityAdded The liquidity added during the operation
      * @param liquidityTaken The liquidity taken during the operation
      * @param totalVariableDebt The total borrowed from the reserve at a variable rate
@@ -158,7 +158,7 @@ abstract contract BasePiReserveRateStrategy is Ownable {
      * @return currentFlow The current flow (if tranched)
      */
     function _calculateInterestRates(
-        address reserve,
+        address asset,
         address aToken,
         uint256 liquidityAdded, //! since this function is not view anymore we need to make sure liquidityAdded is added at the end
         uint256 liquidityTaken, //! since this function is not view anymore we need to make sure liquidityTaken is removed at the end
@@ -175,13 +175,13 @@ abstract contract BasePiReserveRateStrategy is Ownable {
         )
     {
         uint256 availableLiquidity;
-        (availableLiquidity, underlying, currentFlow) = getAvailableLiquidity(reserve, aToken);
+        (availableLiquidity, underlying, currentFlow) = getAvailableLiquidity(asset, aToken);
         if (availableLiquidity + liquidityAdded < liquidityTaken) {
             revert(Errors.LP_NOT_ENOUGH_LIQUIDITY_TO_BORROW);
         }
         availableLiquidity = availableLiquidity + liquidityAdded - liquidityTaken;
         (currentLiquidityRate, currentVariableBorrowRate, utilization) =
-            _calculateInterestRates(reserve, availableLiquidity, totalVariableDebt, reserveFactor);
+            _calculateInterestRates(asset, availableLiquidity, totalVariableDebt, reserveFactor);
     }
 
     /**

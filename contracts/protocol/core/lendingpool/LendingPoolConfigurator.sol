@@ -25,7 +25,7 @@ import {IAToken} from "../../../../contracts/interfaces/IAToken.sol";
 /**
  * @title LendingPoolConfigurator contract
  * @author Cod3x
- * @dev Implements the configuration methods for the Aave protocol
+ * @dev Implements the configuration methods for the Cod3x Lend protocol
  *
  */
 contract LendingPoolConfigurator is VersionedInitializable, ILendingPoolConfigurator {
@@ -356,40 +356,6 @@ contract LendingPoolConfigurator is VersionedInitializable, ILendingPoolConfigur
         pool.setConfiguration(asset, reserveType, currentConfig.data);
 
         emit ReserveUnfrozen(asset, reserveType);
-    }
-
-    /**
-     * @dev Pause a reserve.
-     * @param asset The address of the underlying asset of the reserve
-     * @param reserveType Whether the reserve is boosted by a vault
-     *
-     */
-    function pauseReserve(address asset, bool reserveType) external onlyPoolAdmin {
-        DataTypes.ReserveConfigurationMap memory currentConfig =
-            pool.getConfiguration(asset, reserveType);
-
-        currentConfig.setPaused(true);
-
-        pool.setConfiguration(asset, reserveType, currentConfig.data);
-
-        emit ReservePaused(asset, reserveType);
-    }
-
-    /**
-     * @dev Unpause a reserve
-     * @param asset The address of the underlying asset of the reserve
-     * @param reserveType Whether the reserve is boosted by a vault
-     *
-     */
-    function unpauseReserve(address asset, bool reserveType) external onlyPoolAdmin {
-        DataTypes.ReserveConfigurationMap memory currentConfig =
-            pool.getConfiguration(asset, reserveType);
-
-        currentConfig.setPaused(false);
-
-        pool.setConfiguration(asset, reserveType, currentConfig.data);
-
-        emit ReserveUnpaused(asset, reserveType);
     }
 
     /**

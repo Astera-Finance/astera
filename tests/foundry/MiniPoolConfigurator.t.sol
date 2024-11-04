@@ -61,13 +61,6 @@ contract MiniPoolConfiguratorTest is MiniPoolDepositBorrowTest {
         );
 
         vm.expectRevert(bytes("33"));
-        miniPoolContracts.miniPoolConfigurator.pauseReserve(tokenAddress, IMiniPool(randomAddress));
-        vm.expectRevert(bytes("33"));
-        miniPoolContracts.miniPoolConfigurator.unpauseReserve(
-            tokenAddress, IMiniPool(randomAddress)
-        );
-
-        vm.expectRevert(bytes("33"));
         miniPoolContracts.miniPoolConfigurator.enableFlashloan(
             tokenAddress, IMiniPool(randomAddress)
         );

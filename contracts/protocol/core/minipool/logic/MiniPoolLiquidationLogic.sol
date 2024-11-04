@@ -85,19 +85,13 @@ library MiniPoolLiquidationLogic {
         uint256 userVariableDebt;
         uint256 maxLiquidatableDebt;
         uint256 actualDebtToLiquidate;
-        uint256 liquidationRatio;
-        uint256 maxAmountCollateralToLiquidate;
         uint256 maxCollateralToLiquidate;
         uint256 debtAmountNeeded;
         uint256 healthFactor;
         uint256 liquidatorPreviousATokenBalance;
         IAERC6909 collateralAtoken;
-        bool isCollateralEnabled;
-        DataTypes.InterestRateMode borrowRateMode;
         uint256 debtID;
         uint256 aTokenID;
-        uint256 errorCode;
-        string errorMsg;
     }
 
     struct liquidationCallParams {
@@ -122,7 +116,7 @@ library MiniPoolLiquidationLogic {
     function liquidationCall(
         mapping(address => DataTypes.MiniPoolReserveData) storage reserves,
         mapping(address => DataTypes.UserConfigurationMap) storage usersConfig,
-        mapping(uint256 => DataTypes.ReserveReference) storage reservesList,
+        mapping(uint256 => address) storage reservesList,
         liquidationCallParams memory params
     ) external {
         DataTypes.MiniPoolReserveData storage collateralReserve = reserves[params.collateralAsset];

@@ -3,7 +3,7 @@
         "aTokenNamePrefix": "Cod3x Lend ",
         "aTokenSymbolPrefix": "cl",
         "debtTokenNamePrefix": "Cod3x Lend variable debt bearing ",
-        "debtTokenSymbolPrefix": "variableDebt",
+        "debtTokenSymbolPrefix": "clDebt",
         "treasury": "0x3151CfCA393FE5Eec690feD2a2446DA5a073d01B"
     },
     "poolAddressesProviderConfig": {

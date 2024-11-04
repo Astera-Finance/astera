@@ -59,7 +59,7 @@ library MiniPoolValidationLogic {
      * @param reserveAddress The address of the reserve
      * @param amount The amount to be withdrawn
      * @param userBalance The balance of the user
-     * @param reservesData The reserves state
+     * @param reserves The reserves state
      * @param userConfig The user configuration
      * @param reserves The addresses of the reserves
      * @param reservesCount The number of reserves
@@ -75,9 +75,9 @@ library MiniPoolValidationLogic {
 
     function validateWithdraw(
         ValidateWithdrawParams memory validateParams,
-        mapping(address => DataTypes.MiniPoolReserveData) storage reservesData,
+        mapping(address => DataTypes.MiniPoolReserveData) storage reserves,
         DataTypes.UserConfigurationMap storage userConfig,
-        mapping(uint256 => DataTypes.ReserveReference) storage reserves
+        mapping(uint256 => address) storage reservesList
     ) internal view {
         require(validateParams.amount != 0, Errors.VL_INVALID_AMOUNT);
         require(
@@ -85,7 +85,7 @@ library MiniPoolValidationLogic {
             Errors.VL_NOT_ENOUGH_AVAILABLE_USER_BALANCE
         );
 
-        (bool isActive,,) = reservesData[validateParams.reserveAddress].configuration.getFlags();
+        (bool isActive,,) = reserves[validateParams.reserveAddress].configuration.getFlags();
         require(isActive, Errors.VL_NO_ACTIVE_RESERVE);
 
         require(
@@ -93,9 +93,9 @@ library MiniPoolValidationLogic {
                 validateParams.reserveAddress,
                 msg.sender,
                 validateParams.amount,
-                reservesData,
-                userConfig,
                 reserves,
+                userConfig,
+                reservesList,
                 validateParams.reservesCount,
                 validateParams.oracle
             ),
@@ -104,7 +104,6 @@ library MiniPoolValidationLogic {
     }
 
     /**
-     * @param asset The address of the asset to borrow
      * @param userAddress The address of the user
      * @param amount The amount to be borrowed
      * @param amountInETH The amount to be borrowed, in ETH
@@ -112,7 +111,6 @@ library MiniPoolValidationLogic {
      * @param oracle The price oracle
      */
     struct ValidateBorrowParams {
-        address asset;
         address userAddress;
         uint256 amount;
         uint256 amountInETH;
@@ -126,14 +124,7 @@ library MiniPoolValidationLogic {
         uint256 amountOfCollateralNeededETH;
         uint256 userCollateralBalanceETH;
         uint256 userBorrowBalanceETH;
-        uint256 availableLiquidity;
         uint256 healthFactor;
-        uint256 amountOfCollateralNeededETHIsolated;
-        uint256 userCollateralBalanceETHIsolated;
-        uint256 userBorrowBalanceETHIsolated;
-        uint256 currentLtvIsolated;
-        uint256 currentLiquidationThresholdIsolated;
-        uint256 healthFactorIsolated;
         bool isActive;
         bool isFrozen;
         bool borrowingEnabled;
@@ -142,16 +133,16 @@ library MiniPoolValidationLogic {
     /**
      * @dev Validates a borrow action
      * @param reserve The reserve state from which the user is borrowing
-     * @param reservesData The state of all the reserves
+     * @param reserves The state of all the reserves
      * @param userConfig The state of the user for the specific reserve
-     * @param reserves The addresses of all the active reserves
+     * @param reservesList The addresses of all the active reserves
      */
     function validateBorrow(
         ValidateBorrowParams memory validateParams,
         DataTypes.MiniPoolReserveData storage reserve,
-        mapping(address => DataTypes.MiniPoolReserveData) storage reservesData,
+        mapping(address => DataTypes.MiniPoolReserveData) storage reserves,
         DataTypes.UserConfigurationMap storage userConfig,
-        mapping(uint256 => DataTypes.ReserveReference) storage reserves
+        mapping(uint256 => address) storage reservesList
     ) internal view {
         ValidateBorrowLocalVars memory vars;
         MiniPoolBorrowLogic.CalculateUserAccountDataVolatileParams memory params;
@@ -173,7 +164,7 @@ library MiniPoolValidationLogic {
             vars.currentLiquidationThreshold,
             vars.healthFactor
         ) = MiniPoolBorrowLogic.calculateUserAccountDataVolatile(
-            params, reservesData, userConfig, reserves
+            params, reserves, userConfig, reservesList
         );
 
         require(vars.userCollateralBalanceETH > 0, Errors.VL_COLLATERAL_BALANCE_IS_0);
@@ -224,18 +215,18 @@ library MiniPoolValidationLogic {
      * @dev Validates the action of setting an asset as collateral
      * @param reserve The state of the reserve that the user is enabling or disabling as collateral
      * @param reserveAddress The address of the reserve
-     * @param reservesData The data of all the reserves
+     * @param reserves The data of all the reserves
      * @param userConfig The state of the user for the specific reserve
-     * @param reserves The addresses of all the active reserves
+     * @param reservesList The addresses of all the active reserves
      * @param oracle The price oracle
      */
     function validateSetUseReserveAsCollateral(
         DataTypes.MiniPoolReserveData storage reserve,
         address reserveAddress,
         bool useAsCollateral,
-        mapping(address => DataTypes.MiniPoolReserveData) storage reservesData,
+        mapping(address => DataTypes.MiniPoolReserveData) storage reserves,
         DataTypes.UserConfigurationMap storage userConfig,
-        mapping(uint256 => DataTypes.ReserveReference) storage reserves,
+        mapping(uint256 => address) storage reservesList,
         uint256 reservesCount,
         address oracle
     ) internal view {
@@ -251,9 +242,9 @@ library MiniPoolValidationLogic {
                     reserveAddress,
                     msg.sender,
                     underlyingBalance,
-                    reservesData,
-                    userConfig,
                     reserves,
+                    userConfig,
+                    reservesList,
                     reservesCount,
                     oracle
                 ),
@@ -288,7 +279,7 @@ library MiniPoolValidationLogic {
             !IAERC6909(reserve.aTokenAddress).isTranche(reserve.aTokenID),
             Errors.VL_TRANCHED_ASSET_CANNOT_BE_FLASHLOAN
         );
-        require(!configuration.getPaused(), Errors.VL_RESERVE_PAUSED);
+        require(!configuration.getFrozen(), Errors.VL_RESERVE_FROZEN);
         require(configuration.getActive(), Errors.VL_RESERVE_INACTIVE);
         require(configuration.getFlashLoanEnabled(), Errors.VL_FLASHLOAN_DISABLED);
     }
@@ -336,21 +327,21 @@ library MiniPoolValidationLogic {
     /**
      * @dev Validates an aToken transfer
      * @param from The user from which the aTokens are being transferred
-     * @param reservesData The state of all the reserves
+     * @param reserves The state of all the reserves
      * @param userConfig The state of the user for the specific reserve
-     * @param reserves The addresses of all the active reserves
+     * @param reservesList The addresses of all the active reserves
      * @param oracle The price oracle
      */
     function validateTransfer(
         address from,
-        mapping(address => DataTypes.MiniPoolReserveData) storage reservesData,
+        mapping(address => DataTypes.MiniPoolReserveData) storage reserves,
         DataTypes.UserConfigurationMap storage userConfig,
-        mapping(uint256 => DataTypes.ReserveReference) storage reserves,
+        mapping(uint256 => address) storage reservesList,
         uint256 reservesCount,
         address oracle
     ) internal view {
         (,,,, uint256 healthFactor) = MiniPoolGenericLogic.calculateUserAccountData(
-            from, reservesData, userConfig, reserves, reservesCount, oracle
+            from, reserves, userConfig, reservesList, reservesCount, oracle
         );
 
         require(

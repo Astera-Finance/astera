@@ -54,12 +54,12 @@ library MiniPoolWithdrawLogic {
 
     function withdraw(
         withdrawParams memory params,
-        mapping(address => DataTypes.MiniPoolReserveData) storage reservesData,
+        mapping(address => DataTypes.MiniPoolReserveData) storage reserves,
         mapping(address => DataTypes.UserConfigurationMap) storage usersConfig,
-        mapping(uint256 => DataTypes.ReserveReference) storage reserves,
+        mapping(uint256 => address) storage reservesList,
         IMiniPoolAddressesProvider addressesProvider
     ) external returns (uint256) {
-        DataTypes.MiniPoolReserveData storage reserve = reservesData[params.asset];
+        DataTypes.MiniPoolReserveData storage reserve = reserves[params.asset];
         withdrawLocalVars memory localVars;
 
         {
@@ -82,9 +82,9 @@ library MiniPoolWithdrawLogic {
                 params.reservesCount,
                 addressesProvider.getPriceOracle()
             ),
-            reservesData,
+            reserves,
             usersConfig[msg.sender],
-            reserves
+            reservesList
         );
 
         reserve.updateState();
@@ -119,7 +119,7 @@ library MiniPoolWithdrawLogic {
         finalizeTransferParams memory params,
         mapping(address => DataTypes.MiniPoolReserveData) storage reserves,
         mapping(address => DataTypes.UserConfigurationMap) storage usersConfig,
-        mapping(uint256 => DataTypes.ReserveReference) storage reservesList,
+        mapping(uint256 => address) storage reservesList,
         IMiniPoolAddressesProvider addressesProvider
     ) internal {
         require(
@@ -154,12 +154,12 @@ library MiniPoolWithdrawLogic {
 
     function internalWithdraw(
         withdrawParams memory params,
-        mapping(address => DataTypes.MiniPoolReserveData) storage reservesData,
+        mapping(address => DataTypes.MiniPoolReserveData) storage reserves,
         mapping(address => DataTypes.UserConfigurationMap) storage usersConfig,
-        mapping(uint256 => DataTypes.ReserveReference) storage reserves,
+        mapping(uint256 => address) storage reservesList,
         IMiniPoolAddressesProvider addressesProvider
     ) internal returns (uint256) {
-        DataTypes.MiniPoolReserveData storage reserve = reservesData[params.asset];
+        DataTypes.MiniPoolReserveData storage reserve = reserves[params.asset];
         withdrawLocalVars memory localVars;
 
         {
@@ -187,9 +187,9 @@ library MiniPoolWithdrawLogic {
                 params.reservesCount,
                 addressesProvider.getPriceOracle()
             ),
-            reservesData,
+            reserves,
             usersConfig[address(this)],
-            reserves
+            reservesList
         );
         reserve.updateState();
 

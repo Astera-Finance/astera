@@ -66,7 +66,6 @@ library MiniPoolReserveLogic {
     {
         uint40 timestamp = reserve.lastUpdateTimestamp;
 
-        //solium-disable-next-line
         if (timestamp == uint40(block.timestamp)) {
             //if the index was updated in the same block, no need to perform any calculation
             return reserve.liquidityIndex;
@@ -94,7 +93,6 @@ library MiniPoolReserveLogic {
     {
         uint40 timestamp = reserve.lastUpdateTimestamp;
 
-        //solium-disable-next-line
         if (timestamp == uint40(block.timestamp)) {
             //if the index was updated in the same block, no need to perform any calculation
             return reserve.variableBorrowIndex;
@@ -189,7 +187,6 @@ library MiniPoolReserveLogic {
     }
 
     struct UpdateInterestRatesLocalVars {
-        uint256 availableLiquidity;
         uint256 newLiquidityRate;
         uint256 newVariableRate;
         uint256 totalVariableDebt;
@@ -315,7 +312,7 @@ library MiniPoolReserveLogic {
         uint256 newVariableBorrowIndex = variableBorrowIndex;
 
         //only cumulating if there is any income being produced
-        if (currentLiquidityRate > 0) {
+        if (currentLiquidityRate != 0) {
             uint256 cumulatedLiquidityInterest =
                 MathUtils.calculateLinearInterest(currentLiquidityRate, timestamp);
             newLiquidityIndex = cumulatedLiquidityInterest.rayMul(liquidityIndex);
@@ -323,8 +320,6 @@ library MiniPoolReserveLogic {
 
             reserve.liquidityIndex = uint128(newLiquidityIndex);
 
-            //as the liquidity rate might come only from stable rate loans, we need to ensure
-            //that there is actual variable debt before accumulating
             if (scaledVariableDebt != 0) {
                 uint256 cumulatedVariableBorrowInterest = MathUtils.calculateCompoundedInterest(
                     reserve.currentVariableBorrowRate, timestamp
@@ -338,7 +333,6 @@ library MiniPoolReserveLogic {
             }
         }
 
-        //solium-disable-next-line
         reserve.lastUpdateTimestamp = uint40(block.timestamp);
         return (newLiquidityIndex, newVariableBorrowIndex);
     }

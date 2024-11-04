@@ -98,14 +98,14 @@ abstract contract RewardsDistributor6909 is IMiniPoolRewardsDistributor, Ownable
     }
 
     function getUserRewardsBalance(
-        DistributionTypes.asset6909[] calldata assets,
+        DistributionTypes.Asset6909[] calldata assets,
         address user,
         address reward
     ) external view override returns (uint256) {
         return _getUserReward(user, reward, _getUserStake(assets, user));
     }
 
-    function getAllUserRewardsBalance(DistributionTypes.asset6909[] calldata assets, address user)
+    function getAllUserRewardsBalance(DistributionTypes.Asset6909[] calldata assets, address user)
         external
         view
         override
@@ -373,13 +373,13 @@ abstract contract RewardsDistributor6909 is IMiniPoolRewardsDistributor, Ownable
         return (emissionPerSecond * timeDelta * (10 ** decimals)) / totalBalance + currentIndex;
     }
 
-    function _getUserStake(DistributionTypes.asset6909[] calldata assets, address user)
+    function _getUserStake(DistributionTypes.Asset6909[] calldata assets, address user)
         internal
         view
         virtual
         returns (DistributionTypes.UserMiniPoolAssetInput[] memory userState);
 
-    function getAssetDecimals(DistributionTypes.asset6909 calldata asset)
+    function getAssetDecimals(DistributionTypes.Asset6909 calldata asset)
         external
         view
         override

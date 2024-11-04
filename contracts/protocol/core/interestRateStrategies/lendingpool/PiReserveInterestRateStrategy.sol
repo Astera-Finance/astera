@@ -107,7 +107,7 @@ contract PiReserveInterestRateStrategy is
 
     /**
      * @dev Calculates the interest rates depending on the reserve's state and configurations
-     * @param reserve The address of the reserve
+     * @param asset The address of the asset
      * @param aToken The address of the reserve aToken
      * @param liquidityAdded The liquidity added during the operation
      * @param liquidityTaken The liquidity taken during the operation
@@ -118,7 +118,7 @@ contract PiReserveInterestRateStrategy is
      *
      */
     function calculateInterestRates(
-        address reserve,
+        address asset,
         address aToken,
         uint256 liquidityAdded, //! since this function is not view anymore we need to make sure liquidityAdded is added at the end
         uint256 liquidityTaken, //! since this function is not view anymore we need to make sure liquidityTaken is removed at the end
@@ -131,7 +131,7 @@ contract PiReserveInterestRateStrategy is
         returns (uint256 currentLiquidityRate, uint256 currentVariableBorrowRate)
     {
         (currentLiquidityRate, currentVariableBorrowRate,,,) = _calculateInterestRates(
-            reserve, aToken, liquidityAdded, liquidityTaken, totalVariableDebt, reserveFactor
+            asset, aToken, liquidityAdded, liquidityTaken, totalVariableDebt, reserveFactor
         );
     }
 }

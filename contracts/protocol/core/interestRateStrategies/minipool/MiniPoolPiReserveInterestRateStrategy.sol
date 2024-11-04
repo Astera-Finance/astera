@@ -77,7 +77,7 @@ contract MiniPoolPiReserveInterestRateStrategy is
         override
         returns (uint256 availableLiquidity, address underlying, uint256 currentFlow)
     {
-        (,, bool isTranched,) = IAERC6909(aToken).getIdForUnderlying(asset);
+        (,, bool isTranched) = IAERC6909(aToken).getIdForUnderlying(asset);
 
         if (isTranched) {
             IFlowLimiter flowLimiter =
@@ -138,7 +138,7 @@ contract MiniPoolPiReserveInterestRateStrategy is
 
     /**
      * @dev Calculates the interest rates depending on the reserve's state and configurations
-     * @param reserve The address of the reserve
+     * @param asset The address of the asset
      * @param aToken The address of the reserve aToken
      * @param liquidityAdded The liquidity added during the operation
      * @param liquidityTaken The liquidity taken during the operation
@@ -148,7 +148,7 @@ contract MiniPoolPiReserveInterestRateStrategy is
      * @return currentVariableBorrowRate The variable borrow rate
      */
     function calculateInterestRates(
-        address reserve,
+        address asset,
         address aToken,
         uint256 liquidityAdded, //! since this function is not view anymore we need to make sure liquidityAdded is added at the end
         uint256 liquidityTaken, //! since this function is not view anymore we need to make sure liquidityTaken is removed at the end
@@ -165,7 +165,7 @@ contract MiniPoolPiReserveInterestRateStrategy is
         uint256 currentFlow;
         (currentLiquidityRate, currentVariableBorrowRate, utilizationRate, underlying, currentFlow)
         = _calculateInterestRates(
-            reserve, aToken, liquidityAdded, liquidityTaken, totalVariableDebt, reserveFactor
+            asset, aToken, liquidityAdded, liquidityTaken, totalVariableDebt, reserveFactor
         );
 
         // Here we make sure that the minipool can always repay its debt to the lendingpool.
@@ -185,7 +185,7 @@ contract MiniPoolPiReserveInterestRateStrategy is
                         (r.currentLiquidityRate * DELTA_TIME_MARGIN / SECONDS_PER_YEAR)
                             + WadRayMath.ray()
                     ) / SECONDS_PER_YEAR
-            ).percentMul(10_100); // * 101% => +1% safety margin.
+            );
 
             // `&& utilizationRate != 0` to avoid 0 division. It's safe since the minipool flow is
             // always owed to a user. Since the debt is repaid as soon as possible if
