@@ -309,27 +309,14 @@ contract LendingPool is VersionedInitializable, ILendingPool, LendingPoolStorage
         );
     }
 
-    struct FlashLoanLocalVars {
-        IFlashLoanReceiver receiver;
-        address oracle;
-        uint256 i;
-        address currentAsset;
-        bool currentType;
-        address currentATokenAddress;
-        uint256 currentAmount;
-        uint256 currentPremium;
-        uint256 currentAmountPlusPremium;
-        address debtToken;
-    }
-
     /**
      * @dev Allows smartcontracts to access the liquidity of the pool within one transaction,
      * as long as the amount taken plus a fee is returned.
      * IMPORTANT There are security concerns for developers of flashloan receiver contracts that must be kept into consideration.
      * @param flashLoanParams struct containing receiverAddress, onBehalfOf, assets, amounts
      * @param modes Types of the debt to open if the flash loan is not returned:
-     *   0 -> Don't open any debt, just revert if funds can't be transferred from the receiver
-     *   2 -> Open debt at variable rate for the value of the amount flash-borrowed to the `onBehalfOf` address
+     *   0    -> Don't open any debt, just revert if funds can't be transferred from the receiver
+     *   =! 0 -> Open debt at variable rate for the value of the amount flash-borrowed to the `onBehalfOf` address
      * @param params Variadic packed params to pass to the receiver as extra information
      *
      */

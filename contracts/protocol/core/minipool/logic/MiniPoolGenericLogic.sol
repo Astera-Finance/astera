@@ -37,8 +37,6 @@ library MiniPoolGenericLogic {
         uint256 amountToDecreaseInETH;
         uint256 collateralBalanceAfterDecrease;
         uint256 liquidationThresholdAfterDecrease;
-        uint256 healthFactorAfterDecrease;
-        bool reserveUsageAsCollateralEnabled;
     }
 
     /**
@@ -115,7 +113,7 @@ library MiniPoolGenericLogic {
         return IPriceOracleGetter(oracle).getAssetPrice(asset) * amount / (10 ** decimals);
     }
 
-    struct CalculateUserAccountDataVars {
+    struct CalculateUserAccountDataLocalVars {
         uint256 reserveUnitPrice;
         uint256 tokenUnit;
         uint256 compoundedLiquidityBalance;
@@ -129,13 +127,7 @@ library MiniPoolGenericLogic {
         uint256 totalDebtInETH;
         uint256 avgLtv;
         uint256 avgLiquidationThreshold;
-        uint256 reservesLength;
-        uint256 userVolatility;
-        address underlyingAsset;
-        bool healthFactorBelowThreshold;
         address currentReserveAddress;
-        bool usageAsCollateralEnabled;
-        bool userUsesReserveAsCollateral;
     }
 
     /**
@@ -158,7 +150,7 @@ library MiniPoolGenericLogic {
         uint256 reservesCount,
         address oracle
     ) internal view returns (uint256, uint256, uint256, uint256, uint256) {
-        CalculateUserAccountDataVars memory vars;
+        CalculateUserAccountDataLocalVars memory vars;
 
         if (userConfig.isEmpty()) {
             return (0, 0, 0, 0, type(uint256).max);

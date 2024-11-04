@@ -1,8 +1,6 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity 0.8.23;
 
-import "forge-std/console.sol";
-
 import {Address} from "../../../../contracts/dependencies/openzeppelin/contracts/Address.sol";
 import {IAERC6909} from "../../../../contracts/interfaces/IAERC6909.sol";
 import {IERC20} from "../../../../contracts/dependencies/openzeppelin/contracts/IERC20.sol";
@@ -163,9 +161,9 @@ contract MiniPool is VersionedInitializable, IMiniPool, MiniPoolStorage {
         );
     }
 
-    struct borrowVars {
+    struct borrowVarsLocalVars {
         uint256 availableLiquidity;
-        uint256 amountRecieved;
+        uint256 amountReceived;
         address onBehalfOf;
         address aTokenAddress;
         address LendingPool;
@@ -189,7 +187,7 @@ contract MiniPool is VersionedInitializable, IMiniPool, MiniPoolStorage {
         whenNotPaused
     {
         DataTypes.MiniPoolReserveData storage reserve = _reserves[asset];
-        borrowVars memory vars;
+        borrowVarsLocalVars memory vars;
         vars.aTokenAddress = reserve.aTokenAddress;
         require(vars.aTokenAddress != address(0), "Reserve not initialized");
         vars.availableLiquidity = IERC20(asset).balanceOf(vars.aTokenAddress);
@@ -207,16 +205,16 @@ contract MiniPool is VersionedInitializable, IMiniPool, MiniPoolStorage {
                 ATokenNonRebasing(asset).ATOKEN_ADDRESS()
             );
 
-            vars.amountRecieved = IERC20(underlying).balanceOf(address(this));
+            vars.amountReceived = IERC20(underlying).balanceOf(address(this));
 
-            IERC20(underlying).approve(vars.LendingPool, vars.amountRecieved);
+            IERC20(underlying).approve(vars.LendingPool, vars.amountReceived);
             ILendingPool(vars.LendingPool).deposit(
-                underlying, true, vars.amountRecieved, address(this)
+                underlying, true, vars.amountReceived, address(this)
             );
 
-            vars.amountRecieved = IERC20(asset).balanceOf(address(this));
+            vars.amountReceived = IERC20(asset).balanceOf(address(this));
             MiniPoolDepositLogic.internalDeposit(
-                MiniPoolDepositLogic.DepositParams(asset, vars.amountRecieved, address(this)),
+                MiniPoolDepositLogic.DepositParams(asset, vars.amountReceived, address(this)),
                 _reserves,
                 _usersConfig,
                 _addressesProvider
@@ -241,13 +239,6 @@ contract MiniPool is VersionedInitializable, IMiniPool, MiniPoolStorage {
             _reservesList,
             _usersConfig
         );
-    }
-
-    struct repayVars {
-        uint256 repayAmount;
-        address aTokenAddress;
-        address underlyingAsset;
-        uint256 underlyingDebt;
     }
 
     /**
@@ -349,16 +340,16 @@ contract MiniPool is VersionedInitializable, IMiniPool, MiniPoolStorage {
 
     function _repayLendingPool(address asset) internal {
         DataTypes.MiniPoolReserveData storage reserve = _reserves[asset];
-        repayVars memory vars;
-        vars.aTokenAddress = reserve.aTokenAddress;
-        if (IAERC6909(vars.aTokenAddress).isTranche(reserve.aTokenID)) {
-            vars.underlyingAsset = ATokenNonRebasing(asset).UNDERLYING_ASSET_ADDRESS();
-            vars.underlyingDebt = ATokenNonRebasing(asset).convertToShares(
-                getCurrentLendingPoolDebt(vars.underlyingAsset)
-            ); // share
+        address aTokenAddress = reserve.aTokenAddress;
+        address underlyingAsset;
 
-            if (vars.underlyingDebt != 0) {
-                uint256 amount = vars.underlyingDebt;
+        if (IAERC6909(aTokenAddress).isTranche(reserve.aTokenID)) {
+            underlyingAsset = ATokenNonRebasing(asset).UNDERLYING_ASSET_ADDRESS();
+            uint256 underlyingDebt =
+                ATokenNonRebasing(asset).convertToShares(getCurrentLendingPoolDebt(underlyingAsset)); // share
+
+            if (underlyingDebt != 0) {
+                uint256 amount = underlyingDebt;
 
                 MiniPoolWithdrawLogic.internalWithdraw(
                     MiniPoolWithdrawLogic.withdrawParams(
@@ -374,18 +365,17 @@ contract MiniPool is VersionedInitializable, IMiniPool, MiniPoolStorage {
                 amount = aToken.balanceOf(address(this)); // asset
                 aToken.approve(_addressesProvider.getLendingPool(), amount);
                 ILendingPool(_addressesProvider.getLendingPool()).repayWithATokens(
-                    vars.underlyingAsset, true, amount
+                    underlyingAsset, true, amount
                 ); // MUST use asset
             }
 
             uint256 aTokenId = reserve.aTokenID;
-            uint256 remainingBalance =
-                IAERC6909(vars.aTokenAddress).balanceOf(address(this), aTokenId);
+            uint256 remainingBalance = IAERC6909(aTokenAddress).balanceOf(address(this), aTokenId);
 
             if (
-                getCurrentLendingPoolDebt(vars.underlyingAsset) == 0
+                getCurrentLendingPoolDebt(underlyingAsset) == 0
                     && remainingBalance > ERROR_REMAINDER_MARGIN /* We leave ERROR_REMAINDER_MARGIN of aToken wei in the minipool to mitigate rounding errors. */
-                    && IERC20(asset).balanceOf(vars.aTokenAddress)
+                    && IERC20(asset).balanceOf(aTokenAddress)
                         > remainingBalance - ERROR_REMAINDER_MARGIN /* Check if there is enough liquidity to withdraw. */
             ) {
                 // Withdraw the remaining AERC6909 to Treasury. This is due to Minipool IR > Lending IR.
@@ -399,26 +389,14 @@ contract MiniPool is VersionedInitializable, IMiniPool, MiniPoolStorage {
         }
     }
 
-    struct FlashLoanLocalVars {
-        IFlashLoanReceiver receiver;
-        address oracle;
-        uint256 i;
-        address currentAsset;
-        address currentATokenAddress;
-        uint256 currentAmount;
-        uint256 currentPremium;
-        uint256 currentAmountPlusPremium;
-        address debtToken;
-    }
-
     /**
      * @dev Allows smartcontracts to access the liquidity of the pool within one transaction,
      * as long as the amount taken plus a fee is returned.
      * IMPORTANT There are security concerns for developers of flashloan receiver contracts that must be kept into consideration.
      * @param flashLoanParams struct containing receiverAddress, onBehalfOf, assets, amounts
      * @param modes Types of the debt to open if the flash loan is not returned:
-     *   0 -> Don't open any debt, just revert if funds can't be transferred from the receiver
-     *   2 -> Open debt at variable rate for the value of the amount flash-borrowed to the `onBehalfOf` address
+     *   0    -> Don't open any debt, just revert if funds can't be transferred from the receiver
+     *   =! 0 -> Open debt at variable rate for the value of the amount flash-borrowed to the `onBehalfOf` address
      * @param params Variadic packed params to pass to the receiver as extra information
      *
      */

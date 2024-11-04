@@ -57,7 +57,6 @@ contract ATokenERC6909 is IncentivizedERC6909, VersionedInitializable {
         require(address(provider) != address(0), Errors.LP_NOT_CONTRACT);
         uint256 chainId;
 
-        //solium-disable-next-line
         assembly {
             chainId := chainid()
         }

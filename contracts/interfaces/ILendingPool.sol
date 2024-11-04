@@ -266,8 +266,8 @@ interface ILendingPool {
      * @param flashLoanParams struct containing receiverAddress, onBehalfOf
      * @param amounts The amounts amounts being flash-borrowed
      * @param modes Types of the debt to open if the flash loan is not returned:
-     *   0 -> Don't open any debt, just revert if funds can't be transferred from the receiver
-     *   2 -> Open debt at variable rate for the value of the amount flash-borrowed to the `onBehalfOf` address
+     *   0    -> Don't open any debt, just revert if funds can't be transferred from the receiver
+     *   =! 0 -> Open debt at variable rate for the value of the amount flash-borrowed to the `onBehalfOf` address
      * @param params Variadic packed params to pass to the receiver as extra information
      *
      */

@@ -240,7 +240,6 @@ interface IMiniPool {
     struct FlashLoanParams {
         address receiverAddress;
         address[] assets;
-        bool[] reserveTypes;
         address onBehalfOf;
     }
 
@@ -250,8 +249,8 @@ interface IMiniPool {
      * IMPORTANT There are security concerns for developers of flashloan receiver contracts that must be kept into consideration.
      * @param flashLoanParams struct containing receiverAddress, onBehalfOf
      * @param modes Types of the debt to open if the flash loan is not returned:
-     *   0 -> Don't open any debt, just revert if funds can't be transferred from the receiver
-     *   2 -> Open debt at variable rate for the value of the amount flash-borrowed to the `onBehalfOf` address
+     *   0    -> Don't open any debt, just revert if funds can't be transferred from the receiver
+     *   =! 0 -> Open debt at variable rate for the value of the amount flash-borrowed to the `onBehalfOf` address
      * @param params Variadic packed params to pass to the receiver as extra information
      *
      */

@@ -50,14 +50,9 @@ library FlashLoanLogic {
         uint256 i;
         address currentAsset;
         uint256 currentAmount;
-        uint256[] totalPremiums;
-        uint256 flashloanPremiumTotal;
-        address oracle;
         bool currentType;
         address currentATokenAddress;
         uint256 currentPremium;
-        uint256 currentAmountPlusPremium;
-        address debtToken;
     }
 
     struct FlashLoanRepaymentParams {

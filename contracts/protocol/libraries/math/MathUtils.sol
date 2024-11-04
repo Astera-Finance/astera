@@ -25,7 +25,6 @@ library MathUtils {
         view
         returns (uint256)
     {
-        //solium-disable-next-line
         uint256 result = rate * (block.timestamp - uint256(lastUpdateTimestamp));
         unchecked {
             result = result / SECONDS_PER_YEAR;
@@ -54,7 +53,6 @@ library MathUtils {
         uint40 lastUpdateTimestamp,
         uint256 currentTimestamp
     ) internal pure returns (uint256) {
-        //solium-disable-next-line
         uint256 exp = currentTimestamp - uint256(lastUpdateTimestamp);
 
         if (exp == 0) {

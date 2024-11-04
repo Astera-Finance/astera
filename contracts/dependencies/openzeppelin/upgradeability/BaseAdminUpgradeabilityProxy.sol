@@ -98,7 +98,6 @@ contract BaseAdminUpgradeabilityProxy is BaseUpgradeabilityProxy {
      */
     function _admin() internal view returns (address adm) {
         bytes32 slot = ADMIN_SLOT;
-        //solium-disable-next-line
         assembly {
             adm := sload(slot)
         }
@@ -110,7 +109,6 @@ contract BaseAdminUpgradeabilityProxy is BaseUpgradeabilityProxy {
      */
     function _setAdmin(address newAdmin) internal {
         bytes32 slot = ADMIN_SLOT;
-        //solium-disable-next-line
         assembly {
             sstore(slot, newAdmin)
         }

@@ -65,7 +65,7 @@ abstract contract VersionedInitializable {
         // yield zero, making it an effective way to detect if a contract is
         // under construction or not.
         uint256 cs;
-        //solium-disable-next-line
+
         assembly {
             cs := extcodesize(address())
         }

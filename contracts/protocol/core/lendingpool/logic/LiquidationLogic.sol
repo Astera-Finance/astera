@@ -77,6 +77,18 @@ library LiquidationLogic {
      */
     event ReserveUsedAsCollateralEnabled(address indexed reserve, address indexed user);
 
+    struct LiquidationCallLocalVars {
+        uint256 userCollateralBalance;
+        uint256 userVariableDebt;
+        uint256 maxLiquidatableDebt;
+        uint256 actualDebtToLiquidate;
+        uint256 maxCollateralToLiquidate;
+        uint256 debtAmountNeeded;
+        uint256 healthFactor;
+        uint256 liquidatorPreviousATokenBalance;
+        IAToken collateralAtoken;
+    }
+
     struct liquidationCallParams {
         address addressesProvider;
         uint256 reservesCount;
@@ -239,24 +251,6 @@ library LiquidationLogic {
             msg.sender,
             params.receiveAToken
         );
-    }
-
-    struct LiquidationCallLocalVars {
-        uint256 userCollateralBalance;
-        uint256 userVariableDebt;
-        uint256 maxLiquidatableDebt;
-        uint256 actualDebtToLiquidate;
-        uint256 liquidationRatio;
-        uint256 maxAmountCollateralToLiquidate;
-        uint256 maxCollateralToLiquidate;
-        uint256 debtAmountNeeded;
-        uint256 healthFactor;
-        uint256 liquidatorPreviousATokenBalance;
-        IAToken collateralAtoken;
-        bool isCollateralEnabled;
-        DataTypes.InterestRateMode borrowRateMode;
-        uint256 errorCode;
-        string errorMsg;
     }
 
     struct AvailableCollateralToLiquidateLocalVars {

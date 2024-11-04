@@ -30,7 +30,6 @@ abstract contract Proxy {
      * @param implementation Address to delegate.
      */
     function _delegate(address implementation) internal {
-        //solium-disable-next-line
         assembly {
             // Copy msg.data. We take full control of memory in this inline assembly
             // block because it will not return to Solidity code. We overwrite the

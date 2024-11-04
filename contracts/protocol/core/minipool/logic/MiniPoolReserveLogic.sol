@@ -66,7 +66,6 @@ library MiniPoolReserveLogic {
     {
         uint40 timestamp = reserve.lastUpdateTimestamp;
 
-        //solium-disable-next-line
         if (timestamp == uint40(block.timestamp)) {
             //if the index was updated in the same block, no need to perform any calculation
             return reserve.liquidityIndex;
@@ -94,7 +93,6 @@ library MiniPoolReserveLogic {
     {
         uint40 timestamp = reserve.lastUpdateTimestamp;
 
-        //solium-disable-next-line
         if (timestamp == uint40(block.timestamp)) {
             //if the index was updated in the same block, no need to perform any calculation
             return reserve.variableBorrowIndex;
@@ -189,7 +187,6 @@ library MiniPoolReserveLogic {
     }
 
     struct UpdateInterestRatesLocalVars {
-        uint256 availableLiquidity;
         uint256 newLiquidityRate;
         uint256 newVariableRate;
         uint256 totalVariableDebt;
@@ -336,7 +333,6 @@ library MiniPoolReserveLogic {
             }
         }
 
-        //solium-disable-next-line
         reserve.lastUpdateTimestamp = uint40(block.timestamp);
         return (newLiquidityIndex, newVariableBorrowIndex);
     }

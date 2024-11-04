@@ -44,7 +44,7 @@ library BorrowLogic {
         uint256 borrowRate
     );
 
-    struct CalculateUserAccountDataVolatileVars {
+    struct CalculateUserAccountDataVolatileLocalVars {
         uint256 reserveUnitPrice;
         uint256 tokenUnit;
         uint256 compoundedLiquidityBalance;
@@ -58,13 +58,8 @@ library BorrowLogic {
         uint256 totalDebtInETH;
         uint256 avgLtv;
         uint256 avgLiquidationThreshold;
-        uint256 reservesLength;
-        uint256 userVolatility;
-        bool healthFactorBelowThreshold;
         address currentReserveAddress;
         bool currentReserveType;
-        bool usageAsCollateralEnabled;
-        bool userUsesReserveAsCollateral;
     }
 
     /**
@@ -94,7 +89,7 @@ library BorrowLogic {
         DataTypes.UserConfigurationMap memory userConfig,
         mapping(uint256 => DataTypes.ReserveReference) storage reservesList
     ) external view returns (uint256, uint256, uint256, uint256, uint256) {
-        CalculateUserAccountDataVolatileVars memory vars;
+        CalculateUserAccountDataVolatileLocalVars memory vars;
 
         if (userConfig.isEmpty()) {
             return (0, 0, 0, 0, type(uint256).max);
@@ -185,7 +180,6 @@ library BorrowLogic {
 
         address oracle = vars.addressesProvider.getPriceOracle();
 
-        validateBorrowParams.asset = vars.asset;
         validateBorrowParams.userAddress = vars.onBehalfOf;
         validateBorrowParams.amount = vars.amount;
         validateBorrowParams.amountInETH =

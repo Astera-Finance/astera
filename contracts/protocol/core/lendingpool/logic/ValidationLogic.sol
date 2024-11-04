@@ -104,7 +104,6 @@ library ValidationLogic {
     }
 
     /**
-     * @param asset The address of the asset to borrow
      * @param userAddress The address of the user
      * @param amount The amount to be borrowed
      * @param amountInETH The amount to be borrowed, in ETH
@@ -112,7 +111,6 @@ library ValidationLogic {
      * @param oracle The price oracle
      */
     struct ValidateBorrowParams {
-        address asset;
         address userAddress;
         uint256 amount;
         uint256 amountInETH;
@@ -126,14 +124,7 @@ library ValidationLogic {
         uint256 amountOfCollateralNeededETH;
         uint256 userCollateralBalanceETH;
         uint256 userBorrowBalanceETH;
-        uint256 availableLiquidity;
         uint256 healthFactor;
-        uint256 amountOfCollateralNeededETHIsolated;
-        uint256 userCollateralBalanceETHIsolated;
-        uint256 userBorrowBalanceETHIsolated;
-        uint256 currentLtvIsolated;
-        uint256 currentLiquidationThresholdIsolated;
-        uint256 healthFactorIsolated;
         bool isActive;
         bool isFrozen;
         bool borrowingEnabled;

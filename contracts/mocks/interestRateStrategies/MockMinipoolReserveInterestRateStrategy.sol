@@ -20,7 +20,6 @@ import {ReserveConfiguration} from
     "../../../contracts/protocol/libraries/configuration/ReserveConfiguration.sol";
 import {IMiniPool} from "../../../contracts/interfaces/IMiniPool.sol";
 import {MathUtils} from "../../../contracts/protocol/libraries/math/MathUtils.sol";
-import "forge-std/console.sol";
 
 /**
  * @title MockMinipoolReserveInterestRateStrategy contract
