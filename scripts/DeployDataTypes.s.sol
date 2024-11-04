@@ -73,7 +73,6 @@ struct General {
     string debtTokenNamePrefix;
     string debtTokenSymbolPrefix;
     address treasury;
-    address wethAddress;
 }
 
 struct Roles {
@@ -83,8 +82,8 @@ struct Roles {
     address piInterestStrategiesOwner;
     address poolAdmin;
     address rewarderOwner;
-    address treasuryOwner;
 }
+// address treasuryOwner; // TODO when Treasury contract will be ready, now it is just multisig
 
 struct PoolAddressesProviderConfig {
     string marketId;

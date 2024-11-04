@@ -692,6 +692,17 @@ contract MiniPool is VersionedInitializable, IMiniPool, MiniPoolStorage {
         }
     }
 
+    function setPool(address asset, IMiniPool newPool) external onlyMiniPoolConfigurator {
+        IAERC6909(_reserves[asset].aTokenAddress).setPool(newPool);
+    }
+
+    function setUnderlyingAsset(address asset, uint256 id, address underlyingAsset)
+        external
+        onlyMiniPoolConfigurator
+    {
+        IAERC6909(_reserves[asset].aTokenAddress).setUnderlyingAsset(id, underlyingAsset);
+    }
+
     function _addReserveToList(address asset) internal {
         uint256 reservesCount = _reservesCount;
 
@@ -717,5 +728,11 @@ contract MiniPool is VersionedInitializable, IMiniPool, MiniPoolStorage {
         );
     }
 
-    // Missing flashloan fee -> Treasury is in addresses provider
+    function updateFlashLoanFee(uint128 flashLoanPremiumTotal) external onlyMiniPoolConfigurator {
+        _updateFlashLoanFee(flashLoanPremiumTotal);
+    }
+
+    function _updateFlashLoanFee(uint128 flashLoanPremiumTotal) internal {
+        _flashLoanPremiumTotal = flashLoanPremiumTotal;
+    }
 }

@@ -370,4 +370,19 @@ interface IMiniPool {
     function paused() external view returns (bool);
 
     function setRewarderForReserve(address asset, address rewarder) external;
+
+    /**
+     * @dev sets new pool for aErc6909 token
+     * @param asset underlying asset address
+     * @param newPool new pool
+     */
+    function setPool(address asset, IMiniPool newPool) external;
+
+    /**
+     * @dev sets new pool for aErc6909 token
+     * @param asset underlying asset address
+     * @param id token id
+     * @param underlyingAsset underlying asset for aERC6909 token
+     */
+    function setUnderlyingAsset(address asset, uint256 id, address underlyingAsset) external;
 }

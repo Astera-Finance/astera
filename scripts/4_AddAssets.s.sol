@@ -89,10 +89,10 @@ contract AddAssets is Script, DeploymentUtils, Test {
         if (vm.envBool("LOCAL_FORK")) {
             console.log("Local fork deployment");
             /* Fork Identifier [ARBITRUM] */
-            string memory RPC = vm.envString("ARBITRUM_RPC_URL");
-            uint256 FORK_BLOCK = 257827379;
-            uint256 arbFork;
-            arbFork = vm.createSelectFork(RPC, FORK_BLOCK);
+            string memory RPC = vm.envString("BASE_RPC_URL");
+            uint256 FORK_BLOCK = 21838058;
+            uint256 fork;
+            fork = vm.createSelectFork(RPC, FORK_BLOCK);
 
             /* Config fetching */
             DeployMiniPool deployMiniPool = new DeployMiniPool();
@@ -102,9 +102,12 @@ contract AddAssets is Script, DeploymentUtils, Test {
             contracts = addStrats.run();
 
             vm.startPrank(FOUNDRY_DEFAULT);
-            _initAndConfigureReserves(contracts, lendingPoolReserversConfig, general, oracleConfig);
+            contracts.oracle.setAssetSources(
+                oracleConfig.assets, oracleConfig.sources, oracleConfig.timeouts
+            );
+            _initAndConfigureReserves(contracts, lendingPoolReserversConfig, general);
             _initAndConfigureMiniPoolReserves(
-                contracts, miniPoolReserversConfig, poolAddressesProviderConfig.poolId, oracleConfig
+                contracts, miniPoolReserversConfig, poolAddressesProviderConfig.poolId
             );
             vm.stopPrank();
         } else if (vm.envBool("TESTNET")) {
@@ -136,6 +139,7 @@ contract AddAssets is Script, DeploymentUtils, Test {
             console.log("PATH: ", path);
             string memory config = vm.readFile(path);
             address[] memory mockedTokens = config.readAddressArray(".mockedTokens");
+            contracts.oracle = Oracle(config.readAddress(".mockedOracle"));
 
             require(
                 mockedTokens.length >= lendingPoolReserversConfig.length,
@@ -149,7 +153,6 @@ contract AddAssets is Script, DeploymentUtils, Test {
                                 == keccak256(abi.encodePacked(lendingPoolReserversConfig[idx].symbol))
                         ) {
                             lendingPoolReserversConfig[idx].tokenAddress = address(mockedTokens[i]);
-                            oracleConfig.assets[idx] = address(mockedTokens[i]);
                             break;
                         }
                     }
@@ -162,7 +165,10 @@ contract AddAssets is Script, DeploymentUtils, Test {
 
             console.log("Init and configuration");
             vm.startBroadcast(vm.envUint("PRIVATE_KEY"));
-            _initAndConfigureReserves(contracts, lendingPoolReserversConfig, general, oracleConfig);
+            // contracts.oracle.setAssetSources(
+            //     oracleConfig.assets, oracleConfig.sources, oracleConfig.timeouts
+            // );
+            _initAndConfigureReserves(contracts, lendingPoolReserversConfig, general);
             vm.stopBroadcast();
 
             /* Mini pool settings */
@@ -206,7 +212,7 @@ contract AddAssets is Script, DeploymentUtils, Test {
             vm.startBroadcast(vm.envUint("PRIVATE_KEY"));
             console.log("Configuration ");
             _initAndConfigureMiniPoolReserves(
-                contracts, miniPoolReserversConfig, poolAddressesProviderConfig.poolId, oracleConfig
+                contracts, miniPoolReserversConfig, poolAddressesProviderConfig.poolId
             );
             vm.stopBroadcast();
         } else if (vm.envBool("MAINNET")) {
@@ -241,7 +247,11 @@ contract AddAssets is Script, DeploymentUtils, Test {
 
             /* Configure reserve */
             vm.startBroadcast(vm.envUint("PRIVATE_KEY"));
-            _initAndConfigureReserves(contracts, lendingPoolReserversConfig, general, oracleConfig);
+            contracts.oracle = Oracle(contracts.lendingPoolAddressesProvider.getPriceOracle());
+            contracts.oracle.setAssetSources(
+                oracleConfig.assets, oracleConfig.sources, oracleConfig.timeouts
+            );
+            _initAndConfigureReserves(contracts, lendingPoolReserversConfig, general);
             vm.stopBroadcast();
 
             /* Mini pool settings */
@@ -262,7 +272,7 @@ contract AddAssets is Script, DeploymentUtils, Test {
             vm.startBroadcast(vm.envUint("PRIVATE_KEY"));
             console.log("Configuration ");
             _initAndConfigureMiniPoolReserves(
-                contracts, miniPoolReserversConfig, poolAddressesProviderConfig.poolId, oracleConfig
+                contracts, miniPoolReserversConfig, poolAddressesProviderConfig.poolId
             );
             vm.stopBroadcast();
         } else {

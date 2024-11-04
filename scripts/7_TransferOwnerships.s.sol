@@ -9,7 +9,7 @@ import "./DeploymentUtils.s.sol";
 import "lib/forge-std/src/Test.sol";
 import "lib/forge-std/src/Script.sol";
 import "lib/forge-std/src/console.sol";
-import {AddAssets} from "./4_AddAssets.s.sol";
+import {ChangePeripherials} from "./6_ChangePeripherials.s.sol";
 
 contract TransferOwnerships is Script, DeploymentUtils, Test {
     using stdJson for string;
@@ -26,14 +26,14 @@ contract TransferOwnerships is Script, DeploymentUtils, Test {
 
         if (vm.envBool("LOCAL_FORK")) {
             /* Fork Identifier [ARBITRUM] */
-            string memory RPC = vm.envString("ARBITRUM_RPC_URL");
-            uint256 FORK_BLOCK = 257827379;
-            uint256 arbFork;
-            arbFork = vm.createSelectFork(RPC, FORK_BLOCK);
+            string memory RPC = vm.envString("BASE_RPC_URL");
+            uint256 FORK_BLOCK = 21838058;
+            uint256 fork;
+            fork = vm.createSelectFork(RPC, FORK_BLOCK);
 
             /* Config fetching */
-            AddAssets reconfigure = new AddAssets();
-            contracts = reconfigure.run();
+            ChangePeripherials changePeripherials = new ChangePeripherials();
+            contracts = changePeripherials.run();
 
             vm.startPrank(FOUNDRY_DEFAULT);
             _transferOwnershipsAndRenounceRoles(roles);
@@ -51,7 +51,9 @@ contract TransferOwnerships is Script, DeploymentUtils, Test {
             contracts.lendingPoolAddressesProvider = LendingPoolAddressesProvider(
                 deploymentConfig.readAddress(".lendingPoolAddressesProvider")
             );
-            contracts.rewarder = Rewarder(deploymentConfig.readAddress(".rewarder"));
+            contracts.aTokensAndRatesHelper =
+                ATokensAndRatesHelper(deploymentConfig.readAddress(".aTokensAndRatesHelper"));
+
             // contracts.treasury = Treasury(deploymentConfig.readAddress(".treasury"));
             contracts.oracle = Oracle(deploymentConfig.readAddress(".oracle"));
 
@@ -88,6 +90,16 @@ contract TransferOwnerships is Script, DeploymentUtils, Test {
             for (uint8 idx = 0; idx < tmpStrats.length; idx++) {
                 contracts.piStrategies.push(PiReserveInterestRateStrategy(tmpStrats[idx]));
             }
+
+            /* *********** Peripherials *********** */
+            {
+                string memory outputPath =
+                    string.concat(root, "/scripts/outputs/6_DeployedPeripherials.json");
+                console.log("PATH: ", outputPath);
+                deploymentConfig = vm.readFile(outputPath);
+            }
+            contracts.rewarder = Rewarder(deploymentConfig.readAddress(".rewarder"));
+            contracts.rewarder6909 = Rewarder6909(deploymentConfig.readAddress(".rewarder6909"));
 
             /* ***** Action ***** */
             vm.startBroadcast(vm.envUint("PRIVATE_KEY"));
@@ -142,6 +154,16 @@ contract TransferOwnerships is Script, DeploymentUtils, Test {
             for (uint8 idx = 0; idx < tmpStrats.length; idx++) {
                 contracts.piStrategies.push(PiReserveInterestRateStrategy(tmpStrats[idx]));
             }
+
+            /* *********** Peripherials *********** */
+            {
+                string memory outputPath =
+                    string.concat(root, "/scripts/outputs/6_DeployedPeripherials.json");
+                console.log("PATH: ", outputPath);
+                deploymentConfig = vm.readFile(outputPath);
+            }
+            contracts.rewarder = Rewarder(deploymentConfig.readAddress(".rewarder"));
+            contracts.rewarder = Rewarder(deploymentConfig.readAddress(".rewarder6909"));
 
             /* ***** Action ***** */
             vm.startBroadcast(vm.envUint("PRIVATE_KEY"));

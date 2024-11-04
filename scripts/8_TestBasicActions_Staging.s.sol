@@ -46,15 +46,15 @@ contract TestBasicActionsStaging is Script, DeploymentUtils, Test {
         uint256 _receiverATokenBalanceBefore = aToken.balanceOf(address(receiver));
         uint256 _senderTokenBalanceTokenBefore = erc20Token.balanceOf(sender);
         uint256 _aTokenBalanceBefore = erc20Token.balanceOf(address(aToken));
-        vm.startPrank(sender);
+        vm.startBroadcast(sender);
         erc20Token.approve(address(contracts.lendingPool), amount);
         contracts.lendingPool.deposit(address(erc20Token), true, amount, receiver);
-        vm.stopPrank();
+        vm.stopBroadcast();
         console.log("_aTokenBalanceBefore: ", _aTokenBalanceBefore);
         console.log("_aTokenBalanceAfter: ", erc20Token.balanceOf(address(aToken)));
         assertEq(
             _senderTokenBalanceTokenBefore,
-            erc20Token.balanceOf(address(this)) + amount,
+            erc20Token.balanceOf(sender) + amount,
             "Sender's token balance is not lower by {amount} after deposit"
         );
         console.log(
@@ -75,7 +75,7 @@ contract TestBasicActionsStaging is Script, DeploymentUtils, Test {
     {
         uint256 _receiverTokenBalanceBefore = erc20Token.balanceOf(address(receiver));
 
-        vm.startPrank(sender);
+        vm.startBroadcast(sender);
         // vm.expectEmit(true, true, true, true);
         // emit Withdraw(address(erc20Token), sender, receiver, amount);
         contracts.lendingPool.withdraw(address(erc20Token), true, amount, receiver);
@@ -111,109 +111,14 @@ contract TestBasicActionsStaging is Script, DeploymentUtils, Test {
         return maxBorrowTokenToBorrowInCollateralUnit;
     }
 
-    function fixture_depositAndBorrow(
-        TokenTypes memory collateral,
-        TokenTypes memory borrowToken,
-        address provider,
-        address borrower,
-        uint256 amount
-    ) public returns (uint256) {
-        /* Borrower deposits collateral and wants to borrow */
-        fixture_deposit(collateral.token, collateral.aToken, borrower, borrower, amount);
-
-        uint256 maxBorrowTokenToBorrowInCollateralUnit =
-            fixture_getMaxValueToBorrow(collateral.token, borrowToken.token, amount);
-        deal(address(borrowToken.token), borrower, 2 * maxBorrowTokenToBorrowInCollateralUnit);
-
-        require(
-            borrowToken.token.balanceOf(borrower) > maxBorrowTokenToBorrowInCollateralUnit * 15 / 10,
-            "Too less borrowToken"
-        );
-        uint256 borrowTokenDepositAmount = maxBorrowTokenToBorrowInCollateralUnit * 15 / 10;
-        console.log("borrowTokenDepositAmount: ", borrowTokenDepositAmount);
-        /* Provider deposits wbtc thanks to that there is enough funds to borrow */
-        fixture_deposit(
-            borrowToken.token, borrowToken.aToken, borrower, provider, borrowTokenDepositAmount
-        );
-
-        uint256 borrowTokenBalanceBeforeBorrow = borrowToken.token.balanceOf(borrower);
-        uint256 debtBalanceBefore = borrowToken.debtToken.balanceOf(borrower);
-
-        (,,,, uint256 reserveFactors,,,,) = contracts
-            .protocolDataProvider
-            .getReserveConfigurationData(address(borrowToken.token), true);
-        DataTypes.ReserveData memory data =
-            contracts.lendingPool.getReserveData(address(borrowToken.token), true);
-        (, uint256 expectedBorrowRate) = DefaultReserveInterestRateStrategy(
-            data.interestRateStrategyAddress
-        ).calculateInterestRates(
-            address(borrowToken.token),
-            address(borrowToken.aToken),
-            0,
-            maxBorrowTokenToBorrowInCollateralUnit,
-            maxBorrowTokenToBorrowInCollateralUnit,
-            reserveFactors
-        );
-        console.log("AToken balance: ", borrowToken.token.balanceOf(address(borrowToken.aToken)));
-        /* Borrower borrows maxPossible amount of borrowToken */
-        contracts.lendingPool.borrow(
-            address(borrowToken.token), true, maxBorrowTokenToBorrowInCollateralUnit, borrower
-        );
-        console.log("AToken balance: ", borrowToken.token.balanceOf(address(borrowToken.aToken)));
-        /* Main user's balance should be: initial amount + borrowed amount */
-        assertEq(
-            borrowTokenBalanceBeforeBorrow + maxBorrowTokenToBorrowInCollateralUnit,
-            borrowToken.token.balanceOf(borrower),
-            "Borrower hasn't more borrowToken than before"
-        );
-        assertEq(
-            debtBalanceBefore + maxBorrowTokenToBorrowInCollateralUnit,
-            borrowToken.debtToken.balanceOf(borrower),
-            "Borrower hasn't more borrowToken than before"
-        );
-        return (maxBorrowTokenToBorrowInCollateralUnit);
-    }
-
-    function testBorrowRepay(
-        TokenTypes memory collateralTypes,
-        TokenTypes memory borrowTypes,
-        uint256 usdcDepositAmount
-    ) public {
-        address user = makeAddr("user");
-
-        (uint256 maxBorrowTokenToBorrowInCollateralUnit) = fixture_depositAndBorrow(
-            collateralTypes, borrowTypes, user, address(this), usdcDepositAmount
-        );
-
-        /* Main user repays his debt */
-        uint256 wbtcBalanceBeforeRepay = borrowTypes.token.balanceOf(address(this));
-        uint256 wbtcDebtBeforeRepay = borrowTypes.debtToken.balanceOf(address(this));
-        borrowTypes.token.approve(
-            address(contracts.lendingPool), maxBorrowTokenToBorrowInCollateralUnit
-        );
-        contracts.lendingPool.repay(
-            address(borrowTypes.token), true, maxBorrowTokenToBorrowInCollateralUnit, address(this)
-        );
-        /* Main user's balance should be the same as before borrowing */
-        assertEq(
-            wbtcBalanceBeforeRepay,
-            borrowTypes.token.balanceOf(address(this)) + maxBorrowTokenToBorrowInCollateralUnit,
-            "User after repayment has less borrowed tokens"
-        );
-        assertEq(
-            wbtcDebtBeforeRepay,
-            borrowTypes.debtToken.balanceOf(address(this)) + maxBorrowTokenToBorrowInCollateralUnit,
-            "User after repayment has less debt"
-        );
-    }
-
     function fixture_getATokenWrapper(address _token, ProtocolDataProvider protocolDataProvider)
         public
         view
         returns (AToken _aTokenW)
     {
+        console.log("In");
         (address _aTokenAddress,) = protocolDataProvider.getReserveTokensAddresses(_token, true);
-        // console.log("AToken%s: %s", idx, _aTokenAddress);
+        console.log("fixture AToken %s", _aTokenAddress);
         _aTokenW = AToken(address(AToken(_aTokenAddress).WRAPPER_ADDRESS()));
     }
 
@@ -241,17 +146,17 @@ contract TestBasicActionsStaging is Script, DeploymentUtils, Test {
         uint256 amount,
         uint256 tokenId,
         address user,
-        TokenParams memory tokenParams,
+        ERC20 collateral,
         IAERC6909 aErc6909Token,
         address miniPool
     ) public {
-        console.log("Address: %s vs tokenId: %s", address(tokenParams.token), tokenId);
+        console.log("Address: %s vs tokenId: %s", address(collateral), tokenId);
         vm.startBroadcast(user);
         uint256 tokenUserBalance = aErc6909Token.balanceOf(user, tokenId);
-        uint256 tokenBalance = tokenParams.token.balanceOf(user);
-        tokenParams.token.approve(miniPool, amount);
-        IMiniPool(miniPool).deposit(address(tokenParams.token), amount, user);
-        assertEq(tokenBalance - amount, tokenParams.token.balanceOf(user));
+        uint256 tokenBalance = collateral.balanceOf(user);
+        collateral.approve(miniPool, amount);
+        IMiniPool(miniPool).deposit(address(collateral), amount, user);
+        assertEq(tokenBalance - amount, collateral.balanceOf(user));
         assertEq(tokenUserBalance + amount, aErc6909Token.balanceOf(user, tokenId));
         vm.stopBroadcast();
     }
@@ -311,11 +216,16 @@ contract TestBasicActionsStaging is Script, DeploymentUtils, Test {
 
         console.log("----------------USER1 DEPOSIT---------------");
         fixture_depositTokensToMiniPool(
-            depositAmount, 1128 + USDC_OFFSET, users.user1, usdcParams, aErc6909Token, miniPool
+            depositAmount,
+            1128 + USDC_OFFSET,
+            users.user1,
+            usdcParams.token,
+            aErc6909Token,
+            miniPool
         );
         console.log("----------------USER2 DEPOSIT---------------");
         fixture_depositTokensToMiniPool(
-            borrowAmount, 1128 + WBTC_OFFSET, users.user2, wbtcParams, aErc6909Token, miniPool
+            borrowAmount, 1128 + WBTC_OFFSET, users.user2, wbtcParams.token, aErc6909Token, miniPool
         );
 
         // console.log("----------------USER1 BORROW---------------");
@@ -328,8 +238,8 @@ contract TestBasicActionsStaging is Script, DeploymentUtils, Test {
         console.log("----------------USER2 BORROW---------------");
         vm.startBroadcast(users.user2);
         balanceBefore = usdcParams.token.balanceOf(users.user2);
-        IMiniPool(miniPool).borrow(address(usdcParams.token), borrowAmount, users.user2);
-        assertEq(usdcParams.token.balanceOf(users.user2), balanceBefore + borrowAmount);
+        IMiniPool(miniPool).borrow(address(usdcParams.token), borrowAmount / 4, users.user2);
+        assertEq(usdcParams.token.balanceOf(users.user2), balanceBefore + borrowAmount / 4);
         vm.stopBroadcast();
 
         vm.startBroadcast(users.user1);
@@ -412,6 +322,8 @@ contract TestBasicActionsStaging is Script, DeploymentUtils, Test {
         contracts.lendingPoolAddressesProvider = LendingPoolAddressesProvider(
             deployedContracts.readAddress(".lendingPoolAddressesProvider")
         );
+        contracts.lendingPoolConfigurator =
+            LendingPoolConfigurator(deployedContracts.readAddress(".lendingPoolConfigurator"));
 
         path = string.concat(root, "/scripts/outputs/2_MiniPoolContracts.json");
         deployedContracts = vm.readFile(path);
@@ -468,6 +380,31 @@ contract TestBasicActionsStaging is Script, DeploymentUtils, Test {
         }
     }
 
+    function mintAllMockedTokens(string memory root, uint256 amount, Users memory users)
+        public
+        returns (address collateral, address borrowAsset)
+    {
+        string memory path = string.concat(root, "/scripts/outputs/0_MockedTokens.json");
+        string memory deployedMocks = vm.readFile(path);
+
+        address[] memory mocks = deployedMocks.readAddressArray(".mockedTokens");
+        contracts.oracle = Oracle(deployedMocks.readAddress(".mockedOracle"));
+        for (uint8 idx = 0; idx < mocks.length; idx++) {
+            console.log("Minting user1... ");
+            vm.broadcast(users.user1);
+            MintableERC20(mocks[idx]).mint(amount);
+
+            console.log("Minting user2... ");
+            vm.broadcast(users.user2);
+            MintableERC20(mocks[idx]).mint(amount);
+
+            console.log("Minting user3... ");
+            vm.broadcast(users.user3);
+            MintableERC20(mocks[idx]).mint(amount);
+            collateral = mocks[idx];
+        }
+    }
+
     function mintMockedTokens(
         string memory root,
         uint256 depositAmount,
@@ -485,15 +422,16 @@ contract TestBasicActionsStaging is Script, DeploymentUtils, Test {
                 keccak256(abi.encodePacked(collateralSymbol))
                     == keccak256(abi.encodePacked(ERC20(mocks[idx]).symbol()))
             ) {
-                vm.broadcast(users.user1);
                 console.log("Minting user1... ");
+                vm.broadcast(users.user1);
                 MintableERC20(mocks[idx]).mint(depositAmount);
 
-                vm.broadcast(users.user2);
                 console.log("Minting user2... ");
+                vm.broadcast(users.user2);
                 MintableERC20(mocks[idx]).mint(depositAmount);
-                vm.broadcast(users.user3);
+
                 console.log("Minting user3... ");
+                vm.broadcast(users.user3);
                 MintableERC20(mocks[idx]).mint(depositAmount);
                 collateral = mocks[idx];
             }
@@ -504,12 +442,62 @@ contract TestBasicActionsStaging is Script, DeploymentUtils, Test {
             ) {
                 vm.broadcast(users.user1);
                 MintableERC20(mocks[idx]).mint(borrowAmount);
+
                 vm.broadcast(users.user2);
                 MintableERC20(mocks[idx]).mint(borrowAmount);
+
                 vm.broadcast(users.user3);
                 MintableERC20(mocks[idx]).mint(borrowAmount);
+
                 borrowAsset = mocks[idx];
             }
+        }
+    }
+
+    /**
+     * @dev amount in 18 decimalse -> will be converted to proper decimals inside
+     */
+    function bootstrapMainPool(uint256 amount, address user) public {
+        (address[] memory assets, bool[] memory reserveTypes) =
+            contracts.lendingPool.getReservesList();
+        for (uint256 idx = 0; idx < assets.length; idx++) {
+            DataTypes.ReserveData memory data =
+                contracts.lendingPool.getReserveData(assets[idx], reserveTypes[idx]);
+            console.log("Price: ", contracts.oracle.getAssetPrice(assets[idx]));
+            uint256 collateralAmount = (amount * 1e8) / contracts.oracle.getAssetPrice(assets[idx]);
+            console.log("Collateral amount: ", collateralAmount);
+            uint256 depositAmount = collateralAmount / (10 ** (18 - ERC20(assets[idx]).decimals()));
+            console.log("depositAmount: ", depositAmount);
+            AToken aToken = fixture_getATokenWrapper(assets[idx], contracts.protocolDataProvider);
+            TokenParams memory collateralParams =
+                TokenParams({token: ERC20(assets[idx]), aToken: aToken});
+            console.log("Depositing: ", depositAmount);
+            fixture_deposit(ERC20(assets[idx]), aToken, user, user, depositAmount);
+        }
+    }
+
+    /**
+     * @dev amount in 18 decimalse -> will be converted to proper decimals inside
+     */
+    function bootstrapMiniPools(uint256 amount, address user) public {
+        uint256 index = 0;
+        address miniPool = contracts.miniPoolAddressesProvider.getMiniPool(index);
+        while (miniPool != address(0)) {
+            console.log("ITERATION: %s", index);
+            IAERC6909 aErc6909Token =
+                IAERC6909(contracts.miniPoolAddressesProvider.getMiniPoolToAERC6909(miniPool));
+
+            (address[] memory assets,) = IMiniPool(miniPool).getReservesList();
+            for (uint256 idx = 0; idx < assets.length; idx++) {
+                DataTypes.MiniPoolReserveData memory data =
+                    IMiniPool(miniPool).getReserveData(assets[idx]);
+                uint256 depositAmount = amount / (10 ** (18 - ERC20(assets[idx]).decimals()));
+                fixture_depositTokensToMiniPool(
+                    depositAmount, data.aTokenID, user, ERC20(assets[idx]), aErc6909Token, miniPool
+                );
+            }
+            index++;
+            miniPool = contracts.miniPoolAddressesProvider.getMiniPool(index);
         }
     }
 
@@ -532,6 +520,10 @@ contract TestBasicActionsStaging is Script, DeploymentUtils, Test {
         );
         uint256 depositAmount = testConfigs.readUint(".depositAmount");
         uint256 borrowAmount = testConfigs.readUint(".borrowAmount");
+
+        bool bootstrapLiquidity = testConfigs.readBool(".bootstrapLiquidity");
+        uint256 usdDepositAmount = testConfigs.readUint(".usdAmountToDeposit");
+
         address collateral;
         address borrowAsset;
         Users memory users;
@@ -545,33 +537,33 @@ contract TestBasicActionsStaging is Script, DeploymentUtils, Test {
         } else {
             // TESTNET
             (collateral, borrowAsset) =
-                mintMockedTokens(root, depositAmount, borrowAmount, "USDC", "WBTC", users);
+                mintMockedTokens(root, 2 * depositAmount, 2 * borrowAmount, "USDC", "WBTC", users);
         }
-
-        console.log("Collateral atoken");
-        AToken aToken = fixture_getAToken(collateral, contracts.protocolDataProvider);
-
-        console.log("Collateral debt");
-        VariableDebtToken variableDebtToken =
-            fixture_getVarDebtToken(collateral, contracts.protocolDataProvider);
-
-        console.log("Borrow atoken");
-        aToken = fixture_getAToken(borrowAsset, contracts.protocolDataProvider);
-
-        console.log("Borrow debt");
-        variableDebtToken = fixture_getVarDebtToken(borrowAsset, contracts.protocolDataProvider);
 
         address mp =
             contracts.miniPoolAddressesProvider.getMiniPool(poolAddressesProviderConfig.poolId);
 
-        aToken = fixture_getATokenWrapper(collateral, contracts.protocolDataProvider);
+        vm.startBroadcast(users.user1);
+        contracts.lendingPoolConfigurator.setPoolPause(false);
+        contracts.miniPoolConfigurator.setPoolPause(false, IMiniPool(mp));
+        vm.stopBroadcast();
+
+        console.log("Getting wrapper");
+        AToken aToken = fixture_getATokenWrapper(collateral, contracts.protocolDataProvider);
         TokenParams memory usdcParams = TokenParams({token: ERC20(collateral), aToken: aToken});
 
         aToken = fixture_getATokenWrapper(borrowAsset, contracts.protocolDataProvider);
         TokenParams memory wbtcParams = TokenParams({token: ERC20(borrowAsset), aToken: aToken});
 
-        testMultipleUsersBorrowRepayAndWithdraw(
-            usdcParams, wbtcParams, mp, users, depositAmount, borrowAmount
-        );
+        if (bootstrapLiquidity == true) {
+            mintAllMockedTokens(root, 2 ether, users);
+            console.log("Bootstrapping...");
+            bootstrapMainPool(1 ether, users.user1);
+            bootstrapMiniPools(1 ether, users.user1);
+        } else {
+            testMultipleUsersBorrowRepayAndWithdraw(
+                usdcParams, wbtcParams, mp, users, depositAmount, borrowAmount
+            );
+        }
     }
 }

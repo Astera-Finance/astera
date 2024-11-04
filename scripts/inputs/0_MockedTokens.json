@@ -2,7 +2,7 @@
     "mockedToken": [
         {
             "decimals": 18,
-            "prices": 2.5e8,
+            "prices": 2.5e11,
             "symbol": "WETH"
         },
         {
@@ -12,7 +12,7 @@
         },
         {
             "decimals": 8,
-            "prices": 64e8,
+            "prices": 64e11,
             "symbol": "WBTC"
         },
         {

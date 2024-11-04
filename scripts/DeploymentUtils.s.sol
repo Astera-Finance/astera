@@ -49,7 +49,6 @@ contract DeploymentUtils {
 
     function deployLendingPoolInfra(
         General memory _general,
-        OracleConfig memory _oracleConfig,
         LinearStrategy[] memory _volatileStrats,
         LinearStrategy[] memory _stableStrats,
         PiStrategy[] memory _piStrategies,
@@ -57,20 +56,17 @@ contract DeploymentUtils {
         PoolReserversConfig[] memory _poolReserversConfig,
         address deployer
     ) public {
-        contracts.oracle = _deployOracle(_oracleConfig);
-
         _deployLendingPoolContracts(_poolAddressesProviderConfig, deployer);
 
         _deployStrategies(
             contracts.lendingPoolAddressesProvider, _volatileStrats, _stableStrats, _piStrategies
         );
-        _deployTokensAndUtils(_general.wethAddress, contracts.lendingPoolAddressesProvider);
+        _deployTokensAndUtils(contracts.lendingPoolAddressesProvider);
 
-        _initAndConfigureReserves(contracts, _poolReserversConfig, _general, _oracleConfig);
+        _initAndConfigureReserves(contracts, _poolReserversConfig, _general);
     }
 
     function deployMiniPoolInfra(
-        OracleConfig memory _oracleConfig,
         LinearStrategy[] memory _volatileStrats,
         LinearStrategy[] memory _stableStrats,
         PiStrategy[] memory _piStrats,
@@ -87,9 +83,7 @@ contract DeploymentUtils {
             _piStrats
         );
 
-        _initAndConfigureMiniPoolReserves(
-            contracts, _poolReserversConfig, miniPoolId, _oracleConfig
-        );
+        _initAndConfigureMiniPoolReserves(contracts, _poolReserversConfig, miniPoolId);
     }
 
     function _deployStrategies(
@@ -207,10 +201,9 @@ contract DeploymentUtils {
         return oracle;
     }
 
-    function _deployTokensAndUtils(
-        address weth,
-        LendingPoolAddressesProvider lendingPoolAddressesProvider
-    ) internal {
+    function _deployTokensAndUtils(LendingPoolAddressesProvider lendingPoolAddressesProvider)
+        internal
+    {
         contracts.aToken = new AToken();
         contracts.variableDebtToken = new VariableDebtToken();
         contracts.aTokenErc6909 = new ATokenERC6909();
@@ -316,15 +309,20 @@ contract DeploymentUtils {
     function _initAndConfigureReserves(
         DeployedContracts memory _contracts,
         PoolReserversConfig[] memory _reservesConfig,
-        General memory _general,
-        OracleConfig memory oracleConfig
+        General memory _general
     ) internal {
         ILendingPoolConfigurator.InitReserveInput[] memory initInputParams =
             new ILendingPoolConfigurator.InitReserveInput[](_reservesConfig.length);
 
         _contracts.lendingPoolConfigurator.setPoolPause(false);
+
         for (uint8 idx = 0; idx < _reservesConfig.length; idx++) {
+            bool assetExist = false;
             PoolReserversConfig memory reserveConfig = _reservesConfig[idx];
+            require(
+                contracts.oracle.getSourceOfAsset(reserveConfig.tokenAddress) != address(0),
+                "Oracle config not compliant"
+            );
             string memory tmpSymbol = ERC20(reserveConfig.tokenAddress).symbol();
 
             address interestStrategy = _determineInterestStrat(_contracts, reserveConfig);
@@ -351,8 +349,6 @@ contract DeploymentUtils {
 
         _configureReserves(_contracts, _reservesConfig);
 
-        Oracle oracle = Oracle(_contracts.lendingPoolAddressesProvider.getPriceOracle());
-        oracle.setAssetSources(oracleConfig.assets, oracleConfig.sources, oracleConfig.timeouts);
         _contracts.lendingPoolConfigurator.setPoolPause(true);
     }
 
@@ -374,6 +370,10 @@ contract DeploymentUtils {
                 reserveFactor: reserveConfig.reserveFactor,
                 borrowingEnabled: reserveConfig.borrowingEnabled
             });
+
+            _contracts.lendingPoolConfigurator.enableFlashloan(
+                reserveConfig.tokenAddress, reserveConfig.reserveType
+            );
         }
         address tmpPoolAdmin = _contracts.lendingPoolAddressesProvider.getPoolAdmin();
         _contracts.lendingPoolAddressesProvider.setPoolAdmin(
@@ -422,8 +422,7 @@ contract DeploymentUtils {
     function _initAndConfigureMiniPoolReserves(
         DeployedContracts memory _contracts,
         PoolReserversConfig[] memory _reservesConfig,
-        uint256 _miniPoolId,
-        OracleConfig memory oracleConfig
+        uint256 _miniPoolId
     ) internal returns (address aToken, address miniPool) {
         IMiniPoolConfigurator.InitReserveInput[] memory initInputParams =
             new IMiniPoolConfigurator.InitReserveInput[](_reservesConfig.length);
@@ -452,9 +451,6 @@ contract DeploymentUtils {
         _contracts.miniPoolConfigurator.batchInitReserve(initInputParams, IMiniPool(mp));
         console.log("Configuring");
         _configureMiniPoolReserves(_contracts, _reservesConfig, mp);
-        Oracle oracle = Oracle(_contracts.miniPoolAddressesProvider.getPriceOracle());
-        oracle.setAssetSources(oracleConfig.assets, oracleConfig.sources, oracleConfig.timeouts);
-        console.log("Asset set!!");
         _contracts.lendingPoolConfigurator.setPoolPause(true);
         _contracts.miniPoolConfigurator.setPoolPause(true, IMiniPool(mp));
         return (aTokensErc6909Addr, mp);
@@ -480,6 +476,9 @@ contract DeploymentUtils {
             );
 
             _contracts.miniPoolConfigurator.enableBorrowingOnReserve(
+                reserveConfig.tokenAddress, IMiniPool(_mp)
+            );
+            _contracts.miniPoolConfigurator.enableFlashloan(
                 reserveConfig.tokenAddress, IMiniPool(_mp)
             );
         }
@@ -513,11 +512,7 @@ contract DeploymentUtils {
         address[] memory aggregators = new address[](names.length);
         uint256[] memory timeouts = new uint256[](names.length);
         for (uint256 i = 0; i < names.length; i++) {
-            if (keccak256(abi.encodePacked(symbols[i])) == keccak256(abi.encodePacked("WETH"))) {
-                tokens[i] = address(_deployWETH9Mocked());
-            } else {
-                tokens[i] = address(_deployERC20Mock(names[i], symbols[i], decimals[i]));
-            }
+            tokens[i] = address(_deployERC20Mock(names[i], symbols[i], decimals[i]));
             aggregators[i] = address(_deployMockAggregator(tokens[i], prices[i]));
             timeouts[i] = type(uint256).max;
         }
@@ -601,6 +596,7 @@ contract DeploymentUtils {
                     data.aTokenAddress, vault[idx].newAddress
                 );
             }
+            console.log("rewarder", address(rewarder[idx].tokenAddress));
             if (rewarder[idx].configure == true) {
                 DataTypes.ReserveData memory data = contracts.lendingPool.getReserveData(
                     rewarder[idx].tokenAddress, rewarder[idx].reserveType
@@ -629,6 +625,7 @@ contract DeploymentUtils {
                 }
             }
             if (rewarder6909[idx].configure == true) {
+                console.log("Getting Mini pool... ");
                 address mp = contracts.miniPoolAddressesProvider.getMiniPool(_miniPoolId);
                 DataTypes.MiniPoolReserveData memory data =
                     IMiniPool(mp).getReserveData(rewarder6909[idx].tokenAddress);

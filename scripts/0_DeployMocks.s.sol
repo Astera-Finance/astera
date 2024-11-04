@@ -26,6 +26,7 @@ contract DeployMocks is Script, DeploymentUtils, Test {
                 abi.decode(config.parseRaw(".mockedToken"), (MockedToken[]));
 
             address[] memory mockedTokens;
+            Oracle mockedOracle;
             {
                 string[] memory symbols = new string[](mockedTokensSettings.length);
                 uint8[] memory decimals = new uint8[](mockedTokensSettings.length);
@@ -40,13 +41,14 @@ contract DeployMocks is Script, DeploymentUtils, Test {
                 // Deployment
                 console.log("Broadcasting....");
                 vm.startBroadcast(vm.envUint("PRIVATE_KEY"));
-                (mockedTokens,) = _deployERC20Mocks(symbols, symbols, decimals, prices);
+                (mockedTokens, mockedOracle) = _deployERC20Mocks(symbols, symbols, decimals, prices);
                 vm.stopBroadcast();
             }
 
             /* Write mocked tokens */
             {
                 string memory out;
+                vm.serializeAddress("mockedContracts", "mockedOracle", address(mockedOracle));
                 out = vm.serializeAddress("mockedContracts", "mockedTokens", mockedTokens);
 
                 vm.writeJson(out, "./scripts/outputs/0_MockedTokens.json");

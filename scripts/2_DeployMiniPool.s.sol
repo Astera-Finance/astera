@@ -82,10 +82,10 @@ contract DeployMiniPool is Script, Test, DeploymentUtils {
         if (vm.envBool("LOCAL_FORK")) {
             /* Fork Identifier [ARBITRUM] */
             {
-                string memory RPC = vm.envString("ARBITRUM_RPC_URL");
-                uint256 FORK_BLOCK = 257827379;
-                uint256 arbFork;
-                arbFork = vm.createSelectFork(RPC, FORK_BLOCK);
+                string memory RPC = vm.envString("BASE_RPC_URL");
+                uint256 FORK_BLOCK = 21838058;
+                uint256 fork;
+                fork = vm.createSelectFork(RPC, FORK_BLOCK);
             }
 
             /* Config fetching */
@@ -94,8 +94,10 @@ contract DeployMiniPool is Script, Test, DeploymentUtils {
 
             /* Deployment */
             vm.startPrank(FOUNDRY_DEFAULT);
+            contracts.oracle.setAssetSources(
+                oracleConfig.assets, oracleConfig.sources, oracleConfig.timeouts
+            );
             deployMiniPoolInfra(
-                oracleConfig,
                 volatileStrategies,
                 stableStrategies,
                 piStrategies,
@@ -103,9 +105,6 @@ contract DeployMiniPool is Script, Test, DeploymentUtils {
                 FOUNDRY_DEFAULT
             );
             vm.stopPrank();
-
-            /* Write important contracts into the file */
-            writeJsonData(root, path);
         } else if (vm.envBool("TESTNET")) {
             console.log("Testnet Deployment");
 
@@ -114,6 +113,7 @@ contract DeployMiniPool is Script, Test, DeploymentUtils {
             console.log("PATH: ", path);
             string memory config = vm.readFile(path);
             address[] memory mockedTokens = config.readAddressArray(".mockedTokens");
+            contracts.oracle = Oracle(config.readAddress(".mockedOracle"));
 
             require(
                 mockedTokens.length >= poolReserversConfig.length,
@@ -157,7 +157,6 @@ contract DeployMiniPool is Script, Test, DeploymentUtils {
             vm.startBroadcast(vm.envUint("PRIVATE_KEY"));
             console.log("Deploying lending pool infra");
             deployMiniPoolInfra(
-                oracleConfig,
                 volatileStrategies,
                 stableStrategies,
                 piStrategies,
@@ -165,9 +164,6 @@ contract DeployMiniPool is Script, Test, DeploymentUtils {
                 vm.addr(vm.envUint("PRIVATE_KEY"))
             );
             vm.stopBroadcast();
-
-            /* Write data */
-            writeJsonData(root, path);
         } else if (vm.envBool("MAINNET")) {
             console.log("Mainnet Deployment");
             /* Get deployed lending pool infra dontracts */
@@ -186,9 +182,12 @@ contract DeployMiniPool is Script, Test, DeploymentUtils {
 
             /* Deploy on mainnet */
             vm.startBroadcast(vm.envUint("PRIVATE_KEY"));
-            console.log("Deploying lending pool infra");
+            console.log("Deploying mini pool infra");
+            contracts.oracle = Oracle(contracts.miniPoolAddressesProvider.getPriceOracle());
+            contracts.oracle.setAssetSources(
+                oracleConfig.assets, oracleConfig.sources, oracleConfig.timeouts
+            );
             deployMiniPoolInfra(
-                oracleConfig,
                 volatileStrategies,
                 stableStrategies,
                 piStrategies,
@@ -196,10 +195,11 @@ contract DeployMiniPool is Script, Test, DeploymentUtils {
                 vm.addr(vm.envUint("PRIVATE_KEY"))
             );
             vm.stopBroadcast();
-            writeJsonData(root, path);
         } else {
             console.log("No deployment type selected in .env");
         }
+        /* Write important contracts into the file */
+        writeJsonData(root, path);
         return contracts;
     }
 }

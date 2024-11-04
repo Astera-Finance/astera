@@ -9,7 +9,7 @@ import "./DeploymentUtils.s.sol";
 import "lib/forge-std/src/Test.sol";
 import "lib/forge-std/src/Script.sol";
 import "lib/forge-std/src/console.sol";
-import {DeployMiniPool} from "./2_DeployMiniPool.s.sol";
+import {AddAssets} from "./4_AddAssets.s.sol";
 import {DataTypes} from "../contracts/protocol/libraries/types/DataTypes.sol";
 import {ERC4626Mock} from "lib/openzeppelin-contracts/contracts/mocks/token/ERC4626Mock.sol";
 
@@ -55,20 +55,20 @@ contract ChangePeripherials is Script, DeploymentUtils, Test {
 
         if (vm.envBool("LOCAL_FORK")) {
             /* Fork Identifier [ARBITRUM] */
-            string memory RPC = vm.envString("ARBITRUM_RPC_URL");
-            uint256 FORK_BLOCK = 257827379;
-            uint256 arbFork;
-            arbFork = vm.createSelectFork(RPC, FORK_BLOCK);
+            string memory RPC = vm.envString("BASE_RPC_URL");
+            uint256 FORK_BLOCK = 21838058;
+            uint256 fork;
+            fork = vm.createSelectFork(RPC, FORK_BLOCK);
 
             /* Config fetching */
-            DeployMiniPool deployMiniPool = new DeployMiniPool();
-            contracts = deployMiniPool.run();
+            AddAssets addAssets = new AddAssets();
+            contracts = addAssets.run();
 
             vm.startPrank(FOUNDRY_DEFAULT);
             for (uint8 idx = 0; idx < vault.length; idx++) {
                 vault[idx].newAddress = address(new ERC4626Mock(vault[idx].tokenAddress));
             }
-
+            console.log("Changing peripherials");
             _changePeripherials(treasury, vault, rewarder, rewarder6909, miniPoolId);
             _turnOnRehypothecation(rehypothecation);
             vm.stopPrank();
@@ -85,6 +85,17 @@ contract ChangePeripherials is Script, DeploymentUtils, Test {
             contracts.lendingPool = LendingPool(config.readAddress(".lendingPool"));
             contracts.lendingPoolConfigurator =
                 LendingPoolConfigurator(config.readAddress(".lendingPoolConfigurator"));
+
+            {
+                string memory outputPath =
+                    string.concat(root, "/scripts/outputs/2_MiniPoolContracts.json");
+                config = vm.readFile(outputPath);
+            }
+
+            contracts.miniPoolAddressesProvider =
+                MiniPoolAddressesProvider(config.readAddress(".miniPoolAddressesProvider"));
+            contracts.miniPoolConfigurator =
+                MiniPoolConfigurator(config.readAddress(".miniPoolConfigurator"));
 
             /* Read all mocks deployed */
             path = string.concat(root, "/scripts/outputs/0_MockedTokens.json");
@@ -159,5 +170,6 @@ contract ChangePeripherials is Script, DeploymentUtils, Test {
             console.log("No deployment type selected in .env");
         }
         writeJsonData(root, path);
+        return contracts;
     }
 }

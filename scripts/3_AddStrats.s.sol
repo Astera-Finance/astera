@@ -32,11 +32,8 @@ contract AddStrats is Script, DeploymentUtils, Test {
             address[] memory piAddresses = new address[](contracts.piStrategies.length);
             string[] memory symbols = new string[](contracts.piStrategies.length);
             for (uint256 idx = 0; idx < contracts.piStrategies.length; idx++) {
-                console.log("Before for: %s", contracts.piStrategies[idx]._asset());
                 symbols[idx] = ERC20(contracts.piStrategies[idx]._asset()).symbol();
-                console.log("Mid for: %s", idx);
                 piAddresses[idx] = address(contracts.piStrategies[idx]);
-                console.log("After for: %s", idx);
             }
             console.log("Serializing");
             vm.serializeString("strategies", "piStrategiesSymbols", symbols);
@@ -108,10 +105,10 @@ contract AddStrats is Script, DeploymentUtils, Test {
 
         if (vm.envBool("LOCAL_FORK")) {
             /* Fork Identifier [ARBITRUM] */
-            string memory RPC = vm.envString("ARBITRUM_RPC_URL");
-            uint256 FORK_BLOCK = 257827379;
-            uint256 arbFork;
-            arbFork = vm.createSelectFork(RPC, FORK_BLOCK);
+            string memory RPC = vm.envString("BASE_RPC_URL");
+            uint256 FORK_BLOCK = 21838058;
+            uint256 fork;
+            fork = vm.createSelectFork(RPC, FORK_BLOCK);
 
             /* Config fetching */
             DeployMiniPool deployMiniPool = new DeployMiniPool();
@@ -132,7 +129,6 @@ contract AddStrats is Script, DeploymentUtils, Test {
                 miniPoolPiStrategies
             );
             vm.stopPrank();
-            writeJsonData(root, path);
         } else if (vm.envBool("TESTNET")) {
             /* ****** Lending pool settings */
             {
@@ -281,7 +277,6 @@ contract AddStrats is Script, DeploymentUtils, Test {
                 miniPoolPiStrategies
             );
             vm.stopBroadcast();
-            writeJsonData(root, path);
         } else if (vm.envBool("MAINNET")) {
             /* ****** Lending pool settings */
             {
@@ -380,9 +375,8 @@ contract AddStrats is Script, DeploymentUtils, Test {
                 miniPoolPiStrategies
             );
             vm.stopBroadcast();
-            writeJsonData(root, path);
         }
-
+        writeJsonData(root, path);
         return contracts;
     }
 }

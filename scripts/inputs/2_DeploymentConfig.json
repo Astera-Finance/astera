@@ -4,8 +4,7 @@
         "aTokenSymbolPrefix": "cl",
         "debtTokenNamePrefix": "Cod3x Lend variable debt bearing ",
         "debtTokenSymbolPrefix": "variableDebt",
-        "treasury": "0x3151CfCA393FE5Eec690feD2a2446DA5a073d01B",
-        "wethAddress": "0x82aF49447D8a07e3bd95BD0d56f35241523fBab1"
+        "treasury": "0x3151CfCA393FE5Eec690feD2a2446DA5a073d01B"
     },
     "poolAddressesProviderConfig": {
         "marketId": "UV TestNet Market",
@@ -24,7 +23,7 @@
             "reserveFactor": 1500,
             "reserveType": true,
             "symbol": "WETH",
-            "tokenAddress": "0x82aF49447D8a07e3bd95BD0d56f35241523fBab1"
+            "tokenAddress": "0x4200000000000000000000000000000000000006"
         },
         {
             "baseLtv": 7000,
@@ -38,7 +37,7 @@
             "reserveFactor": 1500,
             "reserveType": true,
             "symbol": "USDC",
-            "tokenAddress": "0xaf88d065e77c8cC2239327C5EDb3A432268e5831"
+            "tokenAddress": "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913"
         }
     ],
     "volatileStrategies": [
@@ -66,7 +65,7 @@
             "minControllerError": -400e24,
             "optimalUtilizationRate": 45e25,
             "symbol": "WETH",
-            "tokenAddress": "0x82aF49447D8a07e3bd95BD0d56f35241523fBab1"
+            "tokenAddress": "0x4200000000000000000000000000000000000006"
         },
         {
             "assetReserveType": true,
@@ -76,13 +75,13 @@
             "minControllerError": -400e24,
             "optimalUtilizationRate": 45e25,
             "symbol": "USDC",
-            "tokenAddress": "0xaf88d065e77c8cC2239327C5EDb3A432268e5831"
+            "tokenAddress": "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913"
         }
     ],
     "oracleConfig": {
         "assets": [
-            "0x82aF49447D8a07e3bd95BD0d56f35241523fBab1",
-            "0xaf88d065e77c8cC2239327C5EDb3A432268e5831"
+            "0x4200000000000000000000000000000000000006",
+            "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913"
         ],
         "baseCurrency": "0x0000000000000000000000000000000000000000",
         "baseCurrencyUnit": 1e18,
