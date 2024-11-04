@@ -29,6 +29,66 @@ contract MiniPoolConfiguratorTest is MiniPoolDepositBorrowTest {
     event ReserveMediumVolatilityLtvChanged(address indexed asset, uint256 ltv);
     event ReserveHighVolatilityLtvChanged(address indexed asset, uint256 ltv);
 
+    function testMiniPoolConfiguratorAccessControl(uint256 randomNumber) public {
+        address tokenAddress = makeAddr("tokenAddress");
+        address randomAddress = makeAddr("randomAddress");
+        randomNumber = bound(randomNumber, 0, 100);
+
+        vm.expectRevert(bytes("76"));
+        miniPoolContracts.miniPoolConfigurator.setPoolPause(true, IMiniPool(randomAddress));
+
+        vm.expectRevert(bytes("33"));
+        miniPoolContracts.miniPoolConfigurator.activateReserve(
+            tokenAddress, IMiniPool(randomAddress)
+        );
+        vm.expectRevert(bytes("33"));
+        miniPoolContracts.miniPoolConfigurator.deactivateReserve(
+            tokenAddress, IMiniPool(randomAddress)
+        );
+        vm.expectRevert(bytes("33"));
+        miniPoolContracts.miniPoolConfigurator.freezeReserve(tokenAddress, IMiniPool(randomAddress));
+        vm.expectRevert(bytes("33"));
+        miniPoolContracts.miniPoolConfigurator.unfreezeReserve(
+            tokenAddress, IMiniPool(randomAddress)
+        );
+
+        vm.expectRevert(bytes("33"));
+        miniPoolContracts.miniPoolConfigurator.enableFlashloan(
+            tokenAddress, IMiniPool(randomAddress)
+        );
+        vm.expectRevert(bytes("33"));
+        miniPoolContracts.miniPoolConfigurator.disableFlashloan(
+            tokenAddress, IMiniPool(randomAddress)
+        );
+
+        vm.expectRevert(bytes("33"));
+        miniPoolContracts.miniPoolConfigurator.setReserveFactor(
+            tokenAddress, randomNumber, IMiniPool(randomAddress)
+        );
+        vm.expectRevert(bytes("33"));
+        miniPoolContracts.miniPoolConfigurator.setDepositCap(
+            tokenAddress, randomNumber, IMiniPool(randomAddress)
+        );
+
+        vm.expectRevert(bytes("33"));
+        miniPoolContracts.miniPoolConfigurator.setReserveInterestRateStrategyAddress(
+            tokenAddress, randomAddress, IMiniPool(randomAddress)
+        );
+
+        vm.expectRevert(bytes("33"));
+        miniPoolContracts.miniPoolConfigurator.setRewarderForReserve(
+            tokenAddress, randomAddress, IMiniPool(randomAddress)
+        );
+        vm.expectRevert(bytes("33"));
+        miniPoolContracts.miniPoolConfigurator.updateFlashloanPremiumTotal(
+            uint128(randomNumber), IMiniPool(randomAddress)
+        );
+        vm.expectRevert(bytes("33"));
+        miniPoolContracts.miniPoolConfigurator.setRewarderForReserve(
+            tokenAddress, randomAddress, IMiniPool(randomAddress)
+        );
+    }
+
     function testDisableBorrowingOnReserve() public {
         for (uint32 idx; idx < erc20Tokens.length; idx++) {
             vm.expectEmit(true, false, false, true);

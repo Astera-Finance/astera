@@ -300,6 +300,7 @@ contract LendingPoolConfiguratorTest is Common {
         deployedContracts.lendingPoolConfigurator.setProfitHandler(tokenAddress, tokenAddress);
         vm.expectRevert(bytes("33"));
         deployedContracts.lendingPoolConfigurator.setVault(tokenAddress, tokenAddress);
+
         vm.expectRevert(bytes("76"));
         deployedContracts.lendingPoolConfigurator.rebalance(tokenAddress);
 

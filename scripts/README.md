@@ -33,20 +33,25 @@ The deployment process involves configuration files `./input/<Nr>_<InputJsonName
      - configuration with corresponding number shall be filled
      - run `forge script scripts/<nr>_<scriptName>.s.sol`
    - **Testnet**: 
-      - compatible script numbers <Nr> to run (0 - 7)
+      - compatible script numbers `<Nr>` to run (0 - 7)
       - there is need to have executed script 0_DeployMocks.s.sol in order to have ERC20 token mocks
-      - there is need to have already executed script with previous <Nr>
+      - there is need to have already executed script with previous `<Nr>`
       - import env variables via `source .env`
       - run `forge script scripts/<nr>_<scriptName>.s.sol --chain-id <chainId> --rpc-url $<RPC_URL> -vvvv --broadcast` for deployment
-      - run `forge script scripts/5_Reconfigure.s.sol --chain-id 421614 --rpc-url $ARB_SEPOLIA --etherscan-api-key $ETHERSCAN_KEY --broadcast -vvvv --sender 0x3151CfCA393FE5Eec690feD2a2446DA5a073d01B`
+      - run `forge script scripts/<nr>_<scriptName>.s.sol --chain-id $<RPC_URL> --rpc-url $<RPC_URL> --etherscan-api-key $ETHERSCAN_KEY --broadcast -vvvv --sender <sender address>` if sender is required
+      - run `forge script scripts/<nr>_<scriptName>.s.sol --chain-id <chainId> --rpc-url $<RPC_URL> --broadcast -vvvv --private-key $PRIVATE_KEY` if sender is required
    - **Mainnet**:
       - compatible script numbers <Nr> to run (1 - 7)
+   - **Mainnet/Testnet tests**
+     - `forge script scripts/<nr>_<scriptName>.s.sol --chain-id <chainId> --rpc-url $<RPC_URL> --broadcast -vvvv --private-keys $USER1_PRIVATE_KEY --private-keys $USER2_PRIVATE_KEY --private-keys $DIST_PRIVATE_KEY --sender <EoaAddress>`
+   - **Verification**
+     - Blockscout - `forge script scripts/<nr>_<scriptName>.s.sol --chain-id <chainId> --rpc-url $$<RPC_URL> --resume --verify --verifier blockscout --verifier-url $<VerifierUrl> --private-key $PRIVATE_KEY`
 
 ### Configuration files
 **Important !!** All params listed inside json's keys MUST be in alphabetical order !
 ##### **0_MockedTokens**
   - Shall be used only for testnet deployments or for new tokens in mainnet 
-  - Shall contain all tokens we want to use in next scripts with token symbols the same that will be used in reserve configuration
+  - Shall contain all not deplyed tokens we want to use in next scripts with token symbols the same that will be used in reserve configuration
   - Example:
     ```json
     {
@@ -83,7 +88,8 @@ The deployment process involves configuration files `./input/<Nr>_<InputJsonName
             "aTokenNamePrefix": "Cod3x Lend ",
             "aTokenSymbolPrefix": "cl",
             "debtTokenNamePrefix": "Cod3x Lend variable debt bearing ",
-            "debtTokenSymbolPrefix": "variableDebt"
+            "debtTokenSymbolPrefix": "variableDebt",
+            "treasury": "0x3151CfCA393FE5Eec690feD2a2446DA5a073d01B"
         },
         "poolAddressesProviderConfig": {
             "marketId": "UV TestNet Market", // name of the market
@@ -103,7 +109,7 @@ The deployment process involves configuration files `./input/<Nr>_<InputJsonName
                 "reserveFactor": 1500,
                 "reserveType": true,
                 "symbol": "WETH",
-                "tokenAddress": "0x82aF49447D8a07e3bd95BD0d56f35241523fBab1"
+                "tokenAddress": "0x4200000000000000000000000000000000000006"
             }
         ],
         // List of volatile interest strategies and their configurations
@@ -134,13 +140,13 @@ The deployment process involves configuration files `./input/<Nr>_<InputJsonName
                 "minControllerError": -400e24,
                 "optimalUtilizationRate": 45e25,
                 "symbol": "WETH",
-                "tokenAddress": "0x82aF49447D8a07e3bd95BD0d56f35241523fBab1"
+                "tokenAddress": "0x4200000000000000000000000000000000000006"
             }
         ],
         // All necessary configuration to deploy oracle for specified assets
         "oracleConfig": {
             "assets": [
-                "0x82aF49447D8a07e3bd95BD0d56f35241523fBab1"
+                "0x4200000000000000000000000000000000000006"
             ],
             "baseCurrency": "0x0000000000000000000000000000000000000000",
             "baseCurrencyUnit": 1e18,
@@ -160,7 +166,9 @@ The deployment process involves configuration files `./input/<Nr>_<InputJsonName
             "aTokenNamePrefix": "Cod3x Lend ",
             "aTokenSymbolPrefix": "cl",
             "debtTokenNamePrefix": "Cod3x Lend variable debt bearing ",
-            "debtTokenSymbolPrefix": "variableDebt"
+            "debtTokenSymbolPrefix": "variableDebt",
+            "treasury": "0x3151CfCA393FE5Eec690feD2a2446DA5a073d01B"
+            
         },
         "poolAddressesProviderConfig": {
             "marketId": "UV TestNet Market", // name of the market
@@ -180,7 +188,7 @@ The deployment process involves configuration files `./input/<Nr>_<InputJsonName
                 "reserveFactor": 1500,
                 "reserveType": true,
                 "symbol": "WETH",
-                "tokenAddress": "0x82aF49447D8a07e3bd95BD0d56f35241523fBab1"
+                "tokenAddress": "0x4200000000000000000000000000000000000006"
             },
             {
                 "baseLtv": 7000,
@@ -194,7 +202,7 @@ The deployment process involves configuration files `./input/<Nr>_<InputJsonName
                 "reserveFactor": 1500,
                 "reserveType": true,
                 "symbol": "USDC",
-                "tokenAddress": "0xaf88d065e77c8cC2239327C5EDb3A432268e5831"
+                "tokenAddress": "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913"
             }
         ],
         // List of volatile interest strategies and their configurations
@@ -225,7 +233,7 @@ The deployment process involves configuration files `./input/<Nr>_<InputJsonName
                 "minControllerError": -400e24,
                 "optimalUtilizationRate": 45e25,
                 "symbol": "WETH",
-                "tokenAddress": "0x82aF49447D8a07e3bd95BD0d56f35241523fBab1"
+                "tokenAddress": "0x4200000000000000000000000000000000000006"
             },
             {
                 "assetReserveType": true,
@@ -235,14 +243,14 @@ The deployment process involves configuration files `./input/<Nr>_<InputJsonName
                 "minControllerError": -400e24,
                 "optimalUtilizationRate": 45e25,
                 "symbol": "USDC",
-                "tokenAddress": "0xaf88d065e77c8cC2239327C5EDb3A432268e5831"
+                "tokenAddress": "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913"
             }
         ],
         // All necessary configuration to deploy oracle for specified assets
         "oracleConfig": {
             "assets": [
-                "0x82aF49447D8a07e3bd95BD0d56f35241523fBab1",
-                "0xaf88d065e77c8cC2239327C5EDb3A432268e5831"
+                "0x4200000000000000000000000000000000000006",
+                "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913"
             ],
             "baseCurrency": "0x0000000000000000000000000000000000000000",
             "baseCurrencyUnit": 1e18,
@@ -287,7 +295,7 @@ The deployment process involves configuration files `./input/<Nr>_<InputJsonName
                 "minControllerError": -400e24,
                 "optimalUtilizationRate": 45e25,
                 "symbol": "WBTC",
-                "tokenAddress": "0x2f2a2543B76A4166549F7aaB2e75Bef0aefC5B0f"
+                "tokenAddress": "0x0555E30da8f98308EdB960aa94C0Db47230d2B9c"
             },
             {
                 "assetReserveType": true,
@@ -297,7 +305,7 @@ The deployment process involves configuration files `./input/<Nr>_<InputJsonName
                 "minControllerError": -400e24,
                 "optimalUtilizationRate": 45e25,
                 "symbol": "USDC",
-                "tokenAddress": "0xaf88d065e77c8cC2239327C5EDb3A432268e5831"
+                "tokenAddress": "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913"
             }
         ],
         // List of volatile interest strategies and their configurations for mini pool
@@ -328,7 +336,7 @@ The deployment process involves configuration files `./input/<Nr>_<InputJsonName
                 "minControllerError": -400e24,
                 "optimalUtilizationRate": 45e25,
                 "symbol": "WBTC",
-                "tokenAddress": "0x2f2a2543B76A4166549F7aaB2e75Bef0aefC5B0f"
+                "tokenAddress": "0x0555E30da8f98308EdB960aa94C0Db47230d2B9c"
             },
             {
                 "assetReserveType": true,
@@ -338,7 +346,7 @@ The deployment process involves configuration files `./input/<Nr>_<InputJsonName
                 "minControllerError": -400e24,
                 "optimalUtilizationRate": 45e25,
                 "symbol": "USDT",
-                "tokenAddress": "0xFd086bC7CD5C481DCC9C85ebE478A1C0b69FCbb9"
+                "tokenAddress": "0xfde4C96c8593536E31F229EA8f37b2ADa2699bb2"
             }
         ]
     }
@@ -354,7 +362,8 @@ The deployment process involves configuration files `./input/<Nr>_<InputJsonName
             "aTokenNamePrefix": "Cod3x Lend ",
             "aTokenSymbolPrefix": "cl",
             "debtTokenNamePrefix": "Cod3x Lend variable debt bearing ",
-            "debtTokenSymbolPrefix": "variableDebt"
+            "debtTokenSymbolPrefix": "variableDebt",
+            "treasury": "0x3151CfCA393FE5Eec690feD2a2446DA5a073d01B"
         },
         "poolAddressesProviderConfig": {
             "marketId": "UV TestNet Market",
@@ -374,7 +383,7 @@ The deployment process involves configuration files `./input/<Nr>_<InputJsonName
                 "reserveFactor": 1500,
                 "reserveType": true,
                 "symbol": "WBTC",
-                "tokenAddress": "0x2f2a2543B76A4166549F7aaB2e75Bef0aefC5B0f"
+                "tokenAddress": "0x0555E30da8f98308EdB960aa94C0Db47230d2B9c"
             },
             {
                 "baseLtv": 7000,
@@ -388,7 +397,7 @@ The deployment process involves configuration files `./input/<Nr>_<InputJsonName
                 "reserveFactor": 1500,
                 "reserveType": true,
                 "symbol": "USDC",
-                "tokenAddress": "0xaf88d065e77c8cC2239327C5EDb3A432268e5831"
+                "tokenAddress": "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913"
             }
         ],
         // List of reserves and their configurations for mini pool
@@ -405,7 +414,7 @@ The deployment process involves configuration files `./input/<Nr>_<InputJsonName
                 "reserveFactor": 1500,
                 "reserveType": true,
                 "symbol": "WBTC",
-                "tokenAddress": "0x2f2a2543B76A4166549F7aaB2e75Bef0aefC5B0f"
+                "tokenAddress": "0x0555E30da8f98308EdB960aa94C0Db47230d2B9c"
             },
             {
                 "baseLtv": 7000,
@@ -419,16 +428,16 @@ The deployment process involves configuration files `./input/<Nr>_<InputJsonName
                 "reserveFactor": 1500,
                 "reserveType": true,
                 "symbol": "USDT",
-                "tokenAddress": "0xFd086bC7CD5C481DCC9C85ebE478A1C0b69FCbb9"
+                "tokenAddress": "0xfde4C96c8593536E31F229EA8f37b2ADa2699bb2"
             }
         ],
         // All necessary configuration to deploy oracle for specified assets
         "oracleConfig": {
             "assets": [
-                "0x82aF49447D8a07e3bd95BD0d56f35241523fBab1",
-                "0xaf88d065e77c8cC2239327C5EDb3A432268e5831",
-                "0x2f2a2543B76A4166549F7aaB2e75Bef0aefC5B0f",
-                "0xFd086bC7CD5C481DCC9C85ebE478A1C0b69FCbb9"
+                "0x4200000000000000000000000000000000000006",
+                "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913",
+                "0x0555E30da8f98308EdB960aa94C0Db47230d2B9c",
+                "0xfde4C96c8593536E31F229EA8f37b2ADa2699bb2"
             ],
             "baseCurrency": "0x0000000000000000000000000000000000000000",
             "baseCurrencyUnit": 1e18,
@@ -465,7 +474,7 @@ The deployment process involves configuration files `./input/<Nr>_<InputJsonName
                 "reserveFactor": 1500,
                 "reserveType": true,
                 "symbol": "WBTC",
-                "tokenAddress": "0x2f2a2543B76A4166549F7aaB2e75Bef0aefC5B0f"
+                "tokenAddress": "0x0555E30da8f98308EdB960aa94C0Db47230d2B9c"
             },
             {
                 "baseLtv": 7000,
@@ -479,7 +488,7 @@ The deployment process involves configuration files `./input/<Nr>_<InputJsonName
                 "reserveFactor": 1500,
                 "reserveType": true,
                 "symbol": "USDC",
-                "tokenAddress": "0xaf88d065e77c8cC2239327C5EDb3A432268e5831"
+                "tokenAddress": "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913"
             }
         ],
         // List of reserves and their configurations for mini pool
@@ -496,7 +505,7 @@ The deployment process involves configuration files `./input/<Nr>_<InputJsonName
                 "reserveFactor": 1500,
                 "reserveType": true,
                 "symbol": "WBTC",
-                "tokenAddress": "0x2f2a2543B76A4166549F7aaB2e75Bef0aefC5B0f"
+                "tokenAddress": "0x0555E30da8f98308EdB960aa94C0Db47230d2B9c"
             },
             {
                 "baseLtv": 7000,
@@ -510,7 +519,7 @@ The deployment process involves configuration files `./input/<Nr>_<InputJsonName
                 "reserveFactor": 1600,
                 "reserveType": true,
                 "symbol": "USDT",
-                "tokenAddress": "0xFd086bC7CD5C481DCC9C85ebE478A1C0b69FCbb9"
+                "tokenAddress": "0xfde4C96c8593536E31F229EA8f37b2ADa2699bb2"
             }
         ]
     }
@@ -527,73 +536,73 @@ The deployment process involves configuration files `./input/<Nr>_<InputJsonName
         "treasury": [
             {
                 "configure": false, // determine whether treasury needs to be changed for this asset
-                "newAddress": "0x2f2a2543B76A4166549F7aaB2e75Bef0aefC5AAf", // new treasury asset
+                "newAddress": "0x3151CfCA393FE5Eec690feD2a2446DA5a073d01B", // new treasury asset
                 "reserveType": true,
                 "symbol": "USDC",
-                "tokenAddress": "0xaf88d065e77c8cC2239327C5EDb3A432268e5831"
+                "tokenAddress": "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913"
             },
             {
                 "configure": true, // determine whether treasury needs to be changed for this asset
-                "newAddress": "0x2f2a2543B76A4166549F7aaB2e75Bef0aefC5AAf", // new treasury asset
+                "newAddress": "0x3151CfCA393FE5Eec690feD2a2446DA5a073d01B", // new treasury asset
                 "reserveType": true,
                 "symbol": "WETH",
-                "tokenAddress": "0x82aF49447D8a07e3bd95BD0d56f35241523fBab1"
+                "tokenAddress": "0x4200000000000000000000000000000000000006"
             }
         ],
         "vault": [
             {
-                "configure": false, // determine whether treasury needs to be changed for this asset
-                "newAddress": "0x2f2a2543B76A4166549F7aaB2e75Bef0aefC5AAf", // new vault asset
+                "configure": false, // determine whether vault needs to be changed for this asset
+                "newAddress": "0x3151CfCA393FE5Eec690feD2a2446DA5a073d01B", // new vault asset
                 "reserveType": true,
                 "symbol": "USDC",
-                "tokenAddress": "0xaf88d065e77c8cC2239327C5EDb3A432268e5831"
+                "tokenAddress": "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913"
             },
             {
-                "configure": true, // determine whether treasury needs to be changed for this asset
-                "newAddress": "0x2f2a2543B76A4166549F7aaB2e75Bef0aefC5AAf", // new vault asset
+                "configure": true, // determine whether vault needs to be changed for this asset
+                "newAddress": "0x3151CfCA393FE5Eec690feD2a2446DA5a073d01B", // new vault asset
                 "reserveType": true,
                 "symbol": "WETH",
-                "tokenAddress": "0x82aF49447D8a07e3bd95BD0d56f35241523fBab1"
+                "tokenAddress": "0x4200000000000000000000000000000000000006"
             }
         ],
         "rewarder": [
             {
-                "configure": false, // determine whether treasury needs to be changed for this asset
-                "newAddress": "0x2f2a2543B76A4166549F7aaB2e75Bef0aefC5AAf", // new rewarder asset
+                "configure": false, // determine whether rewarder needs to be changed for this asset
+                "newAddress": "0x3151CfCA393FE5Eec690feD2a2446DA5a073d01B", // new rewarder asset
                 "reserveType": true,
                 "symbol": "USDC",
-                "tokenAddress": "0xaf88d065e77c8cC2239327C5EDb3A432268e5831"
+                "tokenAddress": "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913"
             },
             {
-                "configure": true, // determine whether treasury needs to be changed for this asset
-                "newAddress": "0x2f2a2543B76A4166549F7aaB2e75Bef0aefC5AAf", // new rewarder asset
+                "configure": true, // determine whether rewarder needs to be changed for this asset
+                "newAddress": "0x3151CfCA393FE5Eec690feD2a2446DA5a073d01B", // new rewarder asset
                 "reserveType": true,
                 "symbol": "WETH",
-                "tokenAddress": "0x82aF49447D8a07e3bd95BD0d56f35241523fBab1"
+                "tokenAddress": "0x4200000000000000000000000000000000000006"
             }
         ],
         "rehypothecation": [
             {
                 "claimingThreshold": 1e8,
-                "configure": false, // determine whether treasury needs to be changed for this asset
+                "configure": false, // determine whether rehypothecation needs to be changed for this asset
                 "drift": 200,
                 "farmingPct": 2000,
-                "profitHandler": "0x2f2a2543B76A4166549F7aaB2e75Bef0aefC5AAf",
+                "profitHandler": "0x3151CfCA393FE5Eec690feD2a2446DA5a073d01B",
                 "reserveType": true,
                 "symbol": "USDC",
-                "tokenAddress": "0xaf88d065e77c8cC2239327C5EDb3A432268e5831",
-                "vault": "0x2f2a2543B76A4166549F7aaB2e75Bef0aefC5AAf" // if vault is already set for the asset this param doesn't matter
+                "tokenAddress": "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913",
+                "vault": "0x3151CfCA393FE5Eec690feD2a2446DA5a073d01B" // if vault is already set for the asset this param doesn't matter
             },
             {
                 "claimingThreshold": 1e8,
-                "configure": true, // determine whether treasury needs to be changed for this asset
+                "configure": true, // determine whether rehypothecation needs to be changed for this asset
                 "drift": 200,
                 "farmingPct": 2000,
-                "profitHandler": "0x2f2a2543B76A4166549F7aaB2e75Bef0aefC5AAf",
+                "profitHandler": "0x3151CfCA393FE5Eec690feD2a2446DA5a073d01B",
                 "reserveType": true,
                 "symbol": "WETH",
-                "tokenAddress": "0x82aF49447D8a07e3bd95BD0d56f35241523fBab1",
-                "vault": "0x2f2a2543B76A4166549F7aaB2e75Bef0aefC5AAf" // if vault is already set for the asset this param doesn't matter
+                "tokenAddress": "0x4200000000000000000000000000000000000006",
+                "vault": "0x3151CfCA393FE5Eec690feD2a2446DA5a073d01B" // if vault is already set for the asset this param doesn't matter
             }
         ]
     }
@@ -609,21 +618,21 @@ The deployment process involves configuration files `./input/<Nr>_<InputJsonName
            "oracleOwner": "0x3151CfCA393FE5Eec690feD2a2446DA5a073d01B",
            "piInterestStrategiesOwner": "0x3151CfCA393FE5Eec690feD2a2446DA5a073d01B",
            "poolAdmin": "0x3151CfCA393FE5Eec690feD2a2446DA5a073d01B",
-           "rewarderOwner": "0x3151CfCA393FE5Eec690feD2a2446DA5a073d01B",
-           "treasuryOwner": "0x3151CfCA393FE5Eec690feD2a2446DA5a073d01B"
+           "rewarderOwner": "0x3151CfCA393FE5Eec690feD2a2446DA5a073d01B"
        }
    }
    ```
 ##### **8_TestConfig**
-  - Can be run only for local fork (currently)
+  - Can be in script for fork tests (8_TestBasicActions_Fork.s) or staginf tests (8_TestBasicActions_Staging.s)
   - Shall be used to test basic actions for deployed contracts
   - Example:
     ```json
     {
         // test params
-        "collateralAddress": "0xaf88d065e77c8cC2239327C5EDb3A432268e5831",
-        "borrowAssetAddress": "0x2f2a2543B76A4166549F7aaB2e75Bef0aefC5B0f",
+        "collateralAddress": "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913",
+        "borrowAssetAddress": "0x0555E30da8f98308EdB960aa94C0Db47230d2B9c",
         "depositAmount": 5000000000,
+        "bootstrapLiquidity": true, // if the flag is enabled then script deposit assets to all configured reserves
         "poolAddressesProviderConfig": {
             "marketId": "UV TestNet Market",
             "poolId": 0
@@ -697,6 +706,7 @@ The deployment process involves configuration files `./input/<Nr>_<InputJsonName
 ##### **3_DeployedStrategies**
   - List of all strategies deployed so far 
   - Used by 4_AddAssets.s, 5_Reconfigure.s ***in correct order !***
+  - Addresses in the array corresponds with the symbols in the array
   - Example:
   ```json
     {

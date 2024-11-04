@@ -354,4 +354,22 @@ contract MiniPoolConfigurator is VersionedInitializable, IMiniPoolConfigurator {
             Errors.LPC_RESERVE_LIQUIDITY_NOT_0
         );
     }
+
+    function setRewarderForReserve(address asset, address rewarder, IMiniPool pool)
+        external
+        onlyPoolAdmin
+    {
+        pool.setRewarderForReserve(asset, rewarder);
+    }
+
+    function updateFlashloanPremiumTotal(uint128 newFlashloanPremiumTotal, IMiniPool pool)
+        external
+        onlyPoolAdmin
+    {
+        require(
+            newFlashloanPremiumTotal <= PercentageMath.PERCENTAGE_FACTOR,
+            Errors.LPC_FLASHLOAN_PREMIUM_INVALID
+        );
+        pool.updateFlashLoanFee(newFlashloanPremiumTotal);
+    }
 }

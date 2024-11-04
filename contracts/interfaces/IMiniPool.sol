@@ -366,4 +366,12 @@ interface IMiniPool {
     function setPause(bool val) external;
 
     function paused() external view returns (bool);
+
+    function setRewarderForReserve(address asset, address rewarder) external;
+
+    /**
+     * @dev Update flahloan premium total
+     * @param flashLoanPremiumTotal - premiom for flashloan
+     */
+    function updateFlashLoanFee(uint128 flashLoanPremiumTotal) external;
 }

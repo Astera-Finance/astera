@@ -240,19 +240,23 @@ contract TestBasicActions is Script, DeploymentUtils, Test {
         uint256 amount,
         uint256 tokenId,
         address user,
-        TokenParams memory tokenParams,
+        ERC20 collateral,
         IAERC6909 aErc6909Token,
         address miniPool
     ) public {
-        deal(address(tokenParams.token), user, amount);
-        console.log("Address: %s vs tokenId: %s", address(tokenParams.token), tokenId);
+        deal(address(collateral), user, amount);
+        console.log("Address: %s vs tokenId: %s", address(collateral), tokenId);
         vm.startPrank(user);
         uint256 tokenUserBalance = aErc6909Token.balanceOf(user, tokenId);
-        uint256 tokenBalance = tokenParams.token.balanceOf(user);
-        tokenParams.token.approve(miniPool, amount);
-        IMiniPool(miniPool).deposit(address(tokenParams.token), amount, user);
-        assertEq(tokenBalance - amount, tokenParams.token.balanceOf(user));
-        assertEq(tokenUserBalance + amount, aErc6909Token.balanceOf(user, tokenId));
+        uint256 tokenBalance = collateral.balanceOf(user);
+        collateral.approve(miniPool, amount);
+        IMiniPool(miniPool).deposit(address(collateral), amount, user);
+        assertEq(tokenBalance - amount, collateral.balanceOf(user), "Token balance is wrong");
+        assertEq(
+            tokenUserBalance + amount,
+            aErc6909Token.balanceOf(user, tokenId),
+            "AToken balance is wrong"
+        );
         vm.stopPrank();
     }
 
@@ -274,9 +278,12 @@ contract TestBasicActions is Script, DeploymentUtils, Test {
     }
 
     function testMultipleUsersBorrowRepayAndWithdraw(
-        TokenParams memory usdcParams,
-        TokenParams memory wbtcParams,
-        address miniPool
+        TokenParams memory collateralParams,
+        TokenParams memory borrowParams,
+        address miniPool,
+        Users memory users,
+        uint256 depositAmount,
+        uint256 borrowAmount
     ) public {
         /**
          * Preconditions:
@@ -306,58 +313,71 @@ contract TestBasicActions is Script, DeploymentUtils, Test {
         IAERC6909 aErc6909Token =
             IAERC6909(contracts.miniPoolAddressesProvider.getMiniPoolToAERC6909(miniPool));
 
-        Users memory users;
-        users.user1 = makeAddr("user1");
-        users.user2 = makeAddr("user2");
-        users.user3 = makeAddr("distributor");
-
-        uint256 amount1 = 15000 * 10 ** usdcParams.token.decimals(); // 15 000 usdc
-        uint256 amount2 = 2 * 10 ** (wbtcParams.token.decimals() - 1); // 0.2 wbtc
+        // uint256 depositAmount = 15000 * 10 ** collateralParams.token.decimals(); // 15 000 usdc
+        // uint256 borrowAmount = 2 * 10 ** (borrowParams.token.decimals() - 1); // 0.2 wbtc
 
         console.log("----------------USER1 DEPOSIT---------------");
         fixture_depositTokensToMiniPool(
-            amount1, 1128 + USDC_OFFSET, users.user1, usdcParams, aErc6909Token, miniPool
+            depositAmount,
+            1128 + USDC_OFFSET,
+            users.user1,
+            collateralParams.token,
+            aErc6909Token,
+            miniPool
         );
         console.log("----------------USER2 DEPOSIT---------------");
         fixture_depositTokensToMiniPool(
-            amount2, 1128 + WBTC_OFFSET, users.user2, wbtcParams, aErc6909Token, miniPool
+            borrowAmount,
+            1128 + WBTC_OFFSET,
+            users.user2,
+            borrowParams.token,
+            aErc6909Token,
+            miniPool
         );
 
         console.log("----------------USER1 BORROW---------------");
         vm.startPrank(users.user1);
-        IMiniPool(miniPool).borrow(address(wbtcParams.token), amount2 / 4, users.user1);
-        assertEq(wbtcParams.token.balanceOf(users.user1), amount2 / 4);
+        IMiniPool(miniPool).borrow(address(borrowParams.token), borrowAmount / 4, users.user1);
+        assertEq(borrowParams.token.balanceOf(users.user1), borrowAmount / 4);
         vm.stopPrank();
 
         console.log("----------------USER2 BORROW---------------");
         vm.startPrank(users.user2);
-        IMiniPool(miniPool).borrow(address(usdcParams.token), amount1 / 4, users.user2);
-        assertEq(usdcParams.token.balanceOf(users.user2), amount1 / 4);
+        IMiniPool(miniPool).borrow(address(collateralParams.token), depositAmount / 4, users.user2);
+        assertEq(collateralParams.token.balanceOf(users.user2), depositAmount / 4);
         vm.stopPrank();
 
         skip(skipDuration);
 
-        uint256 diff = aErc6909Token.balanceOf(users.user1, 2128 + WBTC_OFFSET) - amount2 / 4;
+        uint256 diff = aErc6909Token.balanceOf(users.user1, 2128 + WBTC_OFFSET) - borrowAmount / 4;
         console.log("Accrued wbtc debt: ", diff);
-        deal(address(wbtcParams.token), users.user1, wbtcParams.token.balanceOf(users.user1) + diff);
-        diff = aErc6909Token.balanceOf(users.user2, 2128 + USDC_OFFSET) - amount1 / 4;
+        deal(
+            address(borrowParams.token),
+            users.user1,
+            borrowParams.token.balanceOf(users.user1) + diff
+        );
+        diff = aErc6909Token.balanceOf(users.user2, 2128 + USDC_OFFSET) - depositAmount / 4;
         console.log("Accrued usdc debt: ", diff);
-        deal(address(usdcParams.token), users.user2, usdcParams.token.balanceOf(users.user2) + diff);
+        deal(
+            address(collateralParams.token),
+            users.user2,
+            collateralParams.token.balanceOf(users.user2) + diff
+        );
 
         vm.startPrank(users.user1);
         console.log("----------------USER1 REPAYS---------------");
         console.log(
             "Amount %s vs debt balance %s",
-            amount1,
+            depositAmount,
             aErc6909Token.balanceOf(users.user1, 2128 + WBTC_OFFSET)
         );
-        wbtcParams.token.approve(
+        borrowParams.token.approve(
             address(miniPool), aErc6909Token.balanceOf(users.user1, 2128 + WBTC_OFFSET)
         );
         console.log("User1 Repaying...");
         /* Give lacking amount to user 1 */
         IMiniPool(miniPool).repay(
-            address(wbtcParams.token),
+            address(borrowParams.token),
             aErc6909Token.balanceOf(users.user1, 2128 + WBTC_OFFSET),
             users.user1
         );
@@ -367,15 +387,15 @@ contract TestBasicActions is Script, DeploymentUtils, Test {
         vm.startPrank(users.user2);
         console.log(
             "Amount %s vs debt balance %s",
-            amount1,
+            depositAmount,
             aErc6909Token.balanceOf(users.user2, 2128 + USDC_OFFSET)
         );
-        usdcParams.token.approve(
+        collateralParams.token.approve(
             address(miniPool), aErc6909Token.balanceOf(users.user2, 2128 + USDC_OFFSET)
         );
         console.log("User2 Repaying...");
         IMiniPool(miniPool).repay(
-            address(usdcParams.token),
+            address(collateralParams.token),
             aErc6909Token.balanceOf(users.user2, 2128 + USDC_OFFSET),
             users.user2
         );
@@ -384,51 +404,98 @@ contract TestBasicActions is Script, DeploymentUtils, Test {
         vm.startPrank(users.user1);
         console.log("Balance: ", aErc6909Token.balanceOf(users.user1, 1000 + USDC_OFFSET));
         console.log("Balance: ", aErc6909Token.balanceOf(users.user1, 1128 + USDC_OFFSET));
-        uint256 availableLiquidity = IERC20(usdcParams.aToken).balanceOf(address(aErc6909Token));
+        uint256 availableLiquidity =
+            IERC20(collateralParams.aToken).balanceOf(address(aErc6909Token));
         console.log("AvailableLiquidity: ", availableLiquidity);
         console.log("Withdrawing... %s", aErc6909Token.balanceOf(users.user1, 1128 + USDC_OFFSET));
         IMiniPool(miniPool).withdraw(
-            address(usdcParams.token),
+            address(collateralParams.token),
             aErc6909Token.balanceOf(users.user1, 1128 + USDC_OFFSET),
             users.user1
         );
         console.log("After Balance: ", aErc6909Token.balanceOf(users.user1, 1128 + USDC_OFFSET));
-        availableLiquidity = IERC20(usdcParams.aToken).balanceOf(address(aErc6909Token));
+        availableLiquidity = IERC20(collateralParams.aToken).balanceOf(address(aErc6909Token));
         console.log("After availableLiquidity: ", availableLiquidity);
         vm.stopPrank();
 
         vm.startPrank(users.user2);
         console.log("----------------USER2 TRANSFER---------------");
 
-        availableLiquidity = IERC20(wbtcParams.aToken).balanceOf(address(aErc6909Token));
+        availableLiquidity = IERC20(borrowParams.aToken).balanceOf(address(aErc6909Token));
         console.log("Balance: ", aErc6909Token.balanceOf(users.user2, 1000 + WBTC_OFFSET));
         console.log("Balance: ", aErc6909Token.balanceOf(users.user2, 1128 + WBTC_OFFSET));
         console.log("AvailableLiquidity: ", availableLiquidity);
         console.log("Withdrawing...");
         IMiniPool(miniPool).withdraw(
-            address(wbtcParams.token),
+            address(borrowParams.token),
             aErc6909Token.balanceOf(users.user2, 1128 + WBTC_OFFSET),
             users.user2
         );
         vm.stopPrank();
 
         assertGt(
-            usdcParams.token.balanceOf(users.user1), amount1, "Balance is not greater for user1"
+            collateralParams.token.balanceOf(users.user1),
+            depositAmount,
+            "Balance is not greater for user1"
         );
         assertGt(
-            wbtcParams.token.balanceOf(users.user2), amount2, "Balance is not greater for user2"
+            borrowParams.token.balanceOf(users.user2),
+            borrowAmount,
+            "Balance is not greater for user2"
         );
+    }
+
+    function bootstrapMainPool() public {
+        (address[] memory assets, bool[] memory reserveTypes) =
+            contracts.lendingPool.getReservesList();
+        for (uint256 idx = 0; idx < assets.length; idx++) {
+            DataTypes.ReserveData memory data =
+                contracts.lendingPool.getReserveData(assets[idx], reserveTypes[idx]);
+            uint256 depositAmount = 10 ** ERC20(assets[idx]).decimals();
+            AToken aToken = fixture_getATokenWrapper(assets[idx], contracts.protocolDataProvider);
+            TokenParams memory collateralParams =
+                TokenParams({token: ERC20(assets[idx]), aToken: aToken});
+            deal(assets[idx], address(this), depositAmount);
+            fixture_deposit(ERC20(assets[idx]), aToken, address(this), address(this), depositAmount);
+        }
+    }
+
+    function bootstrapMiniPools() public {
+        uint256 index = 0;
+        address miniPool = contracts.miniPoolAddressesProvider.getMiniPool(index);
+        while (miniPool != address(0)) {
+            console.log("ITERATION: %s", index);
+            IAERC6909 aErc6909Token =
+                IAERC6909(contracts.miniPoolAddressesProvider.getMiniPoolToAERC6909(miniPool));
+
+            (address[] memory assets,) = IMiniPool(miniPool).getReservesList();
+            for (uint256 idx = 0; idx < assets.length; idx++) {
+                DataTypes.MiniPoolReserveData memory data =
+                    IMiniPool(miniPool).getReserveData(assets[idx]);
+                uint256 depositAmount = 10 ** ERC20(assets[idx]).decimals();
+                fixture_depositTokensToMiniPool(
+                    depositAmount,
+                    data.aTokenID,
+                    address(this),
+                    ERC20(assets[idx]),
+                    aErc6909Token,
+                    miniPool
+                );
+            }
+            index++;
+            miniPool = contracts.miniPoolAddressesProvider.getMiniPool(index);
+        }
     }
 
     function run() external returns (DeployedContracts memory) {
         //vm.startBroadcast(vm.envUint("DEPLOYER"));
 
         if (vm.envBool("LOCAL_FORK")) {
-            /* Fork Identifier [ARBITRUM] */
-            string memory RPC = vm.envString("ARBITRUM_RPC_URL");
-            uint256 FORK_BLOCK = 257827379;
-            uint256 arbFork;
-            arbFork = vm.createSelectFork(RPC, FORK_BLOCK);
+            /* Fork Identifier */
+            string memory RPC = vm.envString("BASE_RPC_URL");
+            uint256 FORK_BLOCK = 21838058;
+            uint256 fork;
+            fork = vm.createSelectFork(RPC, FORK_BLOCK);
 
             /* Config fetching */
             AddAssets addAssets = new AddAssets();
@@ -440,45 +507,85 @@ contract TestBasicActions is Script, DeploymentUtils, Test {
             console.log("PATH: ", path);
             string memory deploymentConfig = vm.readFile(path);
 
-            address collateral = deploymentConfig.readAddress(".collateralAddress");
-            address borrowAsset = deploymentConfig.readAddress(".borrowAssetAddress");
             uint256 depositAmount = deploymentConfig.readUint(".depositAmount");
-            PoolAddressesProviderConfig memory poolAddressesProviderConfig = abi.decode(
-                deploymentConfig.parseRaw(".poolAddressesProviderConfig"),
-                (PoolAddressesProviderConfig)
+            uint256 borrowAmount = deploymentConfig.readUint(".borrowAmount");
+            bool bootstrapLiquidity = deploymentConfig.readBool(".bootstrapLiquidity");
+
+            TokenTypes memory borrowTypes;
+            TokenTypes memory collateralTypes;
+            address mp;
+            AToken aToken;
+
+            {
+                address collateral = deploymentConfig.readAddress(".collateralAddress");
+                address borrowAsset = deploymentConfig.readAddress(".borrowAssetAddress");
+                PoolAddressesProviderConfig memory poolAddressesProviderConfig = abi.decode(
+                    deploymentConfig.parseRaw(".poolAddressesProviderConfig"),
+                    (PoolAddressesProviderConfig)
+                );
+
+                aToken = fixture_getAToken(collateral, contracts.protocolDataProvider);
+
+                VariableDebtToken variableDebtToken =
+                    fixture_getVarDebtToken(collateral, contracts.protocolDataProvider);
+
+                collateralTypes = TokenTypes({
+                    token: ERC20(collateral),
+                    aToken: aToken,
+                    debtToken: variableDebtToken
+                });
+
+                aToken = fixture_getAToken(borrowAsset, contracts.protocolDataProvider);
+
+                variableDebtToken =
+                    fixture_getVarDebtToken(borrowAsset, contracts.protocolDataProvider);
+
+                borrowTypes = TokenTypes({
+                    token: ERC20(borrowAsset),
+                    aToken: aToken,
+                    debtToken: variableDebtToken
+                });
+
+                // vm.startPrank(FOUNDRY_DEFAULT);
+                /* Test borrow repay */
+                deal(address(collateralTypes.token), address(this), 2 * depositAmount);
+                // testBorrowRepay(collateralTypes, borrowTypes, depositAmount);
+                mp = contracts.miniPoolAddressesProvider.getMiniPool(
+                    poolAddressesProviderConfig.poolId
+                );
+            }
+
+            vm.startPrank(FOUNDRY_DEFAULT);
+            contracts.lendingPoolConfigurator.setPoolPause(false);
+            contracts.miniPoolConfigurator.setPoolPause(false, IMiniPool(mp));
+            vm.stopPrank();
+
+            aToken = fixture_getATokenWrapper(
+                address(collateralTypes.token), contracts.protocolDataProvider
             );
+            TokenParams memory collateralParams =
+                TokenParams({token: ERC20(address(collateralTypes.token)), aToken: aToken});
 
-            AToken aToken = fixture_getAToken(collateral, contracts.protocolDataProvider);
+            aToken =
+                fixture_getATokenWrapper(address(borrowTypes.token), contracts.protocolDataProvider);
+            TokenParams memory borrowParams =
+                TokenParams({token: ERC20(address(borrowTypes.token)), aToken: aToken});
+            IAERC6909 aErc6909Token =
+                IAERC6909(contracts.miniPoolAddressesProvider.getMiniPoolToAERC6909(mp));
 
-            VariableDebtToken variableDebtToken =
-                fixture_getVarDebtToken(collateral, contracts.protocolDataProvider);
+            if (bootstrapLiquidity == true) {
+                bootstrapMainPool();
+                bootstrapMiniPools();
+            } else {
+                Users memory users;
+                users.user1 = vm.addr(vm.envUint("USER1_PRIVATE_KEY"));
+                users.user2 = vm.addr(vm.envUint("USER2_PRIVATE_KEY"));
+                users.user3 = vm.addr(vm.envUint("DIST_PRIVATE_KEY"));
+                testMultipleUsersBorrowRepayAndWithdraw(
+                    collateralParams, borrowParams, mp, users, depositAmount, borrowAmount
+                );
+            }
 
-            TokenTypes memory collateralTypes =
-                TokenTypes({token: ERC20(collateral), aToken: aToken, debtToken: variableDebtToken});
-
-            aToken = fixture_getAToken(borrowAsset, contracts.protocolDataProvider);
-
-            variableDebtToken = fixture_getVarDebtToken(borrowAsset, contracts.protocolDataProvider);
-
-            TokenTypes memory borrowTypes = TokenTypes({
-                token: ERC20(borrowAsset),
-                aToken: aToken,
-                debtToken: variableDebtToken
-            });
-
-            // vm.startPrank(FOUNDRY_DEFAULT);
-            /* Test borrow repay */
-            deal(address(collateralTypes.token), address(this), 2 * depositAmount);
-            // testBorrowRepay(collateralTypes, borrowTypes, depositAmount);
-            address mp =
-                contracts.miniPoolAddressesProvider.getMiniPool(poolAddressesProviderConfig.poolId);
-
-            aToken = fixture_getATokenWrapper(collateral, contracts.protocolDataProvider);
-            TokenParams memory usdcParams = TokenParams({token: ERC20(collateral), aToken: aToken});
-
-            aToken = fixture_getATokenWrapper(borrowAsset, contracts.protocolDataProvider);
-            TokenParams memory wbtcParams = TokenParams({token: ERC20(borrowAsset), aToken: aToken});
-            testMultipleUsersBorrowRepayAndWithdraw(usdcParams, wbtcParams, mp);
             // vm.stopPrank();
         } else {
             console.log("Test only available for mainnet fork");

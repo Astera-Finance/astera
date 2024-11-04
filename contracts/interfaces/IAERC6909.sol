@@ -18,8 +18,6 @@ interface IAERC6909 is IERC6909 {
         uint8 decimals
     ) external returns (uint256 aTokenID, uint256 debtTokenID, bool isTranche);
     function setIncentivesController(IMiniPoolRewarder controller) external;
-    function setPool(IMiniPool pool) external;
-    function setUnderlyingAsset(uint256 id, address underlyingAsset) external;
     function getUnderlyingAsset(uint256 id) external view returns (address);
     function transfer(address to, uint256 id, uint256 amount) external override returns (bool);
     function transferFrom(address from, address to, uint256 id, uint256 amount)

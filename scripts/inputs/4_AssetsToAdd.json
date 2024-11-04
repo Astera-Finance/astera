@@ -3,7 +3,8 @@
         "aTokenNamePrefix": "Cod3x Lend ",
         "aTokenSymbolPrefix": "cl",
         "debtTokenNamePrefix": "Cod3x Lend variable debt bearing ",
-        "debtTokenSymbolPrefix": "clDebt"
+        "debtTokenSymbolPrefix": "clDebt",
+        "treasury": "0x3151CfCA393FE5Eec690feD2a2446DA5a073d01B"
     },
     "poolAddressesProviderConfig": {
         "marketId": "UV TestNet Market",
@@ -22,13 +23,13 @@
             "reserveFactor": 1500,
             "reserveType": true,
             "symbol": "WBTC",
-            "tokenAddress": "0x2f2a2543B76A4166549F7aaB2e75Bef0aefC5B0f"
+            "tokenAddress": "0x0555E30da8f98308EdB960aa94C0Db47230d2B9c"
         },
         {
             "baseLtv": 7000,
             "borrowingEnabled": true,
-            "interestStrat": "PI",
-            "interestStratId": 2,
+            "interestStrat": "VOLATILE",
+            "interestStratId": 1,
             "liquidationBonus": 10500,
             "liquidationThreshold": 7500,
             "params": "0x10",
@@ -36,7 +37,7 @@
             "reserveFactor": 1500,
             "reserveType": true,
             "symbol": "USDC",
-            "tokenAddress": "0xaf88d065e77c8cC2239327C5EDb3A432268e5831"
+            "tokenAddress": "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913"
         }
     ],
     "miniPoolReserversConfig": [
@@ -52,7 +53,7 @@
             "reserveFactor": 1500,
             "reserveType": true,
             "symbol": "WBTC",
-            "tokenAddress": "0x2f2a2543B76A4166549F7aaB2e75Bef0aefC5B0f"
+            "tokenAddress": "0x0555E30da8f98308EdB960aa94C0Db47230d2B9c"
         },
         {
             "baseLtv": 7000,
@@ -66,24 +67,30 @@
             "reserveFactor": 1500,
             "reserveType": true,
             "symbol": "USDT",
-            "tokenAddress": "0xFd086bC7CD5C481DCC9C85ebE478A1C0b69FCbb9"
+            "tokenAddress": "0xfde4C96c8593536E31F229EA8f37b2ADa2699bb2"
         }
     ],
     "oracleConfig": {
         "assets": [
-            "0x82aF49447D8a07e3bd95BD0d56f35241523fBab1",
-            "0xaf88d065e77c8cC2239327C5EDb3A432268e5831",
-            "0x2f2a2543B76A4166549F7aaB2e75Bef0aefC5B0f",
-            "0xFd086bC7CD5C481DCC9C85ebE478A1C0b69FCbb9"
+            "0x4200000000000000000000000000000000000006",
+            "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913",
+            "0x0555E30da8f98308EdB960aa94C0Db47230d2B9c",
+            "0xfde4C96c8593536E31F229EA8f37b2ADa2699bb2"
         ],
         "baseCurrency": "0x0000000000000000000000000000000000000000",
         "baseCurrencyUnit": 1e18,
         "fallbackOracle": "0x0000000000000000000000000000000000000000",
         "sources": [
-            "0x639Fe6ab55C921f74e7fac1ee960C0B6293ba612",
-            "0x50834F3163758fcC1Df9973b6e91f0F0F0434aD3",
-            "0xd0C7101eACbB49F3deCcCc166d238410D6D46d57",
-            "0x3f3f5dF88dC9F13eac63DF89EC16ef6e7E25DdE7"
+            "0x71041dddad3595F9CEd3DcCFBe3D1F4b0a16Bb70",
+            "0x7e860098F58bBFC8648a4311b374B1D669a2bc6B",
+            "0x64c911996D3c6aC71f9b455B1E8E7266BcbD848F",
+            "0xf19d560eB8d2ADf07BD6D13ed03e1D11215721F9"
+        ],
+        "timeouts": [
+            100000,
+            100000,
+            200000,
+            200000
         ]
     }
 }

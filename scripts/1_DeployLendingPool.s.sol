@@ -15,8 +15,6 @@ contract DeployLendingPool is Script, DeploymentUtils, Test {
 
     function writeJsonData(string memory root, string memory path) internal {
         vm.serializeAddress("lendingPoolContracts", "oracle", address(contracts.oracle));
-        vm.serializeAddress("lendingPoolContracts", "rewarder", address(contracts.rewarder));
-        vm.serializeAddress("lendingPoolContracts", "treasury", address(contracts.treasury));
         {
             address[] memory stableAddresses = new address[](contracts.stableStrategies.length);
             for (uint256 idx = 0; idx < contracts.stableStrategies.length; idx++) {
@@ -96,17 +94,17 @@ contract DeployLendingPool is Script, DeploymentUtils, Test {
             abi.decode(deploymentConfig.parseRaw(".oracleConfig"), (OracleConfig));
 
         if (vm.envBool("LOCAL_FORK")) {
-            // Fork Identifier [ARBITRUM]
-            string memory RPC = vm.envString("ARBITRUM_RPC_URL");
-            uint256 FORK_BLOCK = 257827379;
-            uint256 arbFork;
-            arbFork = vm.createSelectFork(RPC, FORK_BLOCK);
+            // Fork Identifier
+            string memory RPC = vm.envString("BASE_RPC_URL");
+            uint256 FORK_BLOCK = 21838058;
+            uint256 fork;
+            fork = vm.createSelectFork(RPC, FORK_BLOCK);
 
             // Deployment
             vm.startPrank(FOUNDRY_DEFAULT);
+            contracts.oracle = _deployOracle(oracleConfig);
             deployLendingPoolInfra(
                 general,
-                oracleConfig,
                 volatileStrategies,
                 stableStrategies,
                 piStrategies,
@@ -115,16 +113,16 @@ contract DeployLendingPool is Script, DeploymentUtils, Test {
                 FOUNDRY_DEFAULT
             );
             vm.stopPrank();
-            writeJsonData(root, path);
 
             /* Write important contracts into the file */
         } else if (vm.envBool("TESTNET")) {
             console.log("Testnet Deployment");
             /* Read all mocks deployed */
-            string memory path = string.concat(root, "/scripts/outputs/0_MockedTokens.json");
+            path = string.concat(root, "/scripts/outputs/0_MockedTokens.json");
             console.log("PATH: ", path);
             string memory config = vm.readFile(path);
             address[] memory mockedTokens = config.readAddressArray(".mockedTokens");
+            contracts.oracle = Oracle(config.readAddress(".mockedOracle"));
 
             require(
                 mockedTokens.length >= poolReserversConfig.length,
@@ -153,7 +151,6 @@ contract DeployLendingPool is Script, DeploymentUtils, Test {
             console.log("Deploying lending pool infra");
             deployLendingPoolInfra(
                 general,
-                oracleConfig,
                 volatileStrategies,
                 stableStrategies,
                 piStrategies,
@@ -162,17 +159,14 @@ contract DeployLendingPool is Script, DeploymentUtils, Test {
                 vm.addr(vm.envUint("PRIVATE_KEY"))
             );
             vm.stopBroadcast();
-
-            /* Write data */
-            writeJsonData(root, path);
         } else if (vm.envBool("MAINNET")) {
             console.log("Mainnet Deployment");
 
             /* Deploy to the mainnet */
             vm.startBroadcast(vm.envUint("PRIVATE_KEY"));
+            contracts.oracle = _deployOracle(oracleConfig);
             deployLendingPoolInfra(
                 general,
-                oracleConfig,
                 volatileStrategies,
                 stableStrategies,
                 piStrategies,
@@ -181,10 +175,13 @@ contract DeployLendingPool is Script, DeploymentUtils, Test {
                 vm.addr(vm.envUint("PRIVATE_KEY"))
             );
             vm.stopBroadcast();
-            writeJsonData(root, path);
         } else {
             console.log("No deployment type selected in .env");
         }
+
+        /* Write data to json */
+        writeJsonData(root, path);
+
         return contracts;
     }
 }

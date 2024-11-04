@@ -4,7 +4,7 @@
         "aTokenSymbolPrefix": "cl",
         "debtTokenNamePrefix": "Cod3x Lend variable debt bearing ",
         "debtTokenSymbolPrefix": "clDebt",
-        "wethAddress": "0x82aF49447D8a07e3bd95BD0d56f35241523fBab1"
+        "treasury": "0x3151CfCA393FE5Eec690feD2a2446DA5a073d01B"
     },
     "poolAddressesProviderConfig": {
         "marketId": "UV TestNet Market",
@@ -23,7 +23,7 @@
             "reserveFactor": 1500,
             "reserveType": true,
             "symbol": "WETH",
-            "tokenAddress": "0x82aF49447D8a07e3bd95BD0d56f35241523fBab1"
+            "tokenAddress": "0x4200000000000000000000000000000000000006"
         }
     ],
     "volatileStrategies": [
@@ -51,18 +51,21 @@
             "minControllerError": -400e24,
             "optimalUtilizationRate": 45e25,
             "symbol": "WETH",
-            "tokenAddress": "0x82aF49447D8a07e3bd95BD0d56f35241523fBab1"
+            "tokenAddress": "0x4200000000000000000000000000000000000006"
         }
     ],
     "oracleConfig": {
         "assets": [
-            "0x82aF49447D8a07e3bd95BD0d56f35241523fBab1"
+            "0x4200000000000000000000000000000000000006"
         ],
         "baseCurrency": "0x0000000000000000000000000000000000000000",
         "baseCurrencyUnit": 1e18,
         "fallbackOracle": "0x0000000000000000000000000000000000000000",
         "sources": [
             "0x639Fe6ab55C921f74e7fac1ee960C0B6293ba612"
+        ],
+        "timeouts": [
+            100000
         ]
     }
 }

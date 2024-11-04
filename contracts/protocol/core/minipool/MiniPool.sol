@@ -35,6 +35,7 @@ import {MiniPoolWithdrawLogic} from "./logic/MiniPoolWithdrawLogic.sol";
 import {MiniPoolBorrowLogic} from "./logic/MiniPoolBorrowLogic.sol";
 import {MiniPoolFlashLoanLogic} from "./logic/MiniPoolFlashLoanLogic.sol";
 import {MiniPoolLiquidationLogic} from "./logic/MiniPoolLiquidationLogic.sol";
+import {IMiniPoolRewarder} from "../../../../contracts/interfaces/IMiniPoolRewarder.sol";
 
 /**
  * @title MiniPool contract
@@ -106,7 +107,7 @@ contract MiniPool is VersionedInitializable, IMiniPool, MiniPoolStorage {
     {
         _addressesProvider = provider;
         _minipoolId = minipoolID;
-        _flashLoanPremiumTotal = 1;
+        _updateFlashLoanFee(9);
         _maxNumberOfReserves = 128;
     }
 
@@ -699,5 +700,22 @@ contract MiniPool is VersionedInitializable, IMiniPool, MiniPoolStorage {
 
     function getCurrentLendingPoolDebt(address asset) public view returns (uint256) {
         return IFlowLimiter(_addressesProvider.getFlowLimiter()).currentFlow(asset, address(this));
+    }
+
+    function setRewarderForReserve(address asset, address rewarder)
+        external
+        onlyMiniPoolConfigurator
+    {
+        IAERC6909(_reserves[asset].aTokenAddress).setIncentivesController(
+            IMiniPoolRewarder(rewarder)
+        );
+    }
+
+    function updateFlashLoanFee(uint128 flashLoanPremiumTotal) external onlyMiniPoolConfigurator {
+        _updateFlashLoanFee(flashLoanPremiumTotal);
+    }
+
+    function _updateFlashLoanFee(uint128 flashLoanPremiumTotal) internal {
+        _flashLoanPremiumTotal = flashLoanPremiumTotal;
     }
 }

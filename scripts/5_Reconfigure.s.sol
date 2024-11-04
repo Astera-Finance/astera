@@ -35,20 +35,12 @@ contract Reconfigure is Script, DeploymentUtils, Test {
             deploymentConfig.parseRaw(".miniPoolReserversConfig"), (PoolReserversConfig[])
         );
 
-        // path = string.concat(root, "/scripts/outputs/3_DeployedStrategies.json");
-        // console.log("PATH: ", path);
-        // deploymentConfig = vm.readFile(path);
-
-        // address[] memory stableStrats = deploymentConfig.readAddressArray(".stableStrats");
-        // address[] memory volatileStrats = deploymentConfig.readAddressArray(".volatileStrategies");
-        // address[] memory piStrats = deploymentConfig.readAddressArray(".stableStrats");
-
         if (vm.envBool("LOCAL_FORK")) {
-            /* Fork Identifier [ARBITRUM] */
-            string memory RPC = vm.envString("ARBITRUM_RPC_URL");
-            uint256 FORK_BLOCK = 257827379;
-            uint256 arbFork;
-            arbFork = vm.createSelectFork(RPC, FORK_BLOCK);
+            /* Fork Identifier */
+            string memory RPC = vm.envString("BASE_RPC_URL");
+            uint256 FORK_BLOCK = 21838058;
+            uint256 fork;
+            fork = vm.createSelectFork(RPC, FORK_BLOCK);
 
             /* Config fetching */
             AddAssets addAssets = new AddAssets();
@@ -77,6 +69,8 @@ contract Reconfigure is Script, DeploymentUtils, Test {
             contracts.lendingPoolAddressesProvider = LendingPoolAddressesProvider(
                 deploymentConfig.readAddress(".lendingPoolAddressesProvider")
             );
+            contracts.lendingPoolConfigurator =
+                LendingPoolConfigurator(deploymentConfig.readAddress(".lendingPoolConfigurator"));
             contracts.aTokensAndRatesHelper =
                 ATokensAndRatesHelper(deploymentConfig.readAddress(".aTokensAndRatesHelper"));
 
@@ -110,6 +104,7 @@ contract Reconfigure is Script, DeploymentUtils, Test {
 
             /* Reconfigure */
             vm.startBroadcast(vm.envUint("PRIVATE_KEY"));
+            console.log("Reconfiguring..");
             _configureReserves(contracts, lendingPoolReserversConfig);
             vm.stopBroadcast();
 
