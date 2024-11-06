@@ -142,7 +142,7 @@ contract LendingPoolConfigurator is VersionedInitializable, ILendingPoolConfigur
         DataTypes.ReserveData memory reserveData =
             cachedPool.getReserveData(input.asset, input.reserveType);
 
-        (,,, uint256 decimals,) =
+        (,,, uint256 decimals,,) =
             cachedPool.getConfiguration(input.asset, input.reserveType).getParamsMemory();
 
         bytes memory encodedCall = abi.encodeWithSelector(
@@ -174,7 +174,7 @@ contract LendingPoolConfigurator is VersionedInitializable, ILendingPoolConfigur
         DataTypes.ReserveData memory reserveData =
             cachedPool.getReserveData(input.asset, input.reserveType);
 
-        (,,, uint256 decimals,) =
+        (,,, uint256 decimals,,) =
             cachedPool.getConfiguration(input.asset, input.reserveType).getParamsMemory();
 
         bytes memory encodedCall = abi.encodeWithSelector(

@@ -141,7 +141,7 @@ contract MiniPoolConfiguratorTest is MiniPoolDepositBorrowTest {
         /* Test depositing */
         uint256 minNrOfTokens;
         {
-            (, uint256 collateralTokenLtv,,,,,,,) = deployedContracts
+            (, uint256 collateralTokenLtv,,,,,,,) = deployedLpContracts
                 .protocolDataProvider
                 .getReserveConfigurationData(address(collateralTokenParams.token), true);
             console.log("collateralTokenLtv: ", collateralTokenLtv);
@@ -241,7 +241,7 @@ contract MiniPoolConfiguratorTest is MiniPoolDepositBorrowTest {
 
         uint256 minNrOfTokens;
         {
-            (, uint256 collateralTokenLtv,,,,,,,) = deployedContracts
+            (, uint256 collateralTokenLtv,,,,,,,) = deployedLpContracts
                 .protocolDataProvider
                 .getReserveConfigurationData(address(collateralTokenParams.token), true);
             uint256 borrowTokenInUsd = (amount * borrowTokenParams.price * 10_000)
@@ -294,7 +294,7 @@ contract MiniPoolConfiguratorTest is MiniPoolDepositBorrowTest {
         console.log("BORROW 2");
         IMiniPool(miniPool).borrow(address(borrowTokenParams.token), amount / 3, user);
         // console.log("Part of borrow aToken balance shall be transfered to the treasury");
-        // assertGt(aErc6909Token.balanceOf(address(deployedContracts.treasury), 1000 + borrowOffset), atokenBalanceBefore);
+        // assertGt(aErc6909Token.balanceOf(address(deployedLpContracts.treasury), 1000 + borrowOffset), atokenBalanceBefore);
         console.log("Part of borrow token balance shall be transfered to the treasury");
 
         assertGt(
@@ -314,7 +314,7 @@ contract MiniPoolConfiguratorTest is MiniPoolDepositBorrowTest {
                 address(erc20Tokens[idx]), validDepositCap, IMiniPool(miniPool)
             );
             // DataTypes.ReserveConfigurationMap memory currentConfig =
-            //     deployedContracts.lendingPool.getConfiguration(address(erc20Tokens[idx]), false);
+            //     deployedLpContracts.lendingPool.getConfiguration(address(erc20Tokens[idx]), false);
             // assertEq(currentConfig.getReserveFactor(), validReserveFactor);
         }
     }
@@ -419,8 +419,8 @@ contract MiniPoolConfiguratorTest is MiniPoolDepositBorrowTest {
         vars.dai.transfer(vars.user, vars.amount * 1e14); // 50000 DAI
 
         vm.startPrank(vars.whaleUser);
-        vars.usdc.approve(address(deployedContracts.lendingPool), vars.amount * 1000); //500000 USDC
-        deployedContracts.lendingPool.deposit(
+        vars.usdc.approve(address(deployedLpContracts.lendingPool), vars.amount * 1000); //500000 USDC
+        deployedLpContracts.lendingPool.deposit(
             address(vars.usdc), true, vars.amount * 1000, vars.whaleUser
         );
         vm.stopPrank();
@@ -445,7 +445,7 @@ contract MiniPoolConfiguratorTest is MiniPoolDepositBorrowTest {
         );
 
         DataTypes.ReserveData memory reserveData =
-            deployedContracts.lendingPool.getReserveData(address(vars.usdc), true);
+            deployedLpContracts.lendingPool.getReserveData(address(vars.usdc), true);
         uint128 currentLiquidityRate = reserveData.currentLiquidityRate;
         uint128 currentVariableBorrowRate = reserveData.currentVariableBorrowRate;
         uint128 delta = currentVariableBorrowRate - currentLiquidityRate;

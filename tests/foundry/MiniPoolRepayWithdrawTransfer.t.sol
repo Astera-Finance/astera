@@ -757,8 +757,8 @@ contract MiniPoolRepayWithdrawTransferTest is MiniPoolDepositBorrowTest {
             // {
             //     uint256 initialTokenBalance = usdcParams.token.balanceOf(users.user3);
             //     uint256 initialATokenBalance = usdcParams.aToken.balanceOf(users.user3);
-            //     usdcParams.token.approve(address(deployedContracts.lendingPool), amount1);
-            //     deployedContracts.lendingPool.deposit(
+            //     usdcParams.token.approve(address(deployedLpContracts.lendingPool), amount1);
+            //     deployedLpContracts.lendingPool.deposit(
             //         address(usdcParams.token), true, amount1, users.user3
             //     );
             //     console.log("User token balance shall be {initialTokenBalance - amount}");
@@ -782,7 +782,7 @@ contract MiniPoolRepayWithdrawTransferTest is MiniPoolDepositBorrowTest {
         );
         console.log(
             "2. Normalized income USDC: ",
-            ILendingPool(deployedContracts.lendingPool).getReserveNormalizedIncome(
+            ILendingPool(deployedLpContracts.lendingPool).getReserveNormalizedIncome(
                 address(usdcParams.token), true
             )
         );
@@ -792,7 +792,7 @@ contract MiniPoolRepayWithdrawTransferTest is MiniPoolDepositBorrowTest {
         );
         console.log(
             "2. Normalized income WBTC: ",
-            ILendingPool(deployedContracts.lendingPool).getReserveNormalizedIncome(
+            ILendingPool(deployedLpContracts.lendingPool).getReserveNormalizedIncome(
                 address(wbtcParams.token), true
             )
         );
@@ -822,7 +822,7 @@ contract MiniPoolRepayWithdrawTransferTest is MiniPoolDepositBorrowTest {
         console.log("3. AvailableLiquidity: ", availableLiquidity);
         console.log(
             "3. Normalized income USDC: ",
-            ILendingPool(deployedContracts.lendingPool).getReserveNormalizedIncome(
+            ILendingPool(deployedLpContracts.lendingPool).getReserveNormalizedIncome(
                 address(usdcParams.token), true
             )
         );
@@ -832,7 +832,7 @@ contract MiniPoolRepayWithdrawTransferTest is MiniPoolDepositBorrowTest {
         );
         console.log(
             "3. Normalized income WBTC: ",
-            ILendingPool(deployedContracts.lendingPool).getReserveNormalizedIncome(
+            ILendingPool(deployedLpContracts.lendingPool).getReserveNormalizedIncome(
                 address(wbtcParams.token), true
             )
         );
@@ -899,7 +899,7 @@ contract MiniPoolRepayWithdrawTransferTest is MiniPoolDepositBorrowTest {
         fixture_depositTokensToMainPool(amountwBtc, user2, tokenParamsWbtc);
 
         vm.startPrank(user2);
-        deployedContracts.lendingPool.borrow(
+        deployedLpContracts.lendingPool.borrow(
             address(tokenParamsUsdc.token), true, amountUsdc, user2
         );
         assertEq(amountUsdc, tokenParamsUsdc.token.balanceOf(address(user2)));

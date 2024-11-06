@@ -115,9 +115,9 @@ contract UiPoolDataProviderV2 is IUiPoolDataProviderV2 {
                 reserveData.reserveLiquidationThreshold,
                 reserveData.reserveLiquidationBonus,
                 reserveData.decimals,
-                reserveData.reserveFactor
+                reserveData.reserveFactor,
             ) = baseData.configuration.getParamsMemory();
-            (reserveData.isActive, reserveData.isFrozen, reserveData.borrowingEnabled) =
+            (reserveData.isActive, reserveData.isFrozen, reserveData.borrowingEnabled,) =
                 baseData.configuration.getFlagsMemory();
             reserveData.usageAsCollateralEnabled = reserveData.baseLTVasCollateral != 0;
             (reserveData.variableRateSlope1, reserveData.variableRateSlope2) =

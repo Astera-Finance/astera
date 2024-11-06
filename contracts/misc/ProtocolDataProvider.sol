@@ -91,10 +91,10 @@ contract ProtocolDataProvider {
         DataTypes.ReserveConfigurationMap memory configuration =
             ILendingPool(ADDRESSES_PROVIDER.getLendingPool()).getConfiguration(asset, reserveType);
 
-        (ltv, liquidationThreshold, liquidationBonus, decimals, reserveFactor) =
+        (ltv, liquidationThreshold, liquidationBonus, decimals, reserveFactor,) =
             configuration.getParamsMemory();
 
-        (isActive, isFrozen, borrowingEnabled) = configuration.getFlagsMemory();
+        (isActive, isFrozen, borrowingEnabled,) = configuration.getFlagsMemory();
 
         usageAsCollateralEnabled = liquidationThreshold > 0;
     }

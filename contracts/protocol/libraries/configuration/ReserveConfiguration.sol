@@ -373,16 +373,38 @@ library ReserveConfiguration {
     function getParamsMemory(DataTypes.ReserveConfigurationMap memory self)
         internal
         pure
-        returns (uint256, uint256, uint256, uint256, uint256)
+        returns (uint256, uint256, uint256, uint256, uint256, uint256)
     {
         return (
             self.data & ~LTV_MASK,
             (self.data & ~LIQUIDATION_THRESHOLD_MASK) >> LIQUIDATION_THRESHOLD_START_BIT_POSITION,
             (self.data & ~LIQUIDATION_BONUS_MASK) >> LIQUIDATION_BONUS_START_BIT_POSITION,
             (self.data & ~DECIMALS_MASK) >> RESERVE_DECIMALS_START_BIT_POSITION,
-            (self.data & ~RESERVE_FACTOR_MASK) >> RESERVE_FACTOR_START_BIT_POSITION
+            (self.data & ~RESERVE_FACTOR_MASK) >> RESERVE_FACTOR_START_BIT_POSITION,
+            (self.data & ~DEPOSIT_CAP_MASK) >> DEPOSIT_CAP_START_BIT_POSITION
         );
     }
+
+    // uint256 internal constant LTV_MASK =
+    //     0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF0000;
+    // uint256 internal constant LIQUIDATION_THRESHOLD_MASK =
+    //     0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF0000FFFF;
+    // uint256 internal constant LIQUIDATION_BONUS_MASK =
+    //     0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF0000FFFFFFFF;
+    // uint256 internal constant DECIMALS_MASK =
+    //     0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF00FFFFFFFFFFFF;
+    // uint256 internal constant ACTIVE_MASK =
+    //     0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFEFFFFFFFFFFFFFF;
+    // uint256 internal constant FROZEN_MASK =
+    //     0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFDFFFFFFFFFFFFFF;
+    // uint256 internal constant BORROWING_MASK =
+    //     0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFBFFFFFFFFFFFFFF;
+    // uint256 internal constant FLASHLOAN_ENABLED_MASK =
+    //     0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF7FFFFFFFFFFFFFF;
+    // uint256 internal constant RESERVE_FACTOR_MASK =
+    //     0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF0000FFFFFFFFFFFFFFF;
+    // uint256 internal constant DEPOSIT_CAP_MASK =
+    //     0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF00FFFFFFFFFFFFFFFFFFF;
 
     /**
      * @dev Gets the configuration flags of the reserve from a memory object
@@ -393,12 +415,13 @@ library ReserveConfiguration {
     function getFlagsMemory(DataTypes.ReserveConfigurationMap memory self)
         internal
         pure
-        returns (bool, bool, bool)
+        returns (bool, bool, bool, bool)
     {
         return (
             (self.data & ~ACTIVE_MASK) != 0,
             (self.data & ~FROZEN_MASK) != 0,
-            (self.data & ~BORROWING_MASK) != 0
+            (self.data & ~BORROWING_MASK) != 0,
+            (self.data & ~FLASHLOAN_ENABLED_MASK) != 0
         );
     }
 

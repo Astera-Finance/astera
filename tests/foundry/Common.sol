@@ -56,6 +56,26 @@ struct ReserveDataParams {
     uint40 lastUpdateTimestamp;
 }
 
+struct TokenTypes {
+    ERC20 token;
+    AToken aToken;
+    VariableDebtToken debtToken;
+}
+
+event Deposit(address indexed reserve, address user, address indexed onBehalfOf, uint256 amount);
+
+event Withdraw(address indexed reserve, address indexed user, address indexed to, uint256 amount);
+
+event Borrow(
+    address indexed reserve,
+    address user,
+    address indexed onBehalfOf,
+    uint256 amount,
+    uint256 borrowRate
+);
+
+event Repay(address indexed reserve, address indexed user, address indexed repayer, uint256 amount);
+
 contract Common is Test {
     using WadRayMath for uint256;
 
