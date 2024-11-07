@@ -289,12 +289,13 @@ contract Cod3xLendDataProvider {
         view
         returns (
             address[] memory aErc6909Token,
+            address[] memory reserves,
             uint256[] memory aTokenIds,
             uint256[] memory variableDebtTokenIds
         )
     {
         IMiniPool miniPool = IMiniPool(miniPoolAddressProvider.getMiniPool(miniPoolId));
-        (address[] memory reserves,) = miniPool.getReservesList();
+        (reserves,) = miniPool.getReservesList();
         aErc6909Token = new address[](reserves.length);
         aTokenIds = new uint256[](reserves.length);
         variableDebtTokenIds = new uint256[](reserves.length);
@@ -385,6 +386,71 @@ contract Cod3xLendDataProvider {
             DataTypes.MiniPoolReserveData memory data = miniPool.getReserveData(reserves[idx]);
             if (data.aTokenID == tokenId) {
                 underlyingBalance += IERC20Detailed(reserves[idx]).balanceOf(data.aTokenAddress);
+            }
+        }
+    }
+
+    function getMpUnderlyingBalanceOf_2(uint256 tokenId, uint256 miniPoolId)
+        public
+        view
+        returns (uint256 underlyingBalance)
+    {
+        IAERC6909 aErc6909Token =
+            IAERC6909(miniPoolAddressProvider.getMiniPoolToAERC6909(miniPoolId));
+        underlyingBalance = IERC20Detailed(aErc6909Token.getUnderlyingAsset(tokenId)).balanceOf(
+            address(aErc6909Token)
+        );
+    }
+
+    function getUnderlyingAssetFromId(uint256 tokenId, uint256 miniPoolId)
+        public
+        view
+        returns (address underlyingAsset)
+    {
+        IAERC6909 aErc6909Token =
+            IAERC6909(miniPoolAddressProvider.getMiniPoolToAERC6909(miniPoolId));
+        return aErc6909Token.getUnderlyingAsset(tokenId);
+    }
+
+    function getMiniPoolsWithReserve(address reserve)
+        external
+        view
+        returns (address[] memory miniPools, uint256[] memory miniPoolIds)
+    {
+        uint256 miniPoolCount = miniPoolAddressProvider.getMiniPoolCount();
+        address[] memory tmpMiniPools = new address[](miniPoolCount);
+        uint256[] memory tmpMiniPoolIds = new uint256[](miniPoolCount);
+        uint256 length = 0;
+        /* Go through all mini pools and check whether reserve exists there */
+        for (uint256 miniPoolId = 0; miniPoolId < miniPoolCount; miniPoolId++) {
+            (bool isReserveAvailable, address miniPool) = isReserveInMiniPool(reserve, miniPoolId);
+            if (isReserveAvailable == true) {
+                tmpMiniPools[length] = miniPool;
+                tmpMiniPoolIds[length] = miniPoolId;
+                length++;
+            }
+        }
+        /* Assign to the return arrays proper lengths */
+        miniPools = new address[](length);
+        miniPoolIds = new uint256[](length);
+        /* Compy data from temporary array */
+        for (uint256 idx = 0; idx < length; idx++) {
+            miniPools[idx] = tmpMiniPools[idx];
+            miniPoolIds[idx] = tmpMiniPoolIds[idx];
+        }
+    }
+
+    function isReserveInMiniPool(address reserve, uint256 miniPoolId)
+        public
+        view
+        returns (bool isReserveAvailable, address miniPool)
+    {
+        isReserveAvailable = false;
+        miniPool = miniPoolAddressProvider.getMiniPool(miniPoolId);
+        (address[] memory reserves,) = IMiniPool(miniPool).getReservesList();
+        for (uint256 idx = 0; idx < reserves.length; idx++) {
+            if (reserves[idx] == reserve) {
+                isReserveAvailable = true;
             }
         }
     }
