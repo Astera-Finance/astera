@@ -18,7 +18,6 @@ contract MockLendingPool is LendingPool {
         BorrowLogic.CalculateUserAccountDataVolatileParams memory params;
         params.user = addUser;
         params.reservesCount = _reservesCount;
-        params.lendingUpdateTimestamp = _lendingUpdateTimestamp;
         params.oracle = oracle;
 
         (uint userCollateralBalanceETH, uint userBorrowBalanceETH,,,) 
@@ -26,7 +25,6 @@ contract MockLendingPool is LendingPool {
                 params,
                 _reserves,
                 _usersConfig[addUser],
-                _usersRecentBorrow[addUser],
                 _reservesList
         );
 

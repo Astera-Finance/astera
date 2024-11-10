@@ -8,8 +8,6 @@ import {IReserveInterestRateStrategy} from
     "../../../../../contracts/interfaces/IReserveInterestRateStrategy.sol";
 import {ReserveConfiguration} from
     "../../../../../contracts/protocol/libraries/configuration/ReserveConfiguration.sol";
-import {ReserveBorrowConfiguration} from
-    "../../../../../contracts/protocol/libraries/configuration/ReserveBorrowConfiguration.sol";
 import {MathUtils} from "../../../../../contracts/protocol/libraries/math/MathUtils.sol";
 import {WadRayMath} from "../../../../../contracts/protocol/libraries/math/WadRayMath.sol";
 import {PercentageMath} from "../../../../../contracts/protocol/libraries/math/PercentageMath.sol";
@@ -52,7 +50,6 @@ library MiniPoolReserveLogic {
 
     using MiniPoolReserveLogic for DataTypes.MiniPoolReserveData;
     using ReserveConfiguration for DataTypes.ReserveConfigurationMap;
-    using ReserveBorrowConfiguration for DataTypes.ReserveBorrowConfigurationMap;
 
     /**
      * @dev Returns the ongoing normalized income for the reserve
@@ -69,7 +66,6 @@ library MiniPoolReserveLogic {
     {
         uint40 timestamp = reserve.lastUpdateTimestamp;
 
-        //solium-disable-next-line
         if (timestamp == uint40(block.timestamp)) {
             //if the index was updated in the same block, no need to perform any calculation
             return reserve.liquidityIndex;
@@ -97,7 +93,6 @@ library MiniPoolReserveLogic {
     {
         uint40 timestamp = reserve.lastUpdateTimestamp;
 
-        //solium-disable-next-line
         if (timestamp == uint40(block.timestamp)) {
             //if the index was updated in the same block, no need to perform any calculation
             return reserve.variableBorrowIndex;
@@ -172,13 +167,14 @@ library MiniPoolReserveLogic {
      */
     function init(
         DataTypes.MiniPoolReserveData storage reserve,
+        address asset,
         IAERC6909 aTokenAddress,
         uint256 aTokenID,
         uint256 variableDebtTokenID,
         address interestRateStrategyAddress
     ) internal {
         require(
-            aTokenAddress.getUnderlyingAsset(reserve.aTokenID) == address(0),
+            aTokenAddress.getUnderlyingAsset(aTokenID) == asset,
             Errors.RL_RESERVE_ALREADY_INITIALIZED
         );
 
@@ -191,7 +187,6 @@ library MiniPoolReserveLogic {
     }
 
     struct UpdateInterestRatesLocalVars {
-        uint256 availableLiquidity;
         uint256 newLiquidityRate;
         uint256 newVariableRate;
         uint256 totalVariableDebt;
@@ -317,7 +312,7 @@ library MiniPoolReserveLogic {
         uint256 newVariableBorrowIndex = variableBorrowIndex;
 
         //only cumulating if there is any income being produced
-        if (currentLiquidityRate > 0) {
+        if (currentLiquidityRate != 0) {
             uint256 cumulatedLiquidityInterest =
                 MathUtils.calculateLinearInterest(currentLiquidityRate, timestamp);
             newLiquidityIndex = cumulatedLiquidityInterest.rayMul(liquidityIndex);
@@ -325,8 +320,6 @@ library MiniPoolReserveLogic {
 
             reserve.liquidityIndex = uint128(newLiquidityIndex);
 
-            //as the liquidity rate might come only from stable rate loans, we need to ensure
-            //that there is actual variable debt before accumulating
             if (scaledVariableDebt != 0) {
                 uint256 cumulatedVariableBorrowInterest = MathUtils.calculateCompoundedInterest(
                     reserve.currentVariableBorrowRate, timestamp
@@ -340,7 +333,6 @@ library MiniPoolReserveLogic {
             }
         }
 
-        //solium-disable-next-line
         reserve.lastUpdateTimestamp = uint40(block.timestamp);
         return (newLiquidityIndex, newVariableBorrowIndex);
     }

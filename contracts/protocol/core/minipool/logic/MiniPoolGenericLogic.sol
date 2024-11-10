@@ -37,8 +37,6 @@ library MiniPoolGenericLogic {
         uint256 amountToDecreaseInETH;
         uint256 collateralBalanceAfterDecrease;
         uint256 liquidationThresholdAfterDecrease;
-        uint256 healthFactorAfterDecrease;
-        bool reserveUsageAsCollateralEnabled;
     }
 
     /**
@@ -47,9 +45,9 @@ library MiniPoolGenericLogic {
      * @param asset The address of the underlying asset of the reserve
      * @param user The address of the user
      * @param amount The amount to decrease
-     * @param reservesData The data of all the reserves
+     * @param reserves The data of all the reserves
      * @param userConfig The user configuration
-     * @param reserves The list of all the active reserves
+     * @param reservesList The list of all the active reserves
      * @param oracle The address of the oracle contract
      * @return true if the decrease of the balance is allowed
      *
@@ -58,28 +56,26 @@ library MiniPoolGenericLogic {
         address asset,
         address user,
         uint256 amount,
-        mapping(address => DataTypes.MiniPoolReserveData) storage reservesData,
+        mapping(address => DataTypes.MiniPoolReserveData) storage reserves,
         DataTypes.UserConfigurationMap storage userConfig,
-        mapping(uint256 => DataTypes.ReserveReference) storage reserves,
+        mapping(uint256 => address) storage reservesList,
         uint256 reservesCount,
         address oracle
     ) external view returns (bool) {
-        if (!userConfig.isBorrowingAny() || !userConfig.isUsingAsCollateral(reservesData[asset].id))
-        {
+        if (!userConfig.isBorrowingAny() || !userConfig.isUsingAsCollateral(reserves[asset].id)) {
             return true;
         }
 
         balanceDecreaseAllowedLocalVars memory vars;
 
-        (, vars.liquidationThreshold,, vars.decimals,) =
-            reservesData[asset].configuration.getParams();
+        (, vars.liquidationThreshold,, vars.decimals,) = reserves[asset].configuration.getParams();
 
         if (vars.liquidationThreshold == 0) {
             return true;
         }
 
         (vars.totalCollateralInETH, vars.totalDebtInETH,, vars.avgLiquidationThreshold,) =
-        calculateUserAccountData(user, reservesData, userConfig, reserves, reservesCount, oracle);
+        calculateUserAccountData(user, reserves, userConfig, reservesList, reservesCount, oracle);
 
         if (vars.totalDebtInETH == 0) {
             return true;
@@ -117,7 +113,7 @@ library MiniPoolGenericLogic {
         return IPriceOracleGetter(oracle).getAssetPrice(asset) * amount / (10 ** decimals);
     }
 
-    struct CalculateUserAccountDataVars {
+    struct CalculateUserAccountDataLocalVars {
         uint256 reserveUnitPrice;
         uint256 tokenUnit;
         uint256 compoundedLiquidityBalance;
@@ -131,13 +127,7 @@ library MiniPoolGenericLogic {
         uint256 totalDebtInETH;
         uint256 avgLtv;
         uint256 avgLiquidationThreshold;
-        uint256 reservesLength;
-        uint256 userVolatility;
-        address underlyingAsset;
-        bool healthFactorBelowThreshold;
         address currentReserveAddress;
-        bool usageAsCollateralEnabled;
-        bool userUsesReserveAsCollateral;
     }
 
     /**
@@ -145,22 +135,22 @@ library MiniPoolGenericLogic {
      * this includes the total liquidity/collateral/borrow balances in ETH,
      * the average Loan To Value, the average Liquidation Ratio, and the Health factor.
      * @param user The address of the user
-     * @param reservesData Data of all the reserves
+     * @param reserves Data of all the reserves
      * @param userConfig The configuration of the user
-     * @param reserves The list of the available reserves
+     * @param reservesList The list of the available reserves
      * @param oracle The price oracle address
      * @return The total collateral and total debt of the user in ETH, the avg ltv, liquidation threshold and the HF
      *
      */
     function calculateUserAccountData(
         address user,
-        mapping(address => DataTypes.MiniPoolReserveData) storage reservesData,
+        mapping(address => DataTypes.MiniPoolReserveData) storage reserves,
         DataTypes.UserConfigurationMap memory userConfig,
-        mapping(uint256 => DataTypes.ReserveReference) storage reserves,
+        mapping(uint256 => address) storage reservesList,
         uint256 reservesCount,
         address oracle
     ) internal view returns (uint256, uint256, uint256, uint256, uint256) {
-        CalculateUserAccountDataVars memory vars;
+        CalculateUserAccountDataLocalVars memory vars;
 
         if (userConfig.isEmpty()) {
             return (0, 0, 0, 0, type(uint256).max);
@@ -170,9 +160,9 @@ library MiniPoolGenericLogic {
                 continue;
             }
 
-            vars.currentReserveAddress = reserves[vars.i].asset;
+            vars.currentReserveAddress = reservesList[vars.i];
             DataTypes.MiniPoolReserveData storage currentReserve =
-                reservesData[vars.currentReserveAddress];
+                reserves[vars.currentReserveAddress];
 
             (vars.ltv, vars.liquidationThreshold,, vars.decimals,) =
                 currentReserve.configuration.getParams();

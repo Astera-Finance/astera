@@ -6,7 +6,6 @@ pragma solidity ^0.8.20;
 import {ERC20} from "contracts/dependencies/openzeppelin/contracts/ERC20.sol";
 import {MockReaperVault2} from "./MockVault.sol";
 import {IStrategy} from "../dependencies/IStrategy.sol";
-import "forge-std/console.sol";
 
 contract MockStrategy is IStrategy {
     uint256 wantBalance;
@@ -24,7 +23,6 @@ contract MockStrategy is IStrategy {
             ? int256(wantContract.balanceOf(address(this)) - wantBalance)
             : -int256(wantBalance - wantContract.balanceOf(address(this)));
         wantContract.approve(address(vaultContract), uint256(roi));
-        console.log("REPORTING ROI: ", uint256(roi));
         vaultContract.report(roi, 0);
         wantBalance = wantContract.balanceOf(address(this));
         return roi;

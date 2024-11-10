@@ -24,7 +24,7 @@ cache_forge
 
 # Python
 pyenv
-datas/
+data/
 
 # Echidna
 corpus/

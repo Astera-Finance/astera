@@ -467,11 +467,8 @@ contract MiniPoolFlashloanTest is Common {
         uint256[] memory modes = new uint256[](assets.length);
         modes[0] = 0;
 
-        bool[] memory reserveTypes = new bool[](assets.length);
-        reserveTypes[0] = false;
-
         IMiniPool.FlashLoanParams memory flashLoanParams =
-            IMiniPool.FlashLoanParams(address(this), assets, reserveTypes, address(this));
+            IMiniPool.FlashLoanParams(address(this), assets, address(this));
 
         uint256 balanceBefore = tokenParamsUsdc.token.balanceOf(address(this));
 
@@ -497,11 +494,8 @@ contract MiniPoolFlashloanTest is Common {
         uint256[] memory modes = new uint256[](assets.length);
         modes[0] = 0;
 
-        bool[] memory reserveTypes = new bool[](assets.length);
-        reserveTypes[0] = false;
-
         IMiniPool.FlashLoanParams memory flashLoanParams =
-            IMiniPool.FlashLoanParams(address(this), assets, reserveTypes, address(this));
+            IMiniPool.FlashLoanParams(address(this), assets, address(this));
 
         IMiniPool(miniPool).flashLoan(flashLoanParams, amounts, modes, bytes("0"));
     }
@@ -523,12 +517,8 @@ contract MiniPoolFlashloanTest is Common {
         modes[0] = 0;
         modes[1] = 0;
 
-        bool[] memory reserveTypes = new bool[](assets.length);
-        reserveTypes[0] = false;
-        reserveTypes[1] = false;
-
         IMiniPool.FlashLoanParams memory flashLoanParams =
-            IMiniPool.FlashLoanParams(address(this), assets, reserveTypes, address(this));
+            IMiniPool.FlashLoanParams(address(this), assets, address(this));
 
         IMiniPool(miniPool).flashLoan(flashLoanParams, amounts, modes, bytes("0"));
     }
@@ -547,11 +537,8 @@ contract MiniPoolFlashloanTest is Common {
         uint256[] memory modes = new uint256[](assets.length);
         modes[0] = 0;
 
-        bool[] memory reserveTypes = new bool[](assets.length);
-        reserveTypes[0] = false;
-
         IMiniPool.FlashLoanParams memory flashLoanParams =
-            IMiniPool.FlashLoanParams(address(this), assets, reserveTypes, address(this));
+            IMiniPool.FlashLoanParams(address(this), assets, address(this));
 
         vm.expectRevert(bytes("95"));
         IMiniPool(miniPool).flashLoan(flashLoanParams, amounts, modes, bytes("0"));
@@ -574,12 +561,8 @@ contract MiniPoolFlashloanTest is Common {
         modes[0] = 0;
         modes[1] = 0;
 
-        bool[] memory reserveTypes = new bool[](assets.length);
-        reserveTypes[0] = false;
-        reserveTypes[1] = false;
-
         IMiniPool.FlashLoanParams memory flashLoanParams =
-            IMiniPool.FlashLoanParams(address(this), assets, reserveTypes, address(this));
+            IMiniPool.FlashLoanParams(address(this), assets, address(this));
 
         vm.expectRevert(bytes("95"));
         IMiniPool(miniPool).flashLoan(flashLoanParams, amounts, modes, bytes("0"));
@@ -607,11 +590,8 @@ contract MiniPoolFlashloanTest is Common {
         uint256[] memory modes = new uint256[](assets.length);
         modes[0] = 1;
 
-        bool[] memory reserveTypes = new bool[](assets.length);
-        reserveTypes[0] = false;
-
         IMiniPool.FlashLoanParams memory flashLoanParams =
-            IMiniPool.FlashLoanParams(address(this), assets, reserveTypes, address(this));
+            IMiniPool.FlashLoanParams(address(this), assets, address(this));
 
         uint256 balanceBefore = tokenParamsUsdc.token.balanceOf(address(this));
 
@@ -653,7 +633,7 @@ contract MiniPoolFlashloanTest is Common {
         reserveTypes[1] = false;
 
         IMiniPool.FlashLoanParams memory flashLoanParams =
-            IMiniPool.FlashLoanParams(address(this), assets, reserveTypes, address(this));
+            IMiniPool.FlashLoanParams(address(this), assets, address(this));
 
         uint256 balanceBeforeUsdc = tokenParamsUsdc.token.balanceOf(address(this));
         uint256 balanceBeforeWbtc = tokenParamsWbtc.token.balanceOf(address(this));
@@ -693,12 +673,8 @@ contract MiniPoolFlashloanTest is Common {
         modes[0] = 1;
         modes[1] = 1;
 
-        bool[] memory reserveTypes = new bool[](assets.length);
-        reserveTypes[0] = false;
-        reserveTypes[1] = false;
-
         IMiniPool.FlashLoanParams memory flashLoanParams =
-            IMiniPool.FlashLoanParams(address(this), assets, reserveTypes, address(this));
+            IMiniPool.FlashLoanParams(address(this), assets, address(this));
 
         uint256 balanceBeforeUsdc = tokenParamsUsdc.token.balanceOf(address(this));
         uint256 balanceBeforeWbtc = tokenParamsWbtc.token.balanceOf(address(this));

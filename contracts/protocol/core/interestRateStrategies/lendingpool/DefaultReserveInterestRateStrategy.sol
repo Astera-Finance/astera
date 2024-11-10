@@ -16,7 +16,7 @@ import {Errors} from "../../../../../contracts/protocol/libraries/helpers/Errors
  * @notice Implements the calculation of the interest rates depending on the reserve state
  * @dev The model of interest rate is based on 2 slopes, one before the `OPTIMAL_UTILIZATION_RATE`
  * point of utilization and another from that one to 100%
- * - An instance of this same contract, can't be used across different Aave markets, due to the caching
+ * - An instance of this same contract, can't be used across different Cod3x Lend markets, due to the caching
  *   of the LendingPoolAddressesProvider
  * @author Cod3x
  *
@@ -84,7 +84,8 @@ contract DefaultReserveInterestRateStrategy is IReserveInterestRateStrategy {
 
     /**
      * @dev Calculates the interest rates depending on the reserve's state and configurations
-     * @param reserve The address of the reserve
+     * @param asset The address of the asset
+     * @param aToken The address of the reserve aToken
      * @param liquidityAdded The liquidity added during the operation
      * @param liquidityTaken The liquidity taken during the operation
      * @param totalVariableDebt The total borrowed from the reserve at a variable rate
@@ -93,7 +94,7 @@ contract DefaultReserveInterestRateStrategy is IReserveInterestRateStrategy {
      *
      */
     function calculateInterestRates(
-        address reserve,
+        address asset,
         address aToken,
         uint256 liquidityAdded,
         uint256 liquidityTaken,
@@ -106,7 +107,7 @@ contract DefaultReserveInterestRateStrategy is IReserveInterestRateStrategy {
         }
         availableLiquidity = availableLiquidity + liquidityAdded - liquidityTaken;
 
-        return calculateInterestRates(reserve, availableLiquidity, totalVariableDebt, reserveFactor);
+        return calculateInterestRates(asset, availableLiquidity, totalVariableDebt, reserveFactor);
     }
 
     struct CalcInterestRatesLocalVars {

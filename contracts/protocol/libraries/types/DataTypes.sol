@@ -10,8 +10,6 @@ library DataTypes {
     struct ReserveData {
         //stores the reserve configuration
         ReserveConfigurationMap configuration;
-        //stores the reserve borrow configuration
-        ReserveBorrowConfigurationMap borrowConfiguration;
         //the liquidity index. Expressed in ray
         uint128 liquidityIndex;
         //variable borrow index. Expressed in ray
@@ -20,9 +18,11 @@ library DataTypes {
         uint128 currentLiquidityRate;
         //the current variable borrow rate. Expressed in ray
         uint128 currentVariableBorrowRate;
+        //timestamp of last update
         uint40 lastUpdateTimestamp;
         //tokens addresses
         address aTokenAddress;
+        //variableDebtToken address
         address variableDebtTokenAddress;
         //address of the interest rate strategy
         address interestRateStrategyAddress;
@@ -33,8 +33,6 @@ library DataTypes {
     struct MiniPoolReserveData {
         //stores the reserve configuration
         ReserveConfigurationMap configuration;
-        //stores the reserve borrow configuration
-        ReserveBorrowConfigurationMap borrowConfiguration;
         //the liquidity index. Expressed in ray
         uint128 liquidityIndex;
         //variable borrow index. Expressed in ray
@@ -43,10 +41,13 @@ library DataTypes {
         uint128 currentLiquidityRate;
         //the current variable borrow rate. Expressed in ray
         uint128 currentVariableBorrowRate;
+        //timestamp of last update
         uint40 lastUpdateTimestamp;
         //tokens addresses
         address aTokenAddress;
+        //ERC6909 aToken ID.
         uint256 aTokenID;
+        //ERC6909 debt token ID.
         uint256 variableDebtTokenID;
         //address of the interest rate strategy
         address interestRateStrategyAddress;
@@ -62,9 +63,10 @@ library DataTypes {
         //bit 56: Reserve is active
         //bit 57: reserve is frozen
         //bit 58: borrowing is enabled
-        //bit 59: stable rate borrowing enabled
-        //bit 60-63: reserved
-        //bit 64-79: reserve factor
+        //bit 59: Flashloan is enabled
+        //bit 60-75: reserve factor
+        //bit 76-83: deposit cap
+        //bit 84-255: unused
         uint256 data;
     }
 
@@ -73,56 +75,12 @@ library DataTypes {
         bool reserveType; // if the reserve is vault-boosted
     }
 
-    struct ReserveBorrowConfigurationMap {
-        //bit 0-15: Low LTV
-        //bit 16-31: Low Liq. Threshold
-        //bit 32-47: Medium LTV
-        //bit 48-63: Medium Liq. Threshold
-        //bit 64-79: High LTV
-        //bit 80-95: High Liq. Threshold
-        //bit 96-98: Volatility tier
-        uint256 data;
-    }
-
-    // struct UserData {
-    //   UserConfigurationMap userConfiguration;
-    //   UserRecentBorrowMap userRecentBorrow;
-    // }
-
     struct UserConfigurationMap {
-        uint256 data;
-    }
-
-    struct UserRecentBorrowMap {
         uint256 data;
     }
 
     enum InterestRateMode {
         NONE,
         VARIABLE
-    }
-
-    struct snapshot {
-        uint8 reserveID;
-        uint16 usedLTV;
-        uint16 usedLiquidationThreshold;
-        uint128 index;
-        uint256 amount;
-    }
-
-    struct collSnapshot {
-        snapshot[] collateralSnapshots;
-        uint8 numCollateral;
-    }
-
-    struct debtSnapshot {
-        snapshot[] debtSnapshots;
-        uint8 numDebt;
-    }
-
-    struct LoanInfo {
-        collSnapshot collateralInfo;
-        debtSnapshot debtInfo;
-        bool relation;
     }
 }

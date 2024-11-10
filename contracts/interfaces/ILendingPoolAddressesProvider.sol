@@ -5,7 +5,7 @@ pragma solidity ^0.8.0;
  * @title LendingPoolAddressesProvider contract
  * @dev Main registry of addresses part of or connected to the protocol, including permissioned roles
  * - Acting also as factory of proxies and admin of those, so with right to change its implementations
- * - Owned by the Aave Governance
+ * - Owned by the Cod3x Governance
  * @author Cod3x
  *
  */
@@ -15,7 +15,6 @@ interface ILendingPoolAddressesProvider {
     event ConfigurationAdminUpdated(address indexed newAddress);
     event EmergencyAdminUpdated(address indexed newAddress);
     event LendingPoolConfiguratorUpdated(address indexed newAddress);
-    event LendingPoolCollateralManagerUpdated(address indexed newAddress);
     event PriceOracleUpdated(address indexed newAddress);
     event ProxyCreated(bytes32 id, address indexed newAddress);
     event AddressSet(bytes32 id, address indexed newAddress, bool hasProxy);
@@ -26,7 +25,6 @@ interface ILendingPoolAddressesProvider {
     function getLendingPoolConfigurator() external view returns (address);
     function getPoolAdmin() external view returns (address);
     function getEmergencyAdmin() external view returns (address);
-    function getLendingPoolCollateralManager() external view returns (address);
     function getPriceOracle() external view returns (address);
     function getFlowLimiter() external view returns (address);
     function getAddress(bytes32 id) external view returns (address);
@@ -39,7 +37,6 @@ interface ILendingPoolAddressesProvider {
     function setLendingPoolConfiguratorImpl(address configurator) external;
 
     //Functions related to proxies
-    function setLendingPoolCollateralManager(address manager) external;
     function setPoolAdmin(address admin) external;
     function setEmergencyAdmin(address admin) external;
     function setPriceOracle(address priceOracle) external;

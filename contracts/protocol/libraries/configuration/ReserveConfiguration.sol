@@ -10,54 +10,44 @@ import {DataTypes} from "../../../../contracts/protocol/libraries/types/DataType
  * @notice Implements the bitmap logic to handle the reserve configuration
  */
 library ReserveConfiguration {
-    /* TODO: make all internal */
-    uint256 constant LTV_MASK = 0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF0000; // prettier-ignore
-    uint256 constant LIQUIDATION_THRESHOLD_MASK =
-        0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF0000FFFF; // prettier-ignore
-    uint256 constant LIQUIDATION_BONUS_MASK =
-        0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF0000FFFFFFFF; // prettier-ignore
-    uint256 constant DECIMALS_MASK =
-        0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF00FFFFFFFFFFFF; // prettier-ignore
-    uint256 constant ACTIVE_MASK =
-        0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFEFFFFFFFFFFFFFF; // prettier-ignore
-    uint256 constant FROZEN_MASK =
-        0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFDFFFFFFFFFFFFFF; // prettier-ignore
-    uint256 constant BORROWING_MASK =
-        0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFBFFFFFFFFFFFFFF; // prettier-ignore
-    uint256 constant RESERVE_FACTOR_MASK =
-        0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF0000FFFFFFFFFFFFFFFF; // prettier-ignore
-
-    uint256 constant DEPOSIT_CAP_MASK =
-        0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF00FFFFFFFFFFFFFFFFFFFF; // prettier-ignore
-
-    uint256 constant PAUSED_MASK =
-        0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFEFFFFFFFFFFFFFFF; // prettier-ignore
-
+    uint256 internal constant LTV_MASK =
+        0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF0000;
+    uint256 internal constant LIQUIDATION_THRESHOLD_MASK =
+        0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF0000FFFF;
+    uint256 internal constant LIQUIDATION_BONUS_MASK =
+        0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF0000FFFFFFFF;
+    uint256 internal constant DECIMALS_MASK =
+        0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF00FFFFFFFFFFFF;
+    uint256 internal constant ACTIVE_MASK =
+        0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFEFFFFFFFFFFFFFF;
+    uint256 internal constant FROZEN_MASK =
+        0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFDFFFFFFFFFFFFFF;
+    uint256 internal constant BORROWING_MASK =
+        0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFBFFFFFFFFFFFFFF;
     uint256 internal constant FLASHLOAN_ENABLED_MASK =
-        0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF7FFFFFFFFFFFFFFF; // prettier-ignore
+        0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF7FFFFFFFFFFFFFF;
+    uint256 internal constant RESERVE_FACTOR_MASK =
+        0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF0000FFFFFFFFFFFFFFF;
+    uint256 internal constant DEPOSIT_CAP_MASK =
+        0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF00FFFFFFFFFFFFFFFFFFF;
 
     /// @dev For the LTV, the start bit is 0 (up to 15), hence no bitshifting is needed
-    uint256 constant LIQUIDATION_THRESHOLD_START_BIT_POSITION = 16;
-    uint256 constant LIQUIDATION_BONUS_START_BIT_POSITION = 32;
-    uint256 constant RESERVE_DECIMALS_START_BIT_POSITION = 48;
-    uint256 constant IS_ACTIVE_START_BIT_POSITION = 56;
-    uint256 constant IS_FROZEN_START_BIT_POSITION = 57;
-    uint256 constant BORROWING_ENABLED_START_BIT_POSITION = 58;
-    uint256 constant RESERVE_FACTOR_START_BIT_POSITION = 64;
-    uint256 constant DEPOSIT_CAP_START_BIT_POSITION = 80;
+    uint256 internal constant LIQUIDATION_THRESHOLD_START_BIT_POSITION = 16;
+    uint256 internal constant LIQUIDATION_BONUS_START_BIT_POSITION = 32;
+    uint256 internal constant RESERVE_DECIMALS_START_BIT_POSITION = 48;
+    uint256 internal constant IS_ACTIVE_START_BIT_POSITION = 56;
+    uint256 internal constant IS_FROZEN_START_BIT_POSITION = 57;
+    uint256 internal constant BORROWING_ENABLED_START_BIT_POSITION = 58;
+    uint256 internal constant FLASHLOAN_ENABLED_START_BIT_POSITION = 59;
+    uint256 internal constant RESERVE_FACTOR_START_BIT_POSITION = 60;
+    uint256 internal constant DEPOSIT_CAP_START_BIT_POSITION = 76;
 
-    uint256 constant MAX_VALID_LTV = 65535;
-    uint256 constant MAX_VALID_LIQUIDATION_THRESHOLD = 65535;
-    uint256 constant MAX_VALID_LIQUIDATION_BONUS = 65535;
-    uint256 constant MAX_VALID_DECIMALS = 255;
-    uint256 constant MAX_VALID_RESERVE_FACTOR = 65535;
-
-    uint256 constant MAX_VALID_DEPOSIT_CAP = 255;
-
-    uint256 constant IS_PAUSED_START_BIT_POSITION = 60;
-    uint256 constant FLASHLOAN_ENABLED_START_BIT_POSITION = 63;
-
-    /* TODO: make all getters with memory param */
+    uint256 internal constant MAX_VALID_LTV = 65535;
+    uint256 internal constant MAX_VALID_LIQUIDATION_THRESHOLD = 65535;
+    uint256 internal constant MAX_VALID_LIQUIDATION_BONUS = 65535;
+    uint256 internal constant MAX_VALID_DECIMALS = 255;
+    uint256 internal constant MAX_VALID_RESERVE_FACTOR = 65535;
+    uint256 internal constant MAX_VALID_DEPOSIT_CAP = 255;
 
     /**
      * @dev Sets the Loan to Value of the reserve
@@ -225,29 +215,6 @@ library ReserveConfiguration {
     }
 
     /**
-     * @notice Sets the paused state of the reserve
-     * @param self The reserve configuration
-     * @param paused The paused state
-     */
-    function setPaused(DataTypes.ReserveConfigurationMap memory self, bool paused) internal pure {
-        self.data =
-            (self.data & PAUSED_MASK) | (uint256(paused ? 1 : 0) << IS_PAUSED_START_BIT_POSITION);
-    }
-
-    /**
-     * @notice Gets the paused state of the reserve
-     * @param self The reserve configuration
-     * @return The paused state
-     */
-    function getPaused(DataTypes.ReserveConfigurationMap storage self)
-        internal
-        view
-        returns (bool)
-    {
-        return (self.data & ~PAUSED_MASK) != 0;
-    }
-
-    /**
      * @dev Enables or disables borrowing on the reserve
      * @param self The reserve configuration
      * @param enabled True if the borrowing needs to be enabled, false otherwise
@@ -384,27 +351,6 @@ library ReserveConfiguration {
             (self.data & ~DEPOSIT_CAP_MASK) >> DEPOSIT_CAP_START_BIT_POSITION
         );
     }
-
-    // uint256 internal constant LTV_MASK =
-    //     0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF0000;
-    // uint256 internal constant LIQUIDATION_THRESHOLD_MASK =
-    //     0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF0000FFFF;
-    // uint256 internal constant LIQUIDATION_BONUS_MASK =
-    //     0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF0000FFFFFFFF;
-    // uint256 internal constant DECIMALS_MASK =
-    //     0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF00FFFFFFFFFFFF;
-    // uint256 internal constant ACTIVE_MASK =
-    //     0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFEFFFFFFFFFFFFFF;
-    // uint256 internal constant FROZEN_MASK =
-    //     0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFDFFFFFFFFFFFFFF;
-    // uint256 internal constant BORROWING_MASK =
-    //     0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFBFFFFFFFFFFFFFF;
-    // uint256 internal constant FLASHLOAN_ENABLED_MASK =
-    //     0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF7FFFFFFFFFFFFFF;
-    // uint256 internal constant RESERVE_FACTOR_MASK =
-    //     0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF0000FFFFFFFFFFFFFFF;
-    // uint256 internal constant DEPOSIT_CAP_MASK =
-    //     0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF00FFFFFFFFFFFFFFFFFFF;
 
     /**
      * @dev Gets the configuration flags of the reserve from a memory object

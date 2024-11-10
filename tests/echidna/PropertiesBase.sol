@@ -22,7 +22,6 @@ import "contracts/interfaces/IInitializableAToken.sol";
 import "contracts/interfaces/IInitializableDebtToken.sol";
 import "contracts/interfaces/ILendingPool.sol";
 import "contracts/interfaces/ILendingPoolAddressesProvider.sol";
-import "contracts/interfaces/ILendingPoolCollateralManager.sol";
 import "contracts/interfaces/ILendingPoolConfigurator.sol";
 import "contracts/interfaces/IReserveInterestRateStrategy.sol";
 import "contracts/interfaces/IRewarder.sol";
@@ -35,21 +34,18 @@ import "contracts/protocol/core/Oracle.sol";
 import "contracts/misc/ProtocolDataProvider.sol";
 import "contracts/misc/UiPoolDataProviderV2.sol";
 import "contracts/misc/RewardsVault.sol";
-import "contracts/misc/Timelock.sol";
 import "contracts/misc/WETHGateway.sol";
 
 import "contracts/deployments/ATokensAndRatesHelper.sol";
 
 import "contracts/protocol/configuration/LendingPoolAddressesProvider.sol";
 
-import "contracts/protocol/core/lendingpool/LendingPoolCollateralManager.sol";
 import
     "contracts/protocol/core/interestRateStrategies/lendingpool/DefaultReserveInterestRateStrategy.sol";
 import "contracts/protocol/core/lendingpool/LendingPoolConfigurator.sol";
 import "contracts/protocol/core/lendingpool/LendingPoolStorage.sol";
 
 import "contracts/protocol/tokenization/ERC20/AToken.sol";
-import "contracts/protocol/tokenization/ERC20/DelegationAwareAToken.sol";
 import "contracts/protocol/tokenization/ERC20/VariableDebtToken.sol";
 
 import "contracts/protocol/core/lendingpool/logic/BorrowLogic.sol";
@@ -62,7 +58,6 @@ import "contracts/protocol/core/minipool/logic/MiniPoolDepositLogic.sol";
 import "contracts/protocol/core/minipool/logic/MiniPoolFlashLoanLogic.sol";
 import "contracts/protocol/core/minipool/logic/MiniPoolGenericLogic.sol";
 import "contracts/protocol/core/minipool/logic/MiniPoolLiquidationLogic.sol";
-import "contracts/protocol/core/minipool/logic/MiniPoolLoanInfoLogic.sol";
 import "contracts/protocol/core/minipool/logic/MiniPoolReserveLogic.sol";
 import "contracts/protocol/core/minipool/logic/MiniPoolValidationLogic.sol";
 import "contracts/protocol/core/minipool/logic/MiniPoolWithdrawLogic.sol";
@@ -92,7 +87,7 @@ contract PropertiesBase is PropertiesAsserts, MarketParams {
     AToken[] internal aTokens;
     VariableDebtToken[] internal debtTokens;
 
-    // AAVE contracts
+    // Cod3x Lend contracts
     IRewarder internal rewarder;
     LendingPoolAddressesProvider internal provider;
     MockLendingPool internal pool;
@@ -105,7 +100,6 @@ contract PropertiesBase is PropertiesAsserts, MarketParams {
     ProtocolDataProvider internal protocolDataProvider;
     UiPoolDataProviderV2 internal uiPoolDataProviderV2;
     WETHGateway internal wethGateway;
-    LendingPoolCollateralManager internal poolCollManager;
 
     constructor() {
         /// mocks
@@ -118,7 +112,7 @@ contract PropertiesBase is PropertiesAsserts, MarketParams {
             aggregators.push(a);
         }
 
-        /// setup AAVE
+        /// setup Cod3x Lend
         rewarder = IRewarder(address(0));
         provider = new LendingPoolAddressesProvider();
         provider.setPoolAdmin(address(this));
@@ -203,9 +197,6 @@ contract PropertiesBase is PropertiesAsserts, MarketParams {
         }
         provider.setPoolAdmin(address(aHelper));
         aHelper.configureReserves(configureReserveInput);
-
-        poolCollManager = new LendingPoolCollateralManager();
-        provider.setLendingPoolCollateralManager(address(poolCollManager));
         wethGateway.authorizeLendingPool(address(pool));
 
         for (uint256 i = 0; i < totalNbTokens; i++) {

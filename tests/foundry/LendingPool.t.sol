@@ -11,7 +11,6 @@ import "contracts/protocol/libraries/configuration/ReserveConfiguration.sol";
 contract LendingPoolTest is LendingPoolFixtures {
     using WadRayMath for uint256;
     using ReserveConfiguration for DataTypes.ReserveConfigurationMap;
-    using ReserveBorrowConfiguration for DataTypes.ReserveBorrowConfigurationMap;
 
     ERC20[] erc20Tokens;
 

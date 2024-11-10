@@ -1,0 +1,12 @@
+{
+    "collateralAddress": "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913",
+    "borrowAssetAddress": "0x0555E30da8f98308EdB960aa94C0Db47230d2B9c",
+    "depositAmount": 5000000000,
+    "borrowAmount": 20000,
+    "bootstrapLiquidity": true,
+    "usdAmountToDeposit": 1000000000000000000000,
+    "poolAddressesProviderConfig": {
+        "marketId": "UV TestNet Market",
+        "poolId": 0
+    }
+}

@@ -14,13 +14,16 @@ import {IFlowLimiter} from "../../../../../contracts/interfaces/IFlowLimiter.sol
 import {IAToken} from "../../../../../contracts/interfaces/IAToken.sol";
 import {IAERC6909} from "../../../../../contracts/interfaces/IAERC6909.sol";
 import {Errors} from "../../../../../contracts/protocol/libraries/helpers/Errors.sol";
+import {MathUtils} from "../../../../../contracts/protocol/libraries/math/MathUtils.sol";
+import {DataTypes} from "../../../../../contracts/protocol/libraries/types/DataTypes.sol";
+import {ILendingPool} from "../../../../../contracts/interfaces/ILendingPool.sol";
 
 /**
  * @title DefaultReserveInterestRateStrategy contract
  * @notice Implements the calculation of the interest rates depending on the reserve state
  * @dev The model of interest rate is based on 2 slopes, one before the `OPTIMAL_UTILIZATION_RATE`
  * point of utilization and another from that one to 100%
- * - An instance of this same contract, can't be used across different Aave markets, due to the caching
+ * - An instance of this same contract, can't be used across different Cod3x Lend markets, due to the caching
  *   of the MiniPoolAddressesProvider
  * @author Cod3x
  *
@@ -28,6 +31,9 @@ import {Errors} from "../../../../../contracts/protocol/libraries/helpers/Errors
 contract MiniPoolDefaultReserveInterestRateStrategy is IMiniPoolReserveInterestRateStrategy {
     using WadRayMath for uint256;
     using PercentageMath for uint256;
+
+    uint256 public constant DELTA_TIME_MARGIN = 5 days;
+    uint256 public constant SECONDS_PER_YEAR = 365 days;
 
     /**
      * @dev this constant represents the utilization rate at which the pool aims to obtain most competitive borrow rates.
@@ -86,9 +92,17 @@ contract MiniPoolDefaultReserveInterestRateStrategy is IMiniPoolReserveInterestR
         return _baseVariableBorrowRate + _variableRateSlope1 + _variableRateSlope2;
     }
 
+    struct CalcInterestRatesLocalVars1 {
+        uint256 availableLiquidity;
+        address underlying;
+        uint256 currentFlow;
+        bool isTranched;
+    }
+
     /**
      * @dev Calculates the interest rates depending on the reserve's state and configurations
-     * @param reserve The address of the reserve
+     * @param asset The address of the asset
+     * @param aToken The address of the reserve aToken
      * @param liquidityAdded The liquidity added during the operation
      * @param liquidityTaken The liquidity taken during the operation
      * @param totalVariableDebt The total borrowed from the reserve at a variable rate
@@ -97,38 +111,46 @@ contract MiniPoolDefaultReserveInterestRateStrategy is IMiniPoolReserveInterestR
      *
      */
     function calculateInterestRates(
-        address reserve,
+        address asset,
         address aToken,
         uint256 liquidityAdded,
         uint256 liquidityTaken,
         uint256 totalVariableDebt,
         uint256 reserveFactor
     ) external view override returns (uint256, uint256) {
-        uint256 availableLiquidity;
-        (,, bool isTranched) = IAERC6909(aToken).getIdForUnderlying(reserve);
-        if (isTranched) {
-            IFlowLimiter flowLimiter = IFlowLimiter(_addressesProvider.getFlowLimiter());
-            address underlying = IAToken(reserve).UNDERLYING_ASSET_ADDRESS();
-            address minipool = IAERC6909(aToken).MINIPOOL_ADDRESS();
+        CalcInterestRatesLocalVars1 memory vars;
 
-            availableLiquidity = IERC20(reserve).balanceOf(aToken)
-                + IAToken(reserve).convertToShares(flowLimiter.getFlowLimit(underlying, minipool))
-                - IAToken(reserve).convertToShares(flowLimiter.currentFlow(underlying, minipool));
+        (,, vars.isTranched) = IAERC6909(aToken).getIdForUnderlying(asset);
+        if (vars.isTranched) {
+            IFlowLimiter flowLimiter = IFlowLimiter(_addressesProvider.getFlowLimiter());
+            vars.underlying = IAToken(asset).UNDERLYING_ASSET_ADDRESS();
+            address minipool = IAERC6909(aToken).MINIPOOL_ADDRESS();
+            vars.currentFlow = flowLimiter.currentFlow(vars.underlying, minipool);
+
+            vars.availableLiquidity = IERC20(asset).balanceOf(aToken)
+                + IAToken(asset).convertToShares(flowLimiter.getFlowLimit(vars.underlying, minipool))
+                - IAToken(asset).convertToShares(vars.currentFlow);
         } else {
-            availableLiquidity = IERC20(reserve).balanceOf(aToken);
+            vars.availableLiquidity = IERC20(asset).balanceOf(aToken);
         }
 
-        if (availableLiquidity + liquidityAdded < liquidityTaken) {
+        if (vars.availableLiquidity + liquidityAdded < liquidityTaken) {
             revert(Errors.LP_NOT_ENOUGH_LIQUIDITY_TO_BORROW);
         }
 
         //avoid stack too deep
-        availableLiquidity = availableLiquidity + liquidityAdded - liquidityTaken;
+        vars.availableLiquidity = vars.availableLiquidity + liquidityAdded - liquidityTaken;
 
-        return calculateInterestRates(reserve, availableLiquidity, totalVariableDebt, reserveFactor);
+        return calculateInterestRates(
+            vars.underlying,
+            vars.currentFlow,
+            vars.availableLiquidity,
+            totalVariableDebt,
+            reserveFactor
+        );
     }
 
-    struct CalcInterestRatesLocalVars {
+    struct CalcInterestRatesLocalVars2 {
         uint256 totalDebt;
         uint256 currentVariableBorrowRate;
         uint256 currentLiquidityRate;
@@ -139,6 +161,8 @@ contract MiniPoolDefaultReserveInterestRateStrategy is IMiniPoolReserveInterestR
      * @dev Calculates the interest rates depending on the reserve's state and configurations.
      * NOTE This function is kept for compatibility with the previous DefaultInterestRateStrategy interface.
      * New protocol implementation uses the new calculateInterestRates() interface
+     * @param underlying Underlying asset if reserve is an aToken.
+     * @param currentFlow Current minipool Flow.
      * @param availableLiquidity The liquidity available in the corresponding aToken
      * @param totalVariableDebt The total borrowed from the reserve at a variable rate
      * @param reserveFactor The reserve portion of the interest that goes to the treasury of the market
@@ -146,12 +170,13 @@ contract MiniPoolDefaultReserveInterestRateStrategy is IMiniPoolReserveInterestR
      *
      */
     function calculateInterestRates(
-        address,
+        address underlying,
+        uint256 currentFlow,
         uint256 availableLiquidity,
         uint256 totalVariableDebt,
         uint256 reserveFactor
     ) public view returns (uint256, uint256) {
-        CalcInterestRatesLocalVars memory vars;
+        CalcInterestRatesLocalVars2 memory vars;
 
         vars.totalDebt = totalVariableDebt;
         vars.currentVariableBorrowRate = 0;
@@ -173,6 +198,37 @@ contract MiniPoolDefaultReserveInterestRateStrategy is IMiniPoolReserveInterestR
 
         vars.currentLiquidityRate = vars.currentVariableBorrowRate.rayMul(vars.utilizationRate)
             .percentMul(PercentageMath.PERCENTAGE_FACTOR - reserveFactor);
+
+        // Here we make sure that the minipool can always repay its debt to the lendingpool.
+        // https://www.desmos.com/calculator/3bigkgqbqg
+        if (currentFlow != 0) {
+            DataTypes.ReserveData memory r =
+                ILendingPool(_addressesProvider.getLendingPool()).getReserveData(underlying, true);
+
+            uint256 minLiquidityRate = (
+                MathUtils.calculateCompoundedInterest(
+                    r.currentVariableBorrowRate, uint40(block.timestamp - DELTA_TIME_MARGIN)
+                ) - r.currentLiquidityRate * DELTA_TIME_MARGIN / SECONDS_PER_YEAR - WadRayMath.ray()
+            ).rayDiv(
+                DELTA_TIME_MARGIN
+                    * (
+                        (r.currentLiquidityRate * DELTA_TIME_MARGIN / SECONDS_PER_YEAR)
+                            + WadRayMath.ray()
+                    ) / SECONDS_PER_YEAR
+            );
+
+            // `&& vars.utilizationRate != 0` to avoid 0 division. It's safe since the minipool flow is
+            // always owed to a user. Since the debt is repaid as soon as possible if
+            // `vars.utilizationRate != 0` then `currentFlow == 0` by the end of the transaction.
+            if (vars.currentLiquidityRate < minLiquidityRate && vars.utilizationRate != 0) {
+                vars.currentLiquidityRate = minLiquidityRate;
+                vars.currentVariableBorrowRate = vars.currentLiquidityRate.rayDiv(
+                    vars.utilizationRate.percentMul(
+                        PercentageMath.PERCENTAGE_FACTOR - reserveFactor
+                    )
+                );
+            }
+        }
 
         return (vars.currentLiquidityRate, vars.currentVariableBorrowRate);
     }

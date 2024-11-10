@@ -27,14 +27,14 @@ interface IMiniPoolRewardsController is IMiniPoolRewardsDistributor {
         external;
 
     function claimRewards(
-        DistributionTypes.asset6909[] calldata assets,
+        DistributionTypes.Asset6909[] calldata assets,
         uint256 amount,
         address to,
         address reward
     ) external returns (uint256);
 
     function claimRewardsOnBehalf(
-        DistributionTypes.asset6909[] calldata assets,
+        DistributionTypes.Asset6909[] calldata assets,
         uint256 amount,
         address user,
         address to,
@@ -42,22 +42,22 @@ interface IMiniPoolRewardsController is IMiniPoolRewardsDistributor {
     ) external returns (uint256);
 
     function claimRewardsToSelf(
-        DistributionTypes.asset6909[] calldata assets,
+        DistributionTypes.Asset6909[] calldata assets,
         uint256 amount,
         address reward
     ) external returns (uint256);
 
-    function claimAllRewards(DistributionTypes.asset6909[] calldata assets, address to)
+    function claimAllRewards(DistributionTypes.Asset6909[] calldata assets, address to)
         external
         returns (address[] memory rewardsList, uint256[] memory claimedAmounts);
 
     function claimAllRewardsOnBehalf(
-        DistributionTypes.asset6909[] calldata assets,
+        DistributionTypes.Asset6909[] calldata assets,
         address user,
         address to
     ) external returns (address[] memory rewardsList, uint256[] memory claimedAmounts);
 
-    function claimAllRewardsToSelf(DistributionTypes.asset6909[] calldata assets)
+    function claimAllRewardsToSelf(DistributionTypes.Asset6909[] calldata assets)
         external
         returns (address[] memory rewardsList, uint256[] memory claimedAmounts);
 }

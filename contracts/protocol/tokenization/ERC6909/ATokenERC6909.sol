@@ -16,6 +16,7 @@ import {IERC20} from "../../../../contracts/dependencies/openzeppelin/contracts/
 import {IMiniPoolAddressesProvider} from
     "../../../../contracts/interfaces/IMiniPoolAddressesProvider.sol";
 import {IMiniPool} from "../../../../contracts/interfaces/IMiniPool.sol";
+import "openzeppelin-contracts/contracts/utils/Strings.sol";
 
 /**
  * @title ERC6909-MultiToken Built to service all collateral and debt tokens for a specific MiniPool
@@ -56,7 +57,6 @@ contract ATokenERC6909 is IncentivizedERC6909, VersionedInitializable {
         require(address(provider) != address(0), Errors.LP_NOT_CONTRACT);
         uint256 chainId;
 
-        //solium-disable-next-line
         assembly {
             chainId := chainid()
         }
@@ -77,8 +77,18 @@ contract ATokenERC6909 is IncentivizedERC6909, VersionedInitializable {
         require(bytes(symbol).length != 0);
         require(decimals != 0);
         require(id < DEBT_TOKEN_ADDRESSABLE_ID, Errors.AT_INVALID_ATOKEN_ID);
-        _setName(id, string.concat("Cod3x Lend Interest Bearing ", name));
-        _setSymbol(id, string.concat("grain", symbol));
+        _setName(
+            id,
+            string.concat(
+                "Cod3x Lend Minipool ", string.concat(Strings.toString(_minipoolId), name)
+            )
+        );
+        _setSymbol(
+            id,
+            string.concat(
+                string.concat("cl-", Strings.toString(_minipoolId)), string.concat("-", symbol)
+            )
+        ); // cl-{minipoolId}-{symbol}
         _setDecimals(id, decimals);
         _setUnderlyingAsset(id, underlyingAsset);
         emit TokenInitialized(id, name, symbol, decimals, underlyingAsset);
@@ -112,7 +122,7 @@ contract ATokenERC6909 is IncentivizedERC6909, VersionedInitializable {
             msg.sender == address(_addressesProvider.getMiniPoolConfigurator()),
             Errors.LP_CALLER_NOT_LENDING_POOL_CONFIGURATOR
         );
-        (aTokenID, debtTokenID, isTrancheRet) = getIdForUnderlying(underlyingAsset);
+        (aTokenID, debtTokenID, isTrancheRet) = getNextIdForUnderlying(underlyingAsset);
         if (isTrancheRet) {
             _totalTrancheTokens++;
             _isTranche[aTokenID] = true;
@@ -128,19 +138,13 @@ contract ATokenERC6909 is IncentivizedERC6909, VersionedInitializable {
         return INCENTIVES_CONTROLLER;
     }
 
+    function getIncentivesController() external view returns (IMiniPoolRewarder) {
+        return _getIncentivesController();
+    }
+
     function setIncentivesController(IMiniPoolRewarder controller) external {
         require(msg.sender == address(POOL), Errors.CT_CALLER_MUST_BE_LENDING_POOL);
         INCENTIVES_CONTROLLER = controller;
-    }
-
-    function setPool(IMiniPool pool) external {
-        require(msg.sender == address(POOL), Errors.CT_CALLER_MUST_BE_LENDING_POOL);
-        POOL = pool;
-    }
-
-    function setUnderlyingAsset(uint256 id, address underlyingAsset) external {
-        require(msg.sender == address(POOL), Errors.CT_CALLER_MUST_BE_LENDING_POOL);
-        _setUnderlyingAsset(id, underlyingAsset);
     }
 
     function _setUnderlyingAsset(uint256 id, address underlyingAsset) internal {
@@ -253,15 +257,7 @@ contract ATokenERC6909 is IncentivizedERC6909, VersionedInitializable {
 
     function transferUnderlyingTo(address to, uint256 id, uint256 amount) public {
         require(msg.sender == address(POOL), Errors.CT_CALLER_MUST_BE_LENDING_POOL);
-        if (_isTranche[id]) {
-            IERC20(_underlyingAssetAddresses[id]).transfer(to, amount);
-            /// unwrap aToken for underlying => improved UX
-            // ILendingPool(_addressesProvider.getLendingPool()).withdraw(
-            //     IAToken(_underlyingAssetAddresses[id]).UNDERLYING_ASSET_ADDRESS(), true, amount, to
-            // );
-        } else {
-            IERC20(_underlyingAssetAddresses[id]).transfer(to, amount);
-        }
+        IERC20(_underlyingAssetAddresses[id]).transfer(to, amount);
     }
 
     function getScaledUserBalanceAndSupply(address user, uint256 id)
@@ -296,7 +292,11 @@ contract ATokenERC6909 is IncentivizedERC6909, VersionedInitializable {
         return id >= DEBT_TOKEN_ADDRESSABLE_ID;
     }
 
-    function getIdForUnderlying(address underlying) public view returns (uint256, uint256, bool) {
+    function _getNextIdForUnderlying(address underlying)
+        internal
+        view
+        returns (uint256, uint256, bool)
+    {
         ILendingPool pool = ILendingPool(_addressesProvider.getLendingPool());
         if (_determineIfAToken(underlying, address(pool))) {
             address tokenUnderlying = IAToken(underlying).UNDERLYING_ASSET_ADDRESS();
@@ -307,6 +307,33 @@ contract ATokenERC6909 is IncentivizedERC6909, VersionedInitializable {
             uint256 tokenID = offset + _totalUniqueTokens;
             return (tokenID + ATOKEN_ADDRESSABLE_ID, tokenID + DEBT_TOKEN_ADDRESSABLE_ID, false);
         }
+    }
+
+    function getNextIdForUnderlying(address underlying)
+        public
+        view
+        returns (uint256 aTokenID, uint256 debtTokenID, bool isTrancheRet)
+    {
+        (aTokenID, debtTokenID, isTrancheRet) = _getNextIdForUnderlying(underlying);
+        require(
+            _underlyingAssetAddresses[aTokenID] == address(0), Errors.RL_RESERVE_ALREADY_INITIALIZED
+        );
+    }
+
+    function getIdForUnderlying(address underlying)
+        public
+        view
+        returns (uint256 aTokenID, uint256 debtTokenID, bool isTrancheRet)
+    {
+        DataTypes.MiniPoolReserveData memory reserveData =
+            IMiniPool(POOL).getReserveData(underlying);
+        aTokenID = reserveData.aTokenID;
+        debtTokenID = reserveData.variableDebtTokenID;
+        isTrancheRet = isTranche(aTokenID);
+
+        require(
+            _underlyingAssetAddresses[aTokenID] != address(0), Errors.RL_RESERVE_NOT_INITIALIZED
+        );
     }
 
     function _determineIfAToken(address underlying, address MLP) internal view returns (bool) {

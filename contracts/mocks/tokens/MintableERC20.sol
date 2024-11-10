@@ -19,11 +19,9 @@ contract MintableERC20 is ERC20 {
     /**
      * @dev Function to mint tokens
      * @param value The amount of tokens to mint.
-     * @return A boolean that indicates if the operation was successful.
      */
-    function mint(uint256 value) public returns (bool) {
+    function mint(uint256 value) public {
         _mint(_msgSender(), value);
-        return true;
     }
 
     function _setupDecimals(uint8 decimals_) internal {

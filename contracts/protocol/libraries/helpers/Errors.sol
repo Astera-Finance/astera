@@ -4,7 +4,7 @@ pragma solidity 0.8.23;
 /**
  * @title Errors library
  * @author Cod3x
- * @notice Defines the error messages emitted by the different contracts of the Aave protocol
+ * @notice Defines the error messages emitted by the different contracts of the Cod3x Lend protocol
  * @dev Error messages prefix glossary:
  *  - VL = ValidationLogic
  *  - MATH = Math libraries
@@ -14,9 +14,11 @@ pragma solidity 0.8.23;
  *  - LP = LendingPool
  *  - LPC = LendingPoolConfiguration
  *  - RL = ReserveLogic
- *  - LPCM = LendingPoolCollateralManager
+ *  - LPCM = Liquidation
  *  - P = Pausable
  *  - DP = DataProvider
+ *  - O = Oracle
+ *  - PAP = PoolAddressesProvider
  */
 library Errors {
     //common errors
@@ -53,6 +55,7 @@ library Errors {
     string public constant CT_CANNOT_GIVE_ALLOWANCE_TO_HIMSELF = "30"; // 'User cannot give allowance to himself'
     string public constant CT_TRANSFER_AMOUNT_NOT_GT_0 = "31"; // 'Transferred amount needs to be greater than zero'
     string public constant RL_RESERVE_ALREADY_INITIALIZED = "32"; // 'Reserve has already been initialized'
+    string public constant RL_RESERVE_NOT_INITIALIZED = "33"; // 'Reserve is not initialized'
     string public constant LPC_RESERVE_LIQUIDITY_NOT_0 = "34"; // 'The liquidity of the reserve needs to be 0'
     string public constant LPC_INVALID_ATOKEN_POOL_ADDRESS = "35"; // 'The liquidity of the reserve needs to be 0'
     string public constant LPC_INVALID_VARIABLE_DEBT_TOKEN_POOL_ADDRESS = "37"; // 'The liquidity of the reserve needs to be 0'
@@ -92,6 +95,7 @@ library Errors {
     string public constant LP_INCONSISTENT_PARAMS_LENGTH = "74";
     string public constant UL_INVALID_INDEX = "77";
     string public constant LP_NOT_CONTRACT = "78";
+    string public constant AT_VAULT_NOT_INITIALIZED = "79";
     string public constant SDT_BURN_EXCEEDS_BALANCE = "80";
     string public constant RC_INVALID_DEPOSIT_CAP = "81";
     string public constant RC_INVALID_VOLATILITY_TIER = "82";
@@ -103,7 +107,6 @@ library Errors {
     string public constant AT_VL_INVALID_ATOKEN_PARAMS = "88";
     string public constant AT_INVALID_ATOKEN_ID = "89";
     string public constant LP_CALLER_NOT_MINIPOOL = "90";
-    string public constant VL_RESERVE_PAUSED = "91";
     string public constant VL_RESERVE_INACTIVE = "92";
     string public constant VL_FLASHLOAN_DISABLED = "93";
     string public constant LPC_FLASHLOAN_PREMIUM_INVALID = "94";
@@ -111,16 +114,9 @@ library Errors {
     string public constant DP_LENDINGPOOL_NOT_SET = "96";
     string public constant DP_MINIPOOL_NOT_SET = "97";
 
-    enum CollateralManagerErrors {
-        NO_ERROR,
-        NO_COLLATERAL_AVAILABLE,
-        COLLATERAL_CANNOT_BE_LIQUIDATED,
-        CURRRENCY_NOT_BORROWED,
-        HEALTH_FACTOR_ABOVE_THRESHOLD,
-        NOT_ENOUGH_LIQUIDITY,
-        NO_ACTIVE_RESERVE,
-        HEALTH_FACTOR_LOWER_THAN_LIQUIDATION_THRESHOLD,
-        INVALID_EQUAL_ASSETS_TO_SWAP,
-        FROZEN_RESERVE
-    }
+    string public constant O_INCONSISTENT_PARAMS_LENGTH = "96";
+    string public constant O_PRICE_FEED_INCONSISTENCY = "97";
+    string public constant PAP_NO_MINI_POOL_ID_FOR_ADDRESS = "98";
+    string public constant PAP_POOL_ID_OUT_OF_RANGE = "99";
+    string public constant AT_VAULT_NOT_EMPTY = "100";
 }
