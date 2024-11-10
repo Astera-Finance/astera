@@ -28,7 +28,7 @@ contract ATokenErc6909Test is Common {
         assertEq(vm.activeFork(), opFork);
         deployedContracts = fixture_deployProtocol();
         configAddresses = ConfigAddresses(
-            address(deployedContracts.protocolDataProvider),
+            address(deployedContracts.cod3xLendDataProvider),
             address(deployedContracts.stableStrategy),
             address(deployedContracts.volatileStrategy),
             address(deployedContracts.treasury),
@@ -59,7 +59,6 @@ contract ATokenErc6909Test is Common {
             }
         }
 
-        configAddresses.protocolDataProvider = address(miniPoolContracts.miniPoolAddressesProvider);
         configAddresses.stableStrategy = address(miniPoolContracts.stableStrategy);
         configAddresses.volatileStrategy = address(miniPoolContracts.volatileStrategy);
         miniPool = fixture_configureMiniPoolReserves(reserves, configAddresses, miniPoolContracts);
@@ -883,8 +882,6 @@ contract ATokenErc6909Test is Common {
         );
         address[] memory reserves = new address[](1);
         reserves[0] = tokens[0];
-
-        configAddresses.protocolDataProvider = address(miniPoolContracts.miniPoolAddressesProvider);
 
         miniPool = fixture_configureMiniPoolReserves(reserves, configAddresses, miniPoolContracts);
         vm.label(miniPool, "MiniPool");

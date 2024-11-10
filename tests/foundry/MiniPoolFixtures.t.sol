@@ -78,7 +78,7 @@ abstract contract MiniPoolFixtures is Common {
         uint256 tokenUserBalance = aErc6909Token.balanceOf(user, tokenId);
         uint256 tokenBalance = tokenParams.token.balanceOf(user);
         tokenParams.token.approve(address(miniPool), amount);
-        console.log("User balance after: ", tokenBalance);
+        console.log("User balance before: ", tokenBalance);
         IMiniPool(miniPool).deposit(address(tokenParams.token), amount, user);
         assertEq(tokenBalance - amount, tokenParams.token.balanceOf(user));
         assertEq(tokenUserBalance + amount, aErc6909Token.balanceOf(user, tokenId));
@@ -147,11 +147,11 @@ abstract contract MiniPoolFixtures is Common {
         /* Test depositing */
         uint256 minNrOfTokens;
         {
-            (, uint256 collateralTokenLtv,,,,,,,) = deployedLpContracts
-                .protocolDataProvider
-                .getReserveConfigurationData(address(collateralTokenParams.token), true);
+            StaticData memory staticData = deployedLpContracts
+                .cod3xLendDataProvider
+                .getLpReserveStaticData(address(collateralTokenParams.token), true);
             uint256 borrowTokenInUsd = (amount * borrowTokenParams.price * 10_000)
-                / ((10 ** PRICE_FEED_DECIMALS) * collateralTokenLtv);
+                / ((10 ** PRICE_FEED_DECIMALS) * staticData.ltv);
             uint256 borrowTokenRay = borrowTokenInUsd.rayDiv(collateralTokenParams.price);
             uint256 borrowTokenInCollateralToken = fixture_preciseConvertWithDecimals(
                 borrowTokenRay,
@@ -265,11 +265,11 @@ abstract contract MiniPoolFixtures is Common {
         /* Test depositing */
         uint256 minNrOfTokens;
         {
-            (, uint256 collateralTokenLtv,,,,,,,) = deployedLpContracts
-                .protocolDataProvider
-                .getReserveConfigurationData(address(collateralTokenParams.token), true);
+            StaticData memory staticData = deployedLpContracts
+                .cod3xLendDataProvider
+                .getLpReserveStaticData(address(collateralTokenParams.token), true);
             uint256 borrowTokenInUsd = (amount * borrowTokenParams.price * 10000)
-                / ((10 ** PRICE_FEED_DECIMALS) * collateralTokenLtv);
+                / ((10 ** PRICE_FEED_DECIMALS) * staticData.ltv);
             uint256 borrowTokenRay = borrowTokenInUsd.rayDiv(collateralTokenParams.price);
             uint256 borrowTokenInCollateralToken = fixture_preciseConvertWithDecimals(
                 borrowTokenRay,

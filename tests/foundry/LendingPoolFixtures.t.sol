@@ -21,21 +21,23 @@ abstract contract LendingPoolFixtures is Common {
         uint256 _receiverATokenBalanceBefore = aToken.balanceOf(address(receiver));
         uint256 _senderTokenBalanceTokenBefore = erc20Token.balanceOf(sender);
         uint256 _aTokenBalanceBefore = erc20Token.balanceOf(address(aToken));
+        vm.startPrank(sender);
         erc20Token.approve(address(deployedContracts.lendingPool), amount);
         vm.expectEmit(true, true, true, true);
-        emit Deposit(address(erc20Token), address(this), receiver, amount);
+        emit Deposit(address(erc20Token), sender, receiver, amount);
         deployedContracts.lendingPool.deposit(address(erc20Token), true, amount, receiver);
+        vm.stopPrank();
         console.log("_aTokenBalanceBefore: ", _aTokenBalanceBefore);
         console.log("_aTokenBalanceAfter: ", erc20Token.balanceOf(address(aToken)));
         assertEq(
             _senderTokenBalanceTokenBefore,
-            erc20Token.balanceOf(address(this)) + amount,
+            erc20Token.balanceOf(sender) + amount,
             "Sender's token balance is not lower by {amount} after deposit"
         );
 
         assertEq(
             _receiverATokenBalanceBefore + amount,
-            aToken.balanceOf(address(receiver)),
+            aToken.balanceOf(receiver),
             "Receiver aToken balance is not greater by {amount} after deposit"
         );
     }
@@ -65,12 +67,12 @@ abstract contract LendingPoolFixtures is Common {
         uint256 borrowTokenPrice = oracle.getAssetPrice(address(borrowToken));
         uint256 collateralPrice = oracle.getAssetPrice(address(collateral));
         uint256 collateralDepositValue = amount * collateralPrice / (10 ** PRICE_FEED_DECIMALS);
-        (, uint256 collateralLtv,,,,,,,) = deployedContracts
-            .protocolDataProvider
-            .getReserveConfigurationData(address(collateral), true);
+        StaticData memory staticData = deployedContracts
+            .cod3xLendDataProvider
+            .getLpReserveStaticData(address(collateral), true);
         uint256 maxBorrowTokenToBorrowInCollateralUnit;
         {
-            uint256 collateralMaxBorrowValue = collateralLtv * collateralDepositValue / 10_000;
+            uint256 collateralMaxBorrowValue = staticData.ltv * collateralDepositValue / 10_000;
 
             uint256 wbtcMaxBorrowAmountRay = collateralMaxBorrowValue.rayDiv(borrowTokenPrice);
             maxBorrowTokenToBorrowInCollateralUnit = fixture_preciseConvertWithDecimals(
@@ -102,25 +104,26 @@ abstract contract LendingPoolFixtures is Common {
         console.log("borrowTokenDepositAmount: ", borrowTokenDepositAmount);
         /* Provider deposits wbtc thanks to that there is enough funds to borrow */
         fixture_deposit(
-            borrowToken.token, borrowToken.aToken, borrower, provider, borrowTokenDepositAmount
+            borrowToken.token, borrowToken.aToken, provider, provider, borrowTokenDepositAmount
         );
 
         uint256 borrowTokenBalanceBeforeBorrow = borrowToken.token.balanceOf(borrower);
         uint256 debtBalanceBefore = borrowToken.debtToken.balanceOf(borrower);
 
-        (,,,, uint256 reserveFactors,,,,) = deployedContracts
-            .protocolDataProvider
-            .getReserveConfigurationData(address(borrowToken.token), true);
+        StaticData memory staticData = deployedContracts
+            .cod3xLendDataProvider
+            .getLpReserveStaticData(address(borrowToken.token), true);
         (, uint256 expectedBorrowRate) = deployedContracts.volatileStrategy.calculateInterestRates(
             address(borrowToken.token),
             address(borrowToken.aToken),
             0,
             maxBorrowTokenToBorrowInCollateralUnit,
             maxBorrowTokenToBorrowInCollateralUnit,
-            reserveFactors
+            staticData.reserveFactor
         );
         console.log("AToken balance: ", borrowToken.token.balanceOf(address(borrowToken.aToken)));
         /* Borrower borrows maxPossible amount of borrowToken */
+        vm.startPrank(borrower);
         vm.expectEmit(true, true, true, true);
         emit Borrow(
             address(borrowToken.token),
@@ -132,6 +135,7 @@ abstract contract LendingPoolFixtures is Common {
         deployedContracts.lendingPool.borrow(
             address(borrowToken.token), true, maxBorrowTokenToBorrowInCollateralUnit, borrower
         );
+        vm.stopPrank();
         console.log("AToken balance: ", borrowToken.token.balanceOf(address(borrowToken.aToken)));
         /* Main user's balance should be: initial amount + borrowed amount */
         assertEq(

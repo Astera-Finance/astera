@@ -20,7 +20,7 @@ contract LendingPoolTest is LendingPoolFixtures {
         assertEq(vm.activeFork(), opFork);
         deployedContracts = fixture_deployProtocol();
         configAddresses = ConfigAddresses(
-            address(deployedContracts.protocolDataProvider),
+            address(deployedContracts.cod3xLendDataProvider),
             address(deployedContracts.stableStrategy),
             address(deployedContracts.volatileStrategy),
             address(deployedContracts.treasury),
@@ -34,8 +34,8 @@ contract LendingPoolTest is LendingPoolFixtures {
             deployedContracts.lendingPoolConfigurator,
             deployedContracts.lendingPoolAddressesProvider
         );
-        // aTokens = fixture_getATokens(tokens, deployedContracts.protocolDataProvider);
-        // variableDebtTokens = fixture_getVarDebtTokens(tokens, deployedContracts.protocolDataProvider);
+        // aTokens = fixture_getATokens(tokens, deployedContracts.cod3xLendDataProvider);
+        // variableDebtTokens = fixture_getVarDebtTokens(tokens, deployedContracts.cod3xLendDataProvider);
         erc20Tokens = fixture_getErc20Tokens(tokens);
         fixture_transferTokensToTestContract(erc20Tokens, 100_000 ether, address(this));
     }
@@ -83,6 +83,11 @@ contract LendingPoolTest is LendingPoolFixtures {
 
         uint256 usdcDepositAmount = 5e9; /* $5k */ // consider fuzzing here
 
+        deal(address(usdcTypes.token), address(this), 2 * usdcDepositAmount);
+        uint256 maxValToBorrow =
+            fixture_getMaxValueToBorrow(usdcTypes.token, wbtcTypes.token, usdcDepositAmount);
+        deal(address(wbtcTypes.token), user, 2 * maxValToBorrow);
+
         (uint256 maxBorrowTokenToBorrowInCollateralUnit) =
             fixture_depositAndBorrow(usdcTypes, wbtcTypes, user, address(this), usdcDepositAmount);
 
@@ -128,9 +133,9 @@ contract LendingPoolTest is LendingPoolFixtures {
         console.log(
             "usdcDepositValue %s vs \nusdcDepositAmount %s", usdcDepositValue, usdcDepositAmount
         );
-        (, uint256 usdcLtv,,,,,,,) =
-            deployedContracts.protocolDataProvider.getReserveConfigurationData(address(usdc), true);
-        uint256 usdcMaxBorrowValue = usdcLtv * usdcDepositValue / 10_000;
+        StaticData memory staticData =
+            deployedContracts.cod3xLendDataProvider.getLpReserveStaticData(address(usdc), true);
+        uint256 usdcMaxBorrowValue = staticData.ltv * usdcDepositValue / 10_000;
         uint256 wbtcMaxBorrowAmountWithUsdcCollateral;
         {
             uint256 wbtcMaxBorrowAmountRay = usdcMaxBorrowValue.rayDiv(wbtcPrice);
@@ -185,9 +190,9 @@ contract LendingPoolTest is LendingPoolFixtures {
         uint256 wbtcPrice = oracle.getAssetPrice(address(wbtc));
         uint256 usdcPrice = oracle.getAssetPrice(address(usdc));
         uint256 usdcDepositValue = usdcDepositAmount * usdcPrice / (10 ** PRICE_FEED_DECIMALS);
-        (, uint256 usdcLtv,,,,,,,) =
-            deployedContracts.protocolDataProvider.getReserveConfigurationData(address(usdc), true);
-        uint256 usdcMaxBorrowValue = usdcLtv * usdcDepositValue / 10_000;
+        StaticData memory staticData =
+            deployedContracts.cod3xLendDataProvider.getLpReserveStaticData(address(usdc), true);
+        uint256 usdcMaxBorrowValue = staticData.ltv * usdcDepositValue / 10_000;
         uint256 wbtcMaxBorrowAmountWithUsdcCollateral;
         {
             uint256 wbtcMaxBorrowAmountRay = usdcMaxBorrowValue.rayDiv(wbtcPrice);
@@ -211,8 +216,7 @@ contract LendingPoolTest is LendingPoolFixtures {
         deployedContracts.lendingPool.deposit(address(wbtc), true, wbtcDepositAmount, user);
 
         /* Main user borrows maxPossible amount of wbtc */
-        //vm.expectRevert();
-        vm.expectRevert(bytes(Errors.LP_NOT_ENOUGH_LIQUIDITY_TO_BORROW)); // @issue10 Over/underflow instead of LP_NOT_ENOUGH_LIQUIDITY_TO_BORROW
+        vm.expectRevert(bytes(Errors.LP_NOT_ENOUGH_LIQUIDITY_TO_BORROW));
         deployedContracts.lendingPool.borrow(
             address(wbtc), true, wbtcMaxBorrowAmountWithUsdcCollateral, address(this)
         );
@@ -226,10 +230,10 @@ contract LendingPoolTest is LendingPoolFixtures {
 
         tokenDepositAmount = bound(tokenDepositAmount, 2, 2_000_000);
         // uint256 usdcDepositValue = usdcDepositAmount * usdcPrice / (10 ** PRICE_FEED_DECIMALS);
-        (, uint256 tokenLtv,,,,,,,) =
-            deployedContracts.protocolDataProvider.getReserveConfigurationData(address(token), true);
+        StaticData memory staticData =
+            deployedContracts.cod3xLendDataProvider.getLpReserveStaticData(address(token), true);
 
-        uint256 tokenMaxBorrowAmount = tokenLtv * tokenDepositAmount / 10_000;
+        uint256 tokenMaxBorrowAmount = staticData.ltv * tokenDepositAmount / 10_000;
 
         /* Main user deposits usdc and wants to borrow */
         token.approve(address(deployedContracts.lendingPool), tokenDepositAmount);
@@ -245,15 +249,15 @@ contract LendingPoolTest is LendingPoolFixtures {
             address(token), true, tokenMaxBorrowAmount, address(this)
         );
 
-        (,,,, uint256 reserveFactors,,,,) =
-            deployedContracts.protocolDataProvider.getReserveConfigurationData(address(token), true);
+        staticData =
+            deployedContracts.cod3xLendDataProvider.getLpReserveStaticData(address(token), true);
         (, uint256 expectedBorrowRate) = deployedContracts.volatileStrategy.calculateInterestRates(
             address(token),
             address(aTokens[idx]),
             0,
             tokenMaxBorrowAmount,
             tokenMaxBorrowAmount,
-            reserveFactors
+            staticData.reserveFactor
         );
         /* Main user is using now his liquidity as a collateral - borrow shall succeed */
         deployedContracts.lendingPool.setUserUseReserveAsCollateral(address(token), true, true);

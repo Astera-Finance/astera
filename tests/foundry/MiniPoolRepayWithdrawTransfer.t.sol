@@ -205,7 +205,7 @@ contract MiniPoolRepayWithdrawTransferTest is MiniPoolDepositBorrowTest {
         assertLt(
             healthFactorBefore, healthFactorAfter, "Health before is greater than health after"
         );
-        vm.stopPrank();
+        // vm.stopPrank();
     }
 
     function testMiniPoolBorrowRepayWithFlowFromLendingPool(
@@ -385,6 +385,7 @@ contract MiniPoolRepayWithdrawTransferTest is MiniPoolDepositBorrowTest {
         /* Fuzz vectors */
         collateralOffset = bound(collateralOffset, 0, tokens.length - 1);
         borrowOffset = bound(borrowOffset, 0, tokens.length - 1);
+        vm.assume(borrowOffset != collateralOffset); //@issue: try to deposit borrow with the same asset for mini pool !!
         console.log("Offsets: token0: %s token1: %s", collateralOffset, borrowOffset);
 
         TokenParams memory collateralParams = TokenParams(

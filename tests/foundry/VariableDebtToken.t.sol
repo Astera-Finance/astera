@@ -17,7 +17,7 @@ contract VariableDebtTokenTest is Common {
         assertEq(vm.activeFork(), opFork);
         deployedContracts = fixture_deployProtocol();
         configAddresses = ConfigAddresses(
-            address(deployedContracts.protocolDataProvider),
+            address(deployedContracts.cod3xLendDataProvider),
             address(deployedContracts.stableStrategy),
             address(deployedContracts.volatileStrategy),
             address(deployedContracts.treasury),
@@ -32,7 +32,7 @@ contract VariableDebtTokenTest is Common {
             deployedContracts.lendingPoolAddressesProvider
         );
         variableDebtTokens =
-            fixture_getVarDebtTokens(tokens, deployedContracts.protocolDataProvider);
+            fixture_getVarDebtTokens(tokens, deployedContracts.cod3xLendDataProvider);
         mockedVaults = fixture_deployReaperVaultMocks(tokens, address(deployedContracts.treasury));
         erc20Tokens = fixture_getErc20Tokens(tokens);
         fixture_transferTokensToTestContract(erc20Tokens, 100_000 ether, address(this));
@@ -97,11 +97,11 @@ contract VariableDebtTokenTest is Common {
             assertEq(variableDebtTokens[idx].totalSupply(), 0);
 
             /* Burning tests with additiveness */
-            (, uint256 currentAssetLtv,,,,,,,) = deployedContracts
-                .protocolDataProvider
-                .getReserveConfigurationData(address(erc20Tokens[idx]), true);
+            StaticData memory staticData = deployedContracts
+                .cod3xLendDataProvider
+                .getLpReserveStaticData(address(erc20Tokens[idx]), true);
 
-            uint256 amountToBorrowRaw = maxValToDeposit * currentAssetLtv / 10_000;
+            uint256 amountToBorrowRaw = maxValToDeposit * staticData.ltv / 10_000;
             deployedContracts.lendingPool.borrow(
                 address(erc20Tokens[idx]), true, amountToBorrowRaw, address(this)
             );

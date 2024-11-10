@@ -161,10 +161,6 @@ contract MiniPoolLiquidationTest is MiniPoolDepositBorrowTest {
 
             borrowParams.token.transfer(liquidator, liquidationVars.amountToLiquidate);
 
-            // uint256 userVariableDebt;
-            // (,address debtToken) = deployedContracts.protocolDataProvider.getReserveTokensAddresses(address(token1Params.token), true);
-            // console.log("MP userVariableDebt for user %s: %s", user, userVariableDebt);
-            // console.log("LP userVariableDebt for user %s: %s", user, userVariableDebt);
             liquidationVars.currentVariableDebt = aErc6909Token.balanceOf(user, 2128 + borrowOffset);
             liquidationVars.liquidatorDebtTokenBalance = borrowParams.token.balanceOf(liquidator);
             liquidationVars.userCollateralBalance =
@@ -267,7 +263,7 @@ contract MiniPoolLiquidationTest is MiniPoolDepositBorrowTest {
                 liquidationVars.healthFactor,
                 healthFactorAfterLiquidation
             );
-            //assertGt(healthFactorAfterLiquidation, liquidationVars.healthFactor); // @issue9 Health factor after liquidation shall be greater than 1
+            //assertGt(healthFactorAfterLiquidation, liquidationVars.healthFactor);
             vm.stopPrank();
         }
 
@@ -336,7 +332,6 @@ contract MiniPoolLiquidationTest is MiniPoolDepositBorrowTest {
          */
     }
 
-    //@issue5 - Failing but this is interest rate augmented functionality which will be rewroked
     function testLiquidationsWithFlowFromLendingPool(
         uint256 amount,
         uint256 collateralOffset,

@@ -16,6 +16,7 @@ pragma solidity 0.8.23;
  *  - RL = ReserveLogic
  *  - LPCM = LendingPoolCollateralManager
  *  - P = Pausable
+ *  - DP = DataProvider
  */
 library Errors {
     //common errors
@@ -107,6 +108,8 @@ library Errors {
     string public constant VL_FLASHLOAN_DISABLED = "93";
     string public constant LPC_FLASHLOAN_PREMIUM_INVALID = "94";
     string public constant VL_TRANCHED_ASSET_CANNOT_BE_FLASHLOAN = "95";
+    string public constant DP_LENDINGPOOL_NOT_SET = "96";
+    string public constant DP_MINIPOOL_NOT_SET = "97";
 
     enum CollateralManagerErrors {
         NO_ERROR,

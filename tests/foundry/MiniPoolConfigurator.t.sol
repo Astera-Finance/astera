@@ -141,12 +141,12 @@ contract MiniPoolConfiguratorTest is MiniPoolDepositBorrowTest {
         /* Test depositing */
         uint256 minNrOfTokens;
         {
-            (, uint256 collateralTokenLtv,,,,,,,) = deployedLpContracts
-                .protocolDataProvider
-                .getReserveConfigurationData(address(collateralTokenParams.token), true);
-            console.log("collateralTokenLtv: ", collateralTokenLtv);
+            StaticData memory staticData = deployedLpContracts
+                .cod3xLendDataProvider
+                .getLpReserveStaticData(address(collateralTokenParams.token), true);
+            console.log("collateralTokenLtv: ", staticData.ltv);
             uint256 borrowTokenInUsd = (amount * borrowTokenParams.price * 10_000)
-                / ((10 ** PRICE_FEED_DECIMALS) * collateralTokenLtv);
+                / ((10 ** PRICE_FEED_DECIMALS) * staticData.ltv);
             uint256 borrowTokenRay = borrowTokenInUsd.rayDiv(collateralTokenParams.price);
             uint256 borrowTokenInCollateralToken = fixture_preciseConvertWithDecimals(
                 borrowTokenRay,
@@ -241,11 +241,11 @@ contract MiniPoolConfiguratorTest is MiniPoolDepositBorrowTest {
 
         uint256 minNrOfTokens;
         {
-            (, uint256 collateralTokenLtv,,,,,,,) = deployedLpContracts
-                .protocolDataProvider
-                .getReserveConfigurationData(address(collateralTokenParams.token), true);
+            StaticData memory staticData = deployedLpContracts
+                .cod3xLendDataProvider
+                .getLpReserveStaticData(address(collateralTokenParams.token), true);
             uint256 borrowTokenInUsd = (amount * borrowTokenParams.price * 10_000)
-                / ((10 ** PRICE_FEED_DECIMALS) * collateralTokenLtv);
+                / ((10 ** PRICE_FEED_DECIMALS) * staticData.ltv);
             console.log("borrow in USD: ", borrowTokenInUsd);
             uint256 borrowTokenRay = borrowTokenInUsd.rayDiv(collateralTokenParams.price);
             uint256 borrowTokenInCollateralToken = fixture_preciseConvertWithDecimals(

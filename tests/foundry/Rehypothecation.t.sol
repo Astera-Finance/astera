@@ -80,6 +80,10 @@ contract RehypothecationTest is Common, LendingPoolTest {
 
         uint256 initialAdminBalance = wbtcTypes.token.balanceOf(address(admin));
         uint256 availableFundsAfterBorrow;
+        deal(address(usdcTypes.token), address(this), 2 * depositSize);
+        uint256 maxValToBorrow =
+            fixture_getMaxValueToBorrow(usdcTypes.token, wbtcTypes.token, depositSize);
+        deal(address(wbtcTypes.token), user, 2 * maxValToBorrow);
         {
             (uint256 maxBorrowTokenToBorrowInCollateralUnit) =
                 fixture_depositAndBorrow(usdcTypes, wbtcTypes, user, address(this), depositSize);
@@ -94,8 +98,6 @@ contract RehypothecationTest is Common, LendingPoolTest {
                 200
             );
 
-            uint256 maxValToBorrow =
-                fixture_getMaxValueToBorrow(usdcTypes.token, wbtcTypes.token, depositSize);
             console.log("maxValToBorrow: ", maxValToBorrow);
             console.log(
                 "maxBorrowTokenToBorrowInCollateralUnit: ", maxBorrowTokenToBorrowInCollateralUnit
@@ -330,9 +332,6 @@ contract RehypothecationTest is Common, LendingPoolTest {
             remainingPct: 0
         });
 
-        console.log("INITIAL USDC: ", usdcVars.initialBalance);
-        console.log("INITIAL WBTC: ", wbtcVars.initialBalance);
-
         address user = makeAddr("user");
 
         uint256 availableFundsAfterBorrow;
@@ -357,6 +356,14 @@ contract RehypothecationTest is Common, LendingPoolTest {
                 10 ** (wbtcTypes.token.decimals() - 3), // 0.001 WBTC
                 200
             );
+
+            deal(address(usdcTypes.token), address(this), 2 * usdcVars.depositSize);
+            maxBorrowTokenToBorrowInCollateralUnit =
+                fixture_getMaxValueToBorrow(usdcTypes.token, wbtcTypes.token, usdcVars.depositSize);
+            deal(address(wbtcTypes.token), user, 2 * maxBorrowTokenToBorrowInCollateralUnit);
+
+            usdcVars.initialBalance = usdcTypes.token.balanceOf(address(this));
+            wbtcVars.initialBalance = wbtcTypes.token.balanceOf(address(this));
 
             maxBorrowTokenToBorrowInCollateralUnit = fixture_depositAndBorrow(
                 usdcTypes, wbtcTypes, user, address(this), usdcVars.depositSize
@@ -432,7 +439,7 @@ contract RehypothecationTest is Common, LendingPoolTest {
         fixture_withdraw(
             wbtcTypes.token,
             user,
-            address(this),
+            user,
             availableFundsAfterBorrow + maxBorrowTokenToBorrowInCollateralUnit
         );
 

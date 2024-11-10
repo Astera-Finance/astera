@@ -19,7 +19,7 @@ contract MiniPoolDepositBorrowTest is MiniPoolFixtures {
         assertEq(vm.activeFork(), opFork);
         deployedLpContracts = fixture_deployProtocol();
         configLpAddresses = ConfigAddresses(
-            address(deployedLpContracts.protocolDataProvider),
+            address(deployedLpContracts.cod3xLendDataProvider),
             address(deployedLpContracts.stableStrategy),
             address(deployedLpContracts.volatileStrategy),
             address(deployedLpContracts.treasury),
@@ -50,7 +50,7 @@ contract MiniPoolDepositBorrowTest is MiniPoolFixtures {
                 reserves[idx] = address(aTokens[idx - tokens.length].WRAPPER_ADDRESS());
             }
         }
-        configLpAddresses.protocolDataProvider =
+        configLpAddresses.cod3xLendDataProvider =
             address(miniPoolContracts.miniPoolAddressesProvider);
         configLpAddresses.stableStrategy = address(miniPoolContracts.stableStrategy);
         configLpAddresses.volatileStrategy = address(miniPoolContracts.volatileStrategy);

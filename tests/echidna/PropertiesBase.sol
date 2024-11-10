@@ -43,7 +43,8 @@ import "contracts/deployments/ATokensAndRatesHelper.sol";
 import "contracts/protocol/configuration/LendingPoolAddressesProvider.sol";
 
 import "contracts/protocol/core/lendingpool/LendingPoolCollateralManager.sol";
-import "contracts/protocol/core/interestRateStrategies/lendingpool/DefaultReserveInterestRateStrategy.sol";
+import
+    "contracts/protocol/core/interestRateStrategies/lendingpool/DefaultReserveInterestRateStrategy.sol";
 import "contracts/protocol/core/lendingpool/LendingPoolConfigurator.sol";
 import "contracts/protocol/core/lendingpool/LendingPoolStorage.sol";
 
@@ -209,7 +210,7 @@ contract PropertiesBase is PropertiesAsserts, MarketParams {
 
         for (uint256 i = 0; i < totalNbTokens; i++) {
             (address aTokenAddress, address variableDebtTokenAddress) =
-                protocolDataProvider.getReserveTokensAddresses(address(assets[i]), false);
+                cod3xLendDataProvider.getLpTokens(address(assets[i]), false);
             aTokens.push(AToken(aTokenAddress));
             debtTokens.push(VariableDebtToken(variableDebtTokenAddress));
         }

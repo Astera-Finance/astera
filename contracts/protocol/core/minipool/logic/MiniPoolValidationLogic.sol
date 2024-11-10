@@ -243,7 +243,6 @@ library MiniPoolValidationLogic {
         uint256 reservesCount,
         address oracle
     ) internal view {
-        //@issue: balanceOf shall be on IAERC6909 instead IERC20
         uint256 underlyingBalance =
             IAERC6909(reserve.aTokenAddress).balanceOf(msg.sender, reserve.aTokenID);
 

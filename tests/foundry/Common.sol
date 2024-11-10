@@ -7,8 +7,9 @@ import "contracts/dependencies/openzeppelin/contracts/ERC20.sol";
 import "contracts/protocol/rewarder/lendingpool/Rewarder.sol";
 import "contracts/protocol/core/Oracle.sol";
 import "contracts/misc/ProtocolDataProvider.sol";
+import "contracts/misc/Cod3xLendDataProvider.sol";
 import "contracts/misc/Treasury.sol";
-import "contracts/misc/UiPoolDataProviderV2.sol";
+// import "contracts/misc/UiPoolDataProviderV2.sol";
 import "contracts/misc/WETHGateway.sol";
 import "contracts/protocol/core/lendingpool/logic/ReserveLogic.sol";
 import "contracts/protocol/core/lendingpool/logic/GenericLogic.sol";
@@ -81,7 +82,7 @@ contract Common is Test {
 
     // Structures
     struct ConfigAddresses {
-        address protocolDataProvider;
+        address cod3xLendDataProvider;
         address stableStrategy;
         address volatileStrategy;
         address treasury;
@@ -108,7 +109,7 @@ contract Common is Test {
         DefaultReserveInterestRateStrategy stableStrategy;
         DefaultReserveInterestRateStrategy volatileStrategy;
         PiReserveInterestRateStrategy piStrategy;
-        ProtocolDataProvider protocolDataProvider;
+        Cod3xLendDataProvider cod3xLendDataProvider;
         ATokensAndRatesHelper aTokensAndRatesHelper;
     }
 
@@ -207,19 +208,14 @@ contract Common is Test {
     ERC20 public weth = ERC20(WETH);
     ERC20 public dai = ERC20(DAI);
 
-    // MockAggregator public usdcPriceFeed;
-    // MockAggregator public wbtcPriceFeed;
-    // MockAggregator public ethPriceFeed;
     address[] public aggregators;
 
     address public reserveLogic;
     address public genericLogic;
     address public validationLogic;
 
-    // StableAndVariableTokensHelper public stableAndVariableTokensHelper;
     Oracle public oracle;
 
-    UiPoolDataProviderV2 public uiPoolDataProviderV2;
     WETHGateway public wETHGateway;
     AToken public aToken;
     VariableDebtToken public variableDebtToken;
@@ -332,9 +328,10 @@ contract Common is Test {
         fixture_deployMocks(address(deployedContracts.treasury));
         deployedContracts.lendingPoolAddressesProvider.setPriceOracle(address(oracle));
         vm.label(address(oracle), "Oracle");
-        deployedContracts.protocolDataProvider =
-            new ProtocolDataProvider(deployedContracts.lendingPoolAddressesProvider);
-        //@todo uiPoolDataProviderV2 = new UiPoolDataProviderV2(IChainlinkAggregator(ethPriceFeed), IChainlinkAggregator(ethPriceFeed));
+        deployedContracts.cod3xLendDataProvider = new Cod3xLendDataProvider();
+        deployedContracts.cod3xLendDataProvider.setLendingPoolAddressProvider(
+            address(deployedContracts.lendingPoolAddressesProvider)
+        );
         wETHGateway = new WETHGateway(WETH);
         deployedContracts.stableStrategy = new DefaultReserveInterestRateStrategy(
             deployedContracts.lendingPoolAddressesProvider,
@@ -405,12 +402,12 @@ contract Common is Test {
         lendingPoolConfiguratorProxy.setPoolPause(false);
 
         aTokens =
-            fixture_getATokens(tokens, ProtocolDataProvider(configAddresses.protocolDataProvider));
+            fixture_getATokens(tokens, Cod3xLendDataProvider(configAddresses.cod3xLendDataProvider));
         aTokensWrapper = fixture_getATokensWrapper(
-            tokens, ProtocolDataProvider(configAddresses.protocolDataProvider)
+            tokens, Cod3xLendDataProvider(configAddresses.cod3xLendDataProvider)
         );
         variableDebtTokens = fixture_getVarDebtTokens(
-            tokens, ProtocolDataProvider(configAddresses.protocolDataProvider)
+            tokens, Cod3xLendDataProvider(configAddresses.cod3xLendDataProvider)
         );
         for (uint256 idx; idx < tokens.length; idx++) {
             vm.label(address(aTokens[idx]), string.concat("AToken ", uintToString(idx)));
@@ -477,15 +474,13 @@ contract Common is Test {
         lendingPoolAddressesProvider.setPoolAdmin(admin);
     }
 
-    function fixture_getATokens(address[] memory _tokens, ProtocolDataProvider protocolDataProvider)
-        public
-        view
-        returns (AToken[] memory _aTokens)
-    {
+    function fixture_getATokens(
+        address[] memory _tokens,
+        Cod3xLendDataProvider cod3xLendDataProvider
+    ) public view returns (AToken[] memory _aTokens) {
         _aTokens = new AToken[](_tokens.length);
         for (uint32 idx = 0; idx < _tokens.length; idx++) {
-            (address _aTokenAddress,) =
-                protocolDataProvider.getReserveTokensAddresses(_tokens[idx], true);
+            (address _aTokenAddress,) = cod3xLendDataProvider.getLpTokens(_tokens[idx], true);
             // console.log("AToken%s: %s", idx, _aTokenAddress);
             _aTokens[idx] = AToken(_aTokenAddress);
         }
@@ -493,12 +488,11 @@ contract Common is Test {
 
     function fixture_getATokensWrapper(
         address[] memory _tokens,
-        ProtocolDataProvider protocolDataProvider
+        Cod3xLendDataProvider cod3xLendDataProvider
     ) public view returns (AToken[] memory _aTokensW) {
         _aTokensW = new AToken[](_tokens.length);
         for (uint32 idx = 0; idx < _tokens.length; idx++) {
-            (address _aTokenAddress,) =
-                protocolDataProvider.getReserveTokensAddresses(_tokens[idx], true);
+            (address _aTokenAddress,) = cod3xLendDataProvider.getLpTokens(_tokens[idx], true);
             // console.log("AToken%s: %s", idx, _aTokenAddress);
             _aTokensW[idx] = AToken(address(AToken(_aTokenAddress).WRAPPER_ADDRESS()));
         }
@@ -506,12 +500,11 @@ contract Common is Test {
 
     function fixture_getVarDebtTokens(
         address[] memory _tokens,
-        ProtocolDataProvider protocolDataProvider
+        Cod3xLendDataProvider cod3xLendDataProvider
     ) public returns (VariableDebtToken[] memory _varDebtTokens) {
         _varDebtTokens = new VariableDebtToken[](_tokens.length);
         for (uint32 idx = 0; idx < _tokens.length; idx++) {
-            (, address _variableDebtToken) =
-                protocolDataProvider.getReserveTokensAddresses(_tokens[idx], true);
+            (, address _variableDebtToken) = cod3xLendDataProvider.getLpTokens(_tokens[idx], true);
             // console.log("Atoken address", _variableDebtToken);
             string memory debtToken = string.concat("debtToken", uintToString(idx));
             vm.label(_variableDebtToken, debtToken);
@@ -754,7 +747,7 @@ contract Common is Test {
         return amount * oracle.getAssetPrice(token);
     }
 
-    function fixture_getReserveData(address token, ProtocolDataProvider protocolDataProvider)
+    function fixture_getReserveData(address token, Cod3xLendDataProvider cod3xLendDataProvider)
         public
         view
         returns (ReserveDataParams memory)
@@ -767,7 +760,7 @@ contract Common is Test {
             uint256 liquidityIndex,
             uint256 variableBorrowIndex,
             uint40 lastUpdateTimestamp
-        ) = protocolDataProvider.getReserveData(token, true);
+        ) = cod3xLendDataProvider.getLpReserveDynamicData(token, true);
         return ReserveDataParams(
             availableLiquidity,
             totalVariableDebt,
