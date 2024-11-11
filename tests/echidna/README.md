@@ -20,11 +20,8 @@ You can fine in `/echidna` 3 config files to run the fuzzer:
 - Improve the bootstraping with users setup with coherante positions.
 - Implemente all "To implement" invariants.
 - Fix all todos in the echidna/codebase.
-- Properly document each invariants.
 
 # Invariant testing
-
-## Implemented
 
 ### General
 
@@ -48,18 +45,23 @@ You can fine in `/echidna` 3 config files to run the fuzzer:
 209. ✅ `borrow()` must decrease `borrowAllowance()` by `amount` if `user != onBehalf`.
 210. ✅ `repay()` must decrease the onBehalfOf debtToken balance by `amount`.
 211. ✅ `repay()` must decrease the user asset balance by `amount`.
-212. ✅ `healthFactorAfter` must be greater than `healthFactorBefore`.
+212. ✅ `healthFactorAfter` must be greater than `healthFactorBefore` as long as liquidations are done in time..
 213. ✅ `setUseReserveAsCollateral` must not reduce the health factor below 1.
 214. ✅ Users must not be able to steal funds from flashloans.
 215. ✅ The total value borrowed must always be less than the value of the collaterals.
-216. ✅ each user postions must remain solvent.
+216. ✅ Each user postions must remain solvent.
 217. ✅ The `liquidityIndex` should monotonically increase when there's total debt.
 218. ✅ The `variableBorrowIndex` should monotonically increase when there's total debt.
 219. ✅ A user with debt should have at least an aToken balance `setUsingAsCollateral`.
 220. ❌ If all debt is repaid, all `aToken` holder should be able to claim their collateral.
 221. ❌ If all users withdraw their liquidity, there must not be aTokens supply left.
+222. 🚧 Integrity of Supply Cap - aToken supply shall never exceed the cap.
+223. 🚧 `UserConfigurationMap` integrity: If a user has a given aToken then `isUsingAsCollateralOrBorrowing` and `isUsingAsCollateral` should return true.
+224. 🚧 `UserConfigurationMap` integrity: If a user has a given debtToken then `isUsingAsCollateralOrBorrowing`, `isBorrowing` and `isBorrowingAny` should return true.
+225. 🚧 `ReserveConfigurationMap` integrity: If reserve is active and not frozen then user can interact with the lending market.
+226. 🚧 Repaying or Liquidate a position must result in the same final state.
 
-### ATokens
+### ATokens/ATokenNonRebasing
 
 300. ✅ Zero amount transfers should not break accounting.
 301. ✅ Once a user has a debt, they must not be able to transfer aTokens if this results in a health factor less than 1.
@@ -87,30 +89,83 @@ You can fine in `/echidna` 3 config files to run the fuzzer:
 323. ✅ Force feeding aToken in LendingPool, ATokens, or debtTokens must not change the final result.
 324. ❌ A user must not hold more than total supply.
 325. ❌ Sum of users' balance must not exceed total supply.
+326. 🚧 All `ATokenNonRebasing` operations should be equivalent to `ATokens`.
 
 ### DebtTokens
 
 400. ✅ `approveDelegation()` must never revert.
 401. ✅ Allowance must be modified correctly via `approve()`.
 
-## To implement
+### MiniPool
 
-- **LendingPool**
+501. 🚧 `deposit()` must increase the user AToken6909 balance by `amount`.
+502. 🚧 `deposit()` must decrease the user asset balance by `amount`.
+503. 🚧 `withdraw()` must decrease the user AToken6909 balance by `amount`.
+504. 🚧 `withdraw()` must increase the user asset balance by `amount`.
+505. 🚧 A user must not be able to `borrow()` if they don't own AToken6909.
+506. 🚧 `borrow()` must only be possible if the user health factor is greater than 1.
+507. 🚧 `borrow()` must not result in a health factor of less than 1.
+508. 🚧 `borrow()` must increase the user debtToken balance by `amount`.
+509. 🚧 `borrow()` must decrease `borrowAllowance()` by `amount` if `user != onBehalf`.
+510. 🚧 `repay()` must decrease the onBehalfOf debtToken balance by `amount`.
+511. 🚧 `repay()` must decrease the user asset balance by `amount`.
+512. 🚧 `healthFactorAfter` must be greater than `healthFactorBefore` as long as liquidations are done in time.
+513. 🚧 `setUseReserveAsCollateral` must not reduce the health factor below 1.
+514. 🚧 Users must not be able to steal funds from flashloans.
+515. 🚧 The total value borrowed must always be less than the value of the collaterals.
+516. 🚧 Each user postions must remain solvent.
+517. 🚧 The `liquidityIndex` should monotonically increase when there's total debt.
+518. 🚧 The `variableBorrowIndex` should monotonically increase when there's total debt.
+519. 🚧 A user with debt should have at least an AToken6909 balance `setUsingAsCollateral`.
+520. 🚧 If all debt is repaid, all aToken holder should be able to claim their collateral.
+521. 🚧 If all users withdraw their liquidity, there must not be aTokens supply left.
+522. 🚧 Integrity of Supply Cap - aToken supply shall never exceed the cap.
+523. 🚧 `UserConfigurationMap` integrity: If a user has a given aToken then `isUsingAsCollateralOrBorrowing` and `isUsingAsCollateral` should return true.
+524. 🚧 `UserConfigurationMap` integrity: If a user has a given debtToken then `isUsingAsCollateralOrBorrowing`, `isBorrowing` and `isBorrowingAny` should return true.
+525. 🚧 `ReserveConfigurationMap` integrity: If reserve is active and not frozen then user can interact with the lending market.
+526. 🚧 If flow reached the maximum, Minipools must not be able to borrow more.
+527. 🚧 Minipool flow borrow integrity: debt from the Lendingpool should never be greater than the collateral owned by Minipools.
+528. 🚧 Repaying or Liquidate a position must result in the same final state.
 
-  - Integrity of Supply Cap - aToken supply shall never exceed the cap.
-  - `ReserveConfigurationMap` integrity:
-    - If borrow ⇒ reserve is active, not frozen and enabeled
-    - If deposit ⇒ reserve is active and not frozen
+(ADD MINIPOOL BORROWFLOW INVARIANTS)
+
+### AToken6909
+
+600. 🚧 Zero amount transfers should not break accounting.
+601. 🚧 Once a user has a debt, they must not be able to transfer aTokens if this results in a health factor less than 1.
+602. 🚧 Transfers for more than available balance should not be allowed.
+603. 🚧 Transfers should update accounting correctly.
+604. 🚧 Self transfers should not break accounting.
+605. 🚧 Zero amount transfers must not break accounting.
+606. 🚧 Once a user has a debt, they must not be able to transfer AToken6909s if this results in a health factor less than 1.
+607. 🚧 Transfers for more than available balance must not be allowed.
+608. 🚧 `transferFrom()` must only transfer if the sender has enough allowance from the `from` address.
+609. 🚧 Transfers must update accounting correctly.
+610. 🚧 Self transfers must not break accounting.
+611. 🚧 `transferFrom()` must decrease allowance.
+612. 🚧 `approve()` must never revert.
+613. 🚧 Allowance must be modified correctly via `approve()`.
+614. 🚧 Force feeding assets in MiniPools or AToken6909 must not change the final result.
+615. 🚧 Force feeding aToken or AToken6909 in MiniPools or AToken6909 must not change the final result.
+616. 🚧 A user must not hold more than total supply.
+617. 🚧 Sum of users' balance must not exceed total supply.
+618. 🚧 `approveDelegation()` must never revert.
+619. 🚧 Allowance must be modified correctly via `approve()`.
 
 ## Admin entry points
 
-✚ : Cod3x Lend add
-
 ### LendingPoolAddressesProvider
 
-- `setMarketId(string memory marketId)`
 - `setAddressAsProxy(bytes32 id, address implementationAddress)`
+  - `setLendingPoolImpl(address pool)`
+  - `setLendingPoolConfiguratorImpl(address configurator)`
 - `setAddress(bytes32 id, address newAddress)`
+  - `setPoolAdmin(address admin)`
+  - `setPriceOracle(address priceOracle)`
+  - `setMiniPoolAddressesProvider(address provider)`
+  - `setFlowLimiter(address flowLimiter)`
+  - `setEmergencyAdmin(address emergencyAdmin)`
+  - `setPoolAdmin(address admin)`
 
 
 ### LendingPoolConfigurator
@@ -129,12 +184,57 @@ You can fine in `/echidna` 3 config files to run the fuzzer:
 - `setDepositCap(address asset, bool reserveType, uint256 depositCap)`
 - `setReserveInterestRateStrategyAddress(address asset, bool reserveType, address rateStrategyAddress)`
 - `setPoolPause(bool val)`
-- ✚ `setFarmingPct(address aTokenAddress, uint256 farmingPct)`
-- ✚ `setClaimingThreshold(address aTokenAddress, uint256 claimingThreshold)`
-- ✚ `setFarmingPctDrift(address aTokenAddress, uint256 _farmingPctDrift)`
-- ✚ `setProfitHandler(address aTokenAddress, address _profitHandler)`
-- ✚ `setVault(address aTokenAddress, address _vault)`
-- ✚ `rebalance(address aTokenAddress)`
+- `setFarmingPct(address aTokenAddress, uint256 farmingPct)`
+- `setClaimingThreshold(address aTokenAddress, uint256 claimingThreshold)`
+- `setFarmingPctDrift(address aTokenAddress, uint256 _farmingPctDrift)`
+- `setProfitHandler(address aTokenAddress, address _profitHandler)`
+- `setVault(address aTokenAddress, address _vault)`
+- `rebalance(address aTokenAddress)`
+- `setRewarderForReserve(address asset, bool reserveType, address rewarder)`
+- `setTreasury(address asset, bool reserveType, address rewarder)`
+- `updateFlashloanPremiumTotal(uint128 newFlashloanPremiumTotal)`
+- `enableFlashloan(address asset, bool reserveType)`
+- `disableFlashloan(address asset, bool reserveType)`
+
+### MiniPoolAddressProvider
+
+- `deployMiniPool(address miniPoolImpl, address aTokenImpl)`
+- `setFlowLimit(address asset, address miniPool, uint256 limit)`
+- `setMiniPoolImpl(address impl, uint256 miniPoolId)`
+- `setAToken6909Impl(address impl, uint256 miniPoolId)`
+- `setAddress(bytes32 id, address newAddress)`
+- `setMiniPoolConfigurator(address configuratorImpl)`
+- `setMiniPoolToTreasury(uint256 id, address treasury)`
+  
+### MiniPoolConfiguration
+
+- `batchInitReserve(InitReserveInput[] calldata input, IMiniPool pool)`
+- `enableBorrowingOnReserve(address asset, IMiniPool pool)`
+- `disableBorrowingOnReserve(address asset, IMiniPool pool)`
+- `configureReserveAsCollateral(address asset, uint256 ltv, uint256 liquidationThreshold, uint256 liquidationBonus, IMiniPool pool)`
+- `activateReserve(address asset, IMiniPool pool)`
+- `deactivateReserve(address asset, IMiniPool pool)`
+- `freezeReserve(address asset, IMiniPool pool)`
+- `unfreezeReserve(address asset, IMiniPool pool)`
+- `enableFlashloan(address asset, IMiniPool pool)`
+- `disableFlashloan(address asset, IMiniPool pool)`
+- `setReserveFactor(address asset, uint256 reserveFactor, IMiniPool pool)`
+- `setDepositCap(address asset, uint256 depositCap, IMiniPool pool)`
+- `setReserveInterestRateStrategyAddress(address asset, address rateStrategyAddress, IMiniPool pool)`
+- `setPoolPause(bool val, IMiniPool pool)`
+- `setRewarderForReserve(address asset, address rewarder, IMiniPool pool)`
+- `updateFlashloanPremiumTotal(uint128 newFlashloanPremiumTotal, IMiniPool pool)`
+
+### Oracle
+
+- `setAssetSources(address[] calldata assets, address[] calldata sources, uint256[] calldata timeouts)`
+- `setFallbackOracle(address fallbackOracle)`
+
+### BasePiReserveRateStrategy
+
+- `setOptimalUtilizationRate(uint256 optimalUtilizationRate)`
+- `setMinControllerError(int256 minControllerError)`
+- `setPidValues(uint256 kp, uint256 ki, int256 maxITimeAmp)`
 
 ## User entry points
 
@@ -144,6 +244,7 @@ You can fine in `/echidna` 3 config files to run the fuzzer:
 - `withdraw(address asset, bool reserveType, uint256 amount, address onBehalfOf)`
 - `borrow(address asset, bool reserveType, uint256 amount, address onBehalfOf)`
 - `repay(address asset, bool reserveType, uint256 amount, address onBehalfOf)`
+- `repayWithATokens(address asset, bool reserveType, uint256 amount)`
 - `setUserUseReserveAsCollateral(address asset, bool reserveType, bool useAsCollateral)`
 - `liquidationCall(address collateralAsset, bool collateralAssetType, address debtAsset, bool debtAssetType, address user, uint256 debtToCover, bool receiveAToken)`
 - `flashLoan(FlashLoanParams memory flashLoanParams, uint256[] calldata amounts, uint256[] calldata modes, bytes calldata params)`
@@ -157,6 +258,32 @@ You can fine in `/echidna` 3 config files to run the fuzzer:
 - `decreaseAllowance(address spender, uint256 subtractedValue)`
 - `permit(address owner, address spender, uint256 value, uint256 deadline, uint8 v, bytes32 r, bytes32 s)`
 
+### ATokenNonRebasing
+
+- `transfer(address recipient, uint256 amountShare)`
+- `transferFrom(address sender, address recipient, uint256 amountShare)`
+- `approve(address spender, uint256 amountShare)`
+- `increaseAllowance(address spender, uint256 addedValue)`
+- `decreaseAllowance(address spender, uint256 subtractedValue)`
+
 ### VariableDebtToken
 
 - `approveDelegation(address delegatee, uint256 amount)`
+
+### Minipool
+
+- `deposit(address asset, uint256 amount, address onBehalfOf)`
+- `withdraw(address asset, uint256 amount, address to)`
+- `borrow(address asset, uint256 amount, address onBehalfOf)`
+- `repay(address asset, uint256 amount, address onBehalfOf)`
+- `setUserUseReserveAsCollateral(address asset, bool useAsCollateral)`
+- `liquidationCall(address collateralAsset, address debtAsset, address user, uint256 debtToCover, bool receiveAToken)`
+- `flashLoan(FlashLoanParams memory flashLoanParams, uint256[] calldata amounts, uint256[] calldata modes, bytes calldata params)`
+
+### AToken6909
+
+- `transfer(address to, uint256 id, uint256 amount)`
+- `transferFrom(address from, address to, uint256 id, uint256 amount)`
+- `approve(address spender, uint256 id, uint256 amount)`
+- `setOperator(address operator, bool approved)`
+- `approveDelegation(address delegatee, uint256 id, uint256 amount)`
