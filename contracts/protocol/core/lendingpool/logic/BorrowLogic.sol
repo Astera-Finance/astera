@@ -217,102 +217,6 @@ library BorrowLogic {
         );
     }
 
-    function amountInETH(address asset, uint256 amount, uint256 decimals, address oracle)
-        internal
-        view
-        returns (uint256)
-    {
-        return IPriceOracleGetter(oracle).getAssetPrice(asset) * amount / (10 ** decimals);
-    }
-
-    struct repayParams {
-        address asset;
-        bool reserveType;
-        uint256 amount;
-        address onBehalfOf;
-        ILendingPoolAddressesProvider addressesProvider;
-    }
-
-    event Repay(
-        address indexed reserve, address indexed user, address indexed repayer, uint256 amount
-    );
-
-    function repay(
-        repayParams memory params,
-        mapping(address => mapping(bool => DataTypes.ReserveData)) storage _reserves,
-        mapping(address => DataTypes.UserConfigurationMap) storage _usersConfig
-    ) internal returns (uint256) {
-        DataTypes.ReserveData storage reserve = _reserves[params.asset][params.reserveType];
-
-        (uint256 variableDebt) = Helpers.getUserCurrentDebt(params.onBehalfOf, reserve);
-
-        ValidationLogic.validateRepay(reserve, params.amount, params.onBehalfOf, variableDebt);
-
-        uint256 paybackAmount = variableDebt;
-
-        if (params.amount < paybackAmount) {
-            paybackAmount = params.amount;
-        }
-
-        reserve.updateState();
-
-        IVariableDebtToken(reserve.variableDebtTokenAddress).burn(
-            params.onBehalfOf, paybackAmount, reserve.variableBorrowIndex
-        );
-
-        address aToken = reserve.aTokenAddress;
-        reserve.updateInterestRates(params.asset, aToken, paybackAmount, 0);
-
-        if (variableDebt - paybackAmount == 0) {
-            _usersConfig[params.onBehalfOf].setBorrowing(reserve.id, false);
-        }
-
-        IERC20(params.asset).safeTransferFrom(msg.sender, aToken, paybackAmount);
-
-        IAToken(aToken).handleRepayment(msg.sender, params.onBehalfOf, paybackAmount);
-
-        emit Repay(params.asset, params.onBehalfOf, msg.sender, paybackAmount);
-
-        return paybackAmount;
-    }
-
-    function repayWithAtokens(
-        repayParams memory params,
-        mapping(address => mapping(bool => DataTypes.ReserveData)) storage _reserves,
-        mapping(address => DataTypes.UserConfigurationMap) storage _usersConfig
-    ) internal returns (uint256) {
-        DataTypes.ReserveData storage reserve = _reserves[params.asset][params.reserveType];
-
-        (uint256 variableDebt) = Helpers.getUserCurrentDebt(params.onBehalfOf, reserve);
-
-        ValidationLogic.validateRepay(reserve, params.amount, params.onBehalfOf, variableDebt);
-
-        uint256 paybackAmount = variableDebt;
-
-        if (params.amount < paybackAmount) {
-            paybackAmount = params.amount;
-        }
-
-        reserve.updateState();
-
-        IVariableDebtToken(reserve.variableDebtTokenAddress).burn(
-            params.onBehalfOf, paybackAmount, reserve.variableBorrowIndex
-        );
-
-        address aToken = reserve.aTokenAddress;
-        reserve.updateInterestRates(params.asset, aToken, paybackAmount, 0);
-
-        if (variableDebt - paybackAmount == 0) {
-            _usersConfig[params.onBehalfOf].setBorrowing(reserve.id, false);
-        }
-
-        IAToken(aToken).burn(params.onBehalfOf, aToken, paybackAmount, reserve.liquidityIndex);
-
-        emit Repay(params.asset, params.onBehalfOf, msg.sender, paybackAmount);
-
-        return paybackAmount;
-    }
-
     struct ExecuteMiniPoolBorrowParams {
         address asset;
         bool reserveType;
@@ -359,6 +263,92 @@ library BorrowLogic {
                 params.amount,
                 reserve.currentVariableBorrowRate
             );
+        }
+    }
+
+    function amountInETH(address asset, uint256 amount, uint256 decimals, address oracle)
+        internal
+        view
+        returns (uint256)
+    {
+        return IPriceOracleGetter(oracle).getAssetPrice(asset) * amount / (10 ** decimals);
+    }
+
+    struct repayParams {
+        address asset;
+        bool reserveType;
+        uint256 amount;
+        address onBehalfOf;
+        ILendingPoolAddressesProvider addressesProvider;
+    }
+
+    event Repay(
+        address indexed reserve, address indexed user, address indexed repayer, uint256 amount
+    );
+
+    function repay(
+        repayParams memory params,
+        mapping(address => mapping(bool => DataTypes.ReserveData)) storage _reserves,
+        mapping(address => DataTypes.UserConfigurationMap) storage _usersConfig
+    ) internal returns (uint256) {
+        DataTypes.ReserveData storage reserve = _reserves[params.asset][params.reserveType];
+
+        (address aToken, uint256 paybackAmount) = _repay(params, reserve, _usersConfig);
+
+        IERC20(params.asset).safeTransferFrom(msg.sender, aToken, paybackAmount);
+
+        IAToken(aToken).handleRepayment(msg.sender, params.onBehalfOf, paybackAmount);
+
+        emit Repay(params.asset, params.onBehalfOf, msg.sender, paybackAmount);
+
+        return paybackAmount;
+    }
+
+    function repayWithAtokens(
+        repayParams memory params,
+        mapping(address => mapping(bool => DataTypes.ReserveData)) storage _reserves,
+        mapping(address => DataTypes.UserConfigurationMap) storage _usersConfig
+    ) internal returns (uint256) {
+        DataTypes.ReserveData storage reserve = _reserves[params.asset][params.reserveType];
+
+        (address aToken, uint256 paybackAmount) = _repay(params, reserve, _usersConfig);
+
+        IAToken(aToken).burn(params.onBehalfOf, aToken, paybackAmount, reserve.liquidityIndex);
+
+        IAToken(aToken).handleRepayment(msg.sender, params.onBehalfOf, paybackAmount);
+
+        emit Repay(params.asset, params.onBehalfOf, msg.sender, paybackAmount);
+
+        return paybackAmount;
+    }
+
+    // Repay helper
+    function _repay(
+        repayParams memory params,
+        DataTypes.ReserveData storage reserve,
+        mapping(address => DataTypes.UserConfigurationMap) storage _usersConfig
+    ) private returns (address aToken, uint256 paybackAmount) {
+        (uint256 variableDebt) = Helpers.getUserCurrentDebt(params.onBehalfOf, reserve);
+
+        ValidationLogic.validateRepay(reserve, params.amount, params.onBehalfOf, variableDebt);
+
+        paybackAmount = variableDebt;
+
+        if (params.amount < paybackAmount) {
+            paybackAmount = params.amount;
+        }
+
+        reserve.updateState();
+
+        IVariableDebtToken(reserve.variableDebtTokenAddress).burn(
+            params.onBehalfOf, paybackAmount, reserve.variableBorrowIndex
+        );
+
+        aToken = reserve.aTokenAddress;
+        reserve.updateInterestRates(params.asset, aToken, paybackAmount, 0);
+
+        if (variableDebt - paybackAmount == 0) {
+            _usersConfig[params.onBehalfOf].setBorrowing(reserve.id, false);
         }
     }
 }
