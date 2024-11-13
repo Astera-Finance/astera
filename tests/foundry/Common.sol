@@ -6,10 +6,8 @@ import "forge-std/console.sol";
 import "contracts/dependencies/openzeppelin/contracts/ERC20.sol";
 import "contracts/protocol/rewarder/lendingpool/Rewarder.sol";
 import "contracts/protocol/core/Oracle.sol";
-import "contracts/misc/ProtocolDataProvider.sol";
 import "contracts/misc/Cod3xLendDataProvider.sol";
 import "contracts/misc/Treasury.sol";
-// import "contracts/misc/UiPoolDataProviderV2.sol";
 import "contracts/misc/WETHGateway.sol";
 import "contracts/protocol/core/lendingpool/logic/ReserveLogic.sol";
 import "contracts/protocol/core/lendingpool/logic/GenericLogic.sol";
@@ -202,7 +200,6 @@ contract Common is Test {
     // Protocol deployment variables
     uint256 providerId = 1;
     string marketId = "Cod3x Lend Genesis Market";
-    uint256 cntr;
 
     ERC20 public weth = ERC20(WETH);
     ERC20 public dai = ERC20(DAI);
@@ -594,68 +591,93 @@ contract Common is Test {
         }
     }
 
+    /**
+     * @dev put address(0) for _miniPoolAddressProvider in order to initialize all minipool contracts
+     */
     function fixture_deployMiniPoolSetup(
         address _lendingPoolAddressesProvider,
-        address _lendingPool
-    ) public returns (DeployedMiniPoolContracts memory) {
+        address _lendingPool,
+        address _cod3xLendDataProvider,
+        address _miniPoolAddressProvider
+    ) public returns (DeployedMiniPoolContracts memory, uint256) {
         DeployedMiniPoolContracts memory deployedMiniPoolContracts;
+        uint256 miniPoolId;
         deployedMiniPoolContracts.miniPoolImpl = new MiniPool();
-        deployedMiniPoolContracts.miniPoolAddressesProvider = new MiniPoolAddressesProvider(
-            ILendingPoolAddressesProvider(_lendingPoolAddressesProvider)
-        );
         deployedMiniPoolContracts.aToken6909Impl = new ATokenERC6909();
-        deployedMiniPoolContracts.flowLimiter = new FlowLimiter(
-            ILendingPoolAddressesProvider(_lendingPoolAddressesProvider),
-            IMiniPoolAddressesProvider(address(deployedMiniPoolContracts.miniPoolAddressesProvider)),
-            ILendingPool(_lendingPool)
-        );
-        address miniPoolConfigImpl = address(new MiniPoolConfigurator());
-        deployedMiniPoolContracts.miniPoolAddressesProvider.setMiniPoolConfigurator(
-            miniPoolConfigImpl
-        );
-        deployedMiniPoolContracts.miniPoolConfigurator = MiniPoolConfigurator(
-            deployedMiniPoolContracts.miniPoolAddressesProvider.getMiniPoolConfigurator()
-        );
 
-        ILendingPoolAddressesProvider(_lendingPoolAddressesProvider).setMiniPoolAddressesProvider(
-            address(deployedMiniPoolContracts.miniPoolAddressesProvider)
-        );
-        ILendingPoolAddressesProvider(_lendingPoolAddressesProvider).setFlowLimiter(
-            address(deployedMiniPoolContracts.flowLimiter)
-        );
-        deployedMiniPoolContracts.miniPoolAddressesProvider.deployMiniPool(
-            address(deployedMiniPoolContracts.miniPoolImpl),
-            address(deployedMiniPoolContracts.aToken6909Impl)
-        );
+        if (_miniPoolAddressProvider == address(0)) {
+            /* First deployment so configure everything */
 
-        /* Strategies */
-        deployedMiniPoolContracts.stableStrategy = new MiniPoolDefaultReserveInterestRateStrategy(
-            IMiniPoolAddressesProvider(_lendingPoolAddressesProvider),
-            sStrat[0],
-            sStrat[1],
-            sStrat[2],
-            sStrat[3]
-        );
-        deployedMiniPoolContracts.volatileStrategy = new MiniPoolDefaultReserveInterestRateStrategy(
-            IMiniPoolAddressesProvider(_lendingPoolAddressesProvider),
-            volStrat[0],
-            volStrat[1],
-            volStrat[2],
-            volStrat[3]
-        );
-        deployedMiniPoolContracts.piStrategy = new MiniPoolPiReserveInterestRateStrategy(
-            _lendingPoolAddressesProvider,
-            0, // minipool ID
-            defaultPidConfig.asset,
-            defaultPidConfig.assetReserveType,
-            defaultPidConfig.minControllerError,
-            defaultPidConfig.maxITimeAmp,
-            defaultPidConfig.optimalUtilizationRate,
-            defaultPidConfig.kp,
-            defaultPidConfig.ki
-        );
+            deployedMiniPoolContracts.miniPoolAddressesProvider = new MiniPoolAddressesProvider(
+                ILendingPoolAddressesProvider(_lendingPoolAddressesProvider)
+            );
+            console.log("miniPoolImpl: ", address(deployedMiniPoolContracts.miniPoolImpl));
+            console.log("aToken6909Impl: ", address(deployedMiniPoolContracts.aToken6909Impl));
+            miniPoolId = deployedMiniPoolContracts.miniPoolAddressesProvider.deployMiniPool(
+                address(deployedMiniPoolContracts.miniPoolImpl),
+                address(deployedMiniPoolContracts.aToken6909Impl)
+            );
+            deployedMiniPoolContracts.flowLimiter = new FlowLimiter(
+                ILendingPoolAddressesProvider(_lendingPoolAddressesProvider),
+                IMiniPoolAddressesProvider(
+                    address(deployedMiniPoolContracts.miniPoolAddressesProvider)
+                ),
+                ILendingPool(_lendingPool)
+            );
+            address miniPoolConfigImpl = address(new MiniPoolConfigurator());
+            deployedMiniPoolContracts.miniPoolAddressesProvider.setMiniPoolConfigurator(
+                miniPoolConfigImpl
+            );
+            deployedMiniPoolContracts.miniPoolConfigurator = MiniPoolConfigurator(
+                deployedMiniPoolContracts.miniPoolAddressesProvider.getMiniPoolConfigurator()
+            );
 
-        return deployedMiniPoolContracts;
+            ILendingPoolAddressesProvider(_lendingPoolAddressesProvider)
+                .setMiniPoolAddressesProvider(
+                address(deployedMiniPoolContracts.miniPoolAddressesProvider)
+            );
+            ILendingPoolAddressesProvider(_lendingPoolAddressesProvider).setFlowLimiter(
+                address(deployedMiniPoolContracts.flowLimiter)
+            );
+
+            /* Strategies */
+            deployedMiniPoolContracts.stableStrategy = new MiniPoolDefaultReserveInterestRateStrategy(
+                IMiniPoolAddressesProvider(_lendingPoolAddressesProvider),
+                sStrat[0],
+                sStrat[1],
+                sStrat[2],
+                sStrat[3]
+            );
+            deployedMiniPoolContracts.volatileStrategy = new MiniPoolDefaultReserveInterestRateStrategy(
+                IMiniPoolAddressesProvider(_lendingPoolAddressesProvider),
+                volStrat[0],
+                volStrat[1],
+                volStrat[2],
+                volStrat[3]
+            );
+            deployedMiniPoolContracts.piStrategy = new MiniPoolPiReserveInterestRateStrategy(
+                _lendingPoolAddressesProvider,
+                0, // minipool ID
+                defaultPidConfig.asset,
+                defaultPidConfig.assetReserveType,
+                defaultPidConfig.minControllerError,
+                defaultPidConfig.maxITimeAmp,
+                defaultPidConfig.optimalUtilizationRate,
+                defaultPidConfig.kp,
+                defaultPidConfig.ki
+            );
+            Cod3xLendDataProvider(_cod3xLendDataProvider).setMiniPoolAddressProvider(
+                address(deployedMiniPoolContracts.miniPoolAddressesProvider)
+            );
+        } else {
+            /* Get the same AERC6909 impl as previously */
+            miniPoolId = IMiniPoolAddressesProvider(_miniPoolAddressProvider).deployMiniPool(
+                address(deployedMiniPoolContracts.miniPoolImpl),
+                address(deployedMiniPoolContracts.aToken6909Impl)
+            );
+        }
+
+        return (deployedMiniPoolContracts, miniPoolId);
     }
 
     function fixture_convertWithDecimals(uint256 amountRaw, uint256 decimalsA, uint256 decimalsB)
@@ -681,16 +703,14 @@ contract Common is Test {
     function fixture_configureMiniPoolReserves(
         address[] memory tokensToConfigure,
         ConfigAddresses memory configAddresses,
-        DeployedMiniPoolContracts memory miniPoolContracts
+        DeployedMiniPoolContracts memory miniPoolContracts,
+        uint256 miniPoolId
     ) public returns (address) {
         IMiniPoolConfigurator.InitReserveInput[] memory initInputParams =
             new IMiniPoolConfigurator.InitReserveInput[](tokensToConfigure.length);
-        // address aTokensErc6909Addr;
         console.log("Getting Mini pool: ");
-        address miniPool = miniPoolContracts.miniPoolAddressesProvider.getMiniPool(cntr);
-        cntr++;
+        address miniPool = miniPoolContracts.miniPoolAddressesProvider.getMiniPool(miniPoolId);
 
-        // aTokensErc6909Addr = miniPoolContracts.miniPoolAddressesProvider.getMiniPoolToAERC6909(mp);
         console.log("Length:", tokensToConfigure.length);
         for (uint8 idx = 0; idx < tokensToConfigure.length; idx++) {
             string memory tmpSymbol = ERC20(tokensToConfigure[idx]).symbol();
@@ -699,7 +719,7 @@ contract Common is Test {
             address interestStrategy = isStableStrategy[idx % tokens.length] != false
                 ? configAddresses.stableStrategy
                 : configAddresses.volatileStrategy;
-            console.log("[common]interestStartegy: ", interestStrategy);
+            // console.log("[common]interestStartegy: ", interestStrategy);
             initInputParams[idx] = IMiniPoolConfigurator.InitReserveInput({
                 underlyingAssetDecimals: ERC20(tokensToConfigure[idx]).decimals(),
                 interestRateStrategyAddress: interestStrategy,

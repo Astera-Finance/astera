@@ -30,9 +30,11 @@ contract MiniPoolPidReserveInterestRateStrategyTest is Common {
         opFork = vm.createSelectFork(RPC, FORK_BLOCK);
         assertEq(vm.activeFork(), opFork);
         deployedContracts = fixture_deployProtocol();
-        deployedMiniPoolContracts = fixture_deployMiniPoolSetup(
+        (deployedMiniPoolContracts,) = fixture_deployMiniPoolSetup(
             address(deployedContracts.lendingPoolAddressesProvider),
-            address(deployedContracts.lendingPool)
+            address(deployedContracts.lendingPool),
+            address(deployedContracts.cod3xLendDataProvider),
+            address(0)
         );
         console.log("PiReserveInterestRateStrategy deployment: ");
         pidStrat = new PiReserveInterestRateStrategy(
@@ -105,7 +107,7 @@ contract MiniPoolPidReserveInterestRateStrategyTest is Common {
             }
         }
         console.log("Mini pool reserve configuration..... ");
-        fixture_configureMiniPoolReserves(reserves, configAddresses, deployedMiniPoolContracts);
+        fixture_configureMiniPoolReserves(reserves, configAddresses, deployedMiniPoolContracts, 0);
 
         miniPool = deployedMiniPoolContracts.miniPoolAddressesProvider.getMiniPool(0);
         console.log("3.Minipool: ", miniPool);

@@ -669,7 +669,7 @@ The deployment process involves configuration files `./input/<Nr>_<InputJsonName
     "piStrategies": [
         "0xdb026094f6b5b3A6aEEEBea25c60E5cfE9eB8E49"
     ],
-    "protocolDataProvider": "0x270701c499Ce78EC803948B8b9a54cd22CfAAB61",
+    "cod3xLendDataProvider": "0x270701c499Ce78EC803948B8b9a54cd22CfAAB61",
     "rewarder": "0xD0171e0923f0Dc7Ab24947d5D316Af640cF7f196",
     "stableStrategies": [
         "0xb798354d5731A9EA700a7B3bC3f7bfE30c562003"

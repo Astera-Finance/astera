@@ -26,13 +26,6 @@ contract MiniPoolRepayWithdrawTransferTest is MiniPoolDepositBorrowTest {
         uint256 currentHealth;
     }
 
-    event Withdraw(
-        address indexed reserve, address indexed user, address indexed to, uint256 amount
-    );
-    event Repay(
-        address indexed reserve, address indexed user, address indexed repayer, uint256 amount
-    );
-
     function fixture_calculateHealthFactorFromBalances(
         uint256 totalCollateralInETH,
         uint256 totalDebtInETH,
@@ -163,6 +156,8 @@ contract MiniPoolRepayWithdrawTransferTest is MiniPoolDepositBorrowTest {
             borrowParams.token.balanceOf(address(this)) / 10
         );
 
+        deal(address(collateralParams.token), user, collateralParams.token.balanceOf(address(this)));
+
         /* Borrow */
         fixture_miniPoolBorrow(
             amount, collateralOffset, borrowOffset, collateralParams, borrowParams, user
@@ -247,6 +242,7 @@ contract MiniPoolRepayWithdrawTransferTest is MiniPoolDepositBorrowTest {
         vm.label(address(borrowParams.aToken), "token1");
         vm.label(address(collateralParams.token), "token0");
 
+        deal(address(collateralParams.token), user, collateralParams.token.balanceOf(address(this)));
         fixture_miniPoolBorrowWithFlowFromLendingPool(
             amount, borrowOffset, collateralParams, borrowParams, user
         );
@@ -328,6 +324,8 @@ contract MiniPoolRepayWithdrawTransferTest is MiniPoolDepositBorrowTest {
             borrowParams.token.balanceOf(address(this)) / 10
         );
         vm.assume(withdrawAmount < borrowAmount);
+
+        deal(address(collateralParams.token), user, collateralParams.token.balanceOf(address(this)));
 
         /* Borrow */
         fixture_miniPoolBorrow(
@@ -413,6 +411,8 @@ contract MiniPoolRepayWithdrawTransferTest is MiniPoolDepositBorrowTest {
             borrowParams.token.balanceOf(address(this)) / 10
         );
         vm.assume(withdrawAmount < borrowAmount);
+
+        deal(address(collateralParams.token), user, collateralParams.token.balanceOf(address(this)));
 
         /* Borrow */
         fixture_miniPoolBorrow(
@@ -763,8 +763,8 @@ contract MiniPoolRepayWithdrawTransferTest is MiniPoolDepositBorrowTest {
             // {
             //     uint256 initialTokenBalance = usdcParams.token.balanceOf(users.user3);
             //     uint256 initialATokenBalance = usdcParams.aToken.balanceOf(users.user3);
-            //     usdcParams.token.approve(address(deployedLpContracts.lendingPool), amount1);
-            //     deployedLpContracts.lendingPool.deposit(
+            //     usdcParams.token.approve(address(deployedContracts.lendingPool), amount1);
+            //     deployedContracts.lendingPool.deposit(
             //         address(usdcParams.token), true, amount1, users.user3
             //     );
             //     console.log("User token balance shall be {initialTokenBalance - amount}");
@@ -788,7 +788,7 @@ contract MiniPoolRepayWithdrawTransferTest is MiniPoolDepositBorrowTest {
         );
         console.log(
             "2. Normalized income USDC: ",
-            ILendingPool(deployedLpContracts.lendingPool).getReserveNormalizedIncome(
+            ILendingPool(deployedContracts.lendingPool).getReserveNormalizedIncome(
                 address(usdcParams.token), true
             )
         );
@@ -798,7 +798,7 @@ contract MiniPoolRepayWithdrawTransferTest is MiniPoolDepositBorrowTest {
         );
         console.log(
             "2. Normalized income WBTC: ",
-            ILendingPool(deployedLpContracts.lendingPool).getReserveNormalizedIncome(
+            ILendingPool(deployedContracts.lendingPool).getReserveNormalizedIncome(
                 address(wbtcParams.token), true
             )
         );
@@ -828,7 +828,7 @@ contract MiniPoolRepayWithdrawTransferTest is MiniPoolDepositBorrowTest {
         console.log("3. AvailableLiquidity: ", availableLiquidity);
         console.log(
             "3. Normalized income USDC: ",
-            ILendingPool(deployedLpContracts.lendingPool).getReserveNormalizedIncome(
+            ILendingPool(deployedContracts.lendingPool).getReserveNormalizedIncome(
                 address(usdcParams.token), true
             )
         );
@@ -838,7 +838,7 @@ contract MiniPoolRepayWithdrawTransferTest is MiniPoolDepositBorrowTest {
         );
         console.log(
             "3. Normalized income WBTC: ",
-            ILendingPool(deployedLpContracts.lendingPool).getReserveNormalizedIncome(
+            ILendingPool(deployedContracts.lendingPool).getReserveNormalizedIncome(
                 address(wbtcParams.token), true
             )
         );
@@ -905,7 +905,7 @@ contract MiniPoolRepayWithdrawTransferTest is MiniPoolDepositBorrowTest {
         fixture_depositTokensToMainPool(amountwBtc, user2, tokenParamsWbtc);
 
         vm.startPrank(user2);
-        deployedLpContracts.lendingPool.borrow(
+        deployedContracts.lendingPool.borrow(
             address(tokenParamsUsdc.token), true, amountUsdc, user2
         );
         assertEq(amountUsdc, tokenParamsUsdc.token.balanceOf(address(user2)));
@@ -1155,7 +1155,7 @@ contract MiniPoolRepayWithdrawTransferTest is MiniPoolDepositBorrowTest {
         miniPoolContracts.miniPoolAddressesProvider.setMiniPoolToTreasury(0, address(0x1111));
 
         MockLendingpoolReserveInterestRateStrategy mockLendingpoolReserveInterestRateStrategy = new MockLendingpoolReserveInterestRateStrategy(
-            deployedLpContracts.lendingPoolAddressesProvider, BrAssetLp, LrAssetLp
+            deployedContracts.lendingPoolAddressesProvider, BrAssetLp, LrAssetLp
         );
 
         MockMinipoolReserveInterestRateStrategy mockMinipoolReserveInterestRateStrategy = new MockMinipoolReserveInterestRateStrategy(
@@ -1170,13 +1170,13 @@ contract MiniPoolRepayWithdrawTransferTest is MiniPoolDepositBorrowTest {
         uint256 amountUsdc = 100000 * (10 ** tokenParamsUsdc.token.decimals());
         uint256 amountwBtc = 1 * (10 ** tokenParamsWbtc.token.decimals());
 
-        vm.startPrank(deployedLpContracts.lendingPoolAddressesProvider.getPoolAdmin());
+        vm.startPrank(deployedContracts.lendingPoolAddressesProvider.getPoolAdmin());
         LendingPoolConfigurator(
-            deployedLpContracts.lendingPoolAddressesProvider.getLendingPoolConfigurator()
+            deployedContracts.lendingPoolAddressesProvider.getLendingPoolConfigurator()
         ).setReserveFactor(address(tokenParamsUsdc.token), true, 0);
 
         LendingPoolConfigurator(
-            deployedLpContracts.lendingPoolAddressesProvider.getLendingPoolConfigurator()
+            deployedContracts.lendingPoolAddressesProvider.getLendingPoolConfigurator()
         ).setReserveInterestRateStrategyAddress(
             address(tokenParamsUsdc.token),
             true,
@@ -1319,7 +1319,7 @@ contract MiniPoolRepayWithdrawTransferTest is MiniPoolDepositBorrowTest {
         miniPoolContracts.miniPoolAddressesProvider.setMiniPoolToTreasury(0, address(0x1111));
 
         MockLendingpoolReserveInterestRateStrategy mockLendingpoolReserveInterestRateStrategy = new MockLendingpoolReserveInterestRateStrategy(
-            deployedLpContracts.lendingPoolAddressesProvider, BrAssetLp, LrAssetLp
+            deployedContracts.lendingPoolAddressesProvider, BrAssetLp, LrAssetLp
         );
 
         MockMinipoolReserveInterestRateStrategy mockMinipoolReserveInterestRateStrategy = new MockMinipoolReserveInterestRateStrategy(
@@ -1334,13 +1334,13 @@ contract MiniPoolRepayWithdrawTransferTest is MiniPoolDepositBorrowTest {
         uint256 amountUsdc = 100000 * (10 ** tokenParamsUsdc.token.decimals());
         uint256 amountwBtc = 1 * (10 ** tokenParamsWbtc.token.decimals());
 
-        vm.startPrank(deployedLpContracts.lendingPoolAddressesProvider.getPoolAdmin());
+        vm.startPrank(deployedContracts.lendingPoolAddressesProvider.getPoolAdmin());
         LendingPoolConfigurator(
-            deployedLpContracts.lendingPoolAddressesProvider.getLendingPoolConfigurator()
+            deployedContracts.lendingPoolAddressesProvider.getLendingPoolConfigurator()
         ).setReserveFactor(address(tokenParamsUsdc.token), true, 0);
 
         LendingPoolConfigurator(
-            deployedLpContracts.lendingPoolAddressesProvider.getLendingPoolConfigurator()
+            deployedContracts.lendingPoolAddressesProvider.getLendingPoolConfigurator()
         ).setReserveInterestRateStrategyAddress(
             address(tokenParamsUsdc.token),
             true,
@@ -1427,7 +1427,7 @@ contract MiniPoolRepayWithdrawTransferTest is MiniPoolDepositBorrowTest {
         miniPoolContracts.miniPoolAddressesProvider.setMiniPoolToTreasury(0, address(0x1111));
 
         MockLendingpoolReserveInterestRateStrategy mockLendingpoolReserveInterestRateStrategy = new MockLendingpoolReserveInterestRateStrategy(
-            deployedLpContracts.lendingPoolAddressesProvider, BrAssetLp, LrAssetLp
+            deployedContracts.lendingPoolAddressesProvider, BrAssetLp, LrAssetLp
         );
 
         MockMinipoolReserveInterestRateStrategy mockMinipoolReserveInterestRateStrategy = new MockMinipoolReserveInterestRateStrategy(
@@ -1442,13 +1442,13 @@ contract MiniPoolRepayWithdrawTransferTest is MiniPoolDepositBorrowTest {
         uint256 amountUsdc = 100000 * (10 ** tokenParamsUsdc.token.decimals());
         uint256 amountwBtc = 1 * (10 ** tokenParamsWbtc.token.decimals());
 
-        vm.startPrank(deployedLpContracts.lendingPoolAddressesProvider.getPoolAdmin());
+        vm.startPrank(deployedContracts.lendingPoolAddressesProvider.getPoolAdmin());
         LendingPoolConfigurator(
-            deployedLpContracts.lendingPoolAddressesProvider.getLendingPoolConfigurator()
+            deployedContracts.lendingPoolAddressesProvider.getLendingPoolConfigurator()
         ).setReserveFactor(address(tokenParamsUsdc.token), true, 0);
 
         LendingPoolConfigurator(
-            deployedLpContracts.lendingPoolAddressesProvider.getLendingPoolConfigurator()
+            deployedContracts.lendingPoolAddressesProvider.getLendingPoolConfigurator()
         ).setReserveInterestRateStrategyAddress(
             address(tokenParamsUsdc.token),
             true,
@@ -1571,7 +1571,7 @@ contract MiniPoolRepayWithdrawTransferTest is MiniPoolDepositBorrowTest {
         miniPoolContracts.miniPoolAddressesProvider.setMiniPoolToTreasury(0, address(0x1111));
 
         MockLendingpoolReserveInterestRateStrategy mockLendingpoolReserveInterestRateStrategy = new MockLendingpoolReserveInterestRateStrategy(
-            deployedLpContracts.lendingPoolAddressesProvider, BrAssetLp, LrAssetLp
+            deployedContracts.lendingPoolAddressesProvider, BrAssetLp, LrAssetLp
         );
 
         MockMinipoolReserveInterestRateStrategy mockMinipoolReserveInterestRateStrategy = new MockMinipoolReserveInterestRateStrategy(
@@ -1586,13 +1586,13 @@ contract MiniPoolRepayWithdrawTransferTest is MiniPoolDepositBorrowTest {
         uint256 amountUsdc = 100000 * (10 ** tokenParamsUsdc.token.decimals());
         uint256 amountwBtc = 1 * (10 ** tokenParamsWbtc.token.decimals());
 
-        vm.startPrank(deployedLpContracts.lendingPoolAddressesProvider.getPoolAdmin());
+        vm.startPrank(deployedContracts.lendingPoolAddressesProvider.getPoolAdmin());
         LendingPoolConfigurator(
-            deployedLpContracts.lendingPoolAddressesProvider.getLendingPoolConfigurator()
+            deployedContracts.lendingPoolAddressesProvider.getLendingPoolConfigurator()
         ).setReserveFactor(address(tokenParamsUsdc.token), true, 0);
 
         LendingPoolConfigurator(
-            deployedLpContracts.lendingPoolAddressesProvider.getLendingPoolConfigurator()
+            deployedContracts.lendingPoolAddressesProvider.getLendingPoolConfigurator()
         ).setReserveInterestRateStrategyAddress(
             address(tokenParamsUsdc.token),
             true,
@@ -1716,7 +1716,7 @@ contract MiniPoolRepayWithdrawTransferTest is MiniPoolDepositBorrowTest {
         miniPoolContracts.miniPoolAddressesProvider.setMiniPoolToTreasury(0, address(0x1111));
 
         MockLendingpoolReserveInterestRateStrategy mockLendingpoolReserveInterestRateStrategy = new MockLendingpoolReserveInterestRateStrategy(
-            deployedLpContracts.lendingPoolAddressesProvider, BrAssetLp, LrAssetLp
+            deployedContracts.lendingPoolAddressesProvider, BrAssetLp, LrAssetLp
         );
 
         MockMinipoolReserveInterestRateStrategy mockMinipoolReserveInterestRateStrategy = new MockMinipoolReserveInterestRateStrategy(
@@ -1731,13 +1731,13 @@ contract MiniPoolRepayWithdrawTransferTest is MiniPoolDepositBorrowTest {
         uint256 amountUsdc = 100000 * (10 ** tokenParamsUsdc.token.decimals());
         uint256 amountwBtc = 1 * (10 ** tokenParamsWbtc.token.decimals());
 
-        vm.startPrank(deployedLpContracts.lendingPoolAddressesProvider.getPoolAdmin());
+        vm.startPrank(deployedContracts.lendingPoolAddressesProvider.getPoolAdmin());
         LendingPoolConfigurator(
-            deployedLpContracts.lendingPoolAddressesProvider.getLendingPoolConfigurator()
+            deployedContracts.lendingPoolAddressesProvider.getLendingPoolConfigurator()
         ).setReserveFactor(address(tokenParamsUsdc.token), true, 0);
 
         LendingPoolConfigurator(
-            deployedLpContracts.lendingPoolAddressesProvider.getLendingPoolConfigurator()
+            deployedContracts.lendingPoolAddressesProvider.getLendingPoolConfigurator()
         ).setReserveInterestRateStrategyAddress(
             address(tokenParamsUsdc.token),
             true,

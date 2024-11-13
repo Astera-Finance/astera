@@ -4,7 +4,7 @@ pragma solidity ^0.8.0;
 import "contracts/dependencies/openzeppelin/contracts/ERC20.sol";
 import "contracts/protocol/rewarder/lendingpool/Rewarder.sol";
 import "contracts/protocol/core/Oracle.sol";
-import "contracts/misc/ProtocolDataProvider.sol";
+import "contracts/misc/Cod3xLendDataProvider.sol";
 import "contracts/misc/Treasury.sol";
 import "contracts/misc/UiPoolDataProviderV2.sol";
 import "contracts/protocol/core/lendingpool/logic/ReserveLogic.sol";
@@ -243,32 +243,46 @@ contract DeploymentUtils {
         contracts.lendingPoolAddressesProvider.setPoolAdmin(deployer);
 
         contracts.lendingPoolAddressesProvider.setPriceOracle(address(contracts.oracle));
-        contracts.protocolDataProvider =
-            new ProtocolDataProvider(contracts.lendingPoolAddressesProvider);
+        contracts.cod3xLendDataProvider = new Cod3xLendDataProvider();
+        contracts.cod3xLendDataProvider.setLendingPoolAddressProvider(
+            address(contracts.lendingPoolAddressesProvider)
+        );
     }
 
     function _deployMiniPoolContracts(address deployer) internal returns (uint256) {
         contracts.miniPoolImpl = new MiniPool();
-        contracts.miniPoolAddressesProvider =
-            new MiniPoolAddressesProvider(contracts.lendingPoolAddressesProvider);
-        contracts.flowLimiter = new FlowLimiter(
-            contracts.lendingPoolAddressesProvider,
-            IMiniPoolAddressesProvider(address(contracts.miniPoolAddressesProvider)),
-            contracts.lendingPool
-        );
-        contracts.miniPoolConfigurator = new MiniPoolConfigurator();
-        contracts.miniPoolAddressesProvider.setMiniPoolConfigurator(
-            address(contracts.miniPoolConfigurator)
-        );
-        contracts.miniPoolConfigurator =
-            MiniPoolConfigurator(contracts.miniPoolAddressesProvider.getMiniPoolConfigurator());
-        contracts.lendingPoolAddressesProvider.setMiniPoolAddressesProvider(
-            address(contracts.miniPoolAddressesProvider)
-        );
-        contracts.lendingPoolAddressesProvider.setFlowLimiter(address(contracts.flowLimiter));
-        uint256 miniPoolId = contracts.miniPoolAddressesProvider.deployMiniPool(
-            address(contracts.miniPoolImpl), address(contracts.aTokenErc6909)
-        );
+        uint256 miniPoolId;
+        if (address(contracts.miniPoolAddressesProvider) == address(0)) {
+            // First deployment so configure miniPool infra
+            miniPoolId = contracts.miniPoolAddressesProvider.deployMiniPool(
+                address(contracts.miniPoolImpl), address(contracts.aTokenErc6909)
+            );
+            contracts.miniPoolAddressesProvider =
+                new MiniPoolAddressesProvider(contracts.lendingPoolAddressesProvider);
+            contracts.flowLimiter = new FlowLimiter(
+                contracts.lendingPoolAddressesProvider,
+                IMiniPoolAddressesProvider(address(contracts.miniPoolAddressesProvider)),
+                contracts.lendingPool
+            );
+            contracts.miniPoolConfigurator = new MiniPoolConfigurator();
+            contracts.miniPoolAddressesProvider.setMiniPoolConfigurator(
+                address(contracts.miniPoolConfigurator)
+            );
+            contracts.miniPoolConfigurator =
+                MiniPoolConfigurator(contracts.miniPoolAddressesProvider.getMiniPoolConfigurator());
+            contracts.lendingPoolAddressesProvider.setMiniPoolAddressesProvider(
+                address(contracts.miniPoolAddressesProvider)
+            );
+            contracts.lendingPoolAddressesProvider.setFlowLimiter(address(contracts.flowLimiter));
+            contracts.cod3xLendDataProvider.setMiniPoolAddressProvider(
+                address(contracts.miniPoolAddressesProvider)
+            );
+        } else {
+            miniPoolId = contracts.miniPoolAddressesProvider.deployMiniPool(
+                address(contracts.miniPoolImpl), address(contracts.aTokenErc6909)
+            );
+        }
+
         return miniPoolId;
     }
 

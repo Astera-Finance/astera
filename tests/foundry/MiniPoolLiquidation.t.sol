@@ -86,6 +86,8 @@ contract MiniPoolLiquidationTest is MiniPoolDepositBorrowTest {
         (,,,,, liquidationVars.healthFactor) = IMiniPool(miniPool).getUserAccountData(user);
         console.log("1. Health factor: ", liquidationVars.healthFactor);
 
+        deal(address(collateralParams.token), user, collateralParams.token.balanceOf(address(this)));
+
         fixture_miniPoolBorrow(
             amount, collateralOffset, borrowOffset, collateralParams, borrowParams, user
         );
@@ -357,6 +359,8 @@ contract MiniPoolLiquidationTest is MiniPoolDepositBorrowTest {
         vm.label(address(aErc6909Token), "aErc6909Token");
         vm.label(address(borrowParams.aToken), "token1");
         vm.label(address(collateralParams.token), "token0");
+
+        deal(address(collateralParams.token), user, collateralParams.token.balanceOf(address(this)));
 
         fixture_miniPoolBorrowWithFlowFromLendingPool(
             amount, borrowOffset, collateralParams, borrowParams, user

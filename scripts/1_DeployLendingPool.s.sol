@@ -37,7 +37,9 @@ contract DeployLendingPool is Script, DeploymentUtils, Test {
             vm.serializeAddress("lendingPoolContracts", "piStrategies", piAddresses);
         }
         vm.serializeAddress(
-            "lendingPoolContracts", "protocolDataProvider", address(contracts.protocolDataProvider)
+            "lendingPoolContracts",
+            "cod3xLendDataProvider",
+            address(contracts.cod3xLendDataProvider)
         );
         vm.serializeAddress(
             "lendingPoolContracts",

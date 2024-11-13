@@ -21,8 +21,6 @@ import {IAERC6909} from "../../contracts/interfaces/IAERC6909.sol";
 import {Ownable} from "../../contracts/dependencies/openzeppelin/contracts/Ownable.sol";
 import {Errors} from "../../contracts/protocol/libraries/helpers/Errors.sol";
 
-import "forge-std/console.sol";
-
 struct UserReserveData {
     address aToken;
     address debtToken;
@@ -186,22 +184,22 @@ contract Cod3xLendDataProvider is Ownable {
         debtTokens = new address[](reserves.length);
         for (uint256 idx = 0; idx < reserves.length; idx++) {
             (aTokens[idx], debtTokens[idx]) =
-                getLpTokens(reserves[idx], reserveTypes[idx], lendingPool);
+                _getLpTokens(reserves[idx], reserveTypes[idx], lendingPool);
         }
     }
 
     function getLpTokens(address asset, bool reserveType)
-        public
+        external
         view
         lendingPoolSet
         returns (address aToken, address debtToken)
     {
         ILendingPool lendingPool = ILendingPool(lendingPoolAddressProvider.getLendingPool());
-        (aToken, debtToken) = getLpTokens(asset, reserveType, lendingPool);
+        (aToken, debtToken) = _getLpTokens(asset, reserveType, lendingPool);
     }
 
-    function getLpTokens(address asset, bool reserveType, ILendingPool lendingPool)
-        public
+    function _getLpTokens(address asset, bool reserveType, ILendingPool lendingPool)
+        internal
         view
         lendingPoolSet
         returns (address aToken, address debtToken)
@@ -252,6 +250,7 @@ contract Cod3xLendDataProvider is Ownable {
      * @param asset Specified asset for which data should be retrieved
      * @param reserveType Type of reserve
      * @param user The address of the user
+     * @param lendingPool Lending pool contract
      */
     function getLpUserData(address asset, bool reserveType, address user, ILendingPool lendingPool)
         internal
@@ -374,14 +373,8 @@ contract Cod3xLendDataProvider is Ownable {
         DataTypes.MiniPoolReserveData memory reserve =
             IMiniPool(miniPoolAddressProvider.getMiniPool(miniPoolId)).getReserveData(asset);
 
-        console.log("Total balance: ", IERC20Detailed(asset).balanceOf(reserve.aTokenAddress));
-        console.log(
-            "Total balance by ID: ",
-            IAERC6909(reserve.aTokenAddress).scaledTotalSupply(reserve.aTokenID)
-        );
-
         return (
-            IERC20Detailed(asset).balanceOf(reserve.aTokenAddress),
+            IERC20Detailed(asset).balanceOf(reserve.aTokenAddress), // or scaledTotalSupply ?
             IAERC6909(reserve.aTokenAddress).scaledTotalSupply(reserve.variableDebtTokenID),
             reserve.currentLiquidityRate,
             reserve.currentVariableBorrowRate,
@@ -390,6 +383,7 @@ contract Cod3xLendDataProvider is Ownable {
             reserve.lastUpdateTimestamp
         );
     }
+
     /**
      * @dev Returns the addresses of multi tokens contracts, underlying reserves, aToken ids and debt token ids for a specific MiniPool.
      * @param miniPoolId The ID of the MiniPool from which the tokens are retrieved.
@@ -398,7 +392,6 @@ contract Cod3xLendDataProvider is Ownable {
      * @return aTokenIds An array of IDs for all aTokens in the MiniPool.
      * @return variableDebtTokenIds An array of IDs for all variable debt tokens in the MiniPool.
      */
-
     function getMpAllTokenInfo(uint256 miniPoolId)
         external
         view
@@ -428,9 +421,8 @@ contract Cod3xLendDataProvider is Ownable {
      * @param user The address of the user for whom the data is being retrieved.
      * @param miniPoolId The ID of the MiniPool from which the user's data is retrieved.
      * @return userReservesData An array of `MiniPoolUserReserveData` structures containing the user's reserve data.
-     *         Each structure includes information about the user's aToken and debt token balances.
      */
-    function getMpUserData(address user, uint256 miniPoolId)
+    function getAllMpUserData(address user, uint256 miniPoolId)
         external
         view
         miniPoolSet
@@ -439,22 +431,54 @@ contract Cod3xLendDataProvider is Ownable {
         IMiniPool miniPool = IMiniPool(miniPoolAddressProvider.getMiniPool(miniPoolId));
         (address[] memory reserves,) = miniPool.getReservesList();
         userReservesData = new MiniPoolUserReserveData[](user != address(0) ? reserves.length : 0);
-        DataTypes.UserConfigurationMap memory userConfig = miniPool.getUserConfiguration(user);
 
         for (uint256 idx = 0; idx < reserves.length; idx++) {
-            DataTypes.MiniPoolReserveData memory data = miniPool.getReserveData(reserves[idx]);
-            userReservesData[idx].aErc6909Token = data.aTokenAddress;
-            userReservesData[idx].aTokenId = data.aTokenID;
-            userReservesData[idx].debtTokenId = data.variableDebtTokenID;
-            (userReservesData[idx].scaledATokenBalance,) =
-                IAERC6909(data.aTokenAddress).getScaledUserBalanceAndSupply(user, data.aTokenID);
-            userReservesData[idx].usageAsCollateralEnabledOnUser =
-                userConfig.isUsingAsCollateral(data.id);
-            userReservesData[idx].isBorrowing = userConfig.isBorrowing(data.id);
-            if (userReservesData[idx].isBorrowing) {
-                (userReservesData[idx].scaledVariableDebt,) = IAERC6909(data.aTokenAddress)
-                    .getScaledUserBalanceAndSupply(user, data.variableDebtTokenID);
-            }
+            userReservesData[idx] = _getMpUserData(user, reserves[idx], miniPool);
+        }
+    }
+
+    /**
+     * @dev Returns all aToken and debt token data and balances for a user in a specified MiniPool.
+     * @param user The address of the user for whom the data is being retrieved.
+     * @param miniPoolId The ID of the MiniPool from which the user's data is retrieved.
+     * @return userReservesData An array of `MiniPoolUserReserveData` structures containing the user's reserve data.
+     */
+    function getMpUserData(address user, uint256 miniPoolId, address reserve)
+        external
+        view
+        miniPoolSet
+        returns (MiniPoolUserReserveData memory userReservesData)
+    {
+        IMiniPool miniPool = IMiniPool(miniPoolAddressProvider.getMiniPool(miniPoolId));
+        userReservesData = _getMpUserData(user, reserve, miniPool);
+    }
+
+    /**
+     * @dev Returns all aToken and debt token data and balances for a user in a specified MiniPool.
+     * @param user The address of the user for whom the data is being retrieved.
+     * @param reserve Reserve of the miniPool.
+     * @param miniPool Mini pool contract.
+     * @return userReservesData An array of `MiniPoolUserReserveData` structures containing the user's reserve data.
+     */
+    function _getMpUserData(address user, address reserve, IMiniPool miniPool)
+        internal
+        view
+        miniPoolSet
+        returns (MiniPoolUserReserveData memory userReservesData)
+    {
+        DataTypes.UserConfigurationMap memory userConfig = miniPool.getUserConfiguration(user);
+
+        DataTypes.MiniPoolReserveData memory data = miniPool.getReserveData(reserve);
+        userReservesData.aErc6909Token = data.aTokenAddress;
+        userReservesData.aTokenId = data.aTokenID;
+        userReservesData.debtTokenId = data.variableDebtTokenID;
+        (userReservesData.scaledATokenBalance,) =
+            IAERC6909(data.aTokenAddress).getScaledUserBalanceAndSupply(user, data.aTokenID);
+        userReservesData.usageAsCollateralEnabledOnUser = userConfig.isUsingAsCollateral(data.id);
+        userReservesData.isBorrowing = userConfig.isBorrowing(data.id);
+        if (userReservesData.isBorrowing) {
+            (userReservesData.scaledVariableDebt,) = IAERC6909(data.aTokenAddress)
+                .getScaledUserBalanceAndSupply(user, data.variableDebtTokenID);
         }
     }
 
@@ -496,7 +520,7 @@ contract Cod3xLendDataProvider is Ownable {
     }
 
     /**
-     * @dev Returns the underlying balance of a specified ERC6909 token across all MiniPools.
+     * @dev Returns the underlying balance of a specified ERC6909 token ID across all MiniPools.
      * @param tokenId The ID of the ERC6909 token for which the underlying balance is being calculated.
      * @return underlyingBalance The total underlying balance of the specified token across all MiniPools.
      */
@@ -513,35 +537,12 @@ contract Cod3xLendDataProvider is Ownable {
     }
 
     /**
-     * @dev Returns the underlying balance of a specified ERC6909 token in a specific MiniPool.
-     * @param tokenId The ID of the ERC6909 token for which the balance is calculated.
-     * @param miniPoolId The ID of the MiniPool where the token's balance is calculated.
-     * @return underlyingBalance The total underlying balance of the specified token in the specified MiniPool.
-     */
-    function getMpUnderlyingBalanceOf(uint256 tokenId, uint256 miniPoolId)
-        public
-        view
-        miniPoolSet
-        returns (uint256 underlyingBalance)
-    {
-        IMiniPool miniPool = IMiniPool(miniPoolAddressProvider.getMiniPool(miniPoolId));
-        (address[] memory reserves,) = miniPool.getReservesList();
-        for (uint256 idx = 0; idx < reserves.length; idx++) {
-            DataTypes.MiniPoolReserveData memory data = miniPool.getReserveData(reserves[idx]);
-            if (data.aTokenID == tokenId) {
-                underlyingBalance += IERC20Detailed(reserves[idx]).balanceOf(data.aTokenAddress);
-            }
-        }
-    }
-
-    /**
      * @dev Returns the underlying balance of a specified ERC6909 token in a MiniPool.
-     *      Uses a different approach to retrieve the underlying balance.
      * @param tokenId The ID of the ERC6909 token for which the balance is calculated.
      * @param miniPoolId The ID of the MiniPool where the token's balance is calculated.
      * @return underlyingBalance The underlying balance of the specified token in the specified MiniPool.
      */
-    function getMpUnderlyingBalanceOf_2(uint256 tokenId, uint256 miniPoolId)
+    function getMpUnderlyingBalanceOf(uint256 tokenId, uint256 miniPoolId)
         public
         view
         miniPoolSet
@@ -561,7 +562,7 @@ contract Cod3xLendDataProvider is Ownable {
      * @return underlyingAsset The address of the underlying asset.
      */
     function getUnderlyingAssetFromId(uint256 tokenId, uint256 miniPoolId)
-        public
+        external
         view
         miniPoolSet
         returns (address underlyingAsset)
@@ -627,5 +628,18 @@ contract Cod3xLendDataProvider is Ownable {
                 isReserveAvailable = true;
             }
         }
+    }
+
+    /* Copied from previous UI provider */
+    function bytes32ToString(bytes32 _bytes32) public pure returns (string memory) {
+        uint8 i = 0;
+        while (i < 32 && _bytes32[i] != 0) {
+            i++;
+        }
+        bytes memory bytesArray = new bytes(i);
+        for (i = 0; i < 32 && _bytes32[i] != 0; i++) {
+            bytesArray[i] = _bytes32[i];
+        }
+        return string(bytesArray);
     }
 }

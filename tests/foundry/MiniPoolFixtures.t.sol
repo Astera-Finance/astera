@@ -1,16 +1,15 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.0;
 
-import "./Common.sol";
+import "./LendingPool.t.sol";
 
-abstract contract MiniPoolFixtures is Common {
+abstract contract MiniPoolFixtures is LendingPoolFixtures {
     event ReserveUsedAsCollateralDisabled(address indexed reserve, address indexed user);
 
     using WadRayMath for uint256;
     using PercentageMath for uint256;
     using ReserveConfiguration for DataTypes.ReserveConfigurationMap;
 
-    DeployedContracts deployedLpContracts;
     DeployedMiniPoolContracts miniPoolContracts;
 
     ConfigAddresses configLpAddresses;
@@ -31,8 +30,8 @@ abstract contract MiniPoolFixtures is Common {
         {
             uint256 initialTokenBalance = tokenParams.token.balanceOf(user);
             uint256 initialATokenBalance = tokenParams.aToken.balanceOf(user);
-            tokenParams.token.approve(address(deployedLpContracts.lendingPool), amount);
-            deployedLpContracts.lendingPool.deposit(address(tokenParams.token), true, amount, user);
+            tokenParams.token.approve(address(deployedContracts.lendingPool), amount);
+            deployedContracts.lendingPool.deposit(address(tokenParams.token), true, amount, user);
             console.log("User token balance shall be {initialTokenBalance - amount}");
             assertEq(tokenParams.token.balanceOf(user), initialTokenBalance - amount, "01");
             console.log("User atoken balance shall be {initialATokenBalance + amount}");
@@ -95,7 +94,7 @@ abstract contract MiniPoolFixtures is Common {
         console.log("[deposit]Offset: ", offset);
         uint256 tokenId = 1128 + offset;
         uint256 aTokenId = 1000 + offset;
-
+        console.log("MINI POOL >>>> ", miniPool);
         IAERC6909 aErc6909Token =
             IAERC6909(miniPoolContracts.miniPoolAddressesProvider.getMiniPoolToAERC6909(miniPool));
         vm.label(address(aErc6909Token), "aErc6909Token");
@@ -147,7 +146,7 @@ abstract contract MiniPoolFixtures is Common {
         /* Test depositing */
         uint256 minNrOfTokens;
         {
-            StaticData memory staticData = deployedLpContracts
+            StaticData memory staticData = deployedContracts
                 .cod3xLendDataProvider
                 .getLpReserveStaticData(address(collateralTokenParams.token), true);
             uint256 borrowTokenInUsd = (amount * borrowTokenParams.price * 10_000)
@@ -159,11 +158,8 @@ abstract contract MiniPoolFixtures is Common {
                 collateralTokenParams.token.decimals()
             );
             minNrOfTokens = (
-                borrowTokenInCollateralToken
-                    > collateralTokenParams.token.balanceOf(address(this)) / 4
-            )
-                ? (collateralTokenParams.token.balanceOf(address(this)) / 4)
-                : borrowTokenInCollateralToken;
+                borrowTokenInCollateralToken > collateralTokenParams.token.balanceOf(user) / 4
+            ) ? (collateralTokenParams.token.balanceOf(user) / 4) : borrowTokenInCollateralToken;
             console.log(
                 "Min nr of collateral in usd: ",
                 (borrowTokenInCollateralToken * collateralTokenParams.price)
@@ -176,7 +172,7 @@ abstract contract MiniPoolFixtures is Common {
             console.log(
                 "Deposit borrowTokens: %s with balance: %s",
                 2 * amount,
-                borrowTokenParams.token.balanceOf(address(this))
+                borrowTokenParams.token.balanceOf(user)
             );
             fixture_MiniPoolDeposit(amount, borrowOffset, liquidityProvider, borrowTokenParams);
 
@@ -265,7 +261,7 @@ abstract contract MiniPoolFixtures is Common {
         /* Test depositing */
         uint256 minNrOfTokens;
         {
-            StaticData memory staticData = deployedLpContracts
+            StaticData memory staticData = deployedContracts
                 .cod3xLendDataProvider
                 .getLpReserveStaticData(address(collateralTokenParams.token), true);
             uint256 borrowTokenInUsd = (amount * borrowTokenParams.price * 10000)
@@ -277,18 +273,15 @@ abstract contract MiniPoolFixtures is Common {
                 collateralTokenParams.token.decimals()
             );
             minNrOfTokens = (
-                borrowTokenInCollateralToken
-                    > collateralTokenParams.token.balanceOf(address(this)) / 4
-            )
-                ? (collateralTokenParams.token.balanceOf(address(this)) / 4)
-                : borrowTokenInCollateralToken;
+                borrowTokenInCollateralToken > collateralTokenParams.token.balanceOf(user) / 4
+            ) ? (collateralTokenParams.token.balanceOf(user) / 4) : borrowTokenInCollateralToken;
         }
         {
             /* Sb deposits tokens which will be borrowed */
             address liquidityProvider = makeAddr("liquidityProvider");
-            borrowTokenParams.token.approve(address(deployedLpContracts.lendingPool), amount);
+            borrowTokenParams.token.approve(address(deployedContracts.lendingPool), amount);
 
-            deployedLpContracts.lendingPool.deposit(
+            deployedContracts.lendingPool.deposit(
                 address(borrowTokenParams.token), true, amount, liquidityProvider
             );
         }
@@ -348,6 +341,4 @@ abstract contract MiniPoolFixtures is Common {
 
         vm.stopPrank();
     }
-
-    function setUp() public virtual {}
 }

@@ -17,28 +17,30 @@ contract MiniPoolDepositBorrowTest is MiniPoolFixtures {
     function setUp() public override {
         opFork = vm.createSelectFork(RPC, FORK_BLOCK);
         assertEq(vm.activeFork(), opFork);
-        deployedLpContracts = fixture_deployProtocol();
+        deployedContracts = fixture_deployProtocol();
         configLpAddresses = ConfigAddresses(
-            address(deployedLpContracts.cod3xLendDataProvider),
-            address(deployedLpContracts.stableStrategy),
-            address(deployedLpContracts.volatileStrategy),
-            address(deployedLpContracts.treasury),
-            address(deployedLpContracts.rewarder),
-            address(deployedLpContracts.aTokensAndRatesHelper)
+            address(deployedContracts.cod3xLendDataProvider),
+            address(deployedContracts.stableStrategy),
+            address(deployedContracts.volatileStrategy),
+            address(deployedContracts.treasury),
+            address(deployedContracts.rewarder),
+            address(deployedContracts.aTokensAndRatesHelper)
         );
         fixture_configureProtocol(
-            address(deployedLpContracts.lendingPool),
+            address(deployedContracts.lendingPool),
             address(aToken),
             configLpAddresses,
-            deployedLpContracts.lendingPoolConfigurator,
-            deployedLpContracts.lendingPoolAddressesProvider
+            deployedContracts.lendingPoolConfigurator,
+            deployedContracts.lendingPoolAddressesProvider
         );
-        mockedVaults = fixture_deployReaperVaultMocks(tokens, address(deployedLpContracts.treasury));
+        mockedVaults = fixture_deployReaperVaultMocks(tokens, address(deployedContracts.treasury));
         erc20Tokens = fixture_getErc20Tokens(tokens);
         fixture_transferTokensToTestContract(erc20Tokens, 1_000_000 ether, address(this));
-        miniPoolContracts = fixture_deployMiniPoolSetup(
-            address(deployedLpContracts.lendingPoolAddressesProvider),
-            address(deployedLpContracts.lendingPool)
+        (miniPoolContracts,) = fixture_deployMiniPoolSetup(
+            address(deployedContracts.lendingPoolAddressesProvider),
+            address(deployedContracts.lendingPool),
+            address(deployedContracts.cod3xLendDataProvider),
+            address(0)
         );
 
         address[] memory reserves = new address[](2 * tokens.length);
@@ -54,7 +56,8 @@ contract MiniPoolDepositBorrowTest is MiniPoolFixtures {
             address(miniPoolContracts.miniPoolAddressesProvider);
         configLpAddresses.stableStrategy = address(miniPoolContracts.stableStrategy);
         configLpAddresses.volatileStrategy = address(miniPoolContracts.volatileStrategy);
-        miniPool = fixture_configureMiniPoolReserves(reserves, configLpAddresses, miniPoolContracts);
+        miniPool =
+            fixture_configureMiniPoolReserves(reserves, configLpAddresses, miniPoolContracts, 0);
         vm.label(miniPool, "MiniPool");
     }
 
@@ -115,7 +118,11 @@ contract MiniPoolDepositBorrowTest is MiniPoolFixtures {
             10 ** (borrowTokenParams.token.decimals() - 2),
             borrowTokenParams.token.balanceOf(address(this)) / 10
         );
-
+        deal(
+            address(collateralTokenParams.token),
+            user,
+            collateralTokenParams.token.balanceOf(address(this))
+        );
         fixture_miniPoolBorrow(
             amount, collateralOffset, borrowOffset, collateralTokenParams, borrowTokenParams, user
         );

@@ -97,7 +97,7 @@ contract TestBasicActionsStaging is Script, DeploymentUtils, Test {
         uint256 collateralPrice = oracle.getAssetPrice(address(collateral));
         uint256 collateralDepositValue = amount * collateralPrice / (10 ** PRICE_FEED_DECIMALS);
         (, uint256 collateralLtv,,,,,,,) =
-            contracts.protocolDataProvider.getReserveConfigurationData(address(collateral), true);
+            contracts.cod3xLendDataProvider.getLpReserveStaticData(address(collateral), true);
         uint256 maxBorrowTokenToBorrowInCollateralUnit;
         {
             uint256 collateralMaxBorrowValue = collateralLtv * collateralDepositValue / 10_000;
@@ -111,34 +111,31 @@ contract TestBasicActionsStaging is Script, DeploymentUtils, Test {
         return maxBorrowTokenToBorrowInCollateralUnit;
     }
 
-    function fixture_getATokenWrapper(address _token, ProtocolDataProvider protocolDataProvider)
+    function fixture_getATokenWrapper(address _token, Cod3xLendDataProvider cod3xLendDataProvider)
         public
         view
         returns (AToken _aTokenW)
     {
-        console.log("In");
-        (address _aTokenAddress,) = protocolDataProvider.getReserveTokensAddresses(_token, true);
-        console.log("fixture AToken %s", _aTokenAddress);
+        (address _aTokenAddress,) = cod3xLendDataProvider.getLpTokens(_tokens, true);
+        // console.log("AToken%s: %s", idx, _aTokenAddress);
         _aTokenW = AToken(address(AToken(_aTokenAddress).WRAPPER_ADDRESS()));
     }
 
-    function fixture_getAToken(address _token, ProtocolDataProvider protocolDataProvider)
+    function fixture_getAToken(address _token, Cod3xLendDataProvider cod3xLendDataProvider)
         public
         view
         returns (AToken _aToken)
     {
-        (address _aTokenAddress,) = protocolDataProvider.getReserveTokensAddresses(_token, true);
+        (address _aTokenAddress,) = cod3xLendDataProvider.getLpTokens(_tokens, true);
         // console.log("AToken%s: %s", idx, _aTokenAddress);
         _aToken = AToken(_aTokenAddress);
     }
 
-    function fixture_getVarDebtToken(address _token, ProtocolDataProvider protocolDataProvider)
+    function fixture_getVarDebtToken(address _token, Cod3xLendDataProvider cod3xLendDataProvider)
         public
         returns (VariableDebtToken _varDebtToken)
     {
-        (, address _variableDebtToken) =
-            protocolDataProvider.getReserveTokensAddresses(_token, true);
-        console.log("Assigning debt");
+        (, address _variableDebtToken) = cod3xLendDataProvider.getLpTokens(_tokens, true);
         _varDebtToken = VariableDebtToken(_variableDebtToken);
     }
 
@@ -317,8 +314,8 @@ contract TestBasicActionsStaging is Script, DeploymentUtils, Test {
         string memory deployedContracts = vm.readFile(path);
 
         contracts.lendingPool = LendingPool(deployedContracts.readAddress(".lendingPool"));
-        contracts.protocolDataProvider =
-            ProtocolDataProvider(deployedContracts.readAddress(".protocolDataProvider"));
+        contracts.cod3xLendDataProvider =
+            Cod3xLendDataProvider(deployedContracts.readAddress(".cod3xLendDataProvider"));
         contracts.lendingPoolAddressesProvider = LendingPoolAddressesProvider(
             deployedContracts.readAddress(".lendingPoolAddressesProvider")
         );
@@ -468,7 +465,7 @@ contract TestBasicActionsStaging is Script, DeploymentUtils, Test {
             console.log("Collateral amount: ", collateralAmount);
             uint256 depositAmount = collateralAmount / (10 ** (18 - ERC20(assets[idx]).decimals()));
             console.log("depositAmount: ", depositAmount);
-            AToken aToken = fixture_getATokenWrapper(assets[idx], contracts.protocolDataProvider);
+            AToken aToken = fixture_getATokenWrapper(assets[idx], contracts.cod3xLendDataProvider);
             TokenParams memory collateralParams =
                 TokenParams({token: ERC20(assets[idx]), aToken: aToken});
             console.log("Depositing: ", depositAmount);
@@ -549,10 +546,10 @@ contract TestBasicActionsStaging is Script, DeploymentUtils, Test {
         vm.stopBroadcast();
 
         console.log("Getting wrapper");
-        AToken aToken = fixture_getATokenWrapper(collateral, contracts.protocolDataProvider);
+        AToken aToken = fixture_getATokenWrapper(collateral, contracts.cod3xLendDataProvider);
         TokenParams memory usdcParams = TokenParams({token: ERC20(collateral), aToken: aToken});
 
-        aToken = fixture_getATokenWrapper(borrowAsset, contracts.protocolDataProvider);
+        aToken = fixture_getATokenWrapper(borrowAsset, contracts.cod3xLendDataProvider);
         TokenParams memory wbtcParams = TokenParams({token: ERC20(borrowAsset), aToken: aToken});
 
         if (bootstrapLiquidity == true) {
