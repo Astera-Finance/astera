@@ -50,8 +50,8 @@ struct DeployedContracts {
     ATokensAndRatesHelper aTokensAndRatesHelper;
     AToken aToken;
     VariableDebtToken variableDebtToken;
-    ATokenERC6909 aTokenErc6909;
-    MiniPool miniPoolImpl;
+    ATokenERC6909[] aTokenErc6909;
+    MiniPool[] miniPoolImpl;
     MiniPoolAddressesProvider miniPoolAddressesProvider;
     MiniPoolConfigurator miniPoolConfigurator;
     FlowLimiter flowLimiter;

@@ -443,7 +443,7 @@ contract TestBasicActions is Script, DeploymentUtils, Test {
         );
     }
 
-    function bootstrapMainPool() public {
+    function depositToMainPool() public {
         (address[] memory assets, bool[] memory reserveTypes) =
             contracts.lendingPool.getReservesList();
         for (uint256 idx = 0; idx < assets.length; idx++) {
@@ -490,24 +490,29 @@ contract TestBasicActions is Script, DeploymentUtils, Test {
 
         if (vm.envBool("LOCAL_FORK")) {
             /* Fork Identifier */
-            string memory RPC = vm.envString("BASE_RPC_URL");
-            uint256 FORK_BLOCK = 21838058;
-            uint256 fork;
-            fork = vm.createSelectFork(RPC, FORK_BLOCK);
+            {
+                string memory RPC = vm.envString("BASE_RPC_URL");
+                uint256 FORK_BLOCK = 21838058;
+                uint256 fork;
+                fork = vm.createSelectFork(RPC, FORK_BLOCK);
+            }
+            string memory deploymentConfig;
+            {
+                /* Config fetching */
+                AddAssets addAssets = new AddAssets();
+                contracts = addAssets.run();
 
-            /* Config fetching */
-            AddAssets addAssets = new AddAssets();
-            contracts = addAssets.run();
-
-            // Config fetching
-            string memory root = vm.projectRoot();
-            string memory path = string.concat(root, "/scripts/inputs/8_TestConfig.json");
-            console.log("PATH: ", path);
-            string memory deploymentConfig = vm.readFile(path);
+                // Config fetching
+                string memory root = vm.projectRoot();
+                string memory path = string.concat(root, "/scripts/inputs/8_TestConfig.json");
+                console.log("PATH: ", path);
+                deploymentConfig = vm.readFile(path);
+            }
 
             uint256 depositAmount = deploymentConfig.readUint(".depositAmount");
             uint256 borrowAmount = deploymentConfig.readUint(".borrowAmount");
-            bool bootstrapLiquidity = deploymentConfig.readBool(".bootstrapLiquidity");
+            bool bootstrapMainPool = deploymentConfig.readBool(".bootstrapMainPool");
+            bool bootstrapMiniPool = deploymentConfig.readBool(".bootstrapMiniPool");
 
             TokenTypes memory borrowTypes;
             TokenTypes memory collateralTypes;
@@ -558,22 +563,26 @@ contract TestBasicActions is Script, DeploymentUtils, Test {
             contracts.miniPoolConfigurator.setPoolPause(false, IMiniPool(mp));
             vm.stopPrank();
 
-            aToken = fixture_getATokenWrapper(
-                address(collateralTypes.token), contracts.cod3xLendDataProvider
-            );
-            TokenParams memory collateralParams =
-                TokenParams({token: ERC20(address(collateralTypes.token)), aToken: aToken});
+            TokenParams memory collateralParams;
+            TokenParams memory borrowParams;
+            {
+                aToken = fixture_getATokenWrapper(
+                    address(collateralTypes.token), contracts.cod3xLendDataProvider
+                );
+                collateralParams =
+                    TokenParams({token: ERC20(address(collateralTypes.token)), aToken: aToken});
 
-            aToken = fixture_getATokenWrapper(
-                address(borrowTypes.token), contracts.cod3xLendDataProvider
-            );
-            TokenParams memory borrowParams =
-                TokenParams({token: ERC20(address(borrowTypes.token)), aToken: aToken});
-            IAERC6909 aErc6909Token =
-                IAERC6909(contracts.miniPoolAddressesProvider.getMiniPoolToAERC6909(mp));
+                aToken = fixture_getATokenWrapper(
+                    address(borrowTypes.token), contracts.cod3xLendDataProvider
+                );
+                borrowParams =
+                    TokenParams({token: ERC20(address(borrowTypes.token)), aToken: aToken});
+            }
 
-            if (bootstrapLiquidity == true) {
-                bootstrapMainPool();
+            if (bootstrapMainPool == true && bootstrapMiniPool == true) {
+                depositToMainPool();
+                bootstrapMiniPools();
+            } else if (bootstrapMiniPool == true) {
                 bootstrapMiniPools();
             } else {
                 Users memory users;

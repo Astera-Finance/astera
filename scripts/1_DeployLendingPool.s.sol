@@ -46,9 +46,6 @@ contract DeployLendingPool is Script, DeploymentUtils, Test {
             "aTokensAndRatesHelper",
             address(contracts.aTokensAndRatesHelper)
         );
-        vm.serializeAddress(
-            "lendingPoolContracts", "aTokenErc6909", address(contracts.aTokenErc6909)
-        );
         vm.serializeAddress("lendingPoolContracts", "aToken", address(contracts.aToken));
         vm.serializeAddress(
             "lendingPoolContracts", "variableDebtToken", address(contracts.variableDebtToken)

@@ -205,6 +205,8 @@ The deployment process involves configuration files `./input/<Nr>_<InputJsonName
                 "tokenAddress": "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913"
             }
         ],
+        //Bool value that determines whether to use already existing strats
+        "usePreviousStrats": false,
         // List of volatile interest strategies and their configurations
         "volatileStrategies": [
             {
@@ -632,7 +634,8 @@ The deployment process involves configuration files `./input/<Nr>_<InputJsonName
         "collateralAddress": "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913",
         "borrowAssetAddress": "0x0555E30da8f98308EdB960aa94C0Db47230d2B9c",
         "depositAmount": 5000000000,
-        "bootstrapLiquidity": true, // if the flag is enabled then script deposit assets to all configured reserves
+        "bootstrapMainPool": true, // if the flag is enabled then script deposit assets to all configured reserves in specific lending pool 
+        "bootstrapMiniPool": true, // if the flag is enabled then script deposit assets to all configured reserves in specific mini pool determined by poolId
         "poolAddressesProviderConfig": {
             "marketId": "UV TestNet Market",
             "poolId": 0
