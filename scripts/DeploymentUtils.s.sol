@@ -6,7 +6,6 @@ import "contracts/protocol/rewarder/lendingpool/Rewarder.sol";
 import "contracts/protocol/core/Oracle.sol";
 import "contracts/misc/Cod3xLendDataProvider.sol";
 import "contracts/misc/Treasury.sol";
-import "contracts/misc/UiPoolDataProviderV2.sol";
 import "contracts/protocol/core/lendingpool/logic/ReserveLogic.sol";
 import "contracts/protocol/core/lendingpool/logic/GenericLogic.sol";
 import "contracts/protocol/core/lendingpool/logic/ValidationLogic.sol";
