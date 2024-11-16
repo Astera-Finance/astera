@@ -1,186 +1,25 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.0;
 
-import "./Common.sol";
+import "./LendingPoolFixtures.t.sol";
 import "contracts/protocol/libraries/helpers/Errors.sol";
 import {WadRayMath} from "contracts/protocol/libraries/math/WadRayMath.sol";
 import {MathUtils} from "contracts/protocol/libraries/math/MathUtils.sol";
 import "contracts/protocol/libraries/configuration/ReserveConfiguration.sol";
 // import {ILendingPool} from "contracts/interfaces/ILendingPool.sol";
 
-contract LendingPoolTest is Common {
+contract LendingPoolTest is LendingPoolFixtures {
     using WadRayMath for uint256;
     using ReserveConfiguration for DataTypes.ReserveConfigurationMap;
 
     ERC20[] erc20Tokens;
-    DeployedContracts deployedContracts;
-    ConfigAddresses configAddresses;
 
-    event Deposit(
-        address indexed reserve, address user, address indexed onBehalfOf, uint256 amount
-    );
-    event Withdraw(
-        address indexed reserve, address indexed user, address indexed to, uint256 amount
-    );
-    event Borrow(
-        address indexed reserve,
-        address user,
-        address indexed onBehalfOf,
-        uint256 amount,
-        uint256 borrowRate
-    );
-    event Repay(
-        address indexed reserve, address indexed user, address indexed repayer, uint256 amount
-    );
-
-    struct TokenTypes {
-        ERC20 token;
-        AToken aToken;
-        VariableDebtToken debtToken;
-    }
-
-    function fixture_deposit(
-        ERC20 erc20Token,
-        AToken aToken,
-        address sender,
-        address receiver,
-        uint256 amount
-    ) internal {
-        uint256 _receiverATokenBalanceBefore = aToken.balanceOf(address(receiver));
-        uint256 _senderTokenBalanceTokenBefore = erc20Token.balanceOf(sender);
-        uint256 _aTokenBalanceBefore = erc20Token.balanceOf(address(aToken));
-        erc20Token.approve(address(deployedContracts.lendingPool), amount);
-        vm.expectEmit(true, true, true, true);
-        emit Deposit(address(erc20Token), address(this), receiver, amount);
-        deployedContracts.lendingPool.deposit(address(erc20Token), true, amount, receiver);
-        console.log("_aTokenBalanceBefore: ", _aTokenBalanceBefore);
-        console.log("_aTokenBalanceAfter: ", erc20Token.balanceOf(address(aToken)));
-        assertEq(
-            _senderTokenBalanceTokenBefore,
-            erc20Token.balanceOf(address(this)) + amount,
-            "Sender's token balance is not lower by {amount} after deposit"
-        );
-
-        assertEq(
-            _receiverATokenBalanceBefore + amount,
-            aToken.balanceOf(address(receiver)),
-            "Receiver aToken balance is not greater by {amount} after deposit"
-        );
-    }
-
-    function fixture_withdraw(ERC20 erc20Token, address sender, address receiver, uint256 amount)
-        public
-    {
-        uint256 _receiverTokenBalanceBefore = erc20Token.balanceOf(address(receiver));
-
-        vm.startPrank(sender);
-        // vm.expectEmit(true, true, true, true);
-        // emit Withdraw(address(erc20Token), sender, receiver, amount);
-        deployedContracts.lendingPool.withdraw(address(erc20Token), true, amount, receiver);
-        vm.stopPrank();
-        assertEq(
-            _receiverTokenBalanceBefore + amount,
-            erc20Token.balanceOf(receiver),
-            "Receiver's token balance is not greater by {amount} after withdrawal"
-        );
-    }
-
-    function fixture_getMaxValueToBorrow(ERC20 collateral, ERC20 borrowToken, uint256 amount)
-        internal
-        view
-        returns (uint256)
-    {
-        uint256 borrowTokenPrice = oracle.getAssetPrice(address(borrowToken));
-        uint256 collateralPrice = oracle.getAssetPrice(address(collateral));
-        uint256 collateralDepositValue = amount * collateralPrice / (10 ** PRICE_FEED_DECIMALS);
-        (, uint256 collateralLtv,,,,,,,) = deployedContracts
-            .protocolDataProvider
-            .getReserveConfigurationData(address(collateral), true);
-        uint256 maxBorrowTokenToBorrowInCollateralUnit;
-        {
-            uint256 collateralMaxBorrowValue = collateralLtv * collateralDepositValue / 10_000;
-
-            uint256 wbtcMaxBorrowAmountRay = collateralMaxBorrowValue.rayDiv(borrowTokenPrice);
-            maxBorrowTokenToBorrowInCollateralUnit = fixture_preciseConvertWithDecimals(
-                wbtcMaxBorrowAmountRay, collateral.decimals(), borrowToken.decimals()
-            );
-            // (usdcMaxBorrowValue * 10 ** PRICE_FEED_DECIMALS) / wbtcPrice;
-        }
-        return maxBorrowTokenToBorrowInCollateralUnit;
-    }
-
-    function fixture_depositAndBorrow(
-        TokenTypes memory collateral,
-        TokenTypes memory borrowToken,
-        address provider,
-        address borrower,
-        uint256 amount
-    ) public returns (uint256) {
-        /* Borrower deposits collateral and wants to borrow */
-        fixture_deposit(collateral.token, collateral.aToken, borrower, borrower, amount);
-
-        uint256 maxBorrowTokenToBorrowInCollateralUnit =
-            fixture_getMaxValueToBorrow(collateral.token, borrowToken.token, amount);
-
-        require(
-            borrowToken.token.balanceOf(borrower) > maxBorrowTokenToBorrowInCollateralUnit * 15 / 10,
-            "Too less borrowToken"
-        );
-        uint256 borrowTokenDepositAmount = maxBorrowTokenToBorrowInCollateralUnit * 15 / 10;
-        console.log("borrowTokenDepositAmount: ", borrowTokenDepositAmount);
-        /* Provider deposits wbtc thanks to that there is enough funds to borrow */
-        fixture_deposit(
-            borrowToken.token, borrowToken.aToken, borrower, provider, borrowTokenDepositAmount
-        );
-
-        uint256 borrowTokenBalanceBeforeBorrow = borrowToken.token.balanceOf(borrower);
-        uint256 debtBalanceBefore = borrowToken.debtToken.balanceOf(borrower);
-
-        (,,,, uint256 reserveFactors,,,,) = deployedContracts
-            .protocolDataProvider
-            .getReserveConfigurationData(address(borrowToken.token), true);
-        (, uint256 expectedBorrowRate) = deployedContracts.volatileStrategy.calculateInterestRates(
-            address(borrowToken.token),
-            address(borrowToken.aToken),
-            0,
-            maxBorrowTokenToBorrowInCollateralUnit,
-            maxBorrowTokenToBorrowInCollateralUnit,
-            reserveFactors
-        );
-        console.log("AToken balance: ", borrowToken.token.balanceOf(address(borrowToken.aToken)));
-        /* Borrower borrows maxPossible amount of borrowToken */
-        vm.expectEmit(true, true, true, true);
-        emit Borrow(
-            address(borrowToken.token),
-            borrower,
-            borrower,
-            maxBorrowTokenToBorrowInCollateralUnit,
-            expectedBorrowRate
-        );
-        deployedContracts.lendingPool.borrow(
-            address(borrowToken.token), true, maxBorrowTokenToBorrowInCollateralUnit, borrower
-        );
-        console.log("AToken balance: ", borrowToken.token.balanceOf(address(borrowToken.aToken)));
-        /* Main user's balance should be: initial amount + borrowed amount */
-        assertEq(
-            borrowTokenBalanceBeforeBorrow + maxBorrowTokenToBorrowInCollateralUnit,
-            borrowToken.token.balanceOf(borrower),
-            "Borrower hasn't more borrowToken than before"
-        );
-        assertEq(
-            debtBalanceBefore + maxBorrowTokenToBorrowInCollateralUnit,
-            borrowToken.debtToken.balanceOf(borrower),
-            "Borrower hasn't more borrowToken than before"
-        );
-        return (maxBorrowTokenToBorrowInCollateralUnit);
-    }
-
-    function setUp() public {
+    function setUp() public override {
         opFork = vm.createSelectFork(RPC, FORK_BLOCK);
         assertEq(vm.activeFork(), opFork);
         deployedContracts = fixture_deployProtocol();
         configAddresses = ConfigAddresses(
-            address(deployedContracts.protocolDataProvider),
+            address(deployedContracts.cod3xLendDataProvider),
             address(deployedContracts.stableStrategy),
             address(deployedContracts.volatileStrategy),
             address(deployedContracts.treasury),
@@ -194,8 +33,8 @@ contract LendingPoolTest is Common {
             deployedContracts.lendingPoolConfigurator,
             deployedContracts.lendingPoolAddressesProvider
         );
-        // aTokens = fixture_getATokens(tokens, deployedContracts.protocolDataProvider);
-        // variableDebtTokens = fixture_getVarDebtTokens(tokens, deployedContracts.protocolDataProvider);
+        // aTokens = fixture_getATokens(tokens, deployedContracts.cod3xLendDataProvider);
+        // variableDebtTokens = fixture_getVarDebtTokens(tokens, deployedContracts.cod3xLendDataProvider);
         erc20Tokens = fixture_getErc20Tokens(tokens);
         fixture_transferTokensToTestContract(erc20Tokens, 100_000 ether, address(this));
     }
@@ -243,6 +82,11 @@ contract LendingPoolTest is Common {
 
         uint256 usdcDepositAmount = 5e9; /* $5k */ // consider fuzzing here
 
+        deal(address(usdcTypes.token), address(this), 2 * usdcDepositAmount);
+        uint256 maxValToBorrow =
+            fixture_getMaxValueToBorrow(usdcTypes.token, wbtcTypes.token, usdcDepositAmount);
+        deal(address(wbtcTypes.token), user, 2 * maxValToBorrow);
+
         (uint256 maxBorrowTokenToBorrowInCollateralUnit) =
             fixture_depositAndBorrow(usdcTypes, wbtcTypes, user, address(this), usdcDepositAmount);
 
@@ -288,9 +132,9 @@ contract LendingPoolTest is Common {
         console.log(
             "usdcDepositValue %s vs \nusdcDepositAmount %s", usdcDepositValue, usdcDepositAmount
         );
-        (, uint256 usdcLtv,,,,,,,) =
-            deployedContracts.protocolDataProvider.getReserveConfigurationData(address(usdc), true);
-        uint256 usdcMaxBorrowValue = usdcLtv * usdcDepositValue / 10_000;
+        StaticData memory staticData =
+            deployedContracts.cod3xLendDataProvider.getLpReserveStaticData(address(usdc), true);
+        uint256 usdcMaxBorrowValue = staticData.ltv * usdcDepositValue / 10_000;
         uint256 wbtcMaxBorrowAmountWithUsdcCollateral;
         {
             uint256 wbtcMaxBorrowAmountRay = usdcMaxBorrowValue.rayDiv(wbtcPrice);
@@ -345,9 +189,9 @@ contract LendingPoolTest is Common {
         uint256 wbtcPrice = oracle.getAssetPrice(address(wbtc));
         uint256 usdcPrice = oracle.getAssetPrice(address(usdc));
         uint256 usdcDepositValue = usdcDepositAmount * usdcPrice / (10 ** PRICE_FEED_DECIMALS);
-        (, uint256 usdcLtv,,,,,,,) =
-            deployedContracts.protocolDataProvider.getReserveConfigurationData(address(usdc), true);
-        uint256 usdcMaxBorrowValue = usdcLtv * usdcDepositValue / 10_000;
+        StaticData memory staticData =
+            deployedContracts.cod3xLendDataProvider.getLpReserveStaticData(address(usdc), true);
+        uint256 usdcMaxBorrowValue = staticData.ltv * usdcDepositValue / 10_000;
         uint256 wbtcMaxBorrowAmountWithUsdcCollateral;
         {
             uint256 wbtcMaxBorrowAmountRay = usdcMaxBorrowValue.rayDiv(wbtcPrice);
@@ -371,8 +215,7 @@ contract LendingPoolTest is Common {
         deployedContracts.lendingPool.deposit(address(wbtc), true, wbtcDepositAmount, user);
 
         /* Main user borrows maxPossible amount of wbtc */
-        //vm.expectRevert();
-        vm.expectRevert(bytes(Errors.LP_NOT_ENOUGH_LIQUIDITY_TO_BORROW)); // @issue10 Over/underflow instead of LP_NOT_ENOUGH_LIQUIDITY_TO_BORROW
+        vm.expectRevert(bytes(Errors.LP_NOT_ENOUGH_LIQUIDITY_TO_BORROW));
         deployedContracts.lendingPool.borrow(
             address(wbtc), true, wbtcMaxBorrowAmountWithUsdcCollateral, address(this)
         );
@@ -386,10 +229,10 @@ contract LendingPoolTest is Common {
 
         tokenDepositAmount = bound(tokenDepositAmount, 2, 2_000_000);
         // uint256 usdcDepositValue = usdcDepositAmount * usdcPrice / (10 ** PRICE_FEED_DECIMALS);
-        (, uint256 tokenLtv,,,,,,,) =
-            deployedContracts.protocolDataProvider.getReserveConfigurationData(address(token), true);
+        StaticData memory staticData =
+            deployedContracts.cod3xLendDataProvider.getLpReserveStaticData(address(token), true);
 
-        uint256 tokenMaxBorrowAmount = tokenLtv * tokenDepositAmount / 10_000;
+        uint256 tokenMaxBorrowAmount = staticData.ltv * tokenDepositAmount / 10_000;
 
         /* Main user deposits usdc and wants to borrow */
         token.approve(address(deployedContracts.lendingPool), tokenDepositAmount);
@@ -405,15 +248,15 @@ contract LendingPoolTest is Common {
             address(token), true, tokenMaxBorrowAmount, address(this)
         );
 
-        (,,,, uint256 reserveFactors,,,,) =
-            deployedContracts.protocolDataProvider.getReserveConfigurationData(address(token), true);
+        staticData =
+            deployedContracts.cod3xLendDataProvider.getLpReserveStaticData(address(token), true);
         (, uint256 expectedBorrowRate) = deployedContracts.volatileStrategy.calculateInterestRates(
             address(token),
             address(aTokens[idx]),
             0,
             tokenMaxBorrowAmount,
             tokenMaxBorrowAmount,
-            reserveFactors
+            staticData.reserveFactor
         );
         /* Main user is using now his liquidity as a collateral - borrow shall succeed */
         deployedContracts.lendingPool.setUserUseReserveAsCollateral(address(token), true, true);

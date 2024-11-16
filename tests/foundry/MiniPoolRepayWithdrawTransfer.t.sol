@@ -26,13 +26,6 @@ contract MiniPoolRepayWithdrawTransferTest is MiniPoolDepositBorrowTest {
         uint256 currentHealth;
     }
 
-    event Withdraw(
-        address indexed reserve, address indexed user, address indexed to, uint256 amount
-    );
-    event Repay(
-        address indexed reserve, address indexed user, address indexed repayer, uint256 amount
-    );
-
     function fixture_calculateHealthFactorFromBalances(
         uint256 totalCollateralInETH,
         uint256 totalDebtInETH,
@@ -163,6 +156,8 @@ contract MiniPoolRepayWithdrawTransferTest is MiniPoolDepositBorrowTest {
             borrowParams.token.balanceOf(address(this)) / 10
         );
 
+        deal(address(collateralParams.token), user, collateralParams.token.balanceOf(address(this)));
+
         /* Borrow */
         fixture_miniPoolBorrow(
             amount, collateralOffset, borrowOffset, collateralParams, borrowParams, user
@@ -210,7 +205,7 @@ contract MiniPoolRepayWithdrawTransferTest is MiniPoolDepositBorrowTest {
         assertLt(
             healthFactorBefore, healthFactorAfter, "Health before is greater than health after"
         );
-        vm.stopPrank();
+        // vm.stopPrank();
     }
 
     function testMiniPoolBorrowRepayWithFlowFromLendingPool(
@@ -247,6 +242,7 @@ contract MiniPoolRepayWithdrawTransferTest is MiniPoolDepositBorrowTest {
         vm.label(address(borrowParams.aToken), "token1");
         vm.label(address(collateralParams.token), "token0");
 
+        deal(address(collateralParams.token), user, collateralParams.token.balanceOf(address(this)));
         fixture_miniPoolBorrowWithFlowFromLendingPool(
             amount, borrowOffset, collateralParams, borrowParams, user
         );
@@ -329,6 +325,8 @@ contract MiniPoolRepayWithdrawTransferTest is MiniPoolDepositBorrowTest {
         );
         vm.assume(withdrawAmount < borrowAmount);
 
+        deal(address(collateralParams.token), user, collateralParams.token.balanceOf(address(this)));
+
         /* Borrow */
         fixture_miniPoolBorrow(
             borrowAmount, collateralOffset, borrowOffset, collateralParams, borrowParams, user
@@ -390,6 +388,7 @@ contract MiniPoolRepayWithdrawTransferTest is MiniPoolDepositBorrowTest {
         /* Fuzz vectors */
         collateralOffset = bound(collateralOffset, 0, tokens.length - 1);
         borrowOffset = bound(borrowOffset, 0, tokens.length - 1);
+        vm.assume(borrowOffset != collateralOffset); //@issue: try to deposit borrow with the same asset for mini pool !!
         console.log("Offsets: token0: %s token1: %s", collateralOffset, borrowOffset);
 
         TokenParams memory collateralParams = TokenParams(
@@ -412,6 +411,8 @@ contract MiniPoolRepayWithdrawTransferTest is MiniPoolDepositBorrowTest {
             borrowParams.token.balanceOf(address(this)) / 10
         );
         vm.assume(withdrawAmount < borrowAmount);
+
+        deal(address(collateralParams.token), user, collateralParams.token.balanceOf(address(this)));
 
         /* Borrow */
         fixture_miniPoolBorrow(

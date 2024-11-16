@@ -6,9 +6,8 @@ import "forge-std/console.sol";
 import "contracts/dependencies/openzeppelin/contracts/ERC20.sol";
 import "contracts/protocol/rewarder/lendingpool/Rewarder.sol";
 import "contracts/protocol/core/Oracle.sol";
-import "contracts/misc/ProtocolDataProvider.sol";
+import "contracts/misc/Cod3xLendDataProvider.sol";
 import "contracts/misc/Treasury.sol";
-import "contracts/misc/UiPoolDataProviderV2.sol";
 import "contracts/misc/WETHGateway.sol";
 import "contracts/protocol/core/lendingpool/logic/ReserveLogic.sol";
 import "contracts/protocol/core/lendingpool/logic/GenericLogic.sol";
@@ -55,12 +54,32 @@ struct ReserveDataParams {
     uint40 lastUpdateTimestamp;
 }
 
+struct TokenTypes {
+    ERC20 token;
+    AToken aToken;
+    VariableDebtToken debtToken;
+}
+
+event Deposit(address indexed reserve, address user, address indexed onBehalfOf, uint256 amount);
+
+event Withdraw(address indexed reserve, address indexed user, address indexed to, uint256 amount);
+
+event Borrow(
+    address indexed reserve,
+    address user,
+    address indexed onBehalfOf,
+    uint256 amount,
+    uint256 borrowRate
+);
+
+event Repay(address indexed reserve, address indexed user, address indexed repayer, uint256 amount);
+
 contract Common is Test {
     using WadRayMath for uint256;
 
     // Structures
     struct ConfigAddresses {
-        address protocolDataProvider;
+        address cod3xLendDataProvider;
         address stableStrategy;
         address volatileStrategy;
         address treasury;
@@ -87,7 +106,7 @@ contract Common is Test {
         DefaultReserveInterestRateStrategy stableStrategy;
         DefaultReserveInterestRateStrategy volatileStrategy;
         PiReserveInterestRateStrategy piStrategy;
-        ProtocolDataProvider protocolDataProvider;
+        Cod3xLendDataProvider cod3xLendDataProvider;
         ATokensAndRatesHelper aTokensAndRatesHelper;
     }
 
@@ -181,24 +200,18 @@ contract Common is Test {
     // Protocol deployment variables
     uint256 providerId = 1;
     string marketId = "Cod3x Lend Genesis Market";
-    uint256 cntr;
 
     ERC20 public weth = ERC20(WETH);
     ERC20 public dai = ERC20(DAI);
 
-    // MockAggregator public usdcPriceFeed;
-    // MockAggregator public wbtcPriceFeed;
-    // MockAggregator public ethPriceFeed;
     address[] public aggregators;
 
     address public reserveLogic;
     address public genericLogic;
     address public validationLogic;
 
-    // StableAndVariableTokensHelper public stableAndVariableTokensHelper;
     Oracle public oracle;
 
-    UiPoolDataProviderV2 public uiPoolDataProviderV2;
     WETHGateway public wETHGateway;
     AToken public aToken;
     VariableDebtToken public variableDebtToken;
@@ -310,9 +323,10 @@ contract Common is Test {
         fixture_deployMocks(address(deployedContracts.treasury));
         deployedContracts.lendingPoolAddressesProvider.setPriceOracle(address(oracle));
         vm.label(address(oracle), "Oracle");
-        deployedContracts.protocolDataProvider =
-            new ProtocolDataProvider(deployedContracts.lendingPoolAddressesProvider);
-        //@todo uiPoolDataProviderV2 = new UiPoolDataProviderV2(IChainlinkAggregator(ethPriceFeed), IChainlinkAggregator(ethPriceFeed));
+        deployedContracts.cod3xLendDataProvider = new Cod3xLendDataProvider();
+        deployedContracts.cod3xLendDataProvider.setLendingPoolAddressProvider(
+            address(deployedContracts.lendingPoolAddressesProvider)
+        );
         wETHGateway = new WETHGateway(WETH);
         deployedContracts.stableStrategy = new DefaultReserveInterestRateStrategy(
             deployedContracts.lendingPoolAddressesProvider,
@@ -382,12 +396,12 @@ contract Common is Test {
         lendingPoolConfiguratorProxy.setPoolPause(false);
 
         aTokens =
-            fixture_getATokens(tokens, ProtocolDataProvider(configAddresses.protocolDataProvider));
+            fixture_getATokens(tokens, Cod3xLendDataProvider(configAddresses.cod3xLendDataProvider));
         aTokensWrapper = fixture_getATokensWrapper(
-            tokens, ProtocolDataProvider(configAddresses.protocolDataProvider)
+            tokens, Cod3xLendDataProvider(configAddresses.cod3xLendDataProvider)
         );
         variableDebtTokens = fixture_getVarDebtTokens(
-            tokens, ProtocolDataProvider(configAddresses.protocolDataProvider)
+            tokens, Cod3xLendDataProvider(configAddresses.cod3xLendDataProvider)
         );
         for (uint256 idx; idx < tokens.length; idx++) {
             vm.label(address(aTokens[idx]), string.concat("AToken ", uintToString(idx)));
@@ -454,15 +468,13 @@ contract Common is Test {
         lendingPoolAddressesProvider.setPoolAdmin(admin);
     }
 
-    function fixture_getATokens(address[] memory _tokens, ProtocolDataProvider protocolDataProvider)
-        public
-        view
-        returns (AToken[] memory _aTokens)
-    {
+    function fixture_getATokens(
+        address[] memory _tokens,
+        Cod3xLendDataProvider cod3xLendDataProvider
+    ) public view returns (AToken[] memory _aTokens) {
         _aTokens = new AToken[](_tokens.length);
         for (uint32 idx = 0; idx < _tokens.length; idx++) {
-            (address _aTokenAddress,) =
-                protocolDataProvider.getReserveTokensAddresses(_tokens[idx], true);
+            (address _aTokenAddress,) = cod3xLendDataProvider.getLpTokens(_tokens[idx], true);
             // console.log("AToken%s: %s", idx, _aTokenAddress);
             _aTokens[idx] = AToken(_aTokenAddress);
         }
@@ -470,12 +482,11 @@ contract Common is Test {
 
     function fixture_getATokensWrapper(
         address[] memory _tokens,
-        ProtocolDataProvider protocolDataProvider
+        Cod3xLendDataProvider cod3xLendDataProvider
     ) public view returns (AToken[] memory _aTokensW) {
         _aTokensW = new AToken[](_tokens.length);
         for (uint32 idx = 0; idx < _tokens.length; idx++) {
-            (address _aTokenAddress,) =
-                protocolDataProvider.getReserveTokensAddresses(_tokens[idx], true);
+            (address _aTokenAddress,) = cod3xLendDataProvider.getLpTokens(_tokens[idx], true);
             // console.log("AToken%s: %s", idx, _aTokenAddress);
             _aTokensW[idx] = AToken(address(AToken(_aTokenAddress).WRAPPER_ADDRESS()));
         }
@@ -483,12 +494,11 @@ contract Common is Test {
 
     function fixture_getVarDebtTokens(
         address[] memory _tokens,
-        ProtocolDataProvider protocolDataProvider
+        Cod3xLendDataProvider cod3xLendDataProvider
     ) public returns (VariableDebtToken[] memory _varDebtTokens) {
         _varDebtTokens = new VariableDebtToken[](_tokens.length);
         for (uint32 idx = 0; idx < _tokens.length; idx++) {
-            (, address _variableDebtToken) =
-                protocolDataProvider.getReserveTokensAddresses(_tokens[idx], true);
+            (, address _variableDebtToken) = cod3xLendDataProvider.getLpTokens(_tokens[idx], true);
             // console.log("Atoken address", _variableDebtToken);
             string memory debtToken = string.concat("debtToken", uintToString(idx));
             vm.label(_variableDebtToken, debtToken);
@@ -581,68 +591,93 @@ contract Common is Test {
         }
     }
 
+    /**
+     * @dev put address(0) for _miniPoolAddressProvider in order to initialize all minipool contracts
+     */
     function fixture_deployMiniPoolSetup(
         address _lendingPoolAddressesProvider,
-        address _lendingPool
-    ) public returns (DeployedMiniPoolContracts memory) {
+        address _lendingPool,
+        address _cod3xLendDataProvider,
+        address _miniPoolAddressProvider
+    ) public returns (DeployedMiniPoolContracts memory, uint256) {
         DeployedMiniPoolContracts memory deployedMiniPoolContracts;
+        uint256 miniPoolId;
         deployedMiniPoolContracts.miniPoolImpl = new MiniPool();
-        deployedMiniPoolContracts.miniPoolAddressesProvider = new MiniPoolAddressesProvider(
-            ILendingPoolAddressesProvider(_lendingPoolAddressesProvider)
-        );
         deployedMiniPoolContracts.aToken6909Impl = new ATokenERC6909();
-        deployedMiniPoolContracts.flowLimiter = new FlowLimiter(
-            ILendingPoolAddressesProvider(_lendingPoolAddressesProvider),
-            IMiniPoolAddressesProvider(address(deployedMiniPoolContracts.miniPoolAddressesProvider)),
-            ILendingPool(_lendingPool)
-        );
-        address miniPoolConfigImpl = address(new MiniPoolConfigurator());
-        deployedMiniPoolContracts.miniPoolAddressesProvider.setMiniPoolConfigurator(
-            miniPoolConfigImpl
-        );
-        deployedMiniPoolContracts.miniPoolConfigurator = MiniPoolConfigurator(
-            deployedMiniPoolContracts.miniPoolAddressesProvider.getMiniPoolConfigurator()
-        );
 
-        ILendingPoolAddressesProvider(_lendingPoolAddressesProvider).setMiniPoolAddressesProvider(
-            address(deployedMiniPoolContracts.miniPoolAddressesProvider)
-        );
-        ILendingPoolAddressesProvider(_lendingPoolAddressesProvider).setFlowLimiter(
-            address(deployedMiniPoolContracts.flowLimiter)
-        );
-        deployedMiniPoolContracts.miniPoolAddressesProvider.deployMiniPool(
-            address(deployedMiniPoolContracts.miniPoolImpl),
-            address(deployedMiniPoolContracts.aToken6909Impl)
-        );
+        if (_miniPoolAddressProvider == address(0)) {
+            /* First deployment so configure everything */
 
-        /* Strategies */
-        deployedMiniPoolContracts.stableStrategy = new MiniPoolDefaultReserveInterestRateStrategy(
-            IMiniPoolAddressesProvider(_lendingPoolAddressesProvider),
-            sStrat[0],
-            sStrat[1],
-            sStrat[2],
-            sStrat[3]
-        );
-        deployedMiniPoolContracts.volatileStrategy = new MiniPoolDefaultReserveInterestRateStrategy(
-            IMiniPoolAddressesProvider(_lendingPoolAddressesProvider),
-            volStrat[0],
-            volStrat[1],
-            volStrat[2],
-            volStrat[3]
-        );
-        deployedMiniPoolContracts.piStrategy = new MiniPoolPiReserveInterestRateStrategy(
-            _lendingPoolAddressesProvider,
-            0, // minipool ID
-            defaultPidConfig.asset,
-            defaultPidConfig.assetReserveType,
-            defaultPidConfig.minControllerError,
-            defaultPidConfig.maxITimeAmp,
-            defaultPidConfig.optimalUtilizationRate,
-            defaultPidConfig.kp,
-            defaultPidConfig.ki
-        );
+            deployedMiniPoolContracts.miniPoolAddressesProvider = new MiniPoolAddressesProvider(
+                ILendingPoolAddressesProvider(_lendingPoolAddressesProvider)
+            );
+            console.log("miniPoolImpl: ", address(deployedMiniPoolContracts.miniPoolImpl));
+            console.log("aToken6909Impl: ", address(deployedMiniPoolContracts.aToken6909Impl));
+            miniPoolId = deployedMiniPoolContracts.miniPoolAddressesProvider.deployMiniPool(
+                address(deployedMiniPoolContracts.miniPoolImpl),
+                address(deployedMiniPoolContracts.aToken6909Impl)
+            );
+            deployedMiniPoolContracts.flowLimiter = new FlowLimiter(
+                ILendingPoolAddressesProvider(_lendingPoolAddressesProvider),
+                IMiniPoolAddressesProvider(
+                    address(deployedMiniPoolContracts.miniPoolAddressesProvider)
+                ),
+                ILendingPool(_lendingPool)
+            );
+            address miniPoolConfigImpl = address(new MiniPoolConfigurator());
+            deployedMiniPoolContracts.miniPoolAddressesProvider.setMiniPoolConfigurator(
+                miniPoolConfigImpl
+            );
+            deployedMiniPoolContracts.miniPoolConfigurator = MiniPoolConfigurator(
+                deployedMiniPoolContracts.miniPoolAddressesProvider.getMiniPoolConfigurator()
+            );
 
-        return deployedMiniPoolContracts;
+            ILendingPoolAddressesProvider(_lendingPoolAddressesProvider)
+                .setMiniPoolAddressesProvider(
+                address(deployedMiniPoolContracts.miniPoolAddressesProvider)
+            );
+            ILendingPoolAddressesProvider(_lendingPoolAddressesProvider).setFlowLimiter(
+                address(deployedMiniPoolContracts.flowLimiter)
+            );
+
+            /* Strategies */
+            deployedMiniPoolContracts.stableStrategy = new MiniPoolDefaultReserveInterestRateStrategy(
+                IMiniPoolAddressesProvider(_lendingPoolAddressesProvider),
+                sStrat[0],
+                sStrat[1],
+                sStrat[2],
+                sStrat[3]
+            );
+            deployedMiniPoolContracts.volatileStrategy = new MiniPoolDefaultReserveInterestRateStrategy(
+                IMiniPoolAddressesProvider(_lendingPoolAddressesProvider),
+                volStrat[0],
+                volStrat[1],
+                volStrat[2],
+                volStrat[3]
+            );
+            deployedMiniPoolContracts.piStrategy = new MiniPoolPiReserveInterestRateStrategy(
+                _lendingPoolAddressesProvider,
+                0, // minipool ID
+                defaultPidConfig.asset,
+                defaultPidConfig.assetReserveType,
+                defaultPidConfig.minControllerError,
+                defaultPidConfig.maxITimeAmp,
+                defaultPidConfig.optimalUtilizationRate,
+                defaultPidConfig.kp,
+                defaultPidConfig.ki
+            );
+            Cod3xLendDataProvider(_cod3xLendDataProvider).setMiniPoolAddressProvider(
+                address(deployedMiniPoolContracts.miniPoolAddressesProvider)
+            );
+        } else {
+            /* Get the same AERC6909 impl as previously */
+            miniPoolId = IMiniPoolAddressesProvider(_miniPoolAddressProvider).deployMiniPool(
+                address(deployedMiniPoolContracts.miniPoolImpl),
+                address(deployedMiniPoolContracts.aToken6909Impl)
+            );
+        }
+
+        return (deployedMiniPoolContracts, miniPoolId);
     }
 
     function fixture_convertWithDecimals(uint256 amountRaw, uint256 decimalsA, uint256 decimalsB)
@@ -668,16 +703,14 @@ contract Common is Test {
     function fixture_configureMiniPoolReserves(
         address[] memory tokensToConfigure,
         ConfigAddresses memory configAddresses,
-        DeployedMiniPoolContracts memory miniPoolContracts
+        DeployedMiniPoolContracts memory miniPoolContracts,
+        uint256 miniPoolId
     ) public returns (address) {
         IMiniPoolConfigurator.InitReserveInput[] memory initInputParams =
             new IMiniPoolConfigurator.InitReserveInput[](tokensToConfigure.length);
-        // address aTokensErc6909Addr;
         console.log("Getting Mini pool: ");
-        address miniPool = miniPoolContracts.miniPoolAddressesProvider.getMiniPool(cntr);
-        cntr++;
+        address miniPool = miniPoolContracts.miniPoolAddressesProvider.getMiniPool(miniPoolId);
 
-        // aTokensErc6909Addr = miniPoolContracts.miniPoolAddressesProvider.getMiniPoolToAERC6909(mp);
         console.log("Length:", tokensToConfigure.length);
         for (uint8 idx = 0; idx < tokensToConfigure.length; idx++) {
             string memory tmpSymbol = ERC20(tokensToConfigure[idx]).symbol();
@@ -686,7 +719,7 @@ contract Common is Test {
             address interestStrategy = isStableStrategy[idx % tokens.length] != false
                 ? configAddresses.stableStrategy
                 : configAddresses.volatileStrategy;
-            console.log("[common]interestStartegy: ", interestStrategy);
+            // console.log("[common]interestStartegy: ", interestStrategy);
             initInputParams[idx] = IMiniPoolConfigurator.InitReserveInput({
                 underlyingAssetDecimals: ERC20(tokensToConfigure[idx]).decimals(),
                 interestRateStrategyAddress: interestStrategy,
@@ -737,7 +770,7 @@ contract Common is Test {
         return amount * oracle.getAssetPrice(token);
     }
 
-    function fixture_getReserveData(address token, ProtocolDataProvider protocolDataProvider)
+    function fixture_getReserveData(address token, Cod3xLendDataProvider cod3xLendDataProvider)
         public
         view
         returns (ReserveDataParams memory)
@@ -750,7 +783,7 @@ contract Common is Test {
             uint256 liquidityIndex,
             uint256 variableBorrowIndex,
             uint40 lastUpdateTimestamp
-        ) = protocolDataProvider.getReserveData(token, true);
+        ) = cod3xLendDataProvider.getLpReserveDynamicData(token, true);
         return ReserveDataParams(
             availableLiquidity,
             totalVariableDebt,

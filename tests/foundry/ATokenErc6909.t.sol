@@ -28,7 +28,7 @@ contract ATokenErc6909Test is Common {
         assertEq(vm.activeFork(), opFork);
         deployedContracts = fixture_deployProtocol();
         configAddresses = ConfigAddresses(
-            address(deployedContracts.protocolDataProvider),
+            address(deployedContracts.cod3xLendDataProvider),
             address(deployedContracts.stableStrategy),
             address(deployedContracts.volatileStrategy),
             address(deployedContracts.treasury),
@@ -45,9 +45,11 @@ contract ATokenErc6909Test is Common {
         mockedVaults = fixture_deployReaperVaultMocks(tokens, address(deployedContracts.treasury));
         erc20Tokens = fixture_getErc20Tokens(tokens);
         fixture_transferTokensToTestContract(erc20Tokens, 100_000 ether, address(this));
-        miniPoolContracts = fixture_deployMiniPoolSetup(
+        (miniPoolContracts,) = fixture_deployMiniPoolSetup(
             address(deployedContracts.lendingPoolAddressesProvider),
-            address(deployedContracts.lendingPool)
+            address(deployedContracts.lendingPool),
+            address(deployedContracts.cod3xLendDataProvider),
+            address(0)
         );
 
         address[] memory reserves = new address[](2 * tokens.length);
@@ -59,10 +61,10 @@ contract ATokenErc6909Test is Common {
             }
         }
 
-        configAddresses.protocolDataProvider = address(miniPoolContracts.miniPoolAddressesProvider);
         configAddresses.stableStrategy = address(miniPoolContracts.stableStrategy);
         configAddresses.volatileStrategy = address(miniPoolContracts.volatileStrategy);
-        miniPool = fixture_configureMiniPoolReserves(reserves, configAddresses, miniPoolContracts);
+        miniPool =
+            fixture_configureMiniPoolReserves(reserves, configAddresses, miniPoolContracts, 0);
         vm.label(miniPool, "MiniPool");
 
         aErc6909Token =
@@ -880,9 +882,8 @@ contract ATokenErc6909Test is Common {
         address[] memory reserves = new address[](1);
         reserves[0] = tokens[0];
 
-        configAddresses.protocolDataProvider = address(miniPoolContracts.miniPoolAddressesProvider);
-
-        miniPool = fixture_configureMiniPoolReserves(reserves, configAddresses, miniPoolContracts);
+        miniPool =
+            fixture_configureMiniPoolReserves(reserves, configAddresses, miniPoolContracts, 0);
         vm.label(miniPool, "MiniPool");
 
         IAERC6909 internalAErc6909Token =

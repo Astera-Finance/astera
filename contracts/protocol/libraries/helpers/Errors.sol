@@ -16,11 +16,9 @@ pragma solidity 0.8.23;
  *  - RL = ReserveLogic
  *  - LPCM = Liquidation
  *  - P = Pausable
- * <<<<<<< HEAD
+ *  - DP = DataProvider
  *  - O = Oracle
- * =======
  *  - PAP = PoolAddressesProvider
- * >>>>>>> deploymentScripts
  */
 library Errors {
     //common errors
@@ -113,6 +111,9 @@ library Errors {
     string public constant VL_FLASHLOAN_DISABLED = "93";
     string public constant LPC_FLASHLOAN_PREMIUM_INVALID = "94";
     string public constant VL_TRANCHED_ASSET_CANNOT_BE_FLASHLOAN = "95";
+    string public constant DP_LENDINGPOOL_NOT_SET = "96";
+    string public constant DP_MINIPOOL_NOT_SET = "97";
+
     string public constant O_INCONSISTENT_PARAMS_LENGTH = "96";
     string public constant O_PRICE_FEED_INCONSISTENCY = "97";
     string public constant PAP_NO_MINI_POOL_ID_FOR_ADDRESS = "98";

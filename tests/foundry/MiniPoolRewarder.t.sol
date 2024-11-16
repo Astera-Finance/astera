@@ -145,7 +145,7 @@ contract MiniPoolRewarderTest is Common {
         assertEq(vm.activeFork(), opFork);
         deployedContracts = fixture_deployProtocol();
         configAddresses = ConfigAddresses(
-            address(deployedContracts.protocolDataProvider),
+            address(deployedContracts.cod3xLendDataProvider),
             address(deployedContracts.stableStrategy),
             address(deployedContracts.volatileStrategy),
             address(deployedContracts.treasury),
@@ -162,9 +162,11 @@ contract MiniPoolRewarderTest is Common {
         mockedVaults = fixture_deployReaperVaultMocks(tokens, address(deployedContracts.treasury));
         erc20Tokens = fixture_getErc20Tokens(tokens);
         fixture_transferTokensToTestContract(erc20Tokens, 100_000 ether, address(this));
-        miniPoolContracts = fixture_deployMiniPoolSetup(
+        (miniPoolContracts,) = fixture_deployMiniPoolSetup(
             address(deployedContracts.lendingPoolAddressesProvider),
-            address(deployedContracts.lendingPool)
+            address(deployedContracts.lendingPool),
+            address(deployedContracts.cod3xLendDataProvider),
+            address(0)
         );
 
         address[] memory reserves = new address[](2 * tokens.length);
@@ -177,10 +179,11 @@ contract MiniPoolRewarderTest is Common {
             }
             console.log("reserves[idx] : ", reserves[idx]);
         }
-        configAddresses.protocolDataProvider = address(miniPoolContracts.miniPoolAddressesProvider);
+        configAddresses.cod3xLendDataProvider = address(miniPoolContracts.miniPoolAddressesProvider);
         configAddresses.stableStrategy = address(miniPoolContracts.stableStrategy);
         configAddresses.volatileStrategy = address(miniPoolContracts.volatileStrategy);
-        miniPool = fixture_configureMiniPoolReserves(reserves, configAddresses, miniPoolContracts);
+        miniPool =
+            fixture_configureMiniPoolReserves(reserves, configAddresses, miniPoolContracts, 0);
         vm.label(miniPool, "MiniPool");
 
         aTokensErc6909Addr =

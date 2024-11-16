@@ -3,10 +3,11 @@
     "borrowAssetAddress": "0x0555E30da8f98308EdB960aa94C0Db47230d2B9c",
     "depositAmount": 5000000000,
     "borrowAmount": 20000,
-    "bootstrapLiquidity": true,
+    "bootstrapMainPool": true,
+    "bootstrapMiniPool": true,
     "usdAmountToDeposit": 1000000000000000000000,
     "poolAddressesProviderConfig": {
         "marketId": "UV TestNet Market",
-        "poolId": 0
+        "poolId": 1
     }
 }

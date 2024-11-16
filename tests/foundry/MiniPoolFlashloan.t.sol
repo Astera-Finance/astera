@@ -138,11 +138,11 @@ contract MiniPoolFlashloanTest is Common {
         /* Test depositing */
         uint256 minNrOfTokens;
         {
-            (, uint256 collateralTokenLtv,,,,,,,) = deployedContracts
-                .protocolDataProvider
-                .getReserveConfigurationData(address(collateralTokenParams.token), true);
+            StaticData memory staticData = deployedContracts
+                .cod3xLendDataProvider
+                .getLpReserveStaticData(address(collateralTokenParams.token), true);
             uint256 borrowTokenInUsd = (amount * borrowTokenParams.price * 10_000)
-                / ((10 ** PRICE_FEED_DECIMALS) * collateralTokenLtv);
+                / ((10 ** PRICE_FEED_DECIMALS) * staticData.ltv);
             uint256 borrowTokenRay = borrowTokenInUsd.rayDiv(collateralTokenParams.price);
             uint256 borrowTokenInCollateralToken = fixture_preciseConvertWithDecimals(
                 borrowTokenRay,
@@ -256,11 +256,11 @@ contract MiniPoolFlashloanTest is Common {
         /* Test depositing */
         uint256 minNrOfTokens;
         {
-            (, uint256 collateralTokenLtv,,,,,,,) = deployedContracts
-                .protocolDataProvider
-                .getReserveConfigurationData(address(collateralTokenParams.token), true);
+            StaticData memory staticData = deployedContracts
+                .cod3xLendDataProvider
+                .getLpReserveStaticData(address(collateralTokenParams.token), true);
             uint256 borrowTokenInUsd = (amount * borrowTokenParams.price * 10000)
-                / ((10 ** PRICE_FEED_DECIMALS) * collateralTokenLtv);
+                / ((10 ** PRICE_FEED_DECIMALS) * staticData.ltv);
             uint256 borrowTokenRay = borrowTokenInUsd.rayDiv(collateralTokenParams.price);
             uint256 borrowTokenInCollateralToken = fixture_preciseConvertWithDecimals(
                 borrowTokenRay,
@@ -360,7 +360,7 @@ contract MiniPoolFlashloanTest is Common {
         assertEq(vm.activeFork(), opFork);
         deployedContracts = fixture_deployProtocol();
         configAddresses = ConfigAddresses(
-            address(deployedContracts.protocolDataProvider),
+            address(deployedContracts.cod3xLendDataProvider),
             address(deployedContracts.stableStrategy),
             address(deployedContracts.volatileStrategy),
             address(deployedContracts.treasury),
@@ -377,9 +377,11 @@ contract MiniPoolFlashloanTest is Common {
         mockedVaults = fixture_deployReaperVaultMocks(tokens, address(deployedContracts.treasury));
         erc20Tokens = fixture_getErc20Tokens(tokens);
         fixture_transferTokensToTestContract(erc20Tokens, 1_000_000 ether, address(this));
-        miniPoolContracts = fixture_deployMiniPoolSetup(
+        (miniPoolContracts,) = fixture_deployMiniPoolSetup(
             address(deployedContracts.lendingPoolAddressesProvider),
-            address(deployedContracts.lendingPool)
+            address(deployedContracts.lendingPool),
+            address(deployedContracts.cod3xLendDataProvider),
+            address(0)
         );
 
         address[] memory reserves = new address[](2 * tokens.length);
@@ -391,10 +393,11 @@ contract MiniPoolFlashloanTest is Common {
                 reserves[idx] = address(aTokens[idx - tokens.length].WRAPPER_ADDRESS());
             }
         }
-        configAddresses.protocolDataProvider = address(miniPoolContracts.miniPoolAddressesProvider);
+        configAddresses.cod3xLendDataProvider = address(miniPoolContracts.miniPoolAddressesProvider);
         configAddresses.stableStrategy = address(miniPoolContracts.stableStrategy);
         configAddresses.volatileStrategy = address(miniPoolContracts.volatileStrategy);
-        miniPool = fixture_configureMiniPoolReserves(reserves, configAddresses, miniPoolContracts);
+        miniPool =
+            fixture_configureMiniPoolReserves(reserves, configAddresses, miniPoolContracts, 0);
         vm.label(miniPool, "MiniPool");
     }
 

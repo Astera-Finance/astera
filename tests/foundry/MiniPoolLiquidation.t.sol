@@ -86,6 +86,8 @@ contract MiniPoolLiquidationTest is MiniPoolDepositBorrowTest {
         (,,,,, liquidationVars.healthFactor) = IMiniPool(miniPool).getUserAccountData(user);
         console.log("1. Health factor: ", liquidationVars.healthFactor);
 
+        deal(address(collateralParams.token), user, collateralParams.token.balanceOf(address(this)));
+
         fixture_miniPoolBorrow(
             amount, collateralOffset, borrowOffset, collateralParams, borrowParams, user
         );
@@ -152,10 +154,6 @@ contract MiniPoolLiquidationTest is MiniPoolDepositBorrowTest {
 
             borrowParams.token.transfer(liquidator, liquidationVars.amountToLiquidate);
 
-            // uint256 userVariableDebt;
-            // (,address debtToken) = deployedContracts.protocolDataProvider.getReserveTokensAddresses(address(token1Params.token), true);
-            // console.log("MP userVariableDebt for user %s: %s", user, userVariableDebt);
-            // console.log("LP userVariableDebt for user %s: %s", user, userVariableDebt);
             liquidationVars.currentVariableDebt = aErc6909Token.balanceOf(user, 2128 + borrowOffset);
             liquidationVars.liquidatorDebtTokenBalance = borrowParams.token.balanceOf(liquidator);
             liquidationVars.userCollateralBalance =
@@ -258,7 +256,7 @@ contract MiniPoolLiquidationTest is MiniPoolDepositBorrowTest {
                 liquidationVars.healthFactor,
                 healthFactorAfterLiquidation
             );
-            //assertGt(healthFactorAfterLiquidation, liquidationVars.healthFactor); // @issue9 Health factor after liquidation shall be greater than 1
+            //assertGt(healthFactorAfterLiquidation, liquidationVars.healthFactor);
             vm.stopPrank();
         }
 
@@ -269,7 +267,7 @@ contract MiniPoolLiquidationTest is MiniPoolDepositBorrowTest {
                 IMiniPool(miniPool).getReserveData(address(borrowParams.token));
             DataTypes.ReserveConfigurationMap memory configuration =
                 IMiniPool(miniPool).getConfiguration(address(collateralParams.token));
-            (,, liquidationVars.liquidationBonus,,) = configuration.getParamsMemory();
+            (,, liquidationVars.liquidationBonus,,,) = configuration.getParamsMemory();
             liquidationVars.expectedCollateralLiquidated = borrowParams.price
                 * (liquidationVars.amountToLiquidate * liquidationVars.liquidationBonus / 10_000)
                 * 10 ** collateralParams.token.decimals()
@@ -327,7 +325,6 @@ contract MiniPoolLiquidationTest is MiniPoolDepositBorrowTest {
          */
     }
 
-    //@issue5 - Failing but this is interest rate augmented functionality which will be rewroked
     function testLiquidationsWithFlowFromLendingPool(
         uint256 amount,
         uint256 collateralOffset,
@@ -362,6 +359,8 @@ contract MiniPoolLiquidationTest is MiniPoolDepositBorrowTest {
         vm.label(address(aErc6909Token), "aErc6909Token");
         vm.label(address(borrowParams.aToken), "token1");
         vm.label(address(collateralParams.token), "token0");
+
+        deal(address(collateralParams.token), user, collateralParams.token.balanceOf(address(this)));
 
         fixture_miniPoolBorrowWithFlowFromLendingPool(
             amount, borrowOffset, collateralParams, borrowParams, user

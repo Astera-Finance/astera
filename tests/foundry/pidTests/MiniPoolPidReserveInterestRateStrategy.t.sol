@@ -30,9 +30,11 @@ contract MiniPoolPidReserveInterestRateStrategyTest is Common {
         opFork = vm.createSelectFork(RPC, FORK_BLOCK);
         assertEq(vm.activeFork(), opFork);
         deployedContracts = fixture_deployProtocol();
-        deployedMiniPoolContracts = fixture_deployMiniPoolSetup(
+        (deployedMiniPoolContracts,) = fixture_deployMiniPoolSetup(
             address(deployedContracts.lendingPoolAddressesProvider),
-            address(deployedContracts.lendingPool)
+            address(deployedContracts.lendingPool),
+            address(deployedContracts.cod3xLendDataProvider),
+            address(0)
         );
         console.log("PiReserveInterestRateStrategy deployment: ");
         pidStrat = new PiReserveInterestRateStrategy(
@@ -62,7 +64,7 @@ contract MiniPoolPidReserveInterestRateStrategyTest is Common {
 
         // we replace stableStrategy and volatileStrategy by pidStrat
         configAddresses = ConfigAddresses(
-            address(deployedContracts.protocolDataProvider),
+            address(deployedContracts.cod3xLendDataProvider),
             address(pidStrat), // address(deployedContracts.stableStrategy), usdc, dai
             address(pidStrat), // address(deployedContracts.volatileStrategy), wbtc, weth
             address(deployedContracts.treasury),
@@ -80,14 +82,14 @@ contract MiniPoolPidReserveInterestRateStrategyTest is Common {
         miniPool = deployedMiniPoolContracts.miniPoolAddressesProvider.getMiniPool(0);
         console.log("2.Minipool: ", miniPool);
 
-        aTokens = fixture_getATokens(tokens, deployedContracts.protocolDataProvider);
-        // variableDebtTokens = fixture_getVarDebtTokens(tokens, deployedContracts.protocolDataProvider);
+        aTokens = fixture_getATokens(tokens, deployedContracts.cod3xLendDataProvider);
+        // variableDebtTokens = fixture_getVarDebtTokens(tokens, deployedContracts.cod3xLendDataProvider);
         mockedVaults = fixture_deployReaperVaultMocks(tokens, address(deployedContracts.treasury));
         erc20Tokens = fixture_getErc20Tokens(tokens);
         fixture_transferTokensToTestContract(erc20Tokens, 100_000_000 ether, address(this));
         console.log("strat address: ", address(miniPoolPidStrat));
         configAddresses = ConfigAddresses(
-            address(deployedContracts.protocolDataProvider),
+            address(deployedContracts.cod3xLendDataProvider),
             address(miniPoolPidStrat), // address(deployedContracts.stableStrategy), usdc, dai
             address(miniPoolPidStrat), // address(deployedContracts.volatileStrategy), wbtc, weth
             address(deployedContracts.treasury),
@@ -105,7 +107,7 @@ contract MiniPoolPidReserveInterestRateStrategyTest is Common {
             }
         }
         console.log("Mini pool reserve configuration..... ");
-        fixture_configureMiniPoolReserves(reserves, configAddresses, deployedMiniPoolContracts);
+        fixture_configureMiniPoolReserves(reserves, configAddresses, deployedMiniPoolContracts, 0);
 
         miniPool = deployedMiniPoolContracts.miniPoolAddressesProvider.getMiniPool(0);
         console.log("3.Minipool: ", miniPool);

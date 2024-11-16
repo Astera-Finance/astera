@@ -17,7 +17,7 @@ contract ATokenTest is Common {
         assertEq(vm.activeFork(), opFork);
         deployedContracts = fixture_deployProtocol();
         configAddresses = ConfigAddresses(
-            address(deployedContracts.protocolDataProvider),
+            address(deployedContracts.cod3xLendDataProvider),
             address(deployedContracts.stableStrategy),
             address(deployedContracts.volatileStrategy),
             address(deployedContracts.treasury),
@@ -128,10 +128,10 @@ contract ATokenTest is Common {
 
             vm.startPrank(user);
             uint256 amountToBorrow;
-            (, uint256 ltv,,,,,,,) = deployedContracts
-                .protocolDataProvider
-                .getReserveConfigurationData(address(erc20Tokens[idx]), true);
-            amountToBorrow = ((ltv * 2 * amount) / 10_000) - 1;
+            StaticData memory staticData = deployedContracts
+                .cod3xLendDataProvider
+                .getLpReserveStaticData(address(erc20Tokens[idx]), true);
+            amountToBorrow = ((staticData.ltv * 2 * amount) / 10_000) - 1;
 
             deployedContracts.lendingPool.borrow(
                 address(erc20Tokens[idx]), true, amountToBorrow, user
@@ -162,13 +162,13 @@ contract ATokenTest is Common {
                 uint256 currentAssetPrice = oracle.getAssetPrice(address(erc20Tokens[idx]));
                 uint256 nextTokenAssetPrice =
                     oracle.getAssetPrice(address(erc20Tokens[nextTokenIndex]));
-                (, uint256 currentAssetLtv,,,,,,,) = deployedContracts
-                    .protocolDataProvider
-                    .getReserveConfigurationData(address(erc20Tokens[idx]), true);
+                StaticData memory staticData = deployedContracts
+                    .cod3xLendDataProvider
+                    .getLpReserveStaticData(address(erc20Tokens[idx]), true);
 
                 uint256 currentAssetDepositValue =
                     amountToTransfer * currentAssetPrice / 10 ** PRICE_FEED_DECIMALS;
-                currentAssetMaxBorrowValue = currentAssetDepositValue * currentAssetLtv / 10_000;
+                currentAssetMaxBorrowValue = currentAssetDepositValue * staticData.ltv / 10_000;
                 uint256 amountToBorrowRaw =
                     (currentAssetMaxBorrowValue * 10 ** PRICE_FEED_DECIMALS) / nextTokenAssetPrice;
                 amountToBorrow = fixture_convertWithDecimals(

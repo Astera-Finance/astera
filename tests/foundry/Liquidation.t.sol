@@ -17,7 +17,7 @@ contract LiquidationTest is Common {
         assertEq(vm.activeFork(), opFork);
         deployedContracts = fixture_deployProtocol();
         configAddresses = ConfigAddresses(
-            address(deployedContracts.protocolDataProvider),
+            address(deployedContracts.cod3xLendDataProvider),
             address(deployedContracts.stableStrategy),
             address(deployedContracts.volatileStrategy),
             address(deployedContracts.treasury),
@@ -48,9 +48,9 @@ contract LiquidationTest is Common {
         uint256 wbtcPrice = oracle.getAssetPrice(address(wbtc));
         uint256 usdcPrice = oracle.getAssetPrice(address(usdc));
         uint256 usdcDepositValue = usdcDepositAmount * usdcPrice / (10 ** PRICE_FEED_DECIMALS);
-        (, uint256 usdcLtv,,,,,,,) =
-            deployedContracts.protocolDataProvider.getReserveConfigurationData(address(usdc), true);
-        uint256 usdcMaxBorrowValue = usdcLtv * usdcDepositValue / 10_000;
+        StaticData memory staticData =
+            deployedContracts.cod3xLendDataProvider.getLpReserveStaticData(address(usdc), true);
+        uint256 usdcMaxBorrowValue = staticData.ltv * usdcDepositValue / 10_000;
         uint256 wbtcMaxBorrowAmountWithUsdcCollateral;
         {
             // uint256 wbtcMaxBorrowAmountRaw = (usdcMaxBorrowValue * 10 ** PRICE_FEED_DECIMALS) / wbtcPrice;
@@ -81,13 +81,19 @@ contract LiquidationTest is Common {
             address(wbtc), true, wbtcMaxBorrowAmountWithUsdcCollateral, address(this)
         );
 
-        (, uint256 debtToCover,,,) = deployedContracts.protocolDataProvider.getUserReserveData(
-            address(usdc), true, address(this)
-        );
+        UserReserveData memory userReservesData = deployedContracts
+            .cod3xLendDataProvider
+            .getLpUserData(address(usdc), true, address(this));
 
         vm.expectRevert(bytes(Errors.LPCM_HEALTH_FACTOR_NOT_BELOW_THRESHOLD));
         deployedContracts.lendingPool.liquidationCall(
-            address(usdc), true, address(wbtc), true, address(this), debtToCover, false
+            address(usdc),
+            true,
+            address(wbtc),
+            true,
+            address(this),
+            userReservesData.currentVariableDebt,
+            false
         );
     }
 
@@ -99,11 +105,10 @@ contract LiquidationTest is Common {
         uint256 usdcPrice = oracle.getAssetPrice(address(usdc));
         {
             uint256 usdcDepositAmount = 5e9; /* $5k */ // consider fuzzing here
-            (, uint256 usdcLtv,,,,,,,) = deployedContracts
-                .protocolDataProvider
-                .getReserveConfigurationData(address(usdc), true);
+            StaticData memory staticData =
+                deployedContracts.cod3xLendDataProvider.getLpReserveStaticData(address(usdc), true);
 
-            uint256 usdcMaxBorrowAmount = usdcLtv * usdcDepositAmount / 10_000;
+            uint256 usdcMaxBorrowAmount = staticData.ltv * usdcDepositAmount / 10_000;
 
             uint256 wbtcMaxToBorrowRay = usdcMaxBorrowAmount.rayDiv(wbtcPrice);
             uint256 wbtcMaxBorrowAmountWithUsdcCollateral = fixture_preciseConvertWithDecimals(
@@ -157,9 +162,9 @@ contract LiquidationTest is Common {
         }
 
         ReserveDataParams memory wbtcReserveParamsBefore =
-            fixture_getReserveData(address(wbtc), deployedContracts.protocolDataProvider);
+            fixture_getReserveData(address(wbtc), deployedContracts.cod3xLendDataProvider);
         ReserveDataParams memory usdcReserveParamsBefore =
-            fixture_getReserveData(address(usdc), deployedContracts.protocolDataProvider);
+            fixture_getReserveData(address(usdc), deployedContracts.cod3xLendDataProvider);
         {
             (,,,,, uint256 healthFactor) =
                 deployedContracts.lendingPool.getUserAccountData(address(this));
@@ -171,13 +176,13 @@ contract LiquidationTest is Common {
          */
         uint256 amountToLiquidate;
         uint256 scaledVariableDebt;
-        {
-            (, uint256 debtToCover, uint256 _scaledVariableDebt,,) = deployedContracts
-                .protocolDataProvider
-                .getUserReserveData(address(wbtc), true, address(this));
-            amountToLiquidate = debtToCover / 2; // maximum possible liquidation amount
-            scaledVariableDebt = _scaledVariableDebt;
-        }
+
+        UserReserveData memory userReservesData = deployedContracts
+            .cod3xLendDataProvider
+            .getLpUserData(address(wbtc), true, address(this));
+        amountToLiquidate = userReservesData.currentVariableDebt / 2; // maximum possible liquidation amount
+        scaledVariableDebt = userReservesData.scaledVariableDebt;
+
         {
             /* prepare funds */
             address liquidator = makeAddr("liquidator");
@@ -194,18 +199,17 @@ contract LiquidationTest is Common {
          * LIQUIDATION PROCESS - END ***********
          */
         ReserveDataParams memory wbtcReserveParamsAfter =
-            fixture_getReserveData(address(wbtc), deployedContracts.protocolDataProvider);
+            fixture_getReserveData(address(wbtc), deployedContracts.cod3xLendDataProvider);
         ReserveDataParams memory usdcReserveParamsAfter =
-            fixture_getReserveData(address(usdc), deployedContracts.protocolDataProvider);
+            fixture_getReserveData(address(usdc), deployedContracts.cod3xLendDataProvider);
         uint256 expectedCollateralLiquidated;
 
         {
-            (,,, uint256 liquidationBonus,,,,,) = deployedContracts
-                .protocolDataProvider
-                .getReserveConfigurationData(address(usdc), true);
+            StaticData memory staticData =
+                deployedContracts.cod3xLendDataProvider.getLpReserveStaticData(address(usdc), true);
 
             expectedCollateralLiquidated = wbtcPrice
-                * (amountToLiquidate * liquidationBonus / 10_000) * 10 ** usdc.decimals()
+                * (amountToLiquidate * staticData.liquidationBonus / 10_000) * 10 ** usdc.decimals()
                 / (usdcPrice * 10 ** wbtc.decimals());
         }
         uint256 variableDebtBeforeTx = fixture_calcExpectedVariableDebtTokenBalance(
@@ -223,11 +227,13 @@ contract LiquidationTest is Common {
             assertGt(healthFactor, 1 ether);
         }
 
-        (, uint256 currentVariableDebt,,,) = deployedContracts
-            .protocolDataProvider
-            .getUserReserveData(address(wbtc), true, address(this));
+        userReservesData = deployedContracts.cod3xLendDataProvider.getLpUserData(
+            address(wbtc), true, address(this)
+        );
 
-        assertApproxEqRel(currentVariableDebt, variableDebtBeforeTx - amountToLiquidate, 0.01e18);
+        assertApproxEqRel(
+            userReservesData.currentVariableDebt, variableDebtBeforeTx - amountToLiquidate, 0.01e18
+        );
         assertApproxEqRel(
             wbtcReserveParamsAfter.availableLiquidity,
             wbtcReserveParamsBefore.availableLiquidity + amountToLiquidate,
@@ -240,12 +246,10 @@ contract LiquidationTest is Common {
             usdcReserveParamsBefore.availableLiquidity - expectedCollateralLiquidated,
             0.01e18
         );
-        {
-            (,,,, bool usageAsCollateralEnabled) = deployedContracts
-                .protocolDataProvider
-                .getUserReserveData(address(usdc), true, address(this));
-            assertEq(usageAsCollateralEnabled, true);
-        }
+        userReservesData = deployedContracts.cod3xLendDataProvider.getLpUserData(
+            address(usdc), true, address(this)
+        );
+        assertEq(userReservesData.usageAsCollateralEnabledOnUser, true);
     }
 
     function testLiquidationOfUnhealthyLoanWithCollateralDecreased(uint256 priceDecrease) public {
@@ -260,11 +264,11 @@ contract LiquidationTest is Common {
             {
                 uint256 usdcDepositValue =
                     usdcDepositAmount * usdcPrice / (10 ** PRICE_FEED_DECIMALS);
-                (, uint256 usdcLtv,,,,,,,) = deployedContracts
-                    .protocolDataProvider
-                    .getReserveConfigurationData(address(usdc), true);
+                StaticData memory staticData = deployedContracts
+                    .cod3xLendDataProvider
+                    .getLpReserveStaticData(address(usdc), true);
 
-                usdcMaxBorrowValue = usdcLtv * usdcDepositValue / 10_000;
+                usdcMaxBorrowValue = staticData.ltv * usdcDepositValue / 10_000;
             }
 
             uint256 wbtcMaxToBorrowRay = usdcMaxBorrowValue.rayDiv(wbtcPrice);
@@ -327,9 +331,9 @@ contract LiquidationTest is Common {
         }
 
         ReserveDataParams memory wbtcReserveParamsBefore =
-            fixture_getReserveData(address(wbtc), deployedContracts.protocolDataProvider);
+            fixture_getReserveData(address(wbtc), deployedContracts.cod3xLendDataProvider);
         ReserveDataParams memory usdcReserveParamsBefore =
-            fixture_getReserveData(address(usdc), deployedContracts.protocolDataProvider);
+            fixture_getReserveData(address(usdc), deployedContracts.cod3xLendDataProvider);
         {
             (,,,,, uint256 healthFactor) =
                 deployedContracts.lendingPool.getUserAccountData(address(this));
@@ -344,13 +348,12 @@ contract LiquidationTest is Common {
         uint256 amountToLiquidate;
         uint256 scaledVariableDebt;
 
-        {
-            (, uint256 debtToCover, uint256 _scaledVariableDebt,,) = deployedContracts
-                .protocolDataProvider
-                .getUserReserveData(address(wbtc), true, address(this));
-            amountToLiquidate = debtToCover / 2; // maximum possible liquidation amount
-            scaledVariableDebt = _scaledVariableDebt;
-        }
+        UserReserveData memory userReservesData = deployedContracts
+            .cod3xLendDataProvider
+            .getLpUserData(address(wbtc), true, address(this));
+        amountToLiquidate = userReservesData.currentVariableDebt / 2; // maximum possible liquidation amount
+        scaledVariableDebt = userReservesData.scaledVariableDebt;
+
         {
             /* prepare funds */
             address liquidator = makeAddr("liquidator");
@@ -367,22 +370,21 @@ contract LiquidationTest is Common {
          * LIQUIDATION PROCESS - END ***********
          */
         ReserveDataParams memory wbtcReserveParamsAfter =
-            fixture_getReserveData(address(wbtc), deployedContracts.protocolDataProvider);
+            fixture_getReserveData(address(wbtc), deployedContracts.cod3xLendDataProvider);
         ReserveDataParams memory usdcReserveParamsAfter =
-            fixture_getReserveData(address(usdc), deployedContracts.protocolDataProvider);
+            fixture_getReserveData(address(usdc), deployedContracts.cod3xLendDataProvider);
         uint256 expectedCollateralLiquidated;
 
-        (, uint256 currentVariableDebt,,,) = deployedContracts
-            .protocolDataProvider
-            .getUserReserveData(address(wbtc), true, address(this));
+        userReservesData = deployedContracts.cod3xLendDataProvider.getLpUserData(
+            address(wbtc), true, address(this)
+        );
 
         {
-            (,,, uint256 liquidationBonus,,,,,) = deployedContracts
-                .protocolDataProvider
-                .getReserveConfigurationData(address(usdc), true);
+            StaticData memory staticData =
+                deployedContracts.cod3xLendDataProvider.getLpReserveStaticData(address(usdc), true);
 
             expectedCollateralLiquidated = wbtcPrice
-                * (amountToLiquidate * liquidationBonus / 10_000) * 10 ** usdc.decimals()
+                * (amountToLiquidate * staticData.liquidationBonus / 10_000) * 10 ** usdc.decimals()
                 / (usdcPrice * 10 ** wbtc.decimals());
         }
         uint256 variableDebtBeforeTx = fixture_calcExpectedVariableDebtTokenBalance(
@@ -405,7 +407,9 @@ contract LiquidationTest is Common {
         // console.log("availableLiquidity: ", usdcReserveParamsBefore.availableLiquidity);
         // console.log("expectedCollateralLiquidated: ", expectedCollateralLiquidated);
 
-        assertApproxEqRel(currentVariableDebt, variableDebtBeforeTx - amountToLiquidate, 0.01e18);
+        assertApproxEqRel(
+            userReservesData.currentVariableDebt, variableDebtBeforeTx - amountToLiquidate, 0.01e18
+        );
         assertApproxEqRel(
             wbtcReserveParamsAfter.availableLiquidity,
             wbtcReserveParamsBefore.availableLiquidity + amountToLiquidate,
@@ -418,11 +422,10 @@ contract LiquidationTest is Common {
             usdcReserveParamsBefore.availableLiquidity - expectedCollateralLiquidated,
             0.01e18
         );
-        {
-            (,,,, bool usageAsCollateralEnabled) = deployedContracts
-                .protocolDataProvider
-                .getUserReserveData(address(usdc), true, address(this));
-            assertEq(usageAsCollateralEnabled, true);
-        }
+
+        userReservesData = deployedContracts.cod3xLendDataProvider.getLpUserData(
+            address(usdc), true, address(this)
+        );
+        assertEq(userReservesData.usageAsCollateralEnabledOnUser, true);
     }
 }

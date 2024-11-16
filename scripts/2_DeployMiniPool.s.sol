@@ -12,9 +12,62 @@ import {DeployLendingPool} from "./1_DeployLendingPool.s.sol";
 contract DeployMiniPool is Script, Test, DeploymentUtils {
     using stdJson for string;
 
+    function readPreviousDeployment(string memory root) internal returns (bool readPrevious) {
+        string memory path = string.concat(root, "/scripts/outputs/2_MiniPoolContracts.json");
+        console.log("PREVIOUS DEPLOYMENT PATH: ", path);
+        try vm.readFile(path) returns (string memory previousContracts) {
+            address[] memory tmpContracts;
+            tmpContracts = previousContracts.readAddressArray(".miniPoolImpl");
+            for (uint256 idx = 0; idx < tmpContracts.length; idx++) {
+                contracts.miniPoolImpl.push(MiniPool(tmpContracts[idx]));
+            }
+            tmpContracts = previousContracts.readAddressArray(".aTokenErc6909");
+            for (uint256 idx = 0; idx < tmpContracts.length; idx++) {
+                contracts.aTokenErc6909.push(ATokenERC6909(tmpContracts[idx]));
+            }
+            tmpContracts = previousContracts.readAddressArray(".miniPoolPiStrategies");
+            for (uint256 idx = 0; idx < tmpContracts.length; idx++) {
+                contracts.miniPoolPiStrategies.push(
+                    MiniPoolPiReserveInterestRateStrategy(tmpContracts[idx])
+                );
+            }
+            tmpContracts = previousContracts.readAddressArray(".miniPoolStableStrategies");
+            for (uint256 idx = 0; idx < tmpContracts.length; idx++) {
+                contracts.miniPoolStableStrategies.push(
+                    MiniPoolDefaultReserveInterestRateStrategy(tmpContracts[idx])
+                );
+            }
+            tmpContracts = previousContracts.readAddressArray(".miniPoolVolatileStrategies");
+            for (uint256 idx = 0; idx < tmpContracts.length; idx++) {
+                contracts.miniPoolVolatileStrategies.push(
+                    MiniPoolDefaultReserveInterestRateStrategy(tmpContracts[idx])
+                );
+            }
+            contracts.flowLimiter = FlowLimiter(previousContracts.readAddress(".flowLimiter"));
+            contracts.miniPoolAddressesProvider = MiniPoolAddressesProvider(
+                previousContracts.readAddress(".miniPoolAddressesProvider")
+            );
+            contracts.miniPoolConfigurator =
+                MiniPoolConfigurator(previousContracts.readAddress(".miniPoolConfigurator"));
+
+            return true;
+        } catch {
+            return false;
+        }
+    }
+
     function writeJsonData(string memory root, string memory path) internal {
         /* Write important contracts into the file */
-        vm.serializeAddress("miniPoolContracts", "miniPoolImpl", address(contracts.miniPoolImpl));
+        address[] memory contractAddresses = new address[](contracts.miniPoolImpl.length);
+        for (uint256 idx = 0; idx < contracts.miniPoolImpl.length; idx++) {
+            contractAddresses[idx] = address(contracts.miniPoolImpl[idx]);
+        }
+        vm.serializeAddress("miniPoolContracts", "miniPoolImpl", contractAddresses);
+        contractAddresses = new address[](contracts.aTokenErc6909.length);
+        for (uint256 idx = 0; idx < contracts.aTokenErc6909.length; idx++) {
+            contractAddresses[idx] = address(contracts.aTokenErc6909[idx]);
+        }
+        vm.serializeAddress("miniPoolContracts", "aTokenErc6909", contractAddresses);
         vm.serializeAddress(
             "miniPoolContracts",
             "miniPoolAddressesProvider",
@@ -79,6 +132,8 @@ contract DeployMiniPool is Script, Test, DeploymentUtils {
         OracleConfig memory oracleConfig =
             abi.decode(config.parseRaw(".oracleConfig"), (OracleConfig));
 
+        bool usePreviousStrats = config.readBool(".usePreviousStrats");
+
         if (vm.envBool("LOCAL_FORK")) {
             /* Fork Identifier */
             {
@@ -102,7 +157,8 @@ contract DeployMiniPool is Script, Test, DeploymentUtils {
                 stableStrategies,
                 piStrategies,
                 poolReserversConfig,
-                FOUNDRY_DEFAULT
+                FOUNDRY_DEFAULT,
+                false
             );
             vm.stopPrank();
         } else if (vm.envBool("TESTNET")) {
@@ -114,7 +170,7 @@ contract DeployMiniPool is Script, Test, DeploymentUtils {
             string memory config = vm.readFile(path);
             address[] memory mockedTokens = config.readAddressArray(".mockedTokens");
             contracts.oracle = Oracle(config.readAddress(".mockedOracle"));
-
+            readPreviousDeployment(root);
             require(
                 mockedTokens.length >= poolReserversConfig.length,
                 "There are not enough mocked tokens. Deploy mocks.. "
@@ -149,9 +205,10 @@ contract DeployMiniPool is Script, Test, DeploymentUtils {
             contracts.lendingPoolAddressesProvider =
                 LendingPoolAddressesProvider(config.readAddress(".lendingPoolAddressesProvider"));
             contracts.lendingPool = LendingPool(config.readAddress(".lendingPool"));
-            contracts.aTokenErc6909 = ATokenERC6909(config.readAddress(".aTokenErc6909"));
             contracts.lendingPoolConfigurator =
                 LendingPoolConfigurator(config.readAddress(".lendingPoolConfigurator"));
+            contracts.cod3xLendDataProvider =
+                Cod3xLendDataProvider(config.readAddress(".cod3xLendDataProvider"));
 
             /* Deploy on testnet */
             vm.startBroadcast(vm.envUint("PRIVATE_KEY"));
@@ -161,7 +218,8 @@ contract DeployMiniPool is Script, Test, DeploymentUtils {
                 stableStrategies,
                 piStrategies,
                 poolReserversConfig,
-                vm.addr(vm.envUint("PRIVATE_KEY"))
+                vm.addr(vm.envUint("PRIVATE_KEY")),
+                usePreviousStrats
             );
             vm.stopBroadcast();
         } else if (vm.envBool("MAINNET")) {
@@ -176,9 +234,10 @@ contract DeployMiniPool is Script, Test, DeploymentUtils {
             contracts.lendingPoolAddressesProvider =
                 LendingPoolAddressesProvider(config.readAddress(".lendingPoolAddressesProvider"));
             contracts.lendingPool = LendingPool(config.readAddress(".lendingPool"));
-            contracts.aTokenErc6909 = ATokenERC6909(config.readAddress(".aTokenErc6909"));
             contracts.lendingPoolConfigurator =
                 LendingPoolConfigurator(config.readAddress(".lendingPoolConfigurator"));
+
+            readPreviousDeployment(root);
 
             /* Deploy on mainnet */
             vm.startBroadcast(vm.envUint("PRIVATE_KEY"));
@@ -192,7 +251,8 @@ contract DeployMiniPool is Script, Test, DeploymentUtils {
                 stableStrategies,
                 piStrategies,
                 poolReserversConfig,
-                vm.addr(vm.envUint("PRIVATE_KEY"))
+                vm.addr(vm.envUint("PRIVATE_KEY")),
+                usePreviousStrats
             );
             vm.stopBroadcast();
         } else {

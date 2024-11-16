@@ -4,9 +4,8 @@ pragma solidity ^0.8.0;
 import "contracts/dependencies/openzeppelin/contracts/ERC20.sol";
 import "contracts/protocol/rewarder/lendingpool/Rewarder.sol";
 import "contracts/protocol/core/Oracle.sol";
-import "contracts/misc/ProtocolDataProvider.sol";
+import "contracts/misc/Cod3xLendDataProvider.sol";
 import "contracts/misc/Treasury.sol";
-import "contracts/misc/UiPoolDataProviderV2.sol";
 import "contracts/protocol/core/lendingpool/logic/ReserveLogic.sol";
 import "contracts/protocol/core/lendingpool/logic/GenericLogic.sol";
 import "contracts/protocol/core/lendingpool/logic/ValidationLogic.sol";
@@ -71,17 +70,20 @@ contract DeploymentUtils {
         LinearStrategy[] memory _stableStrats,
         PiStrategy[] memory _piStrats,
         PoolReserversConfig[] memory _poolReserversConfig,
-        address _deployer
+        address _deployer,
+        bool _usePreviousStrats
     ) public {
         uint256 miniPoolId = _deployMiniPoolContracts(_deployer);
 
-        _deployMiniPoolStrategies(
-            contracts.miniPoolAddressesProvider,
-            miniPoolId,
-            _volatileStrats,
-            _stableStrats,
-            _piStrats
-        );
+        if (!_usePreviousStrats) {
+            _deployMiniPoolStrategies(
+                contracts.miniPoolAddressesProvider,
+                miniPoolId,
+                _volatileStrats,
+                _stableStrats,
+                _piStrats
+            );
+        }
 
         _initAndConfigureMiniPoolReserves(contracts, _poolReserversConfig, miniPoolId);
     }
@@ -206,7 +208,6 @@ contract DeploymentUtils {
     {
         contracts.aToken = new AToken();
         contracts.variableDebtToken = new VariableDebtToken();
-        contracts.aTokenErc6909 = new ATokenERC6909();
         // contracts.treasury = new Treasury(lendingPoolAddressesProvider);
     }
 
@@ -243,32 +244,51 @@ contract DeploymentUtils {
         contracts.lendingPoolAddressesProvider.setPoolAdmin(deployer);
 
         contracts.lendingPoolAddressesProvider.setPriceOracle(address(contracts.oracle));
-        contracts.protocolDataProvider =
-            new ProtocolDataProvider(contracts.lendingPoolAddressesProvider);
+        contracts.cod3xLendDataProvider = new Cod3xLendDataProvider();
+        contracts.cod3xLendDataProvider.setLendingPoolAddressProvider(
+            address(contracts.lendingPoolAddressesProvider)
+        );
     }
 
     function _deployMiniPoolContracts(address deployer) internal returns (uint256) {
-        contracts.miniPoolImpl = new MiniPool();
-        contracts.miniPoolAddressesProvider =
-            new MiniPoolAddressesProvider(contracts.lendingPoolAddressesProvider);
-        contracts.flowLimiter = new FlowLimiter(
-            contracts.lendingPoolAddressesProvider,
-            IMiniPoolAddressesProvider(address(contracts.miniPoolAddressesProvider)),
-            contracts.lendingPool
-        );
-        contracts.miniPoolConfigurator = new MiniPoolConfigurator();
-        contracts.miniPoolAddressesProvider.setMiniPoolConfigurator(
-            address(contracts.miniPoolConfigurator)
-        );
-        contracts.miniPoolConfigurator =
-            MiniPoolConfigurator(contracts.miniPoolAddressesProvider.getMiniPoolConfigurator());
-        contracts.lendingPoolAddressesProvider.setMiniPoolAddressesProvider(
-            address(contracts.miniPoolAddressesProvider)
-        );
-        contracts.lendingPoolAddressesProvider.setFlowLimiter(address(contracts.flowLimiter));
-        uint256 miniPoolId = contracts.miniPoolAddressesProvider.deployMiniPool(
-            address(contracts.miniPoolImpl), address(contracts.aTokenErc6909)
-        );
+        contracts.miniPoolImpl.push(new MiniPool());
+        contracts.aTokenErc6909.push(new ATokenERC6909());
+        uint256 miniPoolId;
+        console.log("Mini pool addresses Provider: ", address(contracts.miniPoolAddressesProvider));
+        if (address(contracts.miniPoolAddressesProvider) == address(0)) {
+            // First deployment so configure miniPool infra
+
+            contracts.miniPoolAddressesProvider =
+                new MiniPoolAddressesProvider(contracts.lendingPoolAddressesProvider);
+            miniPoolId = contracts.miniPoolAddressesProvider.deployMiniPool(
+                address(contracts.miniPoolImpl[contracts.miniPoolImpl.length - 1]),
+                address(contracts.aTokenErc6909[contracts.aTokenErc6909.length - 1])
+            );
+            contracts.flowLimiter = new FlowLimiter(
+                contracts.lendingPoolAddressesProvider,
+                IMiniPoolAddressesProvider(address(contracts.miniPoolAddressesProvider)),
+                contracts.lendingPool
+            );
+            contracts.miniPoolConfigurator = new MiniPoolConfigurator();
+            contracts.miniPoolAddressesProvider.setMiniPoolConfigurator(
+                address(contracts.miniPoolConfigurator)
+            );
+            contracts.miniPoolConfigurator =
+                MiniPoolConfigurator(contracts.miniPoolAddressesProvider.getMiniPoolConfigurator());
+            contracts.lendingPoolAddressesProvider.setMiniPoolAddressesProvider(
+                address(contracts.miniPoolAddressesProvider)
+            );
+            contracts.lendingPoolAddressesProvider.setFlowLimiter(address(contracts.flowLimiter));
+            contracts.cod3xLendDataProvider.setMiniPoolAddressProvider(
+                address(contracts.miniPoolAddressesProvider)
+            );
+        } else {
+            miniPoolId = contracts.miniPoolAddressesProvider.deployMiniPool(
+                address(contracts.miniPoolImpl[contracts.miniPoolImpl.length - 1]),
+                address(contracts.aTokenErc6909[contracts.aTokenErc6909.length - 1])
+            );
+        }
+
         return miniPoolId;
     }
 
@@ -427,7 +447,7 @@ contract DeploymentUtils {
         IMiniPoolConfigurator.InitReserveInput[] memory initInputParams =
             new IMiniPoolConfigurator.InitReserveInput[](_reservesConfig.length);
         address mp = _contracts.miniPoolAddressesProvider.getMiniPool(_miniPoolId);
-
+        console.log("MiniPool to configure: ", mp);
         _contracts.lendingPoolConfigurator.setPoolPause(false);
         _contracts.miniPoolConfigurator.setPoolPause(false, IMiniPool(mp));
         console.log("Getting ERC6909");

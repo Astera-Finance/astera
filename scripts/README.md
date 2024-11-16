@@ -205,6 +205,8 @@ The deployment process involves configuration files `./input/<Nr>_<InputJsonName
                 "tokenAddress": "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913"
             }
         ],
+        //Bool value that determines whether to use already existing strats
+        "usePreviousStrats": false,
         // List of volatile interest strategies and their configurations
         "volatileStrategies": [
             {
@@ -632,7 +634,8 @@ The deployment process involves configuration files `./input/<Nr>_<InputJsonName
         "collateralAddress": "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913",
         "borrowAssetAddress": "0x0555E30da8f98308EdB960aa94C0Db47230d2B9c",
         "depositAmount": 5000000000,
-        "bootstrapLiquidity": true, // if the flag is enabled then script deposit assets to all configured reserves
+        "bootstrapMainPool": true, // if the flag is enabled then script deposit assets to all configured reserves in specific lending pool 
+        "bootstrapMiniPool": true, // if the flag is enabled then script deposit assets to all configured reserves in specific mini pool determined by poolId
         "poolAddressesProviderConfig": {
             "marketId": "UV TestNet Market",
             "poolId": 0
@@ -669,7 +672,7 @@ The deployment process involves configuration files `./input/<Nr>_<InputJsonName
     "piStrategies": [
         "0xdb026094f6b5b3A6aEEEBea25c60E5cfE9eB8E49"
     ],
-    "protocolDataProvider": "0x270701c499Ce78EC803948B8b9a54cd22CfAAB61",
+    "cod3xLendDataProvider": "0x270701c499Ce78EC803948B8b9a54cd22CfAAB61",
     "rewarder": "0xD0171e0923f0Dc7Ab24947d5D316Af640cF7f196",
     "stableStrategies": [
         "0xb798354d5731A9EA700a7B3bC3f7bfE30c562003"

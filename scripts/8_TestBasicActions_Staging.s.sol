@@ -96,11 +96,11 @@ contract TestBasicActionsStaging is Script, DeploymentUtils, Test {
         uint256 borrowTokenPrice = oracle.getAssetPrice(address(borrowToken));
         uint256 collateralPrice = oracle.getAssetPrice(address(collateral));
         uint256 collateralDepositValue = amount * collateralPrice / (10 ** PRICE_FEED_DECIMALS);
-        (, uint256 collateralLtv,,,,,,,) =
-            contracts.protocolDataProvider.getReserveConfigurationData(address(collateral), true);
+        StaticData memory staticData =
+            contracts.cod3xLendDataProvider.getLpReserveStaticData(address(collateral), true);
         uint256 maxBorrowTokenToBorrowInCollateralUnit;
         {
-            uint256 collateralMaxBorrowValue = collateralLtv * collateralDepositValue / 10_000;
+            uint256 collateralMaxBorrowValue = staticData.ltv * collateralDepositValue / 10_000;
 
             uint256 wbtcMaxBorrowAmountRay = collateralMaxBorrowValue.rayDiv(borrowTokenPrice);
             maxBorrowTokenToBorrowInCollateralUnit = fixture_preciseConvertWithDecimals(
@@ -111,34 +111,31 @@ contract TestBasicActionsStaging is Script, DeploymentUtils, Test {
         return maxBorrowTokenToBorrowInCollateralUnit;
     }
 
-    function fixture_getATokenWrapper(address _token, ProtocolDataProvider protocolDataProvider)
+    function fixture_getATokenWrapper(address _token, Cod3xLendDataProvider cod3xLendDataProvider)
         public
         view
         returns (AToken _aTokenW)
     {
-        console.log("In");
-        (address _aTokenAddress,) = protocolDataProvider.getReserveTokensAddresses(_token, true);
-        console.log("fixture AToken %s", _aTokenAddress);
+        (address _aTokenAddress,) = cod3xLendDataProvider.getLpTokens(_token, true);
+        // console.log("AToken%s: %s", idx, _aTokenAddress);
         _aTokenW = AToken(address(AToken(_aTokenAddress).WRAPPER_ADDRESS()));
     }
 
-    function fixture_getAToken(address _token, ProtocolDataProvider protocolDataProvider)
+    function fixture_getAToken(address _token, Cod3xLendDataProvider cod3xLendDataProvider)
         public
         view
         returns (AToken _aToken)
     {
-        (address _aTokenAddress,) = protocolDataProvider.getReserveTokensAddresses(_token, true);
+        (address _aTokenAddress,) = cod3xLendDataProvider.getLpTokens(_token, true);
         // console.log("AToken%s: %s", idx, _aTokenAddress);
         _aToken = AToken(_aTokenAddress);
     }
 
-    function fixture_getVarDebtToken(address _token, ProtocolDataProvider protocolDataProvider)
+    function fixture_getVarDebtToken(address _token, Cod3xLendDataProvider cod3xLendDataProvider)
         public
         returns (VariableDebtToken _varDebtToken)
     {
-        (, address _variableDebtToken) =
-            protocolDataProvider.getReserveTokensAddresses(_token, true);
-        console.log("Assigning debt");
+        (, address _variableDebtToken) = cod3xLendDataProvider.getLpTokens(_token, true);
         _varDebtToken = VariableDebtToken(_variableDebtToken);
     }
 
@@ -317,8 +314,8 @@ contract TestBasicActionsStaging is Script, DeploymentUtils, Test {
         string memory deployedContracts = vm.readFile(path);
 
         contracts.lendingPool = LendingPool(deployedContracts.readAddress(".lendingPool"));
-        contracts.protocolDataProvider =
-            ProtocolDataProvider(deployedContracts.readAddress(".protocolDataProvider"));
+        contracts.cod3xLendDataProvider =
+            Cod3xLendDataProvider(deployedContracts.readAddress(".cod3xLendDataProvider"));
         contracts.lendingPoolAddressesProvider = LendingPoolAddressesProvider(
             deployedContracts.readAddress(".lendingPoolAddressesProvider")
         );
@@ -457,7 +454,7 @@ contract TestBasicActionsStaging is Script, DeploymentUtils, Test {
     /**
      * @dev amount in 18 decimalse -> will be converted to proper decimals inside
      */
-    function bootstrapMainPool(uint256 amount, address user) public {
+    function depositToMainPool(uint256 amount, address user) public {
         (address[] memory assets, bool[] memory reserveTypes) =
             contracts.lendingPool.getReservesList();
         for (uint256 idx = 0; idx < assets.length; idx++) {
@@ -468,7 +465,7 @@ contract TestBasicActionsStaging is Script, DeploymentUtils, Test {
             console.log("Collateral amount: ", collateralAmount);
             uint256 depositAmount = collateralAmount / (10 ** (18 - ERC20(assets[idx]).decimals()));
             console.log("depositAmount: ", depositAmount);
-            AToken aToken = fixture_getATokenWrapper(assets[idx], contracts.protocolDataProvider);
+            AToken aToken = fixture_getATokenWrapper(assets[idx], contracts.cod3xLendDataProvider);
             TokenParams memory collateralParams =
                 TokenParams({token: ERC20(assets[idx]), aToken: aToken});
             console.log("Depositing: ", depositAmount);
@@ -479,10 +476,13 @@ contract TestBasicActionsStaging is Script, DeploymentUtils, Test {
     /**
      * @dev amount in 18 decimalse -> will be converted to proper decimals inside
      */
-    function bootstrapMiniPools(uint256 amount, address user) public {
+    function bootstrapAllsMiniPools(uint256 amount, address user, address admin) public {
         uint256 index = 0;
         address miniPool = contracts.miniPoolAddressesProvider.getMiniPool(index);
         while (miniPool != address(0)) {
+            vm.startBroadcast(admin);
+            contracts.miniPoolConfigurator.setPoolPause(false, IMiniPool(miniPool));
+            vm.stopBroadcast();
             console.log("ITERATION: %s", index);
             IAERC6909 aErc6909Token =
                 IAERC6909(contracts.miniPoolAddressesProvider.getMiniPoolToAERC6909(miniPool));
@@ -496,32 +496,58 @@ contract TestBasicActionsStaging is Script, DeploymentUtils, Test {
                     depositAmount, data.aTokenID, user, ERC20(assets[idx]), aErc6909Token, miniPool
                 );
             }
+            vm.startBroadcast(admin);
+            contracts.miniPoolConfigurator.setPoolPause(true, IMiniPool(miniPool));
+            vm.stopBroadcast();
             index++;
             miniPool = contracts.miniPoolAddressesProvider.getMiniPool(index);
         }
     }
 
+    function depositToMiniPool(uint256 amount, address user, address admin, address miniPool)
+        public
+    {
+        vm.startBroadcast(admin);
+        contracts.miniPoolConfigurator.setPoolPause(false, IMiniPool(miniPool));
+        vm.stopBroadcast();
+        IAERC6909 aErc6909Token =
+            IAERC6909(contracts.miniPoolAddressesProvider.getMiniPoolToAERC6909(miniPool));
+
+        (address[] memory assets,) = IMiniPool(miniPool).getReservesList();
+        for (uint256 idx = 0; idx < assets.length; idx++) {
+            DataTypes.MiniPoolReserveData memory data =
+                IMiniPool(miniPool).getReserveData(assets[idx]);
+            uint256 depositAmount = amount / (10 ** (18 - ERC20(assets[idx]).decimals()));
+            fixture_depositTokensToMiniPool(
+                depositAmount, data.aTokenID, user, ERC20(assets[idx]), aErc6909Token, miniPool
+            );
+        }
+        vm.startBroadcast(admin);
+        contracts.miniPoolConfigurator.setPoolPause(true, IMiniPool(miniPool));
+        vm.stopBroadcast();
+    }
+
     function run() external returns (DeployedContracts memory) {
         console.log("8_TestBasicActions_Staging");
-
         // Config fetching
         string memory root = vm.projectRoot();
 
         readContracts(root);
         readStrategiesToContracts(root);
-
-        // Config fetching
-        string memory testConfigPath = string.concat(root, "/scripts/inputs/8_TestConfig.json");
-        console.log("TEST PATH: ", testConfigPath);
-        string memory testConfigs = vm.readFile(testConfigPath);
+        string memory testConfigs;
+        {
+            // Config fetching
+            string memory testConfigPath = string.concat(root, "/scripts/inputs/8_TestConfig.json");
+            console.log("TEST PATH: ", testConfigPath);
+            testConfigs = vm.readFile(testConfigPath);
+        }
 
         PoolAddressesProviderConfig memory poolAddressesProviderConfig = abi.decode(
             testConfigs.parseRaw(".poolAddressesProviderConfig"), (PoolAddressesProviderConfig)
         );
-        uint256 depositAmount = testConfigs.readUint(".depositAmount");
-        uint256 borrowAmount = testConfigs.readUint(".borrowAmount");
 
-        bool bootstrapLiquidity = testConfigs.readBool(".bootstrapLiquidity");
+        bool bootstrapMainPool = testConfigs.readBool(".bootstrapMainPool");
+        bool bootstrapMiniPool = testConfigs.readBool(".bootstrapMiniPool");
         uint256 usdDepositAmount = testConfigs.readUint(".usdAmountToDeposit");
 
         address collateral;
@@ -536,6 +562,8 @@ contract TestBasicActionsStaging is Script, DeploymentUtils, Test {
             borrowAsset = testConfigs.readAddress(".borrowAssetAddress");
         } else {
             // TESTNET
+            uint256 depositAmount = testConfigs.readUint(".depositAmount");
+            uint256 borrowAmount = testConfigs.readUint(".borrowAmount");
             (collateral, borrowAsset) =
                 mintMockedTokens(root, 2 * depositAmount, 2 * borrowAmount, "USDC", "WBTC", users);
         }
@@ -549,18 +577,28 @@ contract TestBasicActionsStaging is Script, DeploymentUtils, Test {
         vm.stopBroadcast();
 
         console.log("Getting wrapper");
-        AToken aToken = fixture_getATokenWrapper(collateral, contracts.protocolDataProvider);
-        TokenParams memory usdcParams = TokenParams({token: ERC20(collateral), aToken: aToken});
+        TokenParams memory usdcParams;
+        TokenParams memory wbtcParams;
+        {
+            AToken aToken = fixture_getATokenWrapper(collateral, contracts.cod3xLendDataProvider);
+            usdcParams = TokenParams({token: ERC20(collateral), aToken: aToken});
 
-        aToken = fixture_getATokenWrapper(borrowAsset, contracts.protocolDataProvider);
-        TokenParams memory wbtcParams = TokenParams({token: ERC20(borrowAsset), aToken: aToken});
+            aToken = fixture_getATokenWrapper(borrowAsset, contracts.cod3xLendDataProvider);
+            wbtcParams = TokenParams({token: ERC20(borrowAsset), aToken: aToken});
+        }
 
-        if (bootstrapLiquidity == true) {
-            mintAllMockedTokens(root, 2 ether, users);
+        if (bootstrapMainPool == true && bootstrapMiniPool == true) {
+            mintAllMockedTokens(root, 5 ether, users);
             console.log("Bootstrapping...");
-            bootstrapMainPool(1 ether, users.user1);
-            bootstrapMiniPools(1 ether, users.user1);
+            depositToMainPool(1 ether, users.user1);
+            depositToMiniPool(1 ether, users.user1, users.user1, mp);
+        } else if (bootstrapMiniPool == true) {
+            mintAllMockedTokens(root, 5 ether, users);
+            depositToMiniPool(1 ether, users.user1, users.user1, mp);
         } else {
+            uint256 depositAmount = testConfigs.readUint(".depositAmount");
+            uint256 borrowAmount = testConfigs.readUint(".borrowAmount");
+            mp = contracts.miniPoolAddressesProvider.getMiniPool(poolAddressesProviderConfig.poolId);
             testMultipleUsersBorrowRepayAndWithdraw(
                 usdcParams, wbtcParams, mp, users, depositAmount, borrowAmount
             );

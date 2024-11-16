@@ -18,7 +18,7 @@ contract DefaultReserveInterestRateStrategyTest is Common {
         assertEq(vm.activeFork(), opFork);
         deployedContracts = fixture_deployProtocol();
         configAddresses = ConfigAddresses(
-            address(deployedContracts.protocolDataProvider),
+            address(deployedContracts.cod3xLendDataProvider),
             address(deployedContracts.stableStrategy),
             address(deployedContracts.volatileStrategy),
             address(deployedContracts.treasury),
@@ -32,40 +32,45 @@ contract DefaultReserveInterestRateStrategyTest is Common {
             deployedContracts.lendingPoolConfigurator,
             deployedContracts.lendingPoolAddressesProvider
         );
-        aTokens = fixture_getATokens(tokens, deployedContracts.protocolDataProvider);
+        aTokens = fixture_getATokens(tokens, deployedContracts.cod3xLendDataProvider);
         variableDebtTokens =
-            fixture_getVarDebtTokens(tokens, deployedContracts.protocolDataProvider);
+            fixture_getVarDebtTokens(tokens, deployedContracts.cod3xLendDataProvider);
         mockedVaults = fixture_deployReaperVaultMocks(tokens, address(deployedContracts.treasury));
         erc20Tokens = fixture_getErc20Tokens(tokens);
         fixture_transferTokensToTestContract(erc20Tokens, 100_000 ether, address(this));
     }
 
-    function testCheckRatesAtZeroUtilizationRate() public {
-        uint256[] memory reserveFactors = new uint256[](erc20Tokens.length);
+    function testCheckRatesAtZeroUtilizationRate() public view {
+        StaticData[] memory staticData = new StaticData[](erc20Tokens.length);
         for (uint32 idx = 0; idx < erc20Tokens.length; idx++) {
             uint256 currentLiquidityRate = 0;
             uint256 currentVariableBorrowRate = 0;
-            (,,,, reserveFactors[idx],,,,) = deployedContracts
-                .protocolDataProvider
-                .getReserveConfigurationData(address(erc20Tokens[idx]), false);
+            staticData[idx] = deployedContracts.cod3xLendDataProvider.getLpReserveStaticData(
+                address(erc20Tokens[idx]), false
+            );
             (currentLiquidityRate, currentVariableBorrowRate) = deployedContracts
                 .stableStrategy
                 .calculateInterestRates(
-                address(erc20Tokens[idx]), address(aTokens[idx]), 0, 0, 0, reserveFactors[idx]
+                address(erc20Tokens[idx]),
+                address(aTokens[idx]),
+                0,
+                0,
+                0,
+                staticData[idx].reserveFactor
             );
             assertEq(currentLiquidityRate, 0);
             assertEq(currentVariableBorrowRate, 0);
         }
     }
 
-    function testCheckRatesAtEightyUtilizationRate() public {
-        uint256[] memory reserveFactors = new uint256[](erc20Tokens.length);
+    function testCheckRatesAtEightyUtilizationRate() public view {
+        StaticData[] memory staticData = new StaticData[](erc20Tokens.length);
         for (uint32 idx = 0; idx < erc20Tokens.length; idx++) {
             uint256 currentLiquidityRate = 0;
             uint256 currentVariableBorrowRate = 0;
-            (,,,, reserveFactors[idx],,,,) = deployedContracts
-                .protocolDataProvider
-                .getReserveConfigurationData(address(erc20Tokens[idx]), false);
+            staticData[idx] = deployedContracts.cod3xLendDataProvider.getLpReserveStaticData(
+                address(erc20Tokens[idx]), false
+            );
             (currentLiquidityRate, currentVariableBorrowRate) = deployedContracts
                 .stableStrategy
                 .calculateInterestRates(
@@ -74,14 +79,14 @@ contract DefaultReserveInterestRateStrategyTest is Common {
                 200000000000000000,
                 0,
                 800000000000000000,
-                reserveFactors[idx]
+                staticData[idx].reserveFactor
             );
             uint256 baseVariableBorrowRate =
                 deployedContracts.stableStrategy.baseVariableBorrowRate();
             uint256 variableRateSlope1 = deployedContracts.stableStrategy.variableRateSlope1();
             uint256 expectedVariableRate = baseVariableBorrowRate + variableRateSlope1;
             uint256 value = expectedVariableRate * 80 / 100;
-            uint256 percentage = PERCENTAGE_FACTOR - reserveFactors[idx];
+            uint256 percentage = PERCENTAGE_FACTOR - staticData[idx].reserveFactor;
             uint256 expectedLiquidityRate = (value * percentage + 5000) / PERCENTAGE_FACTOR;
 
             assertEq(currentLiquidityRate, expectedLiquidityRate);
@@ -90,13 +95,13 @@ contract DefaultReserveInterestRateStrategyTest is Common {
     }
 
     function testCheckRatesAtHundredUtilizationRate() public view {
-        uint256[] memory reserveFactors = new uint256[](erc20Tokens.length);
+        StaticData[] memory staticData = new StaticData[](erc20Tokens.length);
         for (uint32 idx = 0; idx < erc20Tokens.length; idx++) {
             uint256 currentLiquidityRate = 0;
             uint256 currentVariableBorrowRate = 0;
-            (,,,, reserveFactors[idx],,,,) = deployedContracts
-                .protocolDataProvider
-                .getReserveConfigurationData(address(erc20Tokens[idx]), false);
+            staticData[idx] = deployedContracts.cod3xLendDataProvider.getLpReserveStaticData(
+                address(erc20Tokens[idx]), false
+            );
             (currentLiquidityRate, currentVariableBorrowRate) = deployedContracts
                 .stableStrategy
                 .calculateInterestRates(
@@ -105,7 +110,7 @@ contract DefaultReserveInterestRateStrategyTest is Common {
                 0,
                 0,
                 800000000000000000,
-                reserveFactors[idx]
+                staticData[idx].reserveFactor
             );
             uint256 baseVariableBorrowRate =
                 deployedContracts.stableStrategy.baseVariableBorrowRate();
@@ -114,7 +119,7 @@ contract DefaultReserveInterestRateStrategyTest is Common {
             uint256 expectedVariableRate =
                 baseVariableBorrowRate + variableRateSlope1 + variableRateSlope2;
             uint256 value = expectedVariableRate;
-            uint256 percentage = PERCENTAGE_FACTOR - reserveFactors[idx];
+            uint256 percentage = PERCENTAGE_FACTOR - staticData[idx].reserveFactor;
             uint256 expectedLiquidityRate = (value * percentage + 5000) / PERCENTAGE_FACTOR;
 
             assertEq(currentLiquidityRate, expectedLiquidityRate);

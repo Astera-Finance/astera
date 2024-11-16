@@ -31,7 +31,7 @@ import "contracts/interfaces/IPriceOracleGetter.sol";
 
 import "contracts/misc/Treasury.sol";
 import "contracts/protocol/core/Oracle.sol";
-import "contracts/misc/ProtocolDataProvider.sol";
+import "contracts/misc/Cod3xLendDataProvider.sol";
 import "contracts/misc/UiPoolDataProviderV2.sol";
 import "contracts/misc/RewardsVault.sol";
 import "contracts/misc/WETHGateway.sol";
@@ -40,7 +40,8 @@ import "contracts/deployments/ATokensAndRatesHelper.sol";
 
 import "contracts/protocol/configuration/LendingPoolAddressesProvider.sol";
 
-import "contracts/protocol/core/interestRateStrategies/lendingpool/DefaultReserveInterestRateStrategy.sol";
+import
+    "contracts/protocol/core/interestRateStrategies/lendingpool/DefaultReserveInterestRateStrategy.sol";
 import "contracts/protocol/core/lendingpool/LendingPoolConfigurator.sol";
 import "contracts/protocol/core/lendingpool/LendingPoolStorage.sol";
 
@@ -96,7 +97,7 @@ contract PropertiesBase is PropertiesAsserts, MarketParams {
     AToken internal aToken;
     VariableDebtToken internal vToken;
     Oracle internal oracle;
-    ProtocolDataProvider internal protocolDataProvider;
+    Cod3xLendDataProvider internal cod3xLendDataProvider;
     UiPoolDataProviderV2 internal uiPoolDataProviderV2;
     WETHGateway internal wethGateway;
 
@@ -141,7 +142,7 @@ contract PropertiesBase is PropertiesAsserts, MarketParams {
             BASE_CURRENCY_UNIT
         );
         provider.setPriceOracle(address(oracle));
-        protocolDataProvider = new ProtocolDataProvider(provider);
+        cod3xLendDataProvider = new Cod3xLendDataProvider(provider);
         uiPoolDataProviderV2 = new UiPoolDataProviderV2(
             IChainlinkAggregator(address(aggregators[0])),
             IChainlinkAggregator(address(aggregators[0]))
@@ -200,7 +201,7 @@ contract PropertiesBase is PropertiesAsserts, MarketParams {
 
         for (uint256 i = 0; i < totalNbTokens; i++) {
             (address aTokenAddress, address variableDebtTokenAddress) =
-                protocolDataProvider.getReserveTokensAddresses(address(assets[i]), false);
+                cod3xLendDataProvider.getLpTokens(address(assets[i]), false);
             aTokens.push(AToken(aTokenAddress));
             debtTokens.push(VariableDebtToken(variableDebtTokenAddress));
         }
