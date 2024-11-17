@@ -49,7 +49,7 @@ library ReserveConfiguration {
     uint256 internal constant MAX_VALID_LIQUIDATION_THRESHOLD = 65535;
     uint256 internal constant MAX_VALID_LIQUIDATION_BONUS = 65535;
     uint256 internal constant MAX_VALID_DECIMALS = 255;
-    uint256 internal constant MAX_VALID_RESERVE_FACTOR = 65535;
+    uint256 internal constant MAX_VALID_RESERVE_FACTOR = 1500;
     uint256 internal constant MAX_VALID_DEPOSIT_CAP = 255;
 
     /**

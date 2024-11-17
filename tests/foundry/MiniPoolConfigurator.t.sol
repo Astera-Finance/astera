@@ -9,7 +9,7 @@ contract MiniPoolConfiguratorTest is MiniPoolDepositBorrowTest {
     using WadRayMath for uint256;
     using ReserveConfiguration for DataTypes.ReserveConfigurationMap;
 
-    uint256 constant MAX_VALID_RESERVE_FACTOR = 65535;
+    uint256 constant MAX_VALID_RESERVE_FACTOR = 1500;
     uint256 constant MAX_VALID_DEPOSIT_CAP = 256;
     uint256 constant MAX_VALID_VOLATILITY_TIER = 4;
     uint256 constant MAX_VALID_LTV = 65535;
@@ -22,6 +22,7 @@ contract MiniPoolConfiguratorTest is MiniPoolDepositBorrowTest {
     event ReserveUnfrozen(address indexed asset);
     event ReserveFactorChanged(address indexed asset, uint256 factor);
     event Cod3xReserveFactorChanged(address indexed asset, uint256 factor);
+    event MinipoolOwnerReserveFactorChanged(address indexed asset, uint256 factor);
 
     event ReserveDepositCapChanged(address indexed asset, uint256 depositCap);
     event ReserveVolatilityTierChanged(address indexed asset, uint256 tier);
@@ -152,6 +153,18 @@ contract MiniPoolConfiguratorTest is MiniPoolDepositBorrowTest {
             emit Cod3xReserveFactorChanged(address(erc20Tokens[idx]), validReserveFactor);
             vm.prank(admin);
             miniPoolContracts.miniPoolConfigurator.setCod3xReserveFactor(
+                address(erc20Tokens[idx]), validReserveFactor, IMiniPool(miniPool)
+            );
+        }
+    }
+
+    function testsetMinipoolOwnerReserveFactor_Positive(uint256 validReserveFactor) public {
+        validReserveFactor = bound(validReserveFactor, 0, MAX_VALID_RESERVE_FACTOR);
+        for (uint32 idx; idx < erc20Tokens.length; idx++) {
+            vm.expectEmit(true, false, false, false);
+            emit MinipoolOwnerReserveFactorChanged(address(erc20Tokens[idx]), validReserveFactor);
+            vm.prank(admin);
+            miniPoolContracts.miniPoolConfigurator.setMinipoolOwnerReserveFactor(
                 address(erc20Tokens[idx]), validReserveFactor, IMiniPool(miniPool)
             );
         }
