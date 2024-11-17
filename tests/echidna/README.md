@@ -219,6 +219,7 @@ You can fine in `/echidna` 3 config files to run the fuzzer:
 - `enableFlashloan(address asset, IMiniPool pool)`
 - `disableFlashloan(address asset, IMiniPool pool)`
 - `setCod3xReserveFactor(address asset, uint256 reserveFactor, IMiniPool pool)`
+- `setMinipoolOwnerReserveFactor(address asset, uint256 reserveFactor, IMiniPool pool)`
 - `setDepositCap(address asset, uint256 depositCap, IMiniPool pool)`
 - `setReserveInterestRateStrategyAddress(address asset, address rateStrategyAddress, IMiniPool pool)`
 - `setPoolPause(bool val, IMiniPool pool)`

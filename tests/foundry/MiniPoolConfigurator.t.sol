@@ -21,6 +21,7 @@ contract MiniPoolConfiguratorTest is MiniPoolDepositBorrowTest {
     event ReserveFrozen(address indexed asset);
     event ReserveUnfrozen(address indexed asset);
     event ReserveFactorChanged(address indexed asset, uint256 factor);
+    event Cod3xReserveFactorChanged(address indexed asset, uint256 factor);
 
     event ReserveDepositCapChanged(address indexed asset, uint256 depositCap);
     event ReserveVolatilityTierChanged(address indexed asset, uint256 tier);
@@ -148,7 +149,7 @@ contract MiniPoolConfiguratorTest is MiniPoolDepositBorrowTest {
         validReserveFactor = bound(validReserveFactor, 0, MAX_VALID_RESERVE_FACTOR);
         for (uint32 idx; idx < erc20Tokens.length; idx++) {
             vm.expectEmit(true, false, false, false);
-            emit ReserveFactorChanged(address(erc20Tokens[idx]), validReserveFactor);
+            emit Cod3xReserveFactorChanged(address(erc20Tokens[idx]), validReserveFactor);
             vm.prank(admin);
             miniPoolContracts.miniPoolConfigurator.setCod3xReserveFactor(
                 address(erc20Tokens[idx]), validReserveFactor, IMiniPool(miniPool)

@@ -288,7 +288,7 @@ contract MiniPoolConfigurator is VersionedInitializable, IMiniPoolConfigurator {
     }
 
     /**
-     * @dev Updates the reserve factor of a reserve
+     * @dev Updates the Cod3x reserve factor of a reserve
      * @param asset The address of the underlying asset of the reserve
      * @param reserveFactor The new reserve factor of the reserve
      *
@@ -303,7 +303,26 @@ contract MiniPoolConfigurator is VersionedInitializable, IMiniPoolConfigurator {
 
         pool.setConfiguration(asset, currentConfig.data);
 
-        emit ReserveFactorChanged(asset, reserveFactor);
+        emit Cod3xReserveFactorChanged(asset, reserveFactor);
+    }
+
+    /**
+     * @dev Updates the minipool owner reserve factor of a reserve
+     * @param asset The address of the underlying asset of the reserve
+     * @param reserveFactor The new reserve factor of the reserve
+     *
+     */
+    function setMinipoolOwnerReserveFactor(address asset, uint256 reserveFactor, IMiniPool pool)
+        external
+        onlyPoolAdmin
+    {
+        DataTypes.ReserveConfigurationMap memory currentConfig = pool.getConfiguration(asset);
+
+        currentConfig.setMinipoolOwnerReserveFactor(reserveFactor);
+
+        pool.setConfiguration(asset, currentConfig.data);
+
+        emit MinipoolOwnerReserveFactorChanged(asset, reserveFactor);
     }
 
     function setDepositCap(address asset, uint256 depositCap, IMiniPool pool)
