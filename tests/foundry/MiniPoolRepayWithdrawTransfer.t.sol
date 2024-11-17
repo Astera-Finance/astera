@@ -1173,7 +1173,7 @@ contract MiniPoolRepayWithdrawTransferTest is MiniPoolDepositBorrowTest {
         vm.startPrank(deployedContracts.lendingPoolAddressesProvider.getPoolAdmin());
         LendingPoolConfigurator(
             deployedContracts.lendingPoolAddressesProvider.getLendingPoolConfigurator()
-        ).setReserveFactor(address(tokenParamsUsdc.token), true, 0);
+        ).setCod3xReserveFactor(address(tokenParamsUsdc.token), true, 0);
 
         LendingPoolConfigurator(
             deployedContracts.lendingPoolAddressesProvider.getLendingPoolConfigurator()
@@ -1337,7 +1337,7 @@ contract MiniPoolRepayWithdrawTransferTest is MiniPoolDepositBorrowTest {
         vm.startPrank(deployedContracts.lendingPoolAddressesProvider.getPoolAdmin());
         LendingPoolConfigurator(
             deployedContracts.lendingPoolAddressesProvider.getLendingPoolConfigurator()
-        ).setReserveFactor(address(tokenParamsUsdc.token), true, 0);
+        ).setCod3xReserveFactor(address(tokenParamsUsdc.token), true, 0);
 
         LendingPoolConfigurator(
             deployedContracts.lendingPoolAddressesProvider.getLendingPoolConfigurator()
@@ -1445,7 +1445,7 @@ contract MiniPoolRepayWithdrawTransferTest is MiniPoolDepositBorrowTest {
         vm.startPrank(deployedContracts.lendingPoolAddressesProvider.getPoolAdmin());
         LendingPoolConfigurator(
             deployedContracts.lendingPoolAddressesProvider.getLendingPoolConfigurator()
-        ).setReserveFactor(address(tokenParamsUsdc.token), true, 0);
+        ).setCod3xReserveFactor(address(tokenParamsUsdc.token), true, 0);
 
         LendingPoolConfigurator(
             deployedContracts.lendingPoolAddressesProvider.getLendingPoolConfigurator()
@@ -1589,7 +1589,7 @@ contract MiniPoolRepayWithdrawTransferTest is MiniPoolDepositBorrowTest {
         vm.startPrank(deployedContracts.lendingPoolAddressesProvider.getPoolAdmin());
         LendingPoolConfigurator(
             deployedContracts.lendingPoolAddressesProvider.getLendingPoolConfigurator()
-        ).setReserveFactor(address(tokenParamsUsdc.token), true, 0);
+        ).setCod3xReserveFactor(address(tokenParamsUsdc.token), true, 0);
 
         LendingPoolConfigurator(
             deployedContracts.lendingPoolAddressesProvider.getLendingPoolConfigurator()
@@ -1734,7 +1734,7 @@ contract MiniPoolRepayWithdrawTransferTest is MiniPoolDepositBorrowTest {
         vm.startPrank(deployedContracts.lendingPoolAddressesProvider.getPoolAdmin());
         LendingPoolConfigurator(
             deployedContracts.lendingPoolAddressesProvider.getLendingPoolConfigurator()
-        ).setReserveFactor(address(tokenParamsUsdc.token), true, 0);
+        ).setCod3xReserveFactor(address(tokenParamsUsdc.token), true, 0);
 
         LendingPoolConfigurator(
             deployedContracts.lendingPoolAddressesProvider.getLendingPoolConfigurator()

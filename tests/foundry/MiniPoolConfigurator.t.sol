@@ -62,7 +62,7 @@ contract MiniPoolConfiguratorTest is MiniPoolDepositBorrowTest {
         );
 
         vm.expectRevert(bytes("33"));
-        miniPoolContracts.miniPoolConfigurator.setReserveFactor(
+        miniPoolContracts.miniPoolConfigurator.setCod3xReserveFactor(
             tokenAddress, randomNumber, IMiniPool(randomAddress)
         );
         vm.expectRevert(bytes("33"));
@@ -144,25 +144,25 @@ contract MiniPoolConfiguratorTest is MiniPoolDepositBorrowTest {
         }
     }
 
-    function testSetReserveFactor_Positive(uint256 validReserveFactor) public {
+    function testsetCod3xReserveFactor_Positive(uint256 validReserveFactor) public {
         validReserveFactor = bound(validReserveFactor, 0, MAX_VALID_RESERVE_FACTOR);
         for (uint32 idx; idx < erc20Tokens.length; idx++) {
             vm.expectEmit(true, false, false, false);
             emit ReserveFactorChanged(address(erc20Tokens[idx]), validReserveFactor);
             vm.prank(admin);
-            miniPoolContracts.miniPoolConfigurator.setReserveFactor(
+            miniPoolContracts.miniPoolConfigurator.setCod3xReserveFactor(
                 address(erc20Tokens[idx]), validReserveFactor, IMiniPool(miniPool)
             );
         }
     }
 
-    function testSetReserveFactor_Negative(uint256 invalidReserveFactor) public {
+    function testsetCod3xReserveFactor_Negative(uint256 invalidReserveFactor) public {
         invalidReserveFactor =
             bound(invalidReserveFactor, MAX_VALID_RESERVE_FACTOR + 1, type(uint256).max);
         for (uint32 idx; idx < erc20Tokens.length; idx++) {
             vm.expectRevert(bytes(Errors.RC_INVALID_RESERVE_FACTOR));
             vm.prank(admin);
-            miniPoolContracts.miniPoolConfigurator.setReserveFactor(
+            miniPoolContracts.miniPoolConfigurator.setCod3xReserveFactor(
                 address(erc20Tokens[idx]), invalidReserveFactor, IMiniPool(miniPool)
             );
         }
@@ -342,7 +342,7 @@ contract MiniPoolConfiguratorTest is MiniPoolDepositBorrowTest {
 
         /* Setting reserve factor that allow minting to the treasury */
         vm.prank(admin);
-        miniPoolContracts.miniPoolConfigurator.setReserveFactor(
+        miniPoolContracts.miniPoolConfigurator.setCod3xReserveFactor(
             address(borrowTokenParams.token), validReserveFactor, IMiniPool(miniPool)
         );
 
@@ -375,7 +375,7 @@ contract MiniPoolConfiguratorTest is MiniPoolDepositBorrowTest {
             );
             // DataTypes.ReserveConfigurationMap memory currentConfig =
             //     deployedContracts.lendingPool.getConfiguration(address(erc20Tokens[idx]), false);
-            // assertEq(currentConfig.getReserveFactor(), validReserveFactor);
+            // assertEq(currentConfig.getCod3xReserveFactor(), validReserveFactor);
         }
     }
 

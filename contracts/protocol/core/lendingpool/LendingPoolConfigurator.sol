@@ -399,14 +399,14 @@ contract LendingPoolConfigurator is VersionedInitializable, ILendingPoolConfigur
      * @param reserveFactor The new reserve factor of the reserve
      *
      */
-    function setReserveFactor(address asset, bool reserveType, uint256 reserveFactor)
+    function setCod3xReserveFactor(address asset, bool reserveType, uint256 reserveFactor)
         external
         onlyPoolAdmin
     {
         DataTypes.ReserveConfigurationMap memory currentConfig =
             pool.getConfiguration(asset, reserveType);
 
-        currentConfig.setReserveFactor(reserveFactor);
+        currentConfig.setCod3xReserveFactor(reserveFactor);
 
         pool.setConfiguration(asset, reserveType, currentConfig.data);
 

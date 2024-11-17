@@ -121,7 +121,7 @@ contract MiniPoolPiReserveInterestRateStrategy is
 
         // liquity rate
         uint256 currentLiquidityRate = getLiquidityRate(
-            currentVariableBorrowRate, utilizationRate, getReserveFactor(reserve.configuration)
+            currentVariableBorrowRate, utilizationRate, getCod3xReserveFactor(reserve.configuration)
         );
         return (currentLiquidityRate, currentVariableBorrowRate, utilizationRate);
     }

@@ -293,13 +293,13 @@ contract MiniPoolConfigurator is VersionedInitializable, IMiniPoolConfigurator {
      * @param reserveFactor The new reserve factor of the reserve
      *
      */
-    function setReserveFactor(address asset, uint256 reserveFactor, IMiniPool pool)
+    function setCod3xReserveFactor(address asset, uint256 reserveFactor, IMiniPool pool)
         external
         onlyPoolAdmin
     {
         DataTypes.ReserveConfigurationMap memory currentConfig = pool.getConfiguration(asset);
 
-        currentConfig.setReserveFactor(reserveFactor);
+        currentConfig.setCod3xReserveFactor(reserveFactor);
 
         pool.setConfiguration(asset, currentConfig.data);
 

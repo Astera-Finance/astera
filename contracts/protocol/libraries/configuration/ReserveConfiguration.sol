@@ -26,10 +26,12 @@ library ReserveConfiguration {
         0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFBFFFFFFFFFFFFFF;
     uint256 internal constant FLASHLOAN_ENABLED_MASK =
         0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF7FFFFFFFFFFFFFF;
-    uint256 internal constant RESERVE_FACTOR_MASK =
+    uint256 internal constant COD3X_RESERVE_FACTOR_MASK =
         0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF0000FFFFFFFFFFFFFFF;
+    uint256 internal constant MINIPOOL_OWNER_RESERVE_FACTOR_MASK =
+        0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF0000FFFFFFFFFFFFFFFFFFF;
     uint256 internal constant DEPOSIT_CAP_MASK =
-        0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF00FFFFFFFFFFFFFFFFFFF;
+        0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF00FFFFFFFFFFFFFFFFFFFFFFF;
 
     /// @dev For the LTV, the start bit is 0 (up to 15), hence no bitshifting is needed
     uint256 internal constant LIQUIDATION_THRESHOLD_START_BIT_POSITION = 16;
@@ -39,8 +41,9 @@ library ReserveConfiguration {
     uint256 internal constant IS_FROZEN_START_BIT_POSITION = 57;
     uint256 internal constant BORROWING_ENABLED_START_BIT_POSITION = 58;
     uint256 internal constant FLASHLOAN_ENABLED_START_BIT_POSITION = 59;
-    uint256 internal constant RESERVE_FACTOR_START_BIT_POSITION = 60;
-    uint256 internal constant DEPOSIT_CAP_START_BIT_POSITION = 76;
+    uint256 internal constant COD3X_RESERVE_FACTOR_START_BIT_POSITION = 60;
+    uint256 internal constant MINIPOOL_OWNER_FACTOR_START_BIT_POSITION = 76;
+    uint256 internal constant DEPOSIT_CAP_START_BIT_POSITION = 92;
 
     uint256 internal constant MAX_VALID_LTV = 65535;
     uint256 internal constant MAX_VALID_LIQUIDATION_THRESHOLD = 65535;
@@ -243,33 +246,64 @@ library ReserveConfiguration {
     }
 
     /**
-     * @dev Sets the reserve factor of the reserve
+     * @dev Sets the Cod3x reserve factor of the reserve
      * @param self The reserve configuration
      * @param reserveFactor The reserve factor
      *
      */
-    function setReserveFactor(DataTypes.ReserveConfigurationMap memory self, uint256 reserveFactor)
-        internal
-        pure
-    {
+    function setCod3xReserveFactor(
+        DataTypes.ReserveConfigurationMap memory self,
+        uint256 reserveFactor
+    ) internal pure {
         require(reserveFactor <= MAX_VALID_RESERVE_FACTOR, Errors.RC_INVALID_RESERVE_FACTOR);
 
-        self.data =
-            (self.data & RESERVE_FACTOR_MASK) | (reserveFactor << RESERVE_FACTOR_START_BIT_POSITION);
+        self.data = (self.data & COD3X_RESERVE_FACTOR_MASK)
+            | (reserveFactor << COD3X_RESERVE_FACTOR_START_BIT_POSITION);
     }
 
     /**
-     * @dev Gets the reserve factor of the reserve
+     * @dev Gets the Cod3x reserve factor of the reserve
      * @param self The reserve configuration
      * @return The reserve factor
      *
      */
-    function getReserveFactor(DataTypes.ReserveConfigurationMap storage self)
+    function getCod3xReserveFactor(DataTypes.ReserveConfigurationMap storage self)
         internal
         view
         returns (uint256)
     {
-        return (self.data & ~RESERVE_FACTOR_MASK) >> RESERVE_FACTOR_START_BIT_POSITION;
+        return (self.data & ~COD3X_RESERVE_FACTOR_MASK) >> COD3X_RESERVE_FACTOR_START_BIT_POSITION;
+    }
+
+    /**
+     * @dev Sets the minipool owner reserve factor of the reserve
+     * @param self The reserve configuration
+     * @param reserveFactor The reserve factor
+     *
+     */
+    function setMinipoolOwnerReserveFactor(
+        DataTypes.ReserveConfigurationMap memory self,
+        uint256 reserveFactor
+    ) internal pure {
+        require(reserveFactor <= MAX_VALID_RESERVE_FACTOR, Errors.RC_INVALID_RESERVE_FACTOR);
+
+        self.data = (self.data & MINIPOOL_OWNER_RESERVE_FACTOR_MASK)
+            | (reserveFactor << MINIPOOL_OWNER_FACTOR_START_BIT_POSITION);
+    }
+
+    /**
+     * @dev Gets the minipool owner reserve factor of the reserve
+     * @param self The reserve configuration
+     * @return The reserve factor
+     *
+     */
+    function getMinipoolOwnerCod3xReserveFactor(DataTypes.ReserveConfigurationMap storage self)
+        internal
+        view
+        returns (uint256)
+    {
+        return (self.data & ~MINIPOOL_OWNER_RESERVE_FACTOR_MASK)
+            >> MINIPOOL_OWNER_FACTOR_START_BIT_POSITION;
     }
 
     function setDepositCap(DataTypes.ReserveConfigurationMap memory self, uint256 depositCap)
@@ -327,7 +361,7 @@ library ReserveConfiguration {
             (dataLocal & ~LIQUIDATION_THRESHOLD_MASK) >> LIQUIDATION_THRESHOLD_START_BIT_POSITION,
             (dataLocal & ~LIQUIDATION_BONUS_MASK) >> LIQUIDATION_BONUS_START_BIT_POSITION,
             (dataLocal & ~DECIMALS_MASK) >> RESERVE_DECIMALS_START_BIT_POSITION,
-            (dataLocal & ~RESERVE_FACTOR_MASK) >> RESERVE_FACTOR_START_BIT_POSITION
+            (dataLocal & ~COD3X_RESERVE_FACTOR_MASK) >> COD3X_RESERVE_FACTOR_START_BIT_POSITION
         );
     }
 
@@ -347,7 +381,7 @@ library ReserveConfiguration {
             (self.data & ~LIQUIDATION_THRESHOLD_MASK) >> LIQUIDATION_THRESHOLD_START_BIT_POSITION,
             (self.data & ~LIQUIDATION_BONUS_MASK) >> LIQUIDATION_BONUS_START_BIT_POSITION,
             (self.data & ~DECIMALS_MASK) >> RESERVE_DECIMALS_START_BIT_POSITION,
-            (self.data & ~RESERVE_FACTOR_MASK) >> RESERVE_FACTOR_START_BIT_POSITION,
+            (self.data & ~COD3X_RESERVE_FACTOR_MASK) >> COD3X_RESERVE_FACTOR_START_BIT_POSITION,
             (self.data & ~DEPOSIT_CAP_MASK) >> DEPOSIT_CAP_START_BIT_POSITION
         );
     }
