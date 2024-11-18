@@ -269,6 +269,6 @@ contract MiniPoolAddressesProvider is Ownable, IMiniPoolAddressesProvider {
         onlyOwner
     {
         _miniPoolsConfig[id].minipoolOwnerTreasury = treasury;
-        emit Cod3xTreasurySet(treasury, id);
+        emit MinipoolOwnerTreasurySet(treasury, id);
     }
 }
