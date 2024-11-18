@@ -204,7 +204,7 @@ You can fine in `/echidna` 3 config files to run the fuzzer:
 - `setAToken6909Impl(address impl, uint256 miniPoolId)`
 - `setAddress(bytes32 id, address newAddress)`
 - `setMiniPoolConfigurator(address configuratorImpl)`
-- `setMiniPoolToTreasury(uint256 id, address treasury)`
+- `setMiniPoolToCod3xTreasury(uint256 id, address treasury)`
   
 ### MiniPoolConfiguration
 

@@ -282,4 +282,19 @@ abstract contract BasePiReserveRateStrategy is Ownable {
         return (self.data & ~ReserveConfiguration.COD3X_RESERVE_FACTOR_MASK)
             >> ReserveConfiguration.COD3X_RESERVE_FACTOR_START_BIT_POSITION;
     }
+
+    /**
+     * @dev Gets the minipool owner reserve factor of the reserve
+     * @param self The reserve configuration
+     * @return The reserve factor
+     *
+     */
+    function getMinipoolOwnerReserveFactor(DataTypes.ReserveConfigurationMap memory self)
+        internal
+        pure
+        returns (uint256)
+    {
+        return (self.data & ~ReserveConfiguration.MINIPOOL_OWNER_RESERVE_FACTOR_MASK)
+            >> ReserveConfiguration.MINIPOOL_OWNER_FACTOR_START_BIT_POSITION;
+    }
 }

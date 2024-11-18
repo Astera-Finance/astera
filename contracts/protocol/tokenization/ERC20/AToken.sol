@@ -202,7 +202,7 @@ contract AToken is
      * @param amount The amount of tokens getting minted
      * @param index The new liquidity index of the reserve
      */
-    function mintToTreasury(uint256 amount, uint256 index) external override onlyLendingPool {
+    function mintToCod3xTreasury(uint256 amount, uint256 index) external override onlyLendingPool {
         if (amount == 0) {
             return;
         }

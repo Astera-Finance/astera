@@ -1010,7 +1010,7 @@ contract MiniPoolRepayWithdrawTransferTest is MiniPoolDepositBorrowTest {
         uint256 USDC_OFFSET = 0;
         uint256 WBTC_OFFSET = 1;
 
-        miniPoolContracts.miniPoolAddressesProvider.setMiniPoolToTreasury(0, address(0x1111));
+        miniPoolContracts.miniPoolAddressesProvider.setMiniPoolToCod3xTreasury(0, address(0x1111));
 
         /* Deposit tests */
         fixture_depositTokensToMainPool(amountUsdc, user, tokenParamsUsdc);
@@ -1046,7 +1046,7 @@ contract MiniPoolRepayWithdrawTransferTest is MiniPoolDepositBorrowTest {
 
         logMinipoolFlow(address(tokenParamsUsdc.token), user2);
 
-        address treasury = miniPoolContracts.miniPoolAddressesProvider.getMiniPoolTreasury(0);
+        address treasury = miniPoolContracts.miniPoolAddressesProvider.getMiniPoolCod3xTreasury(0);
         uint256 treasuryBalance = aTokens[0].balanceOf(treasury);
 
         assertApproxEqRel(
@@ -1084,7 +1084,7 @@ contract MiniPoolRepayWithdrawTransferTest is MiniPoolDepositBorrowTest {
         uint256 USDC_OFFSET = 0;
         uint256 WBTC_OFFSET = 1;
 
-        miniPoolContracts.miniPoolAddressesProvider.setMiniPoolToTreasury(0, address(0x1111));
+        miniPoolContracts.miniPoolAddressesProvider.setMiniPoolToCod3xTreasury(0, address(0x1111));
 
         /* Deposit tests */
         fixture_depositTokensToMainPool(amountUsdc, user, tokenParamsUsdc);
@@ -1120,7 +1120,7 @@ contract MiniPoolRepayWithdrawTransferTest is MiniPoolDepositBorrowTest {
 
         logMinipoolFlow(address(tokenParamsUsdc.token), user2);
 
-        address treasury = miniPoolContracts.miniPoolAddressesProvider.getMiniPoolTreasury(0);
+        address treasury = miniPoolContracts.miniPoolAddressesProvider.getMiniPoolCod3xTreasury(0);
         uint256 treasuryBalance = aTokens[0].balanceOf(treasury);
 
         assertEq(treasuryBalance, 0, "3");
@@ -1152,7 +1152,7 @@ contract MiniPoolRepayWithdrawTransferTest is MiniPoolDepositBorrowTest {
         uint256 BrAssetLp = 1e27;
         uint256 LrAssetLp = 1e26;
 
-        miniPoolContracts.miniPoolAddressesProvider.setMiniPoolToTreasury(0, address(0x1111));
+        miniPoolContracts.miniPoolAddressesProvider.setMiniPoolToCod3xTreasury(0, address(0x1111));
 
         MockLendingpoolReserveInterestRateStrategy mockLendingpoolReserveInterestRateStrategy = new MockLendingpoolReserveInterestRateStrategy(
             deployedContracts.lendingPoolAddressesProvider, BrAssetLp, LrAssetLp
@@ -1316,7 +1316,7 @@ contract MiniPoolRepayWithdrawTransferTest is MiniPoolDepositBorrowTest {
         uint256 BrAssetLp = bound(seedBr, 1e26, 1e27); //1e27;
         uint256 LrAssetLp = bound(seedLr, 1e24, BrAssetLp); //1e26;
 
-        miniPoolContracts.miniPoolAddressesProvider.setMiniPoolToTreasury(0, address(0x1111));
+        miniPoolContracts.miniPoolAddressesProvider.setMiniPoolToCod3xTreasury(0, address(0x1111));
 
         MockLendingpoolReserveInterestRateStrategy mockLendingpoolReserveInterestRateStrategy = new MockLendingpoolReserveInterestRateStrategy(
             deployedContracts.lendingPoolAddressesProvider, BrAssetLp, LrAssetLp
@@ -1424,7 +1424,7 @@ contract MiniPoolRepayWithdrawTransferTest is MiniPoolDepositBorrowTest {
         uint256 BrAssetLp = bound(seedBr, 1e26, 1e27); //1e27;
         uint256 LrAssetLp = bound(seedLr, 1e24, BrAssetLp); //1e26;
 
-        miniPoolContracts.miniPoolAddressesProvider.setMiniPoolToTreasury(0, address(0x1111));
+        miniPoolContracts.miniPoolAddressesProvider.setMiniPoolToCod3xTreasury(0, address(0x1111));
 
         MockLendingpoolReserveInterestRateStrategy mockLendingpoolReserveInterestRateStrategy = new MockLendingpoolReserveInterestRateStrategy(
             deployedContracts.lendingPoolAddressesProvider, BrAssetLp, LrAssetLp
@@ -1568,7 +1568,7 @@ contract MiniPoolRepayWithdrawTransferTest is MiniPoolDepositBorrowTest {
         uint256 BrAssetLp = 280322497886434557362688922; // 134222087763283109454736198; //bound(seedBr, 1e26, 1e27); //1e27;
         uint256 LrAssetLp = 24572385661946913996488476; // 1e26; // bound(seedLr, BrAssetLp, 1e27); //1e26;
 
-        miniPoolContracts.miniPoolAddressesProvider.setMiniPoolToTreasury(0, address(0x1111));
+        miniPoolContracts.miniPoolAddressesProvider.setMiniPoolToCod3xTreasury(0, address(0x1111));
 
         MockLendingpoolReserveInterestRateStrategy mockLendingpoolReserveInterestRateStrategy = new MockLendingpoolReserveInterestRateStrategy(
             deployedContracts.lendingPoolAddressesProvider, BrAssetLp, LrAssetLp
@@ -1713,7 +1713,7 @@ contract MiniPoolRepayWithdrawTransferTest is MiniPoolDepositBorrowTest {
         uint256 BrAssetLp = 100000000000000000000000000; //bound(seedBr, 1e26, 1e27); //1e27;
         uint256 LrAssetLp = 45587775560685013095732752; // bound(seedLr, 1e24, BrAssetLp); //1e26;
 
-        miniPoolContracts.miniPoolAddressesProvider.setMiniPoolToTreasury(0, address(0x1111));
+        miniPoolContracts.miniPoolAddressesProvider.setMiniPoolToCod3xTreasury(0, address(0x1111));
 
         MockLendingpoolReserveInterestRateStrategy mockLendingpoolReserveInterestRateStrategy = new MockLendingpoolReserveInterestRateStrategy(
             deployedContracts.lendingPoolAddressesProvider, BrAssetLp, LrAssetLp

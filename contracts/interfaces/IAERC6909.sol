@@ -41,7 +41,8 @@ interface IAERC6909 is IERC6909 {
         external
         view
         returns (uint256 aTokenID, uint256 debtTokenID, bool isTranche);
-    function mintToTreasury(uint256 id, uint256 amount, uint256 index) external;
+    function mintToCod3xTreasury(uint256 id, uint256 amount, uint256 index) external;
+    function mintToMinipoolOwnerTreasury(uint256 id, uint256 amount, uint256 index) external;
     function mint(address user, address onBehalfOf, uint256 id, uint256 amount, uint256 index)
         external
         returns (bool);

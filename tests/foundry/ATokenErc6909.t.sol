@@ -77,7 +77,7 @@ contract ATokenErc6909Test is Common {
             vm.expectRevert(bytes(Errors.CT_CALLER_MUST_BE_LENDING_POOL));
             aErc6909Token.mint(address(this), address(this), 1, 1, 1);
             vm.expectRevert(bytes(Errors.CT_CALLER_MUST_BE_LENDING_POOL));
-            aErc6909Token.mintToTreasury(1, 1, 1);
+            aErc6909Token.mintToCod3xTreasury(1, 1, 1);
             vm.expectRevert(bytes(Errors.CT_CALLER_MUST_BE_LENDING_POOL));
             aErc6909Token.burn(admin, admin, 1, 1, 1);
             vm.expectRevert(bytes(Errors.CT_CALLER_MUST_BE_LENDING_POOL));
@@ -87,7 +87,7 @@ contract ATokenErc6909Test is Common {
             vm.expectRevert(bytes(Errors.CT_CALLER_MUST_BE_LENDING_POOL));
             aErc6909Token.transferUnderlyingTo(addr, 11, 1);
             vm.expectRevert(bytes(Errors.CT_CALLER_MUST_BE_LENDING_POOL));
-            aErc6909Token.mintToTreasury(1, 11, 1);
+            aErc6909Token.mintToCod3xTreasury(1, 11, 1);
         }
     }
 
@@ -270,7 +270,7 @@ contract ATokenErc6909Test is Common {
         // index = 2 * 1e27;
         index = bound(index, 1e27, 10e27); // assume index increases in time as the interest accumulates
         vm.assume(maxValToMint.rayDiv(index) > 0);
-        miniPoolContracts.miniPoolAddressesProvider.setMiniPoolToTreasury(0, treasury);
+        miniPoolContracts.miniPoolAddressesProvider.setMiniPoolToCod3xTreasury(0, treasury);
         uint256 granuality = maxValToMint / nrOfIterations;
         vm.assume(maxValToMint % granuality == 0); // accept only multiplicity of {nrOfIterations}
         // maxValToMint = maxValToMint - (maxValToMint % granuality);
@@ -281,7 +281,7 @@ contract ATokenErc6909Test is Common {
         uint8 counter = 0;
         for (uint256 cnt = 0; cnt < maxValToMint; cnt += granuality) {
             console.log("granuality: ", granuality);
-            aErc6909Token.mintToTreasury(id, granuality, index);
+            aErc6909Token.mintToCod3xTreasury(id, granuality, index);
             counter++;
         }
         assertApproxEqAbs(
@@ -289,7 +289,7 @@ contract ATokenErc6909Test is Common {
         ); // We accept some calculation rounding violations from loop
         console.log("Minting: ", maxValToMint.rayDiv(index));
         console.log("Balance of treasury: ", aErc6909Token.balanceOf(treasury, id));
-        aErc6909Token.mintToTreasury(id, maxValToMint, index);
+        aErc6909Token.mintToCod3xTreasury(id, maxValToMint, index);
         assertApproxEqAbs(
             aErc6909Token.balanceOf(treasury, id), 2 * maxValToMint.rayDiv(index), nrOfIterations
         );

@@ -291,7 +291,7 @@ contract MiniPoolConfiguratorTest is MiniPoolDepositBorrowTest {
             IAERC6909(miniPoolContracts.miniPoolAddressesProvider.getMiniPoolToAERC6909(miniPool));
 
         address treasury = makeAddr("treasury");
-        miniPoolContracts.miniPoolAddressesProvider.setMiniPoolToTreasury(0, treasury);
+        miniPoolContracts.miniPoolAddressesProvider.setMiniPoolToCod3xTreasury(0, treasury);
 
         /* Test vars */
         address user = makeAddr("user");

@@ -223,6 +223,7 @@ library MiniPoolReserveLogic {
             liquidityTaken,
             vars.totalVariableDebt,
             reserve.configuration.getCod3xReserveFactor()
+                + reserve.configuration.getMinipoolOwnerReserveFactor()
         );
         require(vars.newLiquidityRate <= type(uint128).max, Errors.RL_LIQUIDITY_RATE_OVERFLOW);
         require(vars.newVariableRate <= type(uint128).max, Errors.RL_VARIABLE_BORROW_RATE_OVERFLOW);
@@ -270,7 +271,7 @@ library MiniPoolReserveLogic {
         MintToTreasuryLocalVars memory vars;
 
         vars.cod3xReserveFactor = reserve.configuration.getCod3xReserveFactor();
-        vars.minipoolOwnerReserveFactor = reserve.configuration.getMinipoolOwnerCod3xReserveFactor();
+        vars.minipoolOwnerReserveFactor = reserve.configuration.getMinipoolOwnerReserveFactor();
 
         if (vars.cod3xReserveFactor == 0 && vars.minipoolOwnerReserveFactor == 0) {
             return;
@@ -289,7 +290,7 @@ library MiniPoolReserveLogic {
             vars.amountToMintCod3x = vars.totalDebtAccrued.percentMul(vars.cod3xReserveFactor);
 
             if (vars.amountToMintCod3x != 0) {
-                IAERC6909(reserve.aTokenAddress).mintToTreasury(
+                IAERC6909(reserve.aTokenAddress).mintToCod3xTreasury(
                     reserve.aTokenID, vars.amountToMintCod3x, newLiquidityIndex
                 );
             }
@@ -300,10 +301,9 @@ library MiniPoolReserveLogic {
                 vars.totalDebtAccrued.percentMul(vars.minipoolOwnerReserveFactor);
 
             if (vars.amountToMintMinipoolOwner != 0) {
-                // TODO mintToMinipoolOwnerTreasury
-                // IAERC6909(reserve.aTokenAddress).mintToTreasury(
-                //     reserve.aTokenID, vars.amountToMintMinipoolOwner, newLiquidityIndex
-                // );
+                IAERC6909(reserve.aTokenAddress).mintToMinipoolOwnerTreasury(
+                    reserve.aTokenID, vars.amountToMintMinipoolOwner, newLiquidityIndex
+                );
             }
         }
     }

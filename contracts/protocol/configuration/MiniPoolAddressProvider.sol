@@ -26,7 +26,8 @@ contract MiniPoolAddressesProvider is Ownable, IMiniPoolAddressesProvider {
     struct MiniPoolConfig {
         address miniPool;
         address aErc6909;
-        address treasury;
+        address cod3xTreasury;
+        address minipoolOwnerTreasury;
     }
 
     modifier poolIdCheck(uint256 poolId) {
@@ -111,8 +112,12 @@ contract MiniPoolAddressesProvider is Ownable, IMiniPoolAddressesProvider {
         return _miniPoolsConfig[id].aErc6909;
     }
 
-    function getMiniPoolTreasury(uint256 id) external view returns (address) {
-        return _miniPoolsConfig[id].treasury;
+    function getMiniPoolCod3xTreasury(uint256 id) external view returns (address) {
+        return _miniPoolsConfig[id].cod3xTreasury;
+    }
+
+    function getMiniPoolOwnerTreasury(uint256 id) external view returns (address) {
+        return _miniPoolsConfig[id].minipoolOwnerTreasury;
     }
 
     function getMiniPoolConfigurator() external view returns (address) {
@@ -249,12 +254,21 @@ contract MiniPoolAddressesProvider is Ownable, IMiniPoolAddressesProvider {
         emit MiniPoolConfiguratorUpdated(configuratorImpl);
     }
 
-    function setMiniPoolToTreasury(uint256 id, address treasury)
+    function setMiniPoolToCod3xTreasury(uint256 id, address treasury)
         external
         poolIdCheck(id)
         onlyOwner
     {
-        _miniPoolsConfig[id].treasury = treasury;
-        emit TreasurySet(treasury, id);
+        _miniPoolsConfig[id].cod3xTreasury = treasury;
+        emit Cod3xTreasurySet(treasury, id);
+    }
+
+    function setMiniPoolToMinipoolOwnerTreasury(uint256 id, address treasury)
+        external
+        poolIdCheck(id)
+        onlyOwner
+    {
+        _miniPoolsConfig[id].minipoolOwnerTreasury = treasury;
+        emit Cod3xTreasurySet(treasury, id);
     }
 }

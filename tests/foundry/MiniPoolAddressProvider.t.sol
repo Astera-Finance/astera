@@ -228,20 +228,22 @@ contract MiniPoolAddressProvider is Common {
         {
             address treasury = makeAddr("Treasury");
             console.log(
-                "1. Treasury", miniPoolContracts.miniPoolAddressesProvider.getMiniPoolTreasury(0)
+                "1. Treasury",
+                miniPoolContracts.miniPoolAddressesProvider.getMiniPoolCod3xTreasury(0)
             );
-            miniPoolContracts.miniPoolAddressesProvider.setMiniPoolToTreasury(0, treasury);
+            miniPoolContracts.miniPoolAddressesProvider.setMiniPoolToCod3xTreasury(0, treasury);
             console.log(
-                "2. Treasury", miniPoolContracts.miniPoolAddressesProvider.getMiniPoolTreasury(0)
+                "2. Treasury",
+                miniPoolContracts.miniPoolAddressesProvider.getMiniPoolCod3xTreasury(0)
             );
             assertEq(
-                miniPoolContracts.miniPoolAddressesProvider.getMiniPoolTreasury(0),
+                miniPoolContracts.miniPoolAddressesProvider.getMiniPoolCod3xTreasury(0),
                 treasury,
                 "Wrong treasury"
             );
             /* Revert when try to get treasury from not existing id */
             vm.expectRevert(bytes(Errors.PAP_POOL_ID_OUT_OF_RANGE));
-            miniPoolContracts.miniPoolAddressesProvider.setMiniPoolToTreasury(10, treasury);
+            miniPoolContracts.miniPoolAddressesProvider.setMiniPoolToCod3xTreasury(10, treasury);
         }
 
         /* ***** Flow limit ***** */

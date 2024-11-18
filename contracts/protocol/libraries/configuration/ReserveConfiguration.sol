@@ -297,7 +297,7 @@ library ReserveConfiguration {
      * @return The reserve factor
      *
      */
-    function getMinipoolOwnerCod3xReserveFactor(DataTypes.ReserveConfigurationMap storage self)
+    function getMinipoolOwnerReserveFactor(DataTypes.ReserveConfigurationMap storage self)
         internal
         view
         returns (uint256)

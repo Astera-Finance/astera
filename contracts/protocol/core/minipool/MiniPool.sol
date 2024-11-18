@@ -384,7 +384,7 @@ contract MiniPool is VersionedInitializable, IMiniPool, MiniPoolStorage {
                 this.withdraw(
                     asset,
                     remainingBalance - ERROR_REMAINDER_MARGIN,
-                    _addressesProvider.getMiniPoolTreasury(_minipoolId)
+                    _addressesProvider.getMiniPoolCod3xTreasury(_minipoolId)
                 );
             }
         }

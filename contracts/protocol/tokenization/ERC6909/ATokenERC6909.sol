@@ -344,13 +344,23 @@ contract ATokenERC6909 is IncentivizedERC6909, VersionedInitializable {
         }
     }
 
-    function mintToTreasury(uint256 id, uint256 amount, uint256 index) external {
+    function mintToCod3xTreasury(uint256 id, uint256 amount, uint256 index) external {
+        address treasury = _addressesProvider.getMiniPoolCod3xTreasury(_minipoolId);
+        _mintToTreasury(id, amount, index, treasury);
+    }
+
+    function mintToMinipoolOwnerTreasury(uint256 id, uint256 amount, uint256 index) external {
+        address treasury = _addressesProvider.getMiniPoolOwnerTreasury(_minipoolId);
+        _mintToTreasury(id, amount, index, treasury);
+    }
+
+    function _mintToTreasury(uint256 id, uint256 amount, uint256 index, address treasury)
+        internal
+    {
         require(msg.sender == address(POOL), Errors.CT_CALLER_MUST_BE_LENDING_POOL);
         if (amount == 0) {
             return;
         }
-
-        address treasury = _addressesProvider.getMiniPoolTreasury(_minipoolId);
 
         // Compared to the normal mint, we don't check for rounding errors.
         // The amount to mint can easily be very small since it is a fraction of the interest ccrued.
