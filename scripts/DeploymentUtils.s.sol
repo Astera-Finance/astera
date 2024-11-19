@@ -501,6 +501,12 @@ contract DeploymentUtils {
             _contracts.miniPoolConfigurator.enableFlashloan(
                 reserveConfig.tokenAddress, IMiniPool(_mp)
             );
+            _contracts.miniPoolConfigurator.setCod3xReserveFactor(
+                reserveConfig.tokenAddress, reserveConfig.reserveFactor, IMiniPool(_mp)
+            );
+            _contracts.miniPoolConfigurator.setMinipoolOwnerReserveFactor(
+                reserveConfig.tokenAddress, reserveConfig.miniPoolOwnerFee, IMiniPool(_mp)
+            );
         }
     }
 

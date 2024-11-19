@@ -28,12 +28,18 @@ contract MiniPoolAddressesProvider is Ownable, IMiniPoolAddressesProvider {
         address aErc6909;
         address cod3xTreasury;
         address minipoolOwnerTreasury;
+        address admin;
     }
 
     modifier poolIdCheck(uint256 poolId) {
         if (poolId >= _miniPoolCount) {
             revert(Errors.PAP_POOL_ID_OUT_OF_RANGE);
         }
+        _;
+    }
+
+    modifier onlyMiniPoolConfigurator() {
+        _onlyMiniPoolConfigurator();
         _;
     }
 
@@ -62,9 +68,8 @@ contract MiniPoolAddressesProvider is Ownable, IMiniPoolAddressesProvider {
             .getLendingPool();
     }
 
-    function getPoolAdmin() external view returns (address) {
-        return ILendingPoolAddressesProvider(_addresses[LENDING_POOL_ADDRESSES_PROVIDER])
-            .getPoolAdmin();
+    function getPoolAdmin(uint256 id) external view returns (address) {
+        return _miniPoolsConfig[id].admin;
     }
 
     function getEmergencyAdmin() external view returns (address) {
@@ -140,6 +145,13 @@ contract MiniPoolAddressesProvider is Ownable, IMiniPoolAddressesProvider {
         return _addresses[id];
     }
 
+    function _onlyMiniPoolConfigurator() internal view {
+        require(
+            _addresses[MINI_POOL_CONFIGURATOR] == msg.sender,
+            Errors.LP_CALLER_NOT_LENDING_POOL_CONFIGURATOR
+        );
+    }
+
     /* Setters */
     function setFlowLimit(address asset, address miniPool, uint256 limit) external onlyOwner {
         IFlowLimiter(getFlowLimiter()).setFlowLimit(asset, miniPool, limit);
@@ -158,6 +170,12 @@ contract MiniPoolAddressesProvider is Ownable, IMiniPoolAddressesProvider {
             abi.encodeWithSignature("initialize(address,uint256)", address(this), miniPoolId);
         _updateAToken(impl, miniPoolId, params);
         emit ATokenUpdated(impl);
+    }
+
+    function setPoolAdmin(uint256 id, address newAdmin) external onlyMiniPoolConfigurator {
+        require(newAdmin != address(0));
+        _miniPoolsConfig[id].admin = newAdmin;
+        emit PoolAdminSet(newAdmin);
     }
 
     /**
@@ -214,11 +232,7 @@ contract MiniPoolAddressesProvider is Ownable, IMiniPoolAddressesProvider {
         emit ProxyCreated(_miniPoolCount, address(aTokenProxy));
     }
 
-    function deployMiniPool(address miniPoolImpl, address aTokenImpl)
-        external
-        onlyOwner
-        returns (uint256)
-    {
+    function deployMiniPool(address miniPoolImpl, address aTokenImpl) external returns (uint256) {
         bytes memory params =
             abi.encodeWithSignature("initialize(address,uint256)", address(this), _miniPoolCount);
 
@@ -228,6 +242,7 @@ contract MiniPoolAddressesProvider is Ownable, IMiniPoolAddressesProvider {
 
         uint256 miniPoolId = _miniPoolCount;
 
+        _miniPoolsConfig[miniPoolId].admin = msg.sender;
         _miniPoolCount++;
 
         return miniPoolId;
@@ -266,7 +281,7 @@ contract MiniPoolAddressesProvider is Ownable, IMiniPoolAddressesProvider {
     function setMiniPoolToMinipoolOwnerTreasury(uint256 id, address treasury)
         external
         poolIdCheck(id)
-        onlyOwner
+        onlyMiniPoolConfigurator
     {
         _miniPoolsConfig[id].minipoolOwnerTreasury = treasury;
         emit MinipoolOwnerTreasurySet(treasury, id);

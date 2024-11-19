@@ -10,6 +10,7 @@ interface IMiniPoolAddressesProvider {
     event ProxyCreated(bytes32 id, address indexed newAddress);
     event AddressSet(bytes32 id, address indexed newAddress, bool hasProxy);
     event MiniPoolConfiguratorUpdated(address indexed newAddress);
+    event PoolAdminSet(address newAdmin);
     event Cod3xTreasurySet(address indexed treasury, uint256 miniPoolId);
     event MinipoolOwnerTreasurySet(address indexed treasury, uint256 miniPoolId);
 
@@ -17,7 +18,7 @@ interface IMiniPoolAddressesProvider {
     function getMiniPoolCount() external view returns (uint256);
     function getLendingPoolAddressesProvider() external view returns (address);
     function getLendingPool() external view returns (address);
-    function getPoolAdmin() external view returns (address);
+    function getPoolAdmin(uint256 id) external view returns (address);
     function getEmergencyAdmin() external view returns (address);
     function getPriceOracle() external view returns (address);
     function getFlowLimiter() external view returns (address);
@@ -34,10 +35,12 @@ interface IMiniPoolAddressesProvider {
     function getMiniPoolList() external view returns (address[] memory);
 
     // Setters
+    function setPoolAdmin(uint256 id, address newAdmin) external;
     function setFlowLimit(address asset, address miniPool, uint256 limit) external;
     function setMiniPoolImpl(address impl, uint256 miniPoolId) external;
     function setAToken6909Impl(address impl, uint256 miniPoolId) external;
     function deployMiniPool(address miniPoolImpl, address aTokenImpl) external returns (uint256);
     function setMiniPoolToCod3xTreasury(uint256 id, address treasury) external;
+    function setMiniPoolToMinipoolOwnerTreasury(uint256 id, address treasury) external;
     function setMiniPoolConfigurator(address configuratorImpl) external;
 }

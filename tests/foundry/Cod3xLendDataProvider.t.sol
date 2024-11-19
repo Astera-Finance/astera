@@ -130,10 +130,11 @@ contract Cod3xLendDataProviderTest is MiniPoolFixtures {
             console.log("isFrozen ", staticData.isFrozen);
             assertEq(staticData.isFrozen, false);
 
-            vm.prank(admin);
+            vm.startPrank(miniPoolContracts.miniPoolAddressesProvider.getEmergencyAdmin());
             deployedContracts.lendingPoolConfigurator.setDepositCap(
                 address(usdcTypes.token), true, 200
             );
+            vm.stopPrank();
 
             staticData = deployedContracts.cod3xLendDataProvider.getLpReserveStaticData(
                 address(usdcTypes.token), true
@@ -298,7 +299,7 @@ contract Cod3xLendDataProviderTest is MiniPoolFixtures {
             console.log("isFrozen ", staticData.isFrozen);
             assertEq(staticData.isFrozen, false);
 
-            vm.startPrank(admin);
+            vm.startPrank(miniPoolContracts.miniPoolAddressesProvider.getEmergencyAdmin());
             miniPoolContracts.miniPoolConfigurator.setDepositCap(
                 address(usdcParams.token),
                 200,

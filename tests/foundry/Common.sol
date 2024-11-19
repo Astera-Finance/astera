@@ -728,7 +728,7 @@ contract Common is Test {
                 underlyingAssetSymbol: tmpSymbol
             });
         }
-        vm.startPrank(address(miniPoolContracts.miniPoolAddressesProvider.getPoolAdmin()));
+        vm.startPrank(address(miniPoolContracts.miniPoolAddressesProvider.getPoolAdmin(miniPoolId)));
         miniPoolContracts.miniPoolConfigurator.batchInitReserve(
             initInputParams, IMiniPool(miniPool)
         );

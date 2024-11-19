@@ -8,7 +8,7 @@
     },
     "poolAddressesProviderConfig": {
         "marketId": "UV TestNet Market",
-        "poolId": 1
+        "poolId": 0
     },
     "lendingPoolReserversConfig": [],
     "miniPoolReserversConfig": [
@@ -19,6 +19,7 @@
             "interestStratId": 0,
             "liquidationBonus": 10500,
             "liquidationThreshold": 7500,
+            "miniPoolOwnerFee": 250,
             "params": "0x10",
             "rates": 0.03e27,
             "reserveFactor": 1500,
@@ -33,6 +34,7 @@
             "interestStratId": 0,
             "liquidationBonus": 10500,
             "liquidationThreshold": 7500,
+            "miniPoolOwnerFee": 250,
             "params": "0x10",
             "rates": 0.03e27,
             "reserveFactor": 1500,

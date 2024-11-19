@@ -97,6 +97,7 @@ struct PoolReserversConfig {
     uint256 interestStratId;
     uint256 liquidationBonus;
     uint256 liquidationThreshold;
+    uint256 miniPoolOwnerFee;
     string params;
     uint256 rates;
     uint256 reserveFactor;
