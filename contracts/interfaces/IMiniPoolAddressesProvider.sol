@@ -19,6 +19,7 @@ interface IMiniPoolAddressesProvider {
     function getLendingPoolAddressesProvider() external view returns (address);
     function getLendingPool() external view returns (address);
     function getPoolAdmin(uint256 id) external view returns (address);
+    function getMainPoolAdmin() external view returns (address);
     function getEmergencyAdmin() external view returns (address);
     function getPriceOracle() external view returns (address);
     function getFlowLimiter() external view returns (address);

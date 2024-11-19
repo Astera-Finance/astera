@@ -72,24 +72,24 @@ contract MiniPoolConfiguratorTest is MiniPoolDepositBorrowTest {
             tokenAddress, IMiniPool(newMiniPool)
         );
 
-        vm.expectRevert(bytes("76"));
+        vm.expectRevert(bytes("33"));
         miniPoolContracts.miniPoolConfigurator.setCod3xReserveFactor(
             tokenAddress, randomNumber, IMiniPool(newMiniPool)
         );
-        vm.expectRevert(bytes("76"));
+        vm.expectRevert(bytes("33"));
         miniPoolContracts.miniPoolConfigurator.setDepositCap(
             tokenAddress, randomNumber, IMiniPool(newMiniPool)
         );
-        vm.expectRevert(bytes("76"));
+        vm.expectRevert(bytes("33"));
         miniPoolContracts.miniPoolConfigurator.setReserveInterestRateStrategyAddress(
             tokenAddress, randomAddress, IMiniPool(newMiniPool)
         );
 
-        vm.expectRevert(bytes("76"));
+        vm.expectRevert(bytes("33"));
         miniPoolContracts.miniPoolConfigurator.setRewarderForReserve(
             tokenAddress, randomAddress, IMiniPool(newMiniPool)
         );
-        vm.expectRevert(bytes("76"));
+        vm.expectRevert(bytes("33"));
         miniPoolContracts.miniPoolConfigurator.updateFlashloanPremiumTotal(
             uint128(randomNumber), IMiniPool(newMiniPool)
         );
@@ -196,7 +196,7 @@ contract MiniPoolConfiguratorTest is MiniPoolDepositBorrowTest {
             assertEq(reserveFactor, 0, "reserveFactor is not 0");
             vm.expectEmit(true, false, false, false);
             emit Cod3xReserveFactorChanged(address(erc20Tokens[idx]), validReserveFactor);
-            vm.startPrank(miniPoolContracts.miniPoolAddressesProvider.getEmergencyAdmin());
+            vm.startPrank(miniPoolContracts.miniPoolAddressesProvider.getMainPoolAdmin());
             miniPoolContracts.miniPoolConfigurator.setCod3xReserveFactor(
                 address(erc20Tokens[idx]), validReserveFactor, IMiniPool(miniPool)
             );
@@ -223,7 +223,7 @@ contract MiniPoolConfiguratorTest is MiniPoolDepositBorrowTest {
         invalidReserveFactor =
             bound(invalidReserveFactor, MAX_VALID_RESERVE_FACTOR + 1, type(uint256).max);
         for (uint32 idx; idx < erc20Tokens.length; idx++) {
-            vm.startPrank(miniPoolContracts.miniPoolAddressesProvider.getEmergencyAdmin());
+            vm.startPrank(miniPoolContracts.miniPoolAddressesProvider.getMainPoolAdmin());
             vm.expectRevert(bytes(Errors.RC_INVALID_RESERVE_FACTOR));
             miniPoolContracts.miniPoolConfigurator.setCod3xReserveFactor(
                 address(erc20Tokens[idx]), invalidReserveFactor, IMiniPool(miniPool)
@@ -405,7 +405,7 @@ contract MiniPoolConfiguratorTest is MiniPoolDepositBorrowTest {
         fixture_MiniPoolDeposit(minNrOfTokens, collateralOffset, user, collateralTokenParams);
 
         /* Setting reserve factor that allow minting to the treasury */
-        vm.startPrank(miniPoolContracts.miniPoolAddressesProvider.getEmergencyAdmin());
+        vm.startPrank(miniPoolContracts.miniPoolAddressesProvider.getMainPoolAdmin());
         miniPoolContracts.miniPoolConfigurator.setCod3xReserveFactor(
             address(borrowTokenParams.token), validReserveFactor, IMiniPool(miniPool)
         );
@@ -434,7 +434,7 @@ contract MiniPoolConfiguratorTest is MiniPoolDepositBorrowTest {
         for (uint32 idx; idx < erc20Tokens.length; idx++) {
             vm.expectEmit(true, false, false, false);
             emit ReserveDepositCapChanged(address(erc20Tokens[idx]), validDepositCap);
-            vm.startPrank(miniPoolContracts.miniPoolAddressesProvider.getEmergencyAdmin());
+            vm.startPrank(miniPoolContracts.miniPoolAddressesProvider.getMainPoolAdmin());
             miniPoolContracts.miniPoolConfigurator.setDepositCap(
                 address(erc20Tokens[idx]), validDepositCap, IMiniPool(miniPool)
             );
@@ -448,7 +448,7 @@ contract MiniPoolConfiguratorTest is MiniPoolDepositBorrowTest {
     function testSetDepositCap_Negative(uint256 invalidDepositCap) public {
         invalidDepositCap = bound(invalidDepositCap, MAX_VALID_DEPOSIT_CAP, type(uint256).max);
         for (uint32 idx; idx < erc20Tokens.length; idx++) {
-            vm.startPrank(miniPoolContracts.miniPoolAddressesProvider.getEmergencyAdmin());
+            vm.startPrank(miniPoolContracts.miniPoolAddressesProvider.getMainPoolAdmin());
             vm.expectRevert(bytes(Errors.RC_INVALID_DEPOSIT_CAP));
             miniPoolContracts.miniPoolConfigurator.setDepositCap(
                 address(erc20Tokens[idx]), invalidDepositCap, IMiniPool(miniPool)

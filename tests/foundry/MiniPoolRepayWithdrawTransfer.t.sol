@@ -1184,7 +1184,7 @@ contract MiniPoolRepayWithdrawTransferTest is MiniPoolDepositBorrowTest {
         );
         vm.stopPrank();
 
-        vm.startPrank(miniPoolContracts.miniPoolAddressesProvider.getEmergencyAdmin());
+        vm.startPrank(miniPoolContracts.miniPoolAddressesProvider.getMainPoolAdmin());
         MiniPoolConfigurator(miniPoolContracts.miniPoolAddressesProvider.getMiniPoolConfigurator())
             .setReserveInterestRateStrategyAddress(
             address(tokenParamsUsdc.aToken),
@@ -1350,7 +1350,7 @@ contract MiniPoolRepayWithdrawTransferTest is MiniPoolDepositBorrowTest {
         );
         vm.stopPrank();
 
-        vm.startPrank(miniPoolContracts.miniPoolAddressesProvider.getEmergencyAdmin());
+        vm.startPrank(miniPoolContracts.miniPoolAddressesProvider.getMainPoolAdmin());
         MiniPoolConfigurator(miniPoolContracts.miniPoolAddressesProvider.getMiniPoolConfigurator())
             .setReserveInterestRateStrategyAddress(
             address(tokenParamsUsdc.aToken),
@@ -1460,7 +1460,7 @@ contract MiniPoolRepayWithdrawTransferTest is MiniPoolDepositBorrowTest {
         );
         vm.stopPrank();
 
-        vm.startPrank(miniPoolContracts.miniPoolAddressesProvider.getEmergencyAdmin());
+        vm.startPrank(miniPoolContracts.miniPoolAddressesProvider.getMainPoolAdmin());
         MiniPoolConfigurator(miniPoolContracts.miniPoolAddressesProvider.getMiniPoolConfigurator())
             .setReserveInterestRateStrategyAddress(
             address(tokenParamsUsdc.aToken),
@@ -1606,7 +1606,7 @@ contract MiniPoolRepayWithdrawTransferTest is MiniPoolDepositBorrowTest {
         );
         vm.stopPrank();
 
-        vm.startPrank(miniPoolContracts.miniPoolAddressesProvider.getEmergencyAdmin());
+        vm.startPrank(miniPoolContracts.miniPoolAddressesProvider.getMainPoolAdmin());
         MiniPoolConfigurator(miniPoolContracts.miniPoolAddressesProvider.getMiniPoolConfigurator())
             .setReserveInterestRateStrategyAddress(
             address(tokenParamsUsdc.aToken),
@@ -1753,7 +1753,7 @@ contract MiniPoolRepayWithdrawTransferTest is MiniPoolDepositBorrowTest {
         );
         vm.stopPrank();
 
-        vm.startPrank(miniPoolContracts.miniPoolAddressesProvider.getEmergencyAdmin());
+        vm.startPrank(miniPoolContracts.miniPoolAddressesProvider.getMainPoolAdmin());
         MiniPoolConfigurator(miniPoolContracts.miniPoolAddressesProvider.getMiniPoolConfigurator())
             .setReserveInterestRateStrategyAddress(
             address(tokenParamsUsdc.aToken),

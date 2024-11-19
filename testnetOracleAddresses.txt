@@ -1,0 +1,24 @@
+ "oracleConfig": {
+        "assets": [
+            "0xB1D0dE114e0eFe72e544cFcF5a8e87421631D88e",
+            "0x933b37DDc867EFAa173894468038197E5C4696af",
+            "0x6b29F6e6a633357aDB9F624475202A3231aC3Fc9",
+            "0x1F7342121Bb233391a1511721bcA7F73e0a4cE00"
+        ],
+        "baseCurrency": "0x0000000000000000000000000000000000000000",
+        "baseCurrencyUnit": 1e18,
+        "fallbackOracle": "0x0000000000000000000000000000000000000000",
+        "sources": [
+            "0x4aDC67696bA383F43DD60A9e78F2C97Fbbfc7cb1",
+            "0xd30e2101a97dcbAeBCBC04F14C3f624E67A35165",
+            "0x0FB99723Aee6f420beAD13e6bBB79b7E6F034298",
+            "0x3ec8593F930EA45ea58c968260e6e9FF53FC934f"
+        ],
+        "timeouts": [
+            100000,
+            100000,
+            200000,
+            200000
+        ]
+    }
+}

@@ -72,6 +72,11 @@ contract MiniPoolAddressesProvider is Ownable, IMiniPoolAddressesProvider {
         return _miniPoolsConfig[id].admin;
     }
 
+    function getMainPoolAdmin() external view returns (address) {
+        return ILendingPoolAddressesProvider(_addresses[LENDING_POOL_ADDRESSES_PROVIDER])
+            .getPoolAdmin();
+    }
+
     function getEmergencyAdmin() external view returns (address) {
         return ILendingPoolAddressesProvider(_addresses[LENDING_POOL_ADDRESSES_PROVIDER])
             .getEmergencyAdmin();

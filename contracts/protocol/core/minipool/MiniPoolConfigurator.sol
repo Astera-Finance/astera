@@ -45,6 +45,11 @@ contract MiniPoolConfigurator is VersionedInitializable, IMiniPoolConfigurator {
         _;
     }
 
+    modifier onlyMainPoolAdmin() {
+        require(addressesProvider.getMainPoolAdmin() == msg.sender, Errors.CALLER_NOT_POOL_ADMIN);
+        _;
+    }
+
     modifier onlyEmergencyAdmin() {
         require(
             addressesProvider.getEmergencyAdmin() == msg.sender,
@@ -308,7 +313,7 @@ contract MiniPoolConfigurator is VersionedInitializable, IMiniPoolConfigurator {
      */
     function setCod3xReserveFactor(address asset, uint256 reserveFactor, IMiniPool pool)
         external
-        onlyEmergencyAdmin
+        onlyMainPoolAdmin
     {
         DataTypes.ReserveConfigurationMap memory currentConfig = pool.getConfiguration(asset);
 
@@ -340,7 +345,7 @@ contract MiniPoolConfigurator is VersionedInitializable, IMiniPoolConfigurator {
 
     function setDepositCap(address asset, uint256 depositCap, IMiniPool pool)
         external
-        onlyEmergencyAdmin
+        onlyMainPoolAdmin
     {
         DataTypes.ReserveConfigurationMap memory currentConfig = pool.getConfiguration(asset);
 
@@ -364,7 +369,7 @@ contract MiniPoolConfigurator is VersionedInitializable, IMiniPoolConfigurator {
         address asset,
         address rateStrategyAddress,
         IMiniPool pool
-    ) external onlyEmergencyAdmin {
+    ) external onlyMainPoolAdmin {
         pool.setReserveInterestRateStrategyAddress(asset, rateStrategyAddress);
         emit ReserveInterestRateStrategyChanged(asset, rateStrategyAddress);
     }
@@ -389,18 +394,16 @@ contract MiniPoolConfigurator is VersionedInitializable, IMiniPoolConfigurator {
         );
     }
 
-    // Discuss access control
     function setRewarderForReserve(address asset, address rewarder, IMiniPool pool)
         external
-        onlyEmergencyAdmin
+        onlyMainPoolAdmin
     {
         pool.setRewarderForReserve(asset, rewarder);
     }
 
-    // Discuss access control
     function updateFlashloanPremiumTotal(uint128 newFlashloanPremiumTotal, IMiniPool pool)
         external
-        onlyEmergencyAdmin
+        onlyMainPoolAdmin
     {
         require(
             newFlashloanPremiumTotal <= PercentageMath.PERCENTAGE_FACTOR,
