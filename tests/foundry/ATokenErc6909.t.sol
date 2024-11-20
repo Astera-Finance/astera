@@ -332,7 +332,9 @@ contract ATokenErc6909Test is Common {
 
         /* Deposit aToken into the mini pool */
         tokenParams.aToken.approve(miniPool, 3 * maxValToBurn);
-        IMiniPool(miniPool).deposit(address(tokenParams.aToken), 3 * maxValToBurn, address(this));
+        IMiniPool(miniPool).deposit(
+            address(tokenParams.aToken), false, 3 * maxValToBurn, address(this)
+        );
 
         /* Borrow aToken from mini pool */
         console.log(
@@ -512,7 +514,9 @@ contract ATokenErc6909Test is Common {
         );
 
         tokenParams.aToken.approve(miniPool, 4 * valToTransfer);
-        IMiniPool(miniPool).deposit(address(tokenParams.aToken), 4 * valToTransfer, address(this));
+        IMiniPool(miniPool).deposit(
+            address(tokenParams.aToken), false, 4 * valToTransfer, address(this)
+        );
         console.log(
             "2. aErc6909Token after deposit %s ",
             IERC20(aErc6909Token.getUnderlyingAsset(testParams.id)).balanceOf(
@@ -737,7 +741,9 @@ contract ATokenErc6909Test is Common {
         );
 
         grainUnderlyingToken.approve(miniPool, 3 * valToTransfer);
-        IMiniPool(miniPool).deposit(address(grainUnderlyingToken), 3 * valToTransfer, address(this));
+        IMiniPool(miniPool).deposit(
+            address(grainUnderlyingToken), false, 3 * valToTransfer, address(this)
+        );
         console.log(
             "3. aErc6909Token after deposit %s ",
             IERC20(aErc6909Token.getUnderlyingAsset(id)).balanceOf(address(aErc6909Token))
@@ -833,7 +839,9 @@ contract ATokenErc6909Test is Common {
         );
 
         tokenParams.aToken.approve(miniPool, 3 * valToTransfer);
-        IMiniPool(miniPool).deposit(address(tokenParams.aToken), 3 * valToTransfer, address(this));
+        IMiniPool(miniPool).deposit(
+            address(tokenParams.aToken), false, 3 * valToTransfer, address(this)
+        );
         console.log(
             "3. aErc6909Token after deposit %s ",
             IERC20(aErc6909Token.getUnderlyingAsset(id)).balanceOf(address(aErc6909Token))

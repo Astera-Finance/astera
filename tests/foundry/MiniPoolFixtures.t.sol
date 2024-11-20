@@ -55,7 +55,7 @@ abstract contract MiniPoolFixtures is LendingPoolFixtures {
         console.log("Amount: ", amount);
         console.log("Balance of aToken: ", aTokenDepositAmount);
         tokenParams.aToken.approve(address(miniPool), amount);
-        IMiniPool(miniPool).deposit(address(tokenParams.aToken), amount, user);
+        IMiniPool(miniPool).deposit(address(tokenParams.aToken), false, amount, user);
         console.log("User AToken balance shall be less by {amount}");
         assertEq(aTokenDepositAmount - amount, tokenParams.aToken.balanceOf(user), "11");
         console.log("User grain token 6909 balance shall be initial balance + amount");
@@ -78,7 +78,7 @@ abstract contract MiniPoolFixtures is LendingPoolFixtures {
         uint256 tokenBalance = tokenParams.token.balanceOf(user);
         tokenParams.token.approve(address(miniPool), amount);
         console.log("User balance before: ", tokenBalance);
-        IMiniPool(miniPool).deposit(address(tokenParams.token), amount, user);
+        IMiniPool(miniPool).deposit(address(tokenParams.token), false, amount, user);
         assertEq(tokenBalance - amount, tokenParams.token.balanceOf(user));
         assertEq(tokenUserBalance + amount, aErc6909Token.balanceOf(user, tokenId));
         vm.stopPrank();
@@ -317,7 +317,9 @@ abstract contract MiniPoolFixtures is LendingPoolFixtures {
             minNrOfTokens,
             collateralTokenParams.token.balanceOf(address(this))
         );
-        IMiniPool(miniPool).deposit(address(collateralTokenParams.token), minNrOfTokens, user);
+        IMiniPool(miniPool).deposit(
+            address(collateralTokenParams.token), false, minNrOfTokens, user
+        );
 
         (,,,,, uint256 healthFactorBefore) = IMiniPool(miniPool).getUserAccountData(user);
         Balances memory balances;

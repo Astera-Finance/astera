@@ -464,7 +464,7 @@ contract MiniPoolConfiguratorTest is MiniPoolDepositBorrowTest {
         vars.dai.approve(address(vars.mp), vars.amount * 1e14);
         console.log("User balance: ", vars.dai.balanceOf(vars.user) / (10 ** 18));
         console.log("User depositAmount: ", vars.amount * 1e14 / (10 ** 18));
-        IMiniPool(vars.mp).deposit(address(vars.dai), vars.amount * 1e14, vars.user);
+        IMiniPool(vars.mp).deposit(address(vars.dai), false, vars.amount * 1e14, vars.user);
         vm.stopPrank();
 
         vars.flowLimiter = address(miniPoolContracts.flowLimiter);

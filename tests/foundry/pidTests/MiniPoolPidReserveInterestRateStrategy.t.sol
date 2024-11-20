@@ -315,7 +315,7 @@ contract MiniPoolPidReserveInterestRateStrategyTest is Common {
         vm.startPrank(user);
         asset.approve(address(miniPool), amount);
         console.log("Depositing to miniPool: %s", miniPool);
-        IMiniPool(miniPool).deposit(address(asset), amount, user);
+        IMiniPool(miniPool).deposit(address(asset), false, amount, user);
         vm.stopPrank();
         loggMiniPool(user, 0, address(asset));
         skip(DEFAULT_TIME_BEFORE_OP);

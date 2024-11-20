@@ -121,13 +121,13 @@ contract MiniPool is VersionedInitializable, IMiniPool, MiniPoolStorage {
      *   is a different wallet
      *
      */
-    function deposit(address asset, uint256 amount, address onBehalfOf)
+    function deposit(address asset, bool wrap, uint256 amount, address onBehalfOf)
         public
         override
         whenNotPaused
     {
         MiniPoolDepositLogic.deposit(
-            MiniPoolDepositLogic.DepositParams(asset, amount, onBehalfOf),
+            MiniPoolDepositLogic.DepositParams(asset, wrap, amount, onBehalfOf),
             _reserves,
             _usersConfig,
             _addressesProvider
@@ -215,7 +215,7 @@ contract MiniPool is VersionedInitializable, IMiniPool, MiniPoolStorage {
 
             vars.amountReceived = IERC20(asset).balanceOf(address(this));
             MiniPoolDepositLogic.internalDeposit(
-                MiniPoolDepositLogic.DepositParams(asset, vars.amountReceived, address(this)),
+                MiniPoolDepositLogic.DepositParams(asset, false, vars.amountReceived, address(this)),
                 _reserves,
                 _usersConfig,
                 _addressesProvider

@@ -151,13 +151,14 @@ interface IMiniPool {
      * @dev Deposits an `amount` of underlying asset into the reserve, receiving in return overlying aTokens.
      * - E.g. User deposits 100 USDC and gets in return 100 aUSDC
      * @param asset The address of the underlying asset to deposit
+     * @param wrap Convert the underlying in AToken from the lendingpool.
      * @param amount The amount to be deposited
      * @param onBehalfOf The address that will receive the aTokens, same as msg.sender if the user
      *   wants to receive them on his own wallet, or a different address if the beneficiary of aTokens
      *   is a different wallet
      *
      */
-    function deposit(address asset, uint256 amount, address onBehalfOf) external;
+    function deposit(address asset, bool wrap, uint256 amount, address onBehalfOf) external;
 
     /**
      * @dev Withdraws an `amount` of underlying asset from the reserve, burning the equivalent aTokens owned

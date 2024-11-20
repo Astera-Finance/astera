@@ -125,7 +125,7 @@ contract PausableFunctionsTest is Common {
             amount = erc20Tokens[idx].balanceOf(address(this));
             erc20Tokens[idx].approve(address(deployedContracts.lendingPool), amount);
             vm.expectRevert(bytes(Errors.LP_IS_PAUSED));
-            IMiniPool(miniPool).deposit(address(erc20Tokens[idx]), amount, address(this));
+            IMiniPool(miniPool).deposit(address(erc20Tokens[idx]), false, amount, address(this));
 
             vm.expectRevert(bytes(Errors.LP_IS_PAUSED));
             IMiniPool(miniPool).withdraw(address(erc20Tokens[idx]), amount, address(this));

@@ -19,6 +19,9 @@ import {UserConfiguration} from
     "../../../../../contracts/protocol/libraries/configuration/UserConfiguration.sol";
 import {MiniPoolValidationLogic} from "./MiniPoolValidationLogic.sol";
 import {MiniPoolReserveLogic} from "./MiniPoolReserveLogic.sol";
+import {ILendingPool} from "../../../../../contracts/interfaces/ILendingPool.sol";
+import {ATokenNonRebasing} from
+    "../../../../../contracts/protocol/tokenization/ERC20/ATokenNonRebasing.sol";
 
 /**
  * @title Deposit Logic library
@@ -41,6 +44,7 @@ library MiniPoolDepositLogic {
 
     struct DepositParams {
         address asset;
+        bool wrap;
         uint256 amount;
         address onBehalfOf;
     }
@@ -49,7 +53,7 @@ library MiniPoolDepositLogic {
         DepositParams memory params,
         mapping(address => DataTypes.MiniPoolReserveData) storage _reserves,
         mapping(address => DataTypes.UserConfigurationMap) storage _usersConfig,
-        IMiniPoolAddressesProvider
+        IMiniPoolAddressesProvider _addressesProvider
     ) external {
         DataTypes.MiniPoolReserveData storage reserve = _reserves[params.asset];
 
@@ -60,7 +64,18 @@ library MiniPoolDepositLogic {
         reserve.updateState();
         reserve.updateInterestRates(params.asset, params.amount, 0);
 
-        IERC20(params.asset).safeTransferFrom(msg.sender, aToken, params.amount);
+        if (params.wrap) {
+            address underlying = ATokenNonRebasing(params.asset).UNDERLYING_ASSET_ADDRESS();
+            address lendingPool = _addressesProvider.getLendingPool();
+            uint256 underlyingAmount =
+                ATokenNonRebasing(params.asset).convertToAssets(params.amount);
+
+            IERC20(underlying).safeTransferFrom(msg.sender, aToken, underlyingAmount);
+            IERC20(underlying).forceApprove(lendingPool, underlyingAmount);
+            ILendingPool(lendingPool).deposit(underlying, true, underlyingAmount, aToken);
+        } else {
+            IERC20(params.asset).safeTransferFrom(msg.sender, aToken, params.amount);
+        }
 
         bool isFirstDeposit = IAERC6909(reserve.aTokenAddress).mint(
             msg.sender, params.onBehalfOf, reserve.aTokenID, params.amount, reserve.liquidityIndex
