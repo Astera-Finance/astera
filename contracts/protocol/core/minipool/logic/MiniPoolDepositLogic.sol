@@ -44,13 +44,13 @@ library MiniPoolDepositLogic {
 
     struct DepositParams {
         address asset;
-        bool wrap;
         uint256 amount;
         address onBehalfOf;
     }
 
     function deposit(
         DepositParams memory params,
+        bool wrap,
         mapping(address => DataTypes.MiniPoolReserveData) storage _reserves,
         mapping(address => DataTypes.UserConfigurationMap) storage _usersConfig,
         IMiniPoolAddressesProvider _addressesProvider
@@ -64,7 +64,7 @@ library MiniPoolDepositLogic {
         reserve.updateState();
         reserve.updateInterestRates(params.asset, params.amount, 0);
 
-        if (params.wrap) {
+        if (wrap) {
             address underlying = ATokenNonRebasing(params.asset).UNDERLYING_ASSET_ADDRESS();
             address lendingPool = _addressesProvider.getLendingPool();
             uint256 underlyingAmount =

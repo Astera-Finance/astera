@@ -383,7 +383,7 @@ contract MiniPoolPidReserveInterestRateStrategyTest is Common {
     function repayMiniPool(address user, IERC20 asset, uint256 amount) internal {
         vm.startPrank(user);
         asset.approve(miniPool, amount);
-        IMiniPool(miniPool).repay(address(asset), amount, user);
+        IMiniPool(miniPool).repay(address(asset), false, amount, user);
         vm.stopPrank();
         loggMiniPool(user, 3, address(asset));
         skip(DEFAULT_TIME_BEFORE_OP);

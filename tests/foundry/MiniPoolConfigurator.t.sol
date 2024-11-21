@@ -503,7 +503,7 @@ contract MiniPoolConfiguratorTest is MiniPoolDepositBorrowTest {
 
         IERC20(vars.grainUSDC).approve(address(vars.mp), vars.amount * 94);
         console.log("Before repay: ");
-        IMiniPool(vars.mp).repay(address(vars.grainUSDC), vars.amount * 94, vars.user); // 47000 USDC
+        IMiniPool(vars.mp).repay(address(vars.grainUSDC), false, vars.amount * 94, vars.user); // 47000 USDC
         console.log("After repay: ");
 
         assertEq(vars.debtUSDC.balanceOf(vars.mp), 0);

@@ -172,7 +172,7 @@ contract MiniPoolRepayWithdrawTransferTest is MiniPoolDepositBorrowTest {
         balances.debtToken = aErc6909Token.balanceOf(user, 2000 + borrowOffset);
         balances.token = borrowParams.aToken.balanceOf(user);
         borrowParams.aToken.approve(address(miniPool), amount);
-        IMiniPool(miniPool).repay(address(borrowParams.aToken), amount, user);
+        IMiniPool(miniPool).repay(address(borrowParams.aToken), false, amount, user);
 
         console.log("Balance of total supply must be lower than before borrow");
         assertEq(
@@ -188,7 +188,7 @@ contract MiniPoolRepayWithdrawTransferTest is MiniPoolDepositBorrowTest {
         balances.debtToken = aErc6909Token.balanceOf(user, 2128 + borrowOffset);
         balances.token = borrowParams.token.balanceOf(user);
         borrowParams.token.approve(address(miniPool), amount);
-        IMiniPool(miniPool).repay(address(borrowParams.token), amount, user);
+        IMiniPool(miniPool).repay(address(borrowParams.token), false, amount, user);
         console.log("total supply: ", balances.totalSupply);
         console.log("debt token: ", balances.debtToken);
         console.log("token: ", balances.token);
@@ -262,7 +262,7 @@ contract MiniPoolRepayWithdrawTransferTest is MiniPoolDepositBorrowTest {
         console.log("Repaying...");
         vm.startPrank(user);
         borrowParams.aToken.approve(address(miniPool), amount);
-        IMiniPool(miniPool).repay(address(borrowParams.aToken), amount, user);
+        IMiniPool(miniPool).repay(address(borrowParams.aToken), false, amount, user);
 
         console.log("Balance of total supply must be lower than before borrow");
         assertEq(
@@ -559,6 +559,7 @@ contract MiniPoolRepayWithdrawTransferTest is MiniPoolDepositBorrowTest {
         /* Give lacking amount to user 1 */
         IMiniPool(miniPool).repay(
             address(wbtcParams.token),
+            false,
             aErc6909Token.balanceOf(users.user1, 2128 + WBTC_OFFSET),
             users.user1
         );
@@ -577,6 +578,7 @@ contract MiniPoolRepayWithdrawTransferTest is MiniPoolDepositBorrowTest {
         console.log("User2 Repaying...");
         IMiniPool(miniPool).repay(
             address(usdcParams.token),
+            false,
             aErc6909Token.balanceOf(users.user2, 2128 + USDC_OFFSET),
             users.user2
         );
@@ -750,6 +752,7 @@ contract MiniPoolRepayWithdrawTransferTest is MiniPoolDepositBorrowTest {
         console.log("User1 Repaying...");
         IMiniPool(miniPool).repay(
             address(wbtcParams.aToken),
+            false,
             aErc6909Token.balanceOf(users.user1, 2000 + WBTC_OFFSET),
             users.user1
         );
@@ -818,6 +821,7 @@ contract MiniPoolRepayWithdrawTransferTest is MiniPoolDepositBorrowTest {
         /* Give lacking amount to user */
         IMiniPool(miniPool).repay(
             address(usdcParams.aToken),
+            false,
             aErc6909Token.balanceOf(users.user2, 2000 + USDC_OFFSET),
             users.user2
         );
@@ -993,7 +997,7 @@ contract MiniPoolRepayWithdrawTransferTest is MiniPoolDepositBorrowTest {
         vm.startPrank(user2);
         uint256 balanceUsdcOwed = aErc6909Token.balanceOf(user2, 2000 + USDC_OFFSET);
         tokenParamsUsdc.aToken.approve(address(miniPool), balanceUsdcOwed);
-        IMiniPool(miniPool).repay(address(tokenParamsUsdc.aToken), 1, user2);
+        IMiniPool(miniPool).repay(address(tokenParamsUsdc.aToken), false, 1, user2);
         vm.stopPrank();
     }
 
@@ -1051,7 +1055,7 @@ contract MiniPoolRepayWithdrawTransferTest is MiniPoolDepositBorrowTest {
         vm.startPrank(user2);
         uint256 balanceUsdcOwed = aErc6909Token.balanceOf(user2, 2000 + USDC_OFFSET);
         tokenParamsUsdc.aToken.approve(address(miniPool), balanceUsdcOwed);
-        IMiniPool(miniPool).repay(address(tokenParamsUsdc.aToken), balanceUsdcOwed, user2);
+        IMiniPool(miniPool).repay(address(tokenParamsUsdc.aToken), false, balanceUsdcOwed, user2);
         vm.stopPrank();
 
         logMinipoolFlow(address(tokenParamsUsdc.token), user2);
@@ -1125,7 +1129,7 @@ contract MiniPoolRepayWithdrawTransferTest is MiniPoolDepositBorrowTest {
         vm.startPrank(user2);
         uint256 balanceUsdcOwed = aErc6909Token.balanceOf(user2, 2000 + USDC_OFFSET);
         tokenParamsUsdc.aToken.approve(address(miniPool), balanceUsdcOwed);
-        IMiniPool(miniPool).repay(address(tokenParamsUsdc.aToken), 5002e6, user2); // not enough liq to withdraw
+        IMiniPool(miniPool).repay(address(tokenParamsUsdc.aToken), false, 5002e6, user2); // not enough liq to withdraw
         vm.stopPrank();
 
         logMinipoolFlow(address(tokenParamsUsdc.token), user2);
@@ -1136,7 +1140,7 @@ contract MiniPoolRepayWithdrawTransferTest is MiniPoolDepositBorrowTest {
         assertEq(treasuryBalance, 0, "3");
 
         vm.startPrank(user2);
-        IMiniPool(miniPool).repay(address(tokenParamsUsdc.aToken), 3000e6, user2); // not enough liq to withdraw
+        IMiniPool(miniPool).repay(address(tokenParamsUsdc.aToken), false, 3000e6, user2); // not enough liq to withdraw
         vm.stopPrank();
 
         logMinipoolFlow(address(tokenParamsUsdc.token), user2);
@@ -1251,7 +1255,7 @@ contract MiniPoolRepayWithdrawTransferTest is MiniPoolDepositBorrowTest {
         vm.startPrank(user2);
         uint256 balanceUsdcOwed = aErc6909Token.balanceOf(user2, 2000 + USDC_OFFSET);
         tokenParamsUsdc.aToken.approve(address(miniPool), balanceUsdcOwed);
-        IMiniPool(miniPool).repay(address(tokenParamsUsdc.aToken), 1000e6, user2);
+        IMiniPool(miniPool).repay(address(tokenParamsUsdc.aToken), false, 1000e6, user2);
         vm.stopPrank();
 
         logMinipoolFlow(address(tokenParamsUsdc.token), address(tokenParamsUsdc.aToken), user2);
@@ -1270,7 +1274,7 @@ contract MiniPoolRepayWithdrawTransferTest is MiniPoolDepositBorrowTest {
         logMinipoolFlow(address(tokenParamsUsdc.token), address(tokenParamsUsdc.aToken), user2);
 
         vm.startPrank(user2);
-        IMiniPool(miniPool).repay(address(tokenParamsUsdc.aToken), 1000e6, user2);
+        IMiniPool(miniPool).repay(address(tokenParamsUsdc.aToken), false, 1000e6, user2);
         vm.stopPrank();
 
         logMinipoolFlow(address(tokenParamsUsdc.token), address(tokenParamsUsdc.aToken), user2);
@@ -1307,7 +1311,7 @@ contract MiniPoolRepayWithdrawTransferTest is MiniPoolDepositBorrowTest {
             logMinipoolFlow(address(tokenParamsUsdc.token), address(tokenParamsUsdc.aToken), user2);
 
             vm.startPrank(user2);
-            IMiniPool(miniPool).repay(address(tokenParamsUsdc.aToken), 1000e6, user2);
+            IMiniPool(miniPool).repay(address(tokenParamsUsdc.aToken), false, 1000e6, user2);
             vm.stopPrank();
             logMinipoolFlow(address(tokenParamsUsdc.token), address(tokenParamsUsdc.aToken), user2);
 
@@ -1315,7 +1319,7 @@ contract MiniPoolRepayWithdrawTransferTest is MiniPoolDepositBorrowTest {
         }
 
         vm.startPrank(user2);
-        IMiniPool(miniPool).repay(address(tokenParamsUsdc.aToken), 5000e6, user2);
+        IMiniPool(miniPool).repay(address(tokenParamsUsdc.aToken), false, 5000e6, user2);
         vm.stopPrank();
 
         logMinipoolFlow(address(tokenParamsUsdc.token), address(tokenParamsUsdc.aToken), user2);
@@ -1521,7 +1525,9 @@ contract MiniPoolRepayWithdrawTransferTest is MiniPoolDepositBorrowTest {
             vm.startPrank(user2);
             uint256 balanceUsdcOwed = aErc6909Token.balanceOf(user2, 2000 + USDC_OFFSET);
             tokenParamsUsdc.aToken.approve(address(miniPool), balanceUsdcOwed);
-            IMiniPool(miniPool).repay(address(tokenParamsUsdc.aToken), balanceUsdcOwed, user2);
+            IMiniPool(miniPool).repay(
+                address(tokenParamsUsdc.aToken), false, balanceUsdcOwed, user2
+            );
             vm.stopPrank();
 
             logMinipoolFlow(address(tokenParamsUsdc.token), address(tokenParamsUsdc.aToken), user2);
@@ -1550,7 +1556,7 @@ contract MiniPoolRepayWithdrawTransferTest is MiniPoolDepositBorrowTest {
         vm.startPrank(user2);
         uint256 balanceUsdcOwed = aErc6909Token.balanceOf(user2, 2000 + USDC_OFFSET);
         tokenParamsUsdc.aToken.approve(address(miniPool), balanceUsdcOwed);
-        IMiniPool(miniPool).repay(address(tokenParamsUsdc.aToken), 1000e6, user2);
+        IMiniPool(miniPool).repay(address(tokenParamsUsdc.aToken), false, 1000e6, user2);
         vm.stopPrank();
 
         skip(skipTime2);
@@ -1567,7 +1573,7 @@ contract MiniPoolRepayWithdrawTransferTest is MiniPoolDepositBorrowTest {
         );
 
         vm.startPrank(user2);
-        IMiniPool(miniPool).repay(address(tokenParamsUsdc.aToken), 7000e6, user2);
+        IMiniPool(miniPool).repay(address(tokenParamsUsdc.aToken), false, 7000e6, user2);
         vm.stopPrank();
 
         logMinipoolFlow(address(tokenParamsUsdc.token), address(tokenParamsUsdc.aToken), user2);
@@ -1666,7 +1672,9 @@ contract MiniPoolRepayWithdrawTransferTest is MiniPoolDepositBorrowTest {
             vm.startPrank(user2);
             uint256 balanceUsdcOwed = aErc6909Token.balanceOf(user2, 2000 + USDC_OFFSET);
             tokenParamsUsdc.aToken.approve(address(miniPool), balanceUsdcOwed);
-            IMiniPool(miniPool).repay(address(tokenParamsUsdc.aToken), balanceUsdcOwed, user2);
+            IMiniPool(miniPool).repay(
+                address(tokenParamsUsdc.aToken), false, balanceUsdcOwed, user2
+            );
             vm.stopPrank();
 
             logMinipoolFlow(address(tokenParamsUsdc.token), address(tokenParamsUsdc.aToken), user2);
@@ -1696,7 +1704,7 @@ contract MiniPoolRepayWithdrawTransferTest is MiniPoolDepositBorrowTest {
         vm.startPrank(user2);
         uint256 balanceUsdcOwed = aErc6909Token.balanceOf(user2, 2000 + USDC_OFFSET);
         tokenParamsUsdc.aToken.approve(address(miniPool), balanceUsdcOwed);
-        IMiniPool(miniPool).repay(address(tokenParamsUsdc.aToken), 1000e6, user2);
+        IMiniPool(miniPool).repay(address(tokenParamsUsdc.aToken), false, 1000e6, user2);
         vm.stopPrank();
 
         assertLe(
@@ -1712,7 +1720,7 @@ contract MiniPoolRepayWithdrawTransferTest is MiniPoolDepositBorrowTest {
         );
 
         vm.startPrank(user2);
-        IMiniPool(miniPool).repay(address(tokenParamsUsdc.aToken), 5000e6, user2);
+        IMiniPool(miniPool).repay(address(tokenParamsUsdc.aToken), false, 5000e6, user2);
         vm.stopPrank();
 
         logMinipoolFlow(address(tokenParamsUsdc.token), address(tokenParamsUsdc.aToken), user2);
@@ -1811,7 +1819,9 @@ contract MiniPoolRepayWithdrawTransferTest is MiniPoolDepositBorrowTest {
             vm.startPrank(user2);
             uint256 balanceUsdcOwed = aErc6909Token.balanceOf(user2, 2000 + USDC_OFFSET);
             tokenParamsUsdc.aToken.approve(address(miniPool), balanceUsdcOwed);
-            IMiniPool(miniPool).repay(address(tokenParamsUsdc.aToken), balanceUsdcOwed, user2);
+            IMiniPool(miniPool).repay(
+                address(tokenParamsUsdc.aToken), false, balanceUsdcOwed, user2
+            );
             vm.stopPrank();
 
             logMinipoolFlow(address(tokenParamsUsdc.token), address(tokenParamsUsdc.aToken), user2);
@@ -1841,7 +1851,7 @@ contract MiniPoolRepayWithdrawTransferTest is MiniPoolDepositBorrowTest {
         vm.startPrank(user2);
         uint256 balanceUsdcOwed = aErc6909Token.balanceOf(user2, 2000 + USDC_OFFSET);
         tokenParamsUsdc.aToken.approve(address(miniPool), balanceUsdcOwed);
-        IMiniPool(miniPool).repay(address(tokenParamsUsdc.aToken), 6000e6, user2);
+        IMiniPool(miniPool).repay(address(tokenParamsUsdc.aToken), false, 6000e6, user2);
         vm.stopPrank();
 
         // vm.startPrank(user2);

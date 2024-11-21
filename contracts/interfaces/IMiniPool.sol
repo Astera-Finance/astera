@@ -197,6 +197,7 @@ interface IMiniPool {
      * @notice Repays a borrowed `amount` on a specific reserve, burning the equivalent debt tokens owned
      * - E.g. User repays 100 USDC, burning 100 variable debt tokens of the `onBehalfOf` address
      * @param asset The address of the borrowed underlying asset previously borrowed
+     * @param wrap Convert the underlying in AToken from the lendingpool.
      * @param amount The amount to repay
      * - Send the value type(uint256).max in order to repay the whole debt for `asset`
      * @param onBehalfOf Address of the user who will get his debt reduced/removed. Should be the address of the
@@ -205,7 +206,9 @@ interface IMiniPool {
      * @return The final amount repaid
      *
      */
-    function repay(address asset, uint256 amount, address onBehalfOf) external returns (uint256);
+    function repay(address asset, bool wrap, uint256 amount, address onBehalfOf)
+        external
+        returns (uint256);
 
     /**
      * @dev Allows depositors to enable/disable a specific deposited asset as collateral

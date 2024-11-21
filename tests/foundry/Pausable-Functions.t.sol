@@ -134,7 +134,7 @@ contract PausableFunctionsTest is Common {
             IMiniPool(miniPool).borrow(address(erc20Tokens[idx]), false, amount, address(this));
 
             vm.expectRevert(bytes(Errors.LP_IS_PAUSED));
-            IMiniPool(miniPool).repay(address(erc20Tokens[idx]), amount, address(this));
+            IMiniPool(miniPool).repay(address(erc20Tokens[idx]), false, amount, address(this));
 
             vm.expectRevert(bytes(Errors.LP_IS_PAUSED));
             IMiniPool(miniPool).liquidationCall(

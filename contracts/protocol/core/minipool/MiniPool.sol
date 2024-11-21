@@ -128,7 +128,8 @@ contract MiniPool is VersionedInitializable, IMiniPool, MiniPoolStorage {
         whenNotPaused
     {
         MiniPoolDepositLogic.deposit(
-            MiniPoolDepositLogic.DepositParams(asset, wrap, amount, onBehalfOf),
+            MiniPoolDepositLogic.DepositParams(asset, amount, onBehalfOf),
+            wrap,
             _reserves,
             _usersConfig,
             _addressesProvider
@@ -218,7 +219,7 @@ contract MiniPool is VersionedInitializable, IMiniPool, MiniPoolStorage {
 
             vars.amountReceived = IERC20(asset).balanceOf(address(this));
             MiniPoolDepositLogic.internalDeposit(
-                MiniPoolDepositLogic.DepositParams(asset, false, vars.amountReceived, address(this)),
+                MiniPoolDepositLogic.DepositParams(asset, vars.amountReceived, address(this)),
                 _reserves,
                 _usersConfig,
                 _addressesProvider
@@ -250,6 +251,7 @@ contract MiniPool is VersionedInitializable, IMiniPool, MiniPoolStorage {
      * @notice Repays a borrowed `amount` on a specific reserve, burning the equivalent debt tokens owned
      * - E.g. User repays 100 USDC, burning 100 variable debt tokens of the `onBehalfOf` address
      * @param asset The address of the borrowed underlying asset previously borrowed
+     * @param wrap Convert the underlying in AToken from the lendingpool.
      * @param amount The amount to repay
      * - Send the value type(uint256).max in order to repay the whole debt for `asset`
      * @param onBehalfOf Address of the user who will get his debt reduced/removed. Should be the address of the
@@ -258,7 +260,7 @@ contract MiniPool is VersionedInitializable, IMiniPool, MiniPoolStorage {
      * @return The final amount repaid
      *
      */
-    function repay(address asset, uint256 amount, address onBehalfOf)
+    function repay(address asset, bool wrap, uint256 amount, address onBehalfOf)
         external
         override
         whenNotPaused
@@ -266,6 +268,7 @@ contract MiniPool is VersionedInitializable, IMiniPool, MiniPoolStorage {
     {
         uint256 repayAmount = MiniPoolBorrowLogic.repay(
             MiniPoolBorrowLogic.repayParams(asset, amount, onBehalfOf, _addressesProvider),
+            wrap,
             _reserves,
             _usersConfig
         );
