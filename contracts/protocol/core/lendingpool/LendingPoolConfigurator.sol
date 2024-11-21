@@ -117,6 +117,7 @@ contract LendingPoolConfigurator is VersionedInitializable, ILendingPoolConfigur
         currentConfig.setActive(true);
         currentConfig.setFrozen(false);
         currentConfig.setFlashLoanEnabled(true);
+        currentConfig.setReserveType(input.reserveType);
 
         pool.setConfiguration(input.underlyingAsset, input.reserveType, currentConfig.data);
 

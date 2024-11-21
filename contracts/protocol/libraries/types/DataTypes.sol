@@ -66,7 +66,8 @@ library DataTypes {
         //bit 59: Flashloan is enabled
         //bit 60-75: reserve factor
         //bit 76-83: deposit cap
-        //bit 84-255: unused
+        //bit 84: reserve type
+        //bit 85-255: unused
         uint256 data;
     }
 

@@ -39,15 +39,27 @@ library ValidationLogic {
      */
     function validateDeposit(DataTypes.ReserveData storage reserve, uint256 amount) internal view {
         (bool isActive, bool isFrozen,) = reserve.configuration.getFlags();
+        
         uint256 depositCapExponent = reserve.configuration.getDepositCap();
         uint256 depositCap =
             depositCapExponent != 0 ? 10 ** (depositCapExponent) : type(uint256).max;
         uint256 total = IERC20(reserve.aTokenAddress).totalSupply();
         uint256 newTotal = total + amount;
+        require(newTotal < depositCap, Errors.VL_DEPOSIT_CAP_REACHED);
+
+        /// TODO fix deposit cap + in MiniPoolValidationLogic.sol and in ValidationLogic.sol
+        // uint256 supplyCap = reserve.configuration.getDepositCap();
+        // require(
+        // supplyCap == 0 ||
+        //     ((IAToken(reserve.aTokenAddress).scaledTotalSupply() +
+        //     uint256(reserve.accruedToTreasury)).rayMul(reserve.nextLiquidityIndex) + amount) <=
+        //     supplyCap * (10 ** reserve.configuration.getDecimals()),
+        // Errors.VL_DEPOSIT_CAP_REACHED
+        // );
+
         require(amount != 0, Errors.VL_INVALID_AMOUNT);
         require(isActive, Errors.VL_NO_ACTIVE_RESERVE);
         require(!isFrozen, Errors.VL_RESERVE_FROZEN);
-        require(newTotal < depositCap, Errors.VL_DEPOSIT_CAP_REACHED);
     }
 
     /**

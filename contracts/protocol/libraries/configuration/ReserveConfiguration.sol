@@ -32,6 +32,8 @@ library ReserveConfiguration {
         0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF0000FFFFFFFFFFFFFFFFFFF;
     uint256 internal constant DEPOSIT_CAP_MASK =
         0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF00FFFFFFFFFFFFFFFFFFFFFFF;
+    uint256 internal constant RESERVE_TYPE_MASK =
+        0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFEFFFFFFFFFFFFFFFFFFFFFFFFF;
 
     /// @dev For the LTV, the start bit is 0 (up to 15), hence no bitshifting is needed
     uint256 internal constant LIQUIDATION_THRESHOLD_START_BIT_POSITION = 16;
@@ -44,6 +46,7 @@ library ReserveConfiguration {
     uint256 internal constant COD3X_RESERVE_FACTOR_START_BIT_POSITION = 60;
     uint256 internal constant MINIPOOL_OWNER_FACTOR_START_BIT_POSITION = 76;
     uint256 internal constant DEPOSIT_CAP_START_BIT_POSITION = 92;
+    uint256 internal constant RESERVE_TYPE_START_BIT_POSITION = 100;
 
     uint256 internal constant MAX_VALID_LTV = 65535;
     uint256 internal constant MAX_VALID_LIQUIDATION_THRESHOLD = 65535;
@@ -321,6 +324,19 @@ library ReserveConfiguration {
         returns (uint256)
     {
         return (self.data & ~DEPOSIT_CAP_MASK) >> DEPOSIT_CAP_START_BIT_POSITION;
+    }
+
+    function setReserveType(DataTypes.ReserveConfigurationMap memory self, bool reserveType) internal pure {
+        self.data =
+            (self.data & RESERVE_TYPE_MASK) | (uint256(reserveType ? 1 : 0) << RESERVE_TYPE_START_BIT_POSITION);
+    }
+
+    function getReserveType(DataTypes.ReserveConfigurationMap storage self)
+        internal
+        view
+        returns (bool)
+    {
+        return (self.data & ~RESERVE_TYPE_MASK) != 0;
     }
 
     /**
