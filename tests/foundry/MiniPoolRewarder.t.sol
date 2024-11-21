@@ -324,7 +324,7 @@ contract MiniPoolRewarderTest is Common {
         );
 
         vm.prank(user3);
-        IMiniPool(miniPool).borrow(address(aTokensWrapper[2]), 50 ether, user3);
+        IMiniPool(miniPool).borrow(address(aTokensWrapper[2]), false, 50 ether, user3);
         vm.warp(block.timestamp + 100);
         vm.roll(block.number + 1);
 
@@ -426,7 +426,7 @@ contract MiniPoolRewarderTest is Common {
         );
 
         vm.prank(user3);
-        IMiniPool(miniPool).borrow(address(aTokensWrapper[2]), 50 ether, user3);
+        IMiniPool(miniPool).borrow(address(aTokensWrapper[2]), false, 50 ether, user3);
         vm.warp(block.timestamp + 100);
         vm.roll(block.number + 1);
 

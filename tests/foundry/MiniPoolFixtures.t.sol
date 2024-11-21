@@ -204,7 +204,7 @@ abstract contract MiniPoolFixtures is LendingPoolFixtures {
             balances.totalSupply = aErc6909Token.scaledTotalSupply(2000 + borrowOffset);
             balances.debtToken = aErc6909Token.balanceOf(user, 2000 + borrowOffset);
             balances.token = borrowTokenParams.aToken.balanceOf(user);
-            IMiniPool(miniPool).borrow(address(borrowTokenParams.aToken), amount, user);
+            IMiniPool(miniPool).borrow(address(borrowTokenParams.aToken), false, amount, user);
             console.log("Total supply of debtAToken must be greater than before borrow");
             assertEq(
                 aErc6909Token.scaledTotalSupply(2000 + borrowOffset), balances.totalSupply + amount
@@ -221,7 +221,7 @@ abstract contract MiniPoolFixtures is LendingPoolFixtures {
             balances.totalSupply = aErc6909Token.scaledTotalSupply(2128 + borrowOffset);
             balances.debtToken = aErc6909Token.balanceOf(user, 2128 + borrowOffset);
             balances.token = borrowTokenParams.token.balanceOf(user);
-            IMiniPool(miniPool).borrow(address(borrowTokenParams.token), amount, user);
+            IMiniPool(miniPool).borrow(address(borrowTokenParams.token), false, amount, user);
             console.log("Balance of debtToken must be greater than before borrow");
             assertEq(
                 aErc6909Token.scaledTotalSupply(2128 + borrowOffset), balances.totalSupply + amount
@@ -327,7 +327,7 @@ abstract contract MiniPoolFixtures is LendingPoolFixtures {
         balances.totalSupply = aErc6909Token.scaledTotalSupply(2000 + borrowOffset);
         balances.debtToken = aErc6909Token.balanceOf(user, 2000 + borrowOffset);
         balances.token = borrowTokenParams.aToken.balanceOf(user);
-        IMiniPool(miniPool).borrow(address(borrowTokenParams.aToken), amount, user);
+        IMiniPool(miniPool).borrow(address(borrowTokenParams.aToken), false, amount, user);
         console.log("Total supply of debtAToken must be greater than before borrow");
         assertEq(
             aErc6909Token.scaledTotalSupply(2000 + borrowOffset), balances.totalSupply + amount

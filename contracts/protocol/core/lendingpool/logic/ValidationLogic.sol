@@ -39,7 +39,7 @@ library ValidationLogic {
      */
     function validateDeposit(DataTypes.ReserveData storage reserve, uint256 amount) internal view {
         (bool isActive, bool isFrozen,) = reserve.configuration.getFlags();
-        
+
         uint256 depositCapExponent = reserve.configuration.getDepositCap();
         uint256 depositCap =
             depositCapExponent != 0 ? 10 ** (depositCapExponent) : type(uint256).max;

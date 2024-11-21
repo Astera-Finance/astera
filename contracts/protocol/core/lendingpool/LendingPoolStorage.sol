@@ -22,7 +22,7 @@ contract LendingPoolStorage {
     ILendingPoolAddressesProvider internal _addressesProvider;
 
     mapping(address => mapping(bool => DataTypes.ReserveData)) internal _reserves;
-    
+
     mapping(address => DataTypes.UserConfigurationMap) internal _usersConfig;
 
     // the list of the available reserves, structured as a mapping for gas savings reasons

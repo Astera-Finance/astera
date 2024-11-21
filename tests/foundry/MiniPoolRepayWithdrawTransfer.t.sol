@@ -526,13 +526,13 @@ contract MiniPoolRepayWithdrawTransferTest is MiniPoolDepositBorrowTest {
 
         console.log("----------------USER1 BORROW---------------");
         vm.startPrank(users.user1);
-        IMiniPool(miniPool).borrow(address(wbtcParams.token), amount2 / 4, users.user1);
+        IMiniPool(miniPool).borrow(address(wbtcParams.token), false, amount2 / 4, users.user1);
         assertEq(wbtcParams.token.balanceOf(users.user1), amount2 / 4);
         vm.stopPrank();
 
         console.log("----------------USER2 BORROW---------------");
         vm.startPrank(users.user2);
-        IMiniPool(miniPool).borrow(address(usdcParams.token), amount1 / 4, users.user2);
+        IMiniPool(miniPool).borrow(address(usdcParams.token), false, amount1 / 4, users.user2);
         assertEq(usdcParams.token.balanceOf(users.user2), amount1 / 4);
         vm.stopPrank();
 
@@ -702,12 +702,12 @@ contract MiniPoolRepayWithdrawTransferTest is MiniPoolDepositBorrowTest {
 
         console.log("----------------USER1 BORROWs---------------");
         vm.startPrank(users.user1);
-        IMiniPool(miniPool).borrow(address(wbtcParams.aToken), amount2 / 4, users.user1);
+        IMiniPool(miniPool).borrow(address(wbtcParams.aToken), false, amount2 / 4, users.user1);
         vm.stopPrank();
 
         console.log("----------------PROVIDER BORROWs---------------");
         vm.prank(users.user2);
-        IMiniPool(miniPool).borrow(address(usdcParams.aToken), amount1 / 10, users.user2);
+        IMiniPool(miniPool).borrow(address(usdcParams.aToken), false, amount1 / 10, users.user2);
 
         console.log("0. Balance aToken: ", aErc6909Token.balanceOf(users.user1, 1000 + USDC_OFFSET));
         console.log(
@@ -986,7 +986,7 @@ contract MiniPoolRepayWithdrawTransferTest is MiniPoolDepositBorrowTest {
         );
 
         vm.prank(user2);
-        IMiniPool(miniPool).borrow(address(tokenParamsUsdc.aToken), 19_999e6, user2);
+        IMiniPool(miniPool).borrow(address(tokenParamsUsdc.aToken), false, 19_999e6, user2);
 
         skip(100 days);
 
@@ -1040,7 +1040,7 @@ contract MiniPoolRepayWithdrawTransferTest is MiniPoolDepositBorrowTest {
         );
 
         vm.prank(user2);
-        IMiniPool(miniPool).borrow(address(tokenParamsUsdc.aToken), 15_000e6, user2);
+        IMiniPool(miniPool).borrow(address(tokenParamsUsdc.aToken), false, 15_000e6, user2);
 
         logMinipoolFlow(address(tokenParamsUsdc.token), user2);
 
@@ -1114,7 +1114,7 @@ contract MiniPoolRepayWithdrawTransferTest is MiniPoolDepositBorrowTest {
         );
 
         vm.prank(user2);
-        IMiniPool(miniPool).borrow(address(tokenParamsUsdc.aToken), 15_000e6, user2);
+        IMiniPool(miniPool).borrow(address(tokenParamsUsdc.aToken), false, 15_000e6, user2);
 
         logMinipoolFlow(address(tokenParamsUsdc.token), user2);
 
@@ -1231,7 +1231,7 @@ contract MiniPoolRepayWithdrawTransferTest is MiniPoolDepositBorrowTest {
         );
 
         vm.prank(user2);
-        IMiniPool(miniPool).borrow(address(tokenParamsUsdc.aToken), 15_000e6, user2);
+        IMiniPool(miniPool).borrow(address(tokenParamsUsdc.aToken), false, 15_000e6, user2);
 
         logMinipoolFlow(address(tokenParamsUsdc.token), address(tokenParamsUsdc.aToken), user2);
 
@@ -1289,7 +1289,7 @@ contract MiniPoolRepayWithdrawTransferTest is MiniPoolDepositBorrowTest {
             );
 
             vm.startPrank(user2);
-            IMiniPool(miniPool).borrow(address(tokenParamsUsdc.aToken), 1000e6, user2);
+            IMiniPool(miniPool).borrow(address(tokenParamsUsdc.aToken), false, 1000e6, user2);
             vm.stopPrank();
 
             skip(5 days - 1 minutes);
@@ -1392,7 +1392,7 @@ contract MiniPoolRepayWithdrawTransferTest is MiniPoolDepositBorrowTest {
         );
 
         vm.prank(user2);
-        IMiniPool(miniPool).borrow(address(tokenParamsUsdc.aToken), 15_000e6, user2);
+        IMiniPool(miniPool).borrow(address(tokenParamsUsdc.aToken), false, 15_000e6, user2);
 
         logMinipoolFlow(address(tokenParamsUsdc.token), address(tokenParamsUsdc.aToken), user2);
 
@@ -1501,7 +1501,7 @@ contract MiniPoolRepayWithdrawTransferTest is MiniPoolDepositBorrowTest {
 
         {
             vm.prank(user2);
-            IMiniPool(miniPool).borrow(address(tokenParamsUsdc.aToken), 15_000e6, user2);
+            IMiniPool(miniPool).borrow(address(tokenParamsUsdc.aToken), false, 15_000e6, user2);
 
             logMinipoolFlow(address(tokenParamsUsdc.token), address(tokenParamsUsdc.aToken), user2);
 
@@ -1529,7 +1529,7 @@ contract MiniPoolRepayWithdrawTransferTest is MiniPoolDepositBorrowTest {
 
         mockMinipoolReserveInterestRateStrategy.setRates(1e27, 0);
         vm.prank(user2);
-        IMiniPool(miniPool).borrow(address(tokenParamsUsdc.aToken), 15_000e6, user2);
+        IMiniPool(miniPool).borrow(address(tokenParamsUsdc.aToken), false, 15_000e6, user2);
 
         logMinipoolFlow(address(tokenParamsUsdc.token), address(tokenParamsUsdc.aToken), user2);
 
@@ -1646,7 +1646,7 @@ contract MiniPoolRepayWithdrawTransferTest is MiniPoolDepositBorrowTest {
         // set up the remainder to test if the rounding error is fixed.
         {
             vm.prank(user2);
-            IMiniPool(miniPool).borrow(address(tokenParamsUsdc.aToken), 15_000e6, user2);
+            IMiniPool(miniPool).borrow(address(tokenParamsUsdc.aToken), false, 15_000e6, user2);
 
             logMinipoolFlow(address(tokenParamsUsdc.token), address(tokenParamsUsdc.aToken), user2);
 
@@ -1675,7 +1675,7 @@ contract MiniPoolRepayWithdrawTransferTest is MiniPoolDepositBorrowTest {
         mockMinipoolReserveInterestRateStrategy.setRates(1e27, 0);
 
         vm.prank(user2);
-        IMiniPool(miniPool).borrow(address(tokenParamsUsdc.aToken), 15_000e6, user2);
+        IMiniPool(miniPool).borrow(address(tokenParamsUsdc.aToken), false, 15_000e6, user2);
 
         logMinipoolFlow(address(tokenParamsUsdc.token), address(tokenParamsUsdc.aToken), user2);
 
@@ -1791,7 +1791,7 @@ contract MiniPoolRepayWithdrawTransferTest is MiniPoolDepositBorrowTest {
         // set up the remainder to test if the rounding error is fixed.
         {
             vm.prank(user2);
-            IMiniPool(miniPool).borrow(address(tokenParamsUsdc.aToken), 15_000e6, user2);
+            IMiniPool(miniPool).borrow(address(tokenParamsUsdc.aToken), false, 15_000e6, user2);
 
             logMinipoolFlow(address(tokenParamsUsdc.token), address(tokenParamsUsdc.aToken), user2);
 
@@ -1820,7 +1820,7 @@ contract MiniPoolRepayWithdrawTransferTest is MiniPoolDepositBorrowTest {
         mockMinipoolReserveInterestRateStrategy.setRates(1e27, 0);
 
         vm.prank(user2);
-        IMiniPool(miniPool).borrow(address(tokenParamsUsdc.aToken), 15_000e6, user2);
+        IMiniPool(miniPool).borrow(address(tokenParamsUsdc.aToken), false, 15_000e6, user2);
 
         logMinipoolFlow(address(tokenParamsUsdc.token), address(tokenParamsUsdc.aToken), user2);
 

@@ -177,6 +177,7 @@ contract MiniPool is VersionedInitializable, IMiniPool, MiniPoolStorage {
      * - E.g. User borrows 100 USDC passing as `onBehalfOf` his own address, receiving the 100 USDC in his wallet
      *   and 100 variable debt tokens
      * @param asset The address of the underlying asset to borrow
+     * @param unwrap If true, and `asset` is an aToken, `to` will directly receive the underlying.
      * @param amount The amount to be borrowed
      * @param onBehalfOf Address of the user who will receive the debt. Should be the address of the borrower itself
      * calling the function if he wants to borrow against his own collateral, or the address of the credit delegator
@@ -184,7 +185,7 @@ contract MiniPool is VersionedInitializable, IMiniPool, MiniPoolStorage {
      *
      */
 
-    function borrow(address asset, uint256 amount, address onBehalfOf)
+    function borrow(address asset, bool unwrap, uint256 amount, address onBehalfOf)
         external
         override
         whenNotPaused
@@ -238,6 +239,7 @@ contract MiniPool is VersionedInitializable, IMiniPool, MiniPoolStorage {
                 _addressesProvider,
                 _reservesCount
             ),
+            unwrap,
             _reserves,
             _reservesList,
             _usersConfig

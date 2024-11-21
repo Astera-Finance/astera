@@ -157,6 +157,7 @@ library MiniPoolFlashLoanLogic {
                         flashLoanParams.addressesProvider,
                         flashLoanParams.reservesCount
                     ),
+                    false,
                     reserves,
                     reservesList,
                     usersConfig

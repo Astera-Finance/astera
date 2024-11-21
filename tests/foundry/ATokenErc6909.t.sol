@@ -349,7 +349,7 @@ contract ATokenErc6909Test is Common {
             "1. underlyingToken after deposit %s ",
             tokenParams.token.balanceOf(address(tokenParams.aToken))
         );
-        IMiniPool(miniPool).borrow(address(tokenParams.aToken), maxValToBurn, address(this));
+        IMiniPool(miniPool).borrow(address(tokenParams.aToken), false, maxValToBurn, address(this));
         skip(timeDiff);
         index = IMiniPool(miniPool).getReserveNormalizedIncome(address(tokenParams.aToken));
         console.log(">>>Index: ", index);
@@ -528,7 +528,7 @@ contract ATokenErc6909Test is Common {
             tokenParams.token.balanceOf(address(tokenParams.aToken))
         );
 
-        IMiniPool(miniPool).borrow(address(tokenParams.aToken), valToTransfer, address(this));
+        IMiniPool(miniPool).borrow(address(tokenParams.aToken), false, valToTransfer, address(this));
         vm.startPrank(miniPool);
         console.log("Balance before: ", aErc6909Token.balanceOf(address(this), testParams.id));
 
@@ -852,7 +852,7 @@ contract ATokenErc6909Test is Common {
         );
         index = IMiniPool(miniPool).getReserveNormalizedIncome(address(tokenParams.aToken));
         console.log("_____ index: ", index);
-        IMiniPool(miniPool).borrow(address(tokenParams.aToken), valToTransfer, address(this));
+        IMiniPool(miniPool).borrow(address(tokenParams.aToken), false, valToTransfer, address(this));
 
         index = IMiniPool(miniPool).getReserveNormalizedIncome(address(tokenParams.aToken));
         console.log("______ index: ", index);

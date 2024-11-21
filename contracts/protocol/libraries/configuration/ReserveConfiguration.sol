@@ -326,9 +326,12 @@ library ReserveConfiguration {
         return (self.data & ~DEPOSIT_CAP_MASK) >> DEPOSIT_CAP_START_BIT_POSITION;
     }
 
-    function setReserveType(DataTypes.ReserveConfigurationMap memory self, bool reserveType) internal pure {
-        self.data =
-            (self.data & RESERVE_TYPE_MASK) | (uint256(reserveType ? 1 : 0) << RESERVE_TYPE_START_BIT_POSITION);
+    function setReserveType(DataTypes.ReserveConfigurationMap memory self, bool reserveType)
+        internal
+        pure
+    {
+        self.data = (self.data & RESERVE_TYPE_MASK)
+            | (uint256(reserveType ? 1 : 0) << RESERVE_TYPE_START_BIT_POSITION);
     }
 
     function getReserveType(DataTypes.ReserveConfigurationMap storage self)

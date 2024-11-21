@@ -170,6 +170,7 @@ library MiniPoolBorrowLogic {
 
     function executeBorrow(
         ExecuteBorrowParams memory vars,
+        bool unwrap,
         mapping(address => DataTypes.MiniPoolReserveData) storage reserves,
         mapping(uint256 => address) storage reservesList,
         mapping(address => DataTypes.UserConfigurationMap) storage usersConfig
@@ -218,7 +219,7 @@ library MiniPoolBorrowLogic {
 
         if (vars.releaseUnderlying) {
             IAERC6909(vars.aTokenAddress).transferUnderlyingTo(
-                vars.user, reserve.aTokenID, vars.amount, false
+                vars.user, reserve.aTokenID, vars.amount, unwrap
             );
         }
 

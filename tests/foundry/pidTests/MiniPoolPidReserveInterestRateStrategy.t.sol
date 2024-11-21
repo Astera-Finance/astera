@@ -334,7 +334,7 @@ contract MiniPoolPidReserveInterestRateStrategyTest is Common {
     function borrowMiniPool(address user, IERC20 asset, uint256 amount) internal {
         console.log("Borrowing MiniPool");
         vm.startPrank(user);
-        IMiniPool(miniPool).borrow(address(asset), amount, user);
+        IMiniPool(miniPool).borrow(address(asset), false, amount, user);
         vm.stopPrank();
         loggMiniPool(user, 1, address(asset));
         skip(DEFAULT_TIME_BEFORE_OP);

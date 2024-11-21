@@ -257,7 +257,7 @@ contract MiniPoolConfiguratorTest is MiniPoolDepositBorrowTest {
             );
 
             vm.expectRevert(bytes(Errors.VL_COLLATERAL_BALANCE_IS_0));
-            IMiniPool(miniPool).borrow(address(borrowTokenParams.token), amount, user);
+            IMiniPool(miniPool).borrow(address(borrowTokenParams.token), false, amount, user);
 
             vm.stopPrank();
         }
@@ -363,10 +363,10 @@ contract MiniPoolConfiguratorTest is MiniPoolDepositBorrowTest {
         vm.startPrank(user);
         uint256 tokenBalanceBefore = aErc6909Token.balanceOf(address(treasury), 1128 + borrowOffset);
         console.log("BORROW 1 token: %s", address(borrowTokenParams.token));
-        IMiniPool(miniPool).borrow(address(borrowTokenParams.token), amount / 3, user);
+        IMiniPool(miniPool).borrow(address(borrowTokenParams.token), false, amount / 3, user);
         skip(100 days);
         console.log("BORROW 2");
-        IMiniPool(miniPool).borrow(address(borrowTokenParams.token), amount / 3, user);
+        IMiniPool(miniPool).borrow(address(borrowTokenParams.token), false, amount / 3, user);
         // console.log("Part of borrow aToken balance shall be transfered to the treasury");
         // assertGt(aErc6909Token.balanceOf(address(deployedContracts.treasury), 1000 + borrowOffset), atokenBalanceBefore);
         console.log("Part of borrow token balance shall be transfered to the treasury");
@@ -473,7 +473,7 @@ contract MiniPoolConfiguratorTest is MiniPoolDepositBorrowTest {
         miniPoolContracts.flowLimiter.setFlowLimit(address(vars.usdc), vars.mp, vars.amount * 100); // 50000 USDC
 
         vm.startPrank(vars.user);
-        IMiniPool(vars.mp).borrow(address(vars.grainUSDC), vars.amount * 94, vars.user); // 47000 USDC
+        IMiniPool(vars.mp).borrow(address(vars.grainUSDC), false, vars.amount * 94, vars.user); // 47000 USDC
         assertEq(vars.debtUSDC.balanceOf(vars.mp), vars.amount * 94);
         assertEq(
             IVariableDebtToken(address(vars.debtUSDC)).scaledBalanceOf(vars.mp), vars.amount * 94
