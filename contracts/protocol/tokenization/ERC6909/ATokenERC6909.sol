@@ -16,6 +16,9 @@ import {IERC20} from "../../../../contracts/dependencies/openzeppelin/contracts/
 import {IMiniPoolAddressesProvider} from
     "../../../../contracts/interfaces/IMiniPoolAddressesProvider.sol";
 import {IMiniPool} from "../../../../contracts/interfaces/IMiniPool.sol";
+import {ATokenNonRebasing} from
+    "../../../../contracts/protocol/tokenization/ERC20/ATokenNonRebasing.sol";
+
 import "openzeppelin-contracts/contracts/utils/Strings.sol";
 
 /**
@@ -255,9 +258,17 @@ contract ATokenERC6909 is IncentivizedERC6909, VersionedInitializable {
         return true;
     }
 
-    function transferUnderlyingTo(address to, uint256 id, uint256 amount) public {
+    function transferUnderlyingTo(address to, uint256 id, uint256 amount, bool unwrap) public {
         require(msg.sender == address(POOL), Errors.CT_CALLER_MUST_BE_LENDING_POOL);
-        IERC20(_underlyingAssetAddresses[id]).transfer(to, amount);
+
+        if (unwrap) {
+            ATokenNonRebasing asset = ATokenNonRebasing(_underlyingAssetAddresses[id]);
+            ILendingPool(_addressesProvider.getLendingPool()).withdraw(
+                asset.UNDERLYING_ASSET_ADDRESS(), true, asset.convertToAssets(amount), to
+            );
+        } else {
+            IERC20(_underlyingAssetAddresses[id]).transfer(to, amount);
+        }
     }
 
     function getScaledUserBalanceAndSupply(address user, uint256 id)
@@ -407,6 +418,7 @@ contract ATokenERC6909 is IncentivizedERC6909, VersionedInitializable {
         address receiverOfUnderlying,
         uint256 id,
         uint256 amount,
+        bool unwrap,
         uint256 index
     ) external {
         require(msg.sender == address(POOL), Errors.CT_CALLER_MUST_BE_LENDING_POOL);
@@ -418,7 +430,7 @@ contract ATokenERC6909 is IncentivizedERC6909, VersionedInitializable {
             uint256 amountScaled = amount.rayDiv(index);
             require(amountScaled != 0, Errors.CT_INVALID_BURN_AMOUNT);
             _burn(user, id, amountScaled);
-            transferUnderlyingTo(receiverOfUnderlying, id, amount);
+            transferUnderlyingTo(receiverOfUnderlying, id, amount, unwrap);
         }
     }
 

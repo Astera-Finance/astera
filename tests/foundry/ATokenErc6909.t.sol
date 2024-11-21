@@ -79,13 +79,13 @@ contract ATokenErc6909Test is Common {
             vm.expectRevert(bytes(Errors.CT_CALLER_MUST_BE_LENDING_POOL));
             aErc6909Token.mintToCod3xTreasury(1, 1, 1);
             vm.expectRevert(bytes(Errors.CT_CALLER_MUST_BE_LENDING_POOL));
-            aErc6909Token.burn(admin, admin, 1, 1, 1);
+            aErc6909Token.burn(admin, admin, 1, 1, false, 1);
             vm.expectRevert(bytes(Errors.CT_CALLER_MUST_BE_LENDING_POOL));
             aErc6909Token.transferOnLiquidation(admin, addr, 0, 1);
             vm.expectRevert(bytes(Errors.CT_CALLER_MUST_BE_LENDING_POOL));
             aErc6909Token.setIncentivesController(IMiniPoolRewarder(addr));
             vm.expectRevert(bytes(Errors.CT_CALLER_MUST_BE_LENDING_POOL));
-            aErc6909Token.transferUnderlyingTo(addr, 11, 1);
+            aErc6909Token.transferUnderlyingTo(addr, 11, 1, false);
             vm.expectRevert(bytes(Errors.CT_CALLER_MUST_BE_LENDING_POOL));
             aErc6909Token.mintToCod3xTreasury(1, 11, 1);
         }
@@ -388,7 +388,7 @@ contract ATokenErc6909Test is Common {
             );
             console.log("Granuality: ", granuality);
             console.log("Granuality cumulated: ", cnt.rayDiv(index));
-            aErc6909Token.burn(address(this), address(this), id, granuality, index);
+            aErc6909Token.burn(address(this), address(this), id, granuality, false, index);
         }
 
         console.log(
@@ -434,7 +434,7 @@ contract ATokenErc6909Test is Common {
             IERC20(aErc6909Token.getUnderlyingAsset(id)).balanceOf(address(aErc6909Token)),
             aErc6909Token.balanceOf(address(this), id)
         );
-        aErc6909Token.burn(address(this), address(this), id, maxValToBurn, index);
+        aErc6909Token.burn(address(this), address(this), id, maxValToBurn, false, index);
         console.log("After single burn balance shall be {maxValToBurn} adjusted with {index}");
         console.log(
             "4. aErc6909Token after 2 burning %s ", aErc6909Token.balanceOf(address(this), id)
@@ -470,7 +470,7 @@ contract ATokenErc6909Test is Common {
 
         console.log("Cannot burn 3th time because it is not available (assets are borrowed)");
         vm.expectRevert();
-        aErc6909Token.burn(address(this), address(this), id, maxValToBurn, index);
+        aErc6909Token.burn(address(this), address(this), id, maxValToBurn, false, index);
         vm.stopPrank();
     }
 
@@ -764,7 +764,7 @@ contract ATokenErc6909Test is Common {
         // assertEq(initialTotalSupply, 3 * valToTransfer.rayDiv(index)); // TODO ??
 
         for (uint256 cnt = 0; cnt < valToTransfer; cnt += granuality) {
-            aErc6909Token.transferUnderlyingTo(user, id, granuality);
+            aErc6909Token.transferUnderlyingTo(user, id, granuality, false);
         }
         assertEq(
             IERC20(aErc6909Token.getUnderlyingAsset(id)).balanceOf(user),
@@ -775,7 +775,7 @@ contract ATokenErc6909Test is Common {
             initialThisBalance - valToTransfer
         );
         console.log("Single mint");
-        aErc6909Token.transferUnderlyingTo(user, id, valToTransfer);
+        aErc6909Token.transferUnderlyingTo(user, id, valToTransfer, false);
         console.log("Assertions");
         assertEq(
             IERC20(aErc6909Token.getUnderlyingAsset(id)).balanceOf(user),

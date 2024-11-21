@@ -40,6 +40,7 @@ library MiniPoolWithdrawLogic {
 
     struct withdrawParams {
         address asset;
+        bool unwrap;
         uint256 amount;
         address to;
         uint256 reservesCount;
@@ -97,7 +98,12 @@ library MiniPoolWithdrawLogic {
         }
 
         IAERC6909(localVars.aToken).burn(
-            msg.sender, params.to, localVars.id, localVars.amountToWithdraw, reserve.liquidityIndex
+            msg.sender,
+            params.to,
+            localVars.id,
+            localVars.amountToWithdraw,
+            params.unwrap,
+            reserve.liquidityIndex
         );
 
         emit Withdraw(params.asset, msg.sender, params.to, localVars.amountToWithdraw);
@@ -200,6 +206,7 @@ library MiniPoolWithdrawLogic {
             params.to,
             localVars.id,
             localVars.amountToWithdraw,
+            false,
             reserve.liquidityIndex
         );
 

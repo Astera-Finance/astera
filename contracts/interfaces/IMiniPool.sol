@@ -164,6 +164,7 @@ interface IMiniPool {
      * @dev Withdraws an `amount` of underlying asset from the reserve, burning the equivalent aTokens owned
      * E.g. User has 100 aUSDC, calls withdraw() and receives 100 USDC, burning the 100 aUSDC
      * @param asset The address of the underlying asset to withdraw
+     * @param unwrap If true, and `asset` is an aToken, `to` will directly receive the underlying.
      * @param amount The underlying amount to be withdrawn
      *   - Send the value type(uint256).max in order to withdraw the whole aToken balance
      * @param to Address that will receive the underlying, same as msg.sender if the user
@@ -172,7 +173,9 @@ interface IMiniPool {
      * @return The final amount withdrawn
      *
      */
-    function withdraw(address asset, uint256 amount, address to) external returns (uint256);
+    function withdraw(address asset, bool unwrap, uint256 amount, address to)
+        external
+        returns (uint256);
 
     /**
      * @dev Allows users to borrow a specific `amount` of the reserve underlying asset, provided that the borrower

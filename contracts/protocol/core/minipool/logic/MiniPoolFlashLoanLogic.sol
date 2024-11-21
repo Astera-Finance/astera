@@ -193,7 +193,7 @@ library MiniPoolFlashLoanLogic {
                 : 0;
 
             IAERC6909 aToken6909 = IAERC6909(aTokenAddresses[i]);
-            aToken6909.transferUnderlyingTo(receiverAddress, reserve.aTokenID, amounts[i]);
+            aToken6909.transferUnderlyingTo(receiverAddress, reserve.aTokenID, amounts[i], false);
         }
     }
 

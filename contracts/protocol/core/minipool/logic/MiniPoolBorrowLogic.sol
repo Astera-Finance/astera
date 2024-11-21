@@ -218,7 +218,7 @@ library MiniPoolBorrowLogic {
 
         if (vars.releaseUnderlying) {
             IAERC6909(vars.aTokenAddress).transferUnderlyingTo(
-                vars.user, reserve.aTokenID, vars.amount
+                vars.user, reserve.aTokenID, vars.amount, false
             );
         }
 
@@ -272,6 +272,7 @@ library MiniPoolBorrowLogic {
             params.onBehalfOf, // we dont care about the burn receiver for debtTokens
             reserve.variableDebtTokenID,
             paybackAmount,
+            false,
             reserve.variableBorrowIndex
         );
 

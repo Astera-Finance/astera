@@ -365,7 +365,7 @@ contract MiniPoolPidReserveInterestRateStrategyTest is Common {
 
     function withdrawMiniPool(address user, IERC20 asset, uint256 amount) internal {
         vm.startPrank(user);
-        IMiniPool(miniPool).withdraw(address(asset), amount, user);
+        IMiniPool(miniPool).withdraw(address(asset), false, amount, user);
         vm.stopPrank();
         loggMiniPool(user, 2, address(asset));
         skip(DEFAULT_TIME_BEFORE_OP);

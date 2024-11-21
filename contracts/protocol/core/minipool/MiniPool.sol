@@ -115,6 +115,7 @@ contract MiniPool is VersionedInitializable, IMiniPool, MiniPoolStorage {
      * @dev Deposits an `amount` of underlying asset into the reserve, receiving in return overlying aTokens.
      * - E.g. User deposits 100 USDC and gets in return 100 aUSDC
      * @param asset The address of the underlying asset to deposit
+     * @param wrap Convert the underlying in AToken from the lendingpool.
      * @param amount The amount to be deposited
      * @param onBehalfOf The address that will receive the aTokens, same as msg.sender if the user
      *   wants to receive them on his own wallet, or a different address if the beneficiary of aTokens
@@ -139,6 +140,7 @@ contract MiniPool is VersionedInitializable, IMiniPool, MiniPoolStorage {
      * @dev Withdraws an `amount` of underlying asset from the reserve, burning the equivalent aTokens owned
      * E.g. User has 100 aUSDC, calls withdraw() and receives 100 USDC, burning the 100 aUSDC
      * @param asset The address of the underlying asset to withdraw
+     * @param unwrap If true, and `asset` is an aToken, `to` will directly receive the underlying.
      * @param amount The underlying amount to be withdrawn
      *   - Send the value type(uint256).max in order to withdraw the whole aToken balance
      * @param to Address that will receive the underlying, same as msg.sender if the user
@@ -147,14 +149,14 @@ contract MiniPool is VersionedInitializable, IMiniPool, MiniPoolStorage {
      * @return The final amount withdrawn
      *
      */
-    function withdraw(address asset, uint256 amount, address to)
+    function withdraw(address asset, bool unwrap, uint256 amount, address to)
         public
         override
         whenNotPaused
         returns (uint256)
     {
         return MiniPoolWithdrawLogic.withdraw(
-            MiniPoolWithdrawLogic.withdrawParams(asset, amount, to, _reservesCount),
+            MiniPoolWithdrawLogic.withdrawParams(asset, unwrap, amount, to, _reservesCount),
             _reserves,
             _usersConfig,
             _reservesList,
@@ -354,7 +356,7 @@ contract MiniPool is VersionedInitializable, IMiniPool, MiniPoolStorage {
 
                 MiniPoolWithdrawLogic.internalWithdraw(
                     MiniPoolWithdrawLogic.withdrawParams(
-                        asset, amount, address(this), _reservesCount
+                        asset, false, amount, address(this), _reservesCount
                     ),
                     _reserves,
                     _usersConfig,
@@ -383,6 +385,7 @@ contract MiniPool is VersionedInitializable, IMiniPool, MiniPoolStorage {
                 // `this.` modifies the execution context => msg.sender == address(this)
                 this.withdraw(
                     asset,
+                    false,
                     remainingBalance - ERROR_REMAINDER_MARGIN,
                     _addressesProvider.getMiniPoolCod3xTreasury(_minipoolId)
                 );
