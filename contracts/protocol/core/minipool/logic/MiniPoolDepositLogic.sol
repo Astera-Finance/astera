@@ -70,7 +70,7 @@ library MiniPoolDepositLogic {
             uint256 underlyingAmount =
                 ATokenNonRebasing(params.asset).convertToAssets(params.amount);
 
-            IERC20(underlying).safeTransferFrom(msg.sender, aToken, underlyingAmount);
+            IERC20(underlying).safeTransferFrom(msg.sender, address(this), underlyingAmount);
             IERC20(underlying).forceApprove(lendingPool, underlyingAmount);
             ILendingPool(lendingPool).deposit(underlying, true, underlyingAmount, aToken);
         } else {
