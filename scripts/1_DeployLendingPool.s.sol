@@ -78,9 +78,7 @@ contract DeployLendingPool is Script, DeploymentUtils, Test {
         console.log("PATH: ", path);
         string memory deploymentConfig = vm.readFile(path);
         General memory general = abi.decode(deploymentConfig.parseRaw(".general"), (General));
-        PoolAddressesProviderConfig memory poolAddressesProviderConfig = abi.decode(
-            deploymentConfig.parseRaw(".poolAddressesProviderConfig"), (PoolAddressesProviderConfig)
-        );
+
         PoolReserversConfig[] memory poolReserversConfig =
             abi.decode(deploymentConfig.parseRaw(".poolReserversConfig"), (PoolReserversConfig[]));
         LinearStrategy[] memory volatileStrategies =
@@ -107,7 +105,6 @@ contract DeployLendingPool is Script, DeploymentUtils, Test {
                 volatileStrategies,
                 stableStrategies,
                 piStrategies,
-                poolAddressesProviderConfig,
                 poolReserversConfig,
                 FOUNDRY_DEFAULT
             );
@@ -153,7 +150,6 @@ contract DeployLendingPool is Script, DeploymentUtils, Test {
                 volatileStrategies,
                 stableStrategies,
                 piStrategies,
-                poolAddressesProviderConfig,
                 poolReserversConfig,
                 vm.addr(vm.envUint("PRIVATE_KEY"))
             );
@@ -169,7 +165,6 @@ contract DeployLendingPool is Script, DeploymentUtils, Test {
                 volatileStrategies,
                 stableStrategies,
                 piStrategies,
-                poolAddressesProviderConfig,
                 poolReserversConfig,
                 vm.addr(vm.envUint("PRIVATE_KEY"))
             );

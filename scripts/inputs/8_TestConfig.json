@@ -8,6 +8,7 @@
     "usdAmountToDeposit": 1000000000000000000000,
     "poolAddressesProviderConfig": {
         "marketId": "UV TestNet Market",
-        "poolId": 1
+        "poolId": 0,
+        "poolOwner": "0xf298Db641560E5B733C43181937207482Ff79bc9"
     }
 }

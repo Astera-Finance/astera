@@ -91,10 +91,6 @@ The deployment process involves configuration files `./input/<Nr>_<InputJsonName
             "debtTokenSymbolPrefix": "variableDebt",
             "treasury": "0x3151CfCA393FE5Eec690feD2a2446DA5a073d01B"
         },
-        "poolAddressesProviderConfig": {
-            "marketId": "UV TestNet Market", // name of the market
-            "poolId": 0 // Id of the pool (used for mini pools)
-        },
         // List of reserves and their configurations
         "poolReserversConfig": [
             {
@@ -169,10 +165,6 @@ The deployment process involves configuration files `./input/<Nr>_<InputJsonName
             "debtTokenSymbolPrefix": "variableDebt",
             "treasury": "0x3151CfCA393FE5Eec690feD2a2446DA5a073d01B"
             
-        },
-        "poolAddressesProviderConfig": {
-            "marketId": "UV TestNet Market", // name of the market
-            "poolId": 0 // Id of the pool (used for mini pools)
         },
         // List of reserves and their configurations
         "poolReserversConfig": [
@@ -269,6 +261,11 @@ The deployment process involves configuration files `./input/<Nr>_<InputJsonName
   - Example:
     ```json
     {
+        "poolAddressesProviderConfig": {
+            "marketId": "UV TestNet Market", // Not used in this script
+            "poolId": 0, // id of the miniPool
+            "poolOwner": "0xf298Db641560E5B733C43181937207482Ff79bc9" // mini pool owner address (Not used in this script)
+        },
         // List of volatile interest strategies and their configurations for main lending pool
         "volatileStrategies": [
             {
@@ -368,8 +365,9 @@ The deployment process involves configuration files `./input/<Nr>_<InputJsonName
             "treasury": "0x3151CfCA393FE5Eec690feD2a2446DA5a073d01B"
         },
         "poolAddressesProviderConfig": {
-            "marketId": "UV TestNet Market",
-            "poolId": 0
+            "marketId": "UV TestNet Market", // Not used in this script
+            "poolId": 0,
+            "poolOwner": "0xf298Db641560E5B733C43181937207482Ff79bc9" // Not used in this script
         },
         // List of reserves and their configurations for main lennding pool
         "lendingPoolReserversConfig": [
@@ -459,8 +457,9 @@ The deployment process involves configuration files `./input/<Nr>_<InputJsonName
     ```json
     {
         "poolAddressesProviderConfig": {
-            "marketId": "UV TestNet Market",
-            "poolId": 0
+            "marketId": "UV TestNet Market", // Not used in this script
+            "poolId": 0,
+            "poolOwner": "0xf298Db641560E5B733C43181937207482Ff79bc9" // Not used in this script
         },
         // List of reserves and their configurations for main lending pool
         "lendingPoolReserversConfig": [
@@ -551,6 +550,18 @@ The deployment process involves configuration files `./input/<Nr>_<InputJsonName
                 "tokenAddress": "0x4200000000000000000000000000000000000006"
             }
         ],
+        "miniPoolCod3xTreasury": [
+            {
+                "configure": true, // determine whether treasury needs to be changed for this asset
+                "newAddress": "0x3151CfCA393FE5Eec690feD2a2446DA5a073d01B",
+                "owner": "0x3151CfCA393FE5Eec690feD2a2446DA5a073d01B" // pool owner
+            },
+            {
+                "configure": true, // determine whether treasury needs to be changed for this asset
+                "newAddress": "0x3151CfCA393FE5Eec690feD2a2446DA5a073d01B",
+                "owner": "0x3151CfCA393FE5Eec690feD2a2446DA5a073d01B" // pool owner
+            }
+        ],
         "vault": [
             {
                 "configure": false, // determine whether vault needs to be changed for this asset
@@ -611,9 +622,11 @@ The deployment process involves configuration files `./input/<Nr>_<InputJsonName
     ```
 ##### **7_TransferOwnerships**
    - Shall be run at the end of configuration in order to transfer all contracts ownerships 
+   - Before run it is possible to configure whether to transfer only mini pool ownership or all main pool roles
    - Example:
    ```json
    {
+        "transferMiniPoolRole": true, // used to determine which ownership transfer shall happen
        "roles": {
            "addressesProviderOwner": "0x3151CfCA393FE5Eec690feD2a2446DA5a073d01B",
            "emergencyAdmin": "0x3151CfCA393FE5Eec690feD2a2446DA5a073d01B",
@@ -621,7 +634,12 @@ The deployment process involves configuration files `./input/<Nr>_<InputJsonName
            "piInterestStrategiesOwner": "0x3151CfCA393FE5Eec690feD2a2446DA5a073d01B",
            "poolAdmin": "0x3151CfCA393FE5Eec690feD2a2446DA5a073d01B",
            "rewarderOwner": "0x3151CfCA393FE5Eec690feD2a2446DA5a073d01B"
-       }
+       },
+        "miniPoolRole": {
+            "miniPoolId": 0,
+            "newPoolOwner": "0xf298Db641560E5B733C43181937207482Ff79bc9",
+            "poolOwnerTreasury": "0xf298Db641560E5B733C43181937207482Ff79bc9"
+        }
    }
    ```
 ##### **8_TestConfig**
@@ -638,7 +656,8 @@ The deployment process involves configuration files `./input/<Nr>_<InputJsonName
         "bootstrapMiniPool": true, // if the flag is enabled then script deposit assets to all configured reserves in specific mini pool determined by poolId
         "poolAddressesProviderConfig": {
             "marketId": "UV TestNet Market",
-            "poolId": 0
+            "poolId": 0,
+            "poolOwner": "0xf298Db641560E5B733C43181937207482Ff79bc9"
         }
     }
     ```
@@ -662,26 +681,23 @@ The deployment process involves configuration files `./input/<Nr>_<InputJsonName
   - Example:
   ```json
     {
-    "aToken": "0xd6F3b6aAE9830543D88344aaCA62F0b3B5c3D817",
-    "aTokenErc6909": "0xb84B0b76DF55c4cFAa6040741e529Cb6EEb3AbB8",
-    "aTokensAndRatesHelper": "0xC00fCbF9A6f8b8cfC55545Cc422FDfFC49Cff522",
-    "lendingPool": "0xf5A3944E2f4B0142857E7E339fc8FeB40cA9d307",
-    "lendingPoolAddressesProvider": "0x18bd805089bC4De456204A9e6b4d4790E942064E",
-    "lendingPoolCollateralManager": "0x0E7F65B9D519d62059216b212A7539d0f8f4223B",
-    "lendingPoolConfigurator": "0x81A79c2807414E57C8f62EFAedC0F650Ffa6aCbF",
-    "piStrategies": [
-        "0xdb026094f6b5b3A6aEEEBea25c60E5cfE9eB8E49"
-    ],
-    "cod3xLendDataProvider": "0x270701c499Ce78EC803948B8b9a54cd22CfAAB61",
-    "rewarder": "0xD0171e0923f0Dc7Ab24947d5D316Af640cF7f196",
-    "stableStrategies": [
-        "0xb798354d5731A9EA700a7B3bC3f7bfE30c562003"
-    ],
-    "treasury": "0xA0A1bD809A69F534226B81E36595aa9c214F8361",
-    "variableDebtToken": "0xB5e68092047642559ce3f1077180e00BBF838189",
-    "volatileStrategies": [
-        "0x5343da84067fD87179C92a8A86D79662CF3cC505"
-    ]
+        "aToken": "0x12e721c390F5728200a26BBEf206A5F4F7E991f3",
+        "aTokensAndRatesHelper": "0x6FeA640c163c624a88bb7000391EB4763A02935f",
+        "cod3xLendDataProvider": "0x77443101F739bf8b771B96a7DD92E89088379D1F",
+        "lendingPool": "0x131D479073FE25CC991A0297d3f46bE6A5d67fFC",
+        "lendingPoolAddressesProvider": "0xA51e039acaeF798a3d42583ec3110baBe8B8666F",
+        "lendingPoolConfigurator": "0xA6fdc363B4E7181857e4a4C4A135a44442741853",
+        "oracle": "0x778325e0498c93078e7c75f0F03D753d714548EB",
+        "piStrategies": [
+            "0x431d5c499025B53468873BeA38EdB4f6Cbf5a57D"
+        ],
+        "stableStrategies": [
+            "0xa82B2097D4A748Ad3d446F9576A74899E3d94Ee3"
+        ],
+        "variableDebtToken": "0xEBD7CAF7d48a1B20283E70B0DFdE7d058584FE22",
+        "volatileStrategies": [
+            "0xFAf3a763Ea80A7FEaFF58fB1e10B97Ef94ADcfEa"
+        ]
     }
   ```
 ##### **2_MiniPoolContracts**
@@ -690,20 +706,25 @@ The deployment process involves configuration files `./input/<Nr>_<InputJsonName
   - Example:
   ```json
     {
-    "flowLimiter": "0xec831Be4Ea7697d05dE0cA119A2e1992762c097f",
-    "miniPoolAddressesProvider": "0x7AaC9cF081c443EFdb2c762b4867BAb49e079e25",
-    "miniPoolConfigurator": "0xF4D062866b30436b99A04b42113687963DB9472e",
-    "miniPoolImpl": "0xBe5511dcF99Cef8610Ec0b27801f00913162B560",
-    "miniPoolPiStrategies": [
-        "0x486056653845AE60d9cEAd581B27A6433fbee660",
-        "0x86e4B254Cf1FEdF27EA73eDd51e96e7c5cD24604"
-    ],
-    "miniPoolStableStrategies": [
-        "0xe8D27ce05F3700906162Df7881002f4706d12b0d"
-    ],
-    "miniPoolVolatileStrategies": [
-        "0xDBE218eaDD164E9380F5819F6cf40095Df16Ee94"
-    ]
+        "aTokenErc6909": [
+            "0x0B426A98488443Cb85E6Cb1Fb885C651255aCD31"
+        ],
+        "flowLimiter": "0x09a3eBe3B08c3751E17b8d77cb1c11389ba9F6DA",
+        "miniPoolAddressesProvider": "0x91752891a019Fb365Df0F99Fa468Bf19F91C2Ac0",
+        "miniPoolConfigurator": "0x7C8f56746de6D271f51d27A73e7266A27597806e",
+        "miniPoolImpl": [
+            "0x2abb7CBB720020ee3C9ecf3915D14B6d1886A577"
+        ],
+        "miniPoolPiStrategies": [
+            "0xcE8C32b1493DB37767fAF988dEC9E80089f4f33c",
+            "0x6A3F8435F343f27A6200ad4098476565d91101Ed"
+        ],
+        "miniPoolStableStrategies": [
+            "0x46FE90E3f70B2d156e6D3489b8A2382d5b707830"
+        ],
+        "miniPoolVolatileStrategies": [
+            "0x0FA02c93f2efa05849f3ee4aeBc030731d0076Ad"
+        ]
     }
   ```
 ##### **3_DeployedStrategies**
@@ -751,5 +772,14 @@ The deployment process involves configuration files `./input/<Nr>_<InputJsonName
         "0x5343da84067fD87179C92a8A86D79662CF3cC505",
         "0xC0d324d5af75BBDf062f2f0DE026a48163875C87"
     ]
+    }
+  ```
+  ##### **6_DeployedPeripherials**
+  - List of deployed peripherials
+  - Example:
+  ```json
+    {
+        "rewarder": "0x3460a33582FC850d707ceA83f29f49D7b6290979",
+        "rewarder6909": "0xCA3c1FC0d5EdbAC5d8AB7742D4ff6F7053E04280"
     }
   ```

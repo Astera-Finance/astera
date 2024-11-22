@@ -182,6 +182,7 @@ contract Common is Test {
     address[] tokensWhales = [USDC_WHALE, WBTC_WHALE, WETH_WHALE, DAI_WHALE];
 
     address admin = 0xe027880CEB8114F2e367211dF977899d00e66138;
+    address poolOwner = makeAddr("poolOwner");
     uint256[] rates = [0.039e27, 0.03e27, 0.03e27]; //usdc, wbtc, eth
     uint256[] volStrat = [
         VOLATILE_OPTIMAL_UTILIZATION_RATE,
@@ -615,7 +616,8 @@ contract Common is Test {
             console.log("aToken6909Impl: ", address(deployedMiniPoolContracts.aToken6909Impl));
             miniPoolId = deployedMiniPoolContracts.miniPoolAddressesProvider.deployMiniPool(
                 address(deployedMiniPoolContracts.miniPoolImpl),
-                address(deployedMiniPoolContracts.aToken6909Impl)
+                address(deployedMiniPoolContracts.aToken6909Impl),
+                poolOwner
             );
             deployedMiniPoolContracts.flowLimiter = new FlowLimiter(
                 ILendingPoolAddressesProvider(_lendingPoolAddressesProvider),
@@ -673,7 +675,8 @@ contract Common is Test {
             /* Get the same AERC6909 impl as previously */
             miniPoolId = IMiniPoolAddressesProvider(_miniPoolAddressProvider).deployMiniPool(
                 address(deployedMiniPoolContracts.miniPoolImpl),
-                address(deployedMiniPoolContracts.aToken6909Impl)
+                address(deployedMiniPoolContracts.aToken6909Impl),
+                poolOwner
             );
         }
 
@@ -728,7 +731,7 @@ contract Common is Test {
                 underlyingAssetSymbol: tmpSymbol
             });
         }
-        vm.startPrank(address(miniPoolContracts.miniPoolAddressesProvider.getPoolAdmin(miniPoolId)));
+        vm.prank(address(miniPoolContracts.miniPoolAddressesProvider.getMainPoolAdmin()));
         miniPoolContracts.miniPoolConfigurator.batchInitReserve(
             initInputParams, IMiniPool(miniPool)
         );
@@ -736,7 +739,7 @@ contract Common is Test {
             miniPoolContracts.miniPoolAddressesProvider.getMiniPoolConfigurator(),
             address(miniPoolContracts.miniPoolConfigurator)
         );
-
+        vm.startPrank(address(miniPoolContracts.miniPoolAddressesProvider.getPoolAdmin(miniPoolId)));
         for (uint8 idx = 0; idx < tokensToConfigure.length; idx++) {
             prepareReserveForLending(
                 miniPoolContracts.miniPoolConfigurator,

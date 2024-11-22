@@ -60,7 +60,7 @@ contract PausableFunctionsTest is Common {
         uint256 amount;
 
         /* Pause Lending Pool */
-        vm.prank(admin);
+        vm.prank(miniPoolContracts.miniPoolAddressesProvider.getMainPoolAdmin());
         deployedContracts.lendingPoolConfigurator.setPoolPause(true);
 
         for (uint8 idx = 0; idx < erc20Tokens.length; idx++) {
@@ -118,7 +118,7 @@ contract PausableFunctionsTest is Common {
     function testMiniPoolFunctionsWhenPaused() public {
         uint256 amount;
 
-        vm.prank(admin);
+        vm.prank(miniPoolContracts.miniPoolAddressesProvider.getMainPoolAdmin());
         miniPoolContracts.miniPoolConfigurator.setPoolPause(true, IMiniPool(miniPool));
 
         for (uint8 idx = 0; idx < erc20Tokens.length; idx++) {

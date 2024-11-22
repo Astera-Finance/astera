@@ -318,8 +318,8 @@ contract MiniPoolRewarderTest is Common {
         IMiniPool(miniPool).deposit(address(erc20Tokens[1]), 5e9, user3);
         vm.stopPrank();
 
-        vm.prank(address(miniPoolContracts.miniPoolAddressesProvider.owner()));
-        miniPoolContracts.miniPoolAddressesProvider.setFlowLimit(
+        vm.prank(address(miniPoolContracts.miniPoolAddressesProvider.getMainPoolAdmin()));
+        miniPoolContracts.miniPoolConfigurator.setFlowLimit(
             address(erc20Tokens[2]), miniPool, 100 ether
         );
 
@@ -420,8 +420,8 @@ contract MiniPoolRewarderTest is Common {
         IMiniPool(miniPool).deposit(address(erc20Tokens[1]), 5e9, user3);
         vm.stopPrank();
 
-        vm.prank(address(miniPoolContracts.miniPoolAddressesProvider.owner()));
-        miniPoolContracts.miniPoolAddressesProvider.setFlowLimit(
+        vm.prank(address(miniPoolContracts.miniPoolAddressesProvider.getMainPoolAdmin()));
+        miniPoolContracts.miniPoolConfigurator.setFlowLimit(
             address(erc20Tokens[2]), miniPool, 100 ether
         );
 

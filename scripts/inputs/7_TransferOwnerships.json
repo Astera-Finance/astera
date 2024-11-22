@@ -1,4 +1,5 @@
 {
+    "transferMiniPoolRole": true,
     "roles": {
         "addressesProviderOwner": "0x3151CfCA393FE5Eec690feD2a2446DA5a073d01B",
         "emergencyAdmin": "0x3151CfCA393FE5Eec690feD2a2446DA5a073d01B",
@@ -6,5 +7,10 @@
         "piInterestStrategiesOwner": "0x3151CfCA393FE5Eec690feD2a2446DA5a073d01B",
         "poolAdmin": "0x3151CfCA393FE5Eec690feD2a2446DA5a073d01B",
         "rewarderOwner": "0x3151CfCA393FE5Eec690feD2a2446DA5a073d01B"
+    },
+    "miniPoolRole": {
+        "miniPoolId": 0,
+        "newPoolOwner": "0xf298Db641560E5B733C43181937207482Ff79bc9",
+        "poolOwnerTreasury": "0xf298Db641560E5B733C43181937207482Ff79bc9"
     }
 }

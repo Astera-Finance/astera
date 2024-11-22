@@ -158,11 +158,7 @@ contract MiniPoolAddressesProvider is Ownable, IMiniPoolAddressesProvider {
     }
 
     /* Setters */
-    function setFlowLimit(address asset, address miniPool, uint256 limit) external onlyOwner {
-        IFlowLimiter(getFlowLimiter()).setFlowLimit(asset, miniPool, limit);
-        emit FlowLimitUpdated(limit);
-    }
-
+    /* OnlyOwner */
     function setMiniPoolImpl(address impl, uint256 miniPoolId) external onlyOwner {
         bytes memory params =
             abi.encodeWithSignature("initialize(address,uint256)", address(this), miniPoolId);
@@ -176,6 +172,51 @@ contract MiniPoolAddressesProvider is Ownable, IMiniPoolAddressesProvider {
         _updateAToken(impl, miniPoolId, params);
         emit ATokenUpdated(impl);
     }
+    /**
+     * @dev Sets an address for an id replacing the address saved in the addresses map
+     * IMPORTANT Use this function carefully, as it will do a hard replacement
+     * @param id The id
+     * @param newAddress The address to set
+     */
+
+    function setAddress(bytes32 id, address newAddress) external onlyOwner {
+        _addresses[id] = newAddress;
+        emit AddressSet(id, newAddress, false);
+    }
+
+    function deployMiniPool(address miniPoolImpl, address aTokenImpl, address poolAdmin)
+        external
+        onlyOwner
+        returns (uint256)
+    {
+        bytes memory params =
+            abi.encodeWithSignature("initialize(address,uint256)", address(this), _miniPoolCount);
+
+        _initMiniPool(miniPoolImpl, params);
+
+        _initATokenPool(aTokenImpl, params);
+
+        uint256 miniPoolId = _miniPoolCount;
+
+        _miniPoolsConfig[miniPoolId].admin = poolAdmin;
+        _miniPoolCount++;
+
+        return miniPoolId;
+    }
+
+    /* Only configurator */
+    function setMiniPoolConfigurator(address configuratorImpl) external onlyOwner {
+        _updateImpl(MINI_POOL_CONFIGURATOR, configuratorImpl);
+        emit MiniPoolConfiguratorUpdated(configuratorImpl);
+    }
+
+    function setFlowLimit(address asset, address miniPool, uint256 limit)
+        external
+        onlyMiniPoolConfigurator
+    {
+        IFlowLimiter(getFlowLimiter()).setFlowLimit(asset, miniPool, limit);
+        emit FlowLimitUpdated(limit);
+    }
 
     function setPoolAdmin(uint256 id, address newAdmin) external onlyMiniPoolConfigurator {
         require(newAdmin != address(0));
@@ -183,17 +224,25 @@ contract MiniPoolAddressesProvider is Ownable, IMiniPoolAddressesProvider {
         emit PoolAdminSet(newAdmin);
     }
 
-    /**
-     * @dev Sets an address for an id replacing the address saved in the addresses map
-     * IMPORTANT Use this function carefully, as it will do a hard replacement
-     * @param id The id
-     * @param newAddress The address to set
-     */
-    function setAddress(bytes32 id, address newAddress) external onlyOwner {
-        _addresses[id] = newAddress;
-        emit AddressSet(id, newAddress, false);
+    function setCod3xTreasuryToMiniPool(uint256 id, address treasury)
+        external
+        poolIdCheck(id)
+        onlyMiniPoolConfigurator
+    {
+        _miniPoolsConfig[id].cod3xTreasury = treasury;
+        emit Cod3xTreasurySet(treasury, id);
     }
 
+    function setMinipoolOwnerTreasuryToMiniPool(uint256 id, address treasury)
+        external
+        poolIdCheck(id)
+        onlyMiniPoolConfigurator
+    {
+        _miniPoolsConfig[id].minipoolOwnerTreasury = treasury;
+        emit MinipoolOwnerTreasurySet(treasury, id);
+    }
+
+    /* Internals */
     function _updateMiniPool(address miniPoolImpl, uint256 miniPoolId, bytes memory params)
         internal
         poolIdCheck(miniPoolId)
@@ -237,22 +286,6 @@ contract MiniPoolAddressesProvider is Ownable, IMiniPoolAddressesProvider {
         emit ProxyCreated(_miniPoolCount, address(aTokenProxy));
     }
 
-    function deployMiniPool(address miniPoolImpl, address aTokenImpl) external returns (uint256) {
-        bytes memory params =
-            abi.encodeWithSignature("initialize(address,uint256)", address(this), _miniPoolCount);
-
-        _initMiniPool(miniPoolImpl, params);
-
-        _initATokenPool(aTokenImpl, params);
-
-        uint256 miniPoolId = _miniPoolCount;
-
-        _miniPoolsConfig[miniPoolId].admin = msg.sender;
-        _miniPoolCount++;
-
-        return miniPoolId;
-    }
-
     function _updateImpl(bytes32 id, address newAddress) internal {
         address payable proxyAddress = payable(_addresses[id]);
 
@@ -267,28 +300,5 @@ contract MiniPoolAddressesProvider is Ownable, IMiniPoolAddressesProvider {
         } else {
             proxy.upgradeToAndCall(newAddress, params);
         }
-    }
-
-    function setMiniPoolConfigurator(address configuratorImpl) external onlyOwner {
-        _updateImpl(MINI_POOL_CONFIGURATOR, configuratorImpl);
-        emit MiniPoolConfiguratorUpdated(configuratorImpl);
-    }
-
-    function setMiniPoolToCod3xTreasury(uint256 id, address treasury)
-        external
-        poolIdCheck(id)
-        onlyOwner
-    {
-        _miniPoolsConfig[id].cod3xTreasury = treasury;
-        emit Cod3xTreasurySet(treasury, id);
-    }
-
-    function setMiniPoolToMinipoolOwnerTreasury(uint256 id, address treasury)
-        external
-        poolIdCheck(id)
-        onlyMiniPoolConfigurator
-    {
-        _miniPoolsConfig[id].minipoolOwnerTreasury = treasury;
-        emit MinipoolOwnerTreasurySet(treasury, id);
     }
 }

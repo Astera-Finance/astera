@@ -270,7 +270,10 @@ contract ATokenErc6909Test is Common {
         // index = 2 * 1e27;
         index = bound(index, 1e27, 10e27); // assume index increases in time as the interest accumulates
         vm.assume(maxValToMint.rayDiv(index) > 0);
-        miniPoolContracts.miniPoolAddressesProvider.setMiniPoolToCod3xTreasury(0, treasury);
+        vm.prank(miniPoolContracts.miniPoolAddressesProvider.getMainPoolAdmin());
+        miniPoolContracts.miniPoolConfigurator.setCod3xTreasuryToMiniPool(
+            treasury, IMiniPool(miniPool)
+        );
         uint256 granuality = maxValToMint / nrOfIterations;
         vm.assume(maxValToMint % granuality == 0); // accept only multiplicity of {nrOfIterations}
         // maxValToMint = maxValToMint - (maxValToMint % granuality);
@@ -877,7 +880,9 @@ contract ATokenErc6909Test is Common {
 
     function testErc6909Initialize() public {
         miniPoolContracts.miniPoolAddressesProvider.deployMiniPool(
-            address(miniPoolContracts.miniPoolImpl), address(miniPoolContracts.aToken6909Impl)
+            address(miniPoolContracts.miniPoolImpl),
+            address(miniPoolContracts.aToken6909Impl),
+            admin
         );
         address[] memory reserves = new address[](1);
         reserves[0] = tokens[0];

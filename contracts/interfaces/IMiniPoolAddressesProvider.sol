@@ -40,8 +40,10 @@ interface IMiniPoolAddressesProvider {
     function setFlowLimit(address asset, address miniPool, uint256 limit) external;
     function setMiniPoolImpl(address impl, uint256 miniPoolId) external;
     function setAToken6909Impl(address impl, uint256 miniPoolId) external;
-    function deployMiniPool(address miniPoolImpl, address aTokenImpl) external returns (uint256);
-    function setMiniPoolToCod3xTreasury(uint256 id, address treasury) external;
-    function setMiniPoolToMinipoolOwnerTreasury(uint256 id, address treasury) external;
+    function deployMiniPool(address miniPoolImpl, address aTokenImpl, address poolAdmin)
+        external
+        returns (uint256);
+    function setCod3xTreasuryToMiniPool(uint256 id, address treasury) external;
+    function setMinipoolOwnerTreasuryToMiniPool(uint256 id, address treasury) external;
     function setMiniPoolConfigurator(address configuratorImpl) external;
 }

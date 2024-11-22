@@ -41,6 +41,8 @@ contract ChangePeripherials is Script, DeploymentUtils, Test {
         NewPeripherial[] memory vault = abi.decode(config.parseRaw(".vault"), (NewPeripherial[]));
         NewPeripherial[] memory treasury =
             abi.decode(config.parseRaw(".treasury"), (NewPeripherial[]));
+        NewMiniPoolPeripherial[] memory miniPoolCod3xTreasury =
+            abi.decode(config.parseRaw(".miniPoolCod3xTreasury"), (NewMiniPoolPeripherial[]));
         NewPeripherial[] memory rewarder =
             abi.decode(config.parseRaw(".rewarder"), (NewPeripherial[]));
         NewPeripherial[] memory rewarder6909 =
@@ -69,7 +71,9 @@ contract ChangePeripherials is Script, DeploymentUtils, Test {
                 vault[idx].newAddress = address(new ERC4626Mock(vault[idx].tokenAddress));
             }
             console.log("Changing peripherials");
-            _changePeripherials(treasury, vault, rewarder, rewarder6909, miniPoolId);
+            _changePeripherials(
+                treasury, miniPoolCod3xTreasury, vault, rewarder, rewarder6909, miniPoolId
+            );
             _turnOnRehypothecation(rehypothecation);
             vm.stopPrank();
         } else if (vm.envBool("TESTNET")) {
@@ -144,7 +148,9 @@ contract ChangePeripherials is Script, DeploymentUtils, Test {
             for (uint8 idx = 0; idx < vault.length; idx++) {
                 vault[idx].newAddress = address(new ERC4626Mock(vault[idx].tokenAddress));
             }
-            _changePeripherials(treasury, vault, rewarder, rewarder6909, miniPoolId);
+            _changePeripherials(
+                treasury, miniPoolCod3xTreasury, vault, rewarder, rewarder6909, miniPoolId
+            );
             _turnOnRehypothecation(rehypothecation);
             vm.stopBroadcast();
         } else if (vm.envBool("MAINNET")) {
@@ -163,7 +169,9 @@ contract ChangePeripherials is Script, DeploymentUtils, Test {
 
             /* Change peripherials */
             vm.startBroadcast(vm.envUint("PRIVATE_KEY"));
-            _changePeripherials(treasury, vault, rewarder, rewarder6909, miniPoolId);
+            _changePeripherials(
+                treasury, miniPoolCod3xTreasury, vault, rewarder, rewarder6909, miniPoolId
+            );
             _turnOnRehypothecation(rehypothecation);
             vm.stopBroadcast();
         } else {
