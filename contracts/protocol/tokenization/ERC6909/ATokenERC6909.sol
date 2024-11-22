@@ -130,6 +130,9 @@ contract ATokenERC6909 is IncentivizedERC6909, VersionedInitializable {
             _totalTrancheTokens++;
             _isTranche[aTokenID] = true;
             _isTranche[debtTokenID] = true;
+
+            // Ensure reserveType == True.
+            require(IAToken(underlyingAsset).RESERVE_TYPE(), Errors.AT_VL_INVALID_ATOKEN_PARAMS);
         } else {
             _totalUniqueTokens++;
         }
