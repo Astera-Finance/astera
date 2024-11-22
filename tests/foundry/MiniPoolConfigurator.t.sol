@@ -10,7 +10,7 @@ contract MiniPoolConfiguratorTest is MiniPoolDepositBorrowTest {
     using ReserveConfiguration for DataTypes.ReserveConfigurationMap;
 
     uint256 constant MAX_VALID_RESERVE_FACTOR = 1500;
-    uint256 constant MAX_VALID_DEPOSIT_CAP = 256;
+    uint256 constant MAX_VALID_DEPOSIT_CAP = type(uint72).max;
     uint256 constant MAX_VALID_VOLATILITY_TIER = 4;
     uint256 constant MAX_VALID_LTV = 65535;
 
@@ -394,7 +394,7 @@ contract MiniPoolConfiguratorTest is MiniPoolDepositBorrowTest {
     }
 
     function testSetDepositCap_Negative(uint256 invalidDepositCap) public {
-        invalidDepositCap = bound(invalidDepositCap, MAX_VALID_DEPOSIT_CAP, type(uint256).max);
+        invalidDepositCap = bound(invalidDepositCap, MAX_VALID_DEPOSIT_CAP + 1, type(uint256).max);
         for (uint32 idx; idx < erc20Tokens.length; idx++) {
             vm.expectRevert(bytes(Errors.RC_INVALID_DEPOSIT_CAP));
             vm.prank(admin);

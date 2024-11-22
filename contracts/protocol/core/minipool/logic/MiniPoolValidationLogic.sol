@@ -44,22 +44,15 @@ library MiniPoolValidationLogic {
     {
         (bool isActive, bool isFrozen,) = reserve.configuration.getFlags();
 
-        uint256 depositCapExponent = reserve.configuration.getDepositCap();
-        uint256 depositCap =
-            depositCapExponent != 0 ? 10 ** (depositCapExponent) : type(uint256).max;
-        uint256 total = IAERC6909(reserve.aTokenAddress).totalSupply(reserve.aTokenID);
-        uint256 newTotal = total + amount;
-        require(newTotal < depositCap, Errors.VL_DEPOSIT_CAP_REACHED);
-
-        /// TODO fix deposit cap + in MiniPoolValidationLogic.sol and in ValidationLogic.sol
-        // uint256 supplyCap = reserve.configuration.getDepositCap();
-        // require(
-        // supplyCap == 0 ||
-        //     ((IAToken(reserve.aTokenAddress).scaledTotalSupply() +
-        //     uint256(reserve.accruedToTreasury)).rayMul(reserve.nextLiquidityIndex) + amount) <=
-        //     supplyCap * (10 ** reserve.configuration.getDecimals()),
-        // Errors.VL_DEPOSIT_CAP_REACHED
-        // );
+        // Deposit cap check uses an approximation:
+        // It uses the previous liquidity index instead of the next liquidity index.
+        uint256 depositCap = reserve.configuration.getDepositCap();
+        require(
+            depositCap == 0
+                || IAERC6909(reserve.aTokenAddress).totalSupply(reserve.aTokenID) + amount
+                    < depositCap * (10 ** reserve.configuration.getDecimals()),
+            Errors.VL_DEPOSIT_CAP_REACHED
+        );
 
         require(amount != 0, Errors.VL_INVALID_AMOUNT);
         require(isActive, Errors.VL_NO_ACTIVE_RESERVE);
