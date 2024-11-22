@@ -66,9 +66,9 @@ library DataTypes {
         //bit 59: Flashloan is enabled
         //bit 60-75: Cod3x reserve factor
         //bit 76-91: Minipool owner reserve factor
-        //bit 92-162: deposit cap
-        //bit 163: reserve type
-        //bit 164-255: unused
+        //bit 92-163: deposit cap
+        //bit 164: reserve type
+        //bit 165-255: unused
         uint256 data;
     }
 
