@@ -20,6 +20,7 @@ import {IMiniPool} from "../../contracts/interfaces/IMiniPool.sol";
 import {IAERC6909} from "../../contracts/interfaces/IAERC6909.sol";
 import {Ownable} from "../../contracts/dependencies/openzeppelin/contracts/Ownable.sol";
 import {Errors} from "../../contracts/protocol/libraries/helpers/Errors.sol";
+import {IFlowLimiter} from "../../contracts/interfaces/IFlowLimiter.sol";
 
 struct UserReserveData {
     address aToken;
@@ -608,6 +609,23 @@ contract Cod3xLendDataProvider is Ownable {
             miniPools[idx] = tmpMiniPools[idx];
             miniPoolIds[idx] = tmpMiniPoolIds[idx];
         }
+    }
+
+    /**
+     * @dev Checks if a given reserve is available in a specific MiniPool.
+     * @param asset The address of the reserve to check for availability.
+     * @param miniPoolId The ID of the MiniPool where the reserve's availability is checked.
+     * @return remainingFlow The address of the MiniPool being checked.
+     */
+    function getMpRemainingFlow(address asset, uint256 miniPoolId)
+        external
+        view
+        returns (uint256 remainingFlow)
+    {
+        address miniPool = miniPoolAddressProvider.getMiniPool(miniPoolId);
+        IFlowLimiter flowLimiter = IFlowLimiter(miniPoolAddressProvider.getFlowLimiter());
+        remainingFlow =
+            flowLimiter.getFlowLimit(asset, miniPool) - flowLimiter.currentFlow(asset, miniPool);
     }
 
     /**
