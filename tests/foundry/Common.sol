@@ -461,6 +461,7 @@ contract Common is Test {
                 borrowingEnabled: true
             });
         }
+
         lendingPoolAddressesProvider.setPoolAdmin(configAddresses.aTokensAndRatesHelper);
         ATokensAndRatesHelper(configAddresses.aTokensAndRatesHelper).configureReserves(
             inputConfigParams

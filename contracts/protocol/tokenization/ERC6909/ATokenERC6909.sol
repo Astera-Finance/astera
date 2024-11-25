@@ -18,7 +18,6 @@ import {IMiniPoolAddressesProvider} from
 import {IMiniPool} from "../../../../contracts/interfaces/IMiniPool.sol";
 import {ATokenNonRebasing} from
     "../../../../contracts/protocol/tokenization/ERC20/ATokenNonRebasing.sol";
-
 import "openzeppelin-contracts/contracts/utils/Strings.sol";
 
 /**
@@ -131,8 +130,10 @@ contract ATokenERC6909 is IncentivizedERC6909, VersionedInitializable {
             _isTranche[aTokenID] = true;
             _isTranche[debtTokenID] = true;
 
-            // Ensure reserveType == True.
-            require(IAToken(underlyingAsset).RESERVE_TYPE(), Errors.AT_VL_INVALID_ATOKEN_PARAMS);
+            // Ensure reserveType == True. (`assert` because it must never be `false`)
+            assert(IAToken(underlyingAsset).RESERVE_TYPE());
+
+            // TODO Ensure the AToken address is the Non Rebasin version.
         } else {
             _totalUniqueTokens++;
         }
@@ -314,11 +315,20 @@ contract ATokenERC6909 is IncentivizedERC6909, VersionedInitializable {
         ILendingPool pool = ILendingPool(_addressesProvider.getLendingPool());
         if (_determineIfAToken(underlying, address(pool))) {
             address tokenUnderlying = IAToken(underlying).UNDERLYING_ASSET_ADDRESS();
+
+            // Ensure LendingPool reserve is initialized.
+            require(
+                pool.getReserveData(tokenUnderlying, true).aTokenAddress != address(0),
+                Errors.RL_RESERVE_NOT_INITIALIZED
+            );
+            // Thanks to the above check, `getReserveData.id` returns the correct value.
             uint256 tokenID = pool.getReserveData(tokenUnderlying, true).id;
+
             return (tokenID + ATOKEN_ADDRESSABLE_ID, tokenID + DEBT_TOKEN_ADDRESSABLE_ID, true);
         } else {
             uint256 offset = pool.MAX_NUMBER_RESERVES();
             uint256 tokenID = offset + _totalUniqueTokens;
+
             return (tokenID + ATOKEN_ADDRESSABLE_ID, tokenID + DEBT_TOKEN_ADDRESSABLE_ID, false);
         }
     }
@@ -329,6 +339,7 @@ contract ATokenERC6909 is IncentivizedERC6909, VersionedInitializable {
         returns (uint256 aTokenID, uint256 debtTokenID, bool isTrancheRet)
     {
         (aTokenID, debtTokenID, isTrancheRet) = _getNextIdForUnderlying(underlying);
+
         require(
             _underlyingAssetAddresses[aTokenID] == address(0), Errors.RL_RESERVE_ALREADY_INITIALIZED
         );

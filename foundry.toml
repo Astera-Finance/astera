@@ -17,6 +17,7 @@ remappings = [
     'solady/=lib/solady/src/',
 ]
 gas_limit = "18446744073709551615"
+via_ir = false
 
 [rpc_endpoints]
 sepolia = "${ARB_SEPOLIA}"
