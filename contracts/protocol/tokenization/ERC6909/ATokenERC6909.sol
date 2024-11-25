@@ -133,7 +133,11 @@ contract ATokenERC6909 is IncentivizedERC6909, VersionedInitializable {
             // Ensure reserveType == True. (`assert` because it must never be `false`)
             assert(IAToken(underlyingAsset).RESERVE_TYPE());
 
-            // TODO Ensure the AToken address is the Non Rebasin version.
+            // Ensure the AToken address is the Non Rebasin version.
+            require(
+                ATokenNonRebasing(underlyingAsset).ATOKEN_ADDRESS() != address(0),
+                Errors.AT_INVALID_ATOKEN_ADDRESS
+            );
         } else {
             _totalUniqueTokens++;
         }
