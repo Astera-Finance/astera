@@ -18,6 +18,9 @@ contract ChangePeripherials is Script, DeploymentUtils, Test {
 
     function writeJsonData(string memory root, string memory path) internal {
         /* Write important contracts into the file */
+        vm.serializeAddress(
+            "peripherials", "cod3xLendDataProvider", address(contracts.cod3xLendDataProvider)
+        );
         vm.serializeAddress("peripherials", "rewarder", address(contracts.rewarder));
 
         string memory output =
@@ -31,12 +34,25 @@ contract ChangePeripherials is Script, DeploymentUtils, Test {
 
     function run() external returns (DeployedContracts memory) {
         console.log("6_ChangePeripherials");
-
         // Config fetching
+        // Providers
         string memory root = vm.projectRoot();
-        string memory path = string.concat(root, "/scripts/inputs/6_ChangePeripherials.json");
+        string memory path = string.concat(root, "/scripts/outputs/1_LendingPoolContracts.json");
         console.log("PATH: ", path);
         string memory config = vm.readFile(path);
+
+        address lendingPoolAddressesProvider = config.readAddress(".lendingPoolAddressesProvider");
+
+        path = string.concat(root, "/scripts/outputs/2_MiniPoolContracts.json");
+        console.log("PATH: ", path);
+        config = vm.readFile(path);
+
+        address miniPoolAddressesProvider = config.readAddress(".miniPoolAddressesProvider");
+
+        // Inputs from Peripherials
+        path = string.concat(root, "/scripts/inputs/6_ChangePeripherials.json");
+        console.log("PATH: ", path);
+        config = vm.readFile(path);
 
         NewPeripherial[] memory vault = abi.decode(config.parseRaw(".vault"), (NewPeripherial[]));
         NewPeripherial[] memory treasury =
@@ -52,6 +68,7 @@ contract ChangePeripherials is Script, DeploymentUtils, Test {
             abi.decode(config.parseRaw(".rehypothecation"), (Rehypothecation[]));
 
         uint256 miniPoolId = config.readUint(".miniPoolId");
+        bool deployCod3xLendDataProvider = config.readBool(".deployCod3xLendDataProvider");
 
         require(treasury.length == rehypothecation.length, "Lengths settings must be the same");
 
@@ -75,6 +92,15 @@ contract ChangePeripherials is Script, DeploymentUtils, Test {
                 treasury, miniPoolCod3xTreasury, vault, rewarder, rewarder6909, miniPoolId
             );
             _turnOnRehypothecation(rehypothecation);
+            if (deployCod3xLendDataProvider) {
+                contracts.cod3xLendDataProvider = new Cod3xLendDataProvider();
+                contracts.cod3xLendDataProvider.setLendingPoolAddressProvider(
+                    lendingPoolAddressesProvider
+                );
+                contracts.cod3xLendDataProvider.setMiniPoolAddressProvider(
+                    miniPoolAddressesProvider
+                );
+            }
             vm.stopPrank();
         } else if (vm.envBool("TESTNET")) {
             console.log("Testnet");
@@ -152,6 +178,15 @@ contract ChangePeripherials is Script, DeploymentUtils, Test {
                 treasury, miniPoolCod3xTreasury, vault, rewarder, rewarder6909, miniPoolId
             );
             _turnOnRehypothecation(rehypothecation);
+            if (deployCod3xLendDataProvider) {
+                contracts.cod3xLendDataProvider = new Cod3xLendDataProvider();
+                contracts.cod3xLendDataProvider.setLendingPoolAddressProvider(
+                    lendingPoolAddressesProvider
+                );
+                contracts.cod3xLendDataProvider.setMiniPoolAddressProvider(
+                    miniPoolAddressesProvider
+                );
+            }
             vm.stopBroadcast();
         } else if (vm.envBool("MAINNET")) {
             console.log("Mainnet");
@@ -173,6 +208,15 @@ contract ChangePeripherials is Script, DeploymentUtils, Test {
                 treasury, miniPoolCod3xTreasury, vault, rewarder, rewarder6909, miniPoolId
             );
             _turnOnRehypothecation(rehypothecation);
+            if (deployCod3xLendDataProvider) {
+                contracts.cod3xLendDataProvider = new Cod3xLendDataProvider();
+                contracts.cod3xLendDataProvider.setLendingPoolAddressProvider(
+                    lendingPoolAddressesProvider
+                );
+                contracts.cod3xLendDataProvider.setMiniPoolAddressProvider(
+                    miniPoolAddressesProvider
+                );
+            }
             vm.stopBroadcast();
         } else {
             console.log("No deployment type selected in .env");

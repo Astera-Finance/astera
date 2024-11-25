@@ -374,7 +374,7 @@ library ReserveConfiguration {
     function getParamsMemory(DataTypes.ReserveConfigurationMap memory self)
         internal
         pure
-        returns (uint256, uint256, uint256, uint256, uint256, uint256)
+        returns (uint256, uint256, uint256, uint256, uint256, uint256, uint256)
     {
         return (
             self.data & ~LTV_MASK,
@@ -382,6 +382,8 @@ library ReserveConfiguration {
             (self.data & ~LIQUIDATION_BONUS_MASK) >> LIQUIDATION_BONUS_START_BIT_POSITION,
             (self.data & ~DECIMALS_MASK) >> RESERVE_DECIMALS_START_BIT_POSITION,
             (self.data & ~COD3X_RESERVE_FACTOR_MASK) >> COD3X_RESERVE_FACTOR_START_BIT_POSITION,
+            (self.data & ~MINIPOOL_OWNER_RESERVE_FACTOR_MASK)
+                >> MINIPOOL_OWNER_FACTOR_START_BIT_POSITION,
             (self.data & ~DEPOSIT_CAP_MASK) >> DEPOSIT_CAP_START_BIT_POSITION
         );
     }

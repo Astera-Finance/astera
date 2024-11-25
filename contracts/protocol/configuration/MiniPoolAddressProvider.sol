@@ -158,7 +158,7 @@ contract MiniPoolAddressesProvider is Ownable, IMiniPoolAddressesProvider {
     }
 
     /* Setters */
-    /* OnlyOwner */
+    /*___ OnlyOwner ___*/
     function setMiniPoolImpl(address impl, uint256 miniPoolId) external onlyOwner {
         bytes memory params =
             abi.encodeWithSignature("initialize(address,uint256)", address(this), miniPoolId);
@@ -204,11 +204,12 @@ contract MiniPoolAddressesProvider is Ownable, IMiniPoolAddressesProvider {
         return miniPoolId;
     }
 
-    /* Only configurator */
     function setMiniPoolConfigurator(address configuratorImpl) external onlyOwner {
         _updateImpl(MINI_POOL_CONFIGURATOR, configuratorImpl);
         emit MiniPoolConfiguratorUpdated(configuratorImpl);
     }
+
+    /*___ Only configurator ___*/
 
     function setFlowLimit(address asset, address miniPool, uint256 limit)
         external

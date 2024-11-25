@@ -256,7 +256,7 @@ contract LendingPoolTest is LendingPoolFixtures {
             0,
             tokenMaxBorrowAmount,
             tokenMaxBorrowAmount,
-            staticData.reserveFactor
+            staticData.cod3xReserveFactor
         );
         /* Main user is using now his liquidity as a collateral - borrow shall succeed */
         deployedContracts.lendingPool.setUserUseReserveAsCollateral(address(token), true, true);

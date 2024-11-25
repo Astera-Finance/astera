@@ -117,8 +117,8 @@ contract Cod3xLendDataProviderTest is MiniPoolFixtures {
             assertEq(staticData.liquidationThreshold, 8500);
             console.log("LiquidationBonus ", staticData.liquidationBonus);
             assertEq(staticData.liquidationBonus, 10500);
-            console.log("reserveFactor ", staticData.reserveFactor);
-            assertEq(staticData.reserveFactor, 1500);
+            console.log("reserveFactor ", staticData.cod3xReserveFactor);
+            assertEq(staticData.cod3xReserveFactor, 1500);
             console.log("depositCap ", staticData.depositCap);
             assertEq(staticData.depositCap, 0);
             console.log("borrowingEnabled ", staticData.borrowingEnabled);
@@ -286,8 +286,8 @@ contract Cod3xLendDataProviderTest is MiniPoolFixtures {
             assertEq(staticData.liquidationThreshold, 9700);
             console.log("LiquidationBonus ", staticData.liquidationBonus);
             assertEq(staticData.liquidationBonus, 10100);
-            console.log("reserveFactor ", staticData.reserveFactor);
-            assertEq(staticData.reserveFactor, 0);
+            console.log("reserveFactor ", staticData.cod3xReserveFactor);
+            assertEq(staticData.cod3xReserveFactor, 0);
             console.log("depositCap ", staticData.depositCap);
             assertEq(staticData.depositCap, 0);
             console.log("borrowingEnabled ", staticData.borrowingEnabled);

@@ -267,7 +267,7 @@ contract MiniPoolLiquidationTest is MiniPoolDepositBorrowTest {
                 IMiniPool(miniPool).getReserveData(address(borrowParams.token));
             DataTypes.ReserveConfigurationMap memory configuration =
                 IMiniPool(miniPool).getConfiguration(address(collateralParams.token));
-            (,, liquidationVars.liquidationBonus,,,) = configuration.getParamsMemory();
+            (,, liquidationVars.liquidationBonus,,,,) = configuration.getParamsMemory();
             liquidationVars.expectedCollateralLiquidated = borrowParams.price
                 * (liquidationVars.amountToLiquidate * liquidationVars.liquidationBonus / 10_000)
                 * 10 ** collateralParams.token.decimals()

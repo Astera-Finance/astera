@@ -533,6 +533,8 @@ The deployment process involves configuration files `./input/<Nr>_<InputJsonName
   - Example:
     ```json
     {
+        "miniPoolId": 0, //Id of mini pool to configure
+        "deployCod3xLendDataProvider": true, //flag used for deployment new cod3x data provider
         // List of configuration for treasury change
         "treasury": [
             {
@@ -779,7 +781,8 @@ The deployment process involves configuration files `./input/<Nr>_<InputJsonName
   - Example:
   ```json
     {
-        "rewarder": "0x3460a33582FC850d707ceA83f29f49D7b6290979",
-        "rewarder6909": "0xCA3c1FC0d5EdbAC5d8AB7742D4ff6F7053E04280"
+    "cod3xLendDataProvider": "0x9dcf274D58d4Fc29CB093bE979d509555d1F157D",
+    "rewarder": "0x3460a33582FC850d707ceA83f29f49D7b6290979",
+    "rewarder6909": "0xCA3c1FC0d5EdbAC5d8AB7742D4ff6F7053E04280"
     }
   ```

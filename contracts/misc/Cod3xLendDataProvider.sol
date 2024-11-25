@@ -47,7 +47,8 @@ struct StaticData {
     uint256 ltv;
     uint256 liquidationThreshold;
     uint256 liquidationBonus;
-    uint256 reserveFactor;
+    uint256 cod3xReserveFactor;
+    uint256 miniPoolOwnerReserveFactor;
     uint256 depositCap;
     bool borrowingEnabled;
     bool flashloanEnabled;
@@ -114,7 +115,8 @@ contract Cod3xLendDataProvider is Ownable {
             staticData.liquidationThreshold,
             staticData.liquidationBonus,
             staticData.decimals,
-            staticData.reserveFactor,
+            staticData.cod3xReserveFactor,
+            staticData.miniPoolOwnerReserveFactor,
             staticData.depositCap
         ) = configuration.getParamsMemory();
 
@@ -332,7 +334,8 @@ contract Cod3xLendDataProvider is Ownable {
             staticData.liquidationThreshold,
             staticData.liquidationBonus,
             staticData.decimals,
-            staticData.reserveFactor,
+            staticData.cod3xReserveFactor,
+            staticData.miniPoolOwnerReserveFactor,
             staticData.depositCap
         ) = configuration.getParamsMemory();
 

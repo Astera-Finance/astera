@@ -1,5 +1,6 @@
 {
     "miniPoolId": 0,
+    "deployCod3xLendDataProvider": true,
     "treasury": [
         {
             "configure": true,
