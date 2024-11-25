@@ -122,14 +122,6 @@ contract MiniPoolDepositBorrowTest is MiniPoolFixtures {
         }
 
         address[] memory aTokensW = new address[](1);
-        (address[] memory reserves, bool[] memory reserveTypes) =
-            deployedContracts.lendingPool.getReservesList();
-
-        for (uint256 i = 0; i < reserves.length; i++) {
-            console.log("rrrrrrrr ==== ");
-            console.logAddress(reserves[i]);
-            console.logBool(reserveTypes[i]);
-        }
 
         (address _aTokenAddress,) = Cod3xLendDataProvider(deployedContracts.cod3xLendDataProvider)
             .getLpTokens(address(mockToken), false);
