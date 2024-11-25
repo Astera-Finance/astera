@@ -5,6 +5,7 @@ import "./Common.sol";
 import "contracts/protocol/libraries/helpers/Errors.sol";
 import {WadRayMath} from "contracts/protocol/libraries/math/WadRayMath.sol";
 import "contracts/interfaces/IMiniPoolRewarder.sol";
+import "contracts/protocol/tokenization/ERC20/ATokenNonRebasing.sol";
 
 contract ATokenErc6909Test is Common {
     using WadRayMath for uint256;
@@ -57,7 +58,7 @@ contract ATokenErc6909Test is Common {
             if (idx < tokens.length) {
                 reserves[idx] = tokens[idx];
             } else {
-                reserves[idx] = address(aTokens[idx - tokens.length]);
+                reserves[idx] = address(aTokens[idx - tokens.length].WRAPPER_ADDRESS());
             }
         }
 
@@ -308,7 +309,7 @@ contract ATokenErc6909Test is Common {
         /* Fuzz vector creation */
         offset = bound(offset, 0, tokens.length - 1);
         uint256 id = 1000 + offset;
-        TokenParams memory tokenParams = TokenParams(erc20Tokens[offset], aTokens[offset], 0);
+        TokenParams memory tokenParams = TokenParams(erc20Tokens[offset], aTokensWrapper[offset], 0);
         maxValToBurn = bound(
             maxValToBurn,
             nrOfIterations * 10 ** (tokenParams.token.decimals() - 2),
@@ -492,7 +493,7 @@ contract ATokenErc6909Test is Common {
         TestParams memory testParams = TestParams(1000 + offset, 20, makeAddr("User"));
         valToTransfer = bound(valToTransfer, testParams.nrOfIterations * 10, 10_000_000);
         uint256 index = 1e27;
-        TokenParams memory tokenParams = TokenParams(erc20Tokens[offset], aTokens[offset], 0);
+        TokenParams memory tokenParams = TokenParams(erc20Tokens[offset], aTokensWrapper[offset], 0);
 
         uint256 granuality = valToTransfer / testParams.nrOfIterations;
         vm.assume(valToTransfer % granuality == 0); // accept only multiplicity of {nrOfIterations} -> avoid issues with rounding
@@ -706,7 +707,7 @@ contract ATokenErc6909Test is Common {
         offset = bound(offset, 0, tokens.length - 1);
         uint256 id = 1000 + offset;
         ERC20 underlyingToken = erc20Tokens[offset];
-        IERC20 grainUnderlyingToken = IERC20(aTokens[offset]);
+        IERC20 grainUnderlyingToken = IERC20(aTokensWrapper[offset]);
         valToTransfer = bound(valToTransfer, nrOfIterations * 10, 20_000_000);
         // index = 1e27;
         index = bound(index, 1e27, 10e27); // assume index increases in time as the interest accumulates
@@ -803,7 +804,7 @@ contract ATokenErc6909Test is Common {
         //offset = bound(offset, 0, (2 * tokens.length) - 1);
         offset = bound(offset, 0, tokens.length - 3);
         // offset = 1;
-        TokenParams memory tokenParams = TokenParams(erc20Tokens[offset], aTokens[offset], 0);
+        TokenParams memory tokenParams = TokenParams(erc20Tokens[offset], aTokensWrapper[offset], 0);
         uint256 id = 1000 + offset;
         valToTransfer = bound(valToTransfer, nrOfIterations, 20_000_000);
         index = 1e27;

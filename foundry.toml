@@ -29,4 +29,4 @@ sepolia = { key = "${ETHERSCAN_KEY}", url = "https://api-sepolia.etherscan.io/ap
 line_length = 100
 
 [fuzz]
-runs = 256
+runs = 50

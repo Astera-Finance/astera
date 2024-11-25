@@ -46,7 +46,7 @@ contract PausableFunctionsTest is Common {
             if (idx < tokens.length) {
                 reserves[idx] = tokens[idx];
             } else {
-                reserves[idx] = address(aTokens[idx - tokens.length]);
+                reserves[idx] = address(aTokens[idx - tokens.length].WRAPPER_ADDRESS());
             }
         }
 
