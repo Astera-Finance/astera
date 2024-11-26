@@ -52,7 +52,7 @@ library ReserveConfiguration {
     uint256 internal constant MAX_VALID_LIQUIDATION_THRESHOLD = type(uint16).max;
     uint256 internal constant MAX_VALID_LIQUIDATION_BONUS = type(uint16).max;
     uint256 internal constant MAX_VALID_DECIMALS = type(uint8).max;
-    uint256 internal constant MAX_VALID_RESERVE_FACTOR = 1500; // 15% // theorical max: type(uint16).max
+    uint256 internal constant MAX_VALID_RESERVE_FACTOR = 5000; // 15% // theorical max: type(uint16).max
     uint256 internal constant MAX_VALID_DEPOSIT_CAP = type(uint72).max; // Enough to represent SHIBA total supply.
 
     /**

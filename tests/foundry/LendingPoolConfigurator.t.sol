@@ -10,7 +10,7 @@ import {WadRayMath} from "contracts/protocol/libraries/math/WadRayMath.sol";
 contract LendingPoolConfiguratorTest is Common {
     using ReserveConfiguration for DataTypes.ReserveConfigurationMap;
 
-    uint256 constant MAX_VALID_RESERVE_FACTOR = 1500;
+    uint256 constant MAX_VALID_RESERVE_FACTOR = 5000;
     uint256 constant MAX_VALID_DEPOSIT_CAP = type(uint72).max;
 
     event ReserveInitialized(
