@@ -359,11 +359,9 @@ contract MiniPool is VersionedInitializable, IMiniPool, MiniPoolStorage {
                 ATokenNonRebasing(asset).convertToShares(getCurrentLendingPoolDebt(underlyingAsset)); // share
 
             if (underlyingDebt != 0) {
-                uint256 amount = underlyingDebt;
-
                 MiniPoolWithdrawLogic.internalWithdraw(
                     MiniPoolWithdrawLogic.withdrawParams(
-                        asset, false, amount, address(this), _reservesCount
+                        asset, false, underlyingDebt, address(this), _reservesCount
                     ),
                     _reserves,
                     _usersConfig,
@@ -371,15 +369,14 @@ contract MiniPool is VersionedInitializable, IMiniPool, MiniPoolStorage {
                     _addressesProvider
                 ); // MUST use share
 
-                IERC20 aToken = IERC20(ATokenNonRebasing(asset).ATOKEN_ADDRESS());
-                amount = aToken.balanceOf(address(this)); // asset
                 ILendingPool(_addressesProvider.getLendingPool()).repayWithATokens(
-                    underlyingAsset, true, amount
+                    underlyingAsset,
+                    true,
+                    IERC20(ATokenNonRebasing(asset).ATOKEN_ADDRESS()).balanceOf(address(this))
                 ); // MUST use asset
             }
-
-            uint256 aTokenId = reserve.aTokenID;
-            uint256 remainingBalance = IAERC6909(aTokenAddress).balanceOf(address(this), aTokenId);
+            uint256 remainingBalance =
+                IAERC6909(aTokenAddress).balanceOf(address(this), reserve.aTokenID);
 
             if (
                 getCurrentLendingPoolDebt(underlyingAsset) == 0
