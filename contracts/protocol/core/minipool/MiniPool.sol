@@ -373,7 +373,6 @@ contract MiniPool is VersionedInitializable, IMiniPool, MiniPoolStorage {
 
                 IERC20 aToken = IERC20(ATokenNonRebasing(asset).ATOKEN_ADDRESS());
                 amount = aToken.balanceOf(address(this)); // asset
-                aToken.approve(_addressesProvider.getLendingPool(), amount);
                 ILendingPool(_addressesProvider.getLendingPool()).repayWithATokens(
                     underlyingAsset, true, amount
                 ); // MUST use asset
