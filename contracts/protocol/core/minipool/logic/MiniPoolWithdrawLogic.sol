@@ -40,7 +40,6 @@ library MiniPoolWithdrawLogic {
 
     struct withdrawParams {
         address asset;
-        bool unwrap;
         uint256 amount;
         address to;
         uint256 reservesCount;
@@ -55,6 +54,7 @@ library MiniPoolWithdrawLogic {
 
     function withdraw(
         withdrawParams memory params,
+        bool unwrap,
         mapping(address => DataTypes.MiniPoolReserveData) storage reserves,
         mapping(address => DataTypes.UserConfigurationMap) storage usersConfig,
         mapping(uint256 => address) storage reservesList,
@@ -102,7 +102,7 @@ library MiniPoolWithdrawLogic {
             params.to,
             localVars.id,
             localVars.amountToWithdraw,
-            params.unwrap,
+            unwrap,
             reserve.liquidityIndex
         );
 

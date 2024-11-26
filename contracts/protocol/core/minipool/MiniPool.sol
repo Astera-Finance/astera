@@ -157,7 +157,8 @@ contract MiniPool is VersionedInitializable, IMiniPool, MiniPoolStorage {
         returns (uint256)
     {
         return MiniPoolWithdrawLogic.withdraw(
-            MiniPoolWithdrawLogic.withdrawParams(asset, unwrap, amount, to, _reservesCount),
+            MiniPoolWithdrawLogic.withdrawParams(asset, amount, to, _reservesCount),
+            unwrap,
             _reserves,
             _usersConfig,
             _reservesList,
@@ -361,7 +362,7 @@ contract MiniPool is VersionedInitializable, IMiniPool, MiniPoolStorage {
             if (underlyingDebt != 0) {
                 MiniPoolWithdrawLogic.internalWithdraw(
                     MiniPoolWithdrawLogic.withdrawParams(
-                        asset, false, underlyingDebt, address(this), _reservesCount
+                        asset, underlyingDebt, address(this), _reservesCount
                     ),
                     _reserves,
                     _usersConfig,
