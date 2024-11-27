@@ -4,10 +4,12 @@ pragma solidity 0.8.23;
 import {IVariableDebtToken} from "../../../../contracts/interfaces/IVariableDebtToken.sol";
 import {WadRayMath} from "../../../../contracts/protocol/libraries/math/WadRayMath.sol";
 import {Errors} from "../../../../contracts/protocol/libraries/helpers/Errors.sol";
-import {DebtTokenBase} from
-    "../../../../contracts/protocol/tokenization/ERC20/base/DebtTokenBase.sol";
 import {ILendingPool} from "../../../../contracts/interfaces/ILendingPool.sol";
 import {IRewarder} from "../../../../contracts/interfaces/IRewarder.sol";
+import {VersionedInitializable} from
+    "../../../../contracts/protocol/libraries/upgradeability/VersionedInitializable.sol";
+import {IncentivizedERC20} from
+    "../../../../contracts/protocol/tokenization/ERC20/IncentivizedERC20.sol";
 
 /**
  * @title VariableDebtToken
@@ -16,7 +18,11 @@ import {IRewarder} from "../../../../contracts/interfaces/IRewarder.sol";
  * @author Cod3x
  *
  */
-contract VariableDebtToken is DebtTokenBase, IVariableDebtToken {
+contract VariableDebtToken is
+    IncentivizedERC20("DEBTTOKEN_IMPL", "DEBTTOKEN_IMPL", 0),
+    VersionedInitializable,
+    IVariableDebtToken
+{
     using WadRayMath for uint256;
 
     uint256 public constant DEBT_TOKEN_REVISION = 0x1;
@@ -25,6 +31,17 @@ contract VariableDebtToken is DebtTokenBase, IVariableDebtToken {
     ILendingPool internal _pool;
     address internal _underlyingAsset;
     IRewarder internal _incentivesController;
+
+    mapping(address => mapping(address => uint256)) internal _borrowAllowances;
+
+    /**
+     * @dev Only lending pool can call functions marked by this modifier
+     *
+     */
+    modifier onlyLendingPool() {
+        require(_msgSender() == address(_getLendingPool()), Errors.CT_CALLER_MUST_BE_LENDING_POOL);
+        _;
+    }
 
     /**
      * @dev Initializes the debt token.
@@ -145,6 +162,98 @@ contract VariableDebtToken is DebtTokenBase, IVariableDebtToken {
     }
 
     /**
+     * @dev delegates borrowing power to a user on the specific debt token
+     * @param delegatee the address receiving the delegated borrowing power
+     * @param amount the maximum amount being delegated. Delegation will still
+     * respect the liquidation constraints (even if delegated, a delegatee cannot
+     * force a delegator HF to go below 1)
+     *
+     */
+    function approveDelegation(address delegatee, uint256 amount) external override {
+        _borrowAllowances[_msgSender()][delegatee] = amount;
+        emit BorrowAllowanceDelegated(_msgSender(), delegatee, _getUnderlyingAssetAddress(), amount);
+    }
+
+    /**
+     * @dev returns the borrow allowance of the user
+     * @param fromUser The user to giving allowance
+     * @param toUser The user to give allowance to
+     * @return the current allowance of toUser
+     *
+     */
+    function borrowAllowance(address fromUser, address toUser)
+        external
+        view
+        override
+        returns (uint256)
+    {
+        return _borrowAllowances[fromUser][toUser];
+    }
+
+    /**
+     * @dev Being non transferrable, the debt token does not implement any of the
+     * standard ERC20 functions for transfer and allowance.
+     *
+     */
+    function transfer(address recipient, uint256 amount) public virtual override returns (bool) {
+        recipient;
+        amount;
+        revert("TRANSFER_NOT_SUPPORTED");
+    }
+
+    function allowance(address owner, address spender)
+        public
+        view
+        virtual
+        override
+        returns (uint256)
+    {
+        owner;
+        spender;
+        revert("ALLOWANCE_NOT_SUPPORTED");
+    }
+
+    function approve(address spender, uint256 amount) public virtual override returns (bool) {
+        spender;
+        amount;
+        revert("APPROVAL_NOT_SUPPORTED");
+    }
+
+    function transferFrom(address sender, address recipient, uint256 amount)
+        public
+        virtual
+        override
+        returns (bool)
+    {
+        sender;
+        recipient;
+        amount;
+        revert("TRANSFER_NOT_SUPPORTED");
+    }
+
+    function increaseAllowance(address spender, uint256 addedValue)
+        public
+        virtual
+        override
+        returns (bool)
+    {
+        spender;
+        addedValue;
+        revert("ALLOWANCE_NOT_SUPPORTED");
+    }
+
+    function decreaseAllowance(address spender, uint256 subtractedValue)
+        public
+        virtual
+        override
+        returns (bool)
+    {
+        spender;
+        subtractedValue;
+        revert("ALLOWANCE_NOT_SUPPORTED");
+    }
+
+    /**
      * @dev Returns the principal debt balance of the user from
      * @return The debt balance of the user since the last burn/mint action
      *
@@ -217,16 +326,30 @@ contract VariableDebtToken is DebtTokenBase, IVariableDebtToken {
         return _incentivesController;
     }
 
-    function _getUnderlyingAssetAddress() internal view override returns (address) {
+    function _getUnderlyingAssetAddress() internal view returns (address) {
         return _underlyingAsset;
     }
 
-    function _getLendingPool() internal view override returns (ILendingPool) {
+    function _getLendingPool() internal view returns (ILendingPool) {
         return _pool;
     }
 
+    function _decreaseBorrowAllowance(address delegator, address delegatee, uint256 amount)
+        internal
+    {
+        uint256 oldAllowance = _borrowAllowances[delegator][delegatee];
+        require(oldAllowance >= amount, Errors.BORROW_ALLOWANCE_NOT_ENOUGH);
+        uint256 newAllowance = oldAllowance - amount;
+
+        _borrowAllowances[delegator][delegatee] = newAllowance;
+
+        emit BorrowAllowanceDelegated(
+            delegator, delegatee, _getUnderlyingAssetAddress(), newAllowance
+        );
+    }
+
     function setIncentivesController(address newController) external override onlyLendingPool {
-        require(newController != address(0), "INVALID_CONTROLLER");
+        require(newController != address(0), Errors.AT_INVALID_CONTROLLER);
         _incentivesController = IRewarder(newController);
     }
 }
