@@ -384,15 +384,15 @@ contract MiniPoolAddressProvider is Common {
         vm.expectRevert();
         miniPoolContracts.miniPoolAddressesProvider.setMiniPoolConfigurator(mockedContractToUpdate);
 
-        vm.expectRevert(bytes("27"));
+        vm.expectRevert(bytes(Errors.LP_CALLER_NOT_LENDING_POOL_CONFIGURATOR));
         miniPoolContracts.miniPoolAddressesProvider.setFlowLimit(
             address(erc20Tokens[0]), miniPool, randomNumber
         );
-        vm.expectRevert(bytes("27"));
+        vm.expectRevert(bytes(Errors.LP_CALLER_NOT_LENDING_POOL_CONFIGURATOR));
         miniPoolContracts.miniPoolAddressesProvider.setPoolAdmin(0, randomAddress);
-        vm.expectRevert(bytes("27"));
+        vm.expectRevert(bytes(Errors.LP_CALLER_NOT_LENDING_POOL_CONFIGURATOR));
         miniPoolContracts.miniPoolAddressesProvider.setCod3xTreasuryToMiniPool(0, randomAddress);
-        vm.expectRevert(bytes("27"));
+        vm.expectRevert(bytes(Errors.LP_CALLER_NOT_LENDING_POOL_CONFIGURATOR));
         miniPoolContracts.miniPoolAddressesProvider.setMinipoolOwnerTreasuryToMiniPool(
             0, randomAddress
         );

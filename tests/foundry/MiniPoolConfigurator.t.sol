@@ -55,38 +55,38 @@ contract MiniPoolConfiguratorTest is MiniPoolDepositBorrowTest {
 
         vm.startPrank(prankAddress);
         /* only main pool */
-        vm.expectRevert(bytes("33"));
+        vm.expectRevert(bytes(Errors.CALLER_NOT_POOL_ADMIN));
         miniPoolContracts.miniPoolConfigurator.batchInitReserve(input, IMiniPool(newMiniPool));
 
-        vm.expectRevert(bytes("33"));
+        vm.expectRevert(bytes(Errors.CALLER_NOT_POOL_ADMIN));
         miniPoolContracts.miniPoolConfigurator.setRewarderForReserve(
             tokenAddress, randomAddress, IMiniPool(newMiniPool)
         );
-        vm.expectRevert(bytes("33"));
+        vm.expectRevert(bytes(Errors.CALLER_NOT_POOL_ADMIN));
         miniPoolContracts.miniPoolConfigurator.updateFlashloanPremiumTotal(
             uint128(randomNumber), IMiniPool(newMiniPool)
         );
-        vm.expectRevert(bytes("33"));
+        vm.expectRevert(bytes(Errors.CALLER_NOT_POOL_ADMIN));
         miniPoolContracts.miniPoolConfigurator.setCod3xTreasuryToMiniPool(
             randomAddress, IMiniPool(miniPool)
         );
-        vm.expectRevert(bytes("33"));
+        vm.expectRevert(bytes(Errors.CALLER_NOT_POOL_ADMIN));
         miniPoolContracts.miniPoolConfigurator.setFlowLimit(tokenAddress, newMiniPool, randomNumber);
-        vm.expectRevert(bytes("33"));
+        vm.expectRevert(bytes(Errors.CALLER_NOT_POOL_ADMIN));
         miniPoolContracts.miniPoolConfigurator.setReserveInterestRateStrategyAddress(
             tokenAddress, randomAddress, IMiniPool(miniPool)
         );
-        vm.expectRevert(bytes("33"));
+        vm.expectRevert(bytes(Errors.CALLER_NOT_POOL_ADMIN));
         miniPoolContracts.miniPoolConfigurator.setCod3xReserveFactor(
             tokenAddress, randomNumber, IMiniPool(miniPool)
         );
-        vm.expectRevert(bytes("33"));
+        vm.expectRevert(bytes(Errors.CALLER_NOT_POOL_ADMIN));
         miniPoolContracts.miniPoolConfigurator.setDepositCap(
             tokenAddress, randomNumber, IMiniPool(miniPool)
         );
 
         /* only emergency admin */
-        vm.expectRevert(bytes("76"));
+        vm.expectRevert(bytes(Errors.LPC_CALLER_NOT_EMERGENCY_ADMIN));
         miniPoolContracts.miniPoolConfigurator.setPoolPause(true, IMiniPool(newMiniPool));
         vm.stopPrank();
 
@@ -96,42 +96,42 @@ contract MiniPoolConfiguratorTest is MiniPoolDepositBorrowTest {
             : randomAddress;
         vm.startPrank(prankAddress);
         /* only pool admin */
-        vm.expectRevert(bytes("33"));
+        vm.expectRevert(bytes(Errors.CALLER_NOT_POOL_ADMIN));
         miniPoolContracts.miniPoolConfigurator.enableBorrowingOnReserve(
             tokenAddress, IMiniPool(newMiniPool)
         );
-        vm.expectRevert(bytes("33"));
+        vm.expectRevert(bytes(Errors.CALLER_NOT_POOL_ADMIN));
         miniPoolContracts.miniPoolConfigurator.disableBorrowingOnReserve(
             tokenAddress, IMiniPool(newMiniPool)
         );
-        vm.expectRevert(bytes("33"));
+        vm.expectRevert(bytes(Errors.CALLER_NOT_POOL_ADMIN));
         miniPoolContracts.miniPoolConfigurator.configureReserveAsCollateral(
             tokenAddress, randomNumber, randomNumber, randomNumber, IMiniPool(newMiniPool)
         );
-        vm.expectRevert(bytes("33"));
+        vm.expectRevert(bytes(Errors.CALLER_NOT_POOL_ADMIN));
         miniPoolContracts.miniPoolConfigurator.activateReserve(tokenAddress, IMiniPool(newMiniPool));
-        vm.expectRevert(bytes("33"));
+        vm.expectRevert(bytes(Errors.CALLER_NOT_POOL_ADMIN));
         miniPoolContracts.miniPoolConfigurator.deactivateReserve(
             tokenAddress, IMiniPool(newMiniPool)
         );
-        vm.expectRevert(bytes("33"));
+        vm.expectRevert(bytes(Errors.CALLER_NOT_POOL_ADMIN));
         miniPoolContracts.miniPoolConfigurator.freezeReserve(tokenAddress, IMiniPool(newMiniPool));
-        vm.expectRevert(bytes("33"));
+        vm.expectRevert(bytes(Errors.CALLER_NOT_POOL_ADMIN));
         miniPoolContracts.miniPoolConfigurator.unfreezeReserve(tokenAddress, IMiniPool(newMiniPool));
 
-        vm.expectRevert(bytes("33"));
+        vm.expectRevert(bytes(Errors.CALLER_NOT_POOL_ADMIN));
         miniPoolContracts.miniPoolConfigurator.enableFlashloan(tokenAddress, IMiniPool(newMiniPool));
-        vm.expectRevert(bytes("33"));
+        vm.expectRevert(bytes(Errors.CALLER_NOT_POOL_ADMIN));
         miniPoolContracts.miniPoolConfigurator.disableFlashloan(
             tokenAddress, IMiniPool(newMiniPool)
         );
-        vm.expectRevert(bytes("33"));
+        vm.expectRevert(bytes(Errors.CALLER_NOT_POOL_ADMIN));
         miniPoolContracts.miniPoolConfigurator.setPoolAdmin(randomAddress, IMiniPool(newMiniPool));
-        vm.expectRevert(bytes("33"));
+        vm.expectRevert(bytes(Errors.CALLER_NOT_POOL_ADMIN));
         miniPoolContracts.miniPoolConfigurator.setMinipoolOwnerTreasuryToMiniPool(
             randomAddress, IMiniPool(newMiniPool)
         );
-        vm.expectRevert(bytes("33"));
+        vm.expectRevert(bytes(Errors.CALLER_NOT_POOL_ADMIN));
         miniPoolContracts.miniPoolConfigurator.setMinipoolOwnerReserveFactor(
             tokenAddress, randomNumber, IMiniPool(newMiniPool)
         );
@@ -150,7 +150,7 @@ contract MiniPoolConfiguratorTest is MiniPoolDepositBorrowTest {
             vm.stopPrank();
 
             vm.startPrank(random);
-            vm.expectRevert(bytes("33"));
+            vm.expectRevert(bytes(Errors.CALLER_NOT_POOL_ADMIN));
             miniPoolContracts.miniPoolConfigurator.disableBorrowingOnReserve(
                 address(erc20Tokens[idx]), IMiniPool(miniPool)
             );
@@ -170,7 +170,7 @@ contract MiniPoolConfiguratorTest is MiniPoolDepositBorrowTest {
             vm.stopPrank();
 
             vm.startPrank(random);
-            vm.expectRevert(bytes("33"));
+            vm.expectRevert(bytes(Errors.CALLER_NOT_POOL_ADMIN));
             miniPoolContracts.miniPoolConfigurator.activateReserve(
                 address(erc20Tokens[idx]), IMiniPool(miniPool)
             );
@@ -190,7 +190,7 @@ contract MiniPoolConfiguratorTest is MiniPoolDepositBorrowTest {
             vm.stopPrank();
 
             vm.startPrank(random);
-            vm.expectRevert(bytes("33"));
+            vm.expectRevert(bytes(Errors.CALLER_NOT_POOL_ADMIN));
             miniPoolContracts.miniPoolConfigurator.activateReserve(
                 address(erc20Tokens[idx]), IMiniPool(miniPool)
             );
@@ -210,7 +210,7 @@ contract MiniPoolConfiguratorTest is MiniPoolDepositBorrowTest {
             vm.stopPrank();
 
             vm.startPrank(random);
-            vm.expectRevert(bytes("33"));
+            vm.expectRevert(bytes(Errors.CALLER_NOT_POOL_ADMIN));
             miniPoolContracts.miniPoolConfigurator.activateReserve(
                 address(erc20Tokens[idx]), IMiniPool(miniPool)
             );
@@ -229,7 +229,7 @@ contract MiniPoolConfiguratorTest is MiniPoolDepositBorrowTest {
             );
             vm.stopPrank();
             vm.startPrank(random);
-            vm.expectRevert(bytes("33"));
+            vm.expectRevert(bytes(Errors.CALLER_NOT_POOL_ADMIN));
             miniPoolContracts.miniPoolConfigurator.activateReserve(
                 address(erc20Tokens[idx]), IMiniPool(miniPool)
             );
