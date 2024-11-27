@@ -151,7 +151,7 @@ contract TestBasicActions is Script, DeploymentUtils, Test {
             0,
             maxBorrowTokenToBorrowInCollateralUnit,
             maxBorrowTokenToBorrowInCollateralUnit,
-            staticData.reserveFactor
+            staticData.cod3xReserveFactor
         );
         console.log("AToken balance: ", borrowToken.token.balanceOf(address(borrowToken.aToken)));
         /* Borrower borrows maxPossible amount of borrowToken */

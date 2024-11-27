@@ -210,7 +210,7 @@ library ReserveLogic {
             liquidityAdded,
             liquidityTaken,
             vars.totalVariableDebt,
-            reserve.configuration.getReserveFactor()
+            reserve.configuration.getCod3xReserveFactor()
         );
         require(vars.newLiquidityRate <= type(uint128).max, Errors.RL_LIQUIDITY_RATE_OVERFLOW);
         require(vars.newVariableRate <= type(uint128).max, Errors.RL_VARIABLE_BORROW_RATE_OVERFLOW);
@@ -255,7 +255,7 @@ library ReserveLogic {
     ) internal {
         MintToTreasuryLocalVars memory vars;
 
-        vars.reserveFactor = reserve.configuration.getReserveFactor();
+        vars.reserveFactor = reserve.configuration.getCod3xReserveFactor();
 
         if (vars.reserveFactor == 0) {
             return;
@@ -273,7 +273,7 @@ library ReserveLogic {
         vars.amountToMint = vars.totalDebtAccrued.percentMul(vars.reserveFactor);
 
         if (vars.amountToMint != 0) {
-            IAToken(reserve.aTokenAddress).mintToTreasury(vars.amountToMint, newLiquidityIndex);
+            IAToken(reserve.aTokenAddress).mintToCod3xTreasury(vars.amountToMint, newLiquidityIndex);
         }
     }
 

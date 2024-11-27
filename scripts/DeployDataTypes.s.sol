@@ -88,6 +88,7 @@ struct Roles {
 struct PoolAddressesProviderConfig {
     string marketId;
     uint256 poolId;
+    address poolOwner;
 }
 
 struct PoolReserversConfig {
@@ -97,6 +98,7 @@ struct PoolReserversConfig {
     uint256 interestStratId;
     uint256 liquidationBonus;
     uint256 liquidationThreshold;
+    uint256 miniPoolOwnerFee;
     string params;
     uint256 rates;
     uint256 reserveFactor;
@@ -144,6 +146,18 @@ struct NewPeripherial {
     bool reserveType;
     string symbol;
     address tokenAddress;
+}
+
+struct NewMiniPoolPeripherial {
+    bool configure;
+    address newAddress;
+    address owner;
+}
+
+struct MiniPoolRole {
+    uint256 miniPoolId;
+    address newPoolOwner;
+    address poolOwnerTreasury;
 }
 
 struct Rehypothecation {

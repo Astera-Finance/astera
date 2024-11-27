@@ -22,7 +22,10 @@ contract TransferOwnerships is Script, DeploymentUtils, Test {
         console.log("PATH: ", path);
         string memory deploymentConfig = vm.readFile(path);
 
+        bool transferMiniPoolRole = deploymentConfig.readBool(".transferMiniPoolRole");
         Roles memory roles = abi.decode(deploymentConfig.parseRaw(".roles"), (Roles));
+        MiniPoolRole memory miniPoolRole =
+            abi.decode(deploymentConfig.parseRaw(".miniPoolRole"), (MiniPoolRole));
 
         if (vm.envBool("LOCAL_FORK")) {
             /* Fork Identifier */
@@ -36,7 +39,14 @@ contract TransferOwnerships is Script, DeploymentUtils, Test {
             contracts = changePeripherials.run();
 
             vm.startPrank(FOUNDRY_DEFAULT);
-            _transferOwnershipsAndRenounceRoles(roles);
+            if (transferMiniPoolRole) {
+                console.log("MiniPool ownership transfer");
+                _transferMiniPoolOwnership(miniPoolRole);
+            } else {
+                console.log("MainPool ownership transfer");
+                _transferOwnershipsAndRenounceRoles(roles);
+            }
+
             vm.stopPrank();
         } else if (vm.envBool("TESTNET")) {
             console.log("Testnet");
@@ -103,7 +113,13 @@ contract TransferOwnerships is Script, DeploymentUtils, Test {
 
             /* ***** Action ***** */
             vm.startBroadcast(vm.envUint("PRIVATE_KEY"));
-            _transferOwnershipsAndRenounceRoles(roles);
+            if (transferMiniPoolRole) {
+                console.log("MiniPool ownership transfer");
+                _transferMiniPoolOwnership(miniPoolRole);
+            } else {
+                console.log("MainPool ownership transfer");
+                _transferOwnershipsAndRenounceRoles(roles);
+            }
             vm.stopBroadcast();
         } else if (vm.envBool("MAINNET")) {
             console.log("Mainnet Deployment");
@@ -167,7 +183,13 @@ contract TransferOwnerships is Script, DeploymentUtils, Test {
 
             /* ***** Action ***** */
             vm.startBroadcast(vm.envUint("PRIVATE_KEY"));
-            _transferOwnershipsAndRenounceRoles(roles);
+            if (transferMiniPoolRole) {
+                console.log("MiniPool ownership transfer");
+                _transferMiniPoolOwnership(miniPoolRole);
+            } else {
+                console.log("MainPool ownership transfer");
+                _transferOwnershipsAndRenounceRoles(roles);
+            }
             vm.stopBroadcast();
         } else {
             console.log("No deployment type selected in .env");

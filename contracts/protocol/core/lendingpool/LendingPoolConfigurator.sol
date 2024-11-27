@@ -117,6 +117,7 @@ contract LendingPoolConfigurator is VersionedInitializable, ILendingPoolConfigur
         currentConfig.setActive(true);
         currentConfig.setFrozen(false);
         currentConfig.setFlashLoanEnabled(true);
+        currentConfig.setReserveType(input.reserveType);
 
         pool.setConfiguration(input.underlyingAsset, input.reserveType, currentConfig.data);
 
@@ -139,7 +140,7 @@ contract LendingPoolConfigurator is VersionedInitializable, ILendingPoolConfigur
         DataTypes.ReserveData memory reserveData =
             cachedPool.getReserveData(input.asset, input.reserveType);
 
-        (,,, uint256 decimals,,) =
+        (,,, uint256 decimals,,,) =
             cachedPool.getConfiguration(input.asset, input.reserveType).getParamsMemory();
 
         bytes memory encodedCall = abi.encodeWithSelector(
@@ -171,7 +172,7 @@ contract LendingPoolConfigurator is VersionedInitializable, ILendingPoolConfigur
         DataTypes.ReserveData memory reserveData =
             cachedPool.getReserveData(input.asset, input.reserveType);
 
-        (,,, uint256 decimals,,) =
+        (,,, uint256 decimals,,,) =
             cachedPool.getConfiguration(input.asset, input.reserveType).getParamsMemory();
 
         bytes memory encodedCall = abi.encodeWithSelector(
@@ -399,14 +400,14 @@ contract LendingPoolConfigurator is VersionedInitializable, ILendingPoolConfigur
      * @param reserveFactor The new reserve factor of the reserve
      *
      */
-    function setReserveFactor(address asset, bool reserveType, uint256 reserveFactor)
+    function setCod3xReserveFactor(address asset, bool reserveType, uint256 reserveFactor)
         external
         onlyPoolAdmin
     {
         DataTypes.ReserveConfigurationMap memory currentConfig =
             pool.getConfiguration(asset, reserveType);
 
-        currentConfig.setReserveFactor(reserveFactor);
+        currentConfig.setCod3xReserveFactor(reserveFactor);
 
         pool.setConfiguration(asset, reserveType, currentConfig.data);
 

@@ -16,6 +16,8 @@ import {IERC20} from "../../../../contracts/dependencies/openzeppelin/contracts/
 import {IMiniPoolAddressesProvider} from
     "../../../../contracts/interfaces/IMiniPoolAddressesProvider.sol";
 import {IMiniPool} from "../../../../contracts/interfaces/IMiniPool.sol";
+import {ATokenNonRebasing} from
+    "../../../../contracts/protocol/tokenization/ERC20/ATokenNonRebasing.sol";
 import "openzeppelin-contracts/contracts/utils/Strings.sol";
 
 /**
@@ -127,6 +129,15 @@ contract ATokenERC6909 is IncentivizedERC6909, VersionedInitializable {
             _totalTrancheTokens++;
             _isTranche[aTokenID] = true;
             _isTranche[debtTokenID] = true;
+
+            // Ensure reserveType == True. (`assert` because it must never be `false`)
+            assert(IAToken(underlyingAsset).RESERVE_TYPE());
+
+            // Ensure the AToken address is the Non Rebasin version.
+            require(
+                ATokenNonRebasing(underlyingAsset).ATOKEN_ADDRESS() != address(0),
+                Errors.AT_INVALID_ATOKEN_ADDRESS
+            );
         } else {
             _totalUniqueTokens++;
         }
@@ -255,9 +266,17 @@ contract ATokenERC6909 is IncentivizedERC6909, VersionedInitializable {
         return true;
     }
 
-    function transferUnderlyingTo(address to, uint256 id, uint256 amount) public {
+    function transferUnderlyingTo(address to, uint256 id, uint256 amount, bool unwrap) public {
         require(msg.sender == address(POOL), Errors.CT_CALLER_MUST_BE_LENDING_POOL);
-        IERC20(_underlyingAssetAddresses[id]).transfer(to, amount);
+
+        if (unwrap) {
+            ATokenNonRebasing asset = ATokenNonRebasing(_underlyingAssetAddresses[id]);
+            ILendingPool(_addressesProvider.getLendingPool()).withdraw(
+                asset.UNDERLYING_ASSET_ADDRESS(), true, asset.convertToAssets(amount), to
+            );
+        } else {
+            IERC20(_underlyingAssetAddresses[id]).transfer(to, amount);
+        }
     }
 
     function getScaledUserBalanceAndSupply(address user, uint256 id)
@@ -300,11 +319,20 @@ contract ATokenERC6909 is IncentivizedERC6909, VersionedInitializable {
         ILendingPool pool = ILendingPool(_addressesProvider.getLendingPool());
         if (_determineIfAToken(underlying, address(pool))) {
             address tokenUnderlying = IAToken(underlying).UNDERLYING_ASSET_ADDRESS();
+
+            // Ensure LendingPool reserve is initialized.
+            require(
+                pool.getReserveData(tokenUnderlying, true).aTokenAddress != address(0),
+                Errors.RL_RESERVE_NOT_INITIALIZED
+            );
+            // Thanks to the above check, `getReserveData.id` returns the correct value.
             uint256 tokenID = pool.getReserveData(tokenUnderlying, true).id;
+
             return (tokenID + ATOKEN_ADDRESSABLE_ID, tokenID + DEBT_TOKEN_ADDRESSABLE_ID, true);
         } else {
             uint256 offset = pool.MAX_NUMBER_RESERVES();
             uint256 tokenID = offset + _totalUniqueTokens;
+
             return (tokenID + ATOKEN_ADDRESSABLE_ID, tokenID + DEBT_TOKEN_ADDRESSABLE_ID, false);
         }
     }
@@ -315,6 +343,7 @@ contract ATokenERC6909 is IncentivizedERC6909, VersionedInitializable {
         returns (uint256 aTokenID, uint256 debtTokenID, bool isTrancheRet)
     {
         (aTokenID, debtTokenID, isTrancheRet) = _getNextIdForUnderlying(underlying);
+
         require(
             _underlyingAssetAddresses[aTokenID] == address(0), Errors.RL_RESERVE_ALREADY_INITIALIZED
         );
@@ -344,13 +373,23 @@ contract ATokenERC6909 is IncentivizedERC6909, VersionedInitializable {
         }
     }
 
-    function mintToTreasury(uint256 id, uint256 amount, uint256 index) external {
+    function mintToCod3xTreasury(uint256 id, uint256 amount, uint256 index) external {
+        address treasury = _addressesProvider.getMiniPoolCod3xTreasury(_minipoolId);
+        _mintToTreasury(id, amount, index, treasury);
+    }
+
+    function mintToMinipoolOwnerTreasury(uint256 id, uint256 amount, uint256 index) external {
+        address treasury = _addressesProvider.getMiniPoolOwnerTreasury(_minipoolId);
+        _mintToTreasury(id, amount, index, treasury);
+    }
+
+    function _mintToTreasury(uint256 id, uint256 amount, uint256 index, address treasury)
+        internal
+    {
         require(msg.sender == address(POOL), Errors.CT_CALLER_MUST_BE_LENDING_POOL);
         if (amount == 0) {
             return;
         }
-
-        address treasury = _addressesProvider.getMiniPoolTreasury(_minipoolId);
 
         // Compared to the normal mint, we don't check for rounding errors.
         // The amount to mint can easily be very small since it is a fraction of the interest ccrued.
@@ -397,6 +436,7 @@ contract ATokenERC6909 is IncentivizedERC6909, VersionedInitializable {
         address receiverOfUnderlying,
         uint256 id,
         uint256 amount,
+        bool unwrap,
         uint256 index
     ) external {
         require(msg.sender == address(POOL), Errors.CT_CALLER_MUST_BE_LENDING_POOL);
@@ -408,7 +448,7 @@ contract ATokenERC6909 is IncentivizedERC6909, VersionedInitializable {
             uint256 amountScaled = amount.rayDiv(index);
             require(amountScaled != 0, Errors.CT_INVALID_BURN_AMOUNT);
             _burn(user, id, amountScaled);
-            transferUnderlyingTo(receiverOfUnderlying, id, amount);
+            transferUnderlyingTo(receiverOfUnderlying, id, amount, unwrap);
         }
     }
 

@@ -6,10 +6,6 @@
         "debtTokenSymbolPrefix": "clDebt",
         "treasury": "0x3151CfCA393FE5Eec690feD2a2446DA5a073d01B"
     },
-    "poolAddressesProviderConfig": {
-        "marketId": "UV TestNet Market",
-        "poolId": 0
-    },
     "poolReserversConfig": [
         {
             "baseLtv": 7000,
@@ -18,6 +14,7 @@
             "interestStratId": 0,
             "liquidationBonus": 10500,
             "liquidationThreshold": 7500,
+            "miniPoolOwnerFee": 150,
             "params": "0x10",
             "rates": 0.03e27,
             "reserveFactor": 1500,
@@ -32,6 +29,7 @@
             "interestStratId": 0,
             "liquidationBonus": 10500,
             "liquidationThreshold": 7500,
+            "miniPoolOwnerFee": 150,
             "params": "0x10",
             "rates": 0.03e27,
             "reserveFactor": 1500,

@@ -268,18 +268,33 @@ abstract contract BasePiReserveRateStrategy is Ownable {
     }
 
     /**
-     * @notice getReserveFactor() from ReserveConfiguration can't be used with memory.
+     * @notice getCod3xReserveFactor() from ReserveConfiguration can't be used with memory.
      * So we need to redefine this function here using memory.
      * @dev Gets the reserve factor of the reserve
      * @param self The reserve configuration
      * @return The reserve factor
      */
-    function getReserveFactor(DataTypes.ReserveConfigurationMap memory self)
+    function getCod3xReserveFactor(DataTypes.ReserveConfigurationMap memory self)
         internal
         pure
         returns (uint256)
     {
-        return (self.data & ~ReserveConfiguration.RESERVE_FACTOR_MASK)
-            >> ReserveConfiguration.RESERVE_FACTOR_START_BIT_POSITION;
+        return (self.data & ~ReserveConfiguration.COD3X_RESERVE_FACTOR_MASK)
+            >> ReserveConfiguration.COD3X_RESERVE_FACTOR_START_BIT_POSITION;
+    }
+
+    /**
+     * @dev Gets the minipool owner reserve factor of the reserve
+     * @param self The reserve configuration
+     * @return The reserve factor
+     *
+     */
+    function getMinipoolOwnerReserveFactor(DataTypes.ReserveConfigurationMap memory self)
+        internal
+        pure
+        returns (uint256)
+    {
+        return (self.data & ~ReserveConfiguration.MINIPOOL_OWNER_RESERVE_FACTOR_MASK)
+            >> ReserveConfiguration.MINIPOOL_OWNER_FACTOR_START_BIT_POSITION;
     }
 }

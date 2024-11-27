@@ -127,12 +127,20 @@ interface IMiniPoolConfigurator {
     event DisableFlashloan(address indexed asset);
 
     /**
-     * @dev Emitted when a reserve factor is updated
+     * @dev Emitted when a Cod3x reserve factor is updated
      * @param asset The address of the underlying asset of the reserve
      * @param factor The new reserve factor
      *
      */
-    event ReserveFactorChanged(address indexed asset, uint256 factor);
+    event Cod3xReserveFactorChanged(address indexed asset, uint256 factor);
+
+    /**
+     * @dev Emitted when a minipool owner reserve factor is updated
+     * @param asset The address of the underlying asset of the reserve
+     * @param factor The new reserve factor
+     *
+     */
+    event MinipoolOwnerReserveFactorChanged(address indexed asset, uint256 factor);
 
     /**
      * @dev Emitted when a reserve volatility tier is updated

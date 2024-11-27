@@ -56,7 +56,7 @@ contract DefaultReserveInterestRateStrategyTest is Common {
                 0,
                 0,
                 0,
-                staticData[idx].reserveFactor
+                staticData[idx].cod3xReserveFactor
             );
             assertEq(currentLiquidityRate, 0);
             assertEq(currentVariableBorrowRate, 0);
@@ -79,14 +79,14 @@ contract DefaultReserveInterestRateStrategyTest is Common {
                 200000000000000000,
                 0,
                 800000000000000000,
-                staticData[idx].reserveFactor
+                staticData[idx].cod3xReserveFactor
             );
             uint256 baseVariableBorrowRate =
                 deployedContracts.stableStrategy.baseVariableBorrowRate();
             uint256 variableRateSlope1 = deployedContracts.stableStrategy.variableRateSlope1();
             uint256 expectedVariableRate = baseVariableBorrowRate + variableRateSlope1;
             uint256 value = expectedVariableRate * 80 / 100;
-            uint256 percentage = PERCENTAGE_FACTOR - staticData[idx].reserveFactor;
+            uint256 percentage = PERCENTAGE_FACTOR - staticData[idx].cod3xReserveFactor;
             uint256 expectedLiquidityRate = (value * percentage + 5000) / PERCENTAGE_FACTOR;
 
             assertEq(currentLiquidityRate, expectedLiquidityRate);
@@ -110,7 +110,7 @@ contract DefaultReserveInterestRateStrategyTest is Common {
                 0,
                 0,
                 800000000000000000,
-                staticData[idx].reserveFactor
+                staticData[idx].cod3xReserveFactor
             );
             uint256 baseVariableBorrowRate =
                 deployedContracts.stableStrategy.baseVariableBorrowRate();
@@ -119,7 +119,7 @@ contract DefaultReserveInterestRateStrategyTest is Common {
             uint256 expectedVariableRate =
                 baseVariableBorrowRate + variableRateSlope1 + variableRateSlope2;
             uint256 value = expectedVariableRate;
-            uint256 percentage = PERCENTAGE_FACTOR - staticData[idx].reserveFactor;
+            uint256 percentage = PERCENTAGE_FACTOR - staticData[idx].cod3xReserveFactor;
             uint256 expectedLiquidityRate = (value * percentage + 5000) / PERCENTAGE_FACTOR;
 
             assertEq(currentLiquidityRate, expectedLiquidityRate);

@@ -74,7 +74,7 @@ interface IAToken is IERC20, IScaledBalanceToken, IInitializableAToken {
      * @param amount The amount of tokens getting minted
      * @param index The new liquidity index of the reserve
      */
-    function mintToTreasury(uint256 amount, uint256 index) external;
+    function mintToCod3xTreasury(uint256 amount, uint256 index) external;
 
     /**
      * @dev Transfers aTokens in the event of a borrow being liquidated, in case the liquidators reclaims the aToken
@@ -115,6 +115,7 @@ interface IAToken is IERC20, IScaledBalanceToken, IInitializableAToken {
      *
      */
     function UNDERLYING_ASSET_ADDRESS() external view returns (address);
+    function RESERVE_TYPE() external view returns (bool);
 
     /// --------- Share logic ---------
 

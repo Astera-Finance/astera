@@ -192,6 +192,7 @@ library MiniPoolLiquidationLogic {
                 msg.sender,
                 vars.debtID,
                 vars.actualDebtToLiquidate,
+                false,
                 debtReserve.variableBorrowIndex
             );
         } else {
@@ -200,6 +201,7 @@ library MiniPoolLiquidationLogic {
                 msg.sender,
                 vars.debtID,
                 vars.userVariableDebt,
+                false,
                 debtReserve.variableBorrowIndex
             );
         }
@@ -230,6 +232,7 @@ library MiniPoolLiquidationLogic {
                 msg.sender,
                 vars.aTokenID,
                 vars.maxCollateralToLiquidate,
+                false,
                 collateralReserve.liquidityIndex
             );
         }

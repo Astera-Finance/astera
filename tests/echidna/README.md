@@ -180,7 +180,7 @@ You can fine in `/echidna` 3 config files to run the fuzzer:
 - `deactivateReserve(address asset, bool reserveType)`
 - `freezeReserve(address asset, bool reserveType)`
 - `unfreezeReserve(address asset, bool reserveType)`
-- `setReserveFactor(address asset, bool reserveType, uint256 reserveFactor)`
+- `setCod3xReserveFactor(address asset, bool reserveType, uint256 reserveFactor)`
 - `setDepositCap(address asset, bool reserveType, uint256 depositCap)`
 - `setReserveInterestRateStrategyAddress(address asset, bool reserveType, address rateStrategyAddress)`
 - `setPoolPause(bool val)`
@@ -204,7 +204,7 @@ You can fine in `/echidna` 3 config files to run the fuzzer:
 - `setAToken6909Impl(address impl, uint256 miniPoolId)`
 - `setAddress(bytes32 id, address newAddress)`
 - `setMiniPoolConfigurator(address configuratorImpl)`
-- `setMiniPoolToTreasury(uint256 id, address treasury)`
+- `setCod3xTreasuryToMiniPool(uint256 id, address treasury)`
   
 ### MiniPoolConfiguration
 
@@ -218,7 +218,8 @@ You can fine in `/echidna` 3 config files to run the fuzzer:
 - `unfreezeReserve(address asset, IMiniPool pool)`
 - `enableFlashloan(address asset, IMiniPool pool)`
 - `disableFlashloan(address asset, IMiniPool pool)`
-- `setReserveFactor(address asset, uint256 reserveFactor, IMiniPool pool)`
+- `setCod3xReserveFactor(address asset, uint256 reserveFactor, IMiniPool pool)`
+- `setMinipoolOwnerReserveFactor(address asset, uint256 reserveFactor, IMiniPool pool)`
 - `setDepositCap(address asset, uint256 depositCap, IMiniPool pool)`
 - `setReserveInterestRateStrategyAddress(address asset, address rateStrategyAddress, IMiniPool pool)`
 - `setPoolPause(bool val, IMiniPool pool)`

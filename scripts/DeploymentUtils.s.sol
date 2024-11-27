@@ -51,11 +51,10 @@ contract DeploymentUtils {
         LinearStrategy[] memory _volatileStrats,
         LinearStrategy[] memory _stableStrats,
         PiStrategy[] memory _piStrategies,
-        PoolAddressesProviderConfig memory _poolAddressesProviderConfig,
         PoolReserversConfig[] memory _poolReserversConfig,
         address deployer
     ) public {
-        _deployLendingPoolContracts(_poolAddressesProviderConfig, deployer);
+        _deployLendingPoolContracts(deployer);
 
         _deployStrategies(
             contracts.lendingPoolAddressesProvider, _volatileStrats, _stableStrats, _piStrategies
@@ -211,10 +210,7 @@ contract DeploymentUtils {
         // contracts.treasury = new Treasury(lendingPoolAddressesProvider);
     }
 
-    function _deployLendingPoolContracts(
-        PoolAddressesProviderConfig memory poolAddressesProviderConfig,
-        address deployer
-    ) internal {
+    function _deployLendingPoolContracts(address deployer) internal {
         contracts.lendingPoolAddressesProvider = new LendingPoolAddressesProvider();
         console.log("provider's owner: ", contracts.lendingPoolAddressesProvider.owner());
 
@@ -262,7 +258,8 @@ contract DeploymentUtils {
                 new MiniPoolAddressesProvider(contracts.lendingPoolAddressesProvider);
             miniPoolId = contracts.miniPoolAddressesProvider.deployMiniPool(
                 address(contracts.miniPoolImpl[contracts.miniPoolImpl.length - 1]),
-                address(contracts.aTokenErc6909[contracts.aTokenErc6909.length - 1])
+                address(contracts.aTokenErc6909[contracts.aTokenErc6909.length - 1]),
+                deployer
             );
             contracts.flowLimiter = new FlowLimiter(
                 contracts.lendingPoolAddressesProvider,
@@ -285,7 +282,8 @@ contract DeploymentUtils {
         } else {
             miniPoolId = contracts.miniPoolAddressesProvider.deployMiniPool(
                 address(contracts.miniPoolImpl[contracts.miniPoolImpl.length - 1]),
-                address(contracts.aTokenErc6909[contracts.aTokenErc6909.length - 1])
+                address(contracts.aTokenErc6909[contracts.aTokenErc6909.length - 1]),
+                deployer
             );
         }
 
@@ -501,6 +499,12 @@ contract DeploymentUtils {
             _contracts.miniPoolConfigurator.enableFlashloan(
                 reserveConfig.tokenAddress, IMiniPool(_mp)
             );
+            _contracts.miniPoolConfigurator.setCod3xReserveFactor(
+                reserveConfig.tokenAddress, reserveConfig.reserveFactor, IMiniPool(_mp)
+            );
+            _contracts.miniPoolConfigurator.setMinipoolOwnerReserveFactor(
+                reserveConfig.tokenAddress, reserveConfig.miniPoolOwnerFee, IMiniPool(_mp)
+            );
         }
     }
 
@@ -520,6 +524,15 @@ contract DeploymentUtils {
         for (uint256 idx = 0; idx < contracts.miniPoolPiStrategies.length; idx++) {
             contracts.miniPoolPiStrategies[idx].transferOwnership(roles.piInterestStrategiesOwner);
         }
+    }
+
+    function _transferMiniPoolOwnership(MiniPoolRole memory miniPoolRole) internal {
+        IMiniPool mp =
+            IMiniPool(contracts.miniPoolAddressesProvider.getMiniPool(miniPoolRole.miniPoolId));
+        contracts.miniPoolConfigurator.setMinipoolOwnerTreasuryToMiniPool(
+            miniPoolRole.poolOwnerTreasury, mp
+        );
+        contracts.miniPoolConfigurator.setPoolAdmin(miniPoolRole.newPoolOwner, mp);
     }
 
     function _deployERC20Mocks(
@@ -585,6 +598,7 @@ contract DeploymentUtils {
 
     function _changePeripherials(
         NewPeripherial[] memory treasury,
+        NewMiniPoolPeripherial[] memory cod3xTreasury,
         NewPeripherial[] memory vault,
         NewPeripherial[] memory rewarder,
         NewPeripherial[] memory rewarder6909,
@@ -595,6 +609,10 @@ contract DeploymentUtils {
 
         for (uint8 idx = 0; idx < treasury.length; idx++) {
             if (treasury[idx].configure == true) {
+                (address[] memory list,) = contracts.lendingPool.getReservesList();
+                for (uint256 i = 0; i < list.length; i++) {
+                    console.log("%s. Address: %s", i, list[i]);
+                }
                 DataTypes.ReserveData memory data = contracts.lendingPool.getReserveData(
                     treasury[idx].tokenAddress, treasury[idx].reserveType
                 );
@@ -603,6 +621,13 @@ contract DeploymentUtils {
                 );
                 contracts.lendingPoolConfigurator.setTreasury(
                     treasury[idx].tokenAddress, treasury[idx].reserveType, treasury[idx].newAddress
+                );
+            }
+            if (cod3xTreasury[idx].configure == true) {
+                IMiniPool tmpMiniPool =
+                    IMiniPool(contracts.miniPoolAddressesProvider.getMiniPool(_miniPoolId));
+                contracts.miniPoolConfigurator.setCod3xTreasuryToMiniPool(
+                    cod3xTreasury[idx].newAddress, tmpMiniPool
                 );
             }
             if (vault[idx].configure == true) {

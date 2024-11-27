@@ -39,8 +39,14 @@ contract MiniPoolConfigurator is VersionedInitializable, IMiniPoolConfigurator {
 
     IMiniPoolAddressesProvider public addressesProvider;
 
-    modifier onlyPoolAdmin() {
-        require(addressesProvider.getPoolAdmin() == msg.sender, Errors.CALLER_NOT_POOL_ADMIN);
+    modifier onlyPoolAdmin(address pool) {
+        uint256 id = addressesProvider.getMiniPoolId(pool);
+        require(addressesProvider.getPoolAdmin(id) == msg.sender, Errors.CALLER_NOT_POOL_ADMIN);
+        _;
+    }
+
+    modifier onlyMainPoolAdmin() {
+        require(addressesProvider.getMainPoolAdmin() == msg.sender, Errors.CALLER_NOT_POOL_ADMIN);
         _;
     }
 
@@ -62,17 +68,100 @@ contract MiniPoolConfigurator is VersionedInitializable, IMiniPoolConfigurator {
         addressesProvider = provider;
     }
 
+    /*___ Only Main Pool ___*/
+
     /**
      * @dev Initializes reserves in batch
      *
      */
     function batchInitReserve(InitReserveInput[] calldata input, IMiniPool pool)
         external
-        onlyPoolAdmin
+        onlyMainPoolAdmin
     {
         for (uint256 i = 0; i < input.length; i++) {
             _initReserve(pool, input[i]);
         }
+    }
+
+    function setRewarderForReserve(address asset, address rewarder, IMiniPool pool)
+        external
+        onlyMainPoolAdmin
+    {
+        pool.setRewarderForReserve(asset, rewarder);
+    }
+
+    function updateFlashloanPremiumTotal(uint128 newFlashloanPremiumTotal, IMiniPool pool)
+        external
+        onlyMainPoolAdmin
+    {
+        require(
+            newFlashloanPremiumTotal <= PercentageMath.PERCENTAGE_FACTOR,
+            Errors.LPC_FLASHLOAN_PREMIUM_INVALID
+        );
+        pool.updateFlashLoanFee(newFlashloanPremiumTotal);
+    }
+
+    function setCod3xTreasuryToMiniPool(address treasury, IMiniPool pool)
+        public
+        onlyMainPoolAdmin
+    {
+        uint256 id = addressesProvider.getMiniPoolId(address(pool));
+        addressesProvider.setCod3xTreasuryToMiniPool(id, treasury);
+    }
+
+    function setFlowLimit(address asset, address miniPool, uint256 limit)
+        public
+        onlyMainPoolAdmin
+    {
+        addressesProvider.setFlowLimit(asset, miniPool, limit);
+    }
+
+    /**
+     * @dev Sets the interest rate strategy of a reserve
+     * @param asset The address of the underlying asset of the reserve
+     * @param rateStrategyAddress The new address of the interest strategy contract
+     * @param pool Minipool address
+     *
+     */
+    function setReserveInterestRateStrategyAddress(
+        address asset,
+        address rateStrategyAddress,
+        IMiniPool pool
+    ) external onlyMainPoolAdmin {
+        pool.setReserveInterestRateStrategyAddress(asset, rateStrategyAddress);
+        emit ReserveInterestRateStrategyChanged(asset, rateStrategyAddress);
+    }
+
+    /**
+     * @dev Updates the Cod3x reserve factor of a reserve
+     * @param asset The address of the underlying asset of the reserve
+     * @param reserveFactor The new reserve factor of the reserve
+     *
+     */
+    function setCod3xReserveFactor(address asset, uint256 reserveFactor, IMiniPool pool)
+        external
+        onlyMainPoolAdmin
+    {
+        DataTypes.ReserveConfigurationMap memory currentConfig = pool.getConfiguration(asset);
+
+        currentConfig.setCod3xReserveFactor(reserveFactor);
+
+        pool.setConfiguration(asset, currentConfig.data);
+
+        emit Cod3xReserveFactorChanged(asset, reserveFactor);
+    }
+
+    function setDepositCap(address asset, uint256 depositCap, IMiniPool pool)
+        external
+        onlyMainPoolAdmin
+    {
+        DataTypes.ReserveConfigurationMap memory currentConfig = pool.getConfiguration(asset);
+
+        currentConfig.setDepositCap(depositCap);
+
+        pool.setConfiguration(asset, currentConfig.data);
+
+        emit ReserveDepositCapChanged(asset, depositCap);
     }
 
     function _initReserve(IMiniPool pool, InitReserveInput calldata input) internal {
@@ -101,13 +190,29 @@ contract MiniPoolConfigurator is VersionedInitializable, IMiniPoolConfigurator {
         pool.setConfiguration(input.underlyingAsset, currentConfig.data);
     }
 
+    /*___ Only emergency admin ___*/
+
+    /**
+     * @dev pauses or unpauses all the actions of the protocol, including aToken transfers
+     * @param val true if protocol needs to be paused, false otherwise
+     *
+     */
+    function setPoolPause(bool val, IMiniPool pool) external onlyEmergencyAdmin {
+        pool.setPause(val);
+    }
+
+    /*___ Only pool admin ___*/
+
     /**
      * @dev Enables borrowing on a reserve
      * @param asset The address of the underlying asset of the reserve
      * @param pool Minipool address
      *
      */
-    function enableBorrowingOnReserve(address asset, IMiniPool pool) external onlyPoolAdmin {
+    function enableBorrowingOnReserve(address asset, IMiniPool pool)
+        external
+        onlyPoolAdmin(address(pool))
+    {
         DataTypes.ReserveConfigurationMap memory currentConfig = pool.getConfiguration(asset);
 
         currentConfig.setBorrowingEnabled(true);
@@ -123,7 +228,10 @@ contract MiniPoolConfigurator is VersionedInitializable, IMiniPoolConfigurator {
      * @param pool Minipool address
      *
      */
-    function disableBorrowingOnReserve(address asset, IMiniPool pool) external onlyPoolAdmin {
+    function disableBorrowingOnReserve(address asset, IMiniPool pool)
+        external
+        onlyPoolAdmin(address(pool))
+    {
         DataTypes.ReserveConfigurationMap memory currentConfig = pool.getConfiguration(asset);
 
         currentConfig.setBorrowingEnabled(false);
@@ -148,7 +256,7 @@ contract MiniPoolConfigurator is VersionedInitializable, IMiniPoolConfigurator {
         uint256 liquidationThreshold,
         uint256 liquidationBonus,
         IMiniPool pool
-    ) external onlyPoolAdmin {
+    ) external onlyPoolAdmin(address(pool)) {
         DataTypes.ReserveConfigurationMap memory currentConfig = pool.getConfiguration(asset);
 
         //validation of the parameters: the LTV can
@@ -194,7 +302,7 @@ contract MiniPoolConfigurator is VersionedInitializable, IMiniPoolConfigurator {
      * @param pool Minipool address
      *
      */
-    function activateReserve(address asset, IMiniPool pool) external onlyPoolAdmin {
+    function activateReserve(address asset, IMiniPool pool) external onlyPoolAdmin(address(pool)) {
         DataTypes.ReserveConfigurationMap memory currentConfig = pool.getConfiguration(asset);
 
         currentConfig.setActive(true);
@@ -210,7 +318,10 @@ contract MiniPoolConfigurator is VersionedInitializable, IMiniPoolConfigurator {
      * @param pool Minipool address
      *
      */
-    function deactivateReserve(address asset, IMiniPool pool) external onlyPoolAdmin {
+    function deactivateReserve(address asset, IMiniPool pool)
+        external
+        onlyPoolAdmin(address(pool))
+    {
         _checkNoLiquidity(asset, pool);
 
         DataTypes.ReserveConfigurationMap memory currentConfig = pool.getConfiguration(asset);
@@ -229,7 +340,7 @@ contract MiniPoolConfigurator is VersionedInitializable, IMiniPoolConfigurator {
      * @param pool Minipool address
      *
      */
-    function freezeReserve(address asset, IMiniPool pool) external onlyPoolAdmin {
+    function freezeReserve(address asset, IMiniPool pool) external onlyPoolAdmin(address(pool)) {
         DataTypes.ReserveConfigurationMap memory currentConfig = pool.getConfiguration(asset);
 
         currentConfig.setFrozen(true);
@@ -245,7 +356,7 @@ contract MiniPoolConfigurator is VersionedInitializable, IMiniPoolConfigurator {
      * @param pool Minipool address
      *
      */
-    function unfreezeReserve(address asset, IMiniPool pool) external onlyPoolAdmin {
+    function unfreezeReserve(address asset, IMiniPool pool) external onlyPoolAdmin(address(pool)) {
         DataTypes.ReserveConfigurationMap memory currentConfig = pool.getConfiguration(asset);
 
         currentConfig.setFrozen(false);
@@ -261,7 +372,7 @@ contract MiniPoolConfigurator is VersionedInitializable, IMiniPoolConfigurator {
      * @param pool Minipool address
      *
      */
-    function enableFlashloan(address asset, IMiniPool pool) external onlyPoolAdmin {
+    function enableFlashloan(address asset, IMiniPool pool) external onlyPoolAdmin(address(pool)) {
         DataTypes.ReserveConfigurationMap memory currentConfig = pool.getConfiguration(asset);
 
         currentConfig.setFlashLoanEnabled(true);
@@ -277,7 +388,10 @@ contract MiniPoolConfigurator is VersionedInitializable, IMiniPoolConfigurator {
      * @param pool Minipool address
      *
      */
-    function disableFlashloan(address asset, IMiniPool pool) external onlyPoolAdmin {
+    function disableFlashloan(address asset, IMiniPool pool)
+        external
+        onlyPoolAdmin(address(pool))
+    {
         DataTypes.ReserveConfigurationMap memory currentConfig = pool.getConfiguration(asset);
 
         currentConfig.setFlashLoanEnabled(false);
@@ -285,63 +399,6 @@ contract MiniPoolConfigurator is VersionedInitializable, IMiniPoolConfigurator {
         pool.setConfiguration(asset, currentConfig.data);
 
         emit DisableFlashloan(asset);
-    }
-
-    /**
-     * @dev Updates the reserve factor of a reserve
-     * @param asset The address of the underlying asset of the reserve
-     * @param reserveFactor The new reserve factor of the reserve
-     *
-     */
-    function setReserveFactor(address asset, uint256 reserveFactor, IMiniPool pool)
-        external
-        onlyPoolAdmin
-    {
-        DataTypes.ReserveConfigurationMap memory currentConfig = pool.getConfiguration(asset);
-
-        currentConfig.setReserveFactor(reserveFactor);
-
-        pool.setConfiguration(asset, currentConfig.data);
-
-        emit ReserveFactorChanged(asset, reserveFactor);
-    }
-
-    function setDepositCap(address asset, uint256 depositCap, IMiniPool pool)
-        external
-        onlyPoolAdmin
-    {
-        DataTypes.ReserveConfigurationMap memory currentConfig = pool.getConfiguration(asset);
-
-        currentConfig.setDepositCap(depositCap);
-
-        pool.setConfiguration(asset, currentConfig.data);
-
-        emit ReserveDepositCapChanged(asset, depositCap);
-    }
-
-    /**
-     * @dev Sets the interest rate strategy of a reserve
-     * @param asset The address of the underlying asset of the reserve
-     * @param rateStrategyAddress The new address of the interest strategy contract
-     * @param pool Minipool address
-     *
-     */
-    function setReserveInterestRateStrategyAddress(
-        address asset,
-        address rateStrategyAddress,
-        IMiniPool pool
-    ) external onlyPoolAdmin {
-        pool.setReserveInterestRateStrategyAddress(asset, rateStrategyAddress);
-        emit ReserveInterestRateStrategyChanged(asset, rateStrategyAddress);
-    }
-
-    /**
-     * @dev pauses or unpauses all the actions of the protocol, including aToken transfers
-     * @param val true if protocol needs to be paused, false otherwise
-     *
-     */
-    function setPoolPause(bool val, IMiniPool pool) external onlyEmergencyAdmin {
-        pool.setPause(val);
     }
 
     function _checkNoLiquidity(address asset, IMiniPool pool) internal view {
@@ -355,21 +412,35 @@ contract MiniPoolConfigurator is VersionedInitializable, IMiniPoolConfigurator {
         );
     }
 
-    function setRewarderForReserve(address asset, address rewarder, IMiniPool pool)
-        external
-        onlyPoolAdmin
-    {
-        pool.setRewarderForReserve(asset, rewarder);
+    function setPoolAdmin(address admin, IMiniPool pool) public onlyPoolAdmin(address(pool)) {
+        uint256 id = addressesProvider.getMiniPoolId(address(pool));
+        addressesProvider.setPoolAdmin(id, admin);
     }
 
-    function updateFlashloanPremiumTotal(uint128 newFlashloanPremiumTotal, IMiniPool pool)
-        external
-        onlyPoolAdmin
+    function setMinipoolOwnerTreasuryToMiniPool(address treasury, IMiniPool pool)
+        public
+        onlyPoolAdmin(address(pool))
     {
-        require(
-            newFlashloanPremiumTotal <= PercentageMath.PERCENTAGE_FACTOR,
-            Errors.LPC_FLASHLOAN_PREMIUM_INVALID
-        );
-        pool.updateFlashLoanFee(newFlashloanPremiumTotal);
+        uint256 id = addressesProvider.getMiniPoolId(address(pool));
+        addressesProvider.setMinipoolOwnerTreasuryToMiniPool(id, treasury);
+    }
+
+    /**
+     * @dev Updates the minipool owner reserve factor of a reserve
+     * @param asset The address of the underlying asset of the reserve
+     * @param reserveFactor The new reserve factor of the reserve
+     *
+     */
+    function setMinipoolOwnerReserveFactor(address asset, uint256 reserveFactor, IMiniPool pool)
+        external
+        onlyPoolAdmin(address(pool))
+    {
+        DataTypes.ReserveConfigurationMap memory currentConfig = pool.getConfiguration(asset);
+
+        currentConfig.setMinipoolOwnerReserveFactor(reserveFactor);
+
+        pool.setConfiguration(asset, currentConfig.data);
+
+        emit MinipoolOwnerReserveFactorChanged(asset, reserveFactor);
     }
 }

@@ -55,12 +55,22 @@ abstract contract MiniPoolFixtures is LendingPoolFixtures {
         console.log("Amount: ", amount);
         console.log("Balance of aToken: ", aTokenDepositAmount);
         tokenParams.aToken.approve(address(miniPool), amount);
-        IMiniPool(miniPool).deposit(address(tokenParams.aToken), amount, user);
+        IMiniPool(miniPool).deposit(address(tokenParams.aToken), false, amount, user);
         console.log("User AToken balance shall be less by {amount}");
         assertEq(aTokenDepositAmount - amount, tokenParams.aToken.balanceOf(user), "11");
-        console.log("User grain token 6909 balance shall be initial balance + amount");
-        assertEq(aToken6909Balance + amount, aErc6909Token.scaledTotalSupply(aTokenId), "12");
-        assertEq(aTokenUserBalance + amount, aErc6909Token.balanceOf(user, aTokenId), "13");
+        uint256 scaledAmount = amount.rayDiv(
+            IMiniPool(miniPool).getReserveNormalizedIncome(address(tokenParams.aToken))
+        );
+        console.log("User atoken 6909 balance shall be initial balance + scaled amount");
+        console.log("aTokenUserBalance: ", aErc6909Token.balanceOf(user, aTokenId));
+        console.log("amount: ", amount);
+        console.log("BalanceOf: ", aErc6909Token.balanceOf(user, aTokenId));
+        assertEq(
+            aToken6909Balance + scaledAmount,
+            aErc6909Token.scaledTotalSupply(aTokenId),
+            "Wrong scaled total supply for token6909"
+        );
+        assertApproxEqAbs(aTokenUserBalance + amount, aErc6909Token.balanceOf(user, aTokenId), 1);
         vm.stopPrank();
     }
 
@@ -78,9 +88,11 @@ abstract contract MiniPoolFixtures is LendingPoolFixtures {
         uint256 tokenBalance = tokenParams.token.balanceOf(user);
         tokenParams.token.approve(address(miniPool), amount);
         console.log("User balance before: ", tokenBalance);
-        IMiniPool(miniPool).deposit(address(tokenParams.token), amount, user);
-        assertEq(tokenBalance - amount, tokenParams.token.balanceOf(user));
-        assertEq(tokenUserBalance + amount, aErc6909Token.balanceOf(user, tokenId));
+        IMiniPool(miniPool).deposit(address(tokenParams.token), false, amount, user);
+        assertEq(
+            tokenBalance - amount, tokenParams.token.balanceOf(user), "wrong underlying balance"
+        );
+        assertApproxEqAbs(tokenUserBalance + amount, aErc6909Token.balanceOf(user, tokenId), 1);
         vm.stopPrank();
     }
 
@@ -101,15 +113,22 @@ abstract contract MiniPoolFixtures is LendingPoolFixtures {
 
         // tokenParams.token.transfer(user, 2 * amount);
         uint256 initialSupply = aErc6909Token.scaledTotalSupply(tokenId);
+        console.log("1. Initial supply: %s ID %s", initialSupply, tokenId);
         /* User deposits tokens to the main lending pool and gets lending pool's aTokens*/
         fixture_depositTokensToMainPool(amount, user, tokenParams);
-
+        initialSupply = aErc6909Token.scaledTotalSupply(tokenId);
+        console.log("2. Initial supply: %s ID %s", initialSupply, tokenId);
         /* User deposits lending pool's aTokens to the mini pool and 
         gets mini pool's aTokens */
         fixture_depositATokensToMiniPool(amount, aTokenId, user, tokenParams, aErc6909Token);
+
+        console.log("aErc6909Token: ", address(aErc6909Token));
+        initialSupply = aErc6909Token.scaledTotalSupply(tokenId);
+        console.log("3. Initial supply: %s ID %s", initialSupply, tokenId);
         /* User deposits tokens to the mini pool and 
             gets mini pool's aTokens */
         fixture_depositTokensToMiniPool(amount, tokenId, user, tokenParams, aErc6909Token);
+
         {
             (uint256 totalCollateralETH,,,,,) = IMiniPool(miniPool).getUserAccountData(user);
             assertGt(totalCollateralETH, 0);
@@ -117,10 +136,6 @@ abstract contract MiniPoolFixtures is LendingPoolFixtures {
         vm.stopPrank();
 
         console.log("Scaled totalSupply...");
-        console.log("Address: ", address(aErc6909Token));
-
-        uint256 aErc6909TokenBalance = aErc6909Token.scaledTotalSupply(tokenId);
-        assertEq(aErc6909TokenBalance, initialSupply + amount);
     }
 
     struct Balances {
@@ -204,31 +219,59 @@ abstract contract MiniPoolFixtures is LendingPoolFixtures {
             balances.totalSupply = aErc6909Token.scaledTotalSupply(2000 + borrowOffset);
             balances.debtToken = aErc6909Token.balanceOf(user, 2000 + borrowOffset);
             balances.token = borrowTokenParams.aToken.balanceOf(user);
-            IMiniPool(miniPool).borrow(address(borrowTokenParams.aToken), amount, user);
+
+            IMiniPool(miniPool).borrow(address(borrowTokenParams.aToken), false, amount, user);
+            uint256 scaledAmount = amount.rayDiv(
+                IMiniPool(miniPool).getReserveNormalizedVariableDebt(
+                    address(borrowTokenParams.token)
+                )
+            );
+
             console.log("Total supply of debtAToken must be greater than before borrow");
             assertEq(
-                aErc6909Token.scaledTotalSupply(2000 + borrowOffset), balances.totalSupply + amount
+                aErc6909Token.scaledTotalSupply(2000 + borrowOffset),
+                balances.totalSupply + scaledAmount,
+                "1. Wrong total supply in miniPoolBorrow"
             );
             console.log("Balance of debtAToken must be greater than before borrow");
-            assertEq(
-                aErc6909Token.balanceOf(user, 2000 + borrowOffset), balances.debtToken + amount
+            // console.log("balances.debtToken: ", balances.debtToken);
+            // console.log("amount: ", amount);
+            // console.log(
+            //     "aErc6909Token.balanceOf(user, 2000 + borrowOffset): ",
+            //     aErc6909Token.balanceOf(user, 2000 + borrowOffset)
+            // );
+            assertApproxEqAbs(
+                aErc6909Token.balanceOf(user, 2000 + borrowOffset), balances.debtToken + amount, 1
             );
             console.log("Balance of AToken must be greater than before borrow");
-            assertEq(borrowTokenParams.aToken.balanceOf(user), balances.token + amount);
+            assertApproxEqAbs(borrowTokenParams.aToken.balanceOf(user), balances.token + amount, 1);
         }
 
         {
             balances.totalSupply = aErc6909Token.scaledTotalSupply(2128 + borrowOffset);
             balances.debtToken = aErc6909Token.balanceOf(user, 2128 + borrowOffset);
             balances.token = borrowTokenParams.token.balanceOf(user);
-            IMiniPool(miniPool).borrow(address(borrowTokenParams.token), amount, user);
-            console.log("Balance of debtToken must be greater than before borrow");
+            IMiniPool(miniPool).borrow(address(borrowTokenParams.token), false, amount, user);
+
+            uint256 scaledAmount = amount.rayDiv(
+                IMiniPool(miniPool).getReserveNormalizedVariableDebt(
+                    address(borrowTokenParams.token)
+                )
+            );
+            console.log(
+                "Balance of debtToken must be greater than before borrow >>>>>>> ",
+                aErc6909Token.scaledTotalSupply(2128 + borrowOffset)
+            );
+            console.log("balances.totalSupply: ", balances.totalSupply);
+
             assertEq(
-                aErc6909Token.scaledTotalSupply(2128 + borrowOffset), balances.totalSupply + amount
+                aErc6909Token.scaledTotalSupply(2128 + borrowOffset),
+                balances.totalSupply + scaledAmount,
+                "2. Wrong total supply in miniPoolBorrow"
             );
             console.log("Balance of debtToken must be greater than before borrow");
-            assertEq(
-                aErc6909Token.balanceOf(user, 2128 + borrowOffset), balances.debtToken + amount
+            assertApproxEqAbs(
+                aErc6909Token.balanceOf(user, 2128 + borrowOffset), balances.debtToken + amount, 1
             );
             console.log("Balance of token must be greater than before borrow");
             assertEq(borrowTokenParams.token.balanceOf(user), balances.token + amount);
@@ -317,7 +360,9 @@ abstract contract MiniPoolFixtures is LendingPoolFixtures {
             minNrOfTokens,
             collateralTokenParams.token.balanceOf(address(this))
         );
-        IMiniPool(miniPool).deposit(address(collateralTokenParams.token), minNrOfTokens, user);
+        IMiniPool(miniPool).deposit(
+            address(collateralTokenParams.token), false, minNrOfTokens, user
+        );
 
         (,,,,, uint256 healthFactorBefore) = IMiniPool(miniPool).getUserAccountData(user);
         Balances memory balances;
@@ -325,13 +370,18 @@ abstract contract MiniPoolFixtures is LendingPoolFixtures {
         balances.totalSupply = aErc6909Token.scaledTotalSupply(2000 + borrowOffset);
         balances.debtToken = aErc6909Token.balanceOf(user, 2000 + borrowOffset);
         balances.token = borrowTokenParams.aToken.balanceOf(user);
-        IMiniPool(miniPool).borrow(address(borrowTokenParams.aToken), amount, user);
+        IMiniPool(miniPool).borrow(address(borrowTokenParams.aToken), false, amount, user);
         console.log("Total supply of debtAToken must be greater than before borrow");
         assertEq(
             aErc6909Token.scaledTotalSupply(2000 + borrowOffset), balances.totalSupply + amount
         );
         console.log("Balance of debtAToken must be greater than before borrow");
-        assertEq(aErc6909Token.balanceOf(user, 2000 + borrowOffset), balances.debtToken + amount);
+
+        assertEq(
+            aErc6909Token.balanceOf(user, 2000 + borrowOffset),
+            balances.debtToken + amount,
+            "Wrong debt balance"
+        );
         console.log("Balance of AToken must be greater than before borrow");
         assertEq(borrowTokenParams.aToken.balanceOf(user), balances.token + amount);
 

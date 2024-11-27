@@ -69,6 +69,41 @@ contract Cod3xLendDataProviderTest is MiniPoolFixtures {
         vm.label(miniPool, "MiniPool");
     }
 
+    function testDepositCap() public {
+        address user1 = makeAddr("user1");
+        address user2 = makeAddr("user2");
+        address user3 = makeAddr("user3");
+        uint256 usdcDepositAmount = 1e16; // bound(usdcDepositAmount, 1e12, 10_000e18);
+        TokenTypes memory usdcTypes = TokenTypes({
+            token: erc20Tokens[0],
+            aToken: aTokens[0],
+            debtToken: variableDebtTokens[0]
+        });
+
+        TokenTypes memory wbtcTypes = TokenTypes({
+            token: erc20Tokens[1],
+            aToken: aTokens[1],
+            debtToken: variableDebtTokens[1]
+        });
+        console.log("Dealing...");
+        deal(address(wbtcTypes.token), address(this), type(uint256).max / 2);
+        deal(address(usdcTypes.token), user1, type(uint256).max / 2);
+        deal(address(wbtcTypes.token), user2, type(uint256).max / 2);
+        deal(address(usdcTypes.token), user3, type(uint256).max / 2);
+        console.log("Deposit borrow...");
+        fixture_depositAndBorrow(usdcTypes, wbtcTypes, address(this), user1, usdcDepositAmount);
+        fixture_depositAndBorrow(usdcTypes, wbtcTypes, user2, user3, usdcDepositAmount);
+
+        vm.prank(admin);
+        deployedContracts.lendingPoolConfigurator.setDepositCap(address(usdcTypes.token), true, 200);
+
+        StaticData memory staticData = deployedContracts
+            .cod3xLendDataProvider
+            .getLpReserveStaticData(address(usdcTypes.token), true);
+        console.log("depositCap ", staticData.depositCap);
+        assertEq(staticData.depositCap, 200);
+    }
+
     struct DynamicData {
         uint256 availableLiquidity;
         uint256 totalVariableDebt;
@@ -79,11 +114,11 @@ contract Cod3xLendDataProviderTest is MiniPoolFixtures {
         uint40 lastUpdateTimestamp;
     }
 
-    function testProvider(uint256 usdcDepositAmount) public {
+    function testProvider() public {
         address user1 = makeAddr("user1");
         address user2 = makeAddr("user2");
         address user3 = makeAddr("user3");
-        usdcDepositAmount = 1e16; // bound(usdcDepositAmount, 1e12, 10_000e18);
+        uint256 usdcDepositAmount = 1e16; // bound(usdcDepositAmount, 1e12, 10_000e18);
         TokenTypes memory usdcTypes = TokenTypes({
             token: erc20Tokens[0],
             aToken: aTokens[0],
@@ -117,8 +152,8 @@ contract Cod3xLendDataProviderTest is MiniPoolFixtures {
             assertEq(staticData.liquidationThreshold, 8500);
             console.log("LiquidationBonus ", staticData.liquidationBonus);
             assertEq(staticData.liquidationBonus, 10500);
-            console.log("reserveFactor ", staticData.reserveFactor);
-            assertEq(staticData.reserveFactor, 1500);
+            console.log("reserveFactor ", staticData.cod3xReserveFactor);
+            assertEq(staticData.cod3xReserveFactor, 1500);
             console.log("depositCap ", staticData.depositCap);
             assertEq(staticData.depositCap, 0);
             console.log("borrowingEnabled ", staticData.borrowingEnabled);
@@ -130,10 +165,11 @@ contract Cod3xLendDataProviderTest is MiniPoolFixtures {
             console.log("isFrozen ", staticData.isFrozen);
             assertEq(staticData.isFrozen, false);
 
-            vm.prank(admin);
+            vm.startPrank(miniPoolContracts.miniPoolAddressesProvider.getMainPoolAdmin());
             deployedContracts.lendingPoolConfigurator.setDepositCap(
                 address(usdcTypes.token), true, 200
             );
+            vm.stopPrank();
 
             staticData = deployedContracts.cod3xLendDataProvider.getLpReserveStaticData(
                 address(usdcTypes.token), true
@@ -285,8 +321,8 @@ contract Cod3xLendDataProviderTest is MiniPoolFixtures {
             assertEq(staticData.liquidationThreshold, 9700);
             console.log("LiquidationBonus ", staticData.liquidationBonus);
             assertEq(staticData.liquidationBonus, 10100);
-            console.log("reserveFactor ", staticData.reserveFactor);
-            assertEq(staticData.reserveFactor, 0);
+            console.log("reserveFactor ", staticData.cod3xReserveFactor);
+            assertEq(staticData.cod3xReserveFactor, 0);
             console.log("depositCap ", staticData.depositCap);
             assertEq(staticData.depositCap, 0);
             console.log("borrowingEnabled ", staticData.borrowingEnabled);
@@ -298,7 +334,7 @@ contract Cod3xLendDataProviderTest is MiniPoolFixtures {
             console.log("isFrozen ", staticData.isFrozen);
             assertEq(staticData.isFrozen, false);
 
-            vm.startPrank(admin);
+            vm.startPrank(miniPoolContracts.miniPoolAddressesProvider.getMainPoolAdmin());
             miniPoolContracts.miniPoolConfigurator.setDepositCap(
                 address(usdcParams.token),
                 200,

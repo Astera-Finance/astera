@@ -115,19 +115,21 @@ contract MiniPool is VersionedInitializable, IMiniPool, MiniPoolStorage {
      * @dev Deposits an `amount` of underlying asset into the reserve, receiving in return overlying aTokens.
      * - E.g. User deposits 100 USDC and gets in return 100 aUSDC
      * @param asset The address of the underlying asset to deposit
+     * @param wrap Convert the underlying in AToken from the lendingpool.
      * @param amount The amount to be deposited
      * @param onBehalfOf The address that will receive the aTokens, same as msg.sender if the user
      *   wants to receive them on his own wallet, or a different address if the beneficiary of aTokens
      *   is a different wallet
      *
      */
-    function deposit(address asset, uint256 amount, address onBehalfOf)
+    function deposit(address asset, bool wrap, uint256 amount, address onBehalfOf)
         public
         override
         whenNotPaused
     {
         MiniPoolDepositLogic.deposit(
             MiniPoolDepositLogic.DepositParams(asset, amount, onBehalfOf),
+            wrap,
             _reserves,
             _usersConfig,
             _addressesProvider
@@ -139,6 +141,7 @@ contract MiniPool is VersionedInitializable, IMiniPool, MiniPoolStorage {
      * @dev Withdraws an `amount` of underlying asset from the reserve, burning the equivalent aTokens owned
      * E.g. User has 100 aUSDC, calls withdraw() and receives 100 USDC, burning the 100 aUSDC
      * @param asset The address of the underlying asset to withdraw
+     * @param unwrap If true, and `asset` is an aToken, `to` will directly receive the underlying.
      * @param amount The underlying amount to be withdrawn
      *   - Send the value type(uint256).max in order to withdraw the whole aToken balance
      * @param to Address that will receive the underlying, same as msg.sender if the user
@@ -147,7 +150,7 @@ contract MiniPool is VersionedInitializable, IMiniPool, MiniPoolStorage {
      * @return The final amount withdrawn
      *
      */
-    function withdraw(address asset, uint256 amount, address to)
+    function withdraw(address asset, bool unwrap, uint256 amount, address to)
         public
         override
         whenNotPaused
@@ -155,6 +158,7 @@ contract MiniPool is VersionedInitializable, IMiniPool, MiniPoolStorage {
     {
         return MiniPoolWithdrawLogic.withdraw(
             MiniPoolWithdrawLogic.withdrawParams(asset, amount, to, _reservesCount),
+            unwrap,
             _reserves,
             _usersConfig,
             _reservesList,
@@ -175,6 +179,7 @@ contract MiniPool is VersionedInitializable, IMiniPool, MiniPoolStorage {
      * - E.g. User borrows 100 USDC passing as `onBehalfOf` his own address, receiving the 100 USDC in his wallet
      *   and 100 variable debt tokens
      * @param asset The address of the underlying asset to borrow
+     * @param unwrap If true, and `asset` is an aToken, `to` will directly receive the underlying.
      * @param amount The amount to be borrowed
      * @param onBehalfOf Address of the user who will receive the debt. Should be the address of the borrower itself
      * calling the function if he wants to borrow against his own collateral, or the address of the credit delegator
@@ -182,7 +187,7 @@ contract MiniPool is VersionedInitializable, IMiniPool, MiniPoolStorage {
      *
      */
 
-    function borrow(address asset, uint256 amount, address onBehalfOf)
+    function borrow(address asset, bool unwrap, uint256 amount, address onBehalfOf)
         external
         override
         whenNotPaused
@@ -214,6 +219,8 @@ contract MiniPool is VersionedInitializable, IMiniPool, MiniPoolStorage {
             );
 
             vars.amountReceived = IERC20(asset).balanceOf(address(this));
+
+            // TODO :: evaluate the risk if the deposit cap is reached
             MiniPoolDepositLogic.internalDeposit(
                 MiniPoolDepositLogic.DepositParams(asset, vars.amountReceived, address(this)),
                 _reserves,
@@ -236,6 +243,7 @@ contract MiniPool is VersionedInitializable, IMiniPool, MiniPoolStorage {
                 _addressesProvider,
                 _reservesCount
             ),
+            unwrap,
             _reserves,
             _reservesList,
             _usersConfig
@@ -246,6 +254,7 @@ contract MiniPool is VersionedInitializable, IMiniPool, MiniPoolStorage {
      * @notice Repays a borrowed `amount` on a specific reserve, burning the equivalent debt tokens owned
      * - E.g. User repays 100 USDC, burning 100 variable debt tokens of the `onBehalfOf` address
      * @param asset The address of the borrowed underlying asset previously borrowed
+     * @param wrap Convert the underlying in AToken from the lendingpool.
      * @param amount The amount to repay
      * - Send the value type(uint256).max in order to repay the whole debt for `asset`
      * @param onBehalfOf Address of the user who will get his debt reduced/removed. Should be the address of the
@@ -254,7 +263,7 @@ contract MiniPool is VersionedInitializable, IMiniPool, MiniPoolStorage {
      * @return The final amount repaid
      *
      */
-    function repay(address asset, uint256 amount, address onBehalfOf)
+    function repay(address asset, bool wrap, uint256 amount, address onBehalfOf)
         external
         override
         whenNotPaused
@@ -262,6 +271,7 @@ contract MiniPool is VersionedInitializable, IMiniPool, MiniPoolStorage {
     {
         uint256 repayAmount = MiniPoolBorrowLogic.repay(
             MiniPoolBorrowLogic.repayParams(asset, amount, onBehalfOf, _addressesProvider),
+            wrap,
             _reserves,
             _usersConfig
         );
@@ -350,11 +360,9 @@ contract MiniPool is VersionedInitializable, IMiniPool, MiniPoolStorage {
                 ATokenNonRebasing(asset).convertToShares(getCurrentLendingPoolDebt(underlyingAsset)); // share
 
             if (underlyingDebt != 0) {
-                uint256 amount = underlyingDebt;
-
                 MiniPoolWithdrawLogic.internalWithdraw(
                     MiniPoolWithdrawLogic.withdrawParams(
-                        asset, amount, address(this), _reservesCount
+                        asset, underlyingDebt, address(this), _reservesCount
                     ),
                     _reserves,
                     _usersConfig,
@@ -362,16 +370,14 @@ contract MiniPool is VersionedInitializable, IMiniPool, MiniPoolStorage {
                     _addressesProvider
                 ); // MUST use share
 
-                IERC20 aToken = IERC20(ATokenNonRebasing(asset).ATOKEN_ADDRESS());
-                amount = aToken.balanceOf(address(this)); // asset
-                aToken.approve(_addressesProvider.getLendingPool(), amount);
                 ILendingPool(_addressesProvider.getLendingPool()).repayWithATokens(
-                    underlyingAsset, true, amount
+                    underlyingAsset,
+                    true,
+                    IERC20(ATokenNonRebasing(asset).ATOKEN_ADDRESS()).balanceOf(address(this))
                 ); // MUST use asset
             }
-
-            uint256 aTokenId = reserve.aTokenID;
-            uint256 remainingBalance = IAERC6909(aTokenAddress).balanceOf(address(this), aTokenId);
+            uint256 remainingBalance =
+                IAERC6909(aTokenAddress).balanceOf(address(this), reserve.aTokenID);
 
             if (
                 getCurrentLendingPoolDebt(underlyingAsset) == 0
@@ -383,8 +389,9 @@ contract MiniPool is VersionedInitializable, IMiniPool, MiniPoolStorage {
                 // `this.` modifies the execution context => msg.sender == address(this)
                 this.withdraw(
                     asset,
+                    false,
                     remainingBalance - ERROR_REMAINDER_MARGIN,
-                    _addressesProvider.getMiniPoolTreasury(_minipoolId)
+                    _addressesProvider.getMiniPoolCod3xTreasury(_minipoolId)
                 );
             }
         }

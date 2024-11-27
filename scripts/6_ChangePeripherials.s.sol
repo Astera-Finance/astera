@@ -18,6 +18,9 @@ contract ChangePeripherials is Script, DeploymentUtils, Test {
 
     function writeJsonData(string memory root, string memory path) internal {
         /* Write important contracts into the file */
+        vm.serializeAddress(
+            "peripherials", "cod3xLendDataProvider", address(contracts.cod3xLendDataProvider)
+        );
         vm.serializeAddress("peripherials", "rewarder", address(contracts.rewarder));
 
         string memory output =
@@ -31,16 +34,31 @@ contract ChangePeripherials is Script, DeploymentUtils, Test {
 
     function run() external returns (DeployedContracts memory) {
         console.log("6_ChangePeripherials");
-
         // Config fetching
+        // Providers
         string memory root = vm.projectRoot();
-        string memory path = string.concat(root, "/scripts/inputs/6_ChangePeripherials.json");
+        string memory path = string.concat(root, "/scripts/outputs/1_LendingPoolContracts.json");
         console.log("PATH: ", path);
         string memory config = vm.readFile(path);
+
+        address lendingPoolAddressesProvider = config.readAddress(".lendingPoolAddressesProvider");
+
+        path = string.concat(root, "/scripts/outputs/2_MiniPoolContracts.json");
+        console.log("PATH: ", path);
+        config = vm.readFile(path);
+
+        address miniPoolAddressesProvider = config.readAddress(".miniPoolAddressesProvider");
+
+        // Inputs from Peripherials
+        path = string.concat(root, "/scripts/inputs/6_ChangePeripherials.json");
+        console.log("PATH: ", path);
+        config = vm.readFile(path);
 
         NewPeripherial[] memory vault = abi.decode(config.parseRaw(".vault"), (NewPeripherial[]));
         NewPeripherial[] memory treasury =
             abi.decode(config.parseRaw(".treasury"), (NewPeripherial[]));
+        NewMiniPoolPeripherial[] memory miniPoolCod3xTreasury =
+            abi.decode(config.parseRaw(".miniPoolCod3xTreasury"), (NewMiniPoolPeripherial[]));
         NewPeripherial[] memory rewarder =
             abi.decode(config.parseRaw(".rewarder"), (NewPeripherial[]));
         NewPeripherial[] memory rewarder6909 =
@@ -50,6 +68,7 @@ contract ChangePeripherials is Script, DeploymentUtils, Test {
             abi.decode(config.parseRaw(".rehypothecation"), (Rehypothecation[]));
 
         uint256 miniPoolId = config.readUint(".miniPoolId");
+        bool deployCod3xLendDataProvider = config.readBool(".deployCod3xLendDataProvider");
 
         require(treasury.length == rehypothecation.length, "Lengths settings must be the same");
 
@@ -69,8 +88,19 @@ contract ChangePeripherials is Script, DeploymentUtils, Test {
                 vault[idx].newAddress = address(new ERC4626Mock(vault[idx].tokenAddress));
             }
             console.log("Changing peripherials");
-            _changePeripherials(treasury, vault, rewarder, rewarder6909, miniPoolId);
+            _changePeripherials(
+                treasury, miniPoolCod3xTreasury, vault, rewarder, rewarder6909, miniPoolId
+            );
             _turnOnRehypothecation(rehypothecation);
+            if (deployCod3xLendDataProvider) {
+                contracts.cod3xLendDataProvider = new Cod3xLendDataProvider();
+                contracts.cod3xLendDataProvider.setLendingPoolAddressProvider(
+                    lendingPoolAddressesProvider
+                );
+                contracts.cod3xLendDataProvider.setMiniPoolAddressProvider(
+                    miniPoolAddressesProvider
+                );
+            }
             vm.stopPrank();
         } else if (vm.envBool("TESTNET")) {
             console.log("Testnet");
@@ -144,8 +174,19 @@ contract ChangePeripherials is Script, DeploymentUtils, Test {
             for (uint8 idx = 0; idx < vault.length; idx++) {
                 vault[idx].newAddress = address(new ERC4626Mock(vault[idx].tokenAddress));
             }
-            _changePeripherials(treasury, vault, rewarder, rewarder6909, miniPoolId);
+            _changePeripherials(
+                treasury, miniPoolCod3xTreasury, vault, rewarder, rewarder6909, miniPoolId
+            );
             _turnOnRehypothecation(rehypothecation);
+            if (deployCod3xLendDataProvider) {
+                contracts.cod3xLendDataProvider = new Cod3xLendDataProvider();
+                contracts.cod3xLendDataProvider.setLendingPoolAddressProvider(
+                    lendingPoolAddressesProvider
+                );
+                contracts.cod3xLendDataProvider.setMiniPoolAddressProvider(
+                    miniPoolAddressesProvider
+                );
+            }
             vm.stopBroadcast();
         } else if (vm.envBool("MAINNET")) {
             console.log("Mainnet");
@@ -163,8 +204,19 @@ contract ChangePeripherials is Script, DeploymentUtils, Test {
 
             /* Change peripherials */
             vm.startBroadcast(vm.envUint("PRIVATE_KEY"));
-            _changePeripherials(treasury, vault, rewarder, rewarder6909, miniPoolId);
+            _changePeripherials(
+                treasury, miniPoolCod3xTreasury, vault, rewarder, rewarder6909, miniPoolId
+            );
             _turnOnRehypothecation(rehypothecation);
+            if (deployCod3xLendDataProvider) {
+                contracts.cod3xLendDataProvider = new Cod3xLendDataProvider();
+                contracts.cod3xLendDataProvider.setLendingPoolAddressProvider(
+                    lendingPoolAddressesProvider
+                );
+                contracts.cod3xLendDataProvider.setMiniPoolAddressProvider(
+                    miniPoolAddressesProvider
+                );
+            }
             vm.stopBroadcast();
         } else {
             console.log("No deployment type selected in .env");

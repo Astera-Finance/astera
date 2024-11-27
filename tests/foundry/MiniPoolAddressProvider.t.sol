@@ -52,7 +52,7 @@ contract MiniPoolAddressProvider is Common {
             if (idx < tokens.length) {
                 reserves[idx] = tokens[idx];
             } else {
-                reserves[idx] = address(aTokens[idx - tokens.length]);
+                reserves[idx] = address(aTokens[idx - tokens.length].WRAPPER_ADDRESS());
             }
         }
 
@@ -228,20 +228,20 @@ contract MiniPoolAddressProvider is Common {
         {
             address treasury = makeAddr("Treasury");
             console.log(
-                "1. Treasury", miniPoolContracts.miniPoolAddressesProvider.getMiniPoolTreasury(0)
+                "1. Treasury",
+                miniPoolContracts.miniPoolAddressesProvider.getMiniPoolCod3xTreasury(0)
             );
-            miniPoolContracts.miniPoolAddressesProvider.setMiniPoolToTreasury(0, treasury);
+            vm.prank(address(miniPoolContracts.miniPoolConfigurator));
+            miniPoolContracts.miniPoolAddressesProvider.setCod3xTreasuryToMiniPool(0, treasury);
             console.log(
-                "2. Treasury", miniPoolContracts.miniPoolAddressesProvider.getMiniPoolTreasury(0)
+                "2. Treasury",
+                miniPoolContracts.miniPoolAddressesProvider.getMiniPoolCod3xTreasury(0)
             );
             assertEq(
-                miniPoolContracts.miniPoolAddressesProvider.getMiniPoolTreasury(0),
+                miniPoolContracts.miniPoolAddressesProvider.getMiniPoolCod3xTreasury(0),
                 treasury,
                 "Wrong treasury"
             );
-            /* Revert when try to get treasury from not existing id */
-            vm.expectRevert(bytes(Errors.PAP_POOL_ID_OUT_OF_RANGE));
-            miniPoolContracts.miniPoolAddressesProvider.setMiniPoolToTreasury(10, treasury);
         }
 
         /* ***** Flow limit ***** */
@@ -261,6 +261,7 @@ contract MiniPoolAddressProvider is Common {
                     tokens[0], address(miniPoolContracts.miniPoolImpl)
                 )
             );
+            vm.prank(address(miniPoolContracts.miniPoolConfigurator));
             miniPoolContracts.miniPoolAddressesProvider.setFlowLimit(
                 tokens[0], address(miniPoolContracts.miniPoolImpl), flowLimit
             );
@@ -294,7 +295,7 @@ contract MiniPoolAddressProvider is Common {
         address[] memory miniPoolList =
             miniPoolContracts.miniPoolAddressesProvider.getMiniPoolList();
 
-        miniPoolContracts.miniPoolAddressesProvider.deployMiniPool(miniPoolImpl, aTokenImpl);
+        miniPoolContracts.miniPoolAddressesProvider.deployMiniPool(miniPoolImpl, aTokenImpl, admin);
 
         assertTrue(
             lastMiniPoolImpl != miniPoolContracts.miniPoolAddressesProvider.getMiniPool(1),
@@ -329,5 +330,72 @@ contract MiniPoolAddressProvider is Common {
         /* getMiniPool shall revert when id not found */
         vm.expectRevert(bytes(Errors.PAP_NO_MINI_POOL_ID_FOR_ADDRESS));
         miniPoolContracts.miniPoolAddressesProvider.getMiniPoolId(makeAddr("Random"));
+    }
+
+    function testAccessControlOfSetters(uint256 randomNumber) public {
+        address randomAddress = makeAddr("randomAddress");
+        bytes32 randomBytes = (bytes32("randomBytes"));
+        randomNumber = bound(randomNumber, 1, 100);
+        address mockedContractToUpdate = address(new MockedContractToUpdate());
+        address miniPool = miniPoolContracts.miniPoolAddressesProvider.getMiniPool(0);
+
+        /* Only owner */
+        vm.startPrank(address(this));
+        miniPoolContracts.miniPoolAddressesProvider.setMiniPoolImpl(mockedContractToUpdate, 0);
+        miniPoolContracts.miniPoolAddressesProvider.setAToken6909Impl(mockedContractToUpdate, 0);
+        miniPoolContracts.miniPoolAddressesProvider.setAddress(randomBytes, randomAddress);
+        miniPoolContracts.miniPoolAddressesProvider.deployMiniPool(
+            mockedContractToUpdate, mockedContractToUpdate, randomAddress
+        );
+        miniPoolContracts.miniPoolAddressesProvider.setMiniPoolConfigurator(mockedContractToUpdate);
+        vm.stopPrank();
+
+        /* Only configurator */
+        vm.startPrank(address(miniPoolContracts.miniPoolConfigurator));
+        miniPoolContracts.miniPoolAddressesProvider.setFlowLimit(
+            address(erc20Tokens[0]), miniPool, randomNumber
+        );
+        miniPoolContracts.miniPoolAddressesProvider.setPoolAdmin(0, randomAddress);
+        miniPoolContracts.miniPoolAddressesProvider.setCod3xTreasuryToMiniPool(0, randomAddress);
+        miniPoolContracts.miniPoolAddressesProvider.setMinipoolOwnerTreasuryToMiniPool(
+            0, randomAddress
+        );
+        vm.stopPrank();
+
+        vm.startPrank(randomAddress);
+        // vm.expectRevert("OwnableUnauthorizedAccount(0xe899D4fE48da746223F9Ad56f1511FB146EC86fF)");
+        // vm.expectRevert(
+        //     bytes4(
+        //         abi.encodeWithSelector(
+        //             bytes4(keccak256("OwnableUnauthorizedAccount(address)")), randomAddress
+        //         )
+        //     )
+        // );
+        vm.expectRevert();
+        miniPoolContracts.miniPoolAddressesProvider.setMiniPoolImpl(mockedContractToUpdate, 0);
+        vm.expectRevert();
+        miniPoolContracts.miniPoolAddressesProvider.setAToken6909Impl(mockedContractToUpdate, 0);
+        vm.expectRevert();
+        miniPoolContracts.miniPoolAddressesProvider.setAddress(randomBytes, randomAddress);
+        vm.expectRevert();
+        miniPoolContracts.miniPoolAddressesProvider.deployMiniPool(
+            mockedContractToUpdate, mockedContractToUpdate, randomAddress
+        );
+        vm.expectRevert();
+        miniPoolContracts.miniPoolAddressesProvider.setMiniPoolConfigurator(mockedContractToUpdate);
+
+        vm.expectRevert(bytes("27"));
+        miniPoolContracts.miniPoolAddressesProvider.setFlowLimit(
+            address(erc20Tokens[0]), miniPool, randomNumber
+        );
+        vm.expectRevert(bytes("27"));
+        miniPoolContracts.miniPoolAddressesProvider.setPoolAdmin(0, randomAddress);
+        vm.expectRevert(bytes("27"));
+        miniPoolContracts.miniPoolAddressesProvider.setCod3xTreasuryToMiniPool(0, randomAddress);
+        vm.expectRevert(bytes("27"));
+        miniPoolContracts.miniPoolAddressesProvider.setMinipoolOwnerTreasuryToMiniPool(
+            0, randomAddress
+        );
+        vm.stopPrank();
     }
 }

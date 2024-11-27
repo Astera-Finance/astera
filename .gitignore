@@ -8,6 +8,8 @@ typechain-types
 inspo
 package-lock.json
 providers.json
+docs
+.vscode/
 
 *outputs
 *broadcast

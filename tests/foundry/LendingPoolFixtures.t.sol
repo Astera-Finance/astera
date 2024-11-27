@@ -124,7 +124,7 @@ abstract contract LendingPoolFixtures is Common {
             0,
             maxBorrowTokenToBorrowInCollateralUnit,
             totalDebt + maxBorrowTokenToBorrowInCollateralUnit,
-            staticData.reserveFactor
+            staticData.cod3xReserveFactor
         );
         console.log("1. AToken balance: ", borrowToken.token.balanceOf(address(borrowToken.aToken)));
         /* Borrower borrows maxPossible amount of borrowToken */

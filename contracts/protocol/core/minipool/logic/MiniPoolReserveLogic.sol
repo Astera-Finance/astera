@@ -222,7 +222,8 @@ library MiniPoolReserveLogic {
             liquidityAdded,
             liquidityTaken,
             vars.totalVariableDebt,
-            reserve.configuration.getReserveFactor()
+            reserve.configuration.getCod3xReserveFactor()
+                + reserve.configuration.getMinipoolOwnerReserveFactor()
         );
         require(vars.newLiquidityRate <= type(uint128).max, Errors.RL_LIQUIDITY_RATE_OVERFLOW);
         require(vars.newVariableRate <= type(uint128).max, Errors.RL_VARIABLE_BORROW_RATE_OVERFLOW);
@@ -243,8 +244,10 @@ library MiniPoolReserveLogic {
         uint256 currentVariableDebt;
         uint256 previousVariableDebt;
         uint256 totalDebtAccrued;
-        uint256 amountToMint;
-        uint256 reserveFactor;
+        uint256 amountToMintCod3x;
+        uint256 amountToMintMinipoolOwner;
+        uint256 cod3xReserveFactor;
+        uint256 minipoolOwnerReserveFactor;
     }
 
     /**
@@ -267,9 +270,10 @@ library MiniPoolReserveLogic {
     ) internal {
         MintToTreasuryLocalVars memory vars;
 
-        vars.reserveFactor = reserve.configuration.getReserveFactor();
+        vars.cod3xReserveFactor = reserve.configuration.getCod3xReserveFactor();
+        vars.minipoolOwnerReserveFactor = reserve.configuration.getMinipoolOwnerReserveFactor();
 
-        if (vars.reserveFactor == 0) {
+        if (vars.cod3xReserveFactor == 0 && vars.minipoolOwnerReserveFactor == 0) {
             return;
         }
 
@@ -282,12 +286,25 @@ library MiniPoolReserveLogic {
         //debt accrued is the sum of the current debt minus the sum of the debt at the last update
         vars.totalDebtAccrued = vars.currentVariableDebt - vars.previousVariableDebt;
 
-        vars.amountToMint = vars.totalDebtAccrued.percentMul(vars.reserveFactor);
+        if (vars.cod3xReserveFactor != 0) {
+            vars.amountToMintCod3x = vars.totalDebtAccrued.percentMul(vars.cod3xReserveFactor);
 
-        if (vars.amountToMint != 0) {
-            IAERC6909(reserve.aTokenAddress).mintToTreasury(
-                reserve.aTokenID, vars.amountToMint, newLiquidityIndex
-            );
+            if (vars.amountToMintCod3x != 0) {
+                IAERC6909(reserve.aTokenAddress).mintToCod3xTreasury(
+                    reserve.aTokenID, vars.amountToMintCod3x, newLiquidityIndex
+                );
+            }
+        }
+
+        if (vars.minipoolOwnerReserveFactor != 0) {
+            vars.amountToMintMinipoolOwner =
+                vars.totalDebtAccrued.percentMul(vars.minipoolOwnerReserveFactor);
+
+            if (vars.amountToMintMinipoolOwner != 0) {
+                IAERC6909(reserve.aTokenAddress).mintToMinipoolOwnerTreasury(
+                    reserve.aTokenID, vars.amountToMintMinipoolOwner, newLiquidityIndex
+                );
+            }
         }
     }
 

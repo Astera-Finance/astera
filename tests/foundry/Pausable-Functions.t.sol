@@ -46,7 +46,7 @@ contract PausableFunctionsTest is Common {
             if (idx < tokens.length) {
                 reserves[idx] = tokens[idx];
             } else {
-                reserves[idx] = address(aTokens[idx - tokens.length]);
+                reserves[idx] = address(aTokens[idx - tokens.length].WRAPPER_ADDRESS());
             }
         }
 
@@ -60,7 +60,7 @@ contract PausableFunctionsTest is Common {
         uint256 amount;
 
         /* Pause Lending Pool */
-        vm.prank(admin);
+        vm.prank(miniPoolContracts.miniPoolAddressesProvider.getMainPoolAdmin());
         deployedContracts.lendingPoolConfigurator.setPoolPause(true);
 
         for (uint8 idx = 0; idx < erc20Tokens.length; idx++) {
@@ -118,23 +118,23 @@ contract PausableFunctionsTest is Common {
     function testMiniPoolFunctionsWhenPaused() public {
         uint256 amount;
 
-        vm.prank(admin);
+        vm.prank(miniPoolContracts.miniPoolAddressesProvider.getMainPoolAdmin());
         miniPoolContracts.miniPoolConfigurator.setPoolPause(true, IMiniPool(miniPool));
 
         for (uint8 idx = 0; idx < erc20Tokens.length; idx++) {
             amount = erc20Tokens[idx].balanceOf(address(this));
             erc20Tokens[idx].approve(address(deployedContracts.lendingPool), amount);
             vm.expectRevert(bytes(Errors.LP_IS_PAUSED));
-            IMiniPool(miniPool).deposit(address(erc20Tokens[idx]), amount, address(this));
+            IMiniPool(miniPool).deposit(address(erc20Tokens[idx]), false, amount, address(this));
 
             vm.expectRevert(bytes(Errors.LP_IS_PAUSED));
-            IMiniPool(miniPool).withdraw(address(erc20Tokens[idx]), amount, address(this));
+            IMiniPool(miniPool).withdraw(address(erc20Tokens[idx]), false, amount, address(this));
 
             vm.expectRevert(bytes(Errors.LP_IS_PAUSED));
-            IMiniPool(miniPool).borrow(address(erc20Tokens[idx]), amount, address(this));
+            IMiniPool(miniPool).borrow(address(erc20Tokens[idx]), false, amount, address(this));
 
             vm.expectRevert(bytes(Errors.LP_IS_PAUSED));
-            IMiniPool(miniPool).repay(address(erc20Tokens[idx]), amount, address(this));
+            IMiniPool(miniPool).repay(address(erc20Tokens[idx]), false, amount, address(this));
 
             vm.expectRevert(bytes(Errors.LP_IS_PAUSED));
             IMiniPool(miniPool).liquidationCall(

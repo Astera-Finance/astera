@@ -10,8 +10,8 @@ import {WadRayMath} from "contracts/protocol/libraries/math/WadRayMath.sol";
 contract LendingPoolConfiguratorTest is Common {
     using ReserveConfiguration for DataTypes.ReserveConfigurationMap;
 
-    uint256 constant MAX_VALID_RESERVE_FACTOR = 65535;
-    uint256 constant MAX_VALID_DEPOSIT_CAP = 256;
+    uint256 constant MAX_VALID_RESERVE_FACTOR = 5000;
+    uint256 constant MAX_VALID_DEPOSIT_CAP = type(uint72).max;
 
     event ReserveInitialized(
         address indexed asset,
@@ -94,7 +94,7 @@ contract LendingPoolConfiguratorTest is Common {
             );
             // DataTypes.ReserveConfigurationMap memory currentConfig =
             //     deployedContracts.lendingPool.getConfiguration(address(erc20Tokens[idx]), false);
-            // assertEq(currentConfig.getReserveFactor(), validReserveFactor);
+            // assertEq(currentConfig.getCod3xReserveFactor(), validReserveFactor);
         }
     }
 
@@ -108,7 +108,7 @@ contract LendingPoolConfiguratorTest is Common {
             );
             // DataTypes.ReserveConfigurationMap memory currentConfig =
             //     deployedContracts.lendingPool.getConfiguration(address(erc20Tokens[idx]), false);
-            // assertEq(currentConfig.getReserveFactor(), validReserveFactor);
+            // assertEq(currentConfig.getCod3xReserveFactor(), validReserveFactor);
         }
     }
 
@@ -122,7 +122,7 @@ contract LendingPoolConfiguratorTest is Common {
             );
             // DataTypes.ReserveConfigurationMap memory currentConfig =
             //     deployedContracts.lendingPool.getConfiguration(address(erc20Tokens[idx]), false);
-            // assertEq(currentConfig.getReserveFactor(), validReserveFactor);
+            // assertEq(currentConfig.getCod3xReserveFactor(), validReserveFactor);
         }
     }
 
@@ -134,7 +134,7 @@ contract LendingPoolConfiguratorTest is Common {
             deployedContracts.lendingPoolConfigurator.freezeReserve(address(erc20Tokens[idx]), true);
             // DataTypes.ReserveConfigurationMap memory currentConfig =
             //     deployedContracts.lendingPool.getConfiguration(address(erc20Tokens[idx]), false);
-            // assertEq(currentConfig.getReserveFactor(), validReserveFactor);
+            // assertEq(currentConfig.getCod3xReserveFactor(), validReserveFactor);
         }
     }
 
@@ -148,32 +148,32 @@ contract LendingPoolConfiguratorTest is Common {
             );
             // DataTypes.ReserveConfigurationMap memory currentConfig =
             //     deployedContracts.lendingPool.getConfiguration(address(erc20Tokens[idx]), false);
-            // assertEq(currentConfig.getReserveFactor(), validReserveFactor);
+            // assertEq(currentConfig.getCod3xReserveFactor(), validReserveFactor);
         }
     }
 
-    function testSetReserveFactor_Positive(uint256 validReserveFactor) public {
+    function testsetCod3xReserveFactor_Positive(uint256 validReserveFactor) public {
         validReserveFactor = bound(validReserveFactor, 0, MAX_VALID_RESERVE_FACTOR);
         for (uint32 idx; idx < erc20Tokens.length; idx++) {
             vm.expectEmit(true, false, false, false);
             emit ReserveFactorChanged(address(erc20Tokens[idx]), true, validReserveFactor);
             vm.prank(admin);
-            deployedContracts.lendingPoolConfigurator.setReserveFactor(
+            deployedContracts.lendingPoolConfigurator.setCod3xReserveFactor(
                 address(erc20Tokens[idx]), true, validReserveFactor
             );
             // DataTypes.ReserveConfigurationMap memory currentConfig =
             //     deployedContracts.lendingPool.getConfiguration(address(erc20Tokens[idx]), false);
-            // assertEq(currentConfig.getReserveFactor(), validReserveFactor);
+            // assertEq(currentConfig.getCod3xReserveFactor(), validReserveFactor);
         }
     }
 
-    function testSetReserveFactor_Negative(uint256 invalidReserveFactor) public {
+    function testsetCod3xReserveFactor_Negative(uint256 invalidReserveFactor) public {
         invalidReserveFactor =
             bound(invalidReserveFactor, MAX_VALID_RESERVE_FACTOR + 1, type(uint256).max);
         for (uint32 idx; idx < erc20Tokens.length; idx++) {
             vm.expectRevert(bytes(Errors.RC_INVALID_RESERVE_FACTOR));
             vm.prank(admin);
-            deployedContracts.lendingPoolConfigurator.setReserveFactor(
+            deployedContracts.lendingPoolConfigurator.setCod3xReserveFactor(
                 address(erc20Tokens[idx]), true, invalidReserveFactor
             );
         }
@@ -190,12 +190,12 @@ contract LendingPoolConfiguratorTest is Common {
             );
             // DataTypes.ReserveConfigurationMap memory currentConfig =
             //     deployedContracts.lendingPool.getConfiguration(address(erc20Tokens[idx]), false);
-            // assertEq(currentConfig.getReserveFactor(), validReserveFactor);
+            // assertEq(currentConfig.getCod3xReserveFactor(), validReserveFactor);
         }
     }
 
     function testSetDepositCap_Negative(uint256 invalidDepositCap) public {
-        invalidDepositCap = bound(invalidDepositCap, MAX_VALID_DEPOSIT_CAP, type(uint256).max);
+        invalidDepositCap = bound(invalidDepositCap, MAX_VALID_DEPOSIT_CAP + 1, type(uint256).max);
         for (uint32 idx; idx < erc20Tokens.length; idx++) {
             vm.expectRevert(bytes(Errors.RC_INVALID_DEPOSIT_CAP));
             vm.prank(admin);
