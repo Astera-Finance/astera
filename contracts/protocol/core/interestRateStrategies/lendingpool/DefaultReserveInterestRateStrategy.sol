@@ -7,7 +7,6 @@ import {WadRayMath} from "../../../../../contracts/protocol/libraries/math/WadRa
 import {PercentageMath} from "../../../../../contracts/protocol/libraries/math/PercentageMath.sol";
 import {ILendingPoolAddressesProvider} from
     "../../../../../contracts/interfaces/ILendingPoolAddressesProvider.sol";
-import {IERC20} from "../../../../../contracts/dependencies/openzeppelin/contracts/IERC20.sol";
 import {IAToken} from "../../../../../contracts/interfaces/IAToken.sol";
 import {Errors} from "../../../../../contracts/protocol/libraries/helpers/Errors.sol";
 

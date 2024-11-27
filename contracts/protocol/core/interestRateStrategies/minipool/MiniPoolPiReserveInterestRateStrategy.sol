@@ -10,14 +10,14 @@ import {IMiniPool} from "../../../../../contracts/interfaces/IMiniPool.sol";
 import {IFlowLimiter} from "../../../../../contracts/interfaces/IFlowLimiter.sol";
 import {IMiniPoolReserveInterestRateStrategy} from
     "../../../../../contracts/interfaces/IMiniPoolReserveInterestRateStrategy.sol";
-import {
-    BasePiReserveRateStrategy,
-    WadRayMath,
-    PercentageMath,
-    DataTypes
-} from "../../../../../contracts/protocol/core/interestRateStrategies/BasePiReserveRateStrategy.sol";
+import {BasePiReserveRateStrategy} from
+    "../../../../../contracts/protocol/core/interestRateStrategies/BasePiReserveRateStrategy.sol";
+import {WadRayMath} from "../../../../../contracts/protocol/libraries/math/WadRayMath.sol";
+import {PercentageMath} from "../../../../../contracts/protocol/libraries/math/PercentageMath.sol";
 import {MathUtils} from "../../../../../contracts/protocol/libraries/math/MathUtils.sol";
+import {DataTypes} from "../../../../../contracts/protocol/libraries/types/DataTypes.sol";
 import {ILendingPool} from "../../../../../contracts/interfaces/ILendingPool.sol";
+
 /**
  * @title PiReserveInterestRateStrategy contract
  * @notice Implements the calculation of the interest rates using control theory.
@@ -28,7 +28,6 @@ import {ILendingPool} from "../../../../../contracts/interfaces/ILendingPool.sol
  * needs to be associated with only one market.
  * @author Cod3x
  */
-
 contract MiniPoolPiReserveInterestRateStrategy is
     BasePiReserveRateStrategy,
     IMiniPoolReserveInterestRateStrategy

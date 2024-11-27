@@ -6,12 +6,8 @@ import {IMiniPoolAddressesProvider} from
 import {Errors} from "../../../../../contracts/protocol/libraries/helpers/Errors.sol";
 
 import {IERC20} from "../../../../../contracts/dependencies/openzeppelin/contracts/IERC20.sol";
-import {IAToken} from "../../../../../contracts/interfaces/IAToken.sol";
 import {IAERC6909} from "../../../../../contracts/interfaces/IAERC6909.sol";
-import {IVariableDebtToken} from "../../../../../contracts/interfaces/IVariableDebtToken.sol";
 import {IPriceOracleGetter} from "../../../../../contracts/interfaces/IPriceOracleGetter.sol";
-import {VersionedInitializable} from
-    "../../../../../contracts/protocol/libraries/upgradeability/VersionedInitializable.sol";
 import {MiniPoolGenericLogic} from
     "../../../../../contracts/protocol/core/minipool/logic/MiniPoolGenericLogic.sol";
 import {Helpers} from "../../../../../contracts/protocol/libraries/helpers/Helpers.sol";

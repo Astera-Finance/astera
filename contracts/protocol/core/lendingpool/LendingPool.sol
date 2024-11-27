@@ -8,8 +8,6 @@ import {ILendingPoolAddressesProvider} from
     "../../../../contracts/interfaces/ILendingPoolAddressesProvider.sol";
 import {IAToken} from "../../../../contracts/interfaces/IAToken.sol";
 import {IVariableDebtToken} from "../../../../contracts/interfaces/IVariableDebtToken.sol";
-import {IFlashLoanReceiver} from "../../../../contracts/interfaces/IFlashLoanReceiver.sol";
-import {IPriceOracleGetter} from "../../../../contracts/interfaces/IPriceOracleGetter.sol";
 import {ILendingPool} from "../../../../contracts/interfaces/ILendingPool.sol";
 import {VersionedInitializable} from
     "../../../../contracts/protocol/libraries/upgradeability/VersionedInitializable.sol";
@@ -27,7 +25,6 @@ import {UserConfiguration} from
     "../../../../contracts/protocol/libraries/configuration/UserConfiguration.sol";
 import {DataTypes} from "../../../../contracts/protocol/libraries/types/DataTypes.sol";
 import {LendingPoolStorage} from "./LendingPoolStorage.sol";
-
 import {DepositLogic} from "../../../../contracts/protocol/core/lendingpool/logic/DepositLogic.sol";
 import {WithdrawLogic} from
     "../../../../contracts/protocol/core/lendingpool/logic/WithdrawLogic.sol";

@@ -20,7 +20,6 @@ import {IInitializableAToken} from "../../../../contracts/interfaces/IInitializa
 import {IRewarder} from "../../../../contracts/interfaces/IRewarder.sol";
 import {ILendingPoolConfigurator} from
     "../../../../contracts/interfaces/ILendingPoolConfigurator.sol";
-import {IAToken} from "../../../../contracts/interfaces/IAToken.sol";
 
 /**
  * @title LendingPoolConfigurator contract

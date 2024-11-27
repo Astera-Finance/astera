@@ -1,9 +1,7 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity 0.8.23;
 
-import {IAToken} from "../../../../../contracts/interfaces/IAToken.sol";
 import {IAERC6909} from "../../../../../contracts/interfaces/IAERC6909.sol";
-import {ILendingPool} from "../../../../../contracts/interfaces/ILendingPool.sol";
 import {IReserveInterestRateStrategy} from
     "../../../../../contracts/interfaces/IReserveInterestRateStrategy.sol";
 import {ReserveConfiguration} from
@@ -13,13 +11,8 @@ import {WadRayMath} from "../../../../../contracts/protocol/libraries/math/WadRa
 import {PercentageMath} from "../../../../../contracts/protocol/libraries/math/PercentageMath.sol";
 import {Errors} from "../../../../../contracts/protocol/libraries/helpers/Errors.sol";
 import {DataTypes} from "../../../../../contracts/protocol/libraries/types/DataTypes.sol";
-import {IMiniPoolAddressesProvider} from
-    "../../../../../contracts/interfaces/IMiniPoolAddressesProvider.sol";
 import {ReserveLogic} from
     "../../../../../contracts/protocol/core/lendingpool/logic/ReserveLogic.sol";
-import {IFlowLimiter} from "../../../../../contracts/interfaces/IFlowLimiter.sol";
-import {IMiniPoolReserveInterestRateStrategy} from
-    "../../../../../contracts/interfaces/IMiniPoolReserveInterestRateStrategy.sol";
 
 /**
  * @title ReserveLogic library

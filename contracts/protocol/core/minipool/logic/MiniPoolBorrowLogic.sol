@@ -6,9 +6,7 @@ import {SafeERC20} from "../../../../../contracts/dependencies/openzeppelin/cont
 import {IPriceOracleGetter} from "../../../../../contracts/interfaces/IPriceOracleGetter.sol";
 import {IMiniPoolAddressesProvider} from
     "../../../../../contracts/interfaces/IMiniPoolAddressesProvider.sol";
-import {IAToken} from "../../../../../contracts/interfaces/IAToken.sol";
 import {IAERC6909} from "../../../../../contracts/interfaces/IAERC6909.sol";
-import {IVariableDebtToken} from "../../../../../contracts/interfaces/IVariableDebtToken.sol";
 import {WadRayMath} from "../../../../../contracts/protocol/libraries/math/WadRayMath.sol";
 import {PercentageMath} from "../../../../../contracts/protocol/libraries/math/PercentageMath.sol";
 import {Errors} from "../../../../../contracts/protocol/libraries/helpers/Errors.sol";

@@ -18,7 +18,7 @@ import {IMiniPoolAddressesProvider} from
 import {IMiniPool} from "../../../../contracts/interfaces/IMiniPool.sol";
 import {ATokenNonRebasing} from
     "../../../../contracts/protocol/tokenization/ERC20/ATokenNonRebasing.sol";
-import "openzeppelin-contracts/contracts/utils/Strings.sol";
+import {Strings} from "openzeppelin-contracts/contracts/utils/Strings.sol";
 
 /**
  * @title ERC6909-MultiToken Built to service all collateral and debt tokens for a specific MiniPool

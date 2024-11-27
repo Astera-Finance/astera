@@ -6,14 +6,10 @@ import {SafeERC20} from "../../../../../contracts/dependencies/openzeppelin/cont
 import {IMiniPoolAddressesProvider} from
     "../../../../../contracts/interfaces/IMiniPoolAddressesProvider.sol";
 import {IAERC6909} from "../../../../../contracts/interfaces/IAERC6909.sol";
-import {IReserveInterestRateStrategy} from
-    "../../../../../contracts/interfaces/IReserveInterestRateStrategy.sol";
 import {ReserveConfiguration} from
     "../../../../../contracts/protocol/libraries/configuration/ReserveConfiguration.sol";
-import {MathUtils} from "../../../../../contracts/protocol/libraries/math/MathUtils.sol";
 import {WadRayMath} from "../../../../../contracts/protocol/libraries/math/WadRayMath.sol";
 import {PercentageMath} from "../../../../../contracts/protocol/libraries/math/PercentageMath.sol";
-import {Errors} from "../../../../../contracts/protocol/libraries/helpers/Errors.sol";
 import {DataTypes} from "../../../../../contracts/protocol/libraries/types/DataTypes.sol";
 import {UserConfiguration} from
     "../../../../../contracts/protocol/libraries/configuration/UserConfiguration.sol";

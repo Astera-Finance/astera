@@ -7,7 +7,6 @@ import {IMiniPoolAddressesProvider} from
     "../../../../contracts/interfaces/IMiniPoolAddressesProvider.sol";
 import {IMiniPool} from "../../../../contracts/interfaces/IMiniPool.sol";
 import {ILendingPool} from "../../../../contracts/interfaces/ILendingPool.sol";
-import {IVariableDebtToken} from "../../../../contracts/interfaces/IVariableDebtToken.sol";
 import {IERC20} from "../../../../contracts/dependencies/openzeppelin/contracts/IERC20.sol";
 import {Errors} from "../../../../contracts/protocol/libraries/helpers/Errors.sol";
 

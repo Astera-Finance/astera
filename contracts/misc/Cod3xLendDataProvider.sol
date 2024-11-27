@@ -13,10 +13,8 @@ import {ReserveConfiguration} from
 import {UserConfiguration} from
     "../../contracts/protocol/libraries/configuration/UserConfiguration.sol";
 import {DataTypes} from "../../contracts/protocol/libraries/types/DataTypes.sol";
-
 import {IMiniPoolAddressesProvider} from "../../contracts/interfaces/IMiniPoolAddressesProvider.sol";
 import {IMiniPool} from "../../contracts/interfaces/IMiniPool.sol";
-
 import {IAERC6909} from "../../contracts/interfaces/IAERC6909.sol";
 import {Ownable} from "../../contracts/dependencies/openzeppelin/contracts/Ownable.sol";
 import {Errors} from "../../contracts/protocol/libraries/helpers/Errors.sol";

@@ -8,8 +8,11 @@ import {ILendingPoolAddressesProvider} from
     "../../../../../contracts/interfaces/ILendingPoolAddressesProvider.sol";
 import {IReserveInterestRateStrategy} from
     "../../../../../contracts/interfaces/IReserveInterestRateStrategy.sol";
-import "../../../../../contracts/protocol/core/interestRateStrategies/BasePiReserveRateStrategy.sol";
-import {IERC20} from "../../../../../contracts/dependencies/openzeppelin/contracts/IERC20.sol";
+import {BasePiReserveRateStrategy} from
+    "../../../../../contracts/protocol/core/interestRateStrategies/BasePiReserveRateStrategy.sol";
+import {WadRayMath} from "../../../../../contracts/protocol/libraries/math/WadRayMath.sol";
+import {PercentageMath} from "../../../../../contracts/protocol/libraries/math/PercentageMath.sol";
+import {DataTypes} from "../../../../../contracts/protocol/libraries/types/DataTypes.sol";
 
 /**
  * @title PiReserveInterestRateStrategy contract
