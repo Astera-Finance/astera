@@ -4,6 +4,8 @@ pragma solidity 0.8.23;
 import {Context} from "../../../../contracts/dependencies/openzeppelin/contracts/Context.sol";
 import {IMiniPoolRewarder} from "../../../../contracts/interfaces/IMiniPoolRewarder.sol";
 import {ERC6909} from "lib/solady/src/tokens/ERC6909.sol";
+import {IAERC6909} from "../../../../contracts/interfaces/IAERC6909.sol";
+import {IERC6909} from "../../../../contracts/interfaces/IERC6909.sol";
 
 /**
  * @title ERC6909
@@ -11,9 +13,8 @@ import {ERC6909} from "lib/solady/src/tokens/ERC6909.sol";
  * @author Cod3x, inspired by the Solady ERC6909 implementation and AAVEs incentivized ERC20
  *
  */
-abstract contract IncentivizedERC6909 is Context, ERC6909 {
+abstract contract IncentivizedERC6909 is Context, ERC6909 /*, IERC6909 */ {
     ///     id      => name
-
     mapping(uint256 => string) private _name;
     ///     id      => symbol
     mapping(uint256 => string) private _symbol;
@@ -41,8 +42,6 @@ abstract contract IncentivizedERC6909 is Context, ERC6909 {
     function tokenURI(uint256 id) public view virtual override returns (string memory) {
         return (_tokenURI[id]);
     }
-
-    function _getIncentivesController() internal view virtual returns (IMiniPoolRewarder);
 
     function totalSupply(uint256 id) public view virtual returns (uint256) {
         return _totalSupply[id];

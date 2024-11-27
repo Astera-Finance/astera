@@ -14,9 +14,6 @@ import "contracts/protocol/libraries/configuration/UserConfiguration.sol";
 
 import "contracts/interfaces/IAToken.sol";
 import "contracts/interfaces/IChainlinkAggregator.sol";
-import "contracts/interfaces/ICreditDelegationToken.sol";
-import "contracts/interfaces/IDelegationToken.sol";
-import "contracts/interfaces/IERC20WithPermit.sol";
 import "contracts/interfaces/IERC4626.sol";
 import "contracts/interfaces/IInitializableAToken.sol";
 import "contracts/interfaces/IInitializableDebtToken.sol";

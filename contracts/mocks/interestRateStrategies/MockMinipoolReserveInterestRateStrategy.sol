@@ -75,7 +75,7 @@ contract MockMinipoolReserveInterestRateStrategy {
         if (isTranched) {
             IFlowLimiter flowLimiter = IFlowLimiter(addressesProvider.getFlowLimiter());
             address underlying = IAToken(reserve).UNDERLYING_ASSET_ADDRESS();
-            address minipool = IAERC6909(aToken).MINIPOOL_ADDRESS();
+            address minipool = IAERC6909(aToken).getMinipoolAddress();
 
             availableLiquidity = IERC20(reserve).balanceOf(aToken)
                 + IAToken(reserve).convertToShares(flowLimiter.getFlowLimit(underlying, minipool))
@@ -101,7 +101,7 @@ contract MockMinipoolReserveInterestRateStrategy {
     {
         IFlowLimiter flowLimiter = IFlowLimiter(addressesProvider.getFlowLimiter());
         address underlying = IAToken(reserve).UNDERLYING_ASSET_ADDRESS();
-        address minipool = IAERC6909(aToken).MINIPOOL_ADDRESS();
+        address minipool = IAERC6909(aToken).getMinipoolAddress();
 
         // Here we make sure that the minipool can always repay its debt to the lendingpool.
         // https://www.desmos.com/calculator/3bigkgqbqg

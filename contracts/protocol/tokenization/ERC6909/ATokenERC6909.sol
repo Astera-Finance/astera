@@ -30,30 +30,31 @@ contract ATokenERC6909 is IncentivizedERC6909, VersionedInitializable {
     using WadRayMath for uint256;
     using ReserveLogic for DataTypes.ReserveData;
 
-    uint256 public constant ATOKEN_REVISION = 0x1;
-    uint256 private _totalTokens;
-    uint256 private _totalUniqueTokens;
-    uint256 private _totalTrancheTokens;
-
-    IMiniPoolAddressesProvider private _addressesProvider;
-    IMiniPoolRewarder private INCENTIVES_CONTROLLER;
-    IMiniPool private POOL;
-    uint256 public constant ATOKEN_ADDRESSABLE_ID = 1000; // This is the first ID for aToken
-    uint256 public constant DEBT_TOKEN_ADDRESSABLE_ID = 2000; // This is the first ID for debtToken
-
     event TokenInitialized(
         uint256 indexed id, string name, string symbol, uint8 decimals, address underlyingAsset
     );
 
+    // ======================= Constant =======================
+
+    uint256 public constant ATOKEN_REVISION = 0x1;
+    uint256 public constant ATOKEN_ADDRESSABLE_ID = 1000; // This is the first ID for aToken
+    uint256 public constant DEBT_TOKEN_ADDRESSABLE_ID = 2000; // This is the first ID for debtToken
+
+    // ======================= Storage =======================
+
+    uint256 private _totalTokens;
+    uint256 private _totalUniqueTokens;
+    uint256 private _totalTrancheTokens;
+    IMiniPoolAddressesProvider private _addressesProvider;
+    IMiniPoolRewarder private INCENTIVES_CONTROLLER;
+    IMiniPool private POOL;
+    uint256 private _minipoolId;
+
     mapping(uint256 => address) private _underlyingAssetAddresses;
     mapping(uint256 => bool) private _isTranche;
-    uint256 private _minipoolId;
-    //ID -> User -> Delegate -> Allowance
-    mapping(uint256 => mapping(address => mapping(address => uint256))) private _borrowAllowances;
+    mapping(uint256 => mapping(address => mapping(address => uint256))) private _borrowAllowances; // ID -> User -> Delegate -> Allowance
 
-    function getRevision() internal pure virtual override returns (uint256) {
-        return ATOKEN_REVISION;
-    }
+    // ======================= External Function =======================
 
     function initialize(address provider, uint256 minipoolId) public initializer {
         require(address(provider) != address(0), Errors.LP_NOT_CONTRACT);
@@ -65,53 +66,6 @@ contract ATokenERC6909 is IncentivizedERC6909, VersionedInitializable {
         _addressesProvider = IMiniPoolAddressesProvider(provider);
         _minipoolId = minipoolId;
         POOL = IMiniPool(_addressesProvider.getMiniPool(minipoolId));
-    }
-
-    function _initializeATokenID(
-        uint256 id,
-        address underlyingAsset,
-        string memory name,
-        string memory symbol,
-        uint8 decimals
-    ) internal {
-        require(underlyingAsset != address(0), Errors.LP_NOT_CONTRACT);
-        require(bytes(name).length != 0);
-        require(bytes(symbol).length != 0);
-        require(decimals != 0);
-        require(id < DEBT_TOKEN_ADDRESSABLE_ID, Errors.AT_INVALID_ATOKEN_ID);
-        _setName(
-            id,
-            string.concat(
-                "Cod3x Lend Minipool ", string.concat(Strings.toString(_minipoolId), name)
-            )
-        );
-        _setSymbol(
-            id,
-            string.concat(
-                string.concat("cl-", Strings.toString(_minipoolId)), string.concat("-", symbol)
-            )
-        ); // cl-{minipoolId}-{symbol}
-        _setDecimals(id, decimals);
-        _setUnderlyingAsset(id, underlyingAsset);
-        emit TokenInitialized(id, name, symbol, decimals, underlyingAsset);
-    }
-
-    function _initializeDebtTokenID(
-        uint256 id,
-        address underlyingAsset,
-        string memory name,
-        string memory symbol,
-        uint8 decimals
-    ) internal {
-        require(underlyingAsset != address(0), Errors.LP_NOT_CONTRACT);
-        require(bytes(name).length != 0);
-        require(bytes(symbol).length != 0);
-        require(decimals != 0);
-        _setName(id, string.concat("Variable Debt ", name));
-        _setSymbol(id, string.concat("vDebt", symbol));
-        _setDecimals(id, decimals);
-        _setUnderlyingAsset(id, underlyingAsset);
-        emit TokenInitialized(id, name, symbol, decimals, underlyingAsset);
     }
 
     function initReserve(
@@ -145,70 +99,9 @@ contract ATokenERC6909 is IncentivizedERC6909, VersionedInitializable {
         _initializeDebtTokenID(debtTokenID, underlyingAsset, name, symbol, decimals);
     }
 
-    function _getIncentivesController() internal view override returns (IMiniPoolRewarder) {
-        return INCENTIVES_CONTROLLER;
-    }
-
-    function getIncentivesController() external view returns (IMiniPoolRewarder) {
-        return _getIncentivesController();
-    }
-
     function setIncentivesController(IMiniPoolRewarder controller) external {
         require(msg.sender == address(POOL), Errors.CT_CALLER_MUST_BE_LENDING_POOL);
         INCENTIVES_CONTROLLER = controller;
-    }
-
-    function _setUnderlyingAsset(uint256 id, address underlyingAsset) internal {
-        require(underlyingAsset != address(0), Errors.LP_NOT_CONTRACT);
-        _underlyingAssetAddresses[id] = underlyingAsset;
-    }
-
-    function getUnderlyingAsset(uint256 id) external view returns (address) {
-        return _underlyingAssetAddresses[id];
-    }
-
-    function _beforeTokenTransfer(address, address, uint256 id, uint256) internal view override {
-        if (isDebtToken(id)) {
-            require(msg.sender == address(POOL), Errors.CT_CALLER_MUST_BE_LENDING_POOL);
-        }
-    }
-
-    function _afterTokenTransfer(address from, address to, uint256 id, uint256 amount)
-        internal
-        override
-    {
-        uint256 oldSupply = totalSupply(id);
-        uint256 oldFromBalance = balanceOf(from, id);
-        uint256 oldToBalance = balanceOf(to, id);
-        //if the token was minted
-        if (from == address(0) && to != address(0)) {
-            oldSupply = _incrementTotalSupply(id, amount);
-            oldToBalance = oldToBalance - amount;
-            oldFromBalance = 0;
-            if (address(_getIncentivesController()) != address(0)) {
-                _getIncentivesController().handleAction(id, to, oldSupply, oldToBalance);
-            }
-            //if the token was burned
-        } else if (to == address(0) && from != address(0)) {
-            oldSupply = _decrementTotalSupply(id, amount);
-            oldFromBalance = oldFromBalance + amount;
-            oldToBalance = 0;
-            if (address(_getIncentivesController()) != address(0)) {
-                _getIncentivesController().handleAction(id, from, oldSupply, oldFromBalance);
-            }
-        }
-        //the token was transferred
-        else {
-            oldFromBalance = oldFromBalance + amount;
-            oldToBalance = oldToBalance - amount;
-            if (address(_getIncentivesController()) != address(0)) {
-                _getIncentivesController().handleAction(id, from, oldSupply, oldFromBalance);
-
-                if (from != to) {
-                    _getIncentivesController().handleAction(id, to, oldSupply, oldToBalance);
-                }
-            }
-        }
     }
 
     function transfer(address to, uint256 id, uint256 amount)
@@ -279,100 +172,6 @@ contract ATokenERC6909 is IncentivizedERC6909, VersionedInitializable {
         }
     }
 
-    function getScaledUserBalanceAndSupply(address user, uint256 id)
-        external
-        view
-        returns (uint256, uint256)
-    {
-        return (super.balanceOf(user, id), super.totalSupply(id));
-    }
-
-    function totalSupply(uint256 id) public view override returns (uint256) {
-        uint256 currentSupplyScaled = super.totalSupply(id);
-
-        if (currentSupplyScaled == 0) {
-            return 0;
-        }
-
-        return currentSupplyScaled.rayMul(
-            POOL.getReserveNormalizedIncome(_underlyingAssetAddresses[id])
-        );
-    }
-
-    function scaledTotalSupply(uint256 id) public view returns (uint256) {
-        return super.totalSupply(id);
-    }
-
-    function isAToken(uint256 id) public pure returns (bool) {
-        return id < DEBT_TOKEN_ADDRESSABLE_ID && id >= ATOKEN_ADDRESSABLE_ID;
-    }
-
-    function isDebtToken(uint256 id) public pure returns (bool) {
-        return id >= DEBT_TOKEN_ADDRESSABLE_ID;
-    }
-
-    function _getNextIdForUnderlying(address underlying)
-        internal
-        view
-        returns (uint256, uint256, bool)
-    {
-        ILendingPool pool = ILendingPool(_addressesProvider.getLendingPool());
-        if (_determineIfAToken(underlying, address(pool))) {
-            address tokenUnderlying = IAToken(underlying).UNDERLYING_ASSET_ADDRESS();
-
-            // Ensure LendingPool reserve is initialized.
-            require(
-                pool.getReserveData(tokenUnderlying, true).aTokenAddress != address(0),
-                Errors.RL_RESERVE_NOT_INITIALIZED
-            );
-            // Thanks to the above check, `getReserveData.id` returns the correct value.
-            uint256 tokenID = pool.getReserveData(tokenUnderlying, true).id;
-
-            return (tokenID + ATOKEN_ADDRESSABLE_ID, tokenID + DEBT_TOKEN_ADDRESSABLE_ID, true);
-        } else {
-            uint256 offset = pool.MAX_NUMBER_RESERVES();
-            uint256 tokenID = offset + _totalUniqueTokens;
-
-            return (tokenID + ATOKEN_ADDRESSABLE_ID, tokenID + DEBT_TOKEN_ADDRESSABLE_ID, false);
-        }
-    }
-
-    function getNextIdForUnderlying(address underlying)
-        public
-        view
-        returns (uint256 aTokenID, uint256 debtTokenID, bool isTrancheRet)
-    {
-        (aTokenID, debtTokenID, isTrancheRet) = _getNextIdForUnderlying(underlying);
-
-        require(
-            _underlyingAssetAddresses[aTokenID] == address(0), Errors.RL_RESERVE_ALREADY_INITIALIZED
-        );
-    }
-
-    function getIdForUnderlying(address underlying)
-        public
-        view
-        returns (uint256 aTokenID, uint256 debtTokenID, bool isTrancheRet)
-    {
-        DataTypes.MiniPoolReserveData memory reserveData =
-            IMiniPool(POOL).getReserveData(underlying);
-        aTokenID = reserveData.aTokenID;
-        debtTokenID = reserveData.variableDebtTokenID;
-        isTrancheRet = isTranche(aTokenID);
-
-        require(
-            _underlyingAssetAddresses[aTokenID] != address(0), Errors.RL_RESERVE_NOT_INITIALIZED
-        );
-    }
-
-    function _determineIfAToken(address underlying, address MLP) internal view returns (bool) {
-        try IAToken(underlying).getPool() returns (address pool) {
-            return pool == MLP;
-        } catch {
-            return false;
-        }
-    }
-
     function mintToCod3xTreasury(uint256 id, uint256 amount, uint256 index) external {
         address treasury = _addressesProvider.getMiniPoolCod3xTreasury(_minipoolId);
         _mintToTreasury(id, amount, index, treasury);
@@ -381,21 +180,6 @@ contract ATokenERC6909 is IncentivizedERC6909, VersionedInitializable {
     function mintToMinipoolOwnerTreasury(uint256 id, uint256 amount, uint256 index) external {
         address treasury = _addressesProvider.getMiniPoolOwnerTreasury(_minipoolId);
         _mintToTreasury(id, amount, index, treasury);
-    }
-
-    function _mintToTreasury(uint256 id, uint256 amount, uint256 index, address treasury)
-        internal
-    {
-        require(msg.sender == address(POOL), Errors.CT_CALLER_MUST_BE_LENDING_POOL);
-        if (amount == 0) {
-            return;
-        }
-
-        // Compared to the normal mint, we don't check for rounding errors.
-        // The amount to mint can easily be very small since it is a fraction of the interest ccrued.
-        // In that case, the treasury will experience a (very small) loss, but it
-        // wont cause potentially valid transactions to fail.
-        _mint(treasury, id, amount.rayDiv(index));
     }
 
     function mint(address user, address onBehalfOf, uint256 id, uint256 amount, uint256 index)
@@ -452,6 +236,118 @@ contract ATokenERC6909 is IncentivizedERC6909, VersionedInitializable {
         }
     }
 
+    function approveDelegation(address delegatee, uint256 id, uint256 amount) external {
+        _borrowAllowances[id][msg.sender][delegatee] = amount;
+    }
+
+    function transferOnLiquidation(address from, address to, uint256 id, uint256 amount) external {
+        require(msg.sender == address(POOL), Errors.CT_CALLER_MUST_BE_LENDING_POOL);
+        _transferForLiquidation(from, to, id, amount);
+    }
+
+    function handleRepayment(address, address, uint256, uint256) external view {
+        require(msg.sender == address(POOL), Errors.CT_CALLER_MUST_BE_LENDING_POOL);
+    }
+    // ======================= Internal Function =======================
+
+    function _setUnderlyingAsset(uint256 id, address underlyingAsset) internal {
+        require(underlyingAsset != address(0), Errors.LP_NOT_CONTRACT);
+        _underlyingAssetAddresses[id] = underlyingAsset;
+    }
+
+    function _beforeTokenTransfer(address, address, uint256 id, uint256) internal view override {
+        if (isDebtToken(id)) {
+            require(msg.sender == address(POOL), Errors.CT_CALLER_MUST_BE_LENDING_POOL);
+        }
+    }
+
+    function _afterTokenTransfer(address from, address to, uint256 id, uint256 amount)
+        internal
+        override
+    {
+        uint256 oldSupply = totalSupply(id);
+        uint256 oldFromBalance = balanceOf(from, id);
+        uint256 oldToBalance = balanceOf(to, id);
+        //if the token was minted
+        if (from == address(0) && to != address(0)) {
+            oldSupply = _incrementTotalSupply(id, amount);
+            oldToBalance = oldToBalance - amount;
+            oldFromBalance = 0;
+            if (address(INCENTIVES_CONTROLLER) != address(0)) {
+                INCENTIVES_CONTROLLER.handleAction(id, to, oldSupply, oldToBalance);
+            }
+            //if the token was burned
+        } else if (to == address(0) && from != address(0)) {
+            oldSupply = _decrementTotalSupply(id, amount);
+            oldFromBalance = oldFromBalance + amount;
+            oldToBalance = 0;
+            if (address(INCENTIVES_CONTROLLER) != address(0)) {
+                INCENTIVES_CONTROLLER.handleAction(id, from, oldSupply, oldFromBalance);
+            }
+        }
+        //the token was transferred
+        else {
+            oldFromBalance = oldFromBalance + amount;
+            oldToBalance = oldToBalance - amount;
+            if (address(INCENTIVES_CONTROLLER) != address(0)) {
+                INCENTIVES_CONTROLLER.handleAction(id, from, oldSupply, oldFromBalance);
+
+                if (from != to) {
+                    INCENTIVES_CONTROLLER.handleAction(id, to, oldSupply, oldToBalance);
+                }
+            }
+        }
+    }
+
+    function _determineIfAToken(address underlying, address MLP) internal view returns (bool) {
+        try IAToken(underlying).getPool() returns (address pool) {
+            return pool == MLP;
+        } catch {
+            return false;
+        }
+    }
+
+    function _getNextIdForUnderlying(address underlying)
+        internal
+        view
+        returns (uint256, uint256, bool)
+    {
+        ILendingPool pool = ILendingPool(_addressesProvider.getLendingPool());
+        if (_determineIfAToken(underlying, address(pool))) {
+            address tokenUnderlying = IAToken(underlying).UNDERLYING_ASSET_ADDRESS();
+
+            // Ensure LendingPool reserve is initialized.
+            require(
+                pool.getReserveData(tokenUnderlying, true).aTokenAddress != address(0),
+                Errors.RL_RESERVE_NOT_INITIALIZED
+            );
+            // Thanks to the above check, `getReserveData.id` returns the correct value.
+            uint256 tokenID = pool.getReserveData(tokenUnderlying, true).id;
+
+            return (tokenID + ATOKEN_ADDRESSABLE_ID, tokenID + DEBT_TOKEN_ADDRESSABLE_ID, true);
+        } else {
+            uint256 offset = pool.MAX_NUMBER_RESERVES();
+            uint256 tokenID = offset + _totalUniqueTokens;
+
+            return (tokenID + ATOKEN_ADDRESSABLE_ID, tokenID + DEBT_TOKEN_ADDRESSABLE_ID, false);
+        }
+    }
+
+    function _mintToTreasury(uint256 id, uint256 amount, uint256 index, address treasury)
+        internal
+    {
+        require(msg.sender == address(POOL), Errors.CT_CALLER_MUST_BE_LENDING_POOL);
+        if (amount == 0) {
+            return;
+        }
+
+        // Compared to the normal mint, we don't check for rounding errors.
+        // The amount to mint can easily be very small since it is a fraction of the interest ccrued.
+        // In that case, the treasury will experience a (very small) loss, but it
+        // wont cause potentially valid transactions to fail.
+        _mint(treasury, id, amount.rayDiv(index));
+    }
+
     function _decreaseBorrowAllowance(
         address delegator,
         address delegatee,
@@ -464,33 +360,51 @@ contract ATokenERC6909 is IncentivizedERC6909, VersionedInitializable {
         _borrowAllowances[id][delegator][delegatee] = newAllowance;
     }
 
-    function approveDelegation(address delegatee, uint256 id, uint256 amount) external {
-        _borrowAllowances[id][msg.sender][delegatee] = amount;
+    function _initializeATokenID(
+        uint256 id,
+        address underlyingAsset,
+        string memory name,
+        string memory symbol,
+        uint8 decimals
+    ) internal {
+        require(underlyingAsset != address(0), Errors.LP_NOT_CONTRACT);
+        require(bytes(name).length != 0);
+        require(bytes(symbol).length != 0);
+        require(decimals != 0);
+        require(id < DEBT_TOKEN_ADDRESSABLE_ID, Errors.AT_INVALID_ATOKEN_ID);
+        _setName(
+            id,
+            string.concat(
+                "Cod3x Lend Minipool ", string.concat(Strings.toString(_minipoolId), name)
+            )
+        );
+        _setSymbol(
+            id,
+            string.concat(
+                string.concat("cl-", Strings.toString(_minipoolId)), string.concat("-", symbol)
+            )
+        ); // cl-{minipoolId}-{symbol}
+        _setDecimals(id, decimals);
+        _setUnderlyingAsset(id, underlyingAsset);
+        emit TokenInitialized(id, name, symbol, decimals, underlyingAsset);
     }
 
-    function balanceOf(address user, uint256 id) public view override returns (uint256) {
-        if (isDebtToken(id)) {
-            return super.balanceOf(user, id).rayMul(
-                POOL.getReserveNormalizedVariableDebt(_underlyingAssetAddresses[id])
-            );
-        } else {
-            return super.balanceOf(user, id).rayMul(
-                POOL.getReserveNormalizedIncome(_underlyingAssetAddresses[id])
-            );
-        }
-    }
-
-    function handleRepayment(address, address, uint256, uint256) external view {
-        require(msg.sender == address(POOL), Errors.CT_CALLER_MUST_BE_LENDING_POOL);
-    }
-
-    function isTranche(uint256 id) public view returns (bool) {
-        return _isTranche[id];
-    }
-
-    function transferOnLiquidation(address from, address to, uint256 id, uint256 amount) external {
-        require(msg.sender == address(POOL), Errors.CT_CALLER_MUST_BE_LENDING_POOL);
-        _transferForLiquidation(from, to, id, amount);
+    function _initializeDebtTokenID(
+        uint256 id,
+        address underlyingAsset,
+        string memory name,
+        string memory symbol,
+        uint8 decimals
+    ) internal {
+        require(underlyingAsset != address(0), Errors.LP_NOT_CONTRACT);
+        require(bytes(name).length != 0);
+        require(bytes(symbol).length != 0);
+        require(decimals != 0);
+        _setName(id, string.concat("Variable Debt ", name));
+        _setSymbol(id, string.concat("vDebt", symbol));
+        _setDecimals(id, decimals);
+        _setUnderlyingAsset(id, underlyingAsset);
+        emit TokenInitialized(id, name, symbol, decimals, underlyingAsset);
     }
 
     function _transferForLiquidation(address from, address to, uint256 id, uint256 amount)
@@ -505,11 +419,101 @@ contract ATokenERC6909 is IncentivizedERC6909, VersionedInitializable {
         }
     }
 
-    function MINIPOOL_ADDRESS() external view returns (address) {
+    // ======================= View/Pure Function =======================
+
+    function totalSupply(uint256 id) public view override returns (uint256) {
+        uint256 currentSupplyScaled = super.totalSupply(id);
+
+        if (currentSupplyScaled == 0) {
+            return 0;
+        }
+
+        return currentSupplyScaled.rayMul(
+            POOL.getReserveNormalizedIncome(_underlyingAssetAddresses[id])
+        );
+    }
+
+    function balanceOf(address user, uint256 id) public view override returns (uint256) {
+        if (isDebtToken(id)) {
+            return super.balanceOf(user, id).rayMul(
+                POOL.getReserveNormalizedVariableDebt(_underlyingAssetAddresses[id])
+            );
+        } else {
+            return super.balanceOf(user, id).rayMul(
+                POOL.getReserveNormalizedIncome(_underlyingAssetAddresses[id])
+            );
+        }
+    }
+
+    function scaledTotalSupply(uint256 id) public view returns (uint256) {
+        return super.totalSupply(id);
+    }
+
+    function isAToken(uint256 id) public pure returns (bool) {
+        return id < DEBT_TOKEN_ADDRESSABLE_ID && id >= ATOKEN_ADDRESSABLE_ID;
+    }
+
+    function isDebtToken(uint256 id) public pure returns (bool) {
+        return id >= DEBT_TOKEN_ADDRESSABLE_ID;
+    }
+
+    function isTranche(uint256 id) public view returns (bool) {
+        return _isTranche[id];
+    }
+
+    function getScaledUserBalanceAndSupply(address user, uint256 id)
+        external
+        view
+        returns (uint256, uint256)
+    {
+        return (super.balanceOf(user, id), super.totalSupply(id));
+    }
+
+    function getNextIdForUnderlying(address underlying)
+        public
+        view
+        returns (uint256 aTokenID, uint256 debtTokenID, bool isTrancheRet)
+    {
+        (aTokenID, debtTokenID, isTrancheRet) = _getNextIdForUnderlying(underlying);
+
+        require(
+            _underlyingAssetAddresses[aTokenID] == address(0), Errors.RL_RESERVE_ALREADY_INITIALIZED
+        );
+    }
+
+    function getIdForUnderlying(address underlying)
+        public
+        view
+        returns (uint256 aTokenID, uint256 debtTokenID, bool isTrancheRet)
+    {
+        DataTypes.MiniPoolReserveData memory reserveData =
+            IMiniPool(POOL).getReserveData(underlying);
+        aTokenID = reserveData.aTokenID;
+        debtTokenID = reserveData.variableDebtTokenID;
+        isTrancheRet = isTranche(aTokenID);
+
+        require(
+            _underlyingAssetAddresses[aTokenID] != address(0), Errors.RL_RESERVE_NOT_INITIALIZED
+        );
+    }
+
+    function getUnderlyingAsset(uint256 id) external view returns (address) {
+        return _underlyingAssetAddresses[id];
+    }
+
+    function getRevision() internal pure virtual override returns (uint256) {
+        return ATOKEN_REVISION;
+    }
+
+    function getMinipoolAddress() external view returns (address) {
         return address(POOL);
     }
 
-    function MINIPOOL_ID() external view returns (uint256) {
+    function getMinipoolId() external view returns (uint256) {
         return _minipoolId;
+    }
+
+    function getIncentivesController() external view returns (IMiniPoolRewarder) {
+        return INCENTIVES_CONTROLLER;
     }
 }

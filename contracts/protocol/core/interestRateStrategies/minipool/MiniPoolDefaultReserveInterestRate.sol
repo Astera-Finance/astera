@@ -122,7 +122,7 @@ contract MiniPoolDefaultReserveInterestRateStrategy is IMiniPoolReserveInterestR
         if (vars.isTranched) {
             IFlowLimiter flowLimiter = IFlowLimiter(_addressesProvider.getFlowLimiter());
             vars.underlying = IAToken(asset).UNDERLYING_ASSET_ADDRESS();
-            address minipool = IAERC6909(aToken).MINIPOOL_ADDRESS();
+            address minipool = IAERC6909(aToken).getMinipoolAddress();
             vars.currentFlow = flowLimiter.currentFlow(vars.underlying, minipool);
 
             vars.availableLiquidity = IERC20(asset).balanceOf(aToken)
