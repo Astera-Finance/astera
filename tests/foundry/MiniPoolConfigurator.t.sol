@@ -12,8 +12,8 @@ contract MiniPoolConfiguratorTest is MiniPoolDepositBorrowTest {
     using WadRayMath for uint256;
     using ReserveConfiguration for DataTypes.ReserveConfigurationMap;
 
-    uint256 constant MAX_VALID_RESERVE_FACTOR = 1500;
-    uint256 constant MAX_VALID_DEPOSIT_CAP = 256;
+    uint256 constant MAX_VALID_RESERVE_FACTOR = 5000;
+    uint256 constant MAX_VALID_DEPOSIT_CAP = type(uint72).max;
     uint256 constant MAX_VALID_VOLATILITY_TIER = 4;
     uint256 constant MAX_VALID_LTV = 65535;
 
@@ -362,7 +362,7 @@ contract MiniPoolConfiguratorTest is MiniPoolDepositBorrowTest {
             );
 
             vm.expectRevert(bytes(Errors.VL_COLLATERAL_BALANCE_IS_0));
-            IMiniPool(miniPool).borrow(address(borrowTokenParams.token), amount, user);
+            IMiniPool(miniPool).borrow(address(borrowTokenParams.token), false, amount, user);
 
             vm.stopPrank();
         }
@@ -478,10 +478,10 @@ contract MiniPoolConfiguratorTest is MiniPoolDepositBorrowTest {
         vm.startPrank(user);
         uint256 tokenBalanceBefore = aErc6909Token.balanceOf(address(treasury), 1128 + borrowOffset);
         console.log("BORROW 1 token: %s", address(borrowTokenParams.token));
-        IMiniPool(miniPool).borrow(address(borrowTokenParams.token), amount / 3, user);
+        IMiniPool(miniPool).borrow(address(borrowTokenParams.token), false, amount / 3, user);
         skip(100 days);
         console.log("BORROW 2");
-        IMiniPool(miniPool).borrow(address(borrowTokenParams.token), amount / 3, user);
+        IMiniPool(miniPool).borrow(address(borrowTokenParams.token), false, amount / 3, user);
         // console.log("Part of borrow aToken balance shall be transfered to the treasury");
         // assertGt(aErc6909Token.balanceOf(address(deployedContracts.treasury), 1000 + borrowOffset), atokenBalanceBefore);
         console.log("Part of borrow token balance shall be transfered to the treasury");
@@ -510,7 +510,7 @@ contract MiniPoolConfiguratorTest is MiniPoolDepositBorrowTest {
     }
 
     function testSetDepositCap_Negative(uint256 invalidDepositCap) public {
-        invalidDepositCap = bound(invalidDepositCap, MAX_VALID_DEPOSIT_CAP, type(uint256).max);
+        invalidDepositCap = bound(invalidDepositCap, MAX_VALID_DEPOSIT_CAP + 1, type(uint256).max);
         for (uint32 idx; idx < erc20Tokens.length; idx++) {
             vm.startPrank(miniPoolContracts.miniPoolAddressesProvider.getMainPoolAdmin());
             vm.expectRevert(bytes(Errors.RC_INVALID_DEPOSIT_CAP));
@@ -581,7 +581,7 @@ contract MiniPoolConfiguratorTest is MiniPoolDepositBorrowTest {
         vars.dai.approve(address(vars.mp), vars.amount * 1e14);
         console.log("User balance: ", vars.dai.balanceOf(vars.user) / (10 ** 18));
         console.log("User depositAmount: ", vars.amount * 1e14 / (10 ** 18));
-        IMiniPool(vars.mp).deposit(address(vars.dai), vars.amount * 1e14, vars.user);
+        IMiniPool(vars.mp).deposit(address(vars.dai), false, vars.amount * 1e14, vars.user);
         vm.stopPrank();
 
         vars.flowLimiter = address(miniPoolContracts.flowLimiter);
@@ -590,7 +590,7 @@ contract MiniPoolConfiguratorTest is MiniPoolDepositBorrowTest {
         miniPoolContracts.flowLimiter.setFlowLimit(address(vars.usdc), vars.mp, vars.amount * 100); // 50000 USDC
 
         vm.startPrank(vars.user);
-        IMiniPool(vars.mp).borrow(address(vars.grainUSDC), vars.amount * 94, vars.user); // 47000 USDC
+        IMiniPool(vars.mp).borrow(address(vars.grainUSDC), false, vars.amount * 94, vars.user); // 47000 USDC
         assertEq(vars.debtUSDC.balanceOf(vars.mp), vars.amount * 94);
         assertEq(
             IVariableDebtToken(address(vars.debtUSDC)).scaledBalanceOf(vars.mp), vars.amount * 94
@@ -620,7 +620,7 @@ contract MiniPoolConfiguratorTest is MiniPoolDepositBorrowTest {
 
         IERC20(vars.grainUSDC).approve(address(vars.mp), vars.amount * 94);
         console.log("Before repay: ");
-        IMiniPool(vars.mp).repay(address(vars.grainUSDC), vars.amount * 94, vars.user); // 47000 USDC
+        IMiniPool(vars.mp).repay(address(vars.grainUSDC), false, vars.amount * 94, vars.user); // 47000 USDC
         console.log("After repay: ");
 
         assertEq(vars.debtUSDC.balanceOf(vars.mp), 0);

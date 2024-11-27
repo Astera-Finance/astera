@@ -31,7 +31,9 @@ library ReserveConfiguration {
     uint256 internal constant MINIPOOL_OWNER_RESERVE_FACTOR_MASK =
         0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF0000FFFFFFFFFFFFFFFFFFF;
     uint256 internal constant DEPOSIT_CAP_MASK =
-        0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF00FFFFFFFFFFFFFFFFFFFFFFF;
+        0xFFFFFFFFFFFFFFFFFFFFFFF000000000000000000FFFFFFFFFFFFFFFFFFFFFFF;
+    uint256 internal constant RESERVE_TYPE_MASK =
+        0xFFFFFFFFFFFFFFFFFFFFFFEFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF;
 
     /// @dev For the LTV, the start bit is 0 (up to 15), hence no bitshifting is needed
     uint256 internal constant LIQUIDATION_THRESHOLD_START_BIT_POSITION = 16;
@@ -44,13 +46,14 @@ library ReserveConfiguration {
     uint256 internal constant COD3X_RESERVE_FACTOR_START_BIT_POSITION = 60;
     uint256 internal constant MINIPOOL_OWNER_FACTOR_START_BIT_POSITION = 76;
     uint256 internal constant DEPOSIT_CAP_START_BIT_POSITION = 92;
+    uint256 internal constant RESERVE_TYPE_START_BIT_POSITION = 164;
 
-    uint256 internal constant MAX_VALID_LTV = 65535;
-    uint256 internal constant MAX_VALID_LIQUIDATION_THRESHOLD = 65535;
-    uint256 internal constant MAX_VALID_LIQUIDATION_BONUS = 65535;
-    uint256 internal constant MAX_VALID_DECIMALS = 255;
-    uint256 internal constant MAX_VALID_RESERVE_FACTOR = 1500;
-    uint256 internal constant MAX_VALID_DEPOSIT_CAP = 255;
+    uint256 internal constant MAX_VALID_LTV = type(uint16).max;
+    uint256 internal constant MAX_VALID_LIQUIDATION_THRESHOLD = type(uint16).max;
+    uint256 internal constant MAX_VALID_LIQUIDATION_BONUS = type(uint16).max;
+    uint256 internal constant MAX_VALID_DECIMALS = type(uint8).max;
+    uint256 internal constant MAX_VALID_RESERVE_FACTOR = 5000; // 15% // theorical max: type(uint16).max
+    uint256 internal constant MAX_VALID_DEPOSIT_CAP = type(uint72).max; // Enough to represent SHIBA total supply.
 
     /**
      * @dev Sets the Loan to Value of the reserve
@@ -321,6 +324,22 @@ library ReserveConfiguration {
         returns (uint256)
     {
         return (self.data & ~DEPOSIT_CAP_MASK) >> DEPOSIT_CAP_START_BIT_POSITION;
+    }
+
+    function setReserveType(DataTypes.ReserveConfigurationMap memory self, bool reserveType)
+        internal
+        pure
+    {
+        self.data = (self.data & RESERVE_TYPE_MASK)
+            | (uint256(reserveType ? 1 : 0) << RESERVE_TYPE_START_BIT_POSITION);
+    }
+
+    function getReserveType(DataTypes.ReserveConfigurationMap storage self)
+        internal
+        view
+        returns (bool)
+    {
+        return (self.data & ~RESERVE_TYPE_MASK) != 0;
     }
 
     /**

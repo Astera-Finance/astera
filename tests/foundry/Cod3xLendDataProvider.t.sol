@@ -69,6 +69,41 @@ contract Cod3xLendDataProviderTest is MiniPoolFixtures {
         vm.label(miniPool, "MiniPool");
     }
 
+    function testDepositCap() public {
+        address user1 = makeAddr("user1");
+        address user2 = makeAddr("user2");
+        address user3 = makeAddr("user3");
+        uint256 usdcDepositAmount = 1e16; // bound(usdcDepositAmount, 1e12, 10_000e18);
+        TokenTypes memory usdcTypes = TokenTypes({
+            token: erc20Tokens[0],
+            aToken: aTokens[0],
+            debtToken: variableDebtTokens[0]
+        });
+
+        TokenTypes memory wbtcTypes = TokenTypes({
+            token: erc20Tokens[1],
+            aToken: aTokens[1],
+            debtToken: variableDebtTokens[1]
+        });
+        console.log("Dealing...");
+        deal(address(wbtcTypes.token), address(this), type(uint256).max / 2);
+        deal(address(usdcTypes.token), user1, type(uint256).max / 2);
+        deal(address(wbtcTypes.token), user2, type(uint256).max / 2);
+        deal(address(usdcTypes.token), user3, type(uint256).max / 2);
+        console.log("Deposit borrow...");
+        fixture_depositAndBorrow(usdcTypes, wbtcTypes, address(this), user1, usdcDepositAmount);
+        fixture_depositAndBorrow(usdcTypes, wbtcTypes, user2, user3, usdcDepositAmount);
+
+        vm.prank(admin);
+        deployedContracts.lendingPoolConfigurator.setDepositCap(address(usdcTypes.token), true, 200);
+
+        StaticData memory staticData = deployedContracts
+            .cod3xLendDataProvider
+            .getLpReserveStaticData(address(usdcTypes.token), true);
+        console.log("depositCap ", staticData.depositCap);
+        assertEq(staticData.depositCap, 200);
+    }
+
     struct DynamicData {
         uint256 availableLiquidity;
         uint256 totalVariableDebt;
@@ -79,11 +114,11 @@ contract Cod3xLendDataProviderTest is MiniPoolFixtures {
         uint40 lastUpdateTimestamp;
     }
 
-    function testProvider(uint256 usdcDepositAmount) public {
+    function testProvider() public {
         address user1 = makeAddr("user1");
         address user2 = makeAddr("user2");
         address user3 = makeAddr("user3");
-        usdcDepositAmount = 1e16; // bound(usdcDepositAmount, 1e12, 10_000e18);
+        uint256 usdcDepositAmount = 1e16; // bound(usdcDepositAmount, 1e12, 10_000e18);
         TokenTypes memory usdcTypes = TokenTypes({
             token: erc20Tokens[0],
             aToken: aTokens[0],

@@ -5,6 +5,7 @@ import "./Common.sol";
 import "contracts/protocol/libraries/helpers/Errors.sol";
 import {WadRayMath} from "contracts/protocol/libraries/math/WadRayMath.sol";
 import "contracts/interfaces/IMiniPoolRewarder.sol";
+import "contracts/protocol/tokenization/ERC20/ATokenNonRebasing.sol";
 
 contract ATokenErc6909Test is Common {
     using WadRayMath for uint256;
@@ -57,7 +58,7 @@ contract ATokenErc6909Test is Common {
             if (idx < tokens.length) {
                 reserves[idx] = tokens[idx];
             } else {
-                reserves[idx] = address(aTokens[idx - tokens.length]);
+                reserves[idx] = address(aTokens[idx - tokens.length].WRAPPER_ADDRESS());
             }
         }
 
@@ -79,13 +80,13 @@ contract ATokenErc6909Test is Common {
             vm.expectRevert(bytes(Errors.CT_CALLER_MUST_BE_LENDING_POOL));
             aErc6909Token.mintToCod3xTreasury(1, 1, 1);
             vm.expectRevert(bytes(Errors.CT_CALLER_MUST_BE_LENDING_POOL));
-            aErc6909Token.burn(admin, admin, 1, 1, 1);
+            aErc6909Token.burn(admin, admin, 1, 1, false, 1);
             vm.expectRevert(bytes(Errors.CT_CALLER_MUST_BE_LENDING_POOL));
             aErc6909Token.transferOnLiquidation(admin, addr, 0, 1);
             vm.expectRevert(bytes(Errors.CT_CALLER_MUST_BE_LENDING_POOL));
             aErc6909Token.setIncentivesController(IMiniPoolRewarder(addr));
             vm.expectRevert(bytes(Errors.CT_CALLER_MUST_BE_LENDING_POOL));
-            aErc6909Token.transferUnderlyingTo(addr, 11, 1);
+            aErc6909Token.transferUnderlyingTo(addr, 11, 1, false);
             vm.expectRevert(bytes(Errors.CT_CALLER_MUST_BE_LENDING_POOL));
             aErc6909Token.mintToCod3xTreasury(1, 11, 1);
         }
@@ -311,7 +312,7 @@ contract ATokenErc6909Test is Common {
         /* Fuzz vector creation */
         offset = bound(offset, 0, tokens.length - 1);
         uint256 id = 1000 + offset;
-        TokenParams memory tokenParams = TokenParams(erc20Tokens[offset], aTokens[offset], 0);
+        TokenParams memory tokenParams = TokenParams(erc20Tokens[offset], aTokensWrapper[offset], 0);
         maxValToBurn = bound(
             maxValToBurn,
             nrOfIterations * 10 ** (tokenParams.token.decimals() - 2),
@@ -335,7 +336,9 @@ contract ATokenErc6909Test is Common {
 
         /* Deposit aToken into the mini pool */
         tokenParams.aToken.approve(miniPool, 3 * maxValToBurn);
-        IMiniPool(miniPool).deposit(address(tokenParams.aToken), 3 * maxValToBurn, address(this));
+        IMiniPool(miniPool).deposit(
+            address(tokenParams.aToken), false, 3 * maxValToBurn, address(this)
+        );
 
         /* Borrow aToken from mini pool */
         console.log(
@@ -350,7 +353,7 @@ contract ATokenErc6909Test is Common {
             "1. underlyingToken after deposit %s ",
             tokenParams.token.balanceOf(address(tokenParams.aToken))
         );
-        IMiniPool(miniPool).borrow(address(tokenParams.aToken), maxValToBurn, address(this));
+        IMiniPool(miniPool).borrow(address(tokenParams.aToken), false, maxValToBurn, address(this));
         skip(timeDiff);
         index = IMiniPool(miniPool).getReserveNormalizedIncome(address(tokenParams.aToken));
         console.log(">>>Index: ", index);
@@ -389,7 +392,7 @@ contract ATokenErc6909Test is Common {
             );
             console.log("Granuality: ", granuality);
             console.log("Granuality cumulated: ", cnt.rayDiv(index));
-            aErc6909Token.burn(address(this), address(this), id, granuality, index);
+            aErc6909Token.burn(address(this), address(this), id, granuality, false, index);
         }
 
         console.log(
@@ -435,7 +438,7 @@ contract ATokenErc6909Test is Common {
             IERC20(aErc6909Token.getUnderlyingAsset(id)).balanceOf(address(aErc6909Token)),
             aErc6909Token.balanceOf(address(this), id)
         );
-        aErc6909Token.burn(address(this), address(this), id, maxValToBurn, index);
+        aErc6909Token.burn(address(this), address(this), id, maxValToBurn, false, index);
         console.log("After single burn balance shall be {maxValToBurn} adjusted with {index}");
         console.log(
             "4. aErc6909Token after 2 burning %s ", aErc6909Token.balanceOf(address(this), id)
@@ -471,7 +474,7 @@ contract ATokenErc6909Test is Common {
 
         console.log("Cannot burn 3th time because it is not available (assets are borrowed)");
         vm.expectRevert();
-        aErc6909Token.burn(address(this), address(this), id, maxValToBurn, index);
+        aErc6909Token.burn(address(this), address(this), id, maxValToBurn, false, index);
         vm.stopPrank();
     }
 
@@ -493,7 +496,7 @@ contract ATokenErc6909Test is Common {
         TestParams memory testParams = TestParams(1000 + offset, 20, makeAddr("User"));
         valToTransfer = bound(valToTransfer, testParams.nrOfIterations * 10, 10_000_000);
         uint256 index = 1e27;
-        TokenParams memory tokenParams = TokenParams(erc20Tokens[offset], aTokens[offset], 0);
+        TokenParams memory tokenParams = TokenParams(erc20Tokens[offset], aTokensWrapper[offset], 0);
 
         uint256 granuality = valToTransfer / testParams.nrOfIterations;
         vm.assume(valToTransfer % granuality == 0); // accept only multiplicity of {nrOfIterations} -> avoid issues with rounding
@@ -515,7 +518,9 @@ contract ATokenErc6909Test is Common {
         );
 
         tokenParams.aToken.approve(miniPool, 4 * valToTransfer);
-        IMiniPool(miniPool).deposit(address(tokenParams.aToken), 4 * valToTransfer, address(this));
+        IMiniPool(miniPool).deposit(
+            address(tokenParams.aToken), false, 4 * valToTransfer, address(this)
+        );
         console.log(
             "2. aErc6909Token after deposit %s ",
             IERC20(aErc6909Token.getUnderlyingAsset(testParams.id)).balanceOf(
@@ -527,7 +532,7 @@ contract ATokenErc6909Test is Common {
             tokenParams.token.balanceOf(address(tokenParams.aToken))
         );
 
-        IMiniPool(miniPool).borrow(address(tokenParams.aToken), valToTransfer, address(this));
+        IMiniPool(miniPool).borrow(address(tokenParams.aToken), false, valToTransfer, address(this));
         vm.startPrank(miniPool);
         console.log("Balance before: ", aErc6909Token.balanceOf(address(this), testParams.id));
 
@@ -705,7 +710,7 @@ contract ATokenErc6909Test is Common {
         offset = bound(offset, 0, tokens.length - 1);
         uint256 id = 1000 + offset;
         ERC20 underlyingToken = erc20Tokens[offset];
-        IERC20 grainUnderlyingToken = IERC20(aTokens[offset]);
+        IERC20 grainUnderlyingToken = IERC20(aTokensWrapper[offset]);
         valToTransfer = bound(valToTransfer, nrOfIterations * 10, 20_000_000);
         // index = 1e27;
         index = bound(index, 1e27, 10e27); // assume index increases in time as the interest accumulates
@@ -740,7 +745,9 @@ contract ATokenErc6909Test is Common {
         );
 
         grainUnderlyingToken.approve(miniPool, 3 * valToTransfer);
-        IMiniPool(miniPool).deposit(address(grainUnderlyingToken), 3 * valToTransfer, address(this));
+        IMiniPool(miniPool).deposit(
+            address(grainUnderlyingToken), false, 3 * valToTransfer, address(this)
+        );
         console.log(
             "3. aErc6909Token after deposit %s ",
             IERC20(aErc6909Token.getUnderlyingAsset(id)).balanceOf(address(aErc6909Token))
@@ -761,7 +768,7 @@ contract ATokenErc6909Test is Common {
         // assertEq(initialTotalSupply, 3 * valToTransfer.rayDiv(index)); // TODO ??
 
         for (uint256 cnt = 0; cnt < valToTransfer; cnt += granuality) {
-            aErc6909Token.transferUnderlyingTo(user, id, granuality);
+            aErc6909Token.transferUnderlyingTo(user, id, granuality, false);
         }
         assertEq(
             IERC20(aErc6909Token.getUnderlyingAsset(id)).balanceOf(user),
@@ -772,7 +779,7 @@ contract ATokenErc6909Test is Common {
             initialThisBalance - valToTransfer
         );
         console.log("Single mint");
-        aErc6909Token.transferUnderlyingTo(user, id, valToTransfer);
+        aErc6909Token.transferUnderlyingTo(user, id, valToTransfer, false);
         console.log("Assertions");
         assertEq(
             IERC20(aErc6909Token.getUnderlyingAsset(id)).balanceOf(user),
@@ -800,7 +807,7 @@ contract ATokenErc6909Test is Common {
         //offset = bound(offset, 0, (2 * tokens.length) - 1);
         offset = bound(offset, 0, tokens.length - 3);
         // offset = 1;
-        TokenParams memory tokenParams = TokenParams(erc20Tokens[offset], aTokens[offset], 0);
+        TokenParams memory tokenParams = TokenParams(erc20Tokens[offset], aTokensWrapper[offset], 0);
         uint256 id = 1000 + offset;
         valToTransfer = bound(valToTransfer, nrOfIterations, 20_000_000);
         index = 1e27;
@@ -836,7 +843,9 @@ contract ATokenErc6909Test is Common {
         );
 
         tokenParams.aToken.approve(miniPool, 3 * valToTransfer);
-        IMiniPool(miniPool).deposit(address(tokenParams.aToken), 3 * valToTransfer, address(this));
+        IMiniPool(miniPool).deposit(
+            address(tokenParams.aToken), false, 3 * valToTransfer, address(this)
+        );
         console.log(
             "3. aErc6909Token after deposit %s ",
             IERC20(aErc6909Token.getUnderlyingAsset(id)).balanceOf(address(aErc6909Token))
@@ -847,7 +856,7 @@ contract ATokenErc6909Test is Common {
         );
         index = IMiniPool(miniPool).getReserveNormalizedIncome(address(tokenParams.aToken));
         console.log("_____ index: ", index);
-        IMiniPool(miniPool).borrow(address(tokenParams.aToken), valToTransfer, address(this));
+        IMiniPool(miniPool).borrow(address(tokenParams.aToken), false, valToTransfer, address(this));
 
         index = IMiniPool(miniPool).getReserveNormalizedIncome(address(tokenParams.aToken));
         console.log("______ index: ", index);

@@ -8,8 +8,10 @@ import {PercentageMath} from "contracts/protocol/libraries/math/PercentageMath.s
 import {ReserveConfiguration} from
     "contracts/protocol/libraries/configuration/ReserveConfiguration.sol";
 import {PercentageMath} from "contracts/protocol/libraries/math/PercentageMath.sol";
+import "contracts/misc/Cod3xLendDataProvider.sol";
 
 import "forge-std/StdUtils.sol";
+import "forge-std/console.sol";
 // import {ILendingPool} from "contracts/interfaces/ILendingPool.sol";
 
 contract MiniPoolDepositBorrowTest is MiniPoolFixtures {
@@ -22,6 +24,7 @@ contract MiniPoolDepositBorrowTest is MiniPoolFixtures {
         opFork = vm.createSelectFork(RPC, FORK_BLOCK);
         assertEq(vm.activeFork(), opFork);
         deployedContracts = fixture_deployProtocol();
+
         configLpAddresses = ConfigAddresses(
             address(deployedContracts.cod3xLendDataProvider),
             address(deployedContracts.stableStrategy),
@@ -63,6 +66,99 @@ contract MiniPoolDepositBorrowTest is MiniPoolFixtures {
         miniPool =
             fixture_configureMiniPoolReserves(reserves, configLpAddresses, miniPoolContracts, 0);
         vm.label(miniPool, "MiniPool");
+    }
+
+    function testInitalizeReserveWithReserveTypeFalse() public {
+        address user = address(0x1223);
+        MintableERC20 mockToken = new MintableERC20("a", "a", 18);
+
+        vm.prank(user);
+        mockToken.mint(100 ether);
+
+        {
+            ILendingPoolConfigurator.InitReserveInput[] memory initInputParams =
+                new ILendingPoolConfigurator.InitReserveInput[](1);
+            ATokensAndRatesHelper.ConfigureReserveInput[] memory inputConfigParams =
+                new ATokensAndRatesHelper.ConfigureReserveInput[](1);
+
+            string memory tmpSymbol = ERC20(mockToken).symbol();
+            address interestStrategy = isStableStrategy[0] != false
+                ? configAddresses.stableStrategy
+                : configAddresses.volatileStrategy;
+            // console.log("[common] main interestStartegy: ", interestStrategy);
+            initInputParams[0] = ILendingPoolConfigurator.InitReserveInput({
+                aTokenImpl: address(aToken),
+                variableDebtTokenImpl: address(variableDebtToken),
+                underlyingAssetDecimals: ERC20(mockToken).decimals(),
+                interestRateStrategyAddress: interestStrategy,
+                underlyingAsset: address(mockToken),
+                reserveType: false,
+                treasury: configAddresses.treasury,
+                incentivesController: configAddresses.rewarder,
+                underlyingAssetName: tmpSymbol,
+                aTokenName: string.concat("Cod3x Lend ", tmpSymbol),
+                aTokenSymbol: string.concat("cl", tmpSymbol),
+                variableDebtTokenName: string.concat("Cod3x Lend variable debt bearing ", tmpSymbol),
+                variableDebtTokenSymbol: string.concat("variableDebt", tmpSymbol),
+                params: "0x10"
+            });
+
+            vm.prank(admin);
+            deployedContracts.lendingPoolConfigurator.batchInitReserve(initInputParams);
+
+            inputConfigParams[0] = ATokensAndRatesHelper.ConfigureReserveInput({
+                asset: address(mockToken),
+                reserveType: false,
+                baseLTV: 8000,
+                liquidationThreshold: 8500,
+                liquidationBonus: 10500,
+                reserveFactor: 1500,
+                borrowingEnabled: true
+            });
+
+            deployedContracts.lendingPoolAddressesProvider.setPoolAdmin(
+                address(deployedContracts.aTokensAndRatesHelper)
+            );
+            ATokensAndRatesHelper(deployedContracts.aTokensAndRatesHelper).configureReserves(
+                inputConfigParams
+            );
+            deployedContracts.lendingPoolAddressesProvider.setPoolAdmin(admin);
+        }
+
+        address[] memory aTokensW = new address[](1);
+
+        (address _aTokenAddress,) = Cod3xLendDataProvider(deployedContracts.cod3xLendDataProvider)
+            .getLpTokens(address(mockToken), false);
+        console.log("AToken ::::  ", _aTokenAddress);
+        aTokensW[0] = address(AToken(_aTokenAddress).WRAPPER_ADDRESS());
+
+        {
+            IMiniPoolConfigurator.InitReserveInput[] memory initInputParams =
+                new IMiniPoolConfigurator.InitReserveInput[](aTokensW.length);
+            console.log("Getting Mini pool: ");
+            address miniPool = miniPoolContracts.miniPoolAddressesProvider.getMiniPool(0);
+
+            string memory tmpSymbol = ERC20(aTokensW[0]).symbol();
+            string memory tmpName = ERC20(aTokensW[0]).name();
+
+            address interestStrategy = configAddresses.volatileStrategy;
+            // console.log("[common]interestStartegy: ", interestStrategy);
+            initInputParams[0] = IMiniPoolConfigurator.InitReserveInput({
+                underlyingAssetDecimals: ERC20(aTokensW[0]).decimals(),
+                interestRateStrategyAddress: interestStrategy,
+                underlyingAsset: aTokensW[0],
+                underlyingAssetName: tmpName,
+                underlyingAssetSymbol: tmpSymbol
+            });
+
+            vm.startPrank(address(miniPoolContracts.miniPoolAddressesProvider.getMainPoolAdmin()));
+            vm.expectRevert(bytes(Errors.RL_RESERVE_NOT_INITIALIZED));
+            miniPoolContracts.miniPoolConfigurator.batchInitReserve(
+                initInputParams, IMiniPool(miniPool)
+            );
+
+            vm.stopPrank();
+        }
     }
 
     function testMiniPoolDeposits(uint256 amount, uint256 offset) public {
@@ -358,7 +454,9 @@ contract MiniPoolDepositBorrowTest is MiniPoolFixtures {
             aErc6909Token
         );
         vm.startPrank(user);
-        IMiniPool(miniPool).borrow(address(borrowTokenParams.token), testParams.borrowAmount, user);
+        IMiniPool(miniPool).borrow(
+            address(borrowTokenParams.token), false, testParams.borrowAmount, user
+        );
         vm.stopPrank();
 
         (,,,,, uint256 previousVariableBorrowIndex,) = deployedContracts
@@ -414,7 +512,9 @@ contract MiniPoolDepositBorrowTest is MiniPoolFixtures {
             aErc6909Token
         );
         vm.startPrank(user);
-        IMiniPool(miniPool).borrow(address(borrowTokenParams.token), testParams.borrowAmount, user);
+        IMiniPool(miniPool).borrow(
+            address(borrowTokenParams.token), false, testParams.borrowAmount, user
+        );
         vm.stopPrank();
 
         (,,,, uint256 liquidityIndex, uint256 variableBorrowIndex,) = deployedContracts

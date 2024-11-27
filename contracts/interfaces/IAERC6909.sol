@@ -24,7 +24,7 @@ interface IAERC6909 is IERC6909 {
         external
         override
         returns (bool);
-    function transferUnderlyingTo(address to, uint256 id, uint256 amount) external;
+    function transferUnderlyingTo(address to, uint256 id, uint256 amount, bool unwrap) external;
     function getScaledUserBalanceAndSupply(address user, uint256 id)
         external
         view
@@ -51,6 +51,7 @@ interface IAERC6909 is IERC6909 {
         address receiverOfUnderlying,
         uint256 id,
         uint256 amount,
+        bool unwrap,
         uint256 index
     ) external;
     function approveDelegation(address delegatee, uint256 id, uint256 amount) external;

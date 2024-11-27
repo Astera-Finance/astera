@@ -21,6 +21,9 @@ import {ReserveConfiguration} from
 import {UserConfiguration} from
     "../../../../../contracts/protocol/libraries/configuration/UserConfiguration.sol";
 import {Helpers} from "../../../../../contracts/protocol/libraries/helpers/Helpers.sol";
+import {ILendingPool} from "../../../../../contracts/interfaces/ILendingPool.sol";
+import {ATokenNonRebasing} from
+    "../../../../../contracts/protocol/tokenization/ERC20/ATokenNonRebasing.sol";
 
 /**
  * @title BorrowLogic library
@@ -170,6 +173,7 @@ library MiniPoolBorrowLogic {
 
     function executeBorrow(
         ExecuteBorrowParams memory vars,
+        bool unwrap,
         mapping(address => DataTypes.MiniPoolReserveData) storage reserves,
         mapping(uint256 => address) storage reservesList,
         mapping(address => DataTypes.UserConfigurationMap) storage usersConfig
@@ -218,7 +222,7 @@ library MiniPoolBorrowLogic {
 
         if (vars.releaseUnderlying) {
             IAERC6909(vars.aTokenAddress).transferUnderlyingTo(
-                vars.user, reserve.aTokenID, vars.amount
+                vars.user, reserve.aTokenID, vars.amount, unwrap
             );
         }
 
@@ -248,6 +252,7 @@ library MiniPoolBorrowLogic {
 
     function repay(
         repayParams memory params,
+        bool wrap,
         mapping(address => DataTypes.MiniPoolReserveData) storage _reserves,
         mapping(address => DataTypes.UserConfigurationMap) storage _usersConfig
     ) external returns (uint256) {
@@ -272,6 +277,7 @@ library MiniPoolBorrowLogic {
             params.onBehalfOf, // we dont care about the burn receiver for debtTokens
             reserve.variableDebtTokenID,
             paybackAmount,
+            false,
             reserve.variableBorrowIndex
         );
 
@@ -282,7 +288,18 @@ library MiniPoolBorrowLogic {
             _usersConfig[params.onBehalfOf].setBorrowing(reserve.id, false);
         }
 
-        IERC20(params.asset).safeTransferFrom(msg.sender, aToken, paybackAmount);
+        if (wrap) {
+            address underlying = ATokenNonRebasing(params.asset).UNDERLYING_ASSET_ADDRESS();
+            address lendingPool = params.addressesProvider.getLendingPool();
+            uint256 underlyingAmount =
+                ATokenNonRebasing(params.asset).convertToAssets(paybackAmount);
+
+            IERC20(underlying).safeTransferFrom(msg.sender, address(this), underlyingAmount);
+            IERC20(underlying).forceApprove(lendingPool, underlyingAmount);
+            ILendingPool(lendingPool).deposit(underlying, true, underlyingAmount, aToken);
+        } else {
+            IERC20(params.asset).safeTransferFrom(msg.sender, aToken, paybackAmount);
+        }
 
         IAERC6909(aToken).handleRepayment(
             msg.sender, params.onBehalfOf, reserve.aTokenID, paybackAmount

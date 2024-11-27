@@ -65,6 +65,13 @@ contract ATokenNonRebasing {
     }
 
     /**
+     * @dev Returns the reserve type.
+     */
+    function RESERVE_TYPE() public view returns (bool) {
+        return _aToken.RESERVE_TYPE();
+    }
+
+    /**
      * @dev Returns the address of the LendingPool address associated with the aToken.
      */
     function getPool() external view returns (address) {

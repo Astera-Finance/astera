@@ -54,6 +54,7 @@ library MiniPoolWithdrawLogic {
 
     function withdraw(
         withdrawParams memory params,
+        bool unwrap,
         mapping(address => DataTypes.MiniPoolReserveData) storage reserves,
         mapping(address => DataTypes.UserConfigurationMap) storage usersConfig,
         mapping(uint256 => address) storage reservesList,
@@ -97,7 +98,12 @@ library MiniPoolWithdrawLogic {
         }
 
         IAERC6909(localVars.aToken).burn(
-            msg.sender, params.to, localVars.id, localVars.amountToWithdraw, reserve.liquidityIndex
+            msg.sender,
+            params.to,
+            localVars.id,
+            localVars.amountToWithdraw,
+            unwrap,
+            reserve.liquidityIndex
         );
 
         emit Withdraw(params.asset, msg.sender, params.to, localVars.amountToWithdraw);
@@ -200,6 +206,7 @@ library MiniPoolWithdrawLogic {
             params.to,
             localVars.id,
             localVars.amountToWithdraw,
+            false,
             reserve.liquidityIndex
         );
 

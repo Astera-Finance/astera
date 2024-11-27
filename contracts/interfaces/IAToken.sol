@@ -115,6 +115,7 @@ interface IAToken is IERC20, IScaledBalanceToken, IInitializableAToken {
      *
      */
     function UNDERLYING_ASSET_ADDRESS() external view returns (address);
+    function RESERVE_TYPE() external view returns (bool);
 
     /// --------- Share logic ---------
 

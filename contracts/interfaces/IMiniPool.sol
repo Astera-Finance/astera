@@ -151,18 +151,20 @@ interface IMiniPool {
      * @dev Deposits an `amount` of underlying asset into the reserve, receiving in return overlying aTokens.
      * - E.g. User deposits 100 USDC and gets in return 100 aUSDC
      * @param asset The address of the underlying asset to deposit
+     * @param wrap Convert the underlying in AToken from the lendingpool.
      * @param amount The amount to be deposited
      * @param onBehalfOf The address that will receive the aTokens, same as msg.sender if the user
      *   wants to receive them on his own wallet, or a different address if the beneficiary of aTokens
      *   is a different wallet
      *
      */
-    function deposit(address asset, uint256 amount, address onBehalfOf) external;
+    function deposit(address asset, bool wrap, uint256 amount, address onBehalfOf) external;
 
     /**
      * @dev Withdraws an `amount` of underlying asset from the reserve, burning the equivalent aTokens owned
      * E.g. User has 100 aUSDC, calls withdraw() and receives 100 USDC, burning the 100 aUSDC
      * @param asset The address of the underlying asset to withdraw
+     * @param unwrap If true, and `asset` is an aToken, `to` will directly receive the underlying.
      * @param amount The underlying amount to be withdrawn
      *   - Send the value type(uint256).max in order to withdraw the whole aToken balance
      * @param to Address that will receive the underlying, same as msg.sender if the user
@@ -171,7 +173,9 @@ interface IMiniPool {
      * @return The final amount withdrawn
      *
      */
-    function withdraw(address asset, uint256 amount, address to) external returns (uint256);
+    function withdraw(address asset, bool unwrap, uint256 amount, address to)
+        external
+        returns (uint256);
 
     /**
      * @dev Allows users to borrow a specific `amount` of the reserve underlying asset, provided that the borrower
@@ -180,18 +184,20 @@ interface IMiniPool {
      * - E.g. User borrows 100 USDC passing as `onBehalfOf` his own address, receiving the 100 USDC in his wallet
      *   and 100 variable debt tokens
      * @param asset The address of the underlying asset to borrow
+     * @param unwrap If true, and `asset` is an aToken, `to` will directly receive the underlying.
      * @param amount The amount to be borrowed
      * @param onBehalfOf Address of the user who will receive the debt. Should be the address of the borrower itself
      * calling the function if he wants to borrow against his own collateral, or the address of the credit delegator
      * if he has been given credit delegation allowance
      *
      */
-    function borrow(address asset, uint256 amount, address onBehalfOf) external;
+    function borrow(address asset, bool unwrap, uint256 amount, address onBehalfOf) external;
 
     /**
      * @notice Repays a borrowed `amount` on a specific reserve, burning the equivalent debt tokens owned
      * - E.g. User repays 100 USDC, burning 100 variable debt tokens of the `onBehalfOf` address
      * @param asset The address of the borrowed underlying asset previously borrowed
+     * @param wrap Convert the underlying in AToken from the lendingpool.
      * @param amount The amount to repay
      * - Send the value type(uint256).max in order to repay the whole debt for `asset`
      * @param onBehalfOf Address of the user who will get his debt reduced/removed. Should be the address of the
@@ -200,7 +206,9 @@ interface IMiniPool {
      * @return The final amount repaid
      *
      */
-    function repay(address asset, uint256 amount, address onBehalfOf) external returns (uint256);
+    function repay(address asset, bool wrap, uint256 amount, address onBehalfOf)
+        external
+        returns (uint256);
 
     /**
      * @dev Allows depositors to enable/disable a specific deposited asset as collateral
