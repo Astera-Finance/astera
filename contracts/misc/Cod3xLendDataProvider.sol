@@ -374,8 +374,10 @@ contract Cod3xLendDataProvider is Ownable {
             uint40 lastUpdateTimestamp
         )
     {
-        DataTypes.MiniPoolReserveData memory reserve =
-            IMiniPool(miniPoolAddressProvider.getMiniPool(miniPoolId)).getReserveData(asset);
+        (bool isReserveConfigured, DataTypes.MiniPoolReserveData memory reserve) =
+            isMpReserveConfigured(asset, miniPoolAddressProvider.getMiniPool(miniPoolId));
+
+        require(isReserveConfigured, Errors.DP_RESERVE_NOT_CONFIGURED);
 
         return (
             IERC20Detailed(asset).balanceOf(reserve.aTokenAddress), // or scaledTotalSupply ?
@@ -413,7 +415,9 @@ contract Cod3xLendDataProvider is Ownable {
         aTokenIds = new uint256[](reserves.length);
         variableDebtTokenIds = new uint256[](reserves.length);
         for (uint256 idx = 0; idx < reserves.length; idx++) {
-            DataTypes.MiniPoolReserveData memory data = miniPool.getReserveData(reserves[idx]);
+            (bool isReserveConfigured, DataTypes.MiniPoolReserveData memory data) =
+                isMpReserveConfigured(reserves[idx], address(miniPool));
+            require(isReserveConfigured, Errors.DP_RESERVE_NOT_CONFIGURED);
             aErc6909Token[idx] = data.aTokenAddress;
             aTokenIds[idx] = data.aTokenID;
             variableDebtTokenIds[idx] = data.variableDebtTokenID;
@@ -472,7 +476,11 @@ contract Cod3xLendDataProvider is Ownable {
     {
         DataTypes.UserConfigurationMap memory userConfig = miniPool.getUserConfiguration(user);
 
-        DataTypes.MiniPoolReserveData memory data = miniPool.getReserveData(reserve);
+        (bool isReserveConfigured, DataTypes.MiniPoolReserveData memory data) =
+            isMpReserveConfigured(reserve, address(miniPool));
+
+        require(isReserveConfigured, Errors.DP_RESERVE_NOT_CONFIGURED);
+
         userReservesData.aErc6909Token = data.aTokenAddress;
         userReservesData.aTokenId = data.aTokenID;
         userReservesData.debtTokenId = data.variableDebtTokenID;
@@ -612,7 +620,7 @@ contract Cod3xLendDataProvider is Ownable {
     }
 
     /**
-     * @dev Checks if a given reserve is available in a specific MiniPool.
+     * @dev Gets remaining flow from main pool for specified mini pool.
      * @param asset The address of the reserve to check for availability.
      * @param miniPoolId The ID of the MiniPool where the reserve's availability is checked.
      * @return remainingFlow The address of the MiniPool being checked.
@@ -649,6 +657,22 @@ contract Cod3xLendDataProvider is Ownable {
                 isReserveAvailable = true;
             }
         }
+    }
+
+    /**
+     * @dev Checks if a given reserve is configured in a specific MiniPool.
+     * @param reserve The address of the reserve to check for availability.
+     * @param miniPool address of the minipool
+     * @return isConfigured True if the reserve is configured in the MiniPool, false otherwise.
+     * @return data reserve mini pool data.
+     */
+    function isMpReserveConfigured(address reserve, address miniPool)
+        public
+        view
+        returns (bool isConfigured, DataTypes.MiniPoolReserveData memory data)
+    {
+        data = IMiniPool(miniPool).getReserveData(reserve);
+        return ((data.aTokenAddress == address(0) ? false : true), data);
     }
 
     /* Copied from previous UI provider */

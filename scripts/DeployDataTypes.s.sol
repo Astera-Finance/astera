@@ -78,6 +78,7 @@ struct General {
 struct Roles {
     address addressesProviderOwner;
     address emergencyAdmin;
+    address dataProviderOwner;
     address oracleOwner;
     address piInterestStrategiesOwner;
     address poolAdmin;

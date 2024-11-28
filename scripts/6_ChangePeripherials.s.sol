@@ -202,6 +202,17 @@ contract ChangePeripherials is Script, DeploymentUtils, Test {
             contracts.lendingPoolConfigurator =
                 LendingPoolConfigurator(config.readAddress(".lendingPoolConfigurator"));
 
+            {
+                string memory outputPath =
+                    string.concat(root, "/scripts/outputs/2_MiniPoolContracts.json");
+                config = vm.readFile(outputPath);
+            }
+
+            contracts.miniPoolAddressesProvider =
+                MiniPoolAddressesProvider(config.readAddress(".miniPoolAddressesProvider"));
+            contracts.miniPoolConfigurator =
+                MiniPoolConfigurator(config.readAddress(".miniPoolConfigurator"));
+
             /* Change peripherials */
             vm.startBroadcast(vm.envUint("PRIVATE_KEY"));
             _changePeripherials(

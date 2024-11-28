@@ -45,7 +45,11 @@ The deployment process involves configuration files `./input/<Nr>_<InputJsonName
    - **Mainnet/Testnet tests**
      - `forge script scripts/<nr>_<scriptName>.s.sol --chain-id <chainId> --rpc-url $<RPC_URL> --broadcast -vvvv --private-keys $USER1_PRIVATE_KEY --private-keys $USER2_PRIVATE_KEY --private-keys $DIST_PRIVATE_KEY --sender <EoaAddress>`
    - **Verification**
-     - Blockscout - `forge script scripts/<nr>_<scriptName>.s.sol --chain-id <chainId> --rpc-url $$<RPC_URL> --resume --verify --verifier blockscout --verifier-url $<VerifierUrl> --private-key $PRIVATE_KEY`
+     - Etherscan - `forge script scripts/<nr>_<scriptName>.s.sol --chain-id <chainId> --rpc-url $SEPOLIA_RPC_URL --resume --verify --verifier etherscan --etherscan-api-key $ETHERSCAN_API_KEY --private-key $PRIVATE_KEY`
+     - Blockscout - `forge script scripts/<nr>_<scriptName>.s.sol --chain-id <chainId> --rpc-url $<RPC_URL> --resume --verify --verifier blockscout --verifier-url $<VerifierUrl> --private-key $PRIVATE_KEY`
+     - Standard Input Json - `forge verify-contract --show-standard-json-input <contract address> <contract name> > std.json`
+   - Examples:
+      - `forge script scripts/2_DeployMiniPool.s.sol --chain-id 84532 --rpc-url $BASE_SEPOLIA_RPC_URL --resume --verify --verifier etherscan --etherscan-api-key $BASE_ETHERSCAN_API_KEY --private-key $PRIVATE_KEY`
 
 ### Configuration files
 **Important !!** All params listed inside json's keys MUST be in alphabetical order !

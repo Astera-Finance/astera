@@ -134,8 +134,11 @@ contract TransferOwnerships is Script, DeploymentUtils, Test {
             contracts.lendingPoolAddressesProvider = LendingPoolAddressesProvider(
                 deploymentConfig.readAddress(".lendingPoolAddressesProvider")
             );
-            contracts.rewarder = Rewarder(deploymentConfig.readAddress(".rewarder"));
+            contracts.aTokensAndRatesHelper =
+                ATokensAndRatesHelper(deploymentConfig.readAddress(".aTokensAndRatesHelper"));
+
             // contracts.treasury = Treasury(deploymentConfig.readAddress(".treasury"));
+            contracts.oracle = Oracle(deploymentConfig.readAddress(".oracle"));
 
             /* *********** Mini pool settings *********** */
             {
@@ -179,7 +182,7 @@ contract TransferOwnerships is Script, DeploymentUtils, Test {
                 deploymentConfig = vm.readFile(outputPath);
             }
             contracts.rewarder = Rewarder(deploymentConfig.readAddress(".rewarder"));
-            contracts.rewarder = Rewarder(deploymentConfig.readAddress(".rewarder6909"));
+            contracts.rewarder6909 = Rewarder6909(deploymentConfig.readAddress(".rewarder6909"));
 
             /* ***** Action ***** */
             vm.startBroadcast(vm.envUint("PRIVATE_KEY"));
