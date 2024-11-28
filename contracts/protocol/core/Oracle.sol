@@ -16,6 +16,7 @@ import {Errors} from "../../../contracts/protocol/libraries/helpers/Errors.sol";
  * @notice Proxy smart contract to get the price of an asset from a price source, with Chainlink Aggregator
  * smart contracts as primary option.
  * @dev The contract has the following features:
+ * - Abstract aToken price to underlying asset price adjusted to the asset/share conversion ratio.
  * - If the returned price by a Chainlink aggregator is <= 0, the call is forwarded to a `fallbackOracle`.
  * - Owned by the Cod3x Governance system, allowed to add sources for assets, replace them
  *   and change the `fallbackOracle`.
