@@ -4,6 +4,10 @@ pragma solidity ^0.8.0;
 import {IRewardsDistributor} from "../../contracts/interfaces/IRewardsDistributor.sol";
 import {DistributionTypes} from "../../contracts/protocol/libraries/types/DistributionTypes.sol";
 
+/**
+ * @title IRewardsController interface.
+ * @author Cod3x
+ */
 interface IRewardsController is IRewardsDistributor {
     /**
      * @notice Emitted when rewards are claimed

@@ -3,6 +3,10 @@ pragma solidity ^0.8.0;
 
 import {DistributionTypes} from "../../contracts/protocol/libraries/types/DistributionTypes.sol";
 
+/**
+ * @title IRewardsDistributor interface.
+ * @author Cod3x
+ */
 interface IRewardsDistributor {
     /**
      * @notice Emitted when an asset's reward configuration is updated

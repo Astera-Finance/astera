@@ -17,46 +17,57 @@ import {IFlowLimiter} from "../../../../../contracts/interfaces/base/IFlowLimite
 import {IERC20} from "../../../../../contracts/dependencies/openzeppelin/contracts/IERC20.sol";
 
 /**
- * @title DefaultReserveInterestRateStrategy contract
- * @notice Implements the calculation of the interest rates depending on the reserve state
+ * @title DefaultReserveInterestRateStrategy contract.
+ * @notice Implements the calculation of the interest rates depending on the reserve state.
  * @dev The model of interest rate is based on 2 slopes, one before the `OPTIMAL_UTILIZATION_RATE`
- * point of utilization and another from that one to 100%
+ * point of utilization and another from that one to 100%.
  * - An instance of this same contract, can't be used across different Cod3x Lend markets, due to the caching
- *   of the MiniPoolAddressesProvider
+ *   of the `MiniPoolAddressesProvider`.
  * @author Cod3x
- *
  */
 contract MiniPoolDefaultReserveInterestRateStrategy is IMiniPoolReserveInterestRateStrategy {
     using WadRayMath for uint256;
     using PercentageMath for uint256;
 
+    /// @dev Time margin used for interest rate calculations, set to 5 days.
     uint256 public constant DELTA_TIME_MARGIN = 5 days;
+
+    /// @dev Number of seconds in a year.
     uint256 public constant SECONDS_PER_YEAR = 365 days;
 
     /**
-     * @dev this constant represents the utilization rate at which the pool aims to obtain most competitive borrow rates.
-     * Expressed in ray
+     * @dev This constant represents the utilization rate at which the pool aims to obtain most competitive borrow rates.
+     * Expressed in ray.
      */
     uint256 public immutable OPTIMAL_UTILIZATION_RATE;
 
     /**
      * @dev This constant represents the excess utilization rate above the optimal. It's always equal to
      * 1-optimal utilization rate. Added as a constant here for gas optimizations.
-     * Expressed in ray
+     * Expressed in ray.
      */
     uint256 public immutable EXCESS_UTILIZATION_RATE;
 
+    /// @dev Address provider for the minipool.
     IMiniPoolAddressesProvider public immutable _addressesProvider;
 
-    // Base variable borrow rate when Utilization rate = 0. Expressed in ray
+    /// @dev Base variable borrow rate when Utilization rate = 0. Expressed in ray.
     uint256 internal immutable _baseVariableBorrowRate;
 
-    // Slope of the variable interest curve when utilization rate > 0 and <= OPTIMAL_UTILIZATION_RATE. Expressed in ray
+    /// @dev Slope of the variable interest curve when utilization rate > 0 and <= OPTIMAL_UTILIZATION_RATE. Expressed in ray.
     uint256 internal immutable _variableRateSlope1;
 
-    // Slope of the variable interest curve when utilization rate > OPTIMAL_UTILIZATION_RATE. Expressed in ray
+    /// @dev Slope of the variable interest curve when utilization rate > OPTIMAL_UTILIZATION_RATE. Expressed in ray.
     uint256 internal immutable _variableRateSlope2;
 
+    /**
+     * @notice Initializes the MiniPoolDefaultReserveInterestRateStrategy contract.
+     * @param provider_ Address of the minipool addresses provider.
+     * @param optimalUtilizationRate_ The optimal utilization rate of the reserve.
+     * @param baseVariableBorrowRate_ The base variable borrow rate.
+     * @param variableRateSlope1_ The variable rate slope below optimal utilization.
+     * @param variableRateSlope2_ The variable rate slope above optimal utilization.
+     */
     constructor(
         IMiniPoolAddressesProvider provider_,
         uint256 optimalUtilizationRate_,
@@ -72,22 +83,33 @@ contract MiniPoolDefaultReserveInterestRateStrategy is IMiniPoolReserveInterestR
         _variableRateSlope2 = variableRateSlope2_;
     }
 
+    /// @notice Returns the slope of the variable interest rate curve below optimal utilization.
     function variableRateSlope1() external view returns (uint256) {
         return _variableRateSlope1;
     }
 
+    /// @notice Returns the slope of the variable interest rate curve above optimal utilization.
     function variableRateSlope2() external view returns (uint256) {
         return _variableRateSlope2;
     }
 
+    /// @notice Returns the base variable borrow rate.
     function baseVariableBorrowRate() external view override returns (uint256) {
         return _baseVariableBorrowRate;
     }
 
+    /// @notice Returns the maximum variable borrow rate.
     function getMaxVariableBorrowRate() external view override returns (uint256) {
         return _baseVariableBorrowRate + _variableRateSlope1 + _variableRateSlope2;
     }
 
+    /**
+     * @dev Local variables struct to avoid stack too deep errors in the `calculateInterestRates` function.
+     * @custom:member availableLiquidity The available liquidity in the reserve.
+     * @custom:member underlying The underlying asset address.
+     * @custom:member currentFlow The current flow amount.
+     * @custom:member isTranched Whether the asset is tranched.
+     */
     struct CalcInterestRatesLocalVars1 {
         uint256 availableLiquidity;
         address underlying;
@@ -96,14 +118,14 @@ contract MiniPoolDefaultReserveInterestRateStrategy is IMiniPoolReserveInterestR
     }
 
     /**
-     * @dev Calculates the interest rates depending on the reserve's state and configurations
-     * @param asset The address of the asset
-     * @param aToken The address of the reserve aToken
-     * @param liquidityAdded The liquidity added during the operation
-     * @param liquidityTaken The liquidity taken during the operation
-     * @param totalVariableDebt The total borrowed from the reserve at a variable rate
-     * @param reserveFactor The reserve portion of the interest that goes to the treasury of the market
-     * @return The liquidity rate and the variable borrow rate
+     * @notice Calculates the interest rates depending on the reserve's state and configurations.
+     * @param asset The address of the asset.
+     * @param aToken The address of the reserve aToken.
+     * @param liquidityAdded The liquidity added during the operation.
+     * @param liquidityTaken The liquidity taken during the operation.
+     * @param totalVariableDebt The total borrowed from the reserve at a variable rate.
+     * @param reserveFactor The reserve portion of the interest that goes to the treasury of the market.
+     * @return The liquidity rate and the variable borrow rate.
      */
     function calculateInterestRates(
         address asset,
@@ -145,6 +167,13 @@ contract MiniPoolDefaultReserveInterestRateStrategy is IMiniPoolReserveInterestR
         );
     }
 
+    /**
+     * @dev Local variables struct to avoid stack too deep errors in the internal `calculateInterestRates` function.
+     * @custom:member totalDebt The total debt of the reserve.
+     * @custom:member currentVariableBorrowRate The current variable borrow rate.
+     * @custom:member currentLiquidityRate The current liquidity rate.
+     * @custom:member utilizationRate The utilization rate of the reserve.
+     */
     struct CalcInterestRatesLocalVars2 {
         uint256 totalDebt;
         uint256 currentVariableBorrowRate;
@@ -153,15 +182,15 @@ contract MiniPoolDefaultReserveInterestRateStrategy is IMiniPoolReserveInterestR
     }
 
     /**
-     * @dev Calculates the interest rates depending on the reserve's state and configurations.
-     * NOTE This function is kept for compatibility with the previous DefaultInterestRateStrategy interface.
-     * New protocol implementation uses the new calculateInterestRates() interface
+     * @notice Calculates the interest rates depending on the reserve's state and configurations.
+     * @dev This function is kept for compatibility with the previous DefaultInterestRateStrategy interface.
+     * New protocol implementation uses the new calculateInterestRates() interface.
      * @param underlying Underlying asset if reserve is an aToken.
      * @param currentFlow Current minipool Flow.
-     * @param availableLiquidity The liquidity available in the corresponding aToken
-     * @param totalVariableDebt The total borrowed from the reserve at a variable rate
-     * @param reserveFactor The reserve portion of the interest that goes to the treasury of the market
-     * @return The liquidity rateand the variable borrow rate
+     * @param availableLiquidity The liquidity available in the corresponding aToken.
+     * @param totalVariableDebt The total borrowed from the reserve at a variable rate.
+     * @param reserveFactor The reserve portion of the interest that goes to the treasury of the market.
+     * @return The liquidity rate and the variable borrow rate.
      */
     function calculateInterestRates(
         address underlying,

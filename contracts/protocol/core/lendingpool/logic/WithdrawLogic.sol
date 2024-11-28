@@ -18,9 +18,10 @@ import {UserConfiguration} from
 import {ValidationLogic} from "./ValidationLogic.sol";
 
 /**
- * @title withdraw Logic library
- * @notice Implements the logic to withdraw assets into the protocol
+ * @title Withdraw Logic library
+ * @notice Implements the logic to withdraw assets from the protocol.
  * @author Cod3x
+ * @dev Contains core functions for managing withdrawals and transfers.
  */
 library WithdrawLogic {
     using WadRayMath for uint256;
@@ -30,12 +31,39 @@ library WithdrawLogic {
     using ReserveConfiguration for DataTypes.ReserveConfigurationMap;
     using UserConfiguration for DataTypes.UserConfigurationMap;
 
+    /**
+     * @dev Emitted when a reserve is disabled as collateral for a user.
+     * @param reserve The address of the reserve.
+     * @param user The address of the user.
+     */
     event ReserveUsedAsCollateralDisabled(address indexed reserve, address indexed user);
+
+    /**
+     * @dev Emitted when a withdrawal occurs.
+     * @param reserve The address of the reserve.
+     * @param user The address of the user initiating the withdrawal.
+     * @param to The address receiving the withdrawn assets.
+     * @param amount The amount being withdrawn.
+     */
     event Withdraw(
         address indexed reserve, address indexed user, address indexed to, uint256 amount
     );
+
+    /**
+     * @dev Emitted when a reserve is enabled as collateral for a user.
+     * @param reserve The address of the reserve.
+     * @param user The address of the user.
+     */
     event ReserveUsedAsCollateralEnabled(address indexed reserve, address indexed user);
 
+    /**
+     * @dev Struct containing parameters for withdraw operations.
+     * @param asset The address of the underlying asset.
+     * @param reserveType The type of the reserve.
+     * @param amount The amount to withdraw.
+     * @param to The address that will receive the withdrawal.
+     * @param reservesCount The total count of reserves.
+     */
     struct withdrawParams {
         address asset;
         bool reserveType;
@@ -44,12 +72,27 @@ library WithdrawLogic {
         uint256 reservesCount;
     }
 
+    /**
+     * @dev Struct for local variables used in withdraw operations.
+     * @param userBalance The current balance of the user.
+     * @param amountToWithdraw The final amount to be withdrawn.
+     * @param aToken The address of the aToken contract.
+     */
     struct withdrawLocalVars {
         uint256 userBalance;
         uint256 amountToWithdraw;
         address aToken;
     }
 
+    /**
+     * @dev Withdraws an `amount` of underlying asset from the reserve.
+     * @param params The parameters for the withdrawal.
+     * @param reserves The state of all reserves.
+     * @param usersConfig The users configuration mapping.
+     * @param reservesList The addresses of all the active reserves.
+     * @param addressesProvider The addresses provider instance.
+     * @return The final amount withdrawn.
+     */
     function withdraw(
         withdrawParams memory params,
         mapping(address => mapping(bool => DataTypes.ReserveData)) storage reserves,
@@ -103,6 +146,17 @@ library WithdrawLogic {
         return localVars.amountToWithdraw;
     }
 
+    /**
+     * @dev Struct containing parameters for finalizing transfers.
+     * @param asset The address of the underlying asset.
+     * @param reserveType The type of the reserve.
+     * @param from The address of the source.
+     * @param to The address of the destination.
+     * @param amount The amount being transferred.
+     * @param balanceFromBefore The balance of the source before the transfer.
+     * @param balanceToBefore The balance of the destination before the transfer.
+     * @param reservesCount The total count of reserves.
+     */
     struct finalizeTransferParams {
         address asset;
         bool reserveType;
@@ -114,6 +168,14 @@ library WithdrawLogic {
         uint256 reservesCount;
     }
 
+    /**
+     * @dev Finalizes an aToken transfer.
+     * @param params The parameters for the finalization.
+     * @param reserves The state of all reserves.
+     * @param usersConfig The users configuration mapping.
+     * @param reservesList The addresses of all the active reserves.
+     * @param addressesProvider The addresses provider instance.
+     */
     function finalizeTransfer(
         finalizeTransferParams memory params,
         mapping(address => mapping(bool => DataTypes.ReserveData)) storage reserves,

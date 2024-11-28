@@ -5,6 +5,10 @@ import {ILendingPoolAddressesProvider} from
     "../../contracts/interfaces/ILendingPoolAddressesProvider.sol";
 import {DataTypes} from "../../contracts/protocol/libraries/types/DataTypes.sol";
 
+/**
+ * @title ILendingPool interface.
+ * @author Cod3x
+ */
 interface ILendingPool {
     /**
      * @dev Emitted on deposit()

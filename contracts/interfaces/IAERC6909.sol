@@ -6,10 +6,18 @@ import {IMiniPool} from "../../contracts/interfaces/IMiniPool.sol";
 import {IERC6909} from "../../contracts/interfaces/base/IERC6909.sol";
 
 /**
- * @title IAERC6909
+ * @title IAERC6909 interface.
  * @author Cod3x
  */
 interface IAERC6909 is IERC6909 {
+    /**
+     * @dev Emitted when a new token type is initialized in the ERC6909 contract.
+     * @param id The unique identifier of the token type.
+     * @param name The name of the token.
+     * @param symbol The symbol of the token.
+     * @param decimals The number of decimals used for token amounts.
+     * @param underlyingAsset The address of the underlying asset that this token represents.
+     */
     event TokenInitialized(
         uint256 indexed id, string name, string symbol, uint8 decimals, address underlyingAsset
     );

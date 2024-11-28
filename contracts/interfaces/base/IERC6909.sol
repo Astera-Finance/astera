@@ -1,7 +1,10 @@
 // SPDX-License-Identifier: agpl-3.0
 pragma solidity ^0.8.0;
 
-/// @title IERC6909 Interface for ERC6909 Standard
+/**
+ * @title IERC6909 interface.
+ * @author Cod3x
+ */
 interface IERC6909 {
     /// @dev Emitted when `by` transfers `amount` of token `id` from `from` to `to`.
     event Transfer(

@@ -21,10 +21,11 @@ import {ATokenNonRebasing} from
 import {Strings} from "openzeppelin-contracts/contracts/utils/Strings.sol";
 
 /**
- * @title ERC6909-MultiToken Built to service all collateral and debt tokens for a specific MiniPool
- *         Current implementation allows for 128 tranched tokens from the Main Pool and 1000-128 unique tokens
- *         from the MiniPool.
+ * @title ERC6909-MultiToken
  * @author Cod3x - 0xGoober
+ * @notice Built to service all collateral and debt tokens for a specific MiniPool.
+ * @dev Current implementation allows for 128 tranched tokens from the Main Pool and 1000-128 unique tokens
+ *      from the MiniPool.
  */
 contract ATokenERC6909 is IncentivizedERC6909, VersionedInitializable {
     using WadRayMath for uint256;
@@ -32,32 +33,60 @@ contract ATokenERC6909 is IncentivizedERC6909, VersionedInitializable {
 
     // ======================= Events =======================
 
+    /**
+     * @notice Emitted when a new token is initialized.
+     * @param id The identifier of the token.
+     * @param name The name of the token.
+     * @param symbol The symbol of the token.
+     * @param decimals The number of decimals of the token.
+     * @param underlyingAsset The address of the underlying asset.
+     */
     event TokenInitialized(
         uint256 indexed id, string name, string symbol, uint8 decimals, address underlyingAsset
     );
 
     // ======================= Constant =======================
 
+    /// @notice The revision number for the AToken implementation.
     uint256 public constant ATOKEN_REVISION = 0x1;
-    uint256 public constant ATOKEN_ADDRESSABLE_ID = 1000; // This is the first ID for aToken
-    uint256 public constant DEBT_TOKEN_ADDRESSABLE_ID = 2000; // This is the first ID for debtToken
+    /// @notice The first ID for aToken. This is the first ID for aToken.
+    uint256 public constant ATOKEN_ADDRESSABLE_ID = 1000;
+    /// @notice The first ID for debtToken. This is the first ID for debtToken.
+    uint256 public constant DEBT_TOKEN_ADDRESSABLE_ID = 2000;
 
     // ======================= Storage =======================
 
-    uint256 private _totalTokens;
-    uint256 private _totalUniqueTokens;
-    uint256 private _totalTrancheTokens;
-    IMiniPoolAddressesProvider private _addressesProvider;
+    /// @notice The incentives controller for rewards distribution.
     IMiniPoolRewarder private INCENTIVES_CONTROLLER;
+    /// @notice The MiniPool contract.
     IMiniPool private POOL;
+
+    /// @notice The total number of tokens.
+    uint256 private _totalTokens;
+    /// @notice The total number of unique tokens.
+    uint256 private _totalUniqueTokens;
+    /// @notice The total number of tranche tokens.
+    uint256 private _totalTrancheTokens;
+    /// @notice The addresses provider for the MiniPool.
+    IMiniPoolAddressesProvider private _addressesProvider;
+    /// @notice The ID of the MiniPool.
     uint256 private _minipoolId;
 
+    /// @notice Mapping from token `id` to underlying asset address.
     mapping(uint256 => address) private _underlyingAssetAddresses;
+    /// @notice Mapping from token `id` to tranche status.
     mapping(uint256 => bool) private _isTranche;
-    mapping(uint256 => mapping(address => mapping(address => uint256))) private _borrowAllowances; // ID -> User -> Delegate -> Allowance
+    /// @notice Mapping from token `id` to user to delegate to allowance amount. ID -> User -> Delegate -> Allowance.
+    mapping(uint256 => mapping(address => mapping(address => uint256))) private _borrowAllowances;
 
     // ======================= External Function =======================
 
+    /**
+     * @notice Initializes the AToken contract.
+     * @param provider The address of the MiniPool addresses provider.
+     * @param minipoolId The ID of the MiniPool.
+     * @dev This function can only be called once through the initializer modifier.
+     */
     function initialize(address provider, uint256 minipoolId) public initializer {
         require(address(provider) != address(0), Errors.LP_NOT_CONTRACT);
         uint256 chainId;
@@ -70,6 +99,16 @@ contract ATokenERC6909 is IncentivizedERC6909, VersionedInitializable {
         POOL = IMiniPool(_addressesProvider.getMiniPool(minipoolId));
     }
 
+    /**
+     * @notice Initializes a new reserve with aToken and debtToken.
+     * @param underlyingAsset The address of the underlying asset.
+     * @param name The name of the token.
+     * @param symbol The symbol of the token.
+     * @param decimals The number of decimals of the token.
+     * @return aTokenID The ID of the created aToken.
+     * @return debtTokenID The ID of the created debtToken.
+     * @return isTrancheRet Whether the created tokens are tranche tokens.
+     */
     function initReserve(
         address underlyingAsset,
         string memory name,
@@ -86,7 +125,7 @@ contract ATokenERC6909 is IncentivizedERC6909, VersionedInitializable {
             _isTranche[aTokenID] = true;
             _isTranche[debtTokenID] = true;
 
-            // Ensure reserveType == True. (`assert` because it must never be `false`)
+            // Ensure reserveType == True. (`assert` because it must never be `false`).
             assert(IAToken(underlyingAsset).RESERVE_TYPE());
 
             // Ensure the AToken address is the Non Rebasin version.
@@ -101,11 +140,22 @@ contract ATokenERC6909 is IncentivizedERC6909, VersionedInitializable {
         _initializeDebtTokenID(debtTokenID, underlyingAsset, name, symbol, decimals);
     }
 
+    /**
+     * @notice Sets the incentives controller for the token.
+     * @param controller The address of the new incentives controller.
+     */
     function setIncentivesController(IMiniPoolRewarder controller) external {
         require(msg.sender == address(POOL), Errors.CT_CALLER_MUST_BE_LENDING_POOL);
         INCENTIVES_CONTROLLER = controller;
     }
 
+    /**
+     * @notice Transfers tokens to another address.
+     * @param to The recipient address.
+     * @param id The token ID.
+     * @param amount The amount to transfer.
+     * @return A boolean indicating success.
+     */
     function transfer(address to, uint256 id, uint256 amount)
         public
         payable
@@ -136,6 +186,14 @@ contract ATokenERC6909 is IncentivizedERC6909, VersionedInitializable {
         return true;
     }
 
+    /**
+     * @notice Transfers tokens from one address to another.
+     * @param from The sender address.
+     * @param to The recipient address.
+     * @param id The token ID.
+     * @param amount The amount to transfer.
+     * @return A boolean indicating success.
+     */
     function transferFrom(address from, address to, uint256 id, uint256 amount)
         public
         payable
@@ -161,6 +219,13 @@ contract ATokenERC6909 is IncentivizedERC6909, VersionedInitializable {
         return true;
     }
 
+    /**
+     * @notice Transfers the underlying asset to a specified address.
+     * @param to The recipient address.
+     * @param id The token ID.
+     * @param amount The amount to transfer.
+     * @param unwrap Whether to unwrap the underlying asset.
+     */
     function transferUnderlyingTo(address to, uint256 id, uint256 amount, bool unwrap) public {
         require(msg.sender == address(POOL), Errors.CT_CALLER_MUST_BE_LENDING_POOL);
 
@@ -174,16 +239,37 @@ contract ATokenERC6909 is IncentivizedERC6909, VersionedInitializable {
         }
     }
 
+    /**
+     * @notice Mints tokens to the Cod3x treasury.
+     * @param id The token ID.
+     * @param amount The amount to mint.
+     * @param index The current liquidity index.
+     */
     function mintToCod3xTreasury(uint256 id, uint256 amount, uint256 index) external {
         address treasury = _addressesProvider.getMiniPoolCod3xTreasury(_minipoolId);
         _mintToTreasury(id, amount, index, treasury);
     }
 
+    /**
+     * @notice Mints tokens to the MiniPool owner treasury.
+     * @param id The token ID.
+     * @param amount The amount to mint.
+     * @param index The current liquidity index.
+     */
     function mintToMinipoolOwnerTreasury(uint256 id, uint256 amount, uint256 index) external {
         address treasury = _addressesProvider.getMiniPoolOwnerTreasury(_minipoolId);
         _mintToTreasury(id, amount, index, treasury);
     }
 
+    /**
+     * @notice Mints tokens to a specified address.
+     * @param user The address initiating the mint.
+     * @param onBehalfOf The address receiving the minted tokens.
+     * @param id The token ID.
+     * @param amount The amount to mint.
+     * @param index The current liquidity index.
+     * @return A boolean indicating if this was the first mint for the recipient.
+     */
     function mint(address user, address onBehalfOf, uint256 id, uint256 amount, uint256 index)
         external
         returns (bool)
@@ -217,6 +303,15 @@ contract ATokenERC6909 is IncentivizedERC6909, VersionedInitializable {
         return previousBalance == 0;
     }
 
+    /**
+     * @notice Burns tokens from a user.
+     * @param user The address to burn tokens from.
+     * @param receiverOfUnderlying The address to receive the underlying asset.
+     * @param id The token ID.
+     * @param amount The amount to burn.
+     * @param unwrap Whether to unwrap the underlying asset.
+     * @param index The current liquidity index.
+     */
     function burn(
         address user,
         address receiverOfUnderlying,
@@ -238,31 +333,66 @@ contract ATokenERC6909 is IncentivizedERC6909, VersionedInitializable {
         }
     }
 
+    /**
+     * @notice Approves delegation of borrowing power.
+     * @param delegatee The address receiving the delegation.
+     * @param id The token ID.
+     * @param amount The amount of borrowing power to delegate.
+     */
     function approveDelegation(address delegatee, uint256 id, uint256 amount) external {
         _borrowAllowances[id][msg.sender][delegatee] = amount;
     }
 
+    /**
+     * @notice Transfers tokens during liquidation.
+     * @param from The address to transfer from.
+     * @param to The address to transfer to.
+     * @param id The token ID.
+     * @param amount The amount to transfer.
+     */
     function transferOnLiquidation(address from, address to, uint256 id, uint256 amount) external {
         require(msg.sender == address(POOL), Errors.CT_CALLER_MUST_BE_LENDING_POOL);
         _transferForLiquidation(from, to, id, amount);
     }
 
+    /**
+     * @notice Handles repayment of debt.
+     */
     function handleRepayment(address, address, uint256, uint256) external view {
         require(msg.sender == address(POOL), Errors.CT_CALLER_MUST_BE_LENDING_POOL);
     }
     // ======================= Internal Function =======================
 
+    /**
+     * @notice Sets the underlying asset address for a token ID.
+     * @param id The token ID to set the underlying asset for.
+     * @param underlyingAsset The address of the underlying asset.
+     * @dev Reverts if `underlyingAsset` is zero address.
+     */
     function _setUnderlyingAsset(uint256 id, address underlyingAsset) internal {
         require(underlyingAsset != address(0), Errors.LP_NOT_CONTRACT);
         _underlyingAssetAddresses[id] = underlyingAsset;
     }
 
+    /**
+     * @notice Hook that is called before any token transfer.
+     * @param id The token ID being transferred.
+     * @dev For debt tokens, only allows transfers from the lending pool.
+     */
     function _beforeTokenTransfer(address, address, uint256 id, uint256) internal view override {
         if (isDebtToken(id)) {
             require(msg.sender == address(POOL), Errors.CT_CALLER_MUST_BE_LENDING_POOL);
         }
     }
 
+    /**
+     * @notice Hook that is called after any token transfer to handle incentives.
+     * @param from The address tokens are transferred from.
+     * @param to The address tokens are transferred to.
+     * @param id The token ID being transferred.
+     * @param amount The amount being transferred.
+     * @dev Updates incentives based on transfer type (mint/burn/transfer).
+     */
     function _afterTokenTransfer(address from, address to, uint256 id, uint256 amount)
         internal
         override
@@ -270,7 +400,7 @@ contract ATokenERC6909 is IncentivizedERC6909, VersionedInitializable {
         uint256 oldSupply = totalSupply(id);
         uint256 oldFromBalance = balanceOf(from, id);
         uint256 oldToBalance = balanceOf(to, id);
-        //if the token was minted
+        //If the token was minted.
         if (from == address(0) && to != address(0)) {
             oldSupply = _incrementTotalSupply(id, amount);
             oldToBalance = oldToBalance - amount;
@@ -278,7 +408,7 @@ contract ATokenERC6909 is IncentivizedERC6909, VersionedInitializable {
             if (address(INCENTIVES_CONTROLLER) != address(0)) {
                 INCENTIVES_CONTROLLER.handleAction(id, to, oldSupply, oldToBalance);
             }
-            //if the token was burned
+            //If the token was burned.
         } else if (to == address(0) && from != address(0)) {
             oldSupply = _decrementTotalSupply(id, amount);
             oldFromBalance = oldFromBalance + amount;
@@ -287,7 +417,7 @@ contract ATokenERC6909 is IncentivizedERC6909, VersionedInitializable {
                 INCENTIVES_CONTROLLER.handleAction(id, from, oldSupply, oldFromBalance);
             }
         }
-        //the token was transferred
+        //The token was transferred.
         else {
             oldFromBalance = oldFromBalance + amount;
             oldToBalance = oldToBalance - amount;
@@ -301,6 +431,12 @@ contract ATokenERC6909 is IncentivizedERC6909, VersionedInitializable {
         }
     }
 
+    /**
+     * @notice Determines if an address is an AToken in the lending pool.
+     * @param underlying The address to check.
+     * @param MLP The MiniLendingPool address to validate against.
+     * @return bool True if the address is an AToken, false otherwise.
+     */
     function _determineIfAToken(address underlying, address MLP) internal view returns (bool) {
         try IAToken(underlying).getPool() returns (address pool) {
             return pool == MLP;
@@ -309,6 +445,12 @@ contract ATokenERC6909 is IncentivizedERC6909, VersionedInitializable {
         }
     }
 
+    /**
+     * @notice Gets the next available token IDs for a new underlying asset.
+     * @param underlying The underlying asset address.
+     * @return A tuple containing (aTokenID, debtTokenID, isTrancheRet).
+     * @dev For ATokens, returns IDs based on reserve data. For other assets, generates new IDs.
+     */
     function _getNextIdForUnderlying(address underlying)
         internal
         view
@@ -335,6 +477,14 @@ contract ATokenERC6909 is IncentivizedERC6909, VersionedInitializable {
         }
     }
 
+    /**
+     * @notice Mints tokens to the treasury.
+     * @param id The token ID to mint.
+     * @param amount The amount to mint.
+     * @param index The price index to scale the amount.
+     * @param treasury The treasury address to mint to.
+     * @dev Only callable by the lending pool. Skips rounding checks for small amounts.
+     */
     function _mintToTreasury(uint256 id, uint256 amount, uint256 index, address treasury)
         internal
     {
@@ -344,12 +494,20 @@ contract ATokenERC6909 is IncentivizedERC6909, VersionedInitializable {
         }
 
         // Compared to the normal mint, we don't check for rounding errors.
-        // The amount to mint can easily be very small since it is a fraction of the interest ccrued.
+        // The amount to mint can easily be very small since it is a fraction of the interest accrued.
         // In that case, the treasury will experience a (very small) loss, but it
-        // wont cause potentially valid transactions to fail.
+        // won't cause potentially valid transactions to fail.
         _mint(treasury, id, amount.rayDiv(index));
     }
 
+    /**
+     * @notice Decreases the borrow allowance for a delegatee.
+     * @param delegator The address delegating borrowing power.
+     * @param delegatee The address receiving delegation.
+     * @param id The token ID.
+     * @param amount The amount to decrease allowance by.
+     * @dev Reverts if allowance would go below zero.
+     */
     function _decreaseBorrowAllowance(
         address delegator,
         address delegatee,
@@ -362,6 +520,15 @@ contract ATokenERC6909 is IncentivizedERC6909, VersionedInitializable {
         _borrowAllowances[id][delegator][delegatee] = newAllowance;
     }
 
+    /**
+     * @notice Initializes a new AToken ID with metadata.
+     * @param id The token ID to initialize.
+     * @param underlyingAsset The underlying asset address.
+     * @param name The token name.
+     * @param symbol The token symbol.
+     * @param decimals The number of decimals.
+     * @dev Sets name as "Cod3x Lend Minipool {minipoolId}{name}" and symbol as "cl-{minipoolId}-{symbol}".
+     */
     function _initializeATokenID(
         uint256 id,
         address underlyingAsset,
@@ -391,6 +558,15 @@ contract ATokenERC6909 is IncentivizedERC6909, VersionedInitializable {
         emit TokenInitialized(id, name, symbol, decimals, underlyingAsset);
     }
 
+    /**
+     * @notice Initializes a new debt token ID with metadata.
+     * @param id The token ID to initialize.
+     * @param underlyingAsset The underlying asset address.
+     * @param name The token name.
+     * @param symbol The token symbol.
+     * @param decimals The number of decimals.
+     * @dev Sets name as "Variable Debt {name}" and symbol as "vDebt{symbol}".
+     */
     function _initializeDebtTokenID(
         uint256 id,
         address underlyingAsset,
@@ -409,6 +585,14 @@ contract ATokenERC6909 is IncentivizedERC6909, VersionedInitializable {
         emit TokenInitialized(id, name, symbol, decimals, underlyingAsset);
     }
 
+    /**
+     * @notice Handles token transfers during liquidation.
+     * @param from The address to transfer from.
+     * @param to The address to transfer to.
+     * @param id The token ID.
+     * @param amount The amount to transfer.
+     * @dev Only transfers ATokens, scaling amount by normalized income.
+     */
     function _transferForLiquidation(address from, address to, uint256 id, uint256 amount)
         internal
     {
@@ -423,6 +607,11 @@ contract ATokenERC6909 is IncentivizedERC6909, VersionedInitializable {
 
     // ======================= View/Pure Function =======================
 
+    /**
+     * @notice Gets the total supply for a token ID.
+     * @param id The token ID.
+     * @return The total supply scaled by normalized income.
+     */
     function totalSupply(uint256 id) public view override returns (uint256) {
         uint256 currentSupplyScaled = super.totalSupply(id);
 
@@ -435,6 +624,12 @@ contract ATokenERC6909 is IncentivizedERC6909, VersionedInitializable {
         );
     }
 
+    /**
+     * @notice Gets the balance of tokens for an address.
+     * @param user The address to check.
+     * @param id The token ID.
+     * @return The balance scaled by normalized income/debt.
+     */
     function balanceOf(address user, uint256 id) public view override returns (uint256) {
         if (isDebtToken(id)) {
             return super.balanceOf(user, id).rayMul(
@@ -447,22 +642,48 @@ contract ATokenERC6909 is IncentivizedERC6909, VersionedInitializable {
         }
     }
 
+    /**
+     * @notice Gets the scaled total supply for a token `id` without applying the income index.
+     * @param id The token identifier.
+     * @return The raw total supply before income scaling.
+     */
     function scaledTotalSupply(uint256 id) public view returns (uint256) {
         return super.totalSupply(id);
     }
 
+    /**
+     * @notice Checks if a token `id` represents an AToken by validating its range.
+     * @param id The token identifier to check.
+     * @return True if the `id` is between `ATOKEN_ADDRESSABLE_ID` and `DEBT_TOKEN_ADDRESSABLE_ID`, false otherwise.
+     */
     function isAToken(uint256 id) public pure returns (bool) {
         return id < DEBT_TOKEN_ADDRESSABLE_ID && id >= ATOKEN_ADDRESSABLE_ID;
     }
 
+    /**
+     * @notice Checks if a token `id` represents a debt token by validating its range.
+     * @param id The token identifier to check.
+     * @return True if the `id` is greater than or equal to `DEBT_TOKEN_ADDRESSABLE_ID`, false otherwise.
+     */
     function isDebtToken(uint256 id) public pure returns (bool) {
         return id >= DEBT_TOKEN_ADDRESSABLE_ID;
     }
 
+    /**
+     * @notice Checks if a token represents a tranche token by querying internal mapping.
+     * @param id The token identifier to check.
+     * @return True if the `id` represents a tranche token, false otherwise.
+     */
     function isTranche(uint256 id) public view returns (bool) {
         return _isTranche[id];
     }
 
+    /**
+     * @notice Gets the scaled balance and total supply for a user.
+     * @param user The user address.
+     * @param id The token ID.
+     * @return A tuple of (scaled balance, scaled total supply).
+     */
     function getScaledUserBalanceAndSupply(address user, uint256 id)
         external
         view
@@ -471,6 +692,14 @@ contract ATokenERC6909 is IncentivizedERC6909, VersionedInitializable {
         return (super.balanceOf(user, id), super.totalSupply(id));
     }
 
+    /**
+     * @notice Gets the next available token IDs for a new underlying asset.
+     * @param underlying The underlying asset address.
+     * @return aTokenID The AToken ID.
+     * @return debtTokenID The debt token ID.
+     * @return isTrancheRet Whether the token is a tranche token.
+     * @dev Reverts if reserve is already initialized.
+     */
     function getNextIdForUnderlying(address underlying)
         public
         view
@@ -483,6 +712,14 @@ contract ATokenERC6909 is IncentivizedERC6909, VersionedInitializable {
         );
     }
 
+    /**
+     * @notice Gets the token IDs for an existing underlying asset.
+     * @param underlying The underlying asset address.
+     * @return aTokenID The AToken ID.
+     * @return debtTokenID The debt token ID.
+     * @return isTrancheRet Whether the token is a tranche token.
+     * @dev Reverts if reserve is not initialized.
+     */
     function getIdForUnderlying(address underlying)
         public
         view
@@ -499,22 +736,43 @@ contract ATokenERC6909 is IncentivizedERC6909, VersionedInitializable {
         );
     }
 
+    /**
+     * @notice Returns the underlying asset address for a given token ID.
+     * @param id The token identifier.
+     * @return The address of the underlying asset corresponding to `id`.
+     */
     function getUnderlyingAsset(uint256 id) external view returns (address) {
         return _underlyingAssetAddresses[id];
     }
 
+    /**
+     * @notice Returns the revision number of the contract implementation.
+     * @return The `ATOKEN_REVISION` value.
+     */
     function getRevision() internal pure virtual override returns (uint256) {
         return ATOKEN_REVISION;
     }
 
+    /**
+     * @notice Returns the address of the associated MiniPool contract.
+     * @return The address of the `POOL` contract.
+     */
     function getMinipoolAddress() external view returns (address) {
         return address(POOL);
     }
 
+    /**
+     * @notice Returns the identifier of the associated MiniPool.
+     * @return The value of `_minipoolId`.
+     */
     function getMinipoolId() external view returns (uint256) {
         return _minipoolId;
     }
 
+    /**
+     * @notice Returns the incentives controller used for rewards distribution.
+     * @return The `INCENTIVES_CONTROLLER` contract interface.
+     */
     function getIncentivesController() external view returns (IMiniPoolRewarder) {
         return INCENTIVES_CONTROLLER;
     }

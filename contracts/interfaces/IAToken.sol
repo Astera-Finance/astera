@@ -7,41 +7,41 @@ import {IInitializableAToken} from "../../contracts/interfaces/base/IInitializab
 import {IRewarder} from "../../contracts/interfaces/IRewarder.sol";
 
 /**
- * @title IAToken
+ * @title IAToken interface.
  * @author Cod3x
  */
 interface IAToken is IERC20, IScaledBalanceToken, IInitializableAToken {
     /**
-     * @dev Emitted after the mint action
-     * @param from The address performing the mint
-     * @param value The amount being
-     * @param index The new liquidity index of the reserve
+     * @dev Emitted after the mint action.
+     * @param from The address performing the mint.
+     * @param value The amount being.
+     * @param index The new liquidity index of the reserve.
      */
     event Mint(address indexed from, uint256 value, uint256 index);
 
     /**
-     * @dev Emitted after aTokens are burned
-     * @param from The owner of the aTokens, getting them burned
-     * @param target The address that will receive the underlying
-     * @param value The amount being burned
-     * @param index The new liquidity index of the reserve
+     * @dev Emitted after aTokens are burned.
+     * @param from The owner of the aTokens, getting them burned.
+     * @param target The address that will receive the underlying.
+     * @param value The amount being burned.
+     * @param index The new liquidity index of the reserve.
      */
     event Burn(address indexed from, address indexed target, uint256 value, uint256 index);
 
     /**
-     * @dev Emitted during the transfer action
-     * @param from The user whose tokens are being transferred
-     * @param to The recipient
-     * @param value The amount being transferred
-     * @param index The new liquidity index of the reserve
+     * @dev Emitted during the transfer action.
+     * @param from The user whose tokens are being transferred.
+     * @param to The recipient.
+     * @param value The amount being transferred.
+     * @param index The new liquidity index of the reserve.
      */
     event BalanceTransfer(address indexed from, address indexed to, uint256 value, uint256 index);
 
     /**
-     * @dev Emitted during the rebalance action
-     * @param vault The vault that is being interacted with
-     * @param amountToWithdraw The amount of asset that needs to be free after the rebalance
-     * @param netAssetMovement The amount of asset being deposited into (if positive) or withdrawn from (if negative) the vault
+     * @dev Emitted during the rebalance action.
+     * @param vault The vault that is being interacted with.
+     * @param amountToWithdraw The amount of asset that needs to be free after the rebalance.
+     * @param netAssetMovement The amount of asset being deposited into (if positive) or withdrawn from (if negative) the vault.
      */
     event Rebalance(address indexed vault, uint256 amountToWithdraw, int256 netAssetMovement);
 

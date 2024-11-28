@@ -27,8 +27,10 @@ import {ReserveLogic} from
 import {DataTypes} from "../../../../../contracts/protocol/libraries/types/DataTypes.sol";
 
 /**
- * @title LiquidationLogic
+ * @title LiquidationLogic library
  * @author Cod3x
+ * @notice Implements the liquidation logic for the Cod3x lending protocol.
+ * @dev Contains functions to handle liquidations of undercollateralized positions.
  */
 library LiquidationLogic {
     using SafeERC20 for IERC20;
@@ -38,17 +40,18 @@ library LiquidationLogic {
     using ReserveConfiguration for DataTypes.ReserveConfigurationMap;
     using UserConfiguration for DataTypes.UserConfigurationMap;
 
+    /// @dev The close factor percentage for liquidations (50%).
     uint256 internal constant LIQUIDATION_CLOSE_FACTOR_PERCENT = 5000;
 
     /**
-     * @dev Emitted when a borrower is liquidated
-     * @param collateral The address of the collateral being liquidated
-     * @param debtAsset The address of the reserve
-     * @param user The address of the user being liquidated
-     * @param debtToCover The total amount liquidated
-     * @param liquidatedCollateralAmount The amount of collateral being liquidated
-     * @param liquidator The address of the liquidator
-     * @param receiveAToken true if the liquidator wants to receive aTokens, false otherwise
+     * @dev Emitted when a borrower's position is liquidated.
+     * @param collateral The address of the collateral being liquidated.
+     * @param debtAsset The address of the debt asset being repaid.
+     * @param user The address of the user being liquidated.
+     * @param debtToCover The amount of debt being covered by the liquidation.
+     * @param liquidatedCollateralAmount The amount of collateral being liquidated.
+     * @param liquidator The address performing the liquidation.
+     * @param receiveAToken True if the liquidator wants to receive aTokens, false otherwise.
      */
     event LiquidationCall(
         address indexed collateral,
@@ -61,19 +64,31 @@ library LiquidationLogic {
     );
 
     /**
-     * @dev Emitted when a reserve is disabled as collateral for an user
-     * @param reserve The address of the reserve
-     * @param user The address of the user
+     * @dev Emitted when a reserve is disabled as collateral for a user.
+     * @param reserve The address of the reserve being disabled.
+     * @param user The address of the user for whom the reserve is disabled.
      */
     event ReserveUsedAsCollateralDisabled(address indexed reserve, address indexed user);
 
     /**
-     * @dev Emitted when a reserve is enabled as collateral for an user
-     * @param reserve The address of the reserve
-     * @param user The address of the user
+     * @dev Emitted when a reserve is enabled as collateral for a user.
+     * @param reserve The address of the reserve being enabled.
+     * @param user The address of the user for whom the reserve is enabled.
      */
     event ReserveUsedAsCollateralEnabled(address indexed reserve, address indexed user);
 
+    /**
+     * @dev Struct containing local variables for liquidation calculations.
+     * @param userCollateralBalance The user's balance of the collateral asset.
+     * @param userVariableDebt The user's variable rate debt.
+     * @param maxLiquidatableDebt The maximum amount of debt that can be liquidated.
+     * @param actualDebtToLiquidate The actual amount of debt to be liquidated.
+     * @param maxCollateralToLiquidate The maximum amount of collateral that can be liquidated.
+     * @param debtAmountNeeded The amount of debt needed to cover the liquidation.
+     * @param healthFactor The user's health factor.
+     * @param liquidatorPreviousATokenBalance The liquidator's previous aToken balance.
+     * @param collateralAtoken The aToken contract of the collateral.
+     */
     struct LiquidationCallLocalVars {
         uint256 userCollateralBalance;
         uint256 userVariableDebt;
@@ -86,6 +101,18 @@ library LiquidationLogic {
         IAToken collateralAtoken;
     }
 
+    /**
+     * @dev Struct containing parameters for liquidation calls.
+     * @param addressesProvider The addresses provider contract address.
+     * @param reservesCount The count of reserves in the protocol.
+     * @param collateralAsset The address of the collateral asset.
+     * @param collateralAssetType Boolean indicating if collateral is boosted by a vault.
+     * @param debtAsset The address of the debt asset.
+     * @param debtAssetType Boolean indicating if debt asset is boosted by a vault.
+     * @param user The address of the user being liquidated.
+     * @param debtToCover The amount of debt to cover.
+     * @param receiveAToken True if liquidator wants to receive aTokens, false otherwise.
+     */
     struct liquidationCallParams {
         address addressesProvider;
         uint256 reservesCount;
@@ -99,13 +126,13 @@ library LiquidationLogic {
     }
 
     /**
-     * @dev Function to liquidate a position if its Health Factor drops below 1
-     * - The caller (liquidator) covers `debtToCover` amount of debt of the user getting liquidated, and receives
-     *   a proportionally amount of the `collateralAsset` plus a bonus to cover market risk
-     * @param reserves Data of all the reserves
-     * @param usersConfig The configuration of the user
-     * @param reservesList Reverves list
-     * @param params Liquidation parameters
+     * @notice Function to liquidate a position if its Health Factor drops below 1.
+     * @dev The caller (liquidator) covers `debtToCover` amount of debt of the user getting liquidated, and receives
+     *   a proportionally amount of the `collateralAsset` plus a bonus to cover market risk.
+     * @param reserves Data of all the reserves.
+     * @param usersConfig The configuration of the users.
+     * @param reservesList Reserves list.
+     * @param params Liquidation parameters.
      */
     function liquidationCall(
         mapping(address => mapping(bool => DataTypes.ReserveData)) storage reserves,
@@ -159,16 +186,16 @@ library LiquidationLogic {
             vars.userCollateralBalance
         );
 
-        // If debtAmountNeeded < actualDebtToLiquidate, there isn't enough
+        // If `debtAmountNeeded` < `actualDebtToLiquidate`, there isn't enough
         // collateral to cover the actual amount that is being liquidated, hence we liquidate
-        // a smaller amount
+        // a smaller amount.
 
         if (vars.debtAmountNeeded < vars.actualDebtToLiquidate) {
             vars.actualDebtToLiquidate = vars.debtAmountNeeded;
         }
 
         // If the liquidator reclaims the underlying asset, we make sure there is enough available liquidity in the
-        // collateral reserve
+        // collateral reserve.
         if (!params.receiveAToken) {
             uint256 currentAvailableCollateral =
                 IAToken(vars.collateralAtoken).getTotalManagedAssets();
@@ -223,8 +250,8 @@ library LiquidationLogic {
             );
         }
 
-        // If the collateral being liquidated is equal to the params.user balance,
-        // we set the currency as not being used as collateral anymore
+        // If the collateral being liquidated is equal to the `params.user` balance,
+        // we set the currency as not being used as collateral anymore.
         if (vars.maxCollateralToLiquidate == vars.userCollateralBalance) {
             userConfig.setUsingAsCollateral(collateralReserve.id, false);
             emit ReserveUsedAsCollateralDisabled(params.collateralAsset, params.user);
@@ -250,6 +277,15 @@ library LiquidationLogic {
         );
     }
 
+    /**
+     * @dev Struct containing local variables for available collateral calculations.
+     * @param liquidationBonus The bonus percentage that liquidators receive.
+     * @param collateralPrice The price of the collateral asset.
+     * @param debtAssetPrice The price of the debt asset.
+     * @param maxAmountCollateralToLiquidate Maximum amount of collateral that can be liquidated.
+     * @param debtAssetDecimals The decimals of the debt asset.
+     * @param collateralDecimals The decimals of the collateral asset.
+     */
     struct AvailableCollateralToLiquidateLocalVars {
         uint256 liquidationBonus;
         uint256 collateralPrice;
@@ -260,20 +296,19 @@ library LiquidationLogic {
     }
 
     /**
-     * @dev Calculates how much of a specific collateral can be liquidated, given
-     * a certain amount of debt asset.
-     * - This function needs to be called after all the checks to validate the liquidation have been performed,
+     * @notice Calculates how much of a specific collateral can be liquidated, given a certain amount of debt asset.
+     * @dev This function needs to be called after all the checks to validate the liquidation have been performed,
      *   otherwise it might fail.
-     * @param addressesProvider The lendingpool address provider
-     * @param collateralReserve The data of the collateral reserve
-     * @param debtReserve The data of the debt reserve
-     * @param collateralAsset The address of the underlying asset used as collateral, to receive as result of the liquidation
-     * @param debtAsset The address of the underlying borrowed asset to be repaid with the liquidation
-     * @param debtToCover The debt amount of borrowed `asset` the liquidator wants to cover
-     * @param userCollateralBalance The collateral balance for the specific `collateralAsset` of the user being liquidated
-     * @return collateralAmount: The maximum amount that is possible to liquidate given all the liquidation constraints
-     *                           (user balance, close factor)
-     *         debtAmountNeeded: The amount to repay with the liquidation
+     * @param addressesProvider The lendingpool address provider.
+     * @param collateralReserve The data of the collateral reserve.
+     * @param debtReserve The data of the debt reserve.
+     * @param collateralAsset The address of the underlying asset used as collateral, to receive as result of the liquidation.
+     * @param debtAsset The address of the underlying borrowed asset to be repaid with the liquidation.
+     * @param debtToCover The debt amount of borrowed `asset` the liquidator wants to cover.
+     * @param userCollateralBalance The collateral balance for the specific `collateralAsset` of the user being liquidated.
+     * @return collateralAmount The maximum amount that is possible to liquidate given all the liquidation constraints
+     *                         (user balance, close factor).
+     * @return debtAmountNeeded The amount to repay with the liquidation.
      */
     function _calculateAvailableCollateralToLiquidate(
         ILendingPoolAddressesProvider addressesProvider,
@@ -298,7 +333,7 @@ library LiquidationLogic {
         vars.debtAssetDecimals = debtReserve.configuration.getDecimals();
 
         // This is the maximum possible amount of the selected collateral that can be liquidated, given the
-        // max amount of liquidatable debt
+        // max amount of liquidatable debt.
         vars.maxAmountCollateralToLiquidate = (
             (vars.debtAssetPrice * debtToCover * (10 ** vars.collateralDecimals)).percentMul(
                 vars.liquidationBonus

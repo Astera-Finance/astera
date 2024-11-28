@@ -5,6 +5,10 @@ import {IMiniPoolRewardsDistributor} from
     "../../contracts/interfaces/IMiniPoolRewardsDistributor.sol";
 import {DistributionTypes} from "../../contracts/protocol/libraries/types/DistributionTypes.sol";
 
+/**
+ * @title IMiniPoolRewardsController interface.
+ * @author Cod3x
+ */
 interface IMiniPoolRewardsController is IMiniPoolRewardsDistributor {
     /**
      * @notice Emitted when rewards are claimed

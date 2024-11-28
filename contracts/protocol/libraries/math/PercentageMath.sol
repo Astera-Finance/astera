@@ -6,19 +6,19 @@ import {Errors} from "../../../../contracts/protocol/libraries/helpers/Errors.so
 /**
  * @title PercentageMath library
  * @author Cod3x
- * @notice Provides functions to perform percentage calculations
- * @dev Percentages are defined by default with 2 decimals of precision (100.00). The precision is indicated by PERCENTAGE_FACTOR
- * @dev Operations are rounded half up
+ * @notice Provides functions to perform percentage calculations.
+ * @dev Percentages are defined by default with 2 decimals of precision (100.00). The precision is indicated by `PERCENTAGE_FACTOR`.
+ * @dev Operations are rounded half up.
  */
 library PercentageMath {
-    uint256 internal constant PERCENTAGE_FACTOR = 1e4; //percentage plus two decimals
+    uint256 internal constant PERCENTAGE_FACTOR = 1e4; // Percentage plus two decimals.
     uint256 internal constant HALF_PERCENT = PERCENTAGE_FACTOR / 2;
 
     /**
-     * @dev Executes a percentage multiplication
-     * @param value The value of which the percentage needs to be calculated
-     * @param percentage The percentage of the value to be calculated
-     * @return The percentage of value
+     * @dev Executes a percentage multiplication.
+     * @param value The value of which the percentage needs to be calculated.
+     * @param percentage The percentage of the value to be calculated.
+     * @return The percentage of `value`.
      */
     function percentMul(uint256 value, uint256 percentage) internal pure returns (uint256) {
         if (value == 0 || percentage == 0) {
@@ -34,10 +34,10 @@ library PercentageMath {
     }
 
     /**
-     * @dev Executes a percentage division
-     * @param value The value of which the percentage needs to be calculated
-     * @param percentage The percentage of the value to be calculated
-     * @return The value divided the percentage
+     * @dev Executes a percentage division.
+     * @param value The value of which the percentage needs to be calculated.
+     * @param percentage The percentage of the value to be calculated.
+     * @return The `value` divided by the `percentage`.
      */
     function percentDiv(uint256 value, uint256 percentage) internal pure returns (uint256) {
         require(percentage != 0, Errors.MATH_DIVISION_BY_ZERO);

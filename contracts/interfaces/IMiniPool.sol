@@ -5,6 +5,10 @@ import {IMiniPoolAddressesProvider} from "../../contracts/interfaces/IMiniPoolAd
 import {IAERC6909} from "../../contracts/interfaces/IAERC6909.sol";
 import {DataTypes} from "../../contracts/protocol/libraries/types/DataTypes.sol";
 
+/**
+ * @title IMiniPool interface.
+ * @author Cod3x
+ */
 interface IMiniPool {
     /**
      * @dev Emitted on deposit()

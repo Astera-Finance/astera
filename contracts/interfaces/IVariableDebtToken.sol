@@ -6,10 +6,8 @@ import {IInitializableDebtToken} from "../../contracts/interfaces/base/IInitiali
 import {IRewarder} from "../../contracts/interfaces/IRewarder.sol";
 
 /**
- * @title IVariableDebtToken
+ * @title IVariableDebtToken interface.
  * @author Cod3x
- * @notice Defines the basic interface for a variable debt token.
- *
  */
 interface IVariableDebtToken is IScaledBalanceToken, IInitializableDebtToken {
     /**

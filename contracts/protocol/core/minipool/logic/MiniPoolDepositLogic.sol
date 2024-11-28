@@ -20,9 +20,10 @@ import {ATokenNonRebasing} from
     "../../../../../contracts/protocol/tokenization/ERC20/ATokenNonRebasing.sol";
 
 /**
- * @title Deposit Logic library
- * @notice Implements the logic to deposit assets into the protocol
+ * @title MiniPoolDepositLogic library
+ * @notice Implements the logic to deposit assets into the protocol.
  * @author Cod3x
+ * @dev Handles both direct deposits and wrapped deposits of assets, managing state updates and user configurations.
  */
 library MiniPoolDepositLogic {
     using WadRayMath for uint256;
@@ -32,24 +33,51 @@ library MiniPoolDepositLogic {
     using ReserveConfiguration for DataTypes.ReserveConfigurationMap;
     using UserConfiguration for DataTypes.UserConfigurationMap;
 
+    /**
+     * @dev Emitted when a deposit is made to a reserve.
+     * @param reserve The address of the reserve receiving the deposit.
+     * @param user The address initiating the deposit.
+     * @param onBehalfOf The address that will receive the aTokens.
+     * @param amount The amount being deposited.
+     */
     event Deposit(
         address indexed reserve, address user, address indexed onBehalfOf, uint256 amount
     );
 
+    /**
+     * @dev Emitted when a reserve is enabled as collateral for a user.
+     * @param reserve The address of the reserve being enabled as collateral.
+     * @param user The address of the user enabling the collateral.
+     */
     event ReserveUsedAsCollateralEnabled(address indexed reserve, address indexed user);
 
+    /**
+     * @dev Parameters for deposit operations.
+     * @param asset The address of the asset being deposited.
+     * @param amount The amount to deposit.
+     * @param onBehalfOf The address that will receive the aTokens.
+     */
     struct DepositParams {
         address asset;
         uint256 amount;
         address onBehalfOf;
     }
 
+    /**
+     * @notice Deposits an asset into the protocol.
+     * @dev Handles both wrapped and unwrapped deposits, updating state and minting aTokens.
+     * @param params The deposit parameters (`asset`, `amount`, `onBehalfOf`).
+     * @param wrap Flag indicating if the deposit should be wrapped.
+     * @param _reserves Mapping of reserve data for each asset.
+     * @param _usersConfig Mapping of user configurations.
+     * @param addressesProvider The addresses provider instance.
+     */
     function deposit(
         DepositParams memory params,
         bool wrap,
         mapping(address => DataTypes.MiniPoolReserveData) storage _reserves,
         mapping(address => DataTypes.UserConfigurationMap) storage _usersConfig,
-        IMiniPoolAddressesProvider _addressesProvider
+        IMiniPoolAddressesProvider addressesProvider
     ) external {
         DataTypes.MiniPoolReserveData storage reserve = _reserves[params.asset];
 
@@ -62,7 +90,7 @@ library MiniPoolDepositLogic {
 
         if (wrap) {
             address underlying = ATokenNonRebasing(params.asset).UNDERLYING_ASSET_ADDRESS();
-            address lendingPool = _addressesProvider.getLendingPool();
+            address lendingPool = addressesProvider.getLendingPool();
             uint256 underlyingAmount =
                 ATokenNonRebasing(params.asset).convertToAssets(params.amount);
 
@@ -85,6 +113,13 @@ library MiniPoolDepositLogic {
         emit Deposit(params.asset, msg.sender, params.onBehalfOf, params.amount);
     }
 
+    /**
+     * @notice Performs an internal deposit of assets.
+     * @dev Used for internal protocol operations, updates state without user configuration changes.
+     * Used by the minipool to deposit assets during flow borrowing.
+     * @param params The deposit parameters (`asset`, `amount`, `onBehalfOf`).
+     * @param _reserves Mapping of reserve data for each asset.
+     */
     function internalDeposit(
         DepositParams memory params,
         mapping(address => DataTypes.MiniPoolReserveData) storage _reserves,

@@ -1,6 +1,10 @@
 // SPDX-License-Identifier: agpl-3.0
 pragma solidity ^0.8.0;
 
+/**
+ * @title IMiniPoolRewarder interface.
+ * @author Cod3x
+ */
 interface IMiniPoolRewarder {
     event RewardsAccrued(address indexed user, uint256 amount);
 

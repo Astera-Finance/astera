@@ -17,9 +17,10 @@ import {UserConfiguration} from
 import {ValidationLogic} from "./ValidationLogic.sol";
 
 /**
- * @title Deposit Logic library
- * @notice Implements the logic to deposit assets into the protocol
+ * @title DepositLogic library
  * @author Cod3x
+ * @notice Implements the core deposit logic for the Cod3x lending protocol.
+ * @dev Contains functions to handle deposits of assets into the protocol and related events.
  */
 library DepositLogic {
     using WadRayMath for uint256;
@@ -29,12 +30,31 @@ library DepositLogic {
     using ReserveConfiguration for DataTypes.ReserveConfigurationMap;
     using UserConfiguration for DataTypes.UserConfigurationMap;
 
+    /**
+     * @dev Emitted when a deposit is made to a reserve.
+     * @param reserve The address of the reserve receiving the deposit.
+     * @param user The address initiating the deposit.
+     * @param onBehalfOf The address that will receive the aTokens.
+     * @param amount The amount being deposited.
+     */
     event Deposit(
         address indexed reserve, address user, address indexed onBehalfOf, uint256 amount
     );
 
+    /**
+     * @dev Emitted when a reserve is enabled as collateral for a user.
+     * @param reserve The address of the reserve enabled as collateral.
+     * @param user The address of the user enabling the reserve as collateral.
+     */
     event ReserveUsedAsCollateralEnabled(address indexed reserve, address indexed user);
 
+    /**
+     * @dev Struct containing parameters for deposit operations.
+     * @param asset The address of the underlying asset to deposit.
+     * @param reserveType Boolean indicating if reserve is boosted by a vault.
+     * @param amount The amount to deposit.
+     * @param onBehalfOf The address that will receive the aTokens.
+     */
     struct DepositParams {
         address asset;
         bool reserveType;
@@ -42,6 +62,13 @@ library DepositLogic {
         address onBehalfOf;
     }
 
+    /**
+     * @notice Deposits an `amount` of underlying asset into the reserve.
+     * @dev Emits a `Deposit` event and possibly a `ReserveUsedAsCollateralEnabled` event.
+     * @param params The parameters for the deposit operation.
+     * @param _reserves The mapping of reserve data.
+     * @param _usersConfig The mapping of user configuration data.
+     */
     function deposit(
         DepositParams memory params,
         mapping(address => mapping(bool => DataTypes.ReserveData)) storage _reserves,

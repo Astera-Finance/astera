@@ -3,6 +3,10 @@ pragma solidity ^0.8.0;
 
 import {ILendingPoolAddressesProvider} from "./ILendingPoolAddressesProvider.sol";
 
+/**
+ * @title ILendingPoolConfigurator interface.
+ * @author Cod3x
+ */
 interface ILendingPoolConfigurator {
     struct InitReserveInput {
         address aTokenImpl;
@@ -189,11 +193,17 @@ interface ILendingPoolConfigurator {
     );
 
     function initialize(ILendingPoolAddressesProvider provider) external;
+
     function batchInitReserve(InitReserveInput[] calldata input) external;
+
     function updateAToken(UpdateATokenInput calldata input) external;
+
     function updateVariableDebtToken(UpdateDebtTokenInput calldata input) external;
+
     function enableBorrowingOnReserve(address asset, bool reserveType) external;
+
     function disableBorrowingOnReserve(address asset, bool reserveType) external;
+
     function configureReserveAsCollateral(
         address asset,
         bool reserveType,
@@ -201,29 +211,49 @@ interface ILendingPoolConfigurator {
         uint256 liquidationThreshold,
         uint256 liquidationBonus
     ) external;
+
     function activateReserve(address asset, bool reserveType) external;
+
     function deactivateReserve(address asset, bool reserveType) external;
+
     function freezeReserve(address asset, bool reserveType) external;
+
     function unfreezeReserve(address asset, bool reserveType) external;
+
     function enableFlashloan(address asset, bool reserveType) external;
+
     function disableFlashloan(address asset, bool reserveType) external;
+
     function setCod3xReserveFactor(address asset, bool reserveType, uint256 reserveFactor)
         external;
+
     function setDepositCap(address asset, bool reserveType, uint256 depositCap) external;
+
     function setReserveInterestRateStrategyAddress(
         address asset,
         bool reserveType,
         address rateStrategyAddress
     ) external;
+
     function setPoolPause(bool val) external;
+
     function updateFlashloanPremiumTotal(uint128 newFlashloanPremiumTotal) external;
+
     function setFarmingPct(address aTokenAddress, uint256 farmingPct) external;
+
     function setClaimingThreshold(address aTokenAddress, uint256 claimingThreshold) external;
+
     function setFarmingPctDrift(address aTokenAddress, uint256 _farmingPctDrift) external;
+
     function setProfitHandler(address aTokenAddress, address _profitHandler) external;
+
     function setVault(address aTokenAddress, address _vault) external;
+
     function rebalance(address aTokenAddress) external;
+
     function getTotalManagedAssets(address aTokenAddress) external view returns (uint256);
+
     function setRewarderForReserve(address asset, bool reserveType, address rewarder) external;
+
     function setTreasury(address asset, bool reserveType, address rewarder) external;
 }

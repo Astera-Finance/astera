@@ -4,6 +4,10 @@ pragma solidity ^0.8.0;
 import {IMiniPoolAddressesProvider} from "./IMiniPoolAddressesProvider.sol";
 import {IMiniPool} from "./IMiniPool.sol";
 
+/**
+ * @title IMiniPoolConfigurator interface.
+ * @author Cod3x
+ */
 interface IMiniPoolConfigurator {
     struct InitReserveInput {
         uint8 underlyingAssetDecimals;

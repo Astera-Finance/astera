@@ -5,10 +5,8 @@ import {ILendingPool} from "../../../contracts/interfaces/ILendingPool.sol";
 import {IRewarder} from "../../../contracts/interfaces/IRewarder.sol";
 
 /**
- * @title IInitializableDebtToken
- * @notice Interface for the initialize function common between debt tokens
+ * @title IInitializableDebtToken interface.
  * @author Cod3x
- *
  */
 interface IInitializableDebtToken {
     /**

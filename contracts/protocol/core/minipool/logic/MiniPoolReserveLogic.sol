@@ -15,9 +15,10 @@ import {ReserveLogic} from
     "../../../../../contracts/protocol/core/lendingpool/logic/ReserveLogic.sol";
 
 /**
- * @title ReserveLogic library
+ * @title MiniPoolReserveLogic library
  * @author Cod3x
- * @notice Implements the logic to update the reserves state
+ * @notice Implements the logic to update the reserves state in the MiniPool protocol.
+ * @dev Contains core reserve management functionality including index calculations, state updates, and interest accrual.
  */
 library MiniPoolReserveLogic {
     using WadRayMath for uint256;
@@ -25,12 +26,12 @@ library MiniPoolReserveLogic {
     using ReserveLogic for DataTypes.ReserveData;
 
     /**
-     * @dev Emitted when the state of a reserve is updated
-     * @param asset The address of the underlying asset of the reserve
-     * @param liquidityRate The new liquidity rate
-     * @param variableBorrowRate The new variable borrow rate
-     * @param liquidityIndex The new liquidity index
-     * @param variableBorrowIndex The new variable borrow index
+     * @dev Emitted when the state of a reserve is updated.
+     * @param asset The address of the underlying asset of the reserve.
+     * @param liquidityRate The new liquidity rate.
+     * @param variableBorrowRate The new variable borrow rate.
+     * @param liquidityIndex The new liquidity index.
+     * @param variableBorrowIndex The new variable borrow index.
      */
     event ReserveDataUpdated(
         address indexed asset,
@@ -44,11 +45,11 @@ library MiniPoolReserveLogic {
     using ReserveConfiguration for DataTypes.ReserveConfigurationMap;
 
     /**
-     * @dev Returns the ongoing normalized income for the reserve
-     * A value of 1e27 means there is no income. As time passes, the income is accrued
-     * A value of 2*1e27 means for each unit of asset one unit of income has been accrued
-     * @param reserve The reserve object
-     * @return the normalized income. expressed in ray
+     * @dev Returns the ongoing normalized income for the reserve.
+     * @notice A value of 1e27 means there is no income. As time passes, the income is accrued.
+     * A value of 2*1e27 means for each unit of asset one unit of income has been accrued.
+     * @param reserve The reserve object.
+     * @return The normalized income expressed in ray.
      */
     function getNormalizedIncome(DataTypes.MiniPoolReserveData storage reserve)
         external
@@ -58,7 +59,7 @@ library MiniPoolReserveLogic {
         uint40 timestamp = reserve.lastUpdateTimestamp;
 
         if (timestamp == uint40(block.timestamp)) {
-            //if the index was updated in the same block, no need to perform any calculation
+            // If the index was updated in the same block, no need to perform any calculation.
             return reserve.liquidityIndex;
         }
 
@@ -70,11 +71,11 @@ library MiniPoolReserveLogic {
     }
 
     /**
-     * @dev Returns the ongoing normalized variable debt for the reserve
-     * A value of 1e27 means there is no debt. As time passes, the income is accrued
-     * A value of 2*1e27 means that for each unit of debt, one unit worth of interest has been accumulated
-     * @param reserve The reserve object
-     * @return The normalized variable debt. expressed in ray
+     * @dev Returns the ongoing normalized variable debt for the reserve.
+     * @notice A value of 1e27 means there is no debt. As time passes, the income is accrued.
+     * A value of 2*1e27 means that for each unit of debt, one unit worth of interest has been accumulated.
+     * @param reserve The reserve object.
+     * @return The normalized variable debt expressed in ray.
      */
     function getNormalizedDebt(DataTypes.MiniPoolReserveData storage reserve)
         internal
@@ -84,7 +85,7 @@ library MiniPoolReserveLogic {
         uint40 timestamp = reserve.lastUpdateTimestamp;
 
         if (timestamp == uint40(block.timestamp)) {
-            //if the index was updated in the same block, no need to perform any calculation
+            // If the index was updated in the same block, no need to perform any calculation.
             return reserve.variableBorrowIndex;
         }
 
@@ -97,7 +98,7 @@ library MiniPoolReserveLogic {
 
     /**
      * @dev Updates the liquidity cumulative index and the variable borrow index.
-     * @param reserve the reserve object
+     * @param reserve The reserve object to update.
      */
     function updateState(DataTypes.MiniPoolReserveData storage reserve) internal {
         uint256 scaledVariableDebt =
@@ -125,11 +126,11 @@ library MiniPoolReserveLogic {
     }
 
     /**
-     * @dev Accumulates a predefined amount of asset to the reserve as a fixed, instantaneous income. Used for example to accumulate
-     * the flashloan fee to the reserve, and spread it between all the depositors
-     * @param reserve The reserve object
-     * @param totalLiquidity The total liquidity available in the reserve
-     * @param amount The amount to accomulate
+     * @dev Accumulates a predefined amount of asset to the reserve as a fixed, instantaneous income.
+     * @notice Used for example to accumulate the flashloan fee to the reserve, and spread it between all the depositors.
+     * @param reserve The reserve object.
+     * @param totalLiquidity The total liquidity available in the reserve.
+     * @param amount The amount to accumulate.
      */
     function cumulateToLiquidityIndex(
         DataTypes.MiniPoolReserveData storage reserve,
@@ -147,10 +148,13 @@ library MiniPoolReserveLogic {
     }
 
     /**
-     * @dev Initializes a reserve
-     * @param reserve The reserve object
-     * @param aTokenAddress The address of the overlying atoken contract
-     * @param interestRateStrategyAddress The address of the interest rate strategy contract
+     * @dev Initializes a reserve with the provided parameters.
+     * @param reserve The reserve object to initialize.
+     * @param asset The address of the underlying asset.
+     * @param aTokenAddress The address of the overlying atoken contract.
+     * @param aTokenID The ID of the aToken.
+     * @param variableDebtTokenID The ID of the variable debt token.
+     * @param interestRateStrategyAddress The address of the interest rate strategy contract.
      */
     function init(
         DataTypes.MiniPoolReserveData storage reserve,
@@ -180,10 +184,10 @@ library MiniPoolReserveLogic {
     }
 
     /**
-     * @dev Updates the current variable borrow rate and the current liquidity rate
-     * @param reserve The address of the reserve to be updated
-     * @param liquidityAdded The amount of liquidity added to the protocol (deposit or repay) in the previous action
-     * @param liquidityTaken The amount of liquidity taken from the protocol (redeem or borrow)
+     * @dev Updates the current variable borrow rate and the current liquidity rate.
+     * @param reserve The address of the reserve to be updated.
+     * @param liquidityAdded The amount of liquidity added to the protocol (deposit or repay) in the previous action.
+     * @param liquidityTaken The amount of liquidity taken from the protocol (redeem or borrow).
      */
     function updateInterestRates(
         DataTypes.MiniPoolReserveData storage reserve,
@@ -193,9 +197,9 @@ library MiniPoolReserveLogic {
     ) internal {
         UpdateInterestRatesLocalVars memory vars;
 
-        //calculates the total variable debt locally using the scaled total supply instead
-        //of totalSupply(), as it's noticeably cheaper. Also, the index has been
-        //updated by the previous updateState() call
+        // Calculates the total variable debt locally using the scaled total supply instead
+        // of totalSupply(), as it's noticeably cheaper. Also, the index has been
+        // updated by the previous updateState() call.
         vars.totalVariableDebt = IAERC6909(reserve.aTokenAddress).scaledTotalSupply(
             (reserve.variableDebtTokenID)
         ).rayMul(reserve.variableBorrowIndex);
@@ -237,13 +241,12 @@ library MiniPoolReserveLogic {
     }
 
     /**
-     * @dev Mints part of the repaid interest to the reserve treasury as a function of the reserveFactor for the
-     * specific asset.
-     * @param reserve The reserve reserve to be updated
-     * @param scaledVariableDebt The current scaled total variable debt
-     * @param previousVariableBorrowIndex The variable borrow index before the last accumulation of the interest
-     * @param newLiquidityIndex The new liquidity index
-     * @param newVariableBorrowIndex The variable borrow index after the last accumulation of the interest
+     * @dev Mints part of the repaid interest to the reserve treasury based on reserve factors.
+     * @param reserve The reserve to be updated.
+     * @param scaledVariableDebt The current scaled total variable debt.
+     * @param previousVariableBorrowIndex The variable borrow index before the last accumulation of interest.
+     * @param newLiquidityIndex The new liquidity index.
+     * @param newVariableBorrowIndex The variable borrow index after the last accumulation of interest.
      */
     function _mintToTreasury(
         DataTypes.MiniPoolReserveData storage reserve,
@@ -262,13 +265,13 @@ library MiniPoolReserveLogic {
             return;
         }
 
-        //calculate the last principal variable debt
+        // Calculate the last principal variable debt.
         vars.previousVariableDebt = scaledVariableDebt.rayMul(previousVariableBorrowIndex);
 
-        //calculate the new total supply after accumulation of the index
+        // Calculate the new total supply after accumulation of the index.
         vars.currentVariableDebt = scaledVariableDebt.rayMul(newVariableBorrowIndex);
 
-        //debt accrued is the sum of the current debt minus the sum of the debt at the last update
+        // Debt accrued is the sum of the current debt minus the sum of the debt at the last update.
         vars.totalDebtAccrued = vars.currentVariableDebt - vars.previousVariableDebt;
 
         if (vars.cod3xReserveFactor != 0) {
@@ -294,11 +297,13 @@ library MiniPoolReserveLogic {
     }
 
     /**
-     * @dev Updates the reserve indexes and the timestamp of the update
-     * @param reserve The reserve reserve to be updated
-     * @param scaledVariableDebt The scaled variable debt
-     * @param liquidityIndex The last stored liquidity index
-     * @param variableBorrowIndex The last stored variable borrow index
+     * @dev Updates the reserve indexes and the timestamp of the update.
+     * @param reserve The reserve to be updated.
+     * @param scaledVariableDebt The scaled variable debt.
+     * @param liquidityIndex The last stored liquidity index.
+     * @param variableBorrowIndex The last stored variable borrow index.
+     * @param timestamp The timestamp of the last update.
+     * @return The new liquidity index and variable borrow index.
      */
     function _updateIndexes(
         DataTypes.MiniPoolReserveData storage reserve,
@@ -312,7 +317,7 @@ library MiniPoolReserveLogic {
         uint256 newLiquidityIndex = liquidityIndex;
         uint256 newVariableBorrowIndex = variableBorrowIndex;
 
-        //only cumulating if there is any income being produced
+        // Only cumulating if there is any income being produced.
         if (currentLiquidityRate != 0) {
             uint256 cumulatedLiquidityInterest =
                 MathUtils.calculateLinearInterest(currentLiquidityRate, timestamp);

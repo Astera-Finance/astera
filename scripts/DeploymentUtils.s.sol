@@ -262,7 +262,6 @@ contract DeploymentUtils {
                 deployer
             );
             contracts.flowLimiter = new FlowLimiter(
-                contracts.lendingPoolAddressesProvider,
                 IMiniPoolAddressesProvider(address(contracts.miniPoolAddressesProvider)),
                 contracts.lendingPool
             );

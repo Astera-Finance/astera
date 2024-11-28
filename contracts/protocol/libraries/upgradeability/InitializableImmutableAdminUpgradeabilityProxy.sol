@@ -9,18 +9,21 @@ import {Proxy} from "../../../../contracts/dependencies/openzeppelin/upgradeabil
 /**
  * @title InitializableAdminUpgradeabilityProxy
  * @author Cod3x
- * @dev Extends BaseAdminUpgradeabilityProxy with an initializer function
+ * @notice Proxy contract that combines immutable admin functionality with initialization capabilities.
+ * @dev Extends `BaseImmutableAdminUpgradeabilityProxy` with an initializer function for one-time setup.
+ * This contract inherits initialization capabilities from `InitializableUpgradeabilityProxy` and admin
+ * functionality from `BaseImmutableAdminUpgradeabilityProxy`.
  */
 contract InitializableImmutableAdminUpgradeabilityProxy is
     BaseImmutableAdminUpgradeabilityProxy,
     InitializableUpgradeabilityProxy
 {
     /**
-     * @dev Constructor.
-     * @param admin The address of the admin
+     * @dev Constructor that sets up the immutable admin address.
+     * @param admin The address of the `admin` that will have special privileges.
      */
     constructor(address admin) BaseImmutableAdminUpgradeabilityProxy(admin) {
-        // Intentionally left blank
+        // Intentionally left blank.
     }
 
     /// @inheritdoc BaseImmutableAdminUpgradeabilityProxy

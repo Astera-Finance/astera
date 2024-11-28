@@ -6,8 +6,8 @@ import {Errors} from "../../../../contracts/protocol/libraries/helpers/Errors.so
 /**
  * @title WadRayMath library
  * @author Cod3x
- * @dev Provides mul and div function for wads (decimal numbers with 18 digits precision) and rays (decimals with 27 digits)
- *
+ * @notice Provides multiplication and division functions for wads (decimal numbers with 18 digits precision) and rays (decimals with 27 digits precision).
+ * @dev Core math library for precise decimal calculations using wad (1e18) and ray (1e27) units.
  */
 library WadRayMath {
     uint256 internal constant WAD = 1e18;
@@ -21,31 +21,31 @@ library WadRayMath {
 
     uint256 internal constant WAD_RAY_RATIO = 1e9;
 
-    /// @return One ray, 1e27
+    /// @return One ray, `1e27`.
     function ray() internal pure returns (uint256) {
         return RAY;
     }
 
-    /// @return One wad, 1e18
+    /// @return One wad, `1e18`.
     function wad() internal pure returns (uint256) {
         return WAD;
     }
 
-    /// @return Half ray, 1e27/2
+    /// @return Half ray, `1e27/2`.
     function halfRay() internal pure returns (uint256) {
         return halfRAY;
     }
 
-    /// @return Half wad, 1e18/2
+    /// @return Half wad, `1e18/2`.
     function halfWad() internal pure returns (uint256) {
         return halfWAD;
     }
 
     /**
-     * @dev Multiplies two wad, rounding half up to the nearest wad
-     * @param a Wad
-     * @param b Wad
-     * @return The result of a*b, in wad
+     * @notice Multiplies two wad numbers, rounding half up to the nearest wad.
+     * @param a First wad number to multiply.
+     * @param b Second wad number to multiply.
+     * @return The result of `a*b`, in wad precision.
      */
     function wadMul(uint256 a, uint256 b) internal pure returns (uint256) {
         if (a == 0 || b == 0) {
@@ -58,10 +58,10 @@ library WadRayMath {
     }
 
     /**
-     * @dev Divides two wad, rounding half up to the nearest wad
-     * @param a Wad
-     * @param b Wad
-     * @return The result of a/b, in wad
+     * @notice Divides two wad numbers, rounding half up to the nearest wad.
+     * @param a Wad number to divide (numerator).
+     * @param b Wad number to divide by (denominator).
+     * @return The result of `a/b`, in wad precision.
      */
     function wadDiv(uint256 a, uint256 b) internal pure returns (uint256) {
         require(b != 0, Errors.MATH_DIVISION_BY_ZERO);
@@ -73,10 +73,10 @@ library WadRayMath {
     }
 
     /**
-     * @dev Divides two wad, rounding half down to the nearest wad
-     * @param a Wad
-     * @param b Wad
-     * @return The result of a/b, in wad
+     * @notice Divides two wad numbers, rounding half down to the nearest wad.
+     * @param a Wad number to divide (numerator).
+     * @param b Wad number to divide by (denominator).
+     * @return The result of `a/b`, in wad precision.
      */
     function wadDivDown(uint256 a, uint256 b) internal pure returns (uint256) {
         require(b != 0, Errors.MATH_DIVISION_BY_ZERO);
@@ -87,10 +87,10 @@ library WadRayMath {
     }
 
     /**
-     * @dev Multiplies two ray, rounding half up to the nearest ray
-     * @param a Ray
-     * @param b Ray
-     * @return The result of a*b, in ray
+     * @notice Multiplies two ray numbers, rounding half up to the nearest ray.
+     * @param a First ray number to multiply.
+     * @param b Second ray number to multiply.
+     * @return The result of `a*b`, in ray precision.
      */
     function rayMul(uint256 a, uint256 b) internal pure returns (uint256) {
         if (a == 0 || b == 0) {
@@ -103,10 +103,10 @@ library WadRayMath {
     }
 
     /**
-     * @dev Divides two ray, rounding half up to the nearest ray
-     * @param a Ray
-     * @param b Ray
-     * @return The result of a/b, in ray
+     * @notice Divides two ray numbers, rounding half up to the nearest ray.
+     * @param a Ray number to divide (numerator).
+     * @param b Ray number to divide by (denominator).
+     * @return The result of `a/b`, in ray precision.
      */
     function rayDiv(uint256 a, uint256 b) internal pure returns (uint256) {
         require(b != 0, Errors.MATH_DIVISION_BY_ZERO);
@@ -118,9 +118,9 @@ library WadRayMath {
     }
 
     /**
-     * @dev Casts ray down to wad
-     * @param a Ray
-     * @return a casted to wad, rounded half up to the nearest wad
+     * @notice Converts ray number down to wad precision.
+     * @param a Ray number to convert.
+     * @return The input `a` converted to wad, rounded half up to the nearest wad.
      */
     function rayToWad(uint256 a) internal pure returns (uint256) {
         uint256 halfRatio = WAD_RAY_RATIO / 2;
@@ -131,9 +131,9 @@ library WadRayMath {
     }
 
     /**
-     * @dev Converts wad up to ray
-     * @param a Wad
-     * @return a converted in ray
+     * @notice Converts wad number up to ray precision.
+     * @param a Wad number to convert.
+     * @return The input `a` converted to ray precision.
      */
     function wadToRay(uint256 a) internal pure returns (uint256) {
         uint256 result = a * WAD_RAY_RATIO;
@@ -144,11 +144,11 @@ library WadRayMath {
     // ------- int -------
 
     /**
-     * @dev Multiplies two ray int, rounding half up to the nearest ray.
-     * If `result` > 0 round up, if `result` < 0 round down.
-     * @param a Ray int
-     * @param b Ray int
-     * @return result The result of a*b, in ray
+     * @notice Multiplies two ray integers, rounding half up to the nearest ray.
+     * @dev If `result` > 0 rounds up, if `result` < 0 rounds down.
+     * @param a First ray integer to multiply.
+     * @param b Second ray integer to multiply.
+     * @return result The result of `a*b`, in ray precision.
      */
     function rayMulInt(int256 a, int256 b) internal pure returns (int256) {
         int256 rawMul = a * b;
@@ -163,11 +163,11 @@ library WadRayMath {
     }
 
     /**
-     * @dev Divides two ray, rounding half up to the nearest ray
-     * If `result` > 0 round up, if `result` < 0 round down.
-     * @param a Ray int
-     * @param b Ray int
-     * @return The result of a/b, in ray
+     * @notice Divides two ray integers, rounding half up to the nearest ray.
+     * @dev If `result` > 0 rounds up, if `result` < 0 rounds down.
+     * @param a Ray integer to divide (numerator).
+     * @param b Ray integer to divide by (denominator).
+     * @return The result of `a/b`, in ray precision.
      */
     function rayDivInt(int256 a, int256 b) internal pure returns (int256) {
         require(b != 0, Errors.MATH_DIVISION_BY_ZERO);
@@ -182,10 +182,11 @@ library WadRayMath {
     }
 
     /**
-     * @dev `base` to the power of `exponent`, using rayMulInt and a for loop.
-     * @param base Ray int
-     * @param exponent power exponent, not ray
-     * @return result The result of base**exponent, in ray
+     * @notice Calculates the power of a ray integer base to an unsigned integer exponent.
+     * @dev Uses `rayMulInt` and a for loop for the calculation.
+     * @param base Ray integer base number.
+     * @param exponent Power exponent (not in ray precision).
+     * @return result The result of `base**exponent`, in ray precision.
      */
     function rayPowerInt(int256 base, uint256 exponent) internal pure returns (int256) {
         if (exponent == 0) {

@@ -17,8 +17,8 @@ import {UserConfiguration} from
 import {MiniPoolValidationLogic} from "./MiniPoolValidationLogic.sol";
 
 /**
- * @title withdraw Logic library
- * @notice Implements the logic to withdraw assets into the protocol
+ * @title MiniPool Withdraw Logic Library
+ * @notice Implements the logic to withdraw assets from the protocol.
  * @author Cod3x
  */
 library MiniPoolWithdrawLogic {
@@ -28,12 +28,38 @@ library MiniPoolWithdrawLogic {
     using ReserveConfiguration for DataTypes.ReserveConfigurationMap;
     using UserConfiguration for DataTypes.UserConfigurationMap;
 
+    /**
+     * @dev Emitted when a reserve is disabled as collateral for a user.
+     * @param reserve The address of the reserve.
+     * @param user The address of the user.
+     */
     event ReserveUsedAsCollateralDisabled(address indexed reserve, address indexed user);
+
+    /**
+     * @dev Emitted on withdrawals.
+     * @param reserve The address of the reserve.
+     * @param user The address initiating the withdrawal.
+     * @param to The address receiving the withdrawal.
+     * @param amount The amount being withdrawn.
+     */
     event Withdraw(
         address indexed reserve, address indexed user, address indexed to, uint256 amount
     );
+
+    /**
+     * @dev Emitted when a reserve is enabled as collateral for a user.
+     * @param reserve The address of the reserve.
+     * @param user The address of the user.
+     */
     event ReserveUsedAsCollateralEnabled(address indexed reserve, address indexed user);
 
+    /**
+     * @dev Struct containing parameters for withdraw operations.
+     * @param asset The address of the underlying asset.
+     * @param amount The amount to withdraw.
+     * @param to The address that will receive the withdrawal.
+     * @param reservesCount The total count of reserves.
+     */
     struct withdrawParams {
         address asset;
         uint256 amount;
@@ -41,6 +67,13 @@ library MiniPoolWithdrawLogic {
         uint256 reservesCount;
     }
 
+    /**
+     * @dev Struct containing local variables for withdraw operations.
+     * @param userBalance The user's current balance.
+     * @param amountToWithdraw The amount being withdrawn.
+     * @param aToken The address of the aToken.
+     * @param id The ID of the aToken.
+     */
     struct withdrawLocalVars {
         uint256 userBalance;
         uint256 amountToWithdraw;
@@ -48,6 +81,16 @@ library MiniPoolWithdrawLogic {
         uint256 id;
     }
 
+    /**
+     * @notice Withdraws an `amount` of underlying asset from the reserve.
+     * @param params The withdraw parameters.
+     * @param unwrap Whether to unwrap the token during withdrawal.
+     * @param reserves The state of all reserves.
+     * @param usersConfig The users configuration mapping.
+     * @param reservesList The addresses of all active reserves.
+     * @param addressesProvider The addresses provider instance.
+     * @return The final amount withdrawn.
+     */
     function withdraw(
         withdrawParams memory params,
         bool unwrap,
@@ -107,6 +150,16 @@ library MiniPoolWithdrawLogic {
         return localVars.amountToWithdraw;
     }
 
+    /**
+     * @dev Struct containing parameters for finalizing transfers.
+     * @param asset The address of the underlying asset.
+     * @param from The address of the source.
+     * @param to The address of the destination.
+     * @param amount The amount being transferred.
+     * @param balanceFromBefore The balance of the source before the transfer.
+     * @param balanceToBefore The balance of the destination before the transfer.
+     * @param reservesCount The total count of reserves.
+     */
     struct finalizeTransferParams {
         address asset;
         address from;
@@ -117,6 +170,14 @@ library MiniPoolWithdrawLogic {
         uint256 reservesCount;
     }
 
+    /**
+     * @notice Finalizes an aToken transfer.
+     * @param params The parameters for the finalization.
+     * @param reserves The state of all reserves.
+     * @param usersConfig The users configuration mapping.
+     * @param reservesList The addresses of all active reserves.
+     * @param addressesProvider The addresses provider instance.
+     */
     function finalizeTransfer(
         finalizeTransferParams memory params,
         mapping(address => DataTypes.MiniPoolReserveData) storage reserves,
@@ -154,6 +215,15 @@ library MiniPoolWithdrawLogic {
         }
     }
 
+    /**
+     * @notice Internal function to withdraw an `amount` of underlying asset from the reserve.
+     * @param params The withdraw parameters.
+     * @param reserves The state of all reserves.
+     * @param usersConfig The users configuration mapping.
+     * @param reservesList The addresses of all active reserves.
+     * @param addressesProvider The addresses provider instance.
+     * @return The final amount withdrawn.
+     */
     function internalWithdraw(
         withdrawParams memory params,
         mapping(address => DataTypes.MiniPoolReserveData) storage reserves,

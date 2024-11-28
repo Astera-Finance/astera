@@ -8,13 +8,14 @@ import {DataTypes} from "../../../../contracts/protocol/libraries/types/DataType
 /**
  * @title Helpers library
  * @author Cod3x
+ * @notice Library containing helper functions for fetching user debt balances.
  */
 library Helpers {
     /**
-     * @dev Fetches the user current variable debt balances
-     * @param user The user address
-     * @param reserve The reserve data object
-     * @return The variable debt balance
+     * @dev Fetches the user current variable debt balance from a standard reserve.
+     * @param user The address of the user to check debt for.
+     * @param reserve The `ReserveData` storage object containing reserve information.
+     * @return The current variable debt balance of the user.
      */
     function getUserCurrentDebt(address user, DataTypes.ReserveData storage reserve)
         internal
@@ -24,6 +25,12 @@ library Helpers {
         return (IERC20(reserve.variableDebtTokenAddress).balanceOf(user));
     }
 
+    /**
+     * @dev Fetches the user current variable debt balance from a standard reserve using memory data.
+     * @param user The address of the user to check debt for.
+     * @param reserve The `ReserveData` memory object containing reserve information.
+     * @return The current variable debt balance of the user.
+     */
     function getUserCurrentDebtMemory(address user, DataTypes.ReserveData memory reserve)
         internal
         view
@@ -32,6 +39,12 @@ library Helpers {
         return (IERC20(reserve.variableDebtTokenAddress).balanceOf(user));
     }
 
+    /**
+     * @dev Fetches the user current variable debt balance from a minipool reserve.
+     * @param user The address of the user to check debt for.
+     * @param reserve The `MiniPoolReserveData` storage object containing minipool reserve information.
+     * @return The current variable debt balance of the user.
+     */
     function getUserCurrentDebt(address user, DataTypes.MiniPoolReserveData storage reserve)
         internal
         view
@@ -40,6 +53,12 @@ library Helpers {
         return (IERC6909(reserve.aTokenAddress).balanceOf(user, reserve.variableDebtTokenID));
     }
 
+    /**
+     * @dev Fetches the user current variable debt balance from a minipool reserve using memory data.
+     * @param user The address of the user to check debt for.
+     * @param reserve The `MiniPoolReserveData` memory object containing minipool reserve information.
+     * @return The current variable debt balance of the user.
+     */
     function getUserCurrentDebtMemory(address user, DataTypes.MiniPoolReserveData memory reserve)
         internal
         view

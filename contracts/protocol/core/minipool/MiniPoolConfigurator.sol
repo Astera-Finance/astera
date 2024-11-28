@@ -16,13 +16,13 @@ import {IMiniPoolAddressesProvider} from
 import {IAERC6909} from "../../../../contracts/interfaces/IAERC6909.sol";
 import {IMiniPoolConfigurator} from "../../../../contracts/interfaces/IMiniPoolConfigurator.sol";
 import {IMiniPool} from "../../../../contracts/interfaces/IMiniPool.sol";
-/**
- * @title LendingPoolConfigurator contract
- * @author Cod3x
- * @dev Implements the configuration methods for the Cod3x Lend Lendingpool
- *
- */
 
+/**
+ * @title MiniPoolConfigurator contract.
+ * @author Cod3x.
+ * @notice Implements the configuration methods for the Cod3x Lend MiniPool protocol.
+ * @dev This contract manages reserve configurations, pool parameters, and access controls.
+ */
 contract MiniPoolConfigurator is VersionedInitializable, IMiniPoolConfigurator {
     using PercentageMath for uint256;
     using ReserveConfiguration for DataTypes.ReserveConfigurationMap;
@@ -30,17 +30,27 @@ contract MiniPoolConfigurator is VersionedInitializable, IMiniPoolConfigurator {
     uint256 internal constant CONFIGURATOR_REVISION = 0x1;
     IMiniPoolAddressesProvider public addressesProvider;
 
+    /**
+     * @dev Only allows pool admin to call the function.
+     * @param pool The address of the MiniPool being accessed.
+     */
     modifier onlyPoolAdmin(address pool) {
         uint256 id = addressesProvider.getMiniPoolId(pool);
         require(addressesProvider.getPoolAdmin(id) == msg.sender, Errors.CALLER_NOT_POOL_ADMIN);
         _;
     }
 
+    /**
+     * @dev Only allows main pool admin to call the function.
+     */
     modifier onlyMainPoolAdmin() {
         require(addressesProvider.getMainPoolAdmin() == msg.sender, Errors.CALLER_NOT_POOL_ADMIN);
         _;
     }
 
+    /**
+     * @dev Only allows emergency admin to call the function.
+     */
     modifier onlyEmergencyAdmin() {
         require(
             addressesProvider.getEmergencyAdmin() == msg.sender,
@@ -49,10 +59,18 @@ contract MiniPoolConfigurator is VersionedInitializable, IMiniPoolConfigurator {
         _;
     }
 
+    /**
+     * @dev Returns the revision number of the contract.
+     * @return The revision number.
+     */
     function getRevision() internal pure override returns (uint256) {
         return CONFIGURATOR_REVISION;
     }
 
+    /**
+     * @dev Initializes the MiniPoolConfigurator.
+     * @param provider The address of the MiniPoolAddressesProvider.
+     */
     function initialize(IMiniPoolAddressesProvider provider) public initializer {
         addressesProvider = provider;
     }
@@ -60,7 +78,9 @@ contract MiniPoolConfigurator is VersionedInitializable, IMiniPoolConfigurator {
     /*___ Only Main Pool ___*/
 
     /**
-     * @dev Initializes reserves in batch
+     * @dev Initializes multiple reserves in a single transaction.
+     * @param input Array of reserve initialization parameters.
+     * @param pool The MiniPool instance to initialize reserves for.
      */
     function batchInitReserve(InitReserveInput[] calldata input, IMiniPool pool)
         external
@@ -71,6 +91,12 @@ contract MiniPoolConfigurator is VersionedInitializable, IMiniPoolConfigurator {
         }
     }
 
+    /**
+     * @dev Sets the rewarder contract for a specific reserve.
+     * @param asset The address of the underlying asset.
+     * @param rewarder The address of the rewarder contract.
+     * @param pool The MiniPool instance to set the rewarder for.
+     */
     function setRewarderForReserve(address asset, address rewarder, IMiniPool pool)
         external
         onlyMainPoolAdmin
@@ -78,6 +104,11 @@ contract MiniPoolConfigurator is VersionedInitializable, IMiniPoolConfigurator {
         pool.setRewarderForReserve(asset, rewarder);
     }
 
+    /**
+     * @dev Updates the total flashloan premium.
+     * @param newFlashloanPremiumTotal The new flashloan premium total.
+     * @param pool The MiniPool instance to update.
+     */
     function updateFlashloanPremiumTotal(uint128 newFlashloanPremiumTotal, IMiniPool pool)
         external
         onlyMainPoolAdmin
@@ -89,6 +120,11 @@ contract MiniPoolConfigurator is VersionedInitializable, IMiniPoolConfigurator {
         pool.updateFlashLoanFee(newFlashloanPremiumTotal);
     }
 
+    /**
+     * @dev Sets the Cod3x treasury address for a MiniPool.
+     * @param treasury The new treasury address.
+     * @param pool The MiniPool instance to update.
+     */
     function setCod3xTreasuryToMiniPool(address treasury, IMiniPool pool)
         public
         onlyMainPoolAdmin
@@ -97,6 +133,12 @@ contract MiniPoolConfigurator is VersionedInitializable, IMiniPoolConfigurator {
         addressesProvider.setCod3xTreasuryToMiniPool(id, treasury);
     }
 
+    /**
+     * @dev Sets the flow limit for an asset in a MiniPool.
+     * @param asset The address of the asset.
+     * @param miniPool The address of the MiniPool.
+     * @param limit The new flow limit value.
+     */
     function setFlowLimit(address asset, address miniPool, uint256 limit)
         public
         onlyMainPoolAdmin
@@ -107,10 +149,10 @@ contract MiniPoolConfigurator is VersionedInitializable, IMiniPoolConfigurator {
     }
 
     /**
-     * @dev Sets the interest rate strategy of a reserve
-     * @param asset The address of the underlying asset of the reserve
-     * @param rateStrategyAddress The new address of the interest strategy contract
-     * @param pool Minipool address
+     * @dev Sets the interest rate strategy for a reserve.
+     * @param asset The address of the underlying asset.
+     * @param rateStrategyAddress The new interest rate strategy address.
+     * @param pool The MiniPool instance to update.
      */
     function setReserveInterestRateStrategyAddress(
         address asset,
@@ -122,9 +164,10 @@ contract MiniPoolConfigurator is VersionedInitializable, IMiniPoolConfigurator {
     }
 
     /**
-     * @dev Updates the Cod3x reserve factor of a reserve
-     * @param asset The address of the underlying asset of the reserve
-     * @param reserveFactor The new reserve factor of the reserve
+     * @dev Updates the Cod3x reserve factor for a reserve.
+     * @param asset The address of the underlying asset.
+     * @param reserveFactor The new reserve factor.
+     * @param pool The MiniPool instance to update.
      */
     function setCod3xReserveFactor(address asset, uint256 reserveFactor, IMiniPool pool)
         external
@@ -139,6 +182,12 @@ contract MiniPoolConfigurator is VersionedInitializable, IMiniPoolConfigurator {
         emit Cod3xReserveFactorChanged(asset, reserveFactor);
     }
 
+    /**
+     * @dev Sets the deposit cap for a reserve.
+     * @param asset The address of the underlying asset.
+     * @param depositCap The new deposit cap.
+     * @param pool The MiniPool instance to update.
+     */
     function setDepositCap(address asset, uint256 depositCap, IMiniPool pool)
         external
         onlyMainPoolAdmin
@@ -152,6 +201,11 @@ contract MiniPoolConfigurator is VersionedInitializable, IMiniPoolConfigurator {
         emit ReserveDepositCapChanged(asset, depositCap);
     }
 
+    /**
+     * @dev Internal function to initialize a single reserve.
+     * @param pool The MiniPool instance.
+     * @param input The reserve initialization parameters.
+     */
     function _initReserve(IMiniPool pool, InitReserveInput calldata input) internal {
         address AERC6909proxy = addressesProvider.getMiniPoolToAERC6909(address(pool));
         (uint256 aTokenID, uint256 debtTokenID,) = IAERC6909(AERC6909proxy).initReserve(
@@ -185,8 +239,9 @@ contract MiniPoolConfigurator is VersionedInitializable, IMiniPoolConfigurator {
     /*___ Only emergency admin ___*/
 
     /**
-     * @dev pauses or unpauses all the actions of the protocol, including aToken transfers
-     * @param val true if protocol needs to be paused, false otherwise
+     * @dev Pauses or unpauses all protocol actions including aToken transfers.
+     * @param val True to pause, false to unpause.
+     * @param pool The MiniPool instance to update.
      */
     function setPoolPause(bool val, IMiniPool pool) external onlyEmergencyAdmin {
         pool.setPause(val);
@@ -195,9 +250,9 @@ contract MiniPoolConfigurator is VersionedInitializable, IMiniPoolConfigurator {
     /*___ Only pool admin ___*/
 
     /**
-     * @dev Enables borrowing on a reserve
-     * @param asset The address of the underlying asset of the reserve
-     * @param pool Minipool address
+     * @dev Enables borrowing on a reserve.
+     * @param asset The address of the underlying asset.
+     * @param pool The MiniPool instance to update.
      */
     function enableBorrowingOnReserve(address asset, IMiniPool pool)
         external
@@ -213,9 +268,9 @@ contract MiniPoolConfigurator is VersionedInitializable, IMiniPoolConfigurator {
     }
 
     /**
-     * @dev Disables borrowing on a reserve
-     * @param asset The address of the underlying asset of the reserve
-     * @param pool Minipool address
+     * @dev Disables borrowing on a reserve.
+     * @param asset The address of the underlying asset.
+     * @param pool The MiniPool instance to update.
      */
     function disableBorrowingOnReserve(address asset, IMiniPool pool)
         external
@@ -230,13 +285,12 @@ contract MiniPoolConfigurator is VersionedInitializable, IMiniPoolConfigurator {
     }
 
     /**
-     * @dev Configures the reserve collateralization parameters
-     * all the values are expressed in percentages with two decimals of precision. A valid value is 10000, which means 100.00%
-     * @param asset The address of the underlying asset of the reserve
-     * @param ltv The loan to value of the asset when used as collateral
-     * @param liquidationThreshold The threshold at which loans using this asset as collateral will be considered undercollateralized
-     * @param liquidationBonus The bonus liquidators receive to liquidate this asset. The values is always above 100%. A value of 105%
-     * means the liquidator will receive a 5% bonus
+     * @dev Configures the collateralization parameters for a reserve.
+     * @param asset The address of the underlying asset.
+     * @param ltv The loan to value ratio (in basis points).
+     * @param liquidationThreshold The liquidation threshold (in basis points).
+     * @param liquidationBonus The liquidation bonus (in basis points).
+     * @param pool The MiniPool instance to update.
      */
     function configureReserveAsCollateral(
         address asset,
@@ -247,21 +301,21 @@ contract MiniPoolConfigurator is VersionedInitializable, IMiniPoolConfigurator {
     ) external onlyPoolAdmin(address(pool)) {
         DataTypes.ReserveConfigurationMap memory currentConfig = pool.getConfiguration(asset);
 
-        //validation of the parameters: the LTV can
-        //only be lower or equal than the liquidation threshold
-        //(otherwise a loan against the asset would cause instantaneous liquidation)
+        // Validation of the parameters: The LTV can
+        // Only be lower or equal than the liquidation threshold
+        // (Otherwise a loan against the asset would cause instantaneous liquidation).
         require(ltv <= liquidationThreshold, Errors.LPC_INVALID_CONFIGURATION);
 
         if (liquidationThreshold != 0) {
-            //liquidation bonus must be bigger than 100.00%, otherwise the liquidator would receive less
-            //collateral than needed to cover the debt
+            // Liquidation bonus must be bigger than 100.00%, otherwise the liquidator would receive less
+            // Collateral than needed to cover the debt.
             require(
                 liquidationBonus > PercentageMath.PERCENTAGE_FACTOR,
                 Errors.LPC_INVALID_CONFIGURATION
             );
 
-            //if threshold * bonus is less than PERCENTAGE_FACTOR, it's guaranteed that at the moment
-            //a loan is taken there is enough collateral available to cover the liquidation bonus
+            // If threshold * bonus is less than PERCENTAGE_FACTOR, it's guaranteed that at the moment
+            // A loan is taken there is enough collateral available to cover the liquidation bonus.
             require(
                 liquidationThreshold.percentMul(liquidationBonus)
                     <= PercentageMath.PERCENTAGE_FACTOR,
@@ -269,9 +323,9 @@ contract MiniPoolConfigurator is VersionedInitializable, IMiniPoolConfigurator {
             );
         } else {
             require(liquidationBonus == 0, Errors.LPC_INVALID_CONFIGURATION);
-            //if the liquidation threshold is being set to 0,
-            // the reserve is being disabled as collateral. To do so,
-            //we need to ensure no liquidity is deposited
+            // If the liquidation threshold is being set to 0,
+            // The reserve is being disabled as collateral. To do so,
+            // We need to ensure no liquidity is deposited.
             _checkNoLiquidity(asset, pool);
         }
 
@@ -285,9 +339,9 @@ contract MiniPoolConfigurator is VersionedInitializable, IMiniPoolConfigurator {
     }
 
     /**
-     * @dev Activates a reserve
-     * @param asset The address of the underlying asset of the reserve
-     * @param pool Minipool address
+     * @dev Activates a reserve.
+     * @param asset The address of the underlying asset.
+     * @param pool The MiniPool instance to update.
      */
     function activateReserve(address asset, IMiniPool pool) external onlyPoolAdmin(address(pool)) {
         DataTypes.ReserveConfigurationMap memory currentConfig = pool.getConfiguration(asset);
@@ -300,9 +354,9 @@ contract MiniPoolConfigurator is VersionedInitializable, IMiniPoolConfigurator {
     }
 
     /**
-     * @dev Deactivates a reserve
-     * @param asset The address of the underlying asset of the reserve
-     * @param pool Minipool address
+     * @dev Deactivates a reserve.
+     * @param asset The address of the underlying asset.
+     * @param pool The MiniPool instance to update.
      */
     function deactivateReserve(address asset, IMiniPool pool)
         external
@@ -320,10 +374,9 @@ contract MiniPoolConfigurator is VersionedInitializable, IMiniPoolConfigurator {
     }
 
     /**
-     * @dev Freezes a reserve. A frozen reserve doesn't allow any new deposit, or borrow
-     *  but allows repayments, liquidations, and withdrawals
-     * @param asset The address of the underlying asset of the reserve
-     * @param pool Minipool address
+     * @dev Freezes a reserve. A frozen reserve doesn't allow new deposits or borrows.
+     * @param asset The address of the underlying asset.
+     * @param pool The MiniPool instance to update.
      */
     function freezeReserve(address asset, IMiniPool pool) external onlyPoolAdmin(address(pool)) {
         DataTypes.ReserveConfigurationMap memory currentConfig = pool.getConfiguration(asset);
@@ -336,9 +389,9 @@ contract MiniPoolConfigurator is VersionedInitializable, IMiniPoolConfigurator {
     }
 
     /**
-     * @dev Unfreezes a reserve
-     * @param asset The address of the underlying asset of the reserve
-     * @param pool Minipool address
+     * @dev Unfreezes a reserve.
+     * @param asset The address of the underlying asset.
+     * @param pool The MiniPool instance to update.
      */
     function unfreezeReserve(address asset, IMiniPool pool) external onlyPoolAdmin(address(pool)) {
         DataTypes.ReserveConfigurationMap memory currentConfig = pool.getConfiguration(asset);
@@ -351,9 +404,9 @@ contract MiniPoolConfigurator is VersionedInitializable, IMiniPoolConfigurator {
     }
 
     /**
-     * @dev Enable Flash loan.
-     * @param asset The address of the underlying asset of the reserve
-     * @param pool Minipool address
+     * @dev Enables flash loans for a reserve.
+     * @param asset The address of the underlying asset.
+     * @param pool The MiniPool instance to update.
      */
     function enableFlashloan(address asset, IMiniPool pool) external onlyPoolAdmin(address(pool)) {
         DataTypes.ReserveConfigurationMap memory currentConfig = pool.getConfiguration(asset);
@@ -366,9 +419,9 @@ contract MiniPoolConfigurator is VersionedInitializable, IMiniPoolConfigurator {
     }
 
     /**
-     * @dev Disable Flash loan.
-     * @param asset The address of the underlying asset of the reserve
-     * @param pool Minipool address
+     * @dev Disables flash loans for a reserve.
+     * @param asset The address of the underlying asset.
+     * @param pool The MiniPool instance to update.
      */
     function disableFlashloan(address asset, IMiniPool pool)
         external
@@ -383,11 +436,21 @@ contract MiniPoolConfigurator is VersionedInitializable, IMiniPoolConfigurator {
         emit DisableFlashloan(asset);
     }
 
+    /**
+     * @dev Sets the pool admin for a MiniPool.
+     * @param admin The address of the new pool admin.
+     * @param pool The MiniPool instance to update.
+     */
     function setPoolAdmin(address admin, IMiniPool pool) public onlyPoolAdmin(address(pool)) {
         uint256 id = addressesProvider.getMiniPoolId(address(pool));
         addressesProvider.setPoolAdmin(id, admin);
     }
 
+    /**
+     * @dev Sets the MiniPool owner treasury address.
+     * @param treasury The address of the new treasury.
+     * @param pool The MiniPool instance to update.
+     */
     function setMinipoolOwnerTreasuryToMiniPool(address treasury, IMiniPool pool)
         public
         onlyPoolAdmin(address(pool))
@@ -397,9 +460,10 @@ contract MiniPoolConfigurator is VersionedInitializable, IMiniPoolConfigurator {
     }
 
     /**
-     * @dev Updates the minipool owner reserve factor of a reserve
-     * @param asset The address of the underlying asset of the reserve
-     * @param reserveFactor The new reserve factor of the reserve
+     * @dev Updates the MiniPool owner reserve factor.
+     * @param asset The address of the underlying asset.
+     * @param reserveFactor The new reserve factor.
+     * @param pool The MiniPool instance to update.
      */
     function setMinipoolOwnerReserveFactor(address asset, uint256 reserveFactor, IMiniPool pool)
         external
@@ -414,6 +478,11 @@ contract MiniPoolConfigurator is VersionedInitializable, IMiniPoolConfigurator {
         emit MinipoolOwnerReserveFactorChanged(asset, reserveFactor);
     }
 
+    /**
+     * @dev Checks if a reserve has zero liquidity.
+     * @param asset The address of the underlying asset.
+     * @param pool The MiniPool instance to check.
+     */
     function _checkNoLiquidity(address asset, IMiniPool pool) internal view {
         DataTypes.MiniPoolReserveData memory reserveData = pool.getReserveData(asset);
 
