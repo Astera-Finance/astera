@@ -384,7 +384,6 @@ contract MiniPoolConfiguratorTest is MiniPoolDepositBorrowTest {
          * 4. User borrows token
          * Invariants:
          * 1. Some tokens are minted to the treasury
-         *
          */
 
         /* Fuzz vectors */

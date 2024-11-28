@@ -288,7 +288,6 @@ library ValidationLogic {
      * @param userConfig The user configuration
      * @param userHealthFactor The user's health factor
      * @param userVariableDebt Total variable debt balance of the user
-     *
      */
     function validateLiquidationCall(
         DataTypes.ReserveData storage collateralReserve,

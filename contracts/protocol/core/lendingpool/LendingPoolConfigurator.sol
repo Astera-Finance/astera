@@ -15,8 +15,9 @@ import {IERC20Detailed} from
 import {Errors} from "../../../../contracts/protocol/libraries/helpers/Errors.sol";
 import {PercentageMath} from "../../../../contracts/protocol/libraries/math/PercentageMath.sol";
 import {DataTypes} from "../../../../contracts/protocol/libraries/types/DataTypes.sol";
-import {IInitializableDebtToken} from "../../../../contracts/interfaces/IInitializableDebtToken.sol";
-import {IInitializableAToken} from "../../../../contracts/interfaces/IInitializableAToken.sol";
+import {IInitializableDebtToken} from
+    "../../../../contracts/interfaces/base/IInitializableDebtToken.sol";
+import {IInitializableAToken} from "../../../../contracts/interfaces/base/IInitializableAToken.sol";
 import {IRewarder} from "../../../../contracts/interfaces/IRewarder.sol";
 import {ILendingPoolConfigurator} from
     "../../../../contracts/interfaces/ILendingPoolConfigurator.sol";
@@ -30,6 +31,8 @@ import {ILendingPoolConfigurator} from
 contract LendingPoolConfigurator is VersionedInitializable, ILendingPoolConfigurator {
     using PercentageMath for uint256;
     using ReserveConfiguration for DataTypes.ReserveConfigurationMap;
+
+    uint256 internal constant CONFIGURATOR_REVISION = 0x1;
 
     ILendingPoolAddressesProvider internal addressesProvider;
     ILendingPool internal pool;
@@ -47,8 +50,6 @@ contract LendingPoolConfigurator is VersionedInitializable, ILendingPoolConfigur
         _;
     }
 
-    uint256 internal constant CONFIGURATOR_REVISION = 0x1;
-
     function getRevision() internal pure override returns (uint256) {
         return CONFIGURATOR_REVISION;
     }
@@ -60,7 +61,6 @@ contract LendingPoolConfigurator is VersionedInitializable, ILendingPoolConfigur
 
     /**
      * @dev Initializes reserves in batch
-     *
      */
     function batchInitReserve(InitReserveInput[] calldata input) external onlyPoolAdmin {
         ILendingPool cachedPool = pool;
@@ -131,7 +131,6 @@ contract LendingPoolConfigurator is VersionedInitializable, ILendingPoolConfigur
 
     /**
      * @dev Updates the aToken implementation for the reserve
-     *
      */
     function updateAToken(UpdateATokenInput calldata input) external onlyPoolAdmin {
         ILendingPool cachedPool = pool;
@@ -163,7 +162,6 @@ contract LendingPoolConfigurator is VersionedInitializable, ILendingPoolConfigur
 
     /**
      * @dev Updates the variable debt token implementation for the asset
-     *
      */
     function updateVariableDebtToken(UpdateDebtTokenInput calldata input) external onlyPoolAdmin {
         ILendingPool cachedPool = pool;
@@ -198,7 +196,6 @@ contract LendingPoolConfigurator is VersionedInitializable, ILendingPoolConfigur
      * @dev Enables borrowing on a reserve
      * @param asset The address of the underlying asset of the reserve
      * @param reserveType Whether the reserve is boosted by a vault
-     *
      */
     function enableBorrowingOnReserve(address asset, bool reserveType) external onlyPoolAdmin {
         DataTypes.ReserveConfigurationMap memory currentConfig =
@@ -215,7 +212,6 @@ contract LendingPoolConfigurator is VersionedInitializable, ILendingPoolConfigur
      * @dev Disables borrowing on a reserve
      * @param asset The address of the underlying asset of the reserve
      * @param reserveType Whether the reserve is boosted by a vault
-     *
      */
     function disableBorrowingOnReserve(address asset, bool reserveType) external onlyPoolAdmin {
         DataTypes.ReserveConfigurationMap memory currentConfig =
@@ -236,7 +232,6 @@ contract LendingPoolConfigurator is VersionedInitializable, ILendingPoolConfigur
      * @param liquidationThreshold The threshold at which loans using this asset as collateral will be considered undercollateralized
      * @param liquidationBonus The bonus liquidators receive to liquidate this asset. The values is always above 100%. A value of 105%
      * means the liquidator will receive a 5% bonus
-     *
      */
     function configureReserveAsCollateral(
         address asset,
@@ -291,7 +286,6 @@ contract LendingPoolConfigurator is VersionedInitializable, ILendingPoolConfigur
      * @dev Activates a reserve
      * @param asset The address of the underlying asset of the reserve
      * @param reserveType Whether the reserve is boosted by a vault
-     *
      */
     function activateReserve(address asset, bool reserveType) external onlyPoolAdmin {
         DataTypes.ReserveConfigurationMap memory currentConfig =
@@ -308,7 +302,6 @@ contract LendingPoolConfigurator is VersionedInitializable, ILendingPoolConfigur
      * @dev Deactivates a reserve
      * @param asset The address of the underlying asset of the reserve
      * @param reserveType Whether the reserve is boosted by a vault
-     *
      */
     function deactivateReserve(address asset, bool reserveType) external onlyPoolAdmin {
         _checkNoLiquidity(asset, reserveType);
@@ -328,7 +321,6 @@ contract LendingPoolConfigurator is VersionedInitializable, ILendingPoolConfigur
      *  but allows repayments, liquidations, and withdrawals
      * @param asset The address of the underlying asset of the reserve
      * @param reserveType Whether the reserve is boosted by a vault
-     *
      */
     function freezeReserve(address asset, bool reserveType) external onlyPoolAdmin {
         DataTypes.ReserveConfigurationMap memory currentConfig =
@@ -345,7 +337,6 @@ contract LendingPoolConfigurator is VersionedInitializable, ILendingPoolConfigur
      * @dev Unfreezes a reserve
      * @param asset The address of the underlying asset of the reserve
      * @param reserveType Whether the reserve is boosted by a vault
-     *
      */
     function unfreezeReserve(address asset, bool reserveType) external onlyPoolAdmin {
         DataTypes.ReserveConfigurationMap memory currentConfig =
@@ -362,7 +353,6 @@ contract LendingPoolConfigurator is VersionedInitializable, ILendingPoolConfigur
      * @dev Enable Flash loan.
      * @param asset The address of the underlying asset of the reserve
      * @param reserveType Whether the reserve is boosted by a vault
-     *
      */
     function enableFlashloan(address asset, bool reserveType) external onlyPoolAdmin {
         DataTypes.ReserveConfigurationMap memory currentConfig =
@@ -379,7 +369,6 @@ contract LendingPoolConfigurator is VersionedInitializable, ILendingPoolConfigur
      * @dev Disable Flash loan.
      * @param asset The address of the underlying asset of the reserve
      * @param reserveType Whether the reserve is boosted by a vault
-     *
      */
     function disableFlashloan(address asset, bool reserveType) external onlyPoolAdmin {
         DataTypes.ReserveConfigurationMap memory currentConfig =
@@ -397,7 +386,6 @@ contract LendingPoolConfigurator is VersionedInitializable, ILendingPoolConfigur
      * @param asset The address of the underlying asset of the reserve
      * @param reserveType Whether the reserve is boosted by a vault
      * @param reserveFactor The new reserve factor of the reserve
-     *
      */
     function setCod3xReserveFactor(address asset, bool reserveType, uint256 reserveFactor)
         external
@@ -432,7 +420,6 @@ contract LendingPoolConfigurator is VersionedInitializable, ILendingPoolConfigur
      * @param asset The address of the underlying asset of the reserve
      * @param reserveType Whether the reserve is boosted by a vault
      * @param rateStrategyAddress The new address of the interest strategy contract
-     *
      */
     function setReserveInterestRateStrategyAddress(
         address asset,
@@ -446,7 +433,6 @@ contract LendingPoolConfigurator is VersionedInitializable, ILendingPoolConfigur
     /**
      * @dev pauses or unpauses all the actions of the protocol, including aToken transfers
      * @param val true if protocol needs to be paused, false otherwise
-     *
      */
     function setPoolPause(bool val) external onlyEmergencyAdmin {
         pool.setPause(val);

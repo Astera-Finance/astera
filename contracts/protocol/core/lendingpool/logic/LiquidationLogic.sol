@@ -9,7 +9,7 @@ import {IERC20} from "../../../../../contracts/dependencies/openzeppelin/contrac
 
 import {IAToken} from "../../../../../contracts/interfaces/IAToken.sol";
 import {IVariableDebtToken} from "../../../../../contracts/interfaces/IVariableDebtToken.sol";
-import {IPriceOracleGetter} from "../../../../../contracts/interfaces/IPriceOracleGetter.sol";
+import {IOracle} from "../../../../../contracts/interfaces/IOracle.sol";
 import {GenericLogic} from
     "../../../../../contracts/protocol/core/lendingpool/logic/GenericLogic.sol";
 import {Helpers} from "../../../../../contracts/protocol/libraries/helpers/Helpers.sol";
@@ -43,17 +43,16 @@ library LiquidationLogic {
     /**
      * @dev Emitted when a borrower is liquidated
      * @param collateral The address of the collateral being liquidated
-     * @param principal The address of the reserve
+     * @param debtAsset The address of the reserve
      * @param user The address of the user being liquidated
      * @param debtToCover The total amount liquidated
      * @param liquidatedCollateralAmount The amount of collateral being liquidated
      * @param liquidator The address of the liquidator
      * @param receiveAToken true if the liquidator wants to receive aTokens, false otherwise
-     *
      */
     event LiquidationCall(
         address indexed collateral,
-        address indexed principal,
+        address indexed debtAsset,
         address indexed user,
         uint256 debtToCover,
         uint256 liquidatedCollateralAmount,
@@ -65,7 +64,6 @@ library LiquidationLogic {
      * @dev Emitted when a reserve is disabled as collateral for an user
      * @param reserve The address of the reserve
      * @param user The address of the user
-     *
      */
     event ReserveUsedAsCollateralDisabled(address indexed reserve, address indexed user);
 
@@ -73,7 +71,6 @@ library LiquidationLogic {
      * @dev Emitted when a reserve is enabled as collateral for an user
      * @param reserve The address of the reserve
      * @param user The address of the user
-     *
      */
     event ReserveUsedAsCollateralEnabled(address indexed reserve, address indexed user);
 
@@ -277,7 +274,6 @@ library LiquidationLogic {
      * @return collateralAmount: The maximum amount that is possible to liquidate given all the liquidation constraints
      *                           (user balance, close factor)
      *         debtAmountNeeded: The amount to repay with the liquidation
-     *
      */
     function _calculateAvailableCollateralToLiquidate(
         ILendingPoolAddressesProvider addressesProvider,
@@ -290,7 +286,7 @@ library LiquidationLogic {
     ) internal view returns (uint256, uint256) {
         uint256 collateralAmount;
         uint256 debtAmountNeeded;
-        IPriceOracleGetter oracle = IPriceOracleGetter(addressesProvider.getPriceOracle());
+        IOracle oracle = IOracle(addressesProvider.getPriceOracle());
 
         AvailableCollateralToLiquidateLocalVars memory vars;
 

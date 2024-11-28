@@ -2,16 +2,70 @@
 pragma solidity ^0.8.0;
 
 interface IMiniPoolAddressesProvider {
-    // Events
+    /**
+     * @dev Emitted when the mini pool implementation is updated
+     * @param newAddress The address of the new MiniPool implementation
+     */
     event MiniPoolUpdated(address indexed newAddress);
+
+    /**
+     * @dev Emitted when the aToken implementation is updated
+     * @param newAddress The address of the new aToken implementation
+     */
     event ATokenUpdated(address indexed newAddress);
+
+    /**
+     * @dev Emitted when a flow limit is updated
+     * @param limit The new flow limit value
+     */
     event FlowLimitUpdated(uint256 indexed limit);
+
+    /**
+     * @dev Emitted when a new mini pool proxy is created
+     * @param poolId The ID of the mini pool
+     * @param newAddress The address of the created proxy contract
+     */
     event ProxyCreated(uint256 poolId, address indexed newAddress);
+
+    /**
+     * @dev Emitted when a new proxy is created
+     * @param id The identifier of the proxy
+     * @param newAddress The address of the created proxy contract
+     */
     event ProxyCreated(bytes32 id, address indexed newAddress);
+
+    /**
+     * @dev Emitted when an address is set
+     * @param id The identifier of the address
+     * @param newAddress The address being set
+     * @param hasProxy Whether the address is set in a proxy contract
+     */
     event AddressSet(bytes32 id, address indexed newAddress, bool hasProxy);
+
+    /**
+     * @dev Emitted when the mini pool configurator implementation is updated
+     * @param newAddress The address of the new MiniPoolConfigurator implementation
+     */
     event MiniPoolConfiguratorUpdated(address indexed newAddress);
+
+    /**
+     * @dev Emitted when a pool admin is set
+     * @param newAdmin The address of the new pool admin
+     */
     event PoolAdminSet(address newAdmin);
+
+    /**
+     * @dev Emitted when a Cod3x treasury is set for a mini pool
+     * @param treasury The address of the Cod3x treasury
+     * @param miniPoolId The ID of the mini pool
+     */
     event Cod3xTreasurySet(address indexed treasury, uint256 miniPoolId);
+
+    /**
+     * @dev Emitted when a mini pool owner treasury is set
+     * @param treasury The address of the mini pool owner treasury
+     * @param miniPoolId The ID of the mini pool
+     */
     event MinipoolOwnerTreasurySet(address indexed treasury, uint256 miniPoolId);
 
     // Functions related to getting various addresses

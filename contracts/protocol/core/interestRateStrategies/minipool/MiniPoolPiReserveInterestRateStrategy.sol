@@ -7,7 +7,7 @@ import {IERC20} from "../../../../../contracts/dependencies/openzeppelin/contrac
 import {IAERC6909} from "../../../../../contracts/interfaces/IAERC6909.sol";
 import {IAToken} from "../../../../../contracts/interfaces/IAToken.sol";
 import {IMiniPool} from "../../../../../contracts/interfaces/IMiniPool.sol";
-import {IFlowLimiter} from "../../../../../contracts/interfaces/IFlowLimiter.sol";
+import {IFlowLimiter} from "../../../../../contracts/interfaces/base/IFlowLimiter.sol";
 import {IMiniPoolReserveInterestRateStrategy} from
     "../../../../../contracts/interfaces/IMiniPoolReserveInterestRateStrategy.sol";
 import {BasePiReserveRateStrategy} from

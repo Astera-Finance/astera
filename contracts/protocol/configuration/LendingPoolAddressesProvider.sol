@@ -68,7 +68,6 @@ contract LendingPoolAddressesProvider is Ownable, ILendingPoolAddressesProvider 
     /**
      * @dev Returns the address of the LendingPool proxy
      * @return The LendingPool proxy address
-     *
      */
     function getLendingPool() external view override returns (address) {
         return getAddress(LENDING_POOL);
@@ -78,7 +77,6 @@ contract LendingPoolAddressesProvider is Ownable, ILendingPoolAddressesProvider 
      * @dev Updates the implementation of the LendingPool, or creates the proxy
      * setting the new `pool` implementation on the first time calling it
      * @param pool The new LendingPool implementation
-     *
      */
     function setLendingPoolImpl(address pool) external override onlyOwner {
         _updateImpl(LENDING_POOL, pool);
@@ -88,7 +86,6 @@ contract LendingPoolAddressesProvider is Ownable, ILendingPoolAddressesProvider 
     /**
      * @dev Returns the address of the LendingPoolConfigurator proxy
      * @return The LendingPoolConfigurator proxy address
-     *
      */
     function getLendingPoolConfigurator() external view override returns (address) {
         return getAddress(LENDING_POOL_CONFIGURATOR);
@@ -98,7 +95,6 @@ contract LendingPoolAddressesProvider is Ownable, ILendingPoolAddressesProvider 
      * @dev Updates the implementation of the LendingPoolConfigurator, or creates the proxy
      * setting the new `configurator` implementation on the first time calling it
      * @param configurator The new LendingPoolConfigurator implementation
-     *
      */
     function setLendingPoolConfiguratorImpl(address configurator) external override onlyOwner {
         _updateImpl(LENDING_POOL_CONFIGURATOR, configurator);
@@ -108,7 +104,6 @@ contract LendingPoolAddressesProvider is Ownable, ILendingPoolAddressesProvider 
     /**
      * @dev The functions below are getters/setters of addresses that are outside the context
      * of the protocol hence the upgradable proxy pattern is not used
-     *
      */
     function getPoolAdmin() external view override returns (address) {
         return getAddress(POOL_ADMIN);
@@ -145,7 +140,6 @@ contract LendingPoolAddressesProvider is Ownable, ILendingPoolAddressesProvider 
      *   calls the initialize() function via upgradeToAndCall() in the proxy
      * @param id The id of the proxy to be updated
      * @param newAddress The address of the new implementation
-     *
      */
     function _updateImpl(bytes32 id, address newAddress) internal {
         address payable proxyAddress = payable(_addresses[id]);

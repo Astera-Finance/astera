@@ -49,7 +49,6 @@ import {LiquidationLogic} from
  * - All admin functions are callable by the LendingPoolConfigurator contract defined also in the
  *   LendingPoolAddressesProvider
  * @author Cod3x
- *
  */
 contract LendingPool is VersionedInitializable, ILendingPool, LendingPoolStorage {
     using WadRayMath for uint256;
@@ -92,7 +91,6 @@ contract LendingPool is VersionedInitializable, ILendingPool, LendingPoolStorage
      * - Caching the address of the LendingPoolAddressesProvider in order to reduce gas consumption
      *   on subsequent operations
      * @param provider The address of the LendingPoolAddressesProvider
-     *
      */
     function initialize(ILendingPoolAddressesProvider provider) public initializer {
         _addressesProvider = provider;
@@ -108,7 +106,6 @@ contract LendingPool is VersionedInitializable, ILendingPool, LendingPoolStorage
      * @param onBehalfOf The address that will receive the aTokens, same as msg.sender if the user
      *   wants to receive them on his own wallet, or a different address if the beneficiary of aTokens
      *   is a different wallet
-     *
      */
     function deposit(address asset, bool reserveType, uint256 amount, address onBehalfOf)
         external
@@ -134,7 +131,6 @@ contract LendingPool is VersionedInitializable, ILendingPool, LendingPoolStorage
      *   wants to receive it on his own wallet, or a different address if the beneficiary is a
      *   different wallet
      * @return The final amount withdrawn
-     *
      */
     function withdraw(address asset, bool reserveType, uint256 amount, address to)
         external
@@ -161,7 +157,6 @@ contract LendingPool is VersionedInitializable, ILendingPool, LendingPoolStorage
      * @param onBehalfOf Address of the user who will receive the debt. Should be the address of the borrower itself
      * calling the function if he wants to borrow against his own collateral, or the address of the credit delegator
      * if he has been given credit delegation allowance
-     *
      */
     function borrow(address asset, bool reserveType, uint256 amount, address onBehalfOf)
         external
@@ -199,7 +194,6 @@ contract LendingPool is VersionedInitializable, ILendingPool, LendingPoolStorage
      * user calling the function if he wants to reduce/remove his own debt, or the address of any other
      * other borrower whose debt should be removed
      * @return The final amount repaid
-     *
      */
     function repay(address asset, bool reserveType, uint256 amount, address onBehalfOf)
         external
@@ -214,6 +208,13 @@ contract LendingPool is VersionedInitializable, ILendingPool, LendingPoolStorage
         );
     }
 
+    /**
+     * @notice Repays a borrowed amount using aTokens.
+     * @param asset The address of the underlying asset of the reserve.
+     * @param reserveType Whether the reserve is boosted by a vault.
+     * @param amount The amount to repay.
+     * @return The final amount repaid.
+     */
     function repayWithATokens(address asset, bool reserveType, uint256 amount)
         external
         override
@@ -232,7 +233,6 @@ contract LendingPool is VersionedInitializable, ILendingPool, LendingPoolStorage
      * @param asset The address of the underlying asset deposited
      * @param reserveType Whether the reserve is boosted by a vault
      * @param useAsCollateral `true` if the user wants to use the deposit as collateral, `false` otherwise
-     *
      */
     function setUserUseReserveAsCollateral(address asset, bool reserveType, bool useAsCollateral)
         external
@@ -274,7 +274,6 @@ contract LendingPool is VersionedInitializable, ILendingPool, LendingPoolStorage
      * @param debtToCover The debt amount of borrowed `asset` the liquidator wants to cover
      * @param receiveAToken `true` if the liquidators wants to receive the collateral aTokens, `false` if he wants
      * to receive the underlying collateral asset directly
-     *
      */
     function liquidationCall(
         address collateralAsset,
@@ -315,7 +314,6 @@ contract LendingPool is VersionedInitializable, ILendingPool, LendingPoolStorage
      *   0    -> Don't open any debt, just revert if funds can't be transferred from the receiver
      *   =! 0 -> Open debt at variable rate for the value of the amount flash-borrowed to the `onBehalfOf` address
      * @param params Variadic packed params to pass to the receiver as extra information
-     *
      */
     function flashLoan(
         FlashLoanParams memory flashLoanParams,
@@ -342,6 +340,15 @@ contract LendingPool is VersionedInitializable, ILendingPool, LendingPoolStorage
         );
     }
 
+    /**
+     * @notice Borrows an unbacked amount of the reserve's underlying asset.
+     * @dev This function is restricted to minipools.
+     * @param asset The address of the underlying asset to borrow.
+     * @param reserveType Whether the reserve is boosted by a vault.
+     * @param amount The amount to borrow.
+     * @param miniPoolAddress The address of the mini pool.
+     * @param aTokenAddress The address of the aToken.
+     */
     function miniPoolBorrow(
         address asset,
         bool reserveType,
@@ -370,7 +377,6 @@ contract LendingPool is VersionedInitializable, ILendingPool, LendingPoolStorage
      * @dev Returns the state and configuration of the reserve
      * @param asset The address of the underlying asset of the reserve
      * @return The state of the reserve
-     *
      */
     function getReserveData(address asset, bool reserveType)
         external
@@ -390,7 +396,6 @@ contract LendingPool is VersionedInitializable, ILendingPool, LendingPoolStorage
      * @return currentLiquidationThreshold the liquidation threshold of the user
      * @return ltv the loan to value of the user
      * @return healthFactor the current health factor of the user
-     *
      */
     function getUserAccountData(address user)
         external
@@ -423,7 +428,6 @@ contract LendingPool is VersionedInitializable, ILendingPool, LendingPoolStorage
      * @dev Returns the configuration of the reserve
      * @param asset The address of the underlying asset of the reserve
      * @return The configuration of the reserve
-     *
      */
     function getConfiguration(address asset, bool reserveType)
         external
@@ -438,7 +442,6 @@ contract LendingPool is VersionedInitializable, ILendingPool, LendingPoolStorage
      * @dev Returns the configuration of the user across all the reserves
      * @param user The user address
      * @return The configuration of the user
-     *
      */
     function getUserConfiguration(address user)
         external
@@ -463,12 +466,13 @@ contract LendingPool is VersionedInitializable, ILendingPool, LendingPoolStorage
     {
         return _reserves[asset][reserveType].getNormalizedIncome();
     }
-
     /**
      * @dev Returns the normalized variable debt per unit of asset
      * @param asset The address of the underlying asset of the reserve
+     * @param reserveType Whether the reserve is boosted by a vault
      * @return The reserve normalized variable debt
      */
+
     function getReserveNormalizedVariableDebt(address asset, bool reserveType)
         external
         view
@@ -480,6 +484,7 @@ contract LendingPool is VersionedInitializable, ILendingPool, LendingPoolStorage
 
     /**
      * @dev Returns if the LendingPool is paused
+     * @return True if the pool is paused, false otherwise
      */
     function paused() external view override returns (bool) {
         return _paused;
@@ -487,7 +492,8 @@ contract LendingPool is VersionedInitializable, ILendingPool, LendingPoolStorage
 
     /**
      * @dev Returns the list of the initialized reserves
-     *
+     * @return _activeReserves Array of reserve addresses
+     * @return _activeReservesTypes Array indicating if each reserve is boosted by a vault
      */
     function getReservesList() external view override returns (address[] memory, bool[] memory) {
         address[] memory _activeReserves = new address[](_reservesCount);
@@ -500,14 +506,18 @@ contract LendingPool is VersionedInitializable, ILendingPool, LendingPoolStorage
         return (_activeReserves, _activeReservesTypes);
     }
 
+    /**
+     * @dev Returns the total number of initialized reserves
+     * @return The number of reserves
+     */
     function getReservesCount() external view override returns (uint256) {
         return _reservesCount;
     }
+
     /**
      * @dev Returns the cached LendingPoolAddressesProvider connected to this contract
-     *
+     * @return The addresses provider instance
      */
-
     function getAddressesProvider()
         external
         view
@@ -519,6 +529,7 @@ contract LendingPool is VersionedInitializable, ILendingPool, LendingPoolStorage
 
     /**
      * @dev Returns the fee on flash loans
+     * @return The total flash loan premium percentage
      */
     function FLASHLOAN_PREMIUM_TOTAL() public view returns (uint128) {
         return _flashLoanPremiumTotal;
@@ -526,6 +537,7 @@ contract LendingPool is VersionedInitializable, ILendingPool, LendingPoolStorage
 
     /**
      * @dev Returns the maximum number of reserves supported to be listed in this LendingPool
+     * @return The maximum number of reserves allowed
      */
     function MAX_NUMBER_RESERVES() public view returns (uint256) {
         return _maxNumberOfReserves;
@@ -578,7 +590,6 @@ contract LendingPool is VersionedInitializable, ILendingPool, LendingPoolStorage
      * @param aTokenAddress The address of the aToken that will be assigned to the reserve
      * @param aTokenAddress The address of the VariableDebtToken that will be assigned to the reserve
      * @param interestRateStrategyAddress The address of the interest rate strategy contract
-     *
      */
     function initReserve(
         address asset,
@@ -600,7 +611,6 @@ contract LendingPool is VersionedInitializable, ILendingPool, LendingPoolStorage
      * @param asset The address of the underlying asset of the reserve
      * @param reserveType Whether the reserve is boosted by a vault
      * @param rateStrategyAddress The address of the interest rate strategy contract
-     *
      */
     function setReserveInterestRateStrategyAddress(
         address asset,
@@ -616,7 +626,6 @@ contract LendingPool is VersionedInitializable, ILendingPool, LendingPoolStorage
      * @param asset The address of the underlying asset of the reserve
      * @param reserveType Whether the reserve is boosted by a vault
      * @param configuration The new configuration bitmap
-     *
      */
     function setConfiguration(address asset, bool reserveType, uint256 configuration)
         external
@@ -640,6 +649,11 @@ contract LendingPool is VersionedInitializable, ILendingPool, LendingPoolStorage
         }
     }
 
+    /**
+     * @notice Sets the farming percentage for a specific aToken.
+     * @param aTokenAddress The address of the aToken.
+     * @param farmingPct The new farming percentage.
+     */
     function setFarmingPct(address aTokenAddress, uint256 farmingPct)
         external
         override
@@ -648,6 +662,11 @@ contract LendingPool is VersionedInitializable, ILendingPool, LendingPoolStorage
         IAToken(aTokenAddress).setFarmingPct(farmingPct);
     }
 
+    /**
+     * @notice Sets the claiming threshold for a specific aToken.
+     * @param aTokenAddress The address of the aToken.
+     * @param claimingThreshold The new claiming threshold to be set.
+     */
     function setClaimingThreshold(address aTokenAddress, uint256 claimingThreshold)
         external
         override
@@ -656,34 +675,58 @@ contract LendingPool is VersionedInitializable, ILendingPool, LendingPoolStorage
         IAToken(aTokenAddress).setClaimingThreshold(claimingThreshold);
     }
 
-    function setFarmingPctDrift(address aTokenAddress, uint256 _farmingPctDrift)
+    /**
+     * @notice Sets the allowable drift for the farming percentage.
+     * @param aTokenAddress The address of the aToken.
+     * @param farmingPctDrift The allowable drift for the farming percentage.
+     */
+    function setFarmingPctDrift(address aTokenAddress, uint256 farmingPctDrift)
         external
         override
         onlyLendingPoolConfigurator
     {
-        IAToken(aTokenAddress).setFarmingPctDrift(_farmingPctDrift);
+        IAToken(aTokenAddress).setFarmingPctDrift(farmingPctDrift);
     }
 
-    function setProfitHandler(address aTokenAddress, address _profitHandler)
+    /**
+     * @notice Sets the profit handler for a specific aToken.
+     * @param aTokenAddress The address of the aToken.
+     * @param profitHandler The address of the profit handler.
+     */
+    function setProfitHandler(address aTokenAddress, address profitHandler)
         external
         override
         onlyLendingPoolConfigurator
     {
-        IAToken(aTokenAddress).setProfitHandler(_profitHandler);
+        IAToken(aTokenAddress).setProfitHandler(profitHandler);
     }
 
-    function setVault(address aTokenAddress, address _vault)
+    /**
+     * @notice Sets the rehypothecation vault for a specific aToken.
+     * @param aTokenAddress The address of the aToken.
+     * @param vault The address of the vault to be set.
+     */
+    function setVault(address aTokenAddress, address vault)
         external
         override
         onlyLendingPoolConfigurator
     {
-        IAToken(aTokenAddress).setVault(_vault);
+        IAToken(aTokenAddress).setVault(vault);
     }
 
+    /**
+     * @notice Rebalances the assets of a specific aToken rehypothecation vault.
+     * @param aTokenAddress The address of the aToken to be rebalanced.
+     */
     function rebalance(address aTokenAddress) external override onlyLendingPoolConfigurator {
         IAToken(aTokenAddress).rebalance();
     }
 
+    /**
+     * @notice Returns the total assets managed by a specific aToken/reserve.
+     * @param aTokenAddress The address of the aToken.
+     * @return The total amount of assets managed by the aToken.
+     */
     function getTotalManagedAssets(address aTokenAddress)
         external
         view
@@ -709,6 +752,10 @@ contract LendingPool is VersionedInitializable, ILendingPool, LendingPoolStorage
         }
     }
 
+    /**
+     * @notice Updates the flash loan fee.
+     * @param flashLoanPremiumTotal The new total premium to be applied on flash loans.
+     */
     function updateFlashLoanFee(uint128 flashLoanPremiumTotal)
         external
         override
@@ -721,6 +768,12 @@ contract LendingPool is VersionedInitializable, ILendingPool, LendingPoolStorage
         _flashLoanPremiumTotal = flashLoanPremiumTotal;
     }
 
+    /**
+     * @notice Sets the rewarder contract for a specific reserve.
+     * @param asset The address of the underlying asset of the reserve.
+     * @param reserveType Whether the reserve is boosted by a vault.
+     * @param rewarder The address of the rewarder contract to be set.
+     */
     function setRewarderForReserve(address asset, bool reserveType, address rewarder)
         external
         override
@@ -731,6 +784,12 @@ contract LendingPool is VersionedInitializable, ILendingPool, LendingPoolStorage
             .setIncentivesController(rewarder);
     }
 
+    /**
+     * @notice Sets the treasury for a specific reserve.
+     * @param asset The address of the underlying asset of the reserve.
+     * @param reserveType Whether the reserve is boosted by a vault.
+     * @param treasury The address of the treasury to be set.
+     */
     function setTreasury(address asset, bool reserveType, address treasury)
         external
         override

@@ -36,7 +36,6 @@ contract VariableDebtToken is
 
     /**
      * @dev Only lending pool can call functions marked by this modifier
-     *
      */
     modifier onlyLendingPool() {
         require(_msgSender() == address(_getLendingPool()), Errors.CT_CALLER_MUST_BE_LENDING_POOL);
@@ -87,7 +86,6 @@ contract VariableDebtToken is
     /**
      * @dev Gets the revision of the variable debt token implementation
      * @return The debt token implementation revision
-     *
      */
     function getRevision() internal pure virtual override returns (uint256) {
         return DEBT_TOKEN_REVISION;
@@ -96,7 +94,6 @@ contract VariableDebtToken is
     /**
      * @dev Calculates the accumulated debt balance of the user
      * @return The debt balance of the user
-     *
      */
     function balanceOf(address user) public view virtual override returns (uint256) {
         uint256 scaledBalance = super.balanceOf(user);
@@ -119,7 +116,6 @@ contract VariableDebtToken is
      * @param amount The amount of debt being minted
      * @param index The variable debt index of the reserve
      * @return `true` if the the previous balance of the user is 0
-     *
      */
     function mint(address user, address onBehalfOf, uint256 amount, uint256 index)
         external
@@ -149,7 +145,6 @@ contract VariableDebtToken is
      * @param user The user whose debt is getting burned
      * @param amount The amount getting burned
      * @param index The variable debt index of the reserve
-     *
      */
     function burn(address user, uint256 amount, uint256 index) external override onlyLendingPool {
         uint256 amountScaled = amount.rayDiv(index);
@@ -167,7 +162,6 @@ contract VariableDebtToken is
      * @param amount the maximum amount being delegated. Delegation will still
      * respect the liquidation constraints (even if delegated, a delegatee cannot
      * force a delegator HF to go below 1)
-     *
      */
     function approveDelegation(address delegatee, uint256 amount) external override {
         _borrowAllowances[_msgSender()][delegatee] = amount;
@@ -179,7 +173,6 @@ contract VariableDebtToken is
      * @param fromUser The user to giving allowance
      * @param toUser The user to give allowance to
      * @return the current allowance of toUser
-     *
      */
     function borrowAllowance(address fromUser, address toUser)
         external
@@ -193,7 +186,6 @@ contract VariableDebtToken is
     /**
      * @dev Being non transferrable, the debt token does not implement any of the
      * standard ERC20 functions for transfer and allowance.
-     *
      */
     function transfer(address recipient, uint256 amount) public virtual override returns (bool) {
         recipient;
@@ -256,7 +248,6 @@ contract VariableDebtToken is
     /**
      * @dev Returns the principal debt balance of the user from
      * @return The debt balance of the user since the last burn/mint action
-     *
      */
     function scaledBalanceOf(address user) public view virtual override returns (uint256) {
         return super.balanceOf(user);
@@ -265,7 +256,6 @@ contract VariableDebtToken is
     /**
      * @dev Returns the total supply of the variable debt token. Represents the total debt accrued by the users
      * @return The total supply
-     *
      */
     function totalSupply() public view virtual override returns (uint256) {
         return super.totalSupply().rayMul(
@@ -276,7 +266,6 @@ contract VariableDebtToken is
     /**
      * @dev Returns the scaled total supply of the variable debt token. Represents sum(debt/index)
      * @return the scaled total supply
-     *
      */
     function scaledTotalSupply() public view virtual override returns (uint256) {
         return super.totalSupply();
@@ -287,7 +276,6 @@ contract VariableDebtToken is
      * @param user The address of the user
      * @return The principal balance of the user
      * @return The principal total supply
-     *
      */
     function getScaledUserBalanceAndSupply(address user)
         external
@@ -299,8 +287,8 @@ contract VariableDebtToken is
     }
 
     /**
-     * @dev Returns the address of the underlying asset of this aToken (E.g. WETH for aWETH)
-     *
+     * @dev Returns the address of the underlying asset of this debt token (E.g. WETH for debtWETH)
+     * @return The address of the underlying asset
      */
     function UNDERLYING_ASSET_ADDRESS() public view returns (address) {
         return _underlyingAsset;
@@ -308,15 +296,15 @@ contract VariableDebtToken is
 
     /**
      * @dev Returns the address of the incentives controller contract
-     *
+     * @return The incentives controller address
      */
     function getIncentivesController() external view override returns (IRewarder) {
         return _getIncentivesController();
     }
 
     /**
-     * @dev Returns the address of the lending pool where this aToken is used
-     *
+     * @dev Returns the address of the lending pool where this debt token is used
+     * @return The lending pool address
      */
     function POOL() public view returns (ILendingPool) {
         return _pool;

@@ -3,7 +3,7 @@ pragma solidity 0.8.23;
 
 import {IRewardsController} from "../../../../contracts/interfaces/IRewardsController.sol";
 import {RewardsDistributor} from "./RewardsDistributor.sol";
-import {IScaledBalanceToken} from "../../../../contracts/interfaces/IScaledBalanceToken.sol";
+import {IScaledBalanceToken} from "../../../../contracts/interfaces/base/IScaledBalanceToken.sol";
 import {DistributionTypes} from
     "../../../../contracts/protocol/libraries/types/DistributionTypes.sol";
 import {IAERC6909} from "../../../../contracts/interfaces/IAERC6909.sol";

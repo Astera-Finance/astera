@@ -6,7 +6,7 @@ import {InitializableImmutableAdminUpgradeabilityProxy} from
     "../../../contracts/protocol/libraries/upgradeability/InitializableImmutableAdminUpgradeabilityProxy.sol";
 import {ILendingPoolAddressesProvider} from
     "../../../contracts/interfaces/ILendingPoolAddressesProvider.sol";
-import {IFlowLimiter} from "../../../contracts/interfaces/IFlowLimiter.sol";
+import {IFlowLimiter} from "../../../contracts/interfaces/base/IFlowLimiter.sol";
 import {IMiniPoolAddressesProvider} from
     "../../../contracts/interfaces/IMiniPoolAddressesProvider.sol";
 import {Errors} from "../libraries/helpers/Errors.sol";
@@ -155,7 +155,7 @@ contract MiniPoolAddressesProvider is Ownable, IMiniPoolAddressesProvider {
     }
 
     /* Setters */
-    /*___ OnlyOwner ___*/
+    // ======= OnlyOwner =======
     function setMiniPoolImpl(address impl, uint256 miniPoolId) external onlyOwner {
         bytes memory params =
             abi.encodeWithSignature("initialize(address,uint256)", address(this), miniPoolId);
@@ -206,7 +206,7 @@ contract MiniPoolAddressesProvider is Ownable, IMiniPoolAddressesProvider {
         emit MiniPoolConfiguratorUpdated(configuratorImpl);
     }
 
-    /*___ Only configurator ___*/
+    // ======= Only configurator =======
 
     function setFlowLimit(address asset, address miniPool, uint256 limit)
         external

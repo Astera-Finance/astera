@@ -1,62 +1,57 @@
 // SPDX-License-Identifier: agpl-3.0
 pragma solidity ^0.8.0;
 
-import {ILendingPool} from "../../contracts/interfaces/ILendingPool.sol";
-import {IRewarder} from "../../contracts/interfaces/IRewarder.sol";
+import {ILendingPool} from "../../../contracts/interfaces/ILendingPool.sol";
+import {IRewarder} from "../../../contracts/interfaces/IRewarder.sol";
 
 /**
- * @title IInitializableAToken
- * @notice Interface for the initialize function on AToken
+ * @title IInitializableDebtToken
+ * @notice Interface for the initialize function common between debt tokens
  * @author Cod3x
  *
  */
-interface IInitializableAToken {
+interface IInitializableDebtToken {
     /**
-     * @dev Emitted when an aToken is initialized
+     * @dev Emitted when a debt token is initialized
      * @param underlyingAsset The address of the underlying asset
      * @param pool The address of the associated lending pool
-     * @param treasury The address of the treasury
      * @param rewarder The address of the incentives controller for this aToken
-     * @param aTokenDecimals the decimals of the underlying
+     * @param debtTokenDecimals the decimals of the debt token
      * @param reserveType Whether the reserve is boosted by a vault
-     * @param aTokenName the name of the aToken
-     * @param aTokenSymbol the symbol of the aToken
+     * @param debtTokenName the name of the debt token
+     * @param debtTokenSymbol the symbol of the debt token
      * @param params A set of encoded parameters for additional initialization
      *
      */
     event Initialized(
         address indexed underlyingAsset,
         address indexed pool,
-        address treasury,
         address rewarder,
-        uint8 aTokenDecimals,
+        uint8 debtTokenDecimals,
         bool reserveType,
-        string aTokenName,
-        string aTokenSymbol,
+        string debtTokenName,
+        string debtTokenSymbol,
         bytes params
     );
 
     /**
-     * @dev Initializes the aToken
+     * @dev Initializes the debt token.
      * @param pool The address of the lending pool where this aToken will be used
-     * @param treasury The address of the Cod3x treasury, receiving the fees on this aToken
      * @param underlyingAsset The address of the underlying asset of this aToken (E.g. WETH for aWETH)
      * @param rewarder The smart contract managing potential incentives distribution
-     * @param aTokenDecimals The decimals of the aToken, same as the underlying asset's
+     * @param debtTokenDecimals The decimals of the debtToken, same as the underlying asset's
      * @param reserveType Whether the reserve is boosted by a vault
-     * @param aTokenName The name of the aToken
-     * @param aTokenSymbol The symbol of the aToken
-     * @param params Additional params to configure contract
+     * @param debtTokenName The name of the token
+     * @param debtTokenSymbol The symbol of the token
      */
     function initialize(
         ILendingPool pool,
-        address treasury,
         address underlyingAsset,
         IRewarder rewarder,
-        uint8 aTokenDecimals,
+        uint8 debtTokenDecimals,
         bool reserveType,
-        string calldata aTokenName,
-        string calldata aTokenSymbol,
+        string memory debtTokenName,
+        string memory debtTokenSymbol,
         bytes calldata params
     ) external;
 }

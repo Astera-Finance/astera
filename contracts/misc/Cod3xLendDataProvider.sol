@@ -18,7 +18,7 @@ import {IMiniPool} from "../../contracts/interfaces/IMiniPool.sol";
 import {IAERC6909} from "../../contracts/interfaces/IAERC6909.sol";
 import {Ownable} from "../../contracts/dependencies/openzeppelin/contracts/Ownable.sol";
 import {Errors} from "../../contracts/protocol/libraries/helpers/Errors.sol";
-import {IFlowLimiter} from "../../contracts/interfaces/IFlowLimiter.sol";
+import {IFlowLimiter} from "../../contracts/interfaces/base/IFlowLimiter.sol";
 
 struct UserReserveData {
     address aToken;

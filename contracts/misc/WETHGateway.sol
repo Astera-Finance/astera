@@ -3,8 +3,8 @@ pragma solidity 0.8.23;
 
 import {Ownable} from "../../contracts/dependencies/openzeppelin/contracts/Ownable.sol";
 import {IERC20} from "../../contracts/dependencies/openzeppelin/contracts/IERC20.sol";
-import {IWETH} from "../../contracts/interfaces/IWETH.sol";
-import {IWETHGateway} from "../../contracts/interfaces/IWETHGateway.sol";
+import {IWETH} from "../../contracts/interfaces/base/IWETH.sol";
+import {IWETHGateway} from "../../contracts/interfaces/base/IWETHGateway.sol";
 import {ILendingPool} from "../../contracts/interfaces/ILendingPool.sol";
 import {IAToken} from "../../contracts/interfaces/IAToken.sol";
 import {ReserveConfiguration} from
@@ -27,7 +27,6 @@ contract WETHGateway is IWETHGateway, Ownable {
     /**
      * @dev Sets the WETH address and the LendingPoolAddressesProvider address. Infinite approves lending pool.
      * @param weth Address of the Wrapped Ether contract
-     *
      */
     constructor(address weth) Ownable(msg.sender) {
         WETH = IWETH(weth);
@@ -42,7 +41,6 @@ contract WETHGateway is IWETHGateway, Ownable {
      * is minted.
      * @param lendingPool address of the targeted underlying lending pool
      * @param onBehalfOf address of the user who will receive the aTokens representing the deposit
-     *
      */
     function depositETH(address lendingPool, bool reserveType, address onBehalfOf)
         external

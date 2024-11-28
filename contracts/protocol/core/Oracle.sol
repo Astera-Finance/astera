@@ -3,40 +3,41 @@ pragma solidity 0.8.23;
 
 import {Ownable} from "../../../contracts/dependencies/openzeppelin/contracts/Ownable.sol";
 import {IERC20} from "../../../contracts/dependencies/openzeppelin/contracts/IERC20.sol";
-import {IPriceOracleGetter} from "../../../contracts/interfaces/IPriceOracleGetter.sol";
-import {IChainlinkAggregator} from "../../../contracts/interfaces/IChainlinkAggregator.sol";
+import {IOracle} from "../../../contracts/interfaces/IOracle.sol";
+import {IChainlinkAggregator} from "../../../contracts/interfaces/base/IChainlinkAggregator.sol";
 import {SafeERC20} from "../../../contracts/dependencies/openzeppelin/contracts/SafeERC20.sol";
 import {ATokenNonRebasing} from
     "../../../contracts/protocol/tokenization/ERC20/ATokenNonRebasing.sol";
 import {Errors} from "../../../contracts/protocol/libraries/helpers/Errors.sol";
 
-/// @title Oracle
-/// @author Cod3x
-/// @notice Proxy smart contract to get the price of an asset from a price source, with Chainlink Aggregator
-///         smart contracts as primary option
-/// - If the returned price by a Chainlink aggregator is <= 0, the call is forwarded to a fallbackOracle
-/// - Owned by the Cod3x Governance system, allowed to add sources for assets, replace them
-///   and change the fallbackOracle
-contract Oracle is IPriceOracleGetter, Ownable {
+/**
+ * @title Oracle
+ * @author Cod3x
+ * @notice Proxy smart contract to get the price of an asset from a price source, with Chainlink Aggregator
+ *         smart contracts as primary option
+ * - If the returned price by a Chainlink aggregator is <= 0, the call is forwarded to a fallbackOracle
+ * - Owned by the Cod3x Governance system, allowed to add sources for assets, replace them
+ *   and change the fallbackOracle
+ */
+contract Oracle is IOracle, Ownable {
     using SafeERC20 for IERC20;
-
-    event BaseCurrencySet(address indexed baseCurrency, uint256 baseCurrencyUnit);
-    event AssetSourceUpdated(address indexed asset, address indexed source);
-    event FallbackOracleUpdated(address indexed fallbackOracle);
 
     mapping(address => IChainlinkAggregator) private _assetsSources;
     mapping(address => uint256) private _assetToTimeout;
-    IPriceOracleGetter private _fallbackOracle;
+    IOracle private _fallbackOracle;
     address public immutable BASE_CURRENCY;
+    /// @dev if usd returns 0x0, if eth returns weth address
     uint256 public immutable BASE_CURRENCY_UNIT;
 
-    /// @notice Constructor
-    /// @param assets The addresses of the assets
-    /// @param sources The address of the source of each asset
-    /// @param fallbackOracle The address of the fallback oracle to use if the data of an
-    ///        aggregator is not consistent
-    /// @param baseCurrency the base currency used for the price quotes. If USD is used, base currency is 0x0
-    /// @param baseCurrencyUnit the unit of the base currency
+    /**
+     * @notice Constructor
+     * @param assets The addresses of the assets
+     * @param sources The address of the source of each asset
+     * @param fallbackOracle The address of the fallback oracle to use if the data of an
+     *        aggregator is not consistent
+     * @param baseCurrency the base currency used for the price quotes. If USD is used, base currency is 0x0
+     * @param baseCurrencyUnit the unit of the base currency
+     */
     constructor(
         address[] memory assets,
         address[] memory sources,
@@ -52,10 +53,12 @@ contract Oracle is IPriceOracleGetter, Ownable {
         emit BaseCurrencySet(baseCurrency, baseCurrencyUnit);
     }
 
-    /// @notice External function called by the Cod3x Governance to set or replace sources of assets
-    /// @param assets The addresses of the assets
-    /// @param sources The address of the source of each asset
-    /// @param timeouts The chainlink timeout of each asset
+    /**
+     * @notice External function called by the Cod3x Governance to set or replace sources of assets
+     * @param assets The addresses of the assets
+     * @param sources The address of the source of each asset
+     * @param timeouts The chainlink timeout of each asset
+     */
     function setAssetSources(
         address[] calldata assets,
         address[] calldata sources,
@@ -64,17 +67,21 @@ contract Oracle is IPriceOracleGetter, Ownable {
         _setAssetsSources(assets, sources, timeouts);
     }
 
-    /// @notice Sets the fallbackOracle
-    /// - Callable only by the Cod3x Governance
-    /// @param fallbackOracle The address of the fallbackOracle
+    /**
+     * @notice Sets the fallbackOracle
+     * - Callable only by the Cod3x Governance
+     * @param fallbackOracle The address of the fallbackOracle
+     */
     function setFallbackOracle(address fallbackOracle) external onlyOwner {
         _setFallbackOracle(fallbackOracle);
     }
 
-    /// @notice Internal function to set the sources for each asset
-    /// @param assets The addresses of the assets
-    /// @param sources The address of the source of each asset
-    /// @param timeouts The chainlink timeout of each asset
+    /**
+     * @notice Internal function to set the sources for each asset
+     * @param assets The addresses of the assets
+     * @param sources The address of the source of each asset
+     * @param timeouts The chainlink timeout of each asset
+     */
     function _setAssetsSources(
         address[] memory assets,
         address[] memory sources,
@@ -88,15 +95,19 @@ contract Oracle is IPriceOracleGetter, Ownable {
         }
     }
 
-    /// @notice Internal function to set the fallbackOracle
-    /// @param fallbackOracle The address of the fallbackOracle
+    /**
+     * @notice Internal function to set the fallbackOracle
+     * @param fallbackOracle The address of the fallbackOracle
+     */
     function _setFallbackOracle(address fallbackOracle) internal {
-        _fallbackOracle = IPriceOracleGetter(fallbackOracle);
+        _fallbackOracle = IOracle(fallbackOracle);
         emit FallbackOracleUpdated(fallbackOracle);
     }
 
-    /// @notice Gets an asset price by address
-    /// @param asset The asset address
+    /**
+     * @notice Gets an asset price by address
+     * @param asset The asset address
+     */
     function getAssetPrice(address asset) public view override returns (uint256) {
         address underlying;
 
@@ -140,8 +151,10 @@ contract Oracle is IPriceOracleGetter, Ownable {
         }
     }
 
-    /// @notice Gets a list of prices from a list of assets addresses
-    /// @param assets The list of assets addresses
+    /**
+     * @notice Gets a list of prices from a list of assets addresses
+     * @param assets The list of assets addresses
+     */
     function getAssetsPrices(address[] calldata assets) external view returns (uint256[] memory) {
         uint256[] memory prices = new uint256[](assets.length);
         for (uint256 i = 0; i < assets.length; i++) {
@@ -150,15 +163,19 @@ contract Oracle is IPriceOracleGetter, Ownable {
         return prices;
     }
 
-    /// @notice Gets the address of the source for an asset address
-    /// @param asset The address of the asset
-    /// @return address The address of the source
+    /**
+     * @notice Gets the address of the source for an asset address
+     * @param asset The address of the asset
+     * @return address The address of the source
+     */
     function getSourceOfAsset(address asset) external view returns (address) {
         return address(_assetsSources[asset]);
     }
 
-    /// @notice Gets the address of the fallback oracle
-    /// @return address The addres of the fallback oracle
+    /**
+     * @notice Gets the address of the fallback oracle
+     * @return address The addres of the fallback oracle
+     */
     function getFallbackOracle() external view returns (address) {
         return address(_fallbackOracle);
     }

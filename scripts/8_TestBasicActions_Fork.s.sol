@@ -300,7 +300,6 @@ contract TestBasicActions is Script, DeploymentUtils, Test {
          * Invariants:
          * 1. All users shall be able to withdraw the greater or equal amount of funds that they deposited
          * 2.
-         *
          */
         uint8 WBTC_OFFSET = 2;
         uint8 USDC_OFFSET = 1;

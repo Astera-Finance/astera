@@ -4,83 +4,107 @@ pragma solidity 0.8.23;
 /**
  * @title DataTypes
  * @author Cod3x
+ * @notice Library containing data structures used across the protocol
  */
 library DataTypes {
-    // refer to the whitepaper, section 1.1 basic concepts for a formal description of these properties.
+    /**
+     * @notice Stores all configuration and state for a lending pool reserve
+     * @param configuration Reserve configuration parameters
+     * @param liquidityIndex Current liquidity index, expressed in ray
+     * @param variableBorrowIndex Current variable borrow index, expressed in ray
+     * @param currentLiquidityRate Current supply interest rate, expressed in ray
+     * @param currentVariableBorrowRate Current variable borrow interest rate, expressed in ray
+     * @param lastUpdateTimestamp Timestamp of the last reserve update
+     * @param aTokenAddress Address of the aToken contract
+     * @param variableDebtTokenAddress Address of the variable debt token
+     * @param interestRateStrategyAddress Address of the interest rate strategy
+     * @param id Identifier of the reserve in the list of active reserves
+     */
     struct ReserveData {
-        //stores the reserve configuration
         ReserveConfigurationMap configuration;
-        //the liquidity index. Expressed in ray
         uint128 liquidityIndex;
-        //variable borrow index. Expressed in ray
         uint128 variableBorrowIndex;
-        //the current supply rate. Expressed in ray
         uint128 currentLiquidityRate;
-        //the current variable borrow rate. Expressed in ray
         uint128 currentVariableBorrowRate;
-        //timestamp of last update
         uint40 lastUpdateTimestamp;
-        //tokens addresses
         address aTokenAddress;
-        //variableDebtToken address
         address variableDebtTokenAddress;
-        //address of the interest rate strategy
         address interestRateStrategyAddress;
-        //the id of the reserve. Represents the position in the list of the active reserves
         uint8 id;
     }
 
+    /**
+     * @notice Stores all configuration and state for a minipool reserve
+     * @param configuration Reserve configuration parameters
+     * @param liquidityIndex Current liquidity index, expressed in ray
+     * @param variableBorrowIndex Current variable borrow index, expressed in ray
+     * @param currentLiquidityRate Current supply interest rate, expressed in ray
+     * @param currentVariableBorrowRate Current variable borrow interest rate, expressed in ray
+     * @param lastUpdateTimestamp Timestamp of the last reserve update
+     * @param aTokenAddress Address of the ERC6909 token contract for aTokens
+     * @param aTokenID ID of the ERC6909 aToken
+     * @param variableDebtTokenID ID of the ERC6909 debt token
+     * @param interestRateStrategyAddress Address of the interest rate strategy
+     * @param id Identifier of the reserve in the list of active reserves
+     */
     struct MiniPoolReserveData {
-        //stores the reserve configuration
         ReserveConfigurationMap configuration;
-        //the liquidity index. Expressed in ray
         uint128 liquidityIndex;
-        //variable borrow index. Expressed in ray
         uint128 variableBorrowIndex;
-        //the current supply rate. Expressed in ray
         uint128 currentLiquidityRate;
-        //the current variable borrow rate. Expressed in ray
         uint128 currentVariableBorrowRate;
-        //timestamp of last update
         uint40 lastUpdateTimestamp;
-        //tokens addresses
         address aTokenAddress;
-        //ERC6909 aToken ID.
         uint256 aTokenID;
-        //ERC6909 debt token ID.
         uint256 variableDebtTokenID;
-        //address of the interest rate strategy
         address interestRateStrategyAddress;
-        //the id of the reserve. Represents the position in the list of the active reserves
         uint8 id;
     }
 
+    /**
+     * @notice Stores the configuration parameters for a reserve
+     * @dev Encoded as a packed bitfield for gas optimization
+     * bits 0-15: Loan to Value ratio
+     * bits 16-31: Liquidation threshold
+     * bits 32-47: Liquidation bonus
+     * bits 48-55: Decimals of the underlying asset
+     * bit 56: Reserve is active
+     * bit 57: Reserve is frozen
+     * bit 58: Borrowing is enabled
+     * bit 59: Flashloan is enabled
+     * bits 60-75: Cod3x reserve factor
+     * bits 76-91: Minipool owner reserve factor
+     * bits 92-163: Deposit cap
+     * bit 164: Reserve type
+     * bits 165-255: Unused
+     */
     struct ReserveConfigurationMap {
-        //bit 0-15: LTV
-        //bit 16-31: Liq. threshold
-        //bit 32-47: Liq. bonus
-        //bit 48-55: Decimals
-        //bit 56: Reserve is active
-        //bit 57: reserve is frozen
-        //bit 58: borrowing is enabled
-        //bit 59: Flashloan is enabled
-        //bit 60-75: Cod3x reserve factor
-        //bit 76-91: Minipool owner reserve factor
-        //bit 92-163: deposit cap
-        //bit 164: reserve type
-        //bit 165-255: unused
         uint256 data;
     }
 
+    /**
+     * @notice Stores reference information for a reserve
+     * @param asset Address of the underlying asset
+     * @param reserveType Boolean indicating if the reserve is vault-boosted
+     */
     struct ReserveReference {
-        address asset; // underlying asset
-        bool reserveType; // if the reserve is vault-boosted
+        address asset;
+        bool reserveType;
     }
 
+    /**
+     * @notice Stores the user's configuration for all reserves
+     * @dev Encoded as a packed bitfield for gas optimization
+     */
     struct UserConfigurationMap {
         uint256 data;
     }
 
+    /**
+     * @notice Defines the possible interest rate modes for flashloans
+     * @param NONE The flashloan must not be paid back
+     * @param VARIABLE If not paid back, try to open a variable rate loan
+     */
     enum InterestRateMode {
         NONE,
         VARIABLE

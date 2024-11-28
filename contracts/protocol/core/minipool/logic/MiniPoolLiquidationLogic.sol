@@ -7,7 +7,7 @@ import {Errors} from "../../../../../contracts/protocol/libraries/helpers/Errors
 
 import {IERC20} from "../../../../../contracts/dependencies/openzeppelin/contracts/IERC20.sol";
 import {IAERC6909} from "../../../../../contracts/interfaces/IAERC6909.sol";
-import {IPriceOracleGetter} from "../../../../../contracts/interfaces/IPriceOracleGetter.sol";
+import {IOracle} from "../../../../../contracts/interfaces/IOracle.sol";
 import {MiniPoolGenericLogic} from
     "../../../../../contracts/protocol/core/minipool/logic/MiniPoolGenericLogic.sol";
 import {Helpers} from "../../../../../contracts/protocol/libraries/helpers/Helpers.sol";
@@ -48,7 +48,6 @@ library MiniPoolLiquidationLogic {
      * @param liquidatedCollateralAmount The amount of collateral being liquidated
      * @param liquidator The address of the liquidator
      * @param receiveAToken true if the liquidator wants to receive aTokens, false otherwise
-     *
      */
     event LiquidationCall(
         address indexed collateral,
@@ -64,7 +63,6 @@ library MiniPoolLiquidationLogic {
      * @dev Emitted when a reserve is disabled as collateral for an user
      * @param reserve The address of the reserve
      * @param user The address of the user
-     *
      */
     event ReserveUsedAsCollateralDisabled(address indexed reserve, address indexed user);
 
@@ -72,7 +70,6 @@ library MiniPoolLiquidationLogic {
      * @dev Emitted when a reserve is enabled as collateral for an user
      * @param reserve The address of the reserve
      * @param user The address of the user
-     *
      */
     event ReserveUsedAsCollateralEnabled(address indexed reserve, address indexed user);
 
@@ -284,7 +281,6 @@ library MiniPoolLiquidationLogic {
      * @return collateralAmount: The maximum amount that is possible to liquidate given all the liquidation constraints
      *                           (user balance, close factor)
      *         debtAmountNeeded: The amount to repay with the liquidation
-     *
      */
     function _calculateAvailableCollateralToLiquidate(
         IMiniPoolAddressesProvider addressesProvider,
@@ -297,7 +293,7 @@ library MiniPoolLiquidationLogic {
     ) internal view returns (uint256, uint256) {
         uint256 collateralAmount = 0;
         uint256 debtAmountNeeded = 0;
-        IPriceOracleGetter oracle = IPriceOracleGetter(addressesProvider.getPriceOracle());
+        IOracle oracle = IOracle(addressesProvider.getPriceOracle());
 
         AvailableCollateralToLiquidateLocalVars memory vars;
 

@@ -191,7 +191,6 @@ contract MiniPoolDepositBorrowTest is MiniPoolFixtures {
          * 2. Total supply of debtToken shall increase
          * 3. Health of user's position shall decrease
          * 4. User shall have borrowed assets
-         *
          */
 
         /* Fuzz vectors */
@@ -392,7 +391,6 @@ contract MiniPoolDepositBorrowTest is MiniPoolFixtures {
          * 3. Health of user's position shall decrease
          * 4. User shall have borrowed assets
          * 5. Treasury shall have some funds taken according to reserve factor
-         *
          */
 
         /* Fixed values */

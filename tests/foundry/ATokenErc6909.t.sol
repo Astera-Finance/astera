@@ -257,7 +257,6 @@ contract ATokenErc6909Test is Common {
          * 2. Perform one big mintToTreasury after some time elapsed
          * Invariants:
          * 1. Balances of treasury must reflect minting
-         *
          */
         uint8 nrOfIterations = 20;
 

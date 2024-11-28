@@ -30,6 +30,8 @@ contract ATokenERC6909 is IncentivizedERC6909, VersionedInitializable {
     using WadRayMath for uint256;
     using ReserveLogic for DataTypes.ReserveData;
 
+    // ======================= Events =======================
+
     event TokenInitialized(
         uint256 indexed id, string name, string symbol, uint8 decimals, address underlyingAsset
     );

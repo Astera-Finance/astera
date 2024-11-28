@@ -13,7 +13,7 @@ import {DataTypes} from "../../../../../contracts/protocol/libraries/types/DataT
 import {ILendingPool} from "../../../../../contracts/interfaces/ILendingPool.sol";
 import {IAERC6909} from "../../../../../contracts/interfaces/IAERC6909.sol";
 import {IAToken} from "../../../../../contracts/interfaces/IAToken.sol";
-import {IFlowLimiter} from "../../../../../contracts/interfaces/IFlowLimiter.sol";
+import {IFlowLimiter} from "../../../../../contracts/interfaces/base/IFlowLimiter.sol";
 import {IERC20} from "../../../../../contracts/dependencies/openzeppelin/contracts/IERC20.sol";
 
 /**
@@ -36,7 +36,6 @@ contract MiniPoolDefaultReserveInterestRateStrategy is IMiniPoolReserveInterestR
     /**
      * @dev this constant represents the utilization rate at which the pool aims to obtain most competitive borrow rates.
      * Expressed in ray
-     *
      */
     uint256 public immutable OPTIMAL_UTILIZATION_RATE;
 
@@ -44,7 +43,6 @@ contract MiniPoolDefaultReserveInterestRateStrategy is IMiniPoolReserveInterestR
      * @dev This constant represents the excess utilization rate above the optimal. It's always equal to
      * 1-optimal utilization rate. Added as a constant here for gas optimizations.
      * Expressed in ray
-     *
      */
     uint256 public immutable EXCESS_UTILIZATION_RATE;
 
@@ -106,7 +104,6 @@ contract MiniPoolDefaultReserveInterestRateStrategy is IMiniPoolReserveInterestR
      * @param totalVariableDebt The total borrowed from the reserve at a variable rate
      * @param reserveFactor The reserve portion of the interest that goes to the treasury of the market
      * @return The liquidity rate and the variable borrow rate
-     *
      */
     function calculateInterestRates(
         address asset,
@@ -165,7 +162,6 @@ contract MiniPoolDefaultReserveInterestRateStrategy is IMiniPoolReserveInterestR
      * @param totalVariableDebt The total borrowed from the reserve at a variable rate
      * @param reserveFactor The reserve portion of the interest that goes to the treasury of the market
      * @return The liquidity rateand the variable borrow rate
-     *
      */
     function calculateInterestRates(
         address underlying,

@@ -54,7 +54,6 @@ interface IRewarder {
      * @param asset The address of the user
      * @param userBalance The balance of the user of the asset in the lending pool
      * @param totalSupply The total supply of the asset in the lending pool
-     *
      */
     function handleAction(address asset, uint256 userBalance, uint256 totalSupply) external;
 
@@ -62,7 +61,6 @@ interface IRewarder {
      * @dev Returns the total of rewards of an user, already accrued + not yet accrued
      * @param user The address of the user
      * @return The rewards
-     *
      */
     function getRewardsBalance(address[] calldata assets, address user)
         external
@@ -74,7 +72,6 @@ interface IRewarder {
      * @param amount Amount of rewards to claim
      * @param to Address that will be receiving the rewards
      * @return Rewards claimed
-     *
      */
     function claimRewards(address[] calldata assets, uint256 amount, address to)
         external
@@ -87,7 +84,6 @@ interface IRewarder {
      * @param user Address to check and claim rewards
      * @param to Address that will be receiving the rewards
      * @return Rewards claimed
-     *
      */
     function claimRewardsOnBehalf(
         address[] calldata assets,

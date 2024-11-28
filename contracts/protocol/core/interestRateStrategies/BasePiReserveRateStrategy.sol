@@ -24,13 +24,13 @@ abstract contract BasePiReserveRateStrategy is Ownable {
     using WadRayMath for int256;
     using PercentageMath for uint256;
 
-    address public immutable _addressProvider;
-    address public immutable _asset; // This strategy contract needs to be associated to a unique market.
-    bool public immutable _assetReserveType; // This strategy contract needs to be associated to a unique market.
-
     int256 public constant M_FACTOR = 213e25;
     uint256 public constant N_FACTOR = 4;
     int256 public constant RAY = 1e27;
+
+    address public immutable _addressProvider;
+    address public immutable _asset; // This strategy contract needs to be associated to a unique market.
+    bool public immutable _assetReserveType; // This strategy contract needs to be associated to a unique market.
 
     int256 public _minControllerError;
     int256 public _maxErrIAmp;
@@ -44,12 +44,15 @@ abstract contract BasePiReserveRateStrategy is Ownable {
     uint256 public _lastTimestamp;
     int256 public _errI;
 
-    // Errors
-    error PiReserveInterestRateStrategy__ACCESS_RESTRICTED_TO_LENDING_POOL();
-    error PiReserveInterestRateStrategy__BASE_BORROW_RATE_CANT_BE_NEGATIVE();
-    error PiReserveInterestRateStrategy__U0_GREATER_THAN_RAY();
-
     // Events
+    /**
+     * @notice Emitted when interest rates are calculated using the PI controller
+     * @param utilizationRate The current utilization rate of the reserve
+     * @param currentLiquidityRate The calculated liquidity rate
+     * @param currentVariableBorrowRate The calculated variable borrow rate
+     * @param err The error between current and optimal utilization rate
+     * @param controllerErr The error used by the PI controller
+     */
     event PidLog(
         uint256 utilizationRate,
         uint256 currentLiquidityRate,
@@ -69,7 +72,7 @@ abstract contract BasePiReserveRateStrategy is Ownable {
         uint256 ki
     ) Ownable(msg.sender) {
         if (optimalUtilizationRate >= uint256(RAY)) {
-            revert PiReserveInterestRateStrategy__U0_GREATER_THAN_RAY();
+            revert(Errors.IR_U0_GREATER_THAN_RAY);
         }
         _optimalUtilizationRate = optimalUtilizationRate;
         _asset = asset;
@@ -82,13 +85,13 @@ abstract contract BasePiReserveRateStrategy is Ownable {
         _maxErrIAmp = int256(_ki).rayMulInt(-RAY * maxITimeAmp);
 
         if (transferFunction(type(int256).min) < 0) {
-            revert PiReserveInterestRateStrategy__BASE_BORROW_RATE_CANT_BE_NEGATIVE();
+            revert(Errors.IR_BASE_BORROW_RATE_CANT_BE_NEGATIVE);
         }
     }
 
     modifier onlyLendingPool() {
         if (msg.sender != _getLendingPool()) {
-            revert PiReserveInterestRateStrategy__ACCESS_RESTRICTED_TO_LENDING_POOL();
+            revert(Errors.IR_ACCESS_RESTRICTED_TO_LENDING_POOL);
         }
         _;
     }
@@ -123,7 +126,7 @@ abstract contract BasePiReserveRateStrategy is Ownable {
 
     function setOptimalUtilizationRate(uint256 optimalUtilizationRate) external onlyOwner {
         if (optimalUtilizationRate >= uint256(RAY)) {
-            revert PiReserveInterestRateStrategy__U0_GREATER_THAN_RAY();
+            revert(Errors.IR_U0_GREATER_THAN_RAY);
         }
         _optimalUtilizationRate = optimalUtilizationRate;
     }
@@ -131,7 +134,7 @@ abstract contract BasePiReserveRateStrategy is Ownable {
     function setMinControllerError(int256 minControllerError) external onlyOwner {
         _minControllerError = minControllerError;
         if (transferFunction(type(int256).min) < 0) {
-            revert PiReserveInterestRateStrategy__BASE_BORROW_RATE_CANT_BE_NEGATIVE();
+            revert(Errors.IR_BASE_BORROW_RATE_CANT_BE_NEGATIVE);
         }
     }
 
@@ -191,7 +194,6 @@ abstract contract BasePiReserveRateStrategy is Ownable {
      * @param totalVariableDebt The total borrowed from the reserve at a variable rate
      * @param reserveFactor The reserve portion of the interest that goes to the treasury of the market
      * @return The liquidity rateand the variable borrow rate
-     *
      */
     function _calculateInterestRates(
         address,
@@ -286,7 +288,6 @@ abstract contract BasePiReserveRateStrategy is Ownable {
      * @dev Gets the minipool owner reserve factor of the reserve
      * @param self The reserve configuration
      * @return The reserve factor
-     *
      */
     function getMinipoolOwnerReserveFactor(DataTypes.ReserveConfigurationMap memory self)
         internal

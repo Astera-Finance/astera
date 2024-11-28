@@ -10,7 +10,7 @@ import {ILendingPoolAddressesProvider} from
 import {IERC20} from "../../../contracts/dependencies/openzeppelin/contracts/IERC20.sol";
 import {IMiniPoolAddressesProvider} from
     "../../../contracts/interfaces/IMiniPoolAddressesProvider.sol";
-import {IFlowLimiter} from "../../../contracts/interfaces/IFlowLimiter.sol";
+import {IFlowLimiter} from "../../../contracts/interfaces/base/IFlowLimiter.sol";
 import {IAToken} from "../../../contracts/interfaces/IAToken.sol";
 import {IAERC6909} from "../../../contracts/interfaces/IAERC6909.sol";
 import {Errors} from "../../../contracts/protocol/libraries/helpers/Errors.sol";
@@ -60,7 +60,6 @@ contract MockMinipoolReserveInterestRateStrategy {
      * @param totalVariableDebt The total borrowed from the reserve at a variable rate
      * @param reserveFactor The reserve portion of the interest that goes to the treasury of the market
      * @return The liquidity rate and the variable borrow rate
-     *
      */
     function calculateInterestRates(
         address reserve,

@@ -2,7 +2,7 @@
 pragma solidity 0.8.23;
 
 import {IERC20} from "../../../../contracts/dependencies/openzeppelin/contracts/IERC20.sol";
-import {IERC6909} from "../../../../contracts/interfaces/IERC6909.sol";
+import {IERC6909} from "../../../../contracts/interfaces/base/IERC6909.sol";
 import {DataTypes} from "../../../../contracts/protocol/libraries/types/DataTypes.sol";
 
 /**
@@ -15,7 +15,6 @@ library Helpers {
      * @param user The user address
      * @param reserve The reserve data object
      * @return The variable debt balance
-     *
      */
     function getUserCurrentDebt(address user, DataTypes.ReserveData storage reserve)
         internal

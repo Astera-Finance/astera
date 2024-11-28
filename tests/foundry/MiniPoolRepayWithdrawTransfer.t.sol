@@ -129,7 +129,6 @@ contract MiniPoolRepayWithdrawTransferTest is MiniPoolDepositBorrowTest {
          * 2. Total supply of debtToken shall decrease
          * 3. Health of user's position shall increase
          * 4. User's borrowed assets balance shall decrease
-         *
          */
 
         /* Fuzz vectors */
@@ -435,8 +434,7 @@ contract MiniPoolRepayWithdrawTransferTest is MiniPoolDepositBorrowTest {
         vm.startPrank(user);
         address oracle = miniPoolContracts.miniPoolAddressesProvider.getPriceOracle();
         console.log(
-            "Price of token: ",
-            IPriceOracleGetter(oracle).getAssetPrice(address(collateralParams.token))
+            "Price of token: ", IOracle(oracle).getAssetPrice(address(collateralParams.token))
         );
         console.log("Withdraw token");
         IMiniPool(miniPool).withdraw(
@@ -486,7 +484,6 @@ contract MiniPoolRepayWithdrawTransferTest is MiniPoolDepositBorrowTest {
          * Invariants:
          * 1. All users shall be able to withdraw the greater or equal amount of funds that they deposited
          * 2.
-         *
          */
         uint8 WBTC_OFFSET = 1;
         uint8 USDC_OFFSET = 0;
@@ -647,7 +644,6 @@ contract MiniPoolRepayWithdrawTransferTest is MiniPoolDepositBorrowTest {
          * 8. User withdraws all the funds with accrued interests
          * Invariants:
          * 1. User shall be able to withdraw all user's balance with accrued interests (always greater than deposit)
-         *
          */
         /* Constants */
         uint8 WBTC_OFFSET = 1;

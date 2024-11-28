@@ -3,7 +3,7 @@ pragma solidity 0.8.23;
 
 import {IERC20} from "../../../../../contracts/dependencies/openzeppelin/contracts/IERC20.sol";
 import {SafeERC20} from "../../../../../contracts/dependencies/openzeppelin/contracts/SafeERC20.sol";
-import {IPriceOracleGetter} from "../../../../../contracts/interfaces/IPriceOracleGetter.sol";
+import {IOracle} from "../../../../../contracts/interfaces/IOracle.sol";
 import {IMiniPoolAddressesProvider} from
     "../../../../../contracts/interfaces/IMiniPoolAddressesProvider.sol";
 import {IAERC6909} from "../../../../../contracts/interfaces/IAERC6909.sol";
@@ -81,7 +81,6 @@ library MiniPoolBorrowLogic {
      * the average Loan To Value, the average Liquidation Ratio, and the Health factor.
      * @param params the params necessary to get the correct borrow data
      * @return The total collateral and total debt of the user in ETH, the avg ltv, liquidation threshold and the HF
-     *
      */
     function calculateUserAccountDataVolatile(
         CalculateUserAccountDataVolatileParams memory params,
@@ -109,8 +108,7 @@ library MiniPoolBorrowLogic {
 
             vars.tokenUnit = 10 ** vars.decimals;
 
-            vars.reserveUnitPrice =
-                IPriceOracleGetter(params.oracle).getAssetPrice(vars.currentReserveAddress);
+            vars.reserveUnitPrice = IOracle(params.oracle).getAssetPrice(vars.currentReserveAddress);
 
             if (vars.liquidationThreshold != 0 && userConfig.isUsingAsCollateral(vars.i)) {
                 vars.compoundedLiquidityBalance = IAERC6909(currentReserve.aTokenAddress).balanceOf(
@@ -234,7 +232,7 @@ library MiniPoolBorrowLogic {
         view
         returns (uint256)
     {
-        return IPriceOracleGetter(oracle).getAssetPrice(asset) * amount / (10 ** decimals);
+        return IOracle(oracle).getAssetPrice(asset) * amount / (10 ** decimals);
     }
 
     struct repayParams {

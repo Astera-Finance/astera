@@ -79,7 +79,6 @@ library FlashLoanLogic {
      * as long as the amount taken plus a fee is returned.
      * IMPORTANT There are security concerns for developers of flashloan receiver contracts that must be kept into consideration.
      * @param flashLoanParams struct containing receiverAddress, onBehalfOf, assets, amounts
-     *
      */
     function flashLoan(
         FlashLoanParams memory flashLoanParams,

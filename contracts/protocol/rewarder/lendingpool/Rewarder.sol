@@ -16,8 +16,6 @@ contract Rewarder is RewardsController {
     // reward => reward vault
     mapping(address => address) internal _rewardsVault;
 
-    event RewardsVaultUpdated(address indexed vault);
-
     constructor() RewardsController(msg.sender) {}
 
     function setRewardsVault(address vault, address reward) external onlyOwner {

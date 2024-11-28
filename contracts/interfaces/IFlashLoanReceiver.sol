@@ -10,7 +10,6 @@ import {ILendingPool} from "../../contracts/interfaces/ILendingPool.sol";
  * @notice Interface for the fee IFlashLoanReceiver.
  * @author Cod3x
  * @dev implement this interface to develop a flashloan-compatible flashLoanReceiver contract
- *
  */
 interface IFlashLoanReceiver {
     function executeOperation(

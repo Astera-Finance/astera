@@ -20,7 +20,6 @@ contract ATokenNonRebasing {
 
     /**
      * @return The name of the share
-     *
      */
     function name() public view returns (string memory) {
         return _aToken.name();
@@ -28,7 +27,6 @@ contract ATokenNonRebasing {
 
     /**
      * @return The symbol of the share
-     *
      */
     function symbol() public view returns (string memory) {
         return _aToken.symbol();
@@ -36,7 +34,6 @@ contract ATokenNonRebasing {
 
     /**
      * @return The decimals of the share
-     *
      */
     function decimals() public view returns (uint8) {
         return _aToken.decimals();
@@ -44,7 +41,6 @@ contract ATokenNonRebasing {
 
     /**
      * @return The total supply of the share
-     *
      */
     function totalSupply() public view virtual returns (uint256) {
         return _aToken.scaledTotalSupply();
@@ -80,7 +76,6 @@ contract ATokenNonRebasing {
 
     /**
      * @return The balance of the share
-     *
      */
     function balanceOf(address account) public view virtual returns (uint256) {
         return _aToken.scaledBalanceOf(account);
@@ -91,7 +86,6 @@ contract ATokenNonRebasing {
      * @param recipient The recipient of the tokens
      * @param amountShare The amount of shares being transferred
      * @return `true` if the transfer succeeds, `false` otherwise
-     *
      */
     function transfer(address recipient, uint256 amountShare) public virtual returns (bool) {
         _aToken.transferShare(msg.sender, recipient, amountShare);
@@ -105,7 +99,6 @@ contract ATokenNonRebasing {
      * @param owner The owner of the tokens
      * @param spender The user allowed to spend the owner's tokens
      * @return The amount of owner's shares spender is allowed to spend
-     *
      */
     function allowance(address owner, address spender) public view virtual returns (uint256) {
         return _aToken.shareAllowances(owner, spender);
@@ -116,7 +109,6 @@ contract ATokenNonRebasing {
      * @param spender The user allowed to spend msg.sender tokens
      * @param amountShare The amount of shares being approved
      * @return `true`
-     *
      */
     function approve(address spender, uint256 amountShare) public virtual returns (bool) {
         _approve(msg.sender, spender, amountShare);
@@ -129,7 +121,6 @@ contract ATokenNonRebasing {
      * @param recipient The recipient of the tokens
      * @param amountShare The amount of shares being transferred
      * @return `true` if the transfer succeeds, `false` otherwise
-     *
      */
     function transferFrom(address sender, address recipient, uint256 amountShare)
         public
@@ -149,7 +140,6 @@ contract ATokenNonRebasing {
      * @param spender The user allowed to spend on behalf of msg.sender
      * @param addedValue The amount being added to the allowance
      * @return `true`
-     *
      */
     function increaseAllowance(address spender, uint256 addedValue) public virtual returns (bool) {
         _approve(msg.sender, spender, _aToken.shareAllowances(msg.sender, spender) + addedValue);
@@ -161,7 +151,6 @@ contract ATokenNonRebasing {
      * @param spender The user allowed to spend on behalf of msg.sender
      * @param subtractedValue The amount being subtracted to the allowance
      * @return `true`
-     *
      */
     function decreaseAllowance(address spender, uint256 subtractedValue)
         public

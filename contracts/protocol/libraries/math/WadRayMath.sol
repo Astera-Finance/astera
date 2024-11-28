@@ -21,34 +21,22 @@ library WadRayMath {
 
     uint256 internal constant WAD_RAY_RATIO = 1e9;
 
-    /**
-     * @return One ray, 1e27
-     *
-     */
+    /// @return One ray, 1e27
     function ray() internal pure returns (uint256) {
         return RAY;
     }
 
-    /**
-     * @return One wad, 1e18
-     *
-     */
+    /// @return One wad, 1e18
     function wad() internal pure returns (uint256) {
         return WAD;
     }
 
-    /**
-     * @return Half ray, 1e27/2
-     *
-     */
+    /// @return Half ray, 1e27/2
     function halfRay() internal pure returns (uint256) {
         return halfRAY;
     }
 
-    /**
-     * @return Half ray, 1e18/2
-     *
-     */
+    /// @return Half wad, 1e18/2
     function halfWad() internal pure returns (uint256) {
         return halfWAD;
     }
@@ -58,7 +46,6 @@ library WadRayMath {
      * @param a Wad
      * @param b Wad
      * @return The result of a*b, in wad
-     *
      */
     function wadMul(uint256 a, uint256 b) internal pure returns (uint256) {
         if (a == 0 || b == 0) {
@@ -75,7 +62,6 @@ library WadRayMath {
      * @param a Wad
      * @param b Wad
      * @return The result of a/b, in wad
-     *
      */
     function wadDiv(uint256 a, uint256 b) internal pure returns (uint256) {
         require(b != 0, Errors.MATH_DIVISION_BY_ZERO);
@@ -91,7 +77,6 @@ library WadRayMath {
      * @param a Wad
      * @param b Wad
      * @return The result of a/b, in wad
-     *
      */
     function wadDivDown(uint256 a, uint256 b) internal pure returns (uint256) {
         require(b != 0, Errors.MATH_DIVISION_BY_ZERO);
@@ -106,7 +91,6 @@ library WadRayMath {
      * @param a Ray
      * @param b Ray
      * @return The result of a*b, in ray
-     *
      */
     function rayMul(uint256 a, uint256 b) internal pure returns (uint256) {
         if (a == 0 || b == 0) {
@@ -123,7 +107,6 @@ library WadRayMath {
      * @param a Ray
      * @param b Ray
      * @return The result of a/b, in ray
-     *
      */
     function rayDiv(uint256 a, uint256 b) internal pure returns (uint256) {
         require(b != 0, Errors.MATH_DIVISION_BY_ZERO);
@@ -138,7 +121,6 @@ library WadRayMath {
      * @dev Casts ray down to wad
      * @param a Ray
      * @return a casted to wad, rounded half up to the nearest wad
-     *
      */
     function rayToWad(uint256 a) internal pure returns (uint256) {
         uint256 halfRatio = WAD_RAY_RATIO / 2;
@@ -152,7 +134,6 @@ library WadRayMath {
      * @dev Converts wad up to ray
      * @param a Wad
      * @return a converted in ray
-     *
      */
     function wadToRay(uint256 a) internal pure returns (uint256) {
         uint256 result = a * WAD_RAY_RATIO;
@@ -168,7 +149,6 @@ library WadRayMath {
      * @param a Ray int
      * @param b Ray int
      * @return result The result of a*b, in ray
-     *
      */
     function rayMulInt(int256 a, int256 b) internal pure returns (int256) {
         int256 rawMul = a * b;
@@ -188,7 +168,6 @@ library WadRayMath {
      * @param a Ray int
      * @param b Ray int
      * @return The result of a/b, in ray
-     *
      */
     function rayDivInt(int256 a, int256 b) internal pure returns (int256) {
         require(b != 0, Errors.MATH_DIVISION_BY_ZERO);
@@ -207,7 +186,6 @@ library WadRayMath {
      * @param base Ray int
      * @param exponent power exponent, not ray
      * @return result The result of base**exponent, in ray
-     *
      */
     function rayPowerInt(int256 base, uint256 exponent) internal pure returns (int256) {
         if (exponent == 0) {

@@ -118,7 +118,6 @@ contract PiReserveInterestRateStrategy is
      * @param reserveFactor The reserve portion of the interest that goes to the treasury of the market
      * @return currentLiquidityRate The liquidity rate
      * @return currentVariableBorrowRate The variable borrow rate
-     *
      */
     function calculateInterestRates(
         address asset,

@@ -9,7 +9,7 @@ import {UserConfiguration} from
     "../../../../../contracts/protocol/libraries/configuration/UserConfiguration.sol";
 import {WadRayMath} from "../../../../../contracts/protocol/libraries/math/WadRayMath.sol";
 import {PercentageMath} from "../../../../../contracts/protocol/libraries/math/PercentageMath.sol";
-import {IPriceOracleGetter} from "../../../../../contracts/interfaces/IPriceOracleGetter.sol";
+import {IOracle} from "../../../../../contracts/interfaces/IOracle.sol";
 import {DataTypes} from "../../../../../contracts/protocol/libraries/types/DataTypes.sol";
 
 /**
@@ -48,7 +48,6 @@ library MiniPoolGenericLogic {
      * @param reservesList The list of all the active reserves
      * @param oracle The address of the oracle contract
      * @return true if the decrease of the balance is allowed
-     *
      */
     function balanceDecreaseAllowed(
         address asset,
@@ -108,7 +107,7 @@ library MiniPoolGenericLogic {
         uint256 amount,
         uint256 decimals
     ) internal view returns (uint256) {
-        return IPriceOracleGetter(oracle).getAssetPrice(asset) * amount / (10 ** decimals);
+        return IOracle(oracle).getAssetPrice(asset) * amount / (10 ** decimals);
     }
 
     struct CalculateUserAccountDataLocalVars {
@@ -138,7 +137,6 @@ library MiniPoolGenericLogic {
      * @param reservesList The list of the available reserves
      * @param oracle The price oracle address
      * @return The total collateral and total debt of the user in ETH, the avg ltv, liquidation threshold and the HF
-     *
      */
     function calculateUserAccountData(
         address user,
@@ -167,8 +165,7 @@ library MiniPoolGenericLogic {
 
             vars.tokenUnit = 10 ** vars.decimals;
 
-            vars.reserveUnitPrice =
-                IPriceOracleGetter(oracle).getAssetPrice(vars.currentReserveAddress);
+            vars.reserveUnitPrice = IOracle(oracle).getAssetPrice(vars.currentReserveAddress);
 
             if (vars.liquidationThreshold != 0 && userConfig.isUsingAsCollateral(vars.i)) {
                 vars.compoundedLiquidityBalance =
@@ -216,7 +213,6 @@ library MiniPoolGenericLogic {
      * @param totalDebtInETH The total debt in ETH
      * @param liquidationThreshold The avg liquidation threshold
      * @return The health factor calculated from the balances provided
-     *
      */
     function calculateHealthFactorFromBalances(
         uint256 totalCollateralInETH,
@@ -235,7 +231,6 @@ library MiniPoolGenericLogic {
      * @param totalDebtInETH The total borrow balance
      * @param ltv The average loan to value
      * @return the amount available to borrow in ETH for the user
-     *
      */
     function calculateAvailableBorrowsETH(
         uint256 totalCollateralInETH,

@@ -27,7 +27,6 @@ contract DefaultReserveInterestRateStrategy is IReserveInterestRateStrategy {
     /**
      * @dev this constant represents the utilization rate at which the pool aims to obtain most competitive borrow rates.
      * Expressed in ray
-     *
      */
     uint256 public immutable OPTIMAL_UTILIZATION_RATE;
 
@@ -35,7 +34,6 @@ contract DefaultReserveInterestRateStrategy is IReserveInterestRateStrategy {
      * @dev This constant represents the excess utilization rate above the optimal. It's always equal to
      * 1-optimal utilization rate. Added as a constant here for gas optimizations.
      * Expressed in ray
-     *
      */
     uint256 public immutable EXCESS_UTILIZATION_RATE;
 
@@ -90,7 +88,6 @@ contract DefaultReserveInterestRateStrategy is IReserveInterestRateStrategy {
      * @param totalVariableDebt The total borrowed from the reserve at a variable rate
      * @param reserveFactor The reserve portion of the interest that goes to the treasury of the market
      * @return The liquidity rate and the variable borrow rate
-     *
      */
     function calculateInterestRates(
         address asset,
@@ -124,7 +121,6 @@ contract DefaultReserveInterestRateStrategy is IReserveInterestRateStrategy {
      * @param totalVariableDebt The total borrowed from the reserve at a variable rate
      * @param reserveFactor The reserve portion of the interest that goes to the treasury of the market
      * @return The liquidity rateand the variable borrow rate
-     *
      */
     function calculateInterestRates(
         address,
