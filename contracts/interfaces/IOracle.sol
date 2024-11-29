@@ -2,17 +2,50 @@
 pragma solidity ^0.8.0;
 
 /**
- * @title IOracle interface
- * @notice Interface for the oracle.
- *
+ * @title IOracle interface.
+ * @author Cod3x
  */
 interface IOracle {
-    function BASE_CURRENCY() external view returns (address); // if usd returns 0x0, if eth returns weth address
-    function BASE_CURRENCY_UNIT() external view returns (uint256);
+    // Events
+    /**
+     * @dev Emitted when the base currency is set
+     * @param baseCurrency The address of the base currency
+     * @param baseCurrencyUnit The unit of the base currency
+     */
+    event BaseCurrencySet(address indexed baseCurrency, uint256 baseCurrencyUnit);
 
     /**
-     *
-     * @dev returns the asset price in ETH
+     * @dev Emitted when an asset source is updated
+     * @param asset The address of the asset
+     * @param source The address of the price source
      */
+    event AssetSourceUpdated(address indexed asset, address indexed source);
+
+    /**
+     * @dev Emitted when the fallback oracle is updated
+     * @param fallbackOracle The address of the new fallback oracle
+     */
+    event FallbackOracleUpdated(address indexed fallbackOracle);
+
+    // Setters
+    function setAssetSources(
+        address[] calldata assets,
+        address[] calldata sources,
+        uint256[] calldata timeouts
+    ) external;
+
+    function setFallbackOracle(address fallbackOracle) external;
+
+    // Getters
     function getAssetPrice(address asset) external view returns (uint256);
+
+    function getAssetsPrices(address[] calldata assets) external view returns (uint256[] memory);
+
+    function getSourceOfAsset(address asset) external view returns (address);
+
+    function getFallbackOracle() external view returns (address);
+
+    function BASE_CURRENCY() external view returns (address);
+
+    function BASE_CURRENCY_UNIT() external view returns (uint256);
 }

@@ -9,13 +9,14 @@ import {UserConfiguration} from
     "../../../../../contracts/protocol/libraries/configuration/UserConfiguration.sol";
 import {WadRayMath} from "../../../../../contracts/protocol/libraries/math/WadRayMath.sol";
 import {PercentageMath} from "../../../../../contracts/protocol/libraries/math/PercentageMath.sol";
-import {IPriceOracleGetter} from "../../../../../contracts/interfaces/IPriceOracleGetter.sol";
+import {IOracle} from "../../../../../contracts/interfaces/IOracle.sol";
 import {DataTypes} from "../../../../../contracts/protocol/libraries/types/DataTypes.sol";
 
 /**
  * @title GenericLogic library
  * @author Cod3x
- * @title Implements protocol-level logic to calculate and validate the state of a user
+ * @notice Implements protocol-level logic to calculate and validate the state of a user.
+ * @dev Contains core functions for calculating user account data and health factors.
  */
 library GenericLogic {
     using ReserveLogic for DataTypes.ReserveData;
@@ -24,8 +25,20 @@ library GenericLogic {
     using ReserveConfiguration for DataTypes.ReserveConfigurationMap;
     using UserConfiguration for DataTypes.UserConfigurationMap;
 
+    /// @dev The minimum health factor value before liquidation can occur.
     uint256 public constant HEALTH_FACTOR_LIQUIDATION_THRESHOLD = 1 ether;
 
+    /**
+     * @dev Struct containing local variables used in balance decrease calculations.
+     * @param decimals Token decimals.
+     * @param liquidationThreshold Asset's liquidation threshold.
+     * @param totalCollateralInETH Total collateral value in ETH.
+     * @param totalDebtInETH Total debt value in ETH.
+     * @param avgLiquidationThreshold Average liquidation threshold across all collateral.
+     * @param amountToDecreaseInETH Amount to decrease in ETH terms.
+     * @param collateralBalanceAfterDecrease Remaining collateral after decrease.
+     * @param liquidationThresholdAfterDecrease New liquidation threshold after decrease.
+     */
     struct balanceDecreaseAllowedLocalVars {
         uint256 decimals;
         uint256 liquidationThreshold;
@@ -38,17 +51,18 @@ library GenericLogic {
     }
 
     /**
-     * @dev Checks if a specific balance decrease is allowed
-     * (i.e. doesn't bring the user borrow position health factor under HEALTH_FACTOR_LIQUIDATION_THRESHOLD)
-     * @param asset The address of the underlying asset of the reserve
-     * @param user The address of the user
-     * @param amount The amount to decrease
-     * @param reserves The data of all the reserves
-     * @param userConfig The user configuration
-     * @param reservesList The list of all the active reserves
-     * @param oracle The address of the oracle contract
-     * @return true if the decrease of the balance is allowed
-     *
+     * @notice Checks if a specific balance decrease is allowed.
+     * @dev Validates that the balance decrease won't bring the health factor below liquidation threshold.
+     * @param asset The address of the underlying asset of the reserve.
+     * @param reserveType Boolean indicating if reserve is boosted by a vault.
+     * @param user The address of the user.
+     * @param amount The amount to decrease.
+     * @param reserves The data of all the reserves.
+     * @param userConfig The user configuration.
+     * @param reservesList The list of all the active reserves.
+     * @param reservesCount The count of initialized reserves.
+     * @param oracle The address of the oracle contract.
+     * @return true if the decrease of the balance is allowed.
      */
     function balanceDecreaseAllowed(
         address asset,
@@ -88,7 +102,7 @@ library GenericLogic {
 
         vars.collateralBalanceAfterDecrease = vars.totalCollateralInETH - vars.amountToDecreaseInETH;
 
-        //if there is a borrow, there can't be 0 collateral
+        // If there is a borrow, there can't be 0 collateral.
         if (vars.collateralBalanceAfterDecrease == 0) {
             return false;
         }
@@ -107,15 +121,42 @@ library GenericLogic {
         return healthFactorAfterDecrease >= GenericLogic.HEALTH_FACTOR_LIQUIDATION_THRESHOLD;
     }
 
+    /**
+     * @notice Calculates the ETH value of an amount to be decreased.
+     * @dev Converts token amount to ETH value using oracle price.
+     * @param oracle The price oracle address.
+     * @param asset The asset address.
+     * @param amount The amount to convert.
+     * @param decimals The decimals of the asset.
+     * @return The ETH value of the amount.
+     */
     function getAmountToDecreaseInEth(
         address oracle,
         address asset,
         uint256 amount,
         uint256 decimals
     ) internal view returns (uint256) {
-        return IPriceOracleGetter(oracle).getAssetPrice(asset) * amount / (10 ** decimals);
+        return IOracle(oracle).getAssetPrice(asset) * amount / (10 ** decimals);
     }
 
+    /**
+     * @dev Struct containing local variables used in user account data calculations.
+     * @param reserveUnitPrice Current price of reserve unit.
+     * @param tokenUnit Base unit of token (10^decimals).
+     * @param compoundedLiquidityBalance User's compounded liquidity balance.
+     * @param compoundedBorrowBalance User's compounded borrow balance.
+     * @param decimals Token decimals.
+     * @param ltv Loan to value ratio.
+     * @param liquidationThreshold Liquidation threshold.
+     * @param i Loop counter.
+     * @param healthFactor Calculated health factor.
+     * @param totalCollateralInETH Total collateral in ETH.
+     * @param totalDebtInETH Total debt in ETH.
+     * @param avgLtv Average loan to value.
+     * @param avgLiquidationThreshold Average liquidation threshold.
+     * @param currentReserveAddress Current reserve being processed.
+     * @param currentReserveType Type of current reserve.
+     */
     struct CalculateUserAccountDataLocalVars {
         uint256 reserveUnitPrice;
         uint256 tokenUnit;
@@ -135,16 +176,19 @@ library GenericLogic {
     }
 
     /**
-     * @dev Calculates the user data across the reserves.
-     * this includes the total liquidity/collateral/borrow balances in ETH,
-     * the average Loan To Value, the average Liquidation Ratio, and the Health factor.
-     * @param user The address of the user
-     * @param reserves Data of all the reserves
-     * @param userConfig The configuration of the user
-     * @param reservesList The list of the available reserves
-     * @param oracle The price oracle address
-     * @return The total collateral and total debt of the user in ETH, the avg ltv, liquidation threshold and the HF
-     *
+     * @notice Calculates the user data across all reserves.
+     * @dev Computes total liquidity/collateral/borrow balances in ETH, average LTV, liquidation ratio, and health factor.
+     * @param user The address of the user.
+     * @param reserves Data of all the reserves.
+     * @param userConfig The configuration of the user.
+     * @param reservesList The list of the available reserves.
+     * @param reservesCount The count of initialized reserves.
+     * @param oracle The price oracle address.
+     * @return totalCollateralETH Total collateral in ETH.
+     * @return totalDebtETH Total debt in ETH.
+     * @return avgLtv Average loan to value ratio.
+     * @return avgLiquidationThreshold Average liquidation threshold.
+     * @return healthFactor User's health factor.
      */
     function calculateUserAccountData(
         address user,
@@ -173,8 +217,7 @@ library GenericLogic {
                 currentReserve.configuration.getParams();
 
             vars.tokenUnit = 10 ** vars.decimals;
-            vars.reserveUnitPrice =
-                IPriceOracleGetter(oracle).getAssetPrice(vars.currentReserveAddress);
+            vars.reserveUnitPrice = IOracle(oracle).getAssetPrice(vars.currentReserveAddress);
 
             if (vars.liquidationThreshold != 0 && userConfig.isUsingAsCollateral(vars.i)) {
                 vars.compoundedLiquidityBalance =
@@ -217,12 +260,12 @@ library GenericLogic {
     }
 
     /**
-     * @dev Calculates the health factor from the corresponding balances
-     * @param totalCollateralInETH The total collateral in ETH
-     * @param totalDebtInETH The total debt in ETH
-     * @param liquidationThreshold The avg liquidation threshold
-     * @return The health factor calculated from the balances provided
-     *
+     * @notice Calculates the health factor from the corresponding balances.
+     * @dev Health factor is the ratio between the total collateral weighted by liquidation threshold and total debt.
+     * @param totalCollateralInETH The total collateral in ETH.
+     * @param totalDebtInETH The total debt in ETH.
+     * @param liquidationThreshold The avg liquidation threshold.
+     * @return The health factor calculated from the balances provided.
      */
     function calculateHealthFactorFromBalances(
         uint256 totalCollateralInETH,
@@ -235,13 +278,12 @@ library GenericLogic {
     }
 
     /**
-     * @dev Calculates the equivalent amount in ETH that an user can borrow, depending on the available collateral and the
-     * average Loan To Value
-     * @param totalCollateralInETH The total collateral in ETH
-     * @param totalDebtInETH The total borrow balance
-     * @param ltv The average loan to value
-     * @return the amount available to borrow in ETH for the user
-     *
+     * @notice Calculates the equivalent amount in ETH that a user can borrow.
+     * @dev Determines borrowing power based on collateral and average LTV.
+     * @param totalCollateralInETH The total collateral in ETH.
+     * @param totalDebtInETH The total borrow balance.
+     * @param ltv The average loan to value.
+     * @return The amount available to borrow in ETH for the user.
      */
     function calculateAvailableBorrowsETH(
         uint256 totalCollateralInETH,

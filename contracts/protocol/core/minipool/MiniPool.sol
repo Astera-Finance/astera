@@ -7,9 +7,7 @@ import {IERC20} from "../../../../contracts/dependencies/openzeppelin/contracts/
 import {SafeERC20} from "../../../../contracts/dependencies/openzeppelin/contracts/SafeERC20.sol";
 import {IMiniPoolAddressesProvider} from
     "../../../../contracts/interfaces/IMiniPoolAddressesProvider.sol";
-import {IFlowLimiter} from "../../../../contracts/interfaces/IFlowLimiter.sol";
-import {IAToken} from "../../../../contracts/interfaces/IAToken.sol";
-import {IFlashLoanReceiver} from "../../../../contracts/interfaces/IFlashLoanReceiver.sol";
+import {IFlowLimiter} from "../../../../contracts/interfaces/base/IFlowLimiter.sol";
 import {ILendingPool} from "../../../../contracts/interfaces/ILendingPool.sol";
 import {VersionedInitializable} from
     "../../../../contracts/protocol/libraries/upgradeability/VersionedInitializable.sol";
@@ -29,7 +27,6 @@ import {MiniPoolStorage} from "./MiniPoolStorage.sol";
 import {IMiniPool} from "../../../../contracts/interfaces/IMiniPool.sol";
 import {ATokenNonRebasing} from
     "../../../../contracts/protocol/tokenization/ERC20/ATokenNonRebasing.sol";
-
 import {MiniPoolDepositLogic} from "./logic/MiniPoolDepositLogic.sol";
 import {MiniPoolWithdrawLogic} from "./logic/MiniPoolWithdrawLogic.sol";
 import {MiniPoolBorrowLogic} from "./logic/MiniPoolBorrowLogic.sol";
@@ -39,20 +36,17 @@ import {IMiniPoolRewarder} from "../../../../contracts/interfaces/IMiniPoolRewar
 
 /**
  * @title MiniPool contract
- * @dev A highly correlated sub market that can borrow from the main lending pool and charge double interest rates on those loans
- * - Users can:
- *   # Deposit
- *   # Withdraw
- *   # Borrow
- *   # Repay
- *   # Enable/disable their deposits as collateral
- *   # Liquidate positions
- *   # Execute Flash Loans
- * - To be covered by a proxy contract, owned by the MiniPoolAddressesProvider of the specific market
- * - All admin functions are callable by the MiniPoolConfigurator contract defined also in the
- *   MiniPoolAddressesProvider
- * @author Cod3x
+ * @dev A highly correlated sub market that can borrow from the main lending pool and charge double
+ * interest rates on those loans.
+ * Minipool can 'flow borrow' from the main lending pool on aTokens from the main lending pool,
+ * which means that the a Minipool can borrow from the main lending pool and use it as collateral
+ * for its own borrowing power. This power is set by the admin through the FlowLimiter.
  *
+ * - Users can: Deposit, Withdraw, Borrow, Repay, Enable/disable their deposits as collateral, Liquidate positions, Execute Flash Loans
+ * - To be covered by a proxy contract, owned by the MiniPoolAddressesProvider of the specific market.
+ * - All admin functions are callable by the MiniPoolConfigurator contract defined also in the
+ *   MiniPoolAddressesProvider.
+ * @author Cod3x
  */
 contract MiniPool is VersionedInitializable, IMiniPool, MiniPoolStorage {
     using WadRayMath for uint256;
@@ -62,26 +56,49 @@ contract MiniPool is VersionedInitializable, IMiniPool, MiniPoolStorage {
     using ReserveConfiguration for DataTypes.ReserveConfigurationMap;
     using UserConfiguration for DataTypes.UserConfigurationMap;
 
+    /**
+     * @dev The revision number of the MiniPool contract implementation.
+     * Used for tracking contract versions in the upgradeable proxy pattern.
+     */
     uint256 public constant MINIPOOL_REVISION = 0x1;
 
-    /// @dev In the super rare scenario of a rounding error occurring during minipool flow borrow,
-    /// this variable ensures that we can do at least 100_000 transactions on minipool in the current block.
+    /**
+     * @dev Safety margin for handling rounding errors during minipool flow borrow.
+     * This variable ensures that we can do at least 100_000 transactions on minipool in the current block.
+     * The value represents the minimum amount of wei that should remain in the pool.
+     */
     uint256 public constant ERROR_REMAINDER_MARGIN = 100_000;
 
+    /**
+     * @dev Modifier to verify the protocol is not paused.
+     * Reverts if the protocol is in a paused state.
+     */
     modifier whenNotPaused() {
         _whenNotPaused();
         _;
     }
 
+    /**
+     * @dev Modifier to verify caller is the MiniPool configurator.
+     * Reverts if caller is not authorized.
+     */
     modifier onlyMiniPoolConfigurator() {
         _onlyMiniPoolConfigurator();
         _;
     }
 
+    /**
+     * @dev Internal function to check if protocol is paused.
+     * Reverts with `LP_IS_PAUSED` if `_paused` is true.
+     */
     function _whenNotPaused() internal view {
         require(!_paused, Errors.LP_IS_PAUSED);
     }
 
+    /**
+     * @dev Internal function to verify caller is the MiniPool configurator.
+     * Reverts with `LP_CALLER_NOT_LENDING_POOL_CONFIGURATOR` if `msg.sender` is not the configurator.
+     */
     function _onlyMiniPoolConfigurator() internal view {
         require(
             _addressesProvider.getMiniPoolConfigurator() == msg.sender,
@@ -97,9 +114,8 @@ contract MiniPool is VersionedInitializable, IMiniPool, MiniPoolStorage {
      * @dev Function is invoked by the proxy contract when the LendingPool contract is added to the
      * LendingPoolAddressesProvider of the market.
      * - Caching the address of the LendingPoolAddressesProvider in order to reduce gas consumption
-     *   on subsequent operations
-     * @param provider The address of the LendingPoolAddressesProvider
-     *
+     *   on subsequent operations.
+     * @param provider The address of the LendingPoolAddressesProvider.
      */
     function initialize(IMiniPoolAddressesProvider provider, uint256 minipoolID)
         public
@@ -113,14 +129,13 @@ contract MiniPool is VersionedInitializable, IMiniPool, MiniPoolStorage {
 
     /**
      * @dev Deposits an `amount` of underlying asset into the reserve, receiving in return overlying aTokens.
-     * - E.g. User deposits 100 USDC and gets in return 100 aUSDC
-     * @param asset The address of the underlying asset to deposit
+     * - E.g. User deposits 100 USDC and gets in return 100 aUSDC.
+     * @param asset The address of the underlying asset to deposit.
      * @param wrap Convert the underlying in AToken from the lendingpool.
-     * @param amount The amount to be deposited
+     * @param amount The amount to be deposited.
      * @param onBehalfOf The address that will receive the aTokens, same as msg.sender if the user
      *   wants to receive them on his own wallet, or a different address if the beneficiary of aTokens
-     *   is a different wallet
-     *
+     *   is a different wallet.
      */
     function deposit(address asset, bool wrap, uint256 amount, address onBehalfOf)
         public
@@ -139,16 +154,15 @@ contract MiniPool is VersionedInitializable, IMiniPool, MiniPoolStorage {
 
     /**
      * @dev Withdraws an `amount` of underlying asset from the reserve, burning the equivalent aTokens owned
-     * E.g. User has 100 aUSDC, calls withdraw() and receives 100 USDC, burning the 100 aUSDC
-     * @param asset The address of the underlying asset to withdraw
+     * E.g. User has 100 aUSDC, calls withdraw() and receives 100 USDC, burning the 100 aUSDC.
+     * @param asset The address of the underlying asset to withdraw.
      * @param unwrap If true, and `asset` is an aToken, `to` will directly receive the underlying.
-     * @param amount The underlying amount to be withdrawn
-     *   - Send the value type(uint256).max in order to withdraw the whole aToken balance
+     * @param amount The underlying amount to be withdrawn.
+     *   - Send the value type(uint256).max in order to withdraw the whole aToken balance.
      * @param to Address that will receive the underlying, same as msg.sender if the user
      *   wants to receive it on his own wallet, or a different address if the beneficiary is a
-     *   different wallet
-     * @return The final amount withdrawn
-     *
+     *   different wallet.
+     * @return The final amount withdrawn.
      */
     function withdraw(address asset, bool unwrap, uint256 amount, address to)
         public
@@ -177,14 +191,13 @@ contract MiniPool is VersionedInitializable, IMiniPool, MiniPoolStorage {
      * @dev Allows users to borrow a specific `amount` of the reserve underlying asset, provided that the borrower
      * already deposited enough collateral, or he was given enough allowance by a credit delegator on the VariableDebtToken
      * - E.g. User borrows 100 USDC passing as `onBehalfOf` his own address, receiving the 100 USDC in his wallet
-     *   and 100 variable debt tokens
-     * @param asset The address of the underlying asset to borrow
+     *   and 100 variable debt tokens.
+     * @param asset The address of the underlying asset to borrow.
      * @param unwrap If true, and `asset` is an aToken, `to` will directly receive the underlying.
-     * @param amount The amount to be borrowed
+     * @param amount The amount to be borrowed.
      * @param onBehalfOf Address of the user who will receive the debt. Should be the address of the borrower itself
      * calling the function if he wants to borrow against his own collateral, or the address of the credit delegator
-     * if he has been given credit delegation allowance
-     *
+     * if he has been given credit delegation allowance.
      */
 
     function borrow(address asset, bool unwrap, uint256 amount, address onBehalfOf)
@@ -207,7 +220,6 @@ contract MiniPool is VersionedInitializable, IMiniPool, MiniPoolStorage {
                 underlying,
                 true,
                 ATokenNonRebasing(asset).convertToAssets(amount - vars.availableLiquidity), // amount + availableLiquidity converted to asset
-                address(this),
                 ATokenNonRebasing(asset).ATOKEN_ADDRESS()
             );
 
@@ -220,7 +232,7 @@ contract MiniPool is VersionedInitializable, IMiniPool, MiniPoolStorage {
 
             vars.amountReceived = IERC20(asset).balanceOf(address(this));
 
-            // TODO :: evaluate the risk if the deposit cap is reached
+            // TODO :: evaluate the risk if the deposit cap is reached.
             MiniPoolDepositLogic.internalDeposit(
                 MiniPoolDepositLogic.DepositParams(asset, vars.amountReceived, address(this)),
                 _reserves,
@@ -251,17 +263,16 @@ contract MiniPool is VersionedInitializable, IMiniPool, MiniPoolStorage {
     }
 
     /**
-     * @notice Repays a borrowed `amount` on a specific reserve, burning the equivalent debt tokens owned
-     * - E.g. User repays 100 USDC, burning 100 variable debt tokens of the `onBehalfOf` address
-     * @param asset The address of the borrowed underlying asset previously borrowed
+     * @notice Repays a borrowed `amount` on a specific reserve, burning the equivalent debt tokens owned.
+     * - E.g. User repays 100 USDC, burning 100 variable debt tokens of the `onBehalfOf` address.
+     * @param asset The address of the borrowed underlying asset previously borrowed.
      * @param wrap Convert the underlying in AToken from the lendingpool.
-     * @param amount The amount to repay
-     * - Send the value type(uint256).max in order to repay the whole debt for `asset`
+     * @param amount The amount to repay.
+     * - Send the value type(uint256).max in order to repay the whole debt for `asset`.
      * @param onBehalfOf Address of the user who will get his debt reduced/removed. Should be the address of the
      * user calling the function if he wants to reduce/remove his own debt, or the address of any other
-     * other borrower whose debt should be removed
-     * @return The final amount repaid
-     *
+     * other borrower whose debt should be removed.
+     * @return The final amount repaid.
      */
     function repay(address asset, bool wrap, uint256 amount, address onBehalfOf)
         external
@@ -281,10 +292,9 @@ contract MiniPool is VersionedInitializable, IMiniPool, MiniPoolStorage {
     }
 
     /**
-     * @dev Allows depositors to enable/disable a specific deposited asset as collateral
-     * @param asset The address of the underlying asset deposited
-     * @param useAsCollateral `true` if the user wants to use the deposit as collateral, `false` otherwise
-     *
+     * @dev Allows depositors to enable/disable a specific deposited asset as collateral.
+     * @param asset The address of the underlying asset deposited.
+     * @param useAsCollateral `true` if the user wants to use the deposit as collateral, `false` otherwise.
      */
     function setUserUseReserveAsCollateral(address asset, bool useAsCollateral)
         external
@@ -316,14 +326,13 @@ contract MiniPool is VersionedInitializable, IMiniPool, MiniPoolStorage {
     /**
      * @dev Function to liquidate a non-healthy position collateral-wise, with Health Factor below 1
      * - The caller (liquidator) covers `debtToCover` amount of debt of the user getting liquidated, and receives
-     *   a proportionally amount of the `collateralAsset` plus a bonus to cover market risk
-     * @param collateralAsset The address of the underlying asset used as collateral, to receive as result of the liquidation
-     * @param debtAsset The address of the underlying borrowed asset to be repaid with the liquidation
-     * @param user The address of the borrower getting liquidated
-     * @param debtToCover The debt amount of borrowed `asset` the liquidator wants to cover
+     *   a proportionally amount of the `collateralAsset` plus a bonus to cover market risk.
+     * @param collateralAsset The address of the underlying asset used as collateral, to receive as result of the liquidation.
+     * @param debtAsset The address of the underlying borrowed asset to be repaid with the liquidation.
+     * @param user The address of the borrower getting liquidated.
+     * @param debtToCover The debt amount of borrowed `asset` the liquidator wants to cover.
      * @param receiveAToken `true` if the liquidators wants to receive the collateral aTokens, `false` if he wants
-     * to receive the underlying collateral asset directly
-     *
+     * to receive the underlying collateral asset directly.
      */
     function liquidationCall(
         address collateralAsset,
@@ -349,6 +358,10 @@ contract MiniPool is VersionedInitializable, IMiniPool, MiniPoolStorage {
         _repayLendingPool(debtAsset);
     }
 
+    /**
+     * @dev Internal function to repay the flow debt of the minipool to the lending pool.
+     * @param asset The address of the underlying asset to repay.
+     */
     function _repayLendingPool(address asset) internal {
         DataTypes.MiniPoolReserveData storage reserve = _reserves[asset];
         address aTokenAddress = reserve.aTokenAddress;
@@ -386,12 +399,12 @@ contract MiniPool is VersionedInitializable, IMiniPool, MiniPoolStorage {
                         > remainingBalance - ERROR_REMAINDER_MARGIN /* Check if there is enough liquidity to withdraw. */
             ) {
                 // Withdraw the remaining AERC6909 to Treasury. This is due to Minipool IR > Lending IR.
-                // `this.` modifies the execution context => msg.sender == address(this)
+                // `this.` modifies the execution context => msg.sender == address(this).
                 this.withdraw(
                     asset,
                     false,
                     remainingBalance - ERROR_REMAINDER_MARGIN,
-                    _addressesProvider.getMiniPoolCod3xTreasury(_minipoolId)
+                    _addressesProvider.getMiniPoolCod3xTreasury()
                 );
             }
         }
@@ -401,12 +414,11 @@ contract MiniPool is VersionedInitializable, IMiniPool, MiniPoolStorage {
      * @dev Allows smartcontracts to access the liquidity of the pool within one transaction,
      * as long as the amount taken plus a fee is returned.
      * IMPORTANT There are security concerns for developers of flashloan receiver contracts that must be kept into consideration.
-     * @param flashLoanParams struct containing receiverAddress, onBehalfOf, assets, amounts
+     * @param flashLoanParams struct containing receiverAddress, onBehalfOf, assets, amounts.
      * @param modes Types of the debt to open if the flash loan is not returned:
-     *   0    -> Don't open any debt, just revert if funds can't be transferred from the receiver
-     *   =! 0 -> Open debt at variable rate for the value of the amount flash-borrowed to the `onBehalfOf` address
-     * @param params Variadic packed params to pass to the receiver as extra information
-     *
+     *   0    -> Don't open any debt, just revert if funds can't be transferred from the receiver.
+     *   =! 0 -> Open debt at variable rate for the value of the amount flash-borrowed to the `onBehalfOf` address.
+     * @param params Variadic packed params to pass to the receiver as extra information.
      */
     function flashLoan(
         FlashLoanParams memory flashLoanParams,
@@ -433,10 +445,9 @@ contract MiniPool is VersionedInitializable, IMiniPool, MiniPoolStorage {
     }
 
     /**
-     * @dev Returns the state and configuration of the reserve
-     * @param asset The address of the underlying asset of the reserve
-     * @return The state of the reserve
-     *
+     * @dev Returns the state and configuration of the reserve.
+     * @param asset The address of the underlying asset of the reserve.
+     * @return The state of the reserve.
      */
     function getReserveData(address asset)
         external
@@ -448,15 +459,14 @@ contract MiniPool is VersionedInitializable, IMiniPool, MiniPoolStorage {
     }
 
     /**
-     * @dev Returns the user account data across all the reserves
-     * @param user The address of the user
-     * @return totalCollateralETH the total collateral in ETH of the user
-     * @return totalDebtETH the total debt in ETH of the user
-     * @return availableBorrowsETH the borrowing power left of the user
-     * @return currentLiquidationThreshold the liquidation threshold of the user
-     * @return ltv the loan to value of the user
-     * @return healthFactor the current health factor of the user
-     *
+     * @dev Returns the user account data across all the reserves.
+     * @param user The address of the user.
+     * @return totalCollateralETH the total collateral in ETH of the user.
+     * @return totalDebtETH the total debt in ETH of the user.
+     * @return availableBorrowsETH the borrowing power left of the user.
+     * @return currentLiquidationThreshold the liquidation threshold of the user.
+     * @return ltv the loan to value of the user.
+     * @return healthFactor the current health factor of the user.
      */
     function getUserAccountData(address user)
         external
@@ -486,10 +496,9 @@ contract MiniPool is VersionedInitializable, IMiniPool, MiniPoolStorage {
     }
 
     /**
-     * @dev Returns the configuration of the reserve
-     * @param asset The address of the underlying asset of the reserve
-     * @return The configuration of the reserve
-     *
+     * @dev Returns the configuration of the reserve.
+     * @param asset The address of the underlying asset of the reserve.
+     * @return The configuration of the reserve.
      */
     function getConfiguration(address asset)
         external
@@ -501,10 +510,9 @@ contract MiniPool is VersionedInitializable, IMiniPool, MiniPoolStorage {
     }
 
     /**
-     * @dev Returns the configuration of the user across all the reserves
-     * @param user The user address
-     * @return The configuration of the user
-     *
+     * @dev Returns the configuration of the user across all the reserves.
+     * @param user The user address.
+     * @return The configuration of the user.
      */
     function getUserConfiguration(address user)
         external
@@ -516,9 +524,9 @@ contract MiniPool is VersionedInitializable, IMiniPool, MiniPoolStorage {
     }
 
     /**
-     * @dev Returns the normalized income per unit of asset
-     * @param asset The address of the underlying asset of the reserve
-     * @return The reserve's normalized income
+     * @dev Returns the normalized income per unit of asset.
+     * @param asset The address of the underlying asset of the reserve.
+     * @return The reserve's normalized income.
      */
     function getReserveNormalizedIncome(address asset)
         external
@@ -531,9 +539,9 @@ contract MiniPool is VersionedInitializable, IMiniPool, MiniPoolStorage {
     }
 
     /**
-     * @dev Returns the normalized variable debt per unit of asset
-     * @param asset The address of the underlying asset of the reserve
-     * @return The reserve normalized variable debt
+     * @dev Returns the normalized variable debt per unit of asset.
+     * @param asset The address of the underlying asset of the reserve.
+     * @return The reserve normalized variable debt.
      */
     function getReserveNormalizedVariableDebt(address asset)
         external
@@ -545,15 +553,18 @@ contract MiniPool is VersionedInitializable, IMiniPool, MiniPoolStorage {
     }
 
     /**
-     * @dev Returns if the LendingPool is paused
+     * @dev Returns if the LendingPool is paused.
+     * @return `true` if the LendingPool is paused, `false` otherwise.
      */
     function paused() external view override returns (bool) {
         return _paused;
     }
 
     /**
-     * @dev Returns the list of the initialized reserves
-     *
+     * @dev Returns the list of the initialized reserves and their types.
+     * @return A tuple containing:
+     *   - An array of addresses representing the initialized reserves.
+     *   - An array of booleans indicating the type of each reserve.
      */
     function getReservesList() external view override returns (address[] memory, bool[] memory) {
         address[] memory _activeReserves = new address[](_reservesCount);
@@ -566,41 +577,44 @@ contract MiniPool is VersionedInitializable, IMiniPool, MiniPoolStorage {
         return (_activeReserves, _activeReservesTypes);
     }
 
+    /// @dev Returns the total number of initialized reserves.
     function getReservesCount() external view override returns (uint256) {
         return _reservesCount;
     }
-    /**
-     * @dev Returns the cached LendingPoolAddressesProvider connected to this contract
-     *
-     */
 
+    /**
+     * @dev Returns the cached addresses provider instance connected to this contract.
+     * @return The `IMiniPoolAddressesProvider` instance.
+     */
     function getAddressesProvider() external view override returns (IMiniPoolAddressesProvider) {
         return _addressesProvider;
     }
 
     /**
-     * @dev Returns the fee on flash loans
+     * @dev Returns the total premium percentage charged on flash loans.
+     * @return The flash loan premium as a percentage value.
      */
     function FLASHLOAN_PREMIUM_TOTAL() public view returns (uint256) {
         return _flashLoanPremiumTotal;
     }
 
     /**
-     * @dev Returns the maximum number of reserves supported to be listed in this LendingPool
+     * @dev Returns the maximum number of reserves that can be supported by this lending pool.
+     * @return The maximum number of reserves allowed.
      */
     function MAX_NUMBER_RESERVES() public view returns (uint256) {
         return _maxNumberOfReserves;
     }
 
     /**
-     * @dev Validates and finalizes an aToken transfer
-     * - Only callable by the overlying aToken of the `asset`
-     * @param asset The address of the underlying asset of the aToken
-     * @param from The user from which the aTokens are transferred
-     * @param to The user receiving the aTokens
-     * @param amount The amount being transferred/withdrawn
-     * @param balanceFromBefore The aToken balance of the `from` user before the transfer
-     * @param balanceToBefore The aToken balance of the `to` user before the transfer
+     * @dev Validates and finalizes an aToken transfer.
+     * - Only callable by the overlying aToken of the `asset`.
+     * @param asset The address of the underlying asset of the aToken.
+     * @param from The user from which the aTokens are transferred.
+     * @param to The user receiving the aTokens.
+     * @param amount The amount being transferred/withdrawn.
+     * @param balanceFromBefore The aToken balance of the `from` user before the transfer.
+     * @param balanceToBefore The aToken balance of the `to` user before the transfer.
      */
     function finalizeTransfer(
         address asset,
@@ -623,14 +637,13 @@ contract MiniPool is VersionedInitializable, IMiniPool, MiniPoolStorage {
 
     /**
      * @dev Initializes a reserve, activating it, assigning an aToken and debt tokens and an
-     * interest rate strategy
-     * - Only callable by the LendingPoolConfigurator contract
-     * @param asset The address of the underlying asset of the reserve
-     * @param aTokenAddress Whether the reserve is boosted by a vault
-     * @param aTokenID The address of the aToken that will be assigned to the reserve
-     * @param variableDebtTokenID The address of the VariableDebtToken that will be assigned to the reserve
-     * @param interestRateStrategyAddress The address of the interest rate strategy contract
-     *
+     * interest rate strategy.
+     * - Only callable by the LendingPoolConfigurator contract.
+     * @param asset The address of the underlying asset of the reserve.
+     * @param aTokenAddress Whether the reserve is boosted by a vault.
+     * @param aTokenID The address of the aToken that will be assigned to the reserve.
+     * @param variableDebtTokenID The address of the VariableDebtToken that will be assigned to the reserve.
+     * @param interestRateStrategyAddress The address of the interest rate strategy contract.
      */
     function initReserve(
         address asset,
@@ -647,11 +660,10 @@ contract MiniPool is VersionedInitializable, IMiniPool, MiniPoolStorage {
     }
 
     /**
-     * @dev Updates the address of the interest rate strategy contract
-     * - Only callable by the LendingPoolConfigurator contract
-     * @param asset The address of the underlying asset of the reserve
-     * @param rateStrategyAddress The address of the interest rate strategy contract
-     *
+     * @dev Updates the address of the interest rate strategy contract.
+     * - Only callable by the LendingPoolConfigurator contract.
+     * @param asset The address of the underlying asset of the reserve.
+     * @param rateStrategyAddress The address of the interest rate strategy contract.
      */
     function setReserveInterestRateStrategyAddress(address asset, address rateStrategyAddress)
         external
@@ -662,11 +674,10 @@ contract MiniPool is VersionedInitializable, IMiniPool, MiniPoolStorage {
     }
 
     /**
-     * @dev Sets the configuration bitmap of the reserve as a whole
-     * - Only callable by the LendingPoolConfigurator contract
-     * @param asset The address of the underlying asset of the reserve
-     * @param configuration The new configuration bitmap
-     *
+     * @dev Sets the configuration bitmap of the reserve as a whole.
+     * - Only callable by the LendingPoolConfigurator contract.
+     * @param asset The address of the underlying asset of the reserve.
+     * @param configuration The new configuration bitmap.
      */
     function setConfiguration(address asset, uint256 configuration)
         external
@@ -677,9 +688,9 @@ contract MiniPool is VersionedInitializable, IMiniPool, MiniPoolStorage {
     }
 
     /**
-     * @dev Set the _pause state of a reserve
-     * - Only callable by the LendingPoolConfigurator contract
-     * @param val `true` to pause the reserve, `false` to un-pause it
+     * @dev Set the _pause state of a reserve.
+     * - Only callable by the LendingPoolConfigurator contract.
+     * @param val `true` to pause the reserve, `false` to un-pause it.
      */
     function setPause(bool val) external override onlyMiniPoolConfigurator {
         _paused = val;
@@ -689,6 +700,10 @@ contract MiniPool is VersionedInitializable, IMiniPool, MiniPoolStorage {
             emit Unpaused();
         }
     }
+    /**
+     * @dev Adds a reserve to the list of reserves.
+     * @param asset The address of the underlying asset of the reserve to be added.
+     */
 
     function _addReserveToList(address asset) internal {
         uint256 reservesCount = _reservesCount;
@@ -705,10 +720,20 @@ contract MiniPool is VersionedInitializable, IMiniPool, MiniPoolStorage {
         }
     }
 
+    /**
+     * @dev Returns the current lending pool debt for a specific asset.
+     * @param asset The address of the asset to check the debt for.
+     * @return The current lending pool debt amount.
+     */
     function getCurrentLendingPoolDebt(address asset) public view returns (uint256) {
         return IFlowLimiter(_addressesProvider.getFlowLimiter()).currentFlow(asset, address(this));
     }
 
+    /**
+     * @dev Sets the rewarder contract for a specific reserve.
+     * @param asset The address of the underlying asset of the reserve.
+     * @param rewarder The address of the rewarder contract to be set.
+     */
     function setRewarderForReserve(address asset, address rewarder)
         external
         onlyMiniPoolConfigurator
@@ -718,10 +743,18 @@ contract MiniPool is VersionedInitializable, IMiniPool, MiniPoolStorage {
         );
     }
 
+    /**
+     * @dev Updates the flash loan premium total.
+     * @param flashLoanPremiumTotal The new premium value for flash loans.
+     */
     function updateFlashLoanFee(uint128 flashLoanPremiumTotal) external onlyMiniPoolConfigurator {
         _updateFlashLoanFee(flashLoanPremiumTotal);
     }
 
+    /**
+     * @dev Internal function to update the flash loan premium total.
+     * @param flashLoanPremiumTotal The new premium value to be set.
+     */
     function _updateFlashLoanFee(uint128 flashLoanPremiumTotal) internal {
         _flashLoanPremiumTotal = flashLoanPremiumTotal;
     }

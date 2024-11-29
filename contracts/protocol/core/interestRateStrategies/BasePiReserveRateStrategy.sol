@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity 0.8.23;
 
-// import {IReserveInterestRateStrategy} from "../../../../contracts/interfaces/IReserveInterestRateStrategy.sol";
 import {WadRayMath} from "../../../../contracts/protocol/libraries/math/WadRayMath.sol";
 import {PercentageMath} from "../../../../contracts/protocol/libraries/math/PercentageMath.sol";
 import {DataTypes} from "../../../../contracts/protocol/libraries/types/DataTypes.sol";
@@ -11,12 +10,12 @@ import {Ownable} from "../../../../contracts/dependencies/openzeppelin/contracts
 import {Errors} from "../../../../contracts/protocol/libraries/helpers/Errors.sol";
 
 /**
- * @title PiReserveInterestRateStrategy contract
+ * @title PiReserveInterestRateStrategy contract.
  * @notice Implements the calculation of the interest rates using control theory.
- * @dev The model of interest rate is based Proportional Integrator (PI).
+ * @dev The model of interest rate is based on Proportional Integrator (PI).
  * Admin needs to set an optimal utilization rate and this strategy will automatically
- * automatically adjust the interest rate according to the `Kp` and `Ki` variables.
- * @dev ATTENTION, this contract must no be used as a library. One PiReserveInterestRateStrategy
+ * adjust the interest rate according to the `_kp` and `_ki` variables.
+ * @dev ATTENTION: This contract must not be used as a library. One PiReserveInterestRateStrategy
  * needs to be associated with only one market.
  * @author Cod3x
  */
@@ -25,32 +24,45 @@ abstract contract BasePiReserveRateStrategy is Ownable {
     using WadRayMath for int256;
     using PercentageMath for uint256;
 
-    address public immutable _addressProvider;
-    address public immutable _asset; // This strategy contract needs to be associated to a unique market.
-    bool public immutable _assetReserveType; // This strategy contract needs to be associated to a unique market.
-
+    /// @dev Multiplier factor used in interest rate calculations.
     int256 public constant M_FACTOR = 213e25;
+    /// @dev Power factor used in interest rate calculations.
     uint256 public constant N_FACTOR = 4;
+    /// @dev Ray precision constant (1e27).
     int256 public constant RAY = 1e27;
 
+    /// @dev Address of the lending pool address provider.
+    address public immutable _addressProvider;
+    /// @dev Address of the asset this strategy is associated with.
+    address public immutable _asset;
+    /// @dev Type of the asset reserve (true/false).
+    bool public immutable _assetReserveType;
+
+    /// @dev Minimum error value allowed for the controller.
     int256 public _minControllerError;
+    /// @dev Maximum amplitude for the integral error term.
     int256 public _maxErrIAmp;
+    /// @dev Target utilization rate for the reserve.
     uint256 public _optimalUtilizationRate;
 
-    // P
-    uint256 public _kp; // in RAY
+    /// @dev Proportional gain coefficient in RAY units.
+    uint256 public _kp;
 
-    // I
-    uint256 public _ki; // in RAY
+    /// @dev Integral gain coefficient in RAY units.
+    uint256 public _ki;
+    /// @dev Timestamp of the last interest rate update.
     uint256 public _lastTimestamp;
+    /// @dev Accumulated integral error term.
     int256 public _errI;
 
-    // Errors
-    error PiReserveInterestRateStrategy__ACCESS_RESTRICTED_TO_LENDING_POOL();
-    error PiReserveInterestRateStrategy__BASE_BORROW_RATE_CANT_BE_NEGATIVE();
-    error PiReserveInterestRateStrategy__U0_GREATER_THAN_RAY();
-
-    // Events
+    /**
+     * @notice Emitted when interest rates are calculated using the PI controller.
+     * @param utilizationRate The current utilization rate of the reserve.
+     * @param currentLiquidityRate The calculated liquidity rate.
+     * @param currentVariableBorrowRate The calculated variable borrow rate.
+     * @param err The error between current and optimal utilization rate.
+     * @param controllerErr The error used by the PI controller.
+     */
     event PidLog(
         uint256 utilizationRate,
         uint256 currentLiquidityRate,
@@ -59,6 +71,17 @@ abstract contract BasePiReserveRateStrategy is Ownable {
         int256 controllerErr
     );
 
+    /**
+     * @notice Initializes the interest rate strategy contract.
+     * @param provider Address of the lending pool provider.
+     * @param asset Address of the asset this strategy is for.
+     * @param assetReserveType Type of the asset reserve.
+     * @param minControllerError Minimum allowed controller error.
+     * @param maxITimeAmp Maximum integral time amplitude.
+     * @param optimalUtilizationRate Target utilization rate.
+     * @param kp Proportional gain coefficient.
+     * @param ki Integral gain coefficient.
+     */
     constructor(
         address provider,
         address asset,
@@ -70,7 +93,7 @@ abstract contract BasePiReserveRateStrategy is Ownable {
         uint256 ki
     ) Ownable(msg.sender) {
         if (optimalUtilizationRate >= uint256(RAY)) {
-            revert PiReserveInterestRateStrategy__U0_GREATER_THAN_RAY();
+            revert(Errors.IR_U0_GREATER_THAN_RAY);
         }
         _optimalUtilizationRate = optimalUtilizationRate;
         _asset = asset;
@@ -83,28 +106,31 @@ abstract contract BasePiReserveRateStrategy is Ownable {
         _maxErrIAmp = int256(_ki).rayMulInt(-RAY * maxITimeAmp);
 
         if (transferFunction(type(int256).min) < 0) {
-            revert PiReserveInterestRateStrategy__BASE_BORROW_RATE_CANT_BE_NEGATIVE();
+            revert(Errors.IR_BASE_BORROW_RATE_CANT_BE_NEGATIVE);
         }
     }
 
+    /// @dev Restricts function access to lending pool only.
     modifier onlyLendingPool() {
         if (msg.sender != _getLendingPool()) {
-            revert PiReserveInterestRateStrategy__ACCESS_RESTRICTED_TO_LENDING_POOL();
+            revert(Errors.IR_ACCESS_RESTRICTED_TO_LENDING_POOL);
         }
         _;
     }
 
-    /* Virtual functions */
     /**
      * @notice Returns lending pool address for main pool or mini pool.
-     * @return lendingPoolAddress
+     * @return lendingPoolAddress The address of the lending pool.
      */
     function _getLendingPool() internal view virtual returns (address) {}
+
     /**
      * @notice Returns available liquidity in the pool for specific asset.
-     * @param asset - address of asset
-     * @param aToken - address of aToken
-     * @return availableLiquidity, the underlying (if tranched) and the current flow (if tranched)
+     * @param asset Address of asset.
+     * @param aToken Address of aToken.
+     * @return availableLiquidity The available liquidity.
+     * @return underlying The underlying asset address if tranched.
+     * @return currentFlow The current flow if tranched.
      */
     function getAvailableLiquidity(address asset, address aToken)
         public
@@ -112,56 +138,69 @@ abstract contract BasePiReserveRateStrategy is Ownable {
         virtual
         returns (uint256, address, uint256)
     {}
+
     /**
      * @notice The view version of `calculateInterestRates()`.
-     * @return currentLiquidityRate
-     * @return currentVariableBorrowRate
-     * @return utilizationRate
+     * @dev Returns the current interest rates without modifying state.
+     * @return currentLiquidityRate The current liquidity rate.
+     * @return currentVariableBorrowRate The current variable borrow rate.
+     * @return utilizationRate The current utilization rate.
      */
     function getCurrentInterestRates() public view virtual returns (uint256, uint256, uint256) {}
 
-    // ----------- admin -----------
-
+    /**
+     * @notice Sets the optimal utilization rate for the reserve.
+     * @param optimalUtilizationRate The new optimal utilization rate.
+     */
     function setOptimalUtilizationRate(uint256 optimalUtilizationRate) external onlyOwner {
         if (optimalUtilizationRate >= uint256(RAY)) {
-            revert PiReserveInterestRateStrategy__U0_GREATER_THAN_RAY();
+            revert(Errors.IR_U0_GREATER_THAN_RAY);
         }
         _optimalUtilizationRate = optimalUtilizationRate;
     }
 
+    /**
+     * @notice Sets the minimum controller error value.
+     * @param minControllerError The new minimum controller error.
+     */
     function setMinControllerError(int256 minControllerError) external onlyOwner {
         _minControllerError = minControllerError;
         if (transferFunction(type(int256).min) < 0) {
-            revert PiReserveInterestRateStrategy__BASE_BORROW_RATE_CANT_BE_NEGATIVE();
+            revert(Errors.IR_BASE_BORROW_RATE_CANT_BE_NEGATIVE);
         }
     }
 
+    /**
+     * @notice Sets the PID controller parameters.
+     * @param kp The proportional gain coefficient.
+     * @param ki The integral gain coefficient.
+     * @param maxITimeAmp The maximum integral time amplitude.
+     */
     function setPidValues(uint256 kp, uint256 ki, int256 maxITimeAmp) external onlyOwner {
         _kp = kp;
         _ki = ki;
         _maxErrIAmp = int256(_ki).rayMulInt(-RAY * maxITimeAmp);
     }
 
-    // ----------- external -----------
-
     /**
-     * @dev Calculates the interest rates depending on the reserve's state and configurations
-     * @param asset The address of the asset
-     * @param liquidityAdded The liquidity added during the operation
-     * @param liquidityTaken The liquidity taken during the operation
-     * @param totalVariableDebt The total borrowed from the reserve at a variable rate
-     * @param reserveFactor The reserve portion of the interest that goes to the treasury of the market
-     * @return currentLiquidityRate The liquidity rate
-     * @return currentVariableBorrowRate The variable borrow rate
-     * @return utilization The utilization rate
-     * @return underlying The underlying (if tranched)
-     * @return currentFlow The current flow (if tranched)
+     * @notice Calculates the interest rates based on the reserve's state and configurations.
+     * @param asset The address of the asset.
+     * @param aToken The address of the aToken.
+     * @param liquidityAdded The liquidity added during the operation.
+     * @param liquidityTaken The liquidity taken during the operation.
+     * @param totalVariableDebt The total borrowed from the reserve at a variable rate.
+     * @param reserveFactor The reserve portion of the interest that goes to the treasury.
+     * @return currentLiquidityRate The calculated liquidity rate.
+     * @return currentVariableBorrowRate The calculated variable borrow rate.
+     * @return utilization The calculated utilization rate.
+     * @return underlying The underlying asset address if tranched.
+     * @return currentFlow The current flow if tranched.
      */
     function _calculateInterestRates(
         address asset,
         address aToken,
-        uint256 liquidityAdded, //! since this function is not view anymore we need to make sure liquidityAdded is added at the end
-        uint256 liquidityTaken, //! since this function is not view anymore we need to make sure liquidityTaken is removed at the end
+        uint256 liquidityAdded,
+        uint256 liquidityTaken,
         uint256 totalVariableDebt,
         uint256 reserveFactor
     )
@@ -185,14 +224,12 @@ abstract contract BasePiReserveRateStrategy is Ownable {
     }
 
     /**
-     * @dev Calculates the interest rates depending on the reserve's state and configurations.
-     * NOTE This function is kept for compatibility with the previous DefaultInterestRateStrategy interface.
-     * New protocol implementation uses the new calculateInterestRates() interface
-     * @param availableLiquidity The liquidity available in the corresponding aToken
-     * @param totalVariableDebt The total borrowed from the reserve at a variable rate
-     * @param reserveFactor The reserve portion of the interest that goes to the treasury of the market
-     * @return The liquidity rateand the variable borrow rate
-     *
+     * @notice Calculates the interest rates based on the reserve's state.
+     * @dev This function is kept for compatibility with the previous DefaultInterestRateStrategy interface.
+     * @param availableLiquidity The liquidity available in the corresponding aToken.
+     * @param totalVariableDebt The total borrowed from the reserve at a variable rate.
+     * @param reserveFactor The reserve portion of the interest that goes to the treasury.
+     * @return The liquidity rate, variable borrow rate, and utilization rate.
      */
     function _calculateInterestRates(
         address,
@@ -227,13 +264,13 @@ abstract contract BasePiReserveRateStrategy is Ownable {
         return (currentLiquidityRate, currentVariableBorrowRate, utilizationRate);
     }
 
-    // ----------- helpers -----------
-
     /**
-     * @dev normalize the err:
-     * utilizationRate ⊂ [0, Uo]   => err ⊂ [-RAY, 0]
-     * utilizationRate ⊂ [Uo, RAY] => err ⊂ [0, RAY]
-     * With Uo = optimal rate
+     * @notice Normalizes the error value based on utilization rate.
+     * @dev For utilizationRate ⊂ [0, Uo] => err ⊂ [-RAY, 0].
+     * For utilizationRate ⊂ [Uo, RAY] => err ⊂ [0, RAY].
+     * Where Uo is the optimal rate.
+     * @param utilizationRate The current utilization rate.
+     * @return The normalized error value.
      */
     function getNormalizedError(uint256 utilizationRate) internal view returns (int256) {
         int256 err = int256(utilizationRate) - int256(_optimalUtilizationRate);
@@ -244,7 +281,13 @@ abstract contract BasePiReserveRateStrategy is Ownable {
         }
     }
 
-    /// @dev Process the liquidity rate from the variable borrow rate.
+    /**
+     * @notice Calculates the liquidity rate from the variable borrow rate.
+     * @param currentVariableBorrowRate The current variable borrow rate.
+     * @param utilizationRate The current utilization rate.
+     * @param reserveFactor The reserve factor.
+     * @return The calculated liquidity rate.
+     */
     function getLiquidityRate(
         uint256 currentVariableBorrowRate,
         uint256 utilizationRate,
@@ -255,24 +298,32 @@ abstract contract BasePiReserveRateStrategy is Ownable {
         );
     }
 
-    /// @dev Process the controller error from the normalized error.
+    /**
+     * @notice Processes the controller error from the normalized error.
+     * @param err The normalized error value.
+     * @return The processed controller error.
+     */
     function getControllerError(int256 err) internal view returns (int256) {
         int256 errP = int256(_kp).rayMulInt(err);
         return errP + _errI;
     }
 
-    /// @dev Transfer Function for calculation of _currentVariableBorrowRate (https://www.desmos.com/calculator/dj5puy23wz)
+    /**
+     * @notice Transfer Function for calculation of currentVariableBorrowRate.
+     * @dev See https://www.desmos.com/calculator/dj5puy23wz for the mathematical model.
+     * @param controllerError The controller error input.
+     * @return The calculated variable borrow rate.
+     */
     function transferFunction(int256 controllerError) public view returns (uint256) {
         int256 ce = controllerError > _minControllerError ? controllerError : _minControllerError;
         return uint256(M_FACTOR.rayMulInt((ce + RAY).rayDivInt(2 * RAY).rayPowerInt(N_FACTOR)));
     }
 
     /**
-     * @notice getCod3xReserveFactor() from ReserveConfiguration can't be used with memory.
-     * So we need to redefine this function here using memory.
-     * @dev Gets the reserve factor of the reserve
-     * @param self The reserve configuration
-     * @return The reserve factor
+     * @notice Gets the Cod3x reserve factor from reserve configuration.
+     * @dev This is a redefined version of ReserveConfiguration.getCod3xReserveFactor() for memory usage.
+     * @param self The reserve configuration.
+     * @return The Cod3x reserve factor.
      */
     function getCod3xReserveFactor(DataTypes.ReserveConfigurationMap memory self)
         internal
@@ -284,10 +335,9 @@ abstract contract BasePiReserveRateStrategy is Ownable {
     }
 
     /**
-     * @dev Gets the minipool owner reserve factor of the reserve
-     * @param self The reserve configuration
-     * @return The reserve factor
-     *
+     * @notice Gets the minipool owner reserve factor from reserve configuration.
+     * @param self The reserve configuration.
+     * @return The minipool owner reserve factor.
      */
     function getMinipoolOwnerReserveFactor(DataTypes.ReserveConfigurationMap memory self)
         internal

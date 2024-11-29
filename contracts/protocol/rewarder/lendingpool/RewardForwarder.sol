@@ -2,36 +2,57 @@
 pragma solidity 0.8.23;
 
 import {IRewardsController} from "../../../../contracts/interfaces/IRewardsController.sol";
-import {DistributionTypes} from
-    "../../../../contracts/protocol/libraries/types/DistributionTypes.sol";
 import {IERC20} from "lib/openzeppelin-contracts/contracts/token/ERC20/IERC20.sol";
 import {Ownable} from "lib/openzeppelin-contracts/contracts/access/Ownable.sol";
 
 /**
  * @title RewardForwarder
  * @author Cod3x - 0xGoober
- * @dev This contract manages the forwarding of rewards to registered claimees.
+ * @notice Contract that manages the forwarding of rewards to registered claimees.
+ * @dev Inherits from `Ownable` to restrict admin functions.
  */
 contract RewardForwarder is Ownable {
+    /// @dev The rewards controller contract interface.
     IRewardsController public rewardsController;
-    address[] public rewardTokens; // tokens that can be claimed as rewards
-    address[] public rewardedPoolTokens; // tokens that can be recieve rewards
+
+    /// @dev Array of tokens that can be claimed as rewards.
+    address[] public rewardTokens;
+
+    /// @dev Array of tokens that can receive rewards (aTokens and variable debt tokens).
+    address[] public rewardedPoolTokens;
+
+    /// @dev Array containing all registered claimee addresses.
     address[] public registeredClaimees;
+
+    /// @dev Mapping to track if an address is a registered claimee.
     mapping(address => bool) public isRegisteredClaimee;
-    //      claimee => rewardedToken => rewardTokensIndex => amount
+
+    /**
+     * @dev Mapping to track claimed rewards per claimee.
+     * Maps `claimee` => `rewardedToken` => `rewardTokensIndex` => `amount`.
+     */
     mapping(address => mapping(address => mapping(uint256 => uint256))) public claimedRewards;
-    //      claimee => rewardTokensIndex => forwarder
+
+    /**
+     * @dev Mapping to store reward forwarder addresses.
+     * Maps `claimee` => `rewardTokensIndex` => `forwarder`.
+     */
     mapping(address => mapping(uint256 => address)) public forwarders;
 
+    /**
+     * @dev Initializes the contract with a rewards controller address.
+     * @param _rewardsController The address of the rewards controller contract.
+     */
     constructor(address _rewardsController) Ownable(msg.sender) {
         rewardsController = IRewardsController(_rewardsController);
     }
 
     /**
-     * @dev Sets the forwarder address for a specific claimee and reward token index.
+     * @notice Sets the forwarder address for a specific claimee and reward token.
+     * @dev Only callable by the contract owner.
      * @param claimee The address of the claimee.
-     * @param rewardTokenIndex The index of the reward token.
-     * @param forwarder The address of the forwarder.
+     * @param rewardTokenIndex The index of the reward token in the `rewardTokens` array.
+     * @param forwarder The address that will receive forwarded rewards.
      */
     function setForwarder(address claimee, uint256 rewardTokenIndex, address forwarder)
         external
@@ -41,32 +62,36 @@ contract RewardForwarder is Ownable {
     }
 
     /**
-     * @dev Sets the reward tokens by fetching them from the rewards controller.
+     * @notice Updates the reward tokens array by fetching from the rewards controller.
+     * @dev Only callable by the contract owner.
      */
     function setRewardTokens() external onlyOwner {
         rewardTokens = rewardsController.getRewardTokens();
     }
 
     /**
-     * @dev Sets the rewarded tokens. An array of aTokens and variable debt tokens.
+     * @notice Sets the rewarded pool tokens that can receive rewards.
+     * @dev Only callable by the contract owner.
+     * @param _rewardedTokens Array of aToken and variable debt token addresses.
      */
     function setRewardedTokens(address[] memory _rewardedTokens) external onlyOwner {
         rewardedPoolTokens = _rewardedTokens;
     }
 
     /**
-     * @dev Registers a claimee.
-     * @param claimee The address of the claimee.
+     * @notice Registers a new claimee address.
+     * @dev Only callable by the contract owner.
+     * @param claimee The address to register as a claimee.
      */
     function registerClaimee(address claimee) external onlyOwner {
         isRegisteredClaimee[claimee] = true;
         registeredClaimees.push(claimee);
     }
-    /**
-     * @dev Claims rewards for a specified mini pool.
-     * @param claimee The address of the mini pool.
-     */
 
+    /**
+     * @notice Claims rewards for all rewarded tokens of a specified mini pool.
+     * @param claimee The address of the mini pool to claim rewards for.
+     */
     function claimRewardsForPool(address claimee) public {
         for (uint256 i = 0; i < rewardedPoolTokens.length; i++) {
             address token = rewardedPoolTokens[i];
@@ -74,6 +99,10 @@ contract RewardForwarder is Ownable {
         }
     }
 
+    /**
+     * @notice Forwards all claimed rewards for a mini pool to their respective forwarders.
+     * @param claimee The address of the mini pool to forward rewards for.
+     */
     function forwardRewardsForPool(address claimee) public {
         for (uint256 i = 0; i < rewardedPoolTokens.length; i++) {
             address token = rewardedPoolTokens[i];
@@ -82,9 +111,11 @@ contract RewardForwarder is Ownable {
     }
 
     /**
-     * @dev Claims rewards for a specific claimee and rewardedtoken.
+     * @notice Claims rewards for a specific claimee and rewarded token.
+     * @dev Requires the claimee to be registered.
      * @param claimee The address of the claimee.
      * @param token The address of the rewarded token.
+     * @return Array of claimed reward amounts.
      */
     function claimRewardsFor(address claimee, address token) public returns (uint256[] memory) {
         require(isRegisteredClaimee[claimee], "Not registered");
@@ -99,10 +130,11 @@ contract RewardForwarder is Ownable {
     }
 
     /**
-     * @dev Forwards the claimed rewards to the specified forwarder.
+     * @notice Forwards previously claimed rewards to the designated forwarder.
+     * @dev Requires claimed rewards to exist and a forwarder to be set.
      * @param claimee The address of the claimee.
      * @param token The address of the rewarded token.
-     * @param rewardTokenIndex The index of the reward token.
+     * @param rewardTokenIndex The index of the reward token in the `rewardTokens` array.
      */
     function forwardRewards(address claimee, address token, uint256 rewardTokenIndex) public {
         address rewardToken = rewardTokens[rewardTokenIndex];

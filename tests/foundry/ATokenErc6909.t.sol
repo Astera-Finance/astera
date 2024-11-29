@@ -257,7 +257,6 @@ contract ATokenErc6909Test is Common {
          * 2. Perform one big mintToTreasury after some time elapsed
          * Invariants:
          * 1. Balances of treasury must reflect minting
-         *
          */
         uint8 nrOfIterations = 20;
 
@@ -272,9 +271,7 @@ contract ATokenErc6909Test is Common {
         index = bound(index, 1e27, 10e27); // assume index increases in time as the interest accumulates
         vm.assume(maxValToMint.rayDiv(index) > 0);
         vm.prank(miniPoolContracts.miniPoolAddressesProvider.getMainPoolAdmin());
-        miniPoolContracts.miniPoolConfigurator.setCod3xTreasuryToMiniPool(
-            treasury, IMiniPool(miniPool)
-        );
+        miniPoolContracts.miniPoolConfigurator.setCod3xTreasury(treasury);
         uint256 granuality = maxValToMint / nrOfIterations;
         vm.assume(maxValToMint % granuality == 0); // accept only multiplicity of {nrOfIterations}
         // maxValToMint = maxValToMint - (maxValToMint % granuality);

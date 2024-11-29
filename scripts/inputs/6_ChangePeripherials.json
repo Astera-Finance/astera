@@ -17,18 +17,11 @@
             "tokenAddress": "0x4200000000000000000000000000000000000006"
         }
     ],
-    "miniPoolCod3xTreasury": [
-        {
-            "configure": true,
-            "newAddress": "0x3151CfCA393FE5Eec690feD2a2446DA5a073d01B",
-            "owner": "0x3151CfCA393FE5Eec690feD2a2446DA5a073d01B"
-        },
-        {
-            "configure": true,
-            "newAddress": "0x3151CfCA393FE5Eec690feD2a2446DA5a073d01B",
-            "owner": "0x3151CfCA393FE5Eec690feD2a2446DA5a073d01B"
-        }
-    ],
+    "miniPoolCod3xTreasury": {
+        "configure": true,
+        "newAddress": "0x3151CfCA393FE5Eec690feD2a2446DA5a073d01B",
+        "owner": "0x3151CfCA393FE5Eec690feD2a2446DA5a073d01B"
+    },
     "vault": [
         {
             "configure": false,

@@ -7,28 +7,27 @@ import {IERC20} from "../../../../../contracts/dependencies/openzeppelin/contrac
 import {IAERC6909} from "../../../../../contracts/interfaces/IAERC6909.sol";
 import {IAToken} from "../../../../../contracts/interfaces/IAToken.sol";
 import {IMiniPool} from "../../../../../contracts/interfaces/IMiniPool.sol";
-import {IFlowLimiter} from "../../../../../contracts/interfaces/IFlowLimiter.sol";
+import {IFlowLimiter} from "../../../../../contracts/interfaces/base/IFlowLimiter.sol";
 import {IMiniPoolReserveInterestRateStrategy} from
     "../../../../../contracts/interfaces/IMiniPoolReserveInterestRateStrategy.sol";
-import {
-    BasePiReserveRateStrategy,
-    WadRayMath,
-    PercentageMath,
-    DataTypes
-} from "../../../../../contracts/protocol/core/interestRateStrategies/BasePiReserveRateStrategy.sol";
+import {BasePiReserveRateStrategy} from
+    "../../../../../contracts/protocol/core/interestRateStrategies/BasePiReserveRateStrategy.sol";
+import {WadRayMath} from "../../../../../contracts/protocol/libraries/math/WadRayMath.sol";
+import {PercentageMath} from "../../../../../contracts/protocol/libraries/math/PercentageMath.sol";
 import {MathUtils} from "../../../../../contracts/protocol/libraries/math/MathUtils.sol";
+import {DataTypes} from "../../../../../contracts/protocol/libraries/types/DataTypes.sol";
 import {ILendingPool} from "../../../../../contracts/interfaces/ILendingPool.sol";
+
 /**
- * @title PiReserveInterestRateStrategy contract
+ * @title MiniPoolPiReserveInterestRateStrategy contract.
  * @notice Implements the calculation of the interest rates using control theory.
- * @dev The model of interest rate is based Proportional Integrator (PI).
+ * @dev The model of interest rate is based on Proportional Integrator (PI).
  * Admin needs to set an optimal utilization rate and this strategy will automatically
- * automatically adjust the interest rate according to the `Kp` and `Ki` variables.
- * @dev ATTENTION, this contract must no be used as a library. One PiReserveInterestRateStrategy
+ * adjust the interest rate according to the `_kp` and `_ki` variables.
+ * @dev ATTENTION: This contract must not be used as a library. One MiniPoolPiReserveInterestRateStrategy
  * needs to be associated with only one market.
  * @author Cod3x
  */
-
 contract MiniPoolPiReserveInterestRateStrategy is
     BasePiReserveRateStrategy,
     IMiniPoolReserveInterestRateStrategy
@@ -37,11 +36,27 @@ contract MiniPoolPiReserveInterestRateStrategy is
     using WadRayMath for int256;
     using PercentageMath for uint256;
 
+    /// @dev Time margin used for interest rate calculations, set to 5 days.
     uint256 public constant DELTA_TIME_MARGIN = 5 days;
+
+    /// @dev Number of seconds in a year.
     uint256 public constant SECONDS_PER_YEAR = 365 days;
 
+    /// @dev ID of the minipool this strategy is associated with.
     uint256 public _minipoolId;
 
+    /**
+     * @notice Initializes the MiniPoolPiReserveInterestRateStrategy contract.
+     * @param provider Address of the lending pool provider.
+     * @param minipoolId ID of the minipool this strategy is for.
+     * @param asset Address of the asset this strategy is for.
+     * @param assetReserveType Type of the asset reserve.
+     * @param minControllerError Minimum allowed controller error.
+     * @param maxITimeAmp Maximum integral time amplitude.
+     * @param optimalUtilizationRate Target utilization rate.
+     * @param kp Proportional gain coefficient.
+     * @param ki Integral gain coefficient.
+     */
     constructor(
         address provider,
         uint256 minipoolId,
@@ -67,10 +82,12 @@ contract MiniPoolPiReserveInterestRateStrategy is
         _minipoolId = minipoolId;
     }
 
+    /// @inheritdoc BasePiReserveRateStrategy
     function _getLendingPool() internal view override returns (address) {
         return IMiniPoolAddressesProvider(_addressProvider).getMiniPool(_minipoolId);
     }
 
+    /// @inheritdoc BasePiReserveRateStrategy
     function getAvailableLiquidity(address asset, address aToken)
         public
         view
@@ -83,7 +100,7 @@ contract MiniPoolPiReserveInterestRateStrategy is
             IFlowLimiter flowLimiter =
                 IFlowLimiter(IMiniPoolAddressesProvider(_addressProvider).getFlowLimiter());
             underlying = IAToken(asset).UNDERLYING_ASSET_ADDRESS();
-            address minipool = IAERC6909(aToken).MINIPOOL_ADDRESS();
+            address minipool = IAERC6909(aToken).getMinipoolAddress();
             currentFlow = flowLimiter.currentFlow(underlying, minipool);
 
             availableLiquidity = IERC20(asset).balanceOf(aToken)
@@ -96,12 +113,7 @@ contract MiniPoolPiReserveInterestRateStrategy is
 
     // ----------- view -----------
 
-    /**
-     * @notice The view version of `calculateInterestRates()`.
-     * @return currentLiquidityRate
-     * @return currentVariableBorrowRate
-     * @return utilizationRate
-     */
+    /// @inheritdoc BasePiReserveRateStrategy
     function getCurrentInterestRates() public view override returns (uint256, uint256, uint256) {
         // utilization
         IAERC6909 aErc6909Token = IAERC6909(
@@ -131,24 +143,33 @@ contract MiniPoolPiReserveInterestRateStrategy is
 
     // ----------- view -----------
 
+    /**
+     * @notice Returns the base variable borrow rate.
+     * @return The minimum variable borrow rate.
+     */
     function baseVariableBorrowRate() public view override returns (uint256) {
         return uint256(transferFunction(type(int256).min));
     }
 
+    /**
+     * @notice Returns the maximum variable borrow rate.
+     * @return The maximum allowed variable borrow rate.
+     */
     function getMaxVariableBorrowRate() external pure override returns (uint256) {
         return type(uint256).max;
     }
 
     /**
-     * @dev Calculates the interest rates depending on the reserve's state and configurations
-     * @param asset The address of the asset
-     * @param aToken The address of the reserve aToken
-     * @param liquidityAdded The liquidity added during the operation
-     * @param liquidityTaken The liquidity taken during the operation
-     * @param totalVariableDebt The total borrowed from the reserve at a variable rate
-     * @param reserveFactor The reserve portion of the interest that goes to the treasury of the market
-     * @return currentLiquidityRate The liquidity rate
-     * @return currentVariableBorrowRate The variable borrow rate
+     * @notice Calculates the interest rates depending on the reserve's state and configurations.
+     * @dev This function ensures the minipool can always repay its debt to the lending pool.
+     * @param asset The address of the asset.
+     * @param aToken The address of the reserve aToken.
+     * @param liquidityAdded The liquidity added during the operation.
+     * @param liquidityTaken The liquidity taken during the operation.
+     * @param totalVariableDebt The total borrowed from the reserve at a variable rate.
+     * @param reserveFactor The reserve portion of the interest that goes to the treasury of the market.
+     * @return currentLiquidityRate The calculated liquidity rate.
+     * @return currentVariableBorrowRate The calculated variable borrow rate.
      */
     function calculateInterestRates(
         address asset,

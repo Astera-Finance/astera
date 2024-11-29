@@ -1,15 +1,13 @@
 // SPDX-License-Identifier: agpl-3.0
 pragma solidity ^0.8.0;
 
-import {IScaledBalanceToken} from "../../contracts/interfaces/IScaledBalanceToken.sol";
-import {IInitializableDebtToken} from "../../contracts/interfaces/IInitializableDebtToken.sol";
+import {IScaledBalanceToken} from "../../contracts/interfaces/base/IScaledBalanceToken.sol";
+import {IInitializableDebtToken} from "../../contracts/interfaces/base/IInitializableDebtToken.sol";
 import {IRewarder} from "../../contracts/interfaces/IRewarder.sol";
 
 /**
- * @title IVariableDebtToken
+ * @title IVariableDebtToken interface.
  * @author Cod3x
- * @notice Defines the basic interface for a variable debt token.
- *
  */
 interface IVariableDebtToken is IScaledBalanceToken, IInitializableDebtToken {
     /**
@@ -18,45 +16,39 @@ interface IVariableDebtToken is IScaledBalanceToken, IInitializableDebtToken {
      * @param onBehalfOf The address of the user on which behalf minting has been performed
      * @param value The amount to be minted
      * @param index The last index of the reserve
-     *
      */
     event Mint(address indexed from, address indexed onBehalfOf, uint256 value, uint256 index);
-
-    /**
-     * @dev Mints debt token to the `onBehalfOf` address
-     * @param user The address receiving the borrowed underlying, being the delegatee in case
-     * of credit delegate, or same as `onBehalfOf` otherwise
-     * @param onBehalfOf The address receiving the debt tokens
-     * @param amount The amount of debt being minted
-     * @param index The variable debt index of the reserve
-     * @return `true` if the the previous balance of the user is 0
-     *
-     */
-    function mint(address user, address onBehalfOf, uint256 amount, uint256 index)
-        external
-        returns (bool);
 
     /**
      * @dev Emitted when variable debt is burnt
      * @param user The user which debt has been burned
      * @param amount The amount of debt being burned
      * @param index The index of the user
-     *
      */
     event Burn(address indexed user, uint256 amount, uint256 index);
 
     /**
-     * @dev Burns user variable debt
-     * @param user The user which debt is burnt
-     * @param index The variable debt index of the reserve
-     *
+     * @dev Emitted when a borrower delegates borrowing power to a delegatee
+     * @param fromUser The address of the delegator
+     * @param toUser The address of the delegatee receiving the borrowing power
+     * @param asset The address of the underlying asset being delegated
+     * @param amount The amount of borrowing power being delegated
      */
+    event BorrowAllowanceDelegated(
+        address indexed fromUser, address indexed toUser, address asset, uint256 amount
+    );
+
+    function mint(address user, address onBehalfOf, uint256 amount, uint256 index)
+        external
+        returns (bool);
+
     function burn(address user, uint256 amount, uint256 index) external;
 
-    /**
-     * @dev Returns the address of the incentives controller contract
-     *
-     */
     function getIncentivesController() external view returns (IRewarder);
+
     function setIncentivesController(address newController) external;
+
+    function approveDelegation(address delegatee, uint256 amount) external;
+
+    function borrowAllowance(address fromUser, address toUser) external view returns (uint256);
 }

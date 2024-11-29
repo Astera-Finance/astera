@@ -1,14 +1,12 @@
 // SPDX-License-Identifier: agpl-3.0
 pragma solidity ^0.8.0;
 
-import {ILendingPool} from "../../contracts/interfaces/ILendingPool.sol";
-import {IRewarder} from "../../contracts/interfaces/IRewarder.sol";
+import {ILendingPool} from "../../../contracts/interfaces/ILendingPool.sol";
+import {IRewarder} from "../../../contracts/interfaces/IRewarder.sol";
 
 /**
- * @title IInitializableAToken
- * @notice Interface for the initialize function on AToken
+ * @title IInitializableAToken interface.
  * @author Cod3x
- *
  */
 interface IInitializableAToken {
     /**

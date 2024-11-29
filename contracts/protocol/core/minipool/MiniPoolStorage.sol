@@ -13,6 +13,8 @@ import {DataTypes} from "../../../../contracts/protocol/libraries/types/DataType
 
 /**
  * @title MiniPoolStorage
+ * @notice Contract that stores the state and configuration for a MiniPool.
+ * @dev Contains mappings and variables used across the MiniPool system.
  * @author Cod3x
  */
 contract MiniPoolStorage {
@@ -20,21 +22,33 @@ contract MiniPoolStorage {
     using ReserveConfiguration for DataTypes.ReserveConfigurationMap;
     using UserConfiguration for DataTypes.UserConfigurationMap;
 
+    /// @dev The addresses provider contract managing this MiniPool's addresses.
     IMiniPoolAddressesProvider internal _addressesProvider;
+
+    /// @dev Reference to the main lending pool contract.
     ILendingPool internal _pool;
+
+    /// @dev Unique identifier for this MiniPool.
     uint256 internal _minipoolId;
 
+    /// @dev Mapping of reserve data for each asset address.
     mapping(address => DataTypes.MiniPoolReserveData) internal _reserves;
+
+    /// @dev Mapping of user configurations for each user address.
     mapping(address => DataTypes.UserConfigurationMap) internal _usersConfig;
 
-    // the list of the available reserves, structured as a mapping for gas savings reasons
+    /// @dev The list of the available reserves.
     mapping(uint256 => address) internal _reservesList;
 
+    /// @dev Count of initialized reserves.
     uint256 internal _reservesCount;
 
+    /// @dev Flag indicating if the MiniPool is paused.
     bool internal _paused;
 
+    /// @dev Total premium percentage charged for flash loans.
     uint256 internal _flashLoanPremiumTotal;
 
+    /// @dev Maximum number of reserves that can be initialized.
     uint256 internal _maxNumberOfReserves;
 }

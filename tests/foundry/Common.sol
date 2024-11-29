@@ -617,7 +617,6 @@ contract Common is Test {
                 poolOwner
             );
             deployedMiniPoolContracts.flowLimiter = new FlowLimiter(
-                ILendingPoolAddressesProvider(_lendingPoolAddressesProvider),
                 IMiniPoolAddressesProvider(
                     address(deployedMiniPoolContracts.miniPoolAddressesProvider)
                 ),

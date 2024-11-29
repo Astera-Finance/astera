@@ -8,10 +8,10 @@ import {IERC20Detailed} from
 import {IRewarder} from "../../../../contracts/interfaces/IRewarder.sol";
 
 /**
- * @title ERC20
- * @notice Basic ERC20 implementation
- * @author Cod3x, inspired by the Openzeppelin ERC20 implementation
- *
+ * @title IncentivizedERC20
+ * @notice Implementation of the basic ERC20 standard with incentives functionality.
+ * @author Cod3x
+ * @dev This contract extends the basic ERC20 implementation with incentives tracking capabilities.
  */
 abstract contract IncentivizedERC20 is Context, IERC20, IERC20Detailed {
     mapping(address => uint256) internal _balances;
@@ -22,6 +22,12 @@ abstract contract IncentivizedERC20 is Context, IERC20, IERC20Detailed {
     string private _symbol;
     uint8 private _decimals;
 
+    /**
+     * @dev Constructor that sets the token details.
+     * @param name_ The name of the token.
+     * @param symbol_ The symbol of the token.
+     * @param decimals_ The number of decimals for token precision.
+     */
     constructor(string memory name_, string memory symbol_, uint8 decimals_) {
         _name = name_;
         _symbol = symbol_;
@@ -29,58 +35,58 @@ abstract contract IncentivizedERC20 is Context, IERC20, IERC20Detailed {
     }
 
     /**
-     * @return The name of the token
-     *
+     * @dev Returns the name of the token.
+     * @return The name of the token as a string.
      */
     function name() public view override returns (string memory) {
         return _name;
     }
 
     /**
-     * @return The symbol of the token
-     *
+     * @dev Returns the symbol of the token.
+     * @return The symbol of the token as a string.
      */
     function symbol() public view override returns (string memory) {
         return _symbol;
     }
 
     /**
-     * @return The decimals of the token
-     *
+     * @dev Returns the number of decimals used for token precision.
+     * @return The decimal places of the token.
      */
     function decimals() public view override returns (uint8) {
         return _decimals;
     }
 
     /**
-     * @return The total supply of the token
-     *
+     * @dev Returns the total supply of the token.
+     * @return The total token supply.
      */
     function totalSupply() public view virtual override returns (uint256) {
         return _totalSupply;
     }
 
     /**
-     * @return The balance of the token
-     *
+     * @dev Returns the token balance of a given account.
+     * @param account The address to query the balance for.
+     * @return The token balance of the `account`.
      */
     function balanceOf(address account) public view virtual override returns (uint256) {
         return _balances[account];
     }
 
     /**
-     * @return Abstract function implemented by the child aToken/debtToken.
-     * Done this way in order to not break compatibility with previous versions of aTokens/debtTokens
-     *
+     * @dev Abstract function to get the incentives controller.
+     * @return The IRewarder interface of the incentives controller.
+     * @dev Implemented by child aToken/debtToken to maintain backward compatibility.
      */
     function _getIncentivesController() internal view virtual returns (IRewarder);
 
     /**
-     * @dev Executes a transfer of tokens from _msgSender() to recipient
-     * @param recipient The recipient of the tokens
-     * @param amount The amount of tokens being transferred
-     * @return `true` if the transfer succeeds, `false` otherwise
-     *
+     * @dev Transfers tokens from sender to recipient.
+     * @param recipient The address receiving the tokens.
+     * @param amount The amount of tokens to transfer.
+     * @return A boolean indicating the success of the transfer.
      */
     function transfer(address recipient, uint256 amount) public virtual override returns (bool) {
         _transfer(_msgSender(), recipient, amount);
@@ -89,11 +95,10 @@ abstract contract IncentivizedERC20 is Context, IERC20, IERC20Detailed {
     }
 
     /**
-     * @dev Returns the allowance of spender on the tokens owned by owner
-     * @param owner The owner of the tokens
-     * @param spender The user allowed to spend the owner's tokens
-     * @return The amount of owner's tokens spender is allowed to spend
-     *
+     * @dev Returns the spending allowance of `spender` for `owner`'s tokens.
+     * @param owner The address owning the tokens.
+     * @param spender The address authorized to spend the tokens.
+     * @return The remaining allowance of tokens.
      */
     function allowance(address owner, address spender)
         public
@@ -106,10 +111,10 @@ abstract contract IncentivizedERC20 is Context, IERC20, IERC20Detailed {
     }
 
     /**
-     * @dev Allows `spender` to spend the tokens owned by _msgSender()
-     * @param spender The user allowed to spend _msgSender() tokens
-     * @return `true`
-     *
+     * @dev Sets `amount` as the allowance of `spender` over the caller's tokens.
+     * @param spender The address authorized to spend the tokens.
+     * @param amount The amount of tokens to be approved for spending.
+     * @return A boolean indicating the success of the approval.
      */
     function approve(address spender, uint256 amount) public virtual override returns (bool) {
         _approve(_msgSender(), spender, amount);
@@ -117,12 +122,11 @@ abstract contract IncentivizedERC20 is Context, IERC20, IERC20Detailed {
     }
 
     /**
-     * @dev Executes a transfer of token from sender to recipient, if _msgSender() is allowed to do so
-     * @param sender The owner of the tokens
-     * @param recipient The recipient of the tokens
-     * @param amount The amount of tokens being transferred
-     * @return `true` if the transfer succeeds, `false` otherwise
-     *
+     * @dev Transfers tokens from one address to another using the allowance mechanism.
+     * @param sender The address to transfer tokens from.
+     * @param recipient The address to transfer tokens to.
+     * @param amount The amount of tokens to transfer.
+     * @return A boolean indicating the success of the transfer.
      */
     function transferFrom(address sender, address recipient, uint256 amount)
         public
@@ -139,11 +143,10 @@ abstract contract IncentivizedERC20 is Context, IERC20, IERC20Detailed {
     }
 
     /**
-     * @dev Increases the allowance of spender to spend _msgSender() tokens
-     * @param spender The user allowed to spend on behalf of _msgSender()
-     * @param addedValue The amount being added to the allowance
-     * @return `true`
-     *
+     * @dev Atomically increases the allowance granted to `spender`.
+     * @param spender The address being authorized to spend tokens.
+     * @param addedValue The amount by which to increase the allowance.
+     * @return A boolean indicating the success of the operation.
      */
     function increaseAllowance(address spender, uint256 addedValue) public virtual returns (bool) {
         _approve(_msgSender(), spender, _allowances[_msgSender()][spender] + addedValue);
@@ -151,11 +154,10 @@ abstract contract IncentivizedERC20 is Context, IERC20, IERC20Detailed {
     }
 
     /**
-     * @dev Decreases the allowance of spender to spend _msgSender() tokens
-     * @param spender The user allowed to spend on behalf of _msgSender()
-     * @param subtractedValue The amount being subtracted to the allowance
-     * @return `true`
-     *
+     * @dev Atomically decreases the allowance granted to `spender`.
+     * @param spender The address being authorized to spend tokens.
+     * @param subtractedValue The amount by which to decrease the allowance.
+     * @return A boolean indicating the success of the operation.
      */
     function decreaseAllowance(address spender, uint256 subtractedValue)
         public
@@ -168,6 +170,12 @@ abstract contract IncentivizedERC20 is Context, IERC20, IERC20Detailed {
         return true;
     }
 
+    /**
+     * @dev Internal function to execute token transfers.
+     * @param sender The address sending the tokens.
+     * @param recipient The address receiving the tokens.
+     * @param amount The amount of tokens to transfer.
+     */
     function _transfer(address sender, address recipient, uint256 amount) internal virtual {
         require(sender != address(0), "ERC20: transfer from the zero address");
         require(recipient != address(0), "ERC20: transfer to the zero address");
@@ -191,6 +199,11 @@ abstract contract IncentivizedERC20 is Context, IERC20, IERC20Detailed {
         }
     }
 
+    /**
+     * @dev Internal function to mint new tokens.
+     * @param account The address receiving the minted tokens.
+     * @param amount The amount of tokens to mint.
+     */
     function _mint(address account, uint256 amount) internal virtual {
         require(account != address(0), "ERC20: mint to the zero address");
 
@@ -207,6 +220,11 @@ abstract contract IncentivizedERC20 is Context, IERC20, IERC20Detailed {
         }
     }
 
+    /**
+     * @dev Internal function to burn tokens.
+     * @param account The address from which tokens will be burned.
+     * @param amount The amount of tokens to burn.
+     */
     function _burn(address account, uint256 amount) internal virtual {
         require(account != address(0), "ERC20: burn from the zero address");
 
@@ -224,6 +242,12 @@ abstract contract IncentivizedERC20 is Context, IERC20, IERC20Detailed {
         }
     }
 
+    /**
+     * @dev Internal function to handle token approvals.
+     * @param owner The address granting the approval.
+     * @param spender The address receiving the approval.
+     * @param amount The amount of tokens approved.
+     */
     function _approve(address owner, address spender, uint256 amount) internal virtual {
         require(owner != address(0), "ERC20: approve from the zero address");
         require(spender != address(0), "ERC20: approve to the zero address");
@@ -232,17 +256,35 @@ abstract contract IncentivizedERC20 is Context, IERC20, IERC20Detailed {
         emit Approval(owner, spender, amount);
     }
 
+    /**
+     * @dev Internal function to update the token name.
+     * @param newName The new name to set.
+     */
     function _setName(string memory newName) internal {
         _name = newName;
     }
 
+    /**
+     * @dev Internal function to update the token symbol.
+     * @param newSymbol The new symbol to set.
+     */
     function _setSymbol(string memory newSymbol) internal {
         _symbol = newSymbol;
     }
 
+    /**
+     * @dev Internal function to update the token decimals.
+     * @param newDecimals The new number of decimals to set.
+     */
     function _setDecimals(uint8 newDecimals) internal {
         _decimals = newDecimals;
     }
 
+    /**
+     * @dev Hook that is called before any transfer of tokens.
+     * @param from The address tokens are transferred from.
+     * @param to The address tokens are transferred to.
+     * @param amount The amount of tokens being transferred.
+     */
     function _beforeTokenTransfer(address from, address to, uint256 amount) internal virtual {}
 }
