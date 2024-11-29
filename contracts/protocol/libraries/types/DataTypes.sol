@@ -65,19 +65,19 @@ library DataTypes {
     /**
      * @notice Stores the configuration parameters for a reserve.
      * @dev Encoded as a packed bitfield for gas optimization.
-     * bits 0-15: `Loan to Value` ratio.
-     * bits 16-31: `Liquidation threshold`.
-     * bits 32-47: `Liquidation bonus`.
-     * bits 48-55: Decimals of the underlying asset.
-     * bit 56: Reserve is active.
-     * bit 57: Reserve is frozen.
-     * bit 58: Borrowing is enabled.
-     * bit 59: Flashloan is enabled.
-     * bits 60-75: `Cod3x` reserve factor.
-     * bits 76-91: Minipool owner reserve factor.
-     * bits 92-163: Deposit cap.
-     * bit 164: Reserve type.
-     * bits 165-255: Unused.
+     *  - bits 0-15: `Loan to Value` ratio.
+     *  - bits 16-31: `Liquidation threshold`.
+     *  - bits 32-47: `Liquidation bonus`.
+     *  - bits 48-55: Decimals of the underlying asset.
+     *  - bit 56: Reserve is active.
+     *  - bit 57: Reserve is frozen.
+     *  - bit 58: Borrowing is enabled.
+     *  - bit 59: Flashloan is enabled.
+     *  - bits 60-75: `Cod3x` reserve factor.
+     *  - bits 76-91: Minipool owner reserve factor.
+     *  - bits 92-163: Deposit cap.
+     *  - bit 164: Reserve type.
+     *  - bits 165-255: Unused.
      */
     struct ReserveConfigurationMap {
         uint256 data;

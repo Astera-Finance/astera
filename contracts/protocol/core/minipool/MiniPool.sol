@@ -42,14 +42,7 @@ import {IMiniPoolRewarder} from "../../../../contracts/interfaces/IMiniPoolRewar
  * which means that the a Minipool can borrow from the main lending pool and use it as collateral
  * for its own borrowing power. This power is set by the admin through the FlowLimiter.
  *
- * - Users can:
- *   # Deposit
- *   # Withdraw
- *   # Borrow
- *   # Repay
- *   # Enable/disable their deposits as collateral
- *   # Liquidate positions
- *   # Execute Flash Loans
+ * - Users can: Deposit, Withdraw, Borrow, Repay, Enable/disable their deposits as collateral, Liquidate positions, Execute Flash Loans
  * - To be covered by a proxy contract, owned by the MiniPoolAddressesProvider of the specific market.
  * - All admin functions are callable by the MiniPoolConfigurator contract defined also in the
  *   MiniPoolAddressesProvider.
