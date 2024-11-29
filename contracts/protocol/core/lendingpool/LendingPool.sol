@@ -36,7 +36,10 @@ import {LiquidationLogic} from
 
 /**
  * @title LendingPool contract
- * @dev Main point of interaction with an Cod3x Lend protocol's market
+ * @dev Main point of interaction with an Cod3x Lend protocol's market.
+ * 
+ * - Minipools can borrow from the main lending pool on aTokens from the main lending pool.
+ * - Admin can activate rehypothecation on reserves.
  * - Users can:
  *   # Deposit
  *   # Withdraw
