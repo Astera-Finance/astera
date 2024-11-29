@@ -398,8 +398,10 @@ contract LendingPool is VersionedInitializable, ILendingPool, LendingPoolStorage
      * @return True if the user is a minipool, false otherwise.
      */
     function _isMiniPool(address user) internal view returns (bool) {
-        return IMiniPoolAddressesProvider(_addressesProvider.getMiniPoolAddressesProvider())
-            .getMiniPoolToAERC6909(user) != address(0);
+        address minipoolAddressProvider = _addressesProvider.getMiniPoolAddressesProvider();
+        if (minipoolAddressProvider == address(0)) return false;
+        return IMiniPoolAddressesProvider(minipoolAddressProvider).getMiniPoolToAERC6909(user)
+            != address(0);
     }
 
     /**
