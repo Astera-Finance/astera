@@ -38,9 +38,6 @@ contract LendingPoolStorage {
      */
     mapping(uint256 => DataTypes.ReserveReference) internal _reservesList;
 
-    /// @dev Mapping to track mini pools with active loans.
-    mapping(address => bool) internal _miniPoolsWithActiveLoans;
-
     /// @dev Counter for the number of initialized reserves.
     uint256 internal _reservesCount;
 

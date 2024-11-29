@@ -302,9 +302,8 @@ contract LendingPool is VersionedInitializable, ILendingPool, LendingPoolStorage
         uint256 debtToCover,
         bool receiveAToken
     ) external override whenNotPaused {
-        if (_miniPoolsWithActiveLoans[user]) {
-            revert(Errors.VL_MINIPOOL_CANNOT_BE_LIQUIDATED);
-        }
+        require(!_isMiniPool(user), Errors.VL_MINIPOOL_CANNOT_BE_LIQUIDATED);
+
         LiquidationLogic.liquidationCall(
             _reserves,
             _usersConfig,
@@ -377,11 +376,7 @@ contract LendingPool is VersionedInitializable, ILendingPool, LendingPoolStorage
         override
         whenNotPaused
     {
-        require(
-            IMiniPoolAddressesProvider(_addressesProvider.getMiniPoolAddressesProvider())
-                .getMiniPoolToAERC6909(msg.sender) != address(0),
-            Errors.LP_CALLER_NOT_MINIPOOL
-        );
+        require(_isMiniPool(msg.sender), Errors.LP_CALLER_NOT_MINIPOOL);
 
         BorrowLogic.executeMiniPoolBorrow(
             BorrowLogic.ExecuteMiniPoolBorrowParams(
@@ -395,7 +390,16 @@ contract LendingPool is VersionedInitializable, ILendingPool, LendingPoolStorage
             ),
             _reserves
         );
-        _miniPoolsWithActiveLoans[msg.sender] = true;
+    }
+
+    /**
+     * @notice Checks if a user is a minipool.
+     * @param user The address of the user.
+     * @return True if the user is a minipool, false otherwise.
+     */
+    function _isMiniPool(address user) internal view returns (bool) {
+        return IMiniPoolAddressesProvider(_addressesProvider.getMiniPoolAddressesProvider())
+            .getMiniPoolToAERC6909(user) != address(0);
     }
 
     /**
