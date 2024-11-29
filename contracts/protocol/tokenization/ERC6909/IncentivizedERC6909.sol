@@ -1,18 +1,15 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity 0.8.23;
 
-import {Context} from "../../../../contracts/dependencies/openzeppelin/contracts/Context.sol";
 import {IMiniPoolRewarder} from "../../../../contracts/interfaces/IMiniPoolRewarder.sol";
 import {ERC6909} from "lib/solady/src/tokens/ERC6909.sol";
-import {IAERC6909} from "../../../../contracts/interfaces/IAERC6909.sol";
-import {IERC6909} from "../../../../contracts/interfaces/base/IERC6909.sol";
 
 /**
  * @title IncentivizedERC6909
  * @notice Basic ERC6909 implementation with incentives functionality.
  * @author Cod3x, inspired by the Solady ERC6909 implementation and AAVEs incentivized ERC20
  */
-abstract contract IncentivizedERC6909 is Context, ERC6909 /*, IERC6909 */ {
+abstract contract IncentivizedERC6909 is ERC6909 /*, IAERC6909 */ {
     /// @dev Mapping from `id` to token name.
     mapping(uint256 => string) private _name;
     /// @dev Mapping from `id` to token symbol.
