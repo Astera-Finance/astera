@@ -212,16 +212,10 @@ interface ILendingPool {
      * @param asset The address of the underlying asset to borrow.
      * @param reserveType Whether the reserve is boosted by a vault.
      * @param amount The amount to borrow.
-     * @param miniPoolAddress The address of the mini pool.
      * @param aTokenAddress The address of the aToken.
      */
-    function miniPoolBorrow(
-        address asset,
-        bool reserveType,
-        uint256 amount,
-        address miniPoolAddress,
-        address aTokenAddress
-    ) external;
+    function miniPoolBorrow(address asset, bool reserveType, uint256 amount, address aTokenAddress)
+        external;
 
     /**
      * @notice Repays a borrowed amount using aTokens.

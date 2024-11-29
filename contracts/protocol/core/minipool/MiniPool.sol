@@ -220,7 +220,6 @@ contract MiniPool is VersionedInitializable, IMiniPool, MiniPoolStorage {
                 underlying,
                 true,
                 ATokenNonRebasing(asset).convertToAssets(amount - vars.availableLiquidity), // amount + availableLiquidity converted to asset
-                address(this),
                 ATokenNonRebasing(asset).ATOKEN_ADDRESS()
             );
 

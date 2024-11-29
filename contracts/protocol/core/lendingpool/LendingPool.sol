@@ -33,6 +33,8 @@ import {FlashLoanLogic} from
     "../../../../contracts/protocol/core/lendingpool/logic/FlashLoanLogic.sol";
 import {LiquidationLogic} from
     "../../../../contracts/protocol/core/lendingpool/logic/LiquidationLogic.sol";
+import {IMiniPoolAddressesProvider} from
+    "../../../../contracts/interfaces/IMiniPoolAddressesProvider.sol";
 
 /**
  * @title LendingPool contract
@@ -368,17 +370,18 @@ contract LendingPool is VersionedInitializable, ILendingPool, LendingPoolStorage
      * @param asset The address of the underlying asset to borrow.
      * @param reserveType Whether the reserve is boosted by a vault.
      * @param amount The amount to borrow.
-     * @param miniPoolAddress The address of the mini pool.
      * @param aTokenAddress The address of the aToken.
      */
-    function miniPoolBorrow(
-        address asset,
-        bool reserveType,
-        uint256 amount,
-        address miniPoolAddress,
-        address aTokenAddress
-    ) external override whenNotPaused {
-        require(msg.sender == miniPoolAddress, Errors.LP_CALLER_NOT_MINIPOOL);
+    function miniPoolBorrow(address asset, bool reserveType, uint256 amount, address aTokenAddress)
+        external
+        override
+        whenNotPaused
+    {
+        require(
+            IMiniPoolAddressesProvider(_addressesProvider.getMiniPoolAddressesProvider())
+                .getMiniPoolToAERC6909(msg.sender) != address(0),
+            Errors.LP_CALLER_NOT_MINIPOOL
+        );
 
         BorrowLogic.executeMiniPoolBorrow(
             BorrowLogic.ExecuteMiniPoolBorrowParams(
@@ -392,7 +395,7 @@ contract LendingPool is VersionedInitializable, ILendingPool, LendingPoolStorage
             ),
             _reserves
         );
-        _miniPoolsWithActiveLoans[miniPoolAddress] = true;
+        _miniPoolsWithActiveLoans[msg.sender] = true;
     }
 
     /**
