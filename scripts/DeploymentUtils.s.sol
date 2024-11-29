@@ -599,7 +599,7 @@ contract DeploymentUtils {
 
     function _changePeripherials(
         NewPeripherial[] memory treasury,
-        NewMiniPoolPeripherial[] memory cod3xTreasury,
+        NewMiniPoolPeripherial memory cod3xTreasury,
         NewPeripherial[] memory vault,
         NewPeripherial[] memory rewarder,
         NewPeripherial[] memory rewarder6909,
@@ -607,6 +607,14 @@ contract DeploymentUtils {
     ) internal {
         require(treasury.length == vault.length, "Lengths of settings must be the same");
         require(treasury.length == rewarder.length, "Lengths settings must be the same");
+
+        if (cod3xTreasury.configure == true) {
+            IMiniPool tmpMiniPool =
+                IMiniPool(contracts.miniPoolAddressesProvider.getMiniPool(_miniPoolId));
+            contracts.miniPoolConfigurator.setCod3xTreasuryToMiniPool(
+                cod3xTreasury.newAddress, tmpMiniPool
+            );
+        }
 
         for (uint8 idx = 0; idx < treasury.length; idx++) {
             if (treasury[idx].configure == true) {
@@ -624,13 +632,7 @@ contract DeploymentUtils {
                     treasury[idx].tokenAddress, treasury[idx].reserveType, treasury[idx].newAddress
                 );
             }
-            if (cod3xTreasury[idx].configure == true) {
-                IMiniPool tmpMiniPool =
-                    IMiniPool(contracts.miniPoolAddressesProvider.getMiniPool(_miniPoolId));
-                contracts.miniPoolConfigurator.setCod3xTreasuryToMiniPool(
-                    cod3xTreasury[idx].newAddress, tmpMiniPool
-                );
-            }
+
             if (vault[idx].configure == true) {
                 DataTypes.ReserveData memory data = contracts.lendingPool.getReserveData(
                     vault[idx].tokenAddress, vault[idx].reserveType

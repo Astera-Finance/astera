@@ -285,9 +285,6 @@ contract Common is Test {
         deployedContracts.lendingPoolAddressesProvider.setPoolAdmin(admin);
         deployedContracts.lendingPoolAddressesProvider.setEmergencyAdmin(admin);
 
-        // reserveLogic = address(new ReserveLogic());
-        // genericLogic = address(new GenericLogic());
-        // validationLogic = address(new ValidationLogic());
         lendingPool = new LendingPool();
         lendingPool.initialize(
             ILendingPoolAddressesProvider(deployedContracts.lendingPoolAddressesProvider)
@@ -297,7 +294,6 @@ contract Common is Test {
             address(deployedContracts.lendingPoolAddressesProvider.getLendingPool());
         deployedContracts.lendingPool = LendingPool(lendingPoolProxyAddress);
         deployedContracts.treasury = new Treasury(deployedContracts.lendingPoolAddressesProvider);
-        // granaryTreasury = new GranaryTreasury(ILendingPoolAddressesProvider(lendingPoolAddressesProvider));
 
         lendingPoolConfigurator = new LendingPoolConfigurator();
         deployedContracts.lendingPoolAddressesProvider.setLendingPoolConfiguratorImpl(
@@ -772,31 +768,6 @@ contract Common is Test {
 
     function getUsdValOfToken(uint256 amount, address token) public view returns (uint256) {
         return amount * oracle.getAssetPrice(token);
-    }
-
-    function fixture_getReserveData(address token, Cod3xLendDataProvider cod3xLendDataProvider)
-        public
-        view
-        returns (ReserveDataParams memory)
-    {
-        (
-            uint256 availableLiquidity,
-            uint256 totalVariableDebt,
-            uint256 liquidityRate,
-            uint256 variableBorrowRate,
-            uint256 liquidityIndex,
-            uint256 variableBorrowIndex,
-            uint40 lastUpdateTimestamp
-        ) = cod3xLendDataProvider.getLpReserveDynamicData(token, true);
-        return ReserveDataParams(
-            availableLiquidity,
-            totalVariableDebt,
-            liquidityRate,
-            variableBorrowRate,
-            liquidityIndex,
-            variableBorrowIndex,
-            lastUpdateTimestamp
-        );
     }
 
     function fixture_changePriceOfToken(

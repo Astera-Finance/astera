@@ -304,13 +304,14 @@ contract MiniPoolDepositBorrowTest is MiniPoolFixtures {
         fixture_miniPoolBorrow(
             amount, collateralOffset, borrowOffset, collateralTokenParams, borrowTokenParams, user
         );
-        (,,,,, uint256 previousVariableBorrowIndex,) = deployedContracts
+        DynamicData memory dynamicData = deployedContracts
             .cod3xLendDataProvider
             .getMpReserveDynamicData(address(borrowTokenParams.token), 0);
         vm.startPrank(miniPoolContracts.miniPoolAddressesProvider.getMainPoolAdmin());
         miniPoolContracts.miniPoolConfigurator.setCod3xReserveFactor(
             address(borrowTokenParams.token), validReserveFactor, IMiniPool(miniPool)
         );
+        uint256 previousVariableBorrowIndex = dynamicData.variableBorrowIndex;
         vm.stopPrank();
 
         vm.prank(miniPoolContracts.miniPoolAddressesProvider.getPoolAdmin(0));
@@ -333,19 +334,19 @@ contract MiniPoolDepositBorrowTest is MiniPoolFixtures {
         fixture_miniPoolBorrow(
             amount, collateralOffset, borrowOffset, collateralTokenParams, borrowTokenParams, user
         );
-        (,,,,, uint256 variableBorrowIndex,) = deployedContracts
-            .cod3xLendDataProvider
-            .getMpReserveDynamicData(address(borrowTokenParams.token), 0);
+        dynamicData = deployedContracts.cod3xLendDataProvider.getMpReserveDynamicData(
+            address(borrowTokenParams.token), 0
+        );
         console.log("2.Treasury balance: ", aErc6909Token.balanceOf(treasury, 1128 + borrowOffset));
         console.log("Balance of token must be greater than before borrow");
-        console.log("variableBorrowIndex: ", variableBorrowIndex);
+        console.log("variableBorrowIndex: ", dynamicData.variableBorrowIndex);
         console.log("previousVariableBorrowIndex: ", previousVariableBorrowIndex);
         console.log("scaledVariableDebt: ", scaledVariableDebt);
 
         assertApproxEqAbs(
             aErc6909Token.balanceOf(treasury, 1128 + borrowOffset),
             (
-                scaledVariableDebt.rayMul(variableBorrowIndex)
+                scaledVariableDebt.rayMul(dynamicData.variableBorrowIndex)
                     - scaledVariableDebt.rayMul(previousVariableBorrowIndex)
             ).percentMul(validReserveFactor),
             1
@@ -354,7 +355,7 @@ contract MiniPoolDepositBorrowTest is MiniPoolFixtures {
         assertApproxEqAbs(
             aErc6909Token.balanceOf(makeAddr("ownerTreasury"), 1128 + borrowOffset),
             (
-                scaledVariableDebt.rayMul(variableBorrowIndex)
+                scaledVariableDebt.rayMul(dynamicData.variableBorrowIndex)
                     - scaledVariableDebt.rayMul(previousVariableBorrowIndex)
             ).percentMul(validReserveFactor - 100),
             1
@@ -459,9 +460,10 @@ contract MiniPoolDepositBorrowTest is MiniPoolFixtures {
         );
         vm.stopPrank();
 
-        (,,,,, uint256 previousVariableBorrowIndex,) = deployedContracts
+        DynamicData memory dynamicData = deployedContracts
             .cod3xLendDataProvider
             .getMpReserveDynamicData(address(borrowTokenParams.token), 0);
+        uint256 previousVariableBorrowIndex = dynamicData.variableBorrowIndex;
         vm.startPrank(miniPoolContracts.miniPoolAddressesProvider.getMainPoolAdmin());
         miniPoolContracts.miniPoolConfigurator.setCod3xReserveFactor(
             address(borrowTokenParams.token), testParams.cod3xReserveFactor, IMiniPool(miniPool)
@@ -517,9 +519,9 @@ contract MiniPoolDepositBorrowTest is MiniPoolFixtures {
         );
         vm.stopPrank();
 
-        (,,,, uint256 liquidityIndex, uint256 variableBorrowIndex,) = deployedContracts
-            .cod3xLendDataProvider
-            .getMpReserveDynamicData(address(borrowTokenParams.token), 0);
+        dynamicData = deployedContracts.cod3xLendDataProvider.getMpReserveDynamicData(
+            address(borrowTokenParams.token), 0
+        );
         console.log(
             "2.Treasury balance: ",
             aErc6909Token.balanceOf(testParams.cod3xTreasury, 1128 + testParams.borrowOffset)
@@ -535,12 +537,12 @@ contract MiniPoolDepositBorrowTest is MiniPoolFixtures {
         );
 
         dynamicParams.cod3xTreasuryAmountToMint = (
-            dynamicParams.scaledVariableDebt.rayMul(variableBorrowIndex)
+            dynamicParams.scaledVariableDebt.rayMul(dynamicData.variableBorrowIndex)
                 - dynamicParams.scaledVariableDebt.rayMul(previousVariableBorrowIndex)
         ).percentMul(testParams.cod3xReserveFactor);
 
         dynamicParams.ownerTreasuryAmountToMint = (
-            dynamicParams.scaledVariableDebt.rayMul(variableBorrowIndex)
+            dynamicParams.scaledVariableDebt.rayMul(dynamicData.variableBorrowIndex)
                 - dynamicParams.scaledVariableDebt.rayMul(previousVariableBorrowIndex)
         ).percentMul(testParams.ownerReserveFactor);
 
@@ -561,7 +563,7 @@ contract MiniPoolDepositBorrowTest is MiniPoolFixtures {
                 + (
                     2 * testParams.borrowAmount + dynamicParams.cod3xTreasuryAmountToMint
                         + dynamicParams.ownerTreasuryAmountToMint
-                ).rayDiv(liquidityIndex),
+                ).rayDiv(dynamicData.liquidityIndex),
             aErc6909Token.scaledTotalSupply(1128 + testParams.borrowOffset),
             1
         );

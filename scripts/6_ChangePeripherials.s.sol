@@ -57,8 +57,8 @@ contract ChangePeripherials is Script, DeploymentUtils, Test {
         NewPeripherial[] memory vault = abi.decode(config.parseRaw(".vault"), (NewPeripherial[]));
         NewPeripherial[] memory treasury =
             abi.decode(config.parseRaw(".treasury"), (NewPeripherial[]));
-        NewMiniPoolPeripherial[] memory miniPoolCod3xTreasury =
-            abi.decode(config.parseRaw(".miniPoolCod3xTreasury"), (NewMiniPoolPeripherial[]));
+        NewMiniPoolPeripherial memory miniPoolCod3xTreasury =
+            abi.decode(config.parseRaw(".miniPoolCod3xTreasury"), (NewMiniPoolPeripherial));
         NewPeripherial[] memory rewarder =
             abi.decode(config.parseRaw(".rewarder"), (NewPeripherial[]));
         NewPeripherial[] memory rewarder6909 =
