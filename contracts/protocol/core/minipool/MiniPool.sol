@@ -36,7 +36,12 @@ import {IMiniPoolRewarder} from "../../../../contracts/interfaces/IMiniPoolRewar
 
 /**
  * @title MiniPool contract
- * @dev A highly correlated sub market that can borrow from the main lending pool and charge double interest rates on those loans
+ * @dev A highly correlated sub market that can borrow from the main lending pool and charge double
+ * interest rates on those loans.
+ * Minipool can 'flow borrow' from the main lending pool on aTokens from the main lending pool,
+ * which means that the a Minipool can borrow from the main lending pool and use it as collateral
+ * for its own borrowing power. This power is set by the admin through the FlowLimiter.
+ *
  * - Users can:
  *   # Deposit
  *   # Withdraw
@@ -49,7 +54,6 @@ import {IMiniPoolRewarder} from "../../../../contracts/interfaces/IMiniPoolRewar
  * - All admin functions are callable by the MiniPoolConfigurator contract defined also in the
  *   MiniPoolAddressesProvider.
  * @author Cod3x
- *
  */
 contract MiniPool is VersionedInitializable, IMiniPool, MiniPoolStorage {
     using WadRayMath for uint256;
