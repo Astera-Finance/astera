@@ -59,11 +59,10 @@ interface IMiniPoolAddressesProvider {
     event PoolAdminSet(address newAdmin);
 
     /**
-     * @dev Emitted when a Cod3x treasury is set for a mini pool.
+     * @dev Emitted when a Cod3x treasury is set for all mini pools.
      * @param treasury The address of the Cod3x treasury.
-     * @param miniPoolId The ID of the mini pool.
      */
-    event Cod3xTreasurySet(address indexed treasury, uint256 miniPoolId);
+    event Cod3xTreasurySet(address indexed treasury);
 
     /**
      * @dev Emitted when a mini pool owner treasury is set.
@@ -100,7 +99,7 @@ interface IMiniPoolAddressesProvider {
 
     function getMiniPoolToAERC6909(uint256 id) external view returns (address);
 
-    function getMiniPoolCod3xTreasury(uint256 id) external view returns (address);
+    function getMiniPoolCod3xTreasury() external view returns (address);
 
     function getMiniPoolOwnerTreasury(uint256 id) external view returns (address);
 
@@ -121,7 +120,7 @@ interface IMiniPoolAddressesProvider {
         external
         returns (uint256);
 
-    function setCod3xTreasuryToMiniPool(uint256 id, address treasury) external;
+    function setCod3xTreasury(address treasury) external;
 
     function setMinipoolOwnerTreasuryToMiniPool(uint256 id, address treasury) external;
 

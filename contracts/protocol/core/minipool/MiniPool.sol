@@ -404,7 +404,7 @@ contract MiniPool is VersionedInitializable, IMiniPool, MiniPoolStorage {
                     asset,
                     false,
                     remainingBalance - ERROR_REMAINDER_MARGIN,
-                    _addressesProvider.getMiniPoolCod3xTreasury(_minipoolId)
+                    _addressesProvider.getMiniPoolCod3xTreasury()
                 );
             }
         }

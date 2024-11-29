@@ -154,7 +154,7 @@ interface IMiniPoolConfigurator {
     function updateFlashloanPremiumTotal(uint128 newFlashloanPremiumTotal, IMiniPool pool)
         external;
 
-    function setCod3xTreasuryToMiniPool(address treasury, IMiniPool pool) external;
+    function setCod3xTreasury(address treasury) external;
 
     function setFlowLimit(address asset, address miniPool, uint256 limit) external;
 

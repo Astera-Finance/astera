@@ -290,12 +290,10 @@ contract MiniPoolDepositBorrowTest is MiniPoolFixtures {
         address treasury = address(deployedContracts.treasury);
         console.log("Treasury 1: ", treasury);
         console.log(
-            "Treasury 2: ", miniPoolContracts.miniPoolAddressesProvider.getMiniPoolCod3xTreasury(0)
+            "Treasury 2: ", miniPoolContracts.miniPoolAddressesProvider.getMiniPoolCod3xTreasury()
         );
         vm.prank(miniPoolContracts.miniPoolAddressesProvider.getMainPoolAdmin());
-        miniPoolContracts.miniPoolConfigurator.setCod3xTreasuryToMiniPool(
-            treasury, IMiniPool(miniPool)
-        );
+        miniPoolContracts.miniPoolConfigurator.setCod3xTreasury(treasury);
         IAERC6909 aErc6909Token =
             IAERC6909(miniPoolContracts.miniPoolAddressesProvider.getMiniPoolToAERC6909(miniPool));
 
@@ -424,9 +422,7 @@ contract MiniPoolDepositBorrowTest is MiniPoolFixtures {
         deal(address(collateralTokenParams.token), user, 2 * testParams.depositAmount);
 
         vm.prank(miniPoolContracts.miniPoolAddressesProvider.getMainPoolAdmin());
-        miniPoolContracts.miniPoolConfigurator.setCod3xTreasuryToMiniPool(
-            testParams.cod3xTreasury, IMiniPool(miniPool)
-        );
+        miniPoolContracts.miniPoolConfigurator.setCod3xTreasury(testParams.cod3xTreasury);
         vm.startPrank(miniPoolContracts.miniPoolAddressesProvider.getPoolAdmin(0));
         miniPoolContracts.miniPoolConfigurator.setMinipoolOwnerTreasuryToMiniPool(
             testParams.ownerTreasury, IMiniPool(miniPool)

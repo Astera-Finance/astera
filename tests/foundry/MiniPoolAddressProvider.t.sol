@@ -229,16 +229,16 @@ contract MiniPoolAddressProvider is Common {
             address treasury = makeAddr("Treasury");
             console.log(
                 "1. Treasury",
-                miniPoolContracts.miniPoolAddressesProvider.getMiniPoolCod3xTreasury(0)
+                miniPoolContracts.miniPoolAddressesProvider.getMiniPoolCod3xTreasury()
             );
             vm.prank(address(miniPoolContracts.miniPoolConfigurator));
-            miniPoolContracts.miniPoolAddressesProvider.setCod3xTreasuryToMiniPool(0, treasury);
+            miniPoolContracts.miniPoolAddressesProvider.setCod3xTreasury(treasury);
             console.log(
                 "2. Treasury",
-                miniPoolContracts.miniPoolAddressesProvider.getMiniPoolCod3xTreasury(0)
+                miniPoolContracts.miniPoolAddressesProvider.getMiniPoolCod3xTreasury()
             );
             assertEq(
-                miniPoolContracts.miniPoolAddressesProvider.getMiniPoolCod3xTreasury(0),
+                miniPoolContracts.miniPoolAddressesProvider.getMiniPoolCod3xTreasury(),
                 treasury,
                 "Wrong treasury"
             );
@@ -356,7 +356,7 @@ contract MiniPoolAddressProvider is Common {
             address(erc20Tokens[0]), miniPool, randomNumber
         );
         miniPoolContracts.miniPoolAddressesProvider.setPoolAdmin(0, randomAddress);
-        miniPoolContracts.miniPoolAddressesProvider.setCod3xTreasuryToMiniPool(0, randomAddress);
+        miniPoolContracts.miniPoolAddressesProvider.setCod3xTreasury(address(0));
         miniPoolContracts.miniPoolAddressesProvider.setMinipoolOwnerTreasuryToMiniPool(
             0, randomAddress
         );
@@ -391,7 +391,7 @@ contract MiniPoolAddressProvider is Common {
         vm.expectRevert(bytes(Errors.LP_CALLER_NOT_LENDING_POOL_CONFIGURATOR));
         miniPoolContracts.miniPoolAddressesProvider.setPoolAdmin(0, randomAddress);
         vm.expectRevert(bytes(Errors.LP_CALLER_NOT_LENDING_POOL_CONFIGURATOR));
-        miniPoolContracts.miniPoolAddressesProvider.setCod3xTreasuryToMiniPool(0, randomAddress);
+        miniPoolContracts.miniPoolAddressesProvider.setCod3xTreasury(address(0));
         vm.expectRevert(bytes(Errors.LP_CALLER_NOT_LENDING_POOL_CONFIGURATOR));
         miniPoolContracts.miniPoolAddressesProvider.setMinipoolOwnerTreasuryToMiniPool(
             0, randomAddress

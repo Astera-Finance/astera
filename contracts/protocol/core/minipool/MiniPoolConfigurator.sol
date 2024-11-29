@@ -121,16 +121,11 @@ contract MiniPoolConfigurator is VersionedInitializable, IMiniPoolConfigurator {
     }
 
     /**
-     * @dev Sets the Cod3x treasury address for a MiniPool.
+     * @dev Sets the Cod3x treasury address for all mini pools.
      * @param treasury The new treasury address.
-     * @param pool The MiniPool instance to update.
      */
-    function setCod3xTreasuryToMiniPool(address treasury, IMiniPool pool)
-        public
-        onlyMainPoolAdmin
-    {
-        uint256 id = addressesProvider.getMiniPoolId(address(pool));
-        addressesProvider.setCod3xTreasuryToMiniPool(id, treasury);
+    function setCod3xTreasury(address treasury) public onlyMainPoolAdmin {
+        addressesProvider.setCod3xTreasury(treasury);
     }
 
     /**

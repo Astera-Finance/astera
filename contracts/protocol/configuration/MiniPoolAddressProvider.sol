@@ -30,7 +30,6 @@ contract MiniPoolAddressesProvider is Ownable, IMiniPoolAddressesProvider {
     struct MiniPoolConfig {
         address miniPool;
         address aErc6909;
-        address cod3xTreasury;
         address minipoolOwnerTreasury;
         address admin;
     }
@@ -62,6 +61,9 @@ contract MiniPoolAddressesProvider is Ownable, IMiniPoolAddressesProvider {
 
     /// @dev Counter for the number of mini pools.
     uint256 private _miniPoolCount;
+
+    /// @dev Address of the Cod3x treasury.
+    address private _cod3xTreasury;
 
     /// @dev Constant identifier for lending pool addresses provider.
     bytes32 private constant LENDING_POOL_ADDRESSES_PROVIDER = "LENDING_POOL_ADDRESSES_PROVIDER";
@@ -209,12 +211,11 @@ contract MiniPoolAddressesProvider is Ownable, IMiniPoolAddressesProvider {
     }
 
     /**
-     * @dev Returns the Cod3x treasury address for a specific pool ID.
-     * @param id The pool ID.
+     * @dev Returns the Cod3x treasury address.
      * @return The treasury address.
      */
-    function getMiniPoolCod3xTreasury(uint256 id) external view returns (address) {
-        return _miniPoolsConfig[id].cod3xTreasury;
+    function getMiniPoolCod3xTreasury() external view returns (address) {
+        return _cod3xTreasury;
     }
 
     /**
@@ -365,17 +366,12 @@ contract MiniPoolAddressesProvider is Ownable, IMiniPoolAddressesProvider {
     }
 
     /**
-     * @dev Sets the Cod3x treasury address for a specific mini pool.
-     * @param id The pool ID.
+     * @dev Sets the Cod3x treasury address for all mini pools.
      * @param treasury The new treasury address.
      */
-    function setCod3xTreasuryToMiniPool(uint256 id, address treasury)
-        external
-        poolIdCheck(id)
-        onlyMiniPoolConfigurator
-    {
-        _miniPoolsConfig[id].cod3xTreasury = treasury;
-        emit Cod3xTreasurySet(treasury, id);
+    function setCod3xTreasury(address treasury) external onlyMiniPoolConfigurator {
+        _cod3xTreasury = treasury;
+        emit Cod3xTreasurySet(treasury);
     }
 
     /**

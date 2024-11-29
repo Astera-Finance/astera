@@ -246,7 +246,7 @@ contract ATokenERC6909 is IncentivizedERC6909, VersionedInitializable {
      * @param index The current liquidity index.
      */
     function mintToCod3xTreasury(uint256 id, uint256 amount, uint256 index) external {
-        address treasury = _addressesProvider.getMiniPoolCod3xTreasury(_minipoolId);
+        address treasury = _addressesProvider.getMiniPoolCod3xTreasury();
         _mintToTreasury(id, amount, index, treasury);
     }
 

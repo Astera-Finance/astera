@@ -67,9 +67,7 @@ contract MiniPoolConfiguratorTest is MiniPoolDepositBorrowTest {
             uint128(randomNumber), IMiniPool(newMiniPool)
         );
         vm.expectRevert(bytes(Errors.CALLER_NOT_POOL_ADMIN));
-        miniPoolContracts.miniPoolConfigurator.setCod3xTreasuryToMiniPool(
-            randomAddress, IMiniPool(miniPool)
-        );
+        miniPoolContracts.miniPoolConfigurator.setCod3xTreasury(randomAddress);
         vm.expectRevert(bytes(Errors.CALLER_NOT_POOL_ADMIN));
         miniPoolContracts.miniPoolConfigurator.setFlowLimit(tokenAddress, newMiniPool, randomNumber);
         vm.expectRevert(bytes(Errors.CALLER_NOT_POOL_ADMIN));
@@ -396,9 +394,7 @@ contract MiniPoolConfiguratorTest is MiniPoolDepositBorrowTest {
 
         address treasury = makeAddr("treasury");
         vm.prank(miniPoolContracts.miniPoolAddressesProvider.getMainPoolAdmin());
-        miniPoolContracts.miniPoolConfigurator.setCod3xTreasuryToMiniPool(
-            treasury, IMiniPool(miniPool)
-        );
+        miniPoolContracts.miniPoolConfigurator.setCod3xTreasury(treasury);
 
         /* Test vars */
         address user = makeAddr("user");

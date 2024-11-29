@@ -625,8 +625,8 @@ contract DeploymentUtils {
             if (cod3xTreasury[idx].configure == true) {
                 IMiniPool tmpMiniPool =
                     IMiniPool(contracts.miniPoolAddressesProvider.getMiniPool(_miniPoolId));
-                contracts.miniPoolConfigurator.setCod3xTreasuryToMiniPool(
-                    cod3xTreasury[idx].newAddress, tmpMiniPool
+                contracts.miniPoolConfigurator.setCod3xTreasury(
+                    cod3xTreasury[idx].newAddress
                 );
             }
             if (vault[idx].configure == true) {
