@@ -168,12 +168,6 @@ interface IMiniPool {
         bool receiveAToken
     ) external;
 
-    /**
-     * @param receiverAddress The address of the contract receiving the funds, implementing the IFlashLoanReceiver interface
-     * @param assets The addresses of the assets being flash-borrowed
-     * @param amounts The amounts amounts being flash-borrowed
-     * @param onBehalfOf The address that will receive the debt
-     */
     struct FlashLoanParams {
         address receiverAddress;
         address[] assets;

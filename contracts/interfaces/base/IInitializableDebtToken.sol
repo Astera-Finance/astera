@@ -32,16 +32,6 @@ interface IInitializableDebtToken {
         bytes params
     );
 
-    /**
-     * @dev Initializes the debt token.
-     * @param pool The address of the lending pool where this aToken will be used
-     * @param underlyingAsset The address of the underlying asset of this aToken (E.g. WETH for aWETH)
-     * @param rewarder The smart contract managing potential incentives distribution
-     * @param debtTokenDecimals The decimals of the debtToken, same as the underlying asset's
-     * @param reserveType Whether the reserve is boosted by a vault
-     * @param debtTokenName The name of the token
-     * @param debtTokenSymbol The symbol of the token
-     */
     function initialize(
         ILendingPool pool,
         address underlyingAsset,
