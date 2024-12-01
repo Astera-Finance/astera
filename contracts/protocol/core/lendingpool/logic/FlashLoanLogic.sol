@@ -3,16 +3,13 @@ pragma solidity 0.8.23;
 
 import {IERC20} from "../../../../../contracts/dependencies/openzeppelin/contracts/IERC20.sol";
 import {SafeERC20} from "../../../../../contracts/dependencies/openzeppelin/contracts/SafeERC20.sol";
-import {IPriceOracleGetter} from "../../../../../contracts/interfaces/IPriceOracleGetter.sol";
 import {ILendingPoolAddressesProvider} from
     "../../../../../contracts/interfaces/ILendingPoolAddressesProvider.sol";
 import {IAToken} from "../../../../../contracts/interfaces/IAToken.sol";
-import {IVariableDebtToken} from "../../../../../contracts/interfaces/IVariableDebtToken.sol";
 import {WadRayMath} from "../../../../../contracts/protocol/libraries/math/WadRayMath.sol";
 import {PercentageMath} from "../../../../../contracts/protocol/libraries/math/PercentageMath.sol";
 import {Errors} from "../../../../../contracts/protocol/libraries/helpers/Errors.sol";
 import {DataTypes} from "../../../../../contracts/protocol/libraries/types/DataTypes.sol";
-import {GenericLogic} from "./GenericLogic.sol";
 import {ReserveLogic} from "./ReserveLogic.sol";
 import {ValidationLogic} from "./ValidationLogic.sol";
 import {ReserveConfiguration} from
@@ -26,6 +23,8 @@ import {BorrowLogic} from "./BorrowLogic.sol";
 /**
  * @title FlashLoanLogic
  * @author Cod3x
+ * @notice Implements the flash loan logic for the Cod3x lending protocol.
+ * @dev Contains functions to execute flash loans and handle their repayments.
  */
 library FlashLoanLogic {
     using WadRayMath for uint256;
@@ -36,6 +35,15 @@ library FlashLoanLogic {
     using ReserveConfiguration for DataTypes.ReserveConfigurationMap;
     using UserConfiguration for DataTypes.UserConfigurationMap;
 
+    /**
+     * @dev Emitted when a flash loan is executed.
+     * @param target The address of the flash loan receiver contract.
+     * @param initiator The address initiating the flash loan.
+     * @param asset The address of the asset being flash borrowed.
+     * @param interestRateMode The interest rate mode of the flash loan.
+     * @param amount The amount being flash borrowed.
+     * @param premium The fee being charged for the flash loan.
+     */
     event FlashLoan(
         address indexed target,
         address indexed initiator,
@@ -45,6 +53,9 @@ library FlashLoanLogic {
         uint256 premium
     );
 
+    /**
+     * @dev Struct containing local variables used in flash loan execution.
+     */
     struct FlashLoanLocalVars {
         IFlashLoanReceiver receiver;
         uint256 i;
@@ -55,6 +66,15 @@ library FlashLoanLogic {
         uint256 currentPremium;
     }
 
+    /**
+     * @dev Struct containing parameters for flash loan repayment.
+     * @param amount The borrowed amount to be repaid.
+     * @param totalPremium The total premium to be paid.
+     * @param liquidityIndex The liquidity index at the time of repayment.
+     * @param asset The address of the borrowed asset.
+     * @param aToken The address of the corresponding aToken.
+     * @param receiverAddress The address of the flash loan receiver.
+     */
     struct FlashLoanRepaymentParams {
         uint256 amount;
         uint256 totalPremium;
@@ -64,6 +84,19 @@ library FlashLoanLogic {
         address receiverAddress;
     }
 
+    /**
+     * @dev Struct containing parameters for flash loan execution.
+     * @param receiverAddress The address of the contract receiving the flash loan.
+     * @param assets Array of asset addresses being borrowed.
+     * @param reserveTypes Array of booleans indicating if reserves are boosted by vaults.
+     * @param onBehalfOf The address that will receive the debt in case of non-revert.
+     * @param addressesProvider The addresses provider instance.
+     * @param reservesCount Total number of initialized reserves.
+     * @param flashLoanPremiumTotal Total premium for flash loans.
+     * @param amounts Array of amounts being borrowed.
+     * @param modes Array of interest rate modes.
+     * @param params Bytes encoded params to pass to receiver's executeOperation.
+     */
     struct FlashLoanParams {
         address receiverAddress;
         address[] assets;
@@ -78,11 +111,12 @@ library FlashLoanLogic {
     }
 
     /**
-     * @dev Allows smartcontracts to access the liquidity of the pool within one transaction,
-     * as long as the amount taken plus a fee is returned.
-     * IMPORTANT There are security concerns for developers of flashloan receiver contracts that must be kept into consideration.
-     * @param flashLoanParams struct containing receiverAddress, onBehalfOf, assets, amounts
-     *
+     * @notice Executes a flash loan operation.
+     * @dev Allows smart contracts to access the liquidity of the pool within one transaction.
+     * @param flashLoanParams The parameters for the flash loan operation.
+     * @param reservesList Mapping of reserve references.
+     * @param usersConfig Mapping of user configurations.
+     * @param reserves Mapping of reserve data.
      */
     function flashLoan(
         FlashLoanParams memory flashLoanParams,
@@ -146,7 +180,7 @@ library FlashLoanLogic {
                 );
             } else {
                 // If the user chose to not return the funds, the system checks if there is enough collateral and
-                // eventually opens a debt position
+                // eventually opens a debt position.
                 BorrowLogic.executeBorrow(
                     BorrowLogic.ExecuteBorrowParams(
                         vars.currentAsset,
@@ -176,12 +210,24 @@ library FlashLoanLogic {
         }
     }
 
+    /**
+     * @notice Gets aToken addresses and calculates premiums for flash loans.
+     * @param receiverAddress The address receiving the flash loan.
+     * @param assets Array of asset addresses.
+     * @param reserveTypes Array of reserve types.
+     * @param amounts Array of amounts being borrowed.
+     * @param flashLoanPremiumTotal Total premium percentage.
+     * @param modes Array of interest rate modes.
+     * @param _reserves Mapping of reserve data.
+     * @return aTokenAddresses Array of aToken addresses.
+     * @return premiums Array of calculated premiums.
+     */
     function getATokenAdressesAndPremiums(
         address receiverAddress,
         address[] memory assets,
         bool[] memory reserveTypes,
         uint256[] memory amounts,
-        uint256 _flashLoanPremiumTotal,
+        uint256 flashLoanPremiumTotal,
         uint256[] memory modes,
         mapping(address => mapping(bool => DataTypes.ReserveData)) storage _reserves
     ) internal returns (address[] memory aTokenAddresses, uint256[] memory premiums) {
@@ -191,7 +237,7 @@ library FlashLoanLogic {
             aTokenAddresses[i] = _reserves[assets[i]][reserveTypes[i]].aTokenAddress;
 
             premiums[i] = DataTypes.InterestRateMode(modes[i]) == DataTypes.InterestRateMode.NONE
-                ? amounts[i] * _flashLoanPremiumTotal / 10000
+                ? amounts[i] * flashLoanPremiumTotal / 10000
                 : 0;
 
             IAToken(aTokenAddresses[i]).transferUnderlyingTo(receiverAddress, amounts[i]);
@@ -199,10 +245,10 @@ library FlashLoanLogic {
     }
 
     /**
-     * @notice Handles repayment of flashloaned assets + premium
-     * @dev Will pull the amount + premium from the receiver, so must have approved pool
-     * @param reserve The state of the flashloaned reserve
-     * @param params The additional parameters needed to execute the repayment function
+     * @notice Handles the repayment of flash loaned assets plus premium.
+     * @dev Will pull the amount plus premium from the receiver, which must have approved the pool.
+     * @param reserve The state of the flash loaned reserve.
+     * @param params The parameters needed to execute the repayment.
      */
     function _handleFlashLoanRepayment(
         DataTypes.ReserveData storage reserve,

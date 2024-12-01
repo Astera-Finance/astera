@@ -165,6 +165,8 @@ contract Reconfigure is Script, DeploymentUtils, Test {
             contracts.lendingPoolAddressesProvider = LendingPoolAddressesProvider(
                 deploymentConfig.readAddress(".lendingPoolAddressesProvider")
             );
+            contracts.lendingPoolConfigurator =
+                LendingPoolConfigurator(deploymentConfig.readAddress(".lendingPoolConfigurator"));
             contracts.aTokensAndRatesHelper =
                 ATokensAndRatesHelper(deploymentConfig.readAddress(".aTokensAndRatesHelper"));
 

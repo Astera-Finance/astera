@@ -262,7 +262,6 @@ contract DeploymentUtils {
                 deployer
             );
             contracts.flowLimiter = new FlowLimiter(
-                contracts.lendingPoolAddressesProvider,
                 IMiniPoolAddressesProvider(address(contracts.miniPoolAddressesProvider)),
                 contracts.lendingPool
             );
@@ -517,6 +516,7 @@ contract DeploymentUtils {
         contracts.rewarder.transferOwnership(roles.rewarderOwner);
         contracts.rewarder6909.transferOwnership(roles.rewarderOwner);
         contracts.oracle.transferOwnership(roles.oracleOwner);
+        contracts.cod3xLendDataProvider.transferOwnership(roles.dataProviderOwner);
 
         for (uint256 idx = 0; idx < contracts.piStrategies.length; idx++) {
             contracts.piStrategies[idx].transferOwnership(roles.piInterestStrategiesOwner);
@@ -598,7 +598,7 @@ contract DeploymentUtils {
 
     function _changePeripherials(
         NewPeripherial[] memory treasury,
-        NewMiniPoolPeripherial[] memory cod3xTreasury,
+        NewMiniPoolPeripherial memory cod3xTreasury,
         NewPeripherial[] memory vault,
         NewPeripherial[] memory rewarder,
         NewPeripherial[] memory rewarder6909,
@@ -606,6 +606,10 @@ contract DeploymentUtils {
     ) internal {
         require(treasury.length == vault.length, "Lengths of settings must be the same");
         require(treasury.length == rewarder.length, "Lengths settings must be the same");
+
+        if (cod3xTreasury.configure == true) {
+            contracts.miniPoolConfigurator.setCod3xTreasury(cod3xTreasury.newAddress);
+        }
 
         for (uint8 idx = 0; idx < treasury.length; idx++) {
             if (treasury[idx].configure == true) {
@@ -621,13 +625,6 @@ contract DeploymentUtils {
                 );
                 contracts.lendingPoolConfigurator.setTreasury(
                     treasury[idx].tokenAddress, treasury[idx].reserveType, treasury[idx].newAddress
-                );
-            }
-            if (cod3xTreasury[idx].configure == true) {
-                IMiniPool tmpMiniPool =
-                    IMiniPool(contracts.miniPoolAddressesProvider.getMiniPool(_miniPoolId));
-                contracts.miniPoolConfigurator.setCod3xTreasuryToMiniPool(
-                    cod3xTreasury[idx].newAddress, tmpMiniPool
                 );
             }
             if (vault[idx].configure == true) {
@@ -711,7 +708,7 @@ contract DeploymentUtils {
                     reserveData.aTokenAddress != address(0),
                     "aTokenAddress not available in lendingPool"
                 );
-                if (address(AToken(reserveData.aTokenAddress).vault()) == address(0)) {
+                if (address(AToken(reserveData.aTokenAddress)._vault()) == address(0)) {
                     contracts.lendingPoolConfigurator.setVault(
                         reserveData.aTokenAddress, rehypothecationSetting.vault
                     );

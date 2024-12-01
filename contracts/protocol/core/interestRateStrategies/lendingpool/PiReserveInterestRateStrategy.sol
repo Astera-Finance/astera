@@ -8,16 +8,19 @@ import {ILendingPoolAddressesProvider} from
     "../../../../../contracts/interfaces/ILendingPoolAddressesProvider.sol";
 import {IReserveInterestRateStrategy} from
     "../../../../../contracts/interfaces/IReserveInterestRateStrategy.sol";
-import "../../../../../contracts/protocol/core/interestRateStrategies/BasePiReserveRateStrategy.sol";
-import {IERC20} from "../../../../../contracts/dependencies/openzeppelin/contracts/IERC20.sol";
+import {BasePiReserveRateStrategy} from
+    "../../../../../contracts/protocol/core/interestRateStrategies/BasePiReserveRateStrategy.sol";
+import {WadRayMath} from "../../../../../contracts/protocol/libraries/math/WadRayMath.sol";
+import {PercentageMath} from "../../../../../contracts/protocol/libraries/math/PercentageMath.sol";
+import {DataTypes} from "../../../../../contracts/protocol/libraries/types/DataTypes.sol";
 
 /**
- * @title PiReserveInterestRateStrategy contract
+ * @title PiReserveInterestRateStrategy contract.
  * @notice Implements the calculation of the interest rates using control theory.
- * @dev The model of interest rate is based Proportional Integrator (PI).
+ * @dev The model of interest rate is based on Proportional Integrator (PI).
  * Admin needs to set an optimal utilization rate and this strategy will automatically
- * automatically adjust the interest rate according to the `Kp` and `Ki` variables.
- * @dev ATTENTION, this contract must no be used as a library. One PiReserveInterestRateStrategy
+ * adjust the interest rate according to the `_kp` and `_ki` variables.
+ * @dev ATTENTION: This contract must not be used as a library. One PiReserveInterestRateStrategy
  * needs to be associated with only one market.
  * @author Cod3x
  */
@@ -29,6 +32,17 @@ contract PiReserveInterestRateStrategy is
     using WadRayMath for int256;
     using PercentageMath for uint256;
 
+    /**
+     * @notice Initializes the PiReserveInterestRateStrategy contract.
+     * @param provider The address of the lending pool addresses provider.
+     * @param asset The address of the asset.
+     * @param assetReserveType The type of asset reserve.
+     * @param minControllerError The minimum controller error.
+     * @param maxITimeAmp The maximum I time amplification.
+     * @param optimalUtilizationRate The optimal utilization rate.
+     * @param kp The proportional coefficient.
+     * @param ki The integral coefficient.
+     */
     constructor(
         address provider,
         address asset,
@@ -51,10 +65,12 @@ contract PiReserveInterestRateStrategy is
         )
     {}
 
+    /// @inheritdoc BasePiReserveRateStrategy
     function _getLendingPool() internal view override returns (address) {
         return ILendingPoolAddressesProvider(_addressProvider).getLendingPool();
     }
 
+    /// @inheritdoc BasePiReserveRateStrategy
     function getAvailableLiquidity(address, address aToken)
         public
         view
@@ -66,12 +82,7 @@ contract PiReserveInterestRateStrategy is
 
     // ----------- view -----------
 
-    /**
-     * @notice The view version of `calculateInterestRates()`.
-     * @return currentLiquidityRate
-     * @return currentVariableBorrowRate
-     * @return utilizationRate
-     */
+    /// @inheritdoc BasePiReserveRateStrategy
     function getCurrentInterestRates() public view override returns (uint256, uint256, uint256) {
         // utilization
         DataTypes.ReserveData memory reserve =
@@ -97,31 +108,32 @@ contract PiReserveInterestRateStrategy is
 
     // ----------- view -----------
 
+    /// @notice Returns the base variable borrow rate.
     function baseVariableBorrowRate() public view override returns (uint256) {
         return uint256(transferFunction(type(int256).min));
     }
 
+    /// @notice Returns the maximum variable borrow rate.
     function getMaxVariableBorrowRate() external pure override returns (uint256) {
         return type(uint256).max;
     }
 
     /**
-     * @dev Calculates the interest rates depending on the reserve's state and configurations
-     * @param asset The address of the asset
-     * @param aToken The address of the reserve aToken
-     * @param liquidityAdded The liquidity added during the operation
-     * @param liquidityTaken The liquidity taken during the operation
-     * @param totalVariableDebt The total borrowed from the reserve at a variable rate
-     * @param reserveFactor The reserve portion of the interest that goes to the treasury of the market
-     * @return currentLiquidityRate The liquidity rate
-     * @return currentVariableBorrowRate The variable borrow rate
-     *
+     * @notice Calculates the interest rates depending on the reserve's state and configurations.
+     * @param asset The address of the asset.
+     * @param aToken The address of the reserve aToken.
+     * @param liquidityAdded The liquidity added during the operation.
+     * @param liquidityTaken The liquidity taken during the operation.
+     * @param totalVariableDebt The total borrowed from the reserve at a variable rate.
+     * @param reserveFactor The reserve portion of the interest that goes to the treasury of the market.
+     * @return currentLiquidityRate The liquidity rate.
+     * @return currentVariableBorrowRate The variable borrow rate.
      */
     function calculateInterestRates(
         address asset,
         address aToken,
-        uint256 liquidityAdded, //! since this function is not view anymore we need to make sure liquidityAdded is added at the end
-        uint256 liquidityTaken, //! since this function is not view anymore we need to make sure liquidityTaken is removed at the end
+        uint256 liquidityAdded, //! since this function is not view anymore we need to make sure `liquidityAdded` is added at the end.
+        uint256 liquidityTaken, //! since this function is not view anymore we need to make sure `liquidityTaken` is removed at the end.
         uint256 totalVariableDebt,
         uint256 reserveFactor
     )

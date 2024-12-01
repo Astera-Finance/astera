@@ -1,40 +1,33 @@
 // SPDX-License-Identifier: agpl-3.0
 pragma solidity 0.8.23;
 
-import {IERC20} from "../../../../contracts/dependencies/openzeppelin/contracts/IERC20.sol";
-import {SafeERC20} from "../../../../contracts/dependencies/openzeppelin/contracts/SafeERC20.sol";
-import {Address} from "../../../../contracts/dependencies/openzeppelin/contracts/Address.sol";
-import {ILendingPoolAddressesProvider} from
-    "../../../../contracts/interfaces/ILendingPoolAddressesProvider.sol";
-import {IAToken} from "../../../../contracts/interfaces/IAToken.sol";
-import {IVariableDebtToken} from "../../../../contracts/interfaces/IVariableDebtToken.sol";
-import {ILendingPool} from "../../../../contracts/interfaces/ILendingPool.sol";
+import {IERC20} from "contracts/dependencies/openzeppelin/contracts/IERC20.sol";
+import {SafeERC20} from "contracts/dependencies/openzeppelin/contracts/SafeERC20.sol";
+import {Address} from "contracts/dependencies/openzeppelin/contracts/Address.sol";
+import {ILendingPoolAddressesProvider} from "contracts/interfaces/ILendingPoolAddressesProvider.sol";
+import {IAToken} from "contracts/interfaces/IAToken.sol";
+import {IVariableDebtToken} from "contracts/interfaces/IVariableDebtToken.sol";
+import {ILendingPool} from "contracts/interfaces/ILendingPool.sol";
 import {VersionedInitializable} from
-    "../../../../contracts/protocol/libraries/upgradeability/VersionedInitializable.sol";
-import {Helpers} from "../../../../contracts/protocol/libraries/helpers/Helpers.sol";
-import {Errors} from "../../../../contracts/protocol/libraries/helpers/Errors.sol";
-import {WadRayMath} from "../../../../contracts/protocol/libraries/math/WadRayMath.sol";
-import {PercentageMath} from "../../../../contracts/protocol/libraries/math/PercentageMath.sol";
-import {ReserveLogic} from "../../../../contracts/protocol/core/lendingpool/logic/ReserveLogic.sol";
-import {GenericLogic} from "../../../../contracts/protocol/core/lendingpool/logic/GenericLogic.sol";
-import {ValidationLogic} from
-    "../../../../contracts/protocol/core/lendingpool/logic/ValidationLogic.sol";
+    "contracts/protocol/libraries/upgradeability/VersionedInitializable.sol";
+import {Helpers} from "contracts/protocol/libraries/helpers/Helpers.sol";
+import {Errors} from "contracts/protocol/libraries/helpers/Errors.sol";
+import {WadRayMath} from "contracts/protocol/libraries/math/WadRayMath.sol";
+import {PercentageMath} from "contracts/protocol/libraries/math/PercentageMath.sol";
+import {ReserveLogic} from "contracts/protocol/core/lendingpool/logic/ReserveLogic.sol";
+import {GenericLogic} from "contracts/protocol/core/lendingpool/logic/GenericLogic.sol";
+import {ValidationLogic} from "contracts/protocol/core/lendingpool/logic/ValidationLogic.sol";
 import {ReserveConfiguration} from
-    "../../../../contracts/protocol/libraries/configuration/ReserveConfiguration.sol";
-import {UserConfiguration} from
-    "../../../../contracts/protocol/libraries/configuration/UserConfiguration.sol";
-import {DataTypes} from "../../../../contracts/protocol/libraries/types/DataTypes.sol";
-import {LendingPoolStorage} from "./LendingPoolStorage.sol";
-import {DepositLogic} from "../../../../contracts/protocol/core/lendingpool/logic/DepositLogic.sol";
-import {WithdrawLogic} from
-    "../../../../contracts/protocol/core/lendingpool/logic/WithdrawLogic.sol";
-import {BorrowLogic} from "../../../../contracts/protocol/core/lendingpool/logic/BorrowLogic.sol";
-import {FlashLoanLogic} from
-    "../../../../contracts/protocol/core/lendingpool/logic/FlashLoanLogic.sol";
-import {LiquidationLogic} from
-    "../../../../contracts/protocol/core/lendingpool/logic/LiquidationLogic.sol";
-import {IMiniPoolAddressesProvider} from
-    "../../../../contracts/interfaces/IMiniPoolAddressesProvider.sol";
+    "contracts/protocol/libraries/configuration/ReserveConfiguration.sol";
+import {UserConfiguration} from "contracts/protocol/libraries/configuration/UserConfiguration.sol";
+import {DataTypes} from "contracts/protocol/libraries/types/DataTypes.sol";
+import {LendingPoolStorage} from "contracts/protocol/core/lendingpool/LendingPoolStorage.sol";
+import {DepositLogic} from "contracts/protocol/core/lendingpool/logic/DepositLogic.sol";
+import {WithdrawLogic} from "contracts/protocol/core/lendingpool/logic/WithdrawLogic.sol";
+import {BorrowLogic} from "contracts/protocol/core/lendingpool/logic/BorrowLogic.sol";
+import {FlashLoanLogic} from "contracts/protocol/core/lendingpool/logic/FlashLoanLogic.sol";
+import {LiquidationLogic} from "contracts/protocol/core/lendingpool/logic/LiquidationLogic.sol";
+import {IMiniPoolAddressesProvider} from "contracts/interfaces/IMiniPoolAddressesProvider.sol";
 
 /**
  * @title LendingPool contract
@@ -48,7 +41,7 @@ import {IMiniPoolAddressesProvider} from
  *   LendingPoolAddressesProvider
  * @author Cod3x
  */
-contract LendingPool is VersionedInitializable, ILendingPool, LendingPoolStorage {
+contract LendingPoolV2 is VersionedInitializable, ILendingPool, LendingPoolStorage {
     using WadRayMath for uint256;
     using PercentageMath for uint256;
     using SafeERC20 for IERC20;
@@ -56,7 +49,7 @@ contract LendingPool is VersionedInitializable, ILendingPool, LendingPoolStorage
     using ReserveConfiguration for DataTypes.ReserveConfigurationMap;
     using UserConfiguration for DataTypes.UserConfigurationMap;
 
-    uint256 public constant LENDINGPOOL_REVISION = 0x1;
+    uint256 public constant LENDINGPOOL_REVISION = 0x2;
 
     /**
      * @dev Modifier to check if the lending pool is not paused.

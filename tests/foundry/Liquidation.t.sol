@@ -161,10 +161,11 @@ contract LiquidationTest is Common {
             wbtcPrice = newPrice;
         }
 
-        ReserveDataParams memory wbtcReserveParamsBefore =
-            fixture_getReserveData(address(wbtc), deployedContracts.cod3xLendDataProvider);
-        ReserveDataParams memory usdcReserveParamsBefore =
-            fixture_getReserveData(address(usdc), deployedContracts.cod3xLendDataProvider);
+        DynamicData memory wbtcReserveParamsBefore =
+            deployedContracts.cod3xLendDataProvider.getLpReserveDynamicData(address(wbtc), true);
+        DynamicData memory usdcReserveParamsBefore =
+            deployedContracts.cod3xLendDataProvider.getLpReserveDynamicData(address(usdc), true);
+
         {
             (,,,,, uint256 healthFactor) =
                 deployedContracts.lendingPool.getUserAccountData(address(this));
@@ -198,10 +199,10 @@ contract LiquidationTest is Common {
         /**
          * LIQUIDATION PROCESS - END ***********
          */
-        ReserveDataParams memory wbtcReserveParamsAfter =
-            fixture_getReserveData(address(wbtc), deployedContracts.cod3xLendDataProvider);
-        ReserveDataParams memory usdcReserveParamsAfter =
-            fixture_getReserveData(address(usdc), deployedContracts.cod3xLendDataProvider);
+        DynamicData memory wbtcReserveParamsAfter =
+            deployedContracts.cod3xLendDataProvider.getLpReserveDynamicData(address(wbtc), true);
+        DynamicData memory usdcReserveParamsAfter =
+            deployedContracts.cod3xLendDataProvider.getLpReserveDynamicData(address(usdc), true);
         uint256 expectedCollateralLiquidated;
 
         {
@@ -330,10 +331,10 @@ contract LiquidationTest is Common {
             usdcPrice = newUsdcPrice;
         }
 
-        ReserveDataParams memory wbtcReserveParamsBefore =
-            fixture_getReserveData(address(wbtc), deployedContracts.cod3xLendDataProvider);
-        ReserveDataParams memory usdcReserveParamsBefore =
-            fixture_getReserveData(address(usdc), deployedContracts.cod3xLendDataProvider);
+        DynamicData memory wbtcReserveParamsBefore =
+            deployedContracts.cod3xLendDataProvider.getLpReserveDynamicData(address(wbtc), true);
+        DynamicData memory usdcReserveParamsBefore =
+            deployedContracts.cod3xLendDataProvider.getLpReserveDynamicData(address(usdc), true);
         {
             (,,,,, uint256 healthFactor) =
                 deployedContracts.lendingPool.getUserAccountData(address(this));
@@ -369,10 +370,10 @@ contract LiquidationTest is Common {
         /**
          * LIQUIDATION PROCESS - END ***********
          */
-        ReserveDataParams memory wbtcReserveParamsAfter =
-            fixture_getReserveData(address(wbtc), deployedContracts.cod3xLendDataProvider);
-        ReserveDataParams memory usdcReserveParamsAfter =
-            fixture_getReserveData(address(usdc), deployedContracts.cod3xLendDataProvider);
+        DynamicData memory wbtcReserveParamsAfter =
+            deployedContracts.cod3xLendDataProvider.getLpReserveDynamicData(address(wbtc), true);
+        DynamicData memory usdcReserveParamsAfter =
+            deployedContracts.cod3xLendDataProvider.getLpReserveDynamicData(address(usdc), true);
         uint256 expectedCollateralLiquidated;
 
         userReservesData = deployedContracts.cod3xLendDataProvider.getLpUserData(

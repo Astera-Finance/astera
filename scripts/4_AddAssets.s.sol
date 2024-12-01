@@ -224,12 +224,6 @@ contract AddAssets is Script, DeploymentUtils, Test {
                 console.log("PATH: ", outputPath);
                 deploymentConfig = vm.readFile(outputPath);
             }
-            {
-                string memory outputPath =
-                    string.concat(root, "/scripts/outputs/1_LendingPoolContracts.json");
-                console.log("PATH: ", outputPath);
-                deploymentConfig = vm.readFile(outputPath);
-            }
 
             /* Ready lending pool contracts settings */
             contracts.aToken = AToken(deploymentConfig.readAddress(".aToken"));

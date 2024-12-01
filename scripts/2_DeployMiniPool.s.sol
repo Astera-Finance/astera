@@ -12,7 +12,7 @@ import {DeployLendingPool} from "./1_DeployLendingPool.s.sol";
 contract DeployMiniPool is Script, Test, DeploymentUtils {
     using stdJson for string;
 
-    function readPreviousDeployment(string memory root) internal returns (bool readPrevious) {
+    function readPreviousDeployments(string memory root) internal returns (bool readPrevious) {
         string memory path = string.concat(root, "/scripts/outputs/2_MiniPoolContracts.json");
         console.log("PREVIOUS DEPLOYMENT PATH: ", path);
         try vm.readFile(path) returns (string memory previousContracts) {
@@ -133,6 +133,7 @@ contract DeployMiniPool is Script, Test, DeploymentUtils {
             abi.decode(config.parseRaw(".oracleConfig"), (OracleConfig));
 
         bool usePreviousStrats = config.readBool(".usePreviousStrats");
+        bool readPreviousContracts = config.readBool(".readPreviousContracts");
 
         if (vm.envBool("LOCAL_FORK")) {
             /* Fork Identifier */
@@ -170,7 +171,10 @@ contract DeployMiniPool is Script, Test, DeploymentUtils {
             string memory config = vm.readFile(path);
             address[] memory mockedTokens = config.readAddressArray(".mockedTokens");
             contracts.oracle = Oracle(config.readAddress(".mockedOracle"));
-            readPreviousDeployment(root);
+            if (readPreviousContracts) {
+                readPreviousDeployments(root);
+            }
+
             require(
                 mockedTokens.length >= poolReserversConfig.length,
                 "There are not enough mocked tokens. Deploy mocks.. "
@@ -236,16 +240,21 @@ contract DeployMiniPool is Script, Test, DeploymentUtils {
             contracts.lendingPool = LendingPool(config.readAddress(".lendingPool"));
             contracts.lendingPoolConfigurator =
                 LendingPoolConfigurator(config.readAddress(".lendingPoolConfigurator"));
+            contracts.cod3xLendDataProvider =
+                Cod3xLendDataProvider(config.readAddress(".cod3xLendDataProvider"));
 
-            readPreviousDeployment(root);
+            if (readPreviousContracts) {
+                readPreviousDeployments(root);
+            }
 
             /* Deploy on mainnet */
             vm.startBroadcast(vm.envUint("PRIVATE_KEY"));
-            console.log("Deploying mini pool infra");
+            console.log("Getting oracle");
             contracts.oracle = Oracle(contracts.miniPoolAddressesProvider.getPriceOracle());
             contracts.oracle.setAssetSources(
                 oracleConfig.assets, oracleConfig.sources, oracleConfig.timeouts
             );
+            console.log("Deploying mini pool infra");
             deployMiniPoolInfra(
                 volatileStrategies,
                 stableStrategies,

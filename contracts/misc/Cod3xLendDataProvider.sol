@@ -12,50 +12,20 @@ import {ReserveConfiguration} from
     "../../contracts/protocol/libraries/configuration/ReserveConfiguration.sol";
 import {UserConfiguration} from
     "../../contracts/protocol/libraries/configuration/UserConfiguration.sol";
-import {DataTypes} from "../../contracts/protocol/libraries/types/DataTypes.sol";
-
 import {IMiniPoolAddressesProvider} from "../../contracts/interfaces/IMiniPoolAddressesProvider.sol";
 import {IMiniPool} from "../../contracts/interfaces/IMiniPool.sol";
-
 import {IAERC6909} from "../../contracts/interfaces/IAERC6909.sol";
 import {Ownable} from "../../contracts/dependencies/openzeppelin/contracts/Ownable.sol";
 import {Errors} from "../../contracts/protocol/libraries/helpers/Errors.sol";
-import {IFlowLimiter} from "../../contracts/interfaces/IFlowLimiter.sol";
-
-struct UserReserveData {
-    address aToken;
-    address debtToken;
-    uint256 currentATokenBalance;
-    uint256 currentVariableDebt;
-    uint256 scaledATokenBalance;
-    uint256 scaledVariableDebt;
-    bool usageAsCollateralEnabledOnUser;
-    bool isBorrowing;
-}
-
-struct MiniPoolUserReserveData {
-    address aErc6909Token;
-    uint256 aTokenId;
-    uint256 debtTokenId;
-    uint256 scaledATokenBalance;
-    uint256 scaledVariableDebt;
-    bool usageAsCollateralEnabledOnUser;
-    bool isBorrowing;
-}
-
-struct StaticData {
-    uint256 decimals;
-    uint256 ltv;
-    uint256 liquidationThreshold;
-    uint256 liquidationBonus;
-    uint256 cod3xReserveFactor;
-    uint256 miniPoolOwnerReserveFactor;
-    uint256 depositCap;
-    bool borrowingEnabled;
-    bool flashloanEnabled;
-    bool isActive;
-    bool isFrozen;
-}
+import {IFlowLimiter} from "../../contracts/interfaces/base/IFlowLimiter.sol";
+import {
+    ICod3xLendDataProvider,
+    DataTypes,
+    StaticData,
+    DynamicData,
+    UserReserveData,
+    MiniPoolUserReserveData
+} from "../../contracts/interfaces/ICod3xLendDataProvider.sol";
 
 /**
  * @title Cod3xLendDataProvider
@@ -63,7 +33,7 @@ struct StaticData {
  * It retrieves static and dynamic configurations, user data, and token addresses from both types of pools.
  * @author Cod3x
  */
-contract Cod3xLendDataProvider is Ownable {
+contract Cod3xLendDataProvider is Ownable, ICod3xLendDataProvider {
     using ReserveConfiguration for DataTypes.ReserveConfigurationMap;
     using UserConfiguration for DataTypes.UserConfigurationMap;
 
@@ -133,41 +103,35 @@ contract Cod3xLendDataProvider is Ownable {
      * @notice Retrieves dynamic reserve data for a given asset in the lending pool.
      * @param asset The address of the asset
      * @param reserveType The type of reserve (true for type A, false for type B)
-     * @return availableLiquidity Current liquidity available
-     * @return totalVariableDebt Total outstanding variable debt
-     * @return liquidityRate Current liquidity rate
-     * @return variableBorrowRate Current variable borrow rate
-     * @return liquidityIndex Current liquidity index
-     * @return variableBorrowIndex Current variable borrow index
-     * @return lastUpdateTimestamp Last timestamp of reserve data update
+     * @return dynamicData :
+     * - availableLiquidity - Current liquidity available
+     * - totalVariableDebt - Total outstanding variable debt
+     * - liquidityRate - Current liquidity rate
+     * - variableBorrowRate - Current variable borrow rate
+     * - liquidityIndex - Current liquidity index
+     * - variableBorrowIndex - Current variable borrow index
+     * - lastUpdateTimestamp - Last timestamp of reserve data update
      */
     function getLpReserveDynamicData(address asset, bool reserveType)
         external
         view
         lendingPoolSet
-        returns (
-            uint256 availableLiquidity,
-            uint256 totalVariableDebt,
-            uint256 liquidityRate,
-            uint256 variableBorrowRate,
-            uint256 liquidityIndex,
-            uint256 variableBorrowIndex,
-            uint40 lastUpdateTimestamp
-        )
+        returns (DynamicData memory dynamicData)
     {
         DataTypes.ReserveData memory reserve = ILendingPool(
             lendingPoolAddressProvider.getLendingPool()
         ).getReserveData(asset, reserveType);
 
-        return (
-            IERC20Detailed(asset).balanceOf(reserve.aTokenAddress),
-            IERC20Detailed(reserve.variableDebtTokenAddress).totalSupply(),
-            reserve.currentLiquidityRate,
-            reserve.currentVariableBorrowRate,
-            reserve.liquidityIndex,
-            reserve.variableBorrowIndex,
-            reserve.lastUpdateTimestamp
-        );
+        dynamicData.availableLiquidity = IERC20Detailed(asset).balanceOf(reserve.aTokenAddress);
+        dynamicData.totalVariableDebt =
+            IERC20Detailed(reserve.variableDebtTokenAddress).totalSupply();
+        dynamicData.liquidityRate = reserve.currentLiquidityRate;
+        dynamicData.variableBorrowRate = reserve.currentVariableBorrowRate;
+        dynamicData.liquidityIndex = reserve.liquidityIndex;
+        dynamicData.variableBorrowIndex = reserve.variableBorrowIndex;
+        dynamicData.lastUpdateTimestamp = reserve.lastUpdateTimestamp;
+
+        return dynamicData;
     }
 
     /**
@@ -352,40 +316,36 @@ contract Cod3xLendDataProvider is Ownable {
      * @notice Retrieves dynamic reserve data for a given asset in a mini pool.
      * @param asset The address of the asset
      * @param miniPoolId The ID of the mini pool
-     * @return availableLiquidity Current liquidity available
-     * @return totalVariableDebt Total outstanding variable debt
-     * @return liquidityRate Current liquidity rate
-     * @return variableBorrowRate Current variable borrow rate
-     * @return liquidityIndex Current liquidity index
-     * @return variableBorrowIndex Current variable borrow index
-     * @return lastUpdateTimestamp Last timestamp of reserve data update
+     * @return dynamicData :
+     * - availableLiquidity - Current liquidity available
+     * - totalVariableDebt - Total outstanding variable debt
+     * - liquidityRate - Current liquidity rate
+     * - variableBorrowRate - Current variable borrow rate
+     * - liquidityIndex - Current liquidity index
+     * - variableBorrowIndex - Current variable borrow index
+     * - lastUpdateTimestamp - Last timestamp of reserve data update
      */
     function getMpReserveDynamicData(address asset, uint256 miniPoolId)
         external
         view
         miniPoolSet
-        returns (
-            uint256 availableLiquidity,
-            uint256 totalVariableDebt,
-            uint256 liquidityRate,
-            uint256 variableBorrowRate,
-            uint256 liquidityIndex,
-            uint256 variableBorrowIndex,
-            uint40 lastUpdateTimestamp
-        )
+        returns (DynamicData memory dynamicData)
     {
-        DataTypes.MiniPoolReserveData memory reserve =
-            IMiniPool(miniPoolAddressProvider.getMiniPool(miniPoolId)).getReserveData(asset);
+        (bool isReserveConfigured, DataTypes.MiniPoolReserveData memory reserve) =
+            isMpReserveConfigured(asset, miniPoolAddressProvider.getMiniPool(miniPoolId));
 
-        return (
-            IERC20Detailed(asset).balanceOf(reserve.aTokenAddress), // or scaledTotalSupply ?
-            IAERC6909(reserve.aTokenAddress).scaledTotalSupply(reserve.variableDebtTokenID),
-            reserve.currentLiquidityRate,
-            reserve.currentVariableBorrowRate,
-            reserve.liquidityIndex,
-            reserve.variableBorrowIndex,
-            reserve.lastUpdateTimestamp
-        );
+        require(isReserveConfigured, Errors.DP_RESERVE_NOT_CONFIGURED);
+
+        dynamicData.availableLiquidity = IERC20Detailed(asset).balanceOf(reserve.aTokenAddress);
+        dynamicData.totalVariableDebt =
+            IAERC6909(reserve.aTokenAddress).scaledTotalSupply(reserve.variableDebtTokenID);
+        dynamicData.liquidityRate = reserve.currentLiquidityRate;
+        dynamicData.variableBorrowRate = reserve.currentVariableBorrowRate;
+        dynamicData.liquidityIndex = reserve.liquidityIndex;
+        dynamicData.variableBorrowIndex = reserve.variableBorrowIndex;
+        dynamicData.lastUpdateTimestamp = reserve.lastUpdateTimestamp;
+
+        return dynamicData;
     }
 
     /**
@@ -413,7 +373,9 @@ contract Cod3xLendDataProvider is Ownable {
         aTokenIds = new uint256[](reserves.length);
         variableDebtTokenIds = new uint256[](reserves.length);
         for (uint256 idx = 0; idx < reserves.length; idx++) {
-            DataTypes.MiniPoolReserveData memory data = miniPool.getReserveData(reserves[idx]);
+            (bool isReserveConfigured, DataTypes.MiniPoolReserveData memory data) =
+                isMpReserveConfigured(reserves[idx], address(miniPool));
+            require(isReserveConfigured, Errors.DP_RESERVE_NOT_CONFIGURED);
             aErc6909Token[idx] = data.aTokenAddress;
             aTokenIds[idx] = data.aTokenID;
             variableDebtTokenIds[idx] = data.variableDebtTokenID;
@@ -472,7 +434,11 @@ contract Cod3xLendDataProvider is Ownable {
     {
         DataTypes.UserConfigurationMap memory userConfig = miniPool.getUserConfiguration(user);
 
-        DataTypes.MiniPoolReserveData memory data = miniPool.getReserveData(reserve);
+        (bool isReserveConfigured, DataTypes.MiniPoolReserveData memory data) =
+            isMpReserveConfigured(reserve, address(miniPool));
+
+        require(isReserveConfigured, Errors.DP_RESERVE_NOT_CONFIGURED);
+
         userReservesData.aErc6909Token = data.aTokenAddress;
         userReservesData.aTokenId = data.aTokenID;
         userReservesData.debtTokenId = data.variableDebtTokenID;
@@ -612,7 +578,7 @@ contract Cod3xLendDataProvider is Ownable {
     }
 
     /**
-     * @dev Checks if a given reserve is available in a specific MiniPool.
+     * @dev Gets remaining flow from main pool for specified mini pool.
      * @param asset The address of the reserve to check for availability.
      * @param miniPoolId The ID of the MiniPool where the reserve's availability is checked.
      * @return remainingFlow The address of the MiniPool being checked.
@@ -649,6 +615,22 @@ contract Cod3xLendDataProvider is Ownable {
                 isReserveAvailable = true;
             }
         }
+    }
+
+    /**
+     * @dev Checks if a given reserve is configured in a specific MiniPool.
+     * @param reserve The address of the reserve to check for availability.
+     * @param miniPool address of the minipool
+     * @return isConfigured True if the reserve is configured in the MiniPool, false otherwise.
+     * @return data reserve mini pool data.
+     */
+    function isMpReserveConfigured(address reserve, address miniPool)
+        public
+        view
+        returns (bool isConfigured, DataTypes.MiniPoolReserveData memory data)
+    {
+        data = IMiniPool(miniPool).getReserveData(reserve);
+        return ((data.aTokenAddress == address(0) ? false : true), data);
     }
 
     /* Copied from previous UI provider */

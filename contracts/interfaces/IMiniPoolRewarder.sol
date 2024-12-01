@@ -1,6 +1,10 @@
 // SPDX-License-Identifier: agpl-3.0
 pragma solidity ^0.8.0;
 
+/**
+ * @title IMiniPoolRewarder interface.
+ * @author Cod3x
+ */
 interface IMiniPoolRewarder {
     event RewardsAccrued(address indexed user, uint256 amount);
 
@@ -55,7 +59,6 @@ interface IMiniPoolRewarder {
      * @param assetID The index of the asset used in the update
      * @param userBalance The balance of the user of the asset in the lending pool
      * @param totalSupply The total supply of the asset in the lending pool
-     *
      */
     function handleAction(uint256 assetID, address user, uint256 userBalance, uint256 totalSupply)
         external;
@@ -64,7 +67,6 @@ interface IMiniPoolRewarder {
      * @dev Returns the total of rewards of an user, already accrued + not yet accrued
      * @param user The address of the user
      * @return The rewards
-     *
      */
     function getRewardsBalance(address[] calldata assets, address user)
         external
@@ -76,7 +78,6 @@ interface IMiniPoolRewarder {
      * @param amount Amount of rewards to claim
      * @param to Address that will be receiving the rewards
      * @return Rewards claimed
-     *
      */
     function claimRewards(address[] calldata assets, uint256 amount, address to)
         external
@@ -89,7 +90,6 @@ interface IMiniPoolRewarder {
      * @param user Address to check and claim rewards
      * @param to Address that will be receiving the rewards
      * @return Rewards claimed
-     *
      */
     function claimRewardsOnBehalf(
         address[] calldata assets,

@@ -13,7 +13,8 @@ import "forge-std/StdUtils.sol";
 import {MathUtils} from "contracts/protocol/libraries/math/MathUtils.sol";
 // import "./LendingPoolFixtures.t.sol";
 import "./MiniPoolFixtures.t.sol";
-import "../../contracts/misc/Cod3xLendDataProvider.sol";
+import "contracts/misc/Cod3xLendDataProvider.sol";
+import "contracts/interfaces/ICod3xLendDataProvider.sol";
 
 contract Cod3xLendDataProviderTest is MiniPoolFixtures {
     using WadRayMath for uint256;
@@ -104,16 +105,6 @@ contract Cod3xLendDataProviderTest is MiniPoolFixtures {
         assertEq(staticData.depositCap, 200);
     }
 
-    struct DynamicData {
-        uint256 availableLiquidity;
-        uint256 totalVariableDebt;
-        uint256 liquidityRate;
-        uint256 variableBorrowRate;
-        uint256 liquidityIndex;
-        uint256 variableBorrowIndex;
-        uint40 lastUpdateTimestamp;
-    }
-
     function testProvider() public {
         address user1 = makeAddr("user1");
         address user2 = makeAddr("user2");
@@ -179,15 +170,8 @@ contract Cod3xLendDataProviderTest is MiniPoolFixtures {
         {
             DynamicData memory dynamicData;
             console.log("\n>>>> USDC <<<<");
-            (
-                dynamicData.availableLiquidity,
-                dynamicData.totalVariableDebt,
-                dynamicData.liquidityRate,
-                dynamicData.variableBorrowRate,
-                dynamicData.liquidityIndex,
-                dynamicData.variableBorrowIndex,
-                dynamicData.lastUpdateTimestamp
-            ) = deployedContracts.cod3xLendDataProvider.getLpReserveDynamicData(
+
+            dynamicData = deployedContracts.cod3xLendDataProvider.getLpReserveDynamicData(
                 address(usdcTypes.token), true
             );
             assertEq(
@@ -200,15 +184,8 @@ contract Cod3xLendDataProviderTest is MiniPoolFixtures {
             assertEq(dynamicData.variableBorrowIndex, 1e27, "Wrong variableBorrowIndex");
             assertEq(dynamicData.lastUpdateTimestamp, block.timestamp, "Wrong lastUpdateTimestamp");
             console.log("\n>>>> WBTC <<<<<");
-            (
-                dynamicData.availableLiquidity,
-                dynamicData.totalVariableDebt,
-                dynamicData.liquidityRate,
-                dynamicData.variableBorrowRate,
-                dynamicData.liquidityIndex,
-                dynamicData.variableBorrowIndex,
-                dynamicData.lastUpdateTimestamp
-            ) = deployedContracts.cod3xLendDataProvider.getLpReserveDynamicData(
+
+            dynamicData = deployedContracts.cod3xLendDataProvider.getLpReserveDynamicData(
                 address(wbtcTypes.token), true
             );
             uint256 wbtcAmount =
@@ -348,19 +325,10 @@ contract Cod3xLendDataProviderTest is MiniPoolFixtures {
             assertEq(staticData.depositCap, 200);
         }
         {
-            DynamicData memory dynamicData;
             console.log("\n>>>> USDC <<<<");
-            (
-                dynamicData.availableLiquidity,
-                dynamicData.totalVariableDebt,
-                dynamicData.liquidityRate,
-                dynamicData.variableBorrowRate,
-                dynamicData.liquidityIndex,
-                dynamicData.variableBorrowIndex,
-                dynamicData.lastUpdateTimestamp
-            ) = deployedContracts.cod3xLendDataProvider.getMpReserveDynamicData(
-                address(usdcParams.token), 0
-            );
+            DynamicData memory dynamicData = deployedContracts
+                .cod3xLendDataProvider
+                .getMpReserveDynamicData(address(usdcParams.token), 0);
             assertEq(dynamicData.availableLiquidity, 0, "Wrong available liquidity");
             assertEq(dynamicData.totalVariableDebt, borrowAmount, "Wrong totalVariableDebt");
             console.log("liquidityRate ", dynamicData.liquidityRate);
@@ -370,15 +338,7 @@ contract Cod3xLendDataProviderTest is MiniPoolFixtures {
             console.log("lastUpdateTimestamp ", dynamicData.lastUpdateTimestamp);
 
             console.log("\n>>>> WBTC <<<<<");
-            (
-                dynamicData.availableLiquidity,
-                dynamicData.totalVariableDebt,
-                dynamicData.liquidityRate,
-                dynamicData.variableBorrowRate,
-                dynamicData.liquidityIndex,
-                dynamicData.variableBorrowIndex,
-                dynamicData.lastUpdateTimestamp
-            ) = deployedContracts.cod3xLendDataProvider.getMpReserveDynamicData(
+            dynamicData = deployedContracts.cod3xLendDataProvider.getMpReserveDynamicData(
                 address(wbtcParams.token), 0
             );
 

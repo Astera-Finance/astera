@@ -57,8 +57,8 @@ contract ChangePeripherials is Script, DeploymentUtils, Test {
         NewPeripherial[] memory vault = abi.decode(config.parseRaw(".vault"), (NewPeripherial[]));
         NewPeripherial[] memory treasury =
             abi.decode(config.parseRaw(".treasury"), (NewPeripherial[]));
-        NewMiniPoolPeripherial[] memory miniPoolCod3xTreasury =
-            abi.decode(config.parseRaw(".miniPoolCod3xTreasury"), (NewMiniPoolPeripherial[]));
+        NewMiniPoolPeripherial memory miniPoolCod3xTreasury =
+            abi.decode(config.parseRaw(".miniPoolCod3xTreasury"), (NewMiniPoolPeripherial));
         NewPeripherial[] memory rewarder =
             abi.decode(config.parseRaw(".rewarder"), (NewPeripherial[]));
         NewPeripherial[] memory rewarder6909 =
@@ -201,6 +201,17 @@ contract ChangePeripherials is Script, DeploymentUtils, Test {
             contracts.lendingPool = LendingPool(config.readAddress(".lendingPool"));
             contracts.lendingPoolConfigurator =
                 LendingPoolConfigurator(config.readAddress(".lendingPoolConfigurator"));
+
+            {
+                string memory outputPath =
+                    string.concat(root, "/scripts/outputs/2_MiniPoolContracts.json");
+                config = vm.readFile(outputPath);
+            }
+
+            contracts.miniPoolAddressesProvider =
+                MiniPoolAddressesProvider(config.readAddress(".miniPoolAddressesProvider"));
+            contracts.miniPoolConfigurator =
+                MiniPoolConfigurator(config.readAddress(".miniPoolConfigurator"));
 
             /* Change peripherials */
             vm.startBroadcast(vm.envUint("PRIVATE_KEY"));

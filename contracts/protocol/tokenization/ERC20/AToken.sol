@@ -12,13 +12,13 @@ import {VersionedInitializable} from
 import {IncentivizedERC20} from
     "../../../../contracts/protocol/tokenization/ERC20/IncentivizedERC20.sol";
 import {IRewarder} from "../../../../contracts/interfaces/IRewarder.sol";
-import {IERC4626} from "../../../../contracts/interfaces/IERC4626.sol";
+import {IERC4626} from "lib/openzeppelin-contracts/lib/forge-std/src/interfaces/IERC4626.sol";
 import {ATokenNonRebasing} from
     "../../../../contracts/protocol/tokenization/ERC20/ATokenNonRebasing.sol";
 
 /**
  * @title Cod3x Lend ERC20 AToken
- * @dev Implementation of the interest bearing token for the Cod3x Lend protocol
+ * @notice Implementation of the interest bearing token for the Cod3x Lend protocol.
  * @author Cod3x
  */
 contract AToken is
@@ -29,70 +29,96 @@ contract AToken is
     using WadRayMath for uint256;
     using SafeERC20 for IERC20;
 
+    /// @notice Constant used for EIP712 domain revision.
     bytes public constant EIP712_REVISION = bytes("1");
+
+    /// @notice EIP712 domain separator data structure hash.
     bytes32 internal constant EIP712_DOMAIN = keccak256(
         "EIP712Domain(string name,string version,uint256 chainId,address verifyingContract)"
     );
+
+    /// @notice EIP712 typehash for permit function.
     bytes32 public constant PERMIT_TYPEHASH = keccak256(
         "Permit(address owner,address spender,uint256 value,uint256 nonce,uint256 deadline)"
     );
 
+    /// @notice Current revision of the AToken implementation.
     uint256 public constant ATOKEN_REVISION = 0x1;
 
-    mapping(address => mapping(address => uint256)) internal _shareAllowances;
-
-    /// @dev owner => next valid nonce to submit with permit()
-    mapping(address => uint256) public _nonces;
-
+    /// @notice EIP712 domain separator.
     bytes32 public DOMAIN_SEPARATOR;
+
+    /// @notice Flag indicating if the reserve is boosted by a vault.
     bool public RESERVE_TYPE;
 
+    /// @notice Reference to the `ILendingPool` contract.
     ILendingPool internal _pool;
+
+    /// @notice Address of the treasury receiving fees.
     address internal _treasury;
+
+    /// @notice Address of the underlying asset.
     address internal _underlyingAsset;
 
+    /// @notice Reference to the incentives controller contract.
     IRewarder internal _incentivesController;
 
+    /// @notice Address of the non rebasing AToken wrapper address.
     address internal _aTokenWrapper;
 
+    /// @notice Mapping of share allowances from owner to spender.
+    mapping(address => mapping(address => uint256)) internal _shareAllowances;
+
+    /// @notice Mapping of nonces for permit function.
+    mapping(address => uint256) public _nonces;
+
+    // ---- Rehypothecation related vars ----
+
+    /// @notice The ERC4626 vault contract that this aToken supplies tokens to for rehypothecation.
+    IERC4626 public _vault;
+    /// @notice The total amount of underlying tokens that have entered/exited this contract from protocol perspective.
+    uint256 public _underlyingAmount;
+    /// @notice The percentage of underlying tokens that should be rehypothecated to the vault.
+    uint256 public _farmingPct;
+    /// @notice The current amount of underlying tokens supplied to the vault.
+    uint256 public _farmingBal;
+    /// @notice The minimum profit amount that will trigger a claim.
+    uint256 public _claimingThreshold;
+    /// @notice The minimum percentage difference that will trigger rebalancing.
+    uint256 public _farmingPctDrift;
+    /// @notice The address that receives claimed profits.
+    address public _profitHandler;
     /**
-     * @dev Rehypothecation related vars
-     * vault is the ERC4626 contract the aToken will supply part of its tokens to
-     * underlyingAmount is the recorded amount of underlying entering and exiting this contract from the perspective of the protocol
-     * farmingPct is the share of underlying that should be rehypothecated
-     * farmingBal is the recorded amount of underlying supplied to the vault
-     * claimingThreshold is the minimum amount this contract will try to claim as profit
-     * farmingPctDrift is the minimum difference in pct after which the contract will rebalance
-     * profitHandler is the EOA/contract receiving profit
+     * @notice Modifier to ensure only the lending pool can call certain functions.
+     * @dev Reverts if the caller is not the lending pool contract.
      */
-    IERC4626 public vault;
-    uint256 public underlyingAmount;
-    uint256 public farmingPct;
-    uint256 public farmingBal;
-    uint256 public claimingThreshold;
-    uint256 public farmingPctDrift;
-    address public profitHandler;
 
     modifier onlyLendingPool() {
         require(_msgSender() == address(_pool), Errors.CT_CALLER_MUST_BE_LENDING_POOL);
         _;
     }
 
+    /**
+     * @notice Returns the current revision number of this implementation.
+     * @dev Implements the VersionedInitializable interface.
+     * @return The revision number of this contract.
+     */
     function getRevision() internal pure virtual override returns (uint256) {
         return ATOKEN_REVISION;
     }
 
     /**
-     * @dev Initializes the aToken
-     * @param pool The address of the lending pool where this aToken will be used
-     * @param treasury The address of the Cod3x treasury, receiving the fees on this aToken
-     * @param underlyingAsset The address of the underlying asset of this aToken (E.g. WETH for aWETH)
-     * @param incentivesController The smart contract managing potential incentives distribution
-     * @param aTokenDecimals The decimals of the aToken, same as the underlying asset's\
-     * @param reserveType Whether the reserve is boosted by a vault
-     * @param aTokenName The name of the aToken
-     * @param aTokenSymbol The symbol of the aToken
-     * @param params Additional params to configure contract
+     * @notice Initializes the aToken contract with its core configuration.
+     * @dev Sets up the token metadata, pool references, and EIP712 domain separator.
+     * @param pool The address of the lending pool where this aToken will be used.
+     * @param treasury The address of the Cod3x treasury, receiving the fees on this aToken.
+     * @param underlyingAsset The address of the underlying asset of this aToken (E.g. `WETH` for aWETH).
+     * @param incentivesController The smart contract managing potential incentives distribution.
+     * @param aTokenDecimals The decimals of the aToken, same as the underlying asset's.
+     * @param reserveType Whether the reserve is boosted by a vault.
+     * @param aTokenName The name of the aToken.
+     * @param aTokenSymbol The symbol of the aToken.
+     * @param params Additional params to configure contract.
      */
     function initialize(
         ILendingPool pool,
@@ -143,13 +169,12 @@ contract AToken is
     }
 
     /**
-     * @dev Burns aTokens from `user` and sends the equivalent amount of underlying to `receiverOfUnderlying`
-     * - Only callable by the LendingPool, as extra state updates there need to be managed
-     * @param user The owner of the aTokens, getting them burned
-     * @param receiverOfUnderlying The address that will receive the underlying
-     * @param amount The amount being burned
-     * @param index The new liquidity index of the reserve
-     *
+     * @notice Burns aTokens and transfers underlying tokens to a specified receiver.
+     * @dev Only callable by the LendingPool contract.
+     * @param user The owner of the aTokens getting burned.
+     * @param receiverOfUnderlying The address that will receive the underlying tokens.
+     * @param amount The amount of tokens being burned.
+     * @param index The new liquidity index of the reserve.
      */
     function burn(address user, address receiverOfUnderlying, uint256 amount, uint256 index)
         external
@@ -159,7 +184,7 @@ contract AToken is
         uint256 amountScaled = amount.rayDiv(index);
         require(amountScaled != 0, Errors.CT_INVALID_BURN_AMOUNT);
         _rebalance(amount);
-        underlyingAmount = underlyingAmount - amount;
+        _underlyingAmount = _underlyingAmount - amount;
         _burn(user, amountScaled);
 
         IERC20(_underlyingAsset).safeTransfer(receiverOfUnderlying, amount);
@@ -169,12 +194,12 @@ contract AToken is
     }
 
     /**
-     * @dev Mints `amount` aTokens to `user`
-     * - Only callable by the LendingPool, as extra state updates there need to be managed
-     * @param user The address receiving the minted tokens
-     * @param amount The amount of tokens getting minted
-     * @param index The new liquidity index of the reserve
-     * @return `true` if the the previous balance of the user was 0
+     * @notice Mints new aTokens to a specified user.
+     * @dev Only callable by the LendingPool contract.
+     * @param user The address receiving the minted tokens.
+     * @param amount The amount of tokens to mint.
+     * @param index The new liquidity index of the reserve.
+     * @return True if the previous balance of the user was 0.
      */
     function mint(address user, uint256 amount, uint256 index)
         external
@@ -186,7 +211,7 @@ contract AToken is
 
         uint256 amountScaled = amount.rayDiv(index);
         require(amountScaled != 0, Errors.CT_INVALID_MINT_AMOUNT);
-        underlyingAmount = underlyingAmount + amount;
+        _underlyingAmount = _underlyingAmount + amount;
         _rebalance(0);
         _mint(user, amountScaled);
 
@@ -197,10 +222,10 @@ contract AToken is
     }
 
     /**
-     * @dev Mints aTokens to the reserve treasury
-     * - Only callable by the LendingPool
-     * @param amount The amount of tokens getting minted
-     * @param index The new liquidity index of the reserve
+     * @notice Mints aTokens to the Cod3x treasury.
+     * @dev Only callable by the LendingPool contract. Does not check for rounding errors.
+     * @param amount The amount of tokens to mint.
+     * @param index The new liquidity index of the reserve.
      */
     function mintToCod3xTreasury(uint256 amount, uint256 index) external override onlyLendingPool {
         if (amount == 0) {
@@ -210,9 +235,9 @@ contract AToken is
         address treasury = _treasury;
 
         // Compared to the normal mint, we don't check for rounding errors.
-        // The amount to mint can easily be very small since it is a fraction of the interest ccrued.
+        // The amount to mint can easily be very small since it is a fraction of the interest accrued.
         // In that case, the treasury will experience a (very small) loss, but it
-        // wont cause potentially valid transactions to fail.
+        // won't cause potentially valid transactions to fail.
         _mint(treasury, amount.rayDiv(index));
 
         emit Transfer(address(0), treasury, amount);
@@ -220,12 +245,11 @@ contract AToken is
     }
 
     /**
-     * @dev Transfers aTokens in the event of a borrow being liquidated, in case the liquidators reclaims the aToken
-     * - Only callable by the LendingPool
-     * @param from The address getting liquidated, current owner of the aTokens
-     * @param to The recipient
-     * @param value The amount of tokens getting transferred
-     *
+     * @notice Transfers aTokens during liquidation.
+     * @dev Only callable by the LendingPool contract.
+     * @param from The address getting liquidated, current owner of the aTokens.
+     * @param to The recipient of the aTokens.
+     * @param value The amount of tokens being transferred.
      */
     function transferOnLiquidation(address from, address to, uint256 value)
         external
@@ -233,17 +257,16 @@ contract AToken is
         onlyLendingPool
     {
         // Being a normal transfer, the Transfer() and BalanceTransfer() are emitted
-        // so no need to emit a specific event here
+        // so no need to emit a specific event here.
         _transfer(from, to, value, false);
 
         emit Transfer(from, to, value);
     }
 
     /**
-     * @dev Calculates the balance of the user: principal balance + interest generated by the principal
-     * @param user The user whose balance is calculated
-     * @return The balance of the user
-     *
+     * @dev Calculates the balance of the user: principal balance + interest generated by the principal.
+     * @param user The user whose balance is calculated.
+     * @return The balance of the user.
      */
     function balanceOf(address user)
         public
@@ -258,10 +281,9 @@ contract AToken is
 
     /**
      * @dev Returns the scaled balance of the user. The scaled balance is the sum of all the
-     * updated stored balance divided by the reserve's liquidity index at the moment of the update
-     * @param user The user whose balance is calculated
-     * @return The scaled balance of the user
-     *
+     * updated stored balance divided by the reserve's liquidity index at the moment of the update.
+     * @param user The user whose balance is calculated.
+     * @return The scaled balance of the user.
      */
     function scaledBalanceOf(address user) external view override returns (uint256) {
         return super.balanceOf(user);
@@ -269,10 +291,9 @@ contract AToken is
 
     /**
      * @dev Returns the scaled balance of the user and the scaled total supply.
-     * @param user The address of the user
-     * @return The scaled balance of the user
-     * @return The scaled balance and the scaled total supply
-     *
+     * @param user The address of the user.
+     * @return The scaled balance of the user.
+     * @return The scaled total supply.
      */
     function getScaledUserBalanceAndSupply(address user)
         external
@@ -284,11 +305,10 @@ contract AToken is
     }
 
     /**
-     * @dev calculates the total supply of the specific aToken
-     * since the balance of every single user increases over time, the total supply
+     * @dev Calculates the total supply of the specific aToken.
+     * Since the balance of every single user increases over time, the total supply
      * does that too.
-     * @return the current total supply
-     *
+     * @return The current total supply.
      */
     function totalSupply() public view override(IncentivizedERC20, IERC20) returns (uint256) {
         uint256 currentSupplyScaled = super.totalSupply();
@@ -303,61 +323,44 @@ contract AToken is
     }
 
     /**
-     * @dev Returns the scaled total supply of the variable debt token. Represents sum(debt/index)
-     * @return the scaled total supply
-     *
+     * @dev Returns the scaled total supply of the variable debt token. Represents sum(debt/index).
+     * @return The scaled total supply.
      */
     function scaledTotalSupply() public view virtual override returns (uint256) {
         return super.totalSupply();
     }
 
-    /**
-     * @dev Returns the address of the Cod3x treasury, receiving the fees on this aToken
-     *
-     */
+    /// @dev Returns the address of the Cod3x treasury, receiving the fees on this aToken.
     function RESERVE_TREASURY_ADDRESS() public view returns (address) {
         return _treasury;
     }
 
-    /**
-     * @dev Returns the address of the underlying asset of this aToken (E.g. WETH for aWETH)
-     *
-     */
+    /// @dev Returns the address of the underlying asset of this aToken (E.g. `WETH` for aWETH).
     function UNDERLYING_ASSET_ADDRESS() public view override returns (address) {
         return _underlyingAsset;
     }
 
-    /**
-     * @dev Returns the address of the lending pool where this aToken is used
-     *
-     */
+    /// @dev Returns the address of the lending pool where this aToken is used.
     function POOL() public view returns (ILendingPool) {
         return _pool;
     }
 
-    /**
-     * @dev For internal usage in the logic of the parent contract IncentivizedERC20
-     *
-     */
+    /// @dev For internal usage in the logic of the parent contract `IncentivizedERC20`.
     function _getIncentivesController() internal view override returns (IRewarder) {
         return _incentivesController;
     }
 
-    /**
-     * @dev Returns the address of the incentives controller contract
-     *
-     */
+    /// @dev Returns the address of the incentives controller contract.
     function getIncentivesController() external view override returns (IRewarder) {
         return _getIncentivesController();
     }
 
     /**
      * @dev Transfers the underlying asset to `target`. Used by the LendingPool to transfer
-     * assets in borrow(), withdraw() and flashLoan()
-     * @param target The recipient of the aTokens
-     * @param amount The amount getting transferred
-     * @return The amount transferred
-     *
+     * assets in borrow(), withdraw() and flashLoan().
+     * @param target The recipient of the aTokens.
+     * @param amount The amount getting transferred.
+     * @return The amount transferred.
      */
     function transferUnderlyingTo(address target, uint256 amount)
         external
@@ -366,30 +369,35 @@ contract AToken is
         returns (uint256)
     {
         _rebalance(amount);
-        underlyingAmount = underlyingAmount - amount;
+        _underlyingAmount = _underlyingAmount - amount;
         IERC20(_underlyingAsset).safeTransfer(target, amount);
         return amount;
     }
 
     /**
      * @dev Invoked to execute actions on the aToken side after a repayment.
-     * @param amount The amount getting repaid
-     *
+     * @param user The user executing the repayment.
+     * @param onBehalfOf The user beneficiary.
+     * @param amount The amount getting repaid.
      */
-    function handleRepayment(address, address, uint256 amount) external override onlyLendingPool {
-        underlyingAmount = underlyingAmount + amount;
+    function handleRepayment(address user, address onBehalfOf, uint256 amount)
+        external
+        override
+        onlyLendingPool
+    {
+        _underlyingAmount = _underlyingAmount + amount;
     }
 
     /**
-     * @dev implements the permit function as for
-     * https://github.com/ethereum/EIPs/blob/8a34d644aacf0f9f8f00815307fd7dd5da07655f/EIPS/eip-2612.md
-     * @param owner The owner of the funds
-     * @param spender The spender
-     * @param value The amount
-     * @param deadline The deadline timestamp, type(uint256).max for max deadline
-     * @param v Signature param
-     * @param s Signature param
-     * @param r Signature param
+     * @dev Implements the permit function as per
+     * https://github.com/ethereum/EIPs/blob/8a34d644aacf0f9f8f00815307fd7dd5da07655f/EIPS/eip-2612.md.
+     * @param owner The owner of the funds.
+     * @param spender The spender.
+     * @param value The amount.
+     * @param deadline The deadline timestamp, type(uint256).max for max deadline.
+     * @param v Signature param.
+     * @param s Signature param.
+     * @param r Signature param.
      */
     function permit(
         address owner,
@@ -420,12 +428,11 @@ contract AToken is
 
     /**
      * @dev Transfers the aTokens between two users. Validates the transfer
-     * (ie checks for valid HF after the transfer) if required
-     * @param from The source address
-     * @param to The destination address
-     * @param amount The amount getting transferred
-     * @param validate `true` if the transfer needs to be validated
-     *
+     * (ie checks for valid HF after the transfer) if required.
+     * @param from The source address.
+     * @param to The destination address.
+     * @param amount The amount getting transferred.
+     * @param validate `true` if the transfer needs to be validated.
      */
     function _transfer(address from, address to, uint256 amount, bool validate) internal {
         address underlyingAsset = _underlyingAsset;
@@ -448,11 +455,10 @@ contract AToken is
     }
 
     /**
-     * @dev Overrides the parent _transfer to force validated transfer() and transferFrom()
-     * @param from The source address
-     * @param to The destination address
-     * @param amount The amount getting transferred
-     *
+     * @dev Overrides the parent _transfer to force validated transfer() and transferFrom().
+     * @param from The source address.
+     * @param to The destination address.
+     * @param amount The amount getting transferred.
      */
     function _transfer(address from, address to, uint256 amount) internal override {
         _transfer(from, to, amount, true);
@@ -462,11 +468,11 @@ contract AToken is
 
     /**
      * @dev Transfers the aToken shares between two users. Validates the transfer
-     * (ie checks for valid HF after the transfer) if required
+     * (ie checks for valid HF after the transfer) if required.
      * Restricted to `_aTokenWrapper`.
-     * @param from The source address
-     * @param to The destination address
-     * @param shareAmount The share amount getting transferred
+     * @param from The source address.
+     * @param to The destination address.
+     * @param shareAmount The share amount getting transferred.
      */
     function transferShare(address from, address to, uint256 shareAmount) external {
         require(msg.sender == _aTokenWrapper, "CALLER_NOT_WRAPPER");
@@ -494,8 +500,8 @@ contract AToken is
      * @dev Allows `spender` to spend the shares owned by `owner`.
      * Restricted to `_aTokenWrapper`.
      * @param owner The owner of the shares.
-     * @param spender The user allowed to spend owner tokens
-     * @param shareAmount The share amount getting approved
+     * @param spender The user allowed to spend owner tokens.
+     * @param shareAmount The share amount getting approved.
      */
     function shareApprove(address owner, address spender, uint256 shareAmount) external {
         require(msg.sender == _aTokenWrapper, "CALLER_NOT_WRAPPER");
@@ -503,118 +509,166 @@ contract AToken is
         _shareAllowances[owner][spender] = shareAmount;
     }
 
+    /**
+     * @dev Returns the share allowance for a given owner and spender.
+     * @param owner The owner of the shares.
+     * @param spender The spender address.
+     * @return The current share allowance.
+     */
     function shareAllowances(address owner, address spender) external view returns (uint256) {
         return _shareAllowances[owner][spender];
     }
 
+    /// @dev Returns the address of the wrapper contract for this aToken.
     function WRAPPER_ADDRESS() external view returns (address) {
         return _aTokenWrapper;
     }
 
+    /**
+     * @dev Converts an asset amount to share amount.
+     * @param assetAmount The amount of assets to convert.
+     * @return The equivalent amount in shares.
+     */
     function convertToShares(uint256 assetAmount) external view returns (uint256) {
         return assetAmount.rayDiv(_pool.getReserveNormalizedIncome(_underlyingAsset, RESERVE_TYPE));
     }
 
+    /**
+     * @dev Converts a share amount to asset amount.
+     * @param shareAmount The amount of shares to convert.
+     * @return The equivalent amount in assets.
+     */
     function convertToAssets(uint256 shareAmount) external view returns (uint256) {
         return shareAmount.rayMul(_pool.getReserveNormalizedIncome(_underlyingAsset, RESERVE_TYPE));
     }
 
     /// --------- Rehypothecation logic ---------
-
-    /// @dev Rebalance so as to free _amountToWithdraw for a future transfer
+    /**
+     * @dev Rebalances the internal allocation of funds between the contract and the vault.
+     * @notice This function ensures there is enough liquidity to process a future transfer by freeing up `_amountToWithdraw`.
+     * @param _amountToWithdraw The amount of tokens that needs to be made available for withdrawal.
+     */
     function _rebalance(uint256 _amountToWithdraw) internal {
-        if (farmingPct == 0 && farmingBal == 0) {
+        if (_farmingPct == 0 && _farmingBal == 0) {
             return;
         }
-        // how much has been allocated as per our internal records?
-        uint256 currentAllocated = farmingBal;
-        // what is the present value of our shares?
-        uint256 ownedShares = IERC20(address(vault)).balanceOf(address(this));
-        uint256 sharesToAssets = vault.convertToAssets(ownedShares);
+        // How much has been allocated as per our internal records?
+        uint256 currentAllocated = _farmingBal;
+        // What is the present value of our shares?
+        uint256 ownedShares = IERC20(address(_vault)).balanceOf(address(this));
+        uint256 sharesToAssets = _vault.convertToAssets(ownedShares);
         uint256 profit;
         uint256 toWithdraw;
         uint256 toDeposit;
-        // if we have profit that's more than the threshold, record it for withdrawal and redistribution
+        // If we have profit that's more than the threshold, record it for withdrawal and redistribution.
         if (
             sharesToAssets > currentAllocated
-                && sharesToAssets - currentAllocated >= claimingThreshold
+                && sharesToAssets - currentAllocated >= _claimingThreshold
         ) {
             profit = sharesToAssets - currentAllocated;
         }
-        // what % of the final pool balance would the current allocation be?
-        uint256 finalBalance = underlyingAmount - _amountToWithdraw;
+        // What % of the final pool balance would the current allocation be?
+        uint256 finalBalance = _underlyingAmount - _amountToWithdraw;
         uint256 pctOfFinalBal =
             finalBalance == 0 ? type(uint256).max : currentAllocated * 10000 / finalBalance;
-        // if abs(percentOfFinalBal - yieldingPercentage) > drift, we will need to deposit more or withdraw some
-        uint256 finalFarmingAmount = finalBalance * farmingPct / 10000;
-        if (pctOfFinalBal > farmingPct && pctOfFinalBal - farmingPct > farmingPctDrift) {
-            // we will end up overallocated, withdraw some
+        // If abs(percentOfFinalBal - yieldingPercentage) > drift, we will need to deposit more or withdraw some.
+        uint256 finalFarmingAmount = finalBalance * _farmingPct / 10000;
+        if (pctOfFinalBal > _farmingPct && pctOfFinalBal - _farmingPct > _farmingPctDrift) {
+            // We will end up overallocated, withdraw some.
             toWithdraw = currentAllocated - finalFarmingAmount;
-            farmingBal = farmingBal - toWithdraw;
-        } else if (pctOfFinalBal < farmingPct && farmingPct - pctOfFinalBal > farmingPctDrift) {
-            // we will end up underallocated, deposit more
+            _farmingBal = _farmingBal - toWithdraw;
+        } else if (pctOfFinalBal < _farmingPct && _farmingPct - pctOfFinalBal > _farmingPctDrift) {
+            // We will end up underallocated, deposit more.
             toDeposit = finalFarmingAmount - currentAllocated;
-            farmingBal = farmingBal + toDeposit;
+            _farmingBal = _farmingBal + toDeposit;
         }
-        // + means deposit, - means withdraw
+        // + means deposit, - means withdraw.
         int256 netAssetMovement = int256(toDeposit) - int256(toWithdraw) - int256(profit);
         if (netAssetMovement > 0) {
-            vault.deposit(uint256(netAssetMovement), address(this));
+            _vault.deposit(uint256(netAssetMovement), address(this));
         } else if (netAssetMovement < 0) {
-            vault.withdraw(uint256(-netAssetMovement), address(this), address(this));
+            _vault.withdraw(uint256(-netAssetMovement), address(this), address(this));
         }
-        // if we recorded profit, recalculate it for precision and distribute
+        // If we recorded profit, recalculate it for precision and distribute.
         if (profit != 0) {
-            // profit is ultimately (coll at hand) + (coll allocated to yield generator) - (recorded total coll Amount in pool)
+            // Profit is ultimately (coll at hand) + (coll allocated to yield generator) - (recorded total coll Amount in pool).
             profit =
-                IERC20(_underlyingAsset).balanceOf(address(this)) + farmingBal - underlyingAmount;
+                IERC20(_underlyingAsset).balanceOf(address(this)) + _farmingBal - _underlyingAmount;
             if (profit != 0) {
-                // distribute to profitHandler
-                IERC20(_underlyingAsset).safeTransfer(profitHandler, profit);
+                // Distribute to profitHandler.
+                IERC20(_underlyingAsset).safeTransfer(_profitHandler, profit);
             }
         }
 
-        emit Rebalance(address(vault), _amountToWithdraw, netAssetMovement);
+        emit Rebalance(address(_vault), _amountToWithdraw, netAssetMovement);
     }
 
-    function setFarmingPct(uint256 _farmingPct) external override onlyLendingPool {
-        require(address(vault) != address(0), Errors.AT_VAULT_NOT_INITIALIZED);
-        require(_farmingPct <= 10000, Errors.AT_INVALID_AMOUNT);
-        farmingPct = _farmingPct;
+    /**
+     * @dev Sets the farming percentage for yield generation.
+     * @param farmingPct The new farming percentage (0-10000).
+     */
+    function setFarmingPct(uint256 farmingPct) external override onlyLendingPool {
+        require(address(_vault) != address(0), Errors.AT_VAULT_NOT_INITIALIZED);
+        require(farmingPct <= 10000, Errors.AT_INVALID_AMOUNT);
+        _farmingPct = farmingPct;
     }
 
-    function setClaimingThreshold(uint256 _claimingThreshold) external override onlyLendingPool {
-        require(address(vault) != address(0), Errors.AT_VAULT_NOT_INITIALIZED);
-        claimingThreshold = _claimingThreshold;
+    /**
+     * @dev Sets the claiming threshold for profit distribution.
+     * @param claimingThreshold The new claiming threshold.
+     */
+    function setClaimingThreshold(uint256 claimingThreshold) external override onlyLendingPool {
+        require(address(_vault) != address(0), Errors.AT_VAULT_NOT_INITIALIZED);
+        _claimingThreshold = claimingThreshold;
     }
 
-    function setFarmingPctDrift(uint256 _farmingPctDrift) external override onlyLendingPool {
-        require(_farmingPctDrift <= 10000, Errors.AT_INVALID_AMOUNT);
-        require(address(vault) != address(0), Errors.AT_VAULT_NOT_INITIALIZED);
-        farmingPctDrift = _farmingPctDrift;
+    /**
+     * @dev Sets the farming percentage drift threshold.
+     * @param farmingPctDrift The new farming percentage drift (0-10000).
+     */
+    function setFarmingPctDrift(uint256 farmingPctDrift) external override onlyLendingPool {
+        require(farmingPctDrift <= 10000, Errors.AT_INVALID_AMOUNT);
+        require(address(_vault) != address(0), Errors.AT_VAULT_NOT_INITIALIZED);
+        _farmingPctDrift = farmingPctDrift;
     }
 
-    function setProfitHandler(address _profitHandler) external override onlyLendingPool {
-        require(_profitHandler != address(0), Errors.AT_INVALID_ADDRESS);
-        require(address(vault) != address(0), Errors.AT_VAULT_NOT_INITIALIZED);
-        profitHandler = _profitHandler;
+    /**
+     * @dev Sets the profit handler address.
+     * @param profitHandler The new profit handler address.
+     */
+    function setProfitHandler(address profitHandler) external override onlyLendingPool {
+        require(profitHandler != address(0), Errors.AT_INVALID_ADDRESS);
+        require(address(_vault) != address(0), Errors.AT_VAULT_NOT_INITIALIZED);
+        _profitHandler = profitHandler;
     }
 
-    function setVault(address _vault) external override onlyLendingPool {
-        require(address(_vault) != address(0), Errors.AT_INVALID_ADDRESS);
-        if (address(vault) != address(0)) {
-            require(farmingBal == 0, Errors.AT_VAULT_NOT_EMPTY);
+    /**
+     * @dev Sets the vault address for yield generation.
+     * @param vault The new vault address.
+     */
+    function setVault(address vault) external override onlyLendingPool {
+        require(address(vault) != address(0), Errors.AT_INVALID_ADDRESS);
+        if (address(_vault) != address(0)) {
+            require(_farmingBal == 0, Errors.AT_VAULT_NOT_EMPTY);
         }
-        require(IERC4626(_vault).asset() == _underlyingAsset, Errors.AT_INVALID_ADDRESS);
-        vault = IERC4626(_vault);
-        IERC20(_underlyingAsset).forceApprove(address(vault), type(uint256).max);
+        require(IERC4626(vault).asset() == _underlyingAsset, Errors.AT_INVALID_ADDRESS);
+        _vault = IERC4626(vault);
+        IERC20(_underlyingAsset).forceApprove(address(_vault), type(uint256).max);
     }
 
+    /**
+     * @dev Sets the treasury address.
+     * @param treasury The new treasury address.
+     */
     function setTreasury(address treasury) external override onlyLendingPool {
         require(treasury != address(0), Errors.AT_INVALID_ADDRESS);
         _treasury = treasury;
     }
 
+    /**
+     * @dev Sets the incentives controller address.
+     * @param incentivesController The new incentives controller address.
+     */
     function setIncentivesController(address incentivesController)
         external
         override
@@ -624,18 +678,19 @@ contract AToken is
         _incentivesController = IRewarder(incentivesController);
     }
 
+    /**
+     * @dev Triggers a rebalance of the vault allocation.
+     */
     function rebalance() external override onlyLendingPool {
         _rebalance(0);
     }
-    /**
-     * @dev Returns the total balance of underlying asset of this token, including balance lent to a vault
-     *
-     */
 
+    /// @dev Returns the total balance of underlying asset of this token, including balance lent to a vault.
     function getTotalManagedAssets() public view override returns (uint256) {
-        return underlyingAmount;
+        return _underlyingAmount;
     }
 
+    /// @dev Returns the address of the lending pool contract.
     function getPool() external view returns (address) {
         return address(_pool);
     }

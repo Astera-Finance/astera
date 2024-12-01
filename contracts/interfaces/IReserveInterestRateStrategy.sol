@@ -2,8 +2,7 @@
 pragma solidity ^0.8.0;
 
 /**
- * @title IReserveInterestRateStrategyInterface interface
- * @dev Interface for the calculation of the interest rates
+ * @title IReserveInterestRateStrategy interface.
  * @author Cod3x
  */
 interface IReserveInterestRateStrategy {

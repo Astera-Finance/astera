@@ -3,12 +3,10 @@ pragma solidity 0.8.23;
 
 import {IERC20} from "../../../../../contracts/dependencies/openzeppelin/contracts/IERC20.sol";
 import {SafeERC20} from "../../../../../contracts/dependencies/openzeppelin/contracts/SafeERC20.sol";
-import {IPriceOracleGetter} from "../../../../../contracts/interfaces/IPriceOracleGetter.sol";
+import {IOracle} from "../../../../../contracts/interfaces/IOracle.sol";
 import {IMiniPoolAddressesProvider} from
     "../../../../../contracts/interfaces/IMiniPoolAddressesProvider.sol";
-import {IAToken} from "../../../../../contracts/interfaces/IAToken.sol";
 import {IAERC6909} from "../../../../../contracts/interfaces/IAERC6909.sol";
-import {IVariableDebtToken} from "../../../../../contracts/interfaces/IVariableDebtToken.sol";
 import {WadRayMath} from "../../../../../contracts/protocol/libraries/math/WadRayMath.sol";
 import {PercentageMath} from "../../../../../contracts/protocol/libraries/math/PercentageMath.sol";
 import {Errors} from "../../../../../contracts/protocol/libraries/helpers/Errors.sol";
@@ -26,9 +24,10 @@ import {ATokenNonRebasing} from
     "../../../../../contracts/protocol/tokenization/ERC20/ATokenNonRebasing.sol";
 
 /**
- * @title BorrowLogic library
+ * @title MiniPoolBorrowLogic library
  * @author Cod3x
- * @notice Implements functions to validate actions related to borrowing
+ * @notice Implements functions to validate and execute borrowing-related actions in the MiniPool.
+ * @dev Contains core borrowing logic including health factor calculations, borrow execution and repayment handling.
  */
 library MiniPoolBorrowLogic {
     using MiniPoolReserveLogic for DataTypes.MiniPoolReserveData;
@@ -39,6 +38,14 @@ library MiniPoolBorrowLogic {
     using UserConfiguration for DataTypes.UserConfigurationMap;
     using MiniPoolValidationLogic for MiniPoolValidationLogic.ValidateBorrowParams;
 
+    /**
+     * @dev Emitted on borrow.
+     * @param reserve The address of the reserve being borrowed from.
+     * @param user The address initiating the borrow.
+     * @param onBehalfOf The address receiving the borrowed assets.
+     * @param amount The amount being borrowed.
+     * @param borrowRate The current borrow rate for the reserve.
+     */
     event Borrow(
         address indexed reserve,
         address user,
@@ -47,6 +54,9 @@ library MiniPoolBorrowLogic {
         uint256 borrowRate
     );
 
+    /**
+     * @dev Struct containing local variables used in account data calculation.
+     */
     struct CalculateUserAccountDataVolatileLocalVars {
         uint256 reserveUnitPrice;
         uint256 tokenUnit;
@@ -65,11 +75,10 @@ library MiniPoolBorrowLogic {
     }
 
     /**
-     * @param user The address of the user
-     * @param reservesData Data of all the reserves
-     * @param userConfig The configuration of the user
-     * @param reserves The list of the available reserves
-     * @param oracle The price oracle address
+     * @dev Parameters for calculating user account data.
+     * @param user The address of the user.
+     * @param reservesCount Total number of initialized reserves.
+     * @param oracle The price oracle address.
      */
     struct CalculateUserAccountDataVolatileParams {
         address user;
@@ -79,11 +88,15 @@ library MiniPoolBorrowLogic {
 
     /**
      * @dev Calculates the user data across the reserves.
-     * this includes the total liquidity/collateral/borrow balances in ETH,
-     * the average Loan To Value, the average Liquidation Ratio, and the Health factor.
-     * @param params the params necessary to get the correct borrow data
-     * @return The total collateral and total debt of the user in ETH, the avg ltv, liquidation threshold and the HF
-     *
+     * @param params The parameters needed for calculation.
+     * @param reserves Mapping of reserve data.
+     * @param userConfig The user's configuration.
+     * @param reservesList List of initialized reserves.
+     * @return totalCollateralInETH Total collateral in ETH.
+     * @return totalDebtInETH Total debt in ETH.
+     * @return avgLtv Average loan to value ratio.
+     * @return avgLiquidationThreshold Average liquidation threshold.
+     * @return healthFactor User's health factor.
      */
     function calculateUserAccountDataVolatile(
         CalculateUserAccountDataVolatileParams memory params,
@@ -111,8 +124,7 @@ library MiniPoolBorrowLogic {
 
             vars.tokenUnit = 10 ** vars.decimals;
 
-            vars.reserveUnitPrice =
-                IPriceOracleGetter(params.oracle).getAssetPrice(vars.currentReserveAddress);
+            vars.reserveUnitPrice = IOracle(params.oracle).getAssetPrice(vars.currentReserveAddress);
 
             if (vars.liquidationThreshold != 0 && userConfig.isUsingAsCollateral(vars.i)) {
                 vars.compoundedLiquidityBalance = IAERC6909(currentReserve.aTokenAddress).balanceOf(
@@ -157,6 +169,9 @@ library MiniPoolBorrowLogic {
         );
     }
 
+    /**
+     * @dev Parameters for executing a borrow operation.
+     */
     struct ExecuteBorrowParams {
         address asset;
         address user;
@@ -171,6 +186,14 @@ library MiniPoolBorrowLogic {
         uint256 reservesCount;
     }
 
+    /**
+     * @dev Executes a borrow operation.
+     * @param vars The borrow parameters.
+     * @param unwrap Whether to unwrap the underlying asset.
+     * @param reserves Mapping of reserve data.
+     * @param reservesList List of initialized reserves.
+     * @param usersConfig Mapping of user configurations.
+     */
     function executeBorrow(
         ExecuteBorrowParams memory vars,
         bool unwrap,
@@ -231,14 +254,25 @@ library MiniPoolBorrowLogic {
         );
     }
 
+    /**
+     * @dev Converts an amount to its ETH equivalent.
+     * @param asset The asset address.
+     * @param amount The amount to convert.
+     * @param decimals The decimals of the asset.
+     * @param oracle The price oracle address.
+     * @return The amount in ETH.
+     */
     function amountInETH(address asset, uint256 amount, uint256 decimals, address oracle)
         internal
         view
         returns (uint256)
     {
-        return IPriceOracleGetter(oracle).getAssetPrice(asset) * amount / (10 ** decimals);
+        return IOracle(oracle).getAssetPrice(asset) * amount / (10 ** decimals);
     }
 
+    /**
+     * @dev Parameters for repaying a borrowed position.
+     */
     struct repayParams {
         address asset;
         uint256 amount;
@@ -246,10 +280,25 @@ library MiniPoolBorrowLogic {
         IMiniPoolAddressesProvider addressesProvider;
     }
 
+    /**
+     * @dev Emitted on repayment.
+     * @param reserve The address of the reserve being repaid.
+     * @param user The user whose debt is being repaid.
+     * @param repayer The address making the repayment.
+     * @param amount The amount being repaid.
+     */
     event Repay(
         address indexed reserve, address indexed user, address indexed repayer, uint256 amount
     );
 
+    /**
+     * @dev Handles the repayment of a borrowed position.
+     * @param params The repayment parameters.
+     * @param wrap Whether to wrap the underlying asset.
+     * @param _reserves Mapping of reserve data.
+     * @param _usersConfig Mapping of user configurations.
+     * @return The amount repaid.
+     */
     function repay(
         repayParams memory params,
         bool wrap,

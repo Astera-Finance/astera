@@ -54,7 +54,7 @@ contract RehypothecationTest is Common, LendingPoolTest {
         deployedContracts.lendingPoolConfigurator.rebalance(address(aTokens[idx]));
         vm.stopPrank();
 
-        uint256 remainingPct = 10000 - (aTokens[idx].farmingPct());
+        uint256 remainingPct = 10000 - (aTokens[idx]._farmingPct());
         assertEq(token.balanceOf(address(aTokens[idx])), depositSize * remainingPct / 10000);
         assertEq(aTokens[idx].getTotalManagedAssets(), depositSize);
     }
@@ -115,7 +115,7 @@ contract RehypothecationTest is Common, LendingPoolTest {
             usdcTypes.token.balanceOf(address(usdcTypes.aToken)), depositSize, "USDC amount wrong"
         );
 
-        uint256 remainingPct = 10000 - (wbtcTypes.aToken.farmingPct());
+        uint256 remainingPct = 10000 - (wbtcTypes.aToken._farmingPct());
         console.log("1. WBTC amount: ", wbtcTypes.token.balanceOf(address(wbtcTypes.aToken)));
         vm.prank(admin);
         deployedContracts.lendingPoolConfigurator.rebalance(address(wbtcTypes.aToken));
@@ -133,7 +133,7 @@ contract RehypothecationTest is Common, LendingPoolTest {
 
         assertEq(
             vaultBalanceAfterFirstRebalance,
-            availableFundsAfterBorrow * (wbtcTypes.aToken.farmingPct()) / 10000,
+            availableFundsAfterBorrow * (wbtcTypes.aToken._farmingPct()) / 10000,
             "WBTC vault amount after rebalance is wrong"
         );
         console.log("1. Balance in vault: ", vaultBalanceAfterFirstRebalance);
@@ -247,7 +247,7 @@ contract RehypothecationTest is Common, LendingPoolTest {
                 address(this),
                 tokenVars.depositSize
             );
-            tokenVars.remainingPct = 10000 - (tokenTypes.aToken.farmingPct());
+            tokenVars.remainingPct = 10000 - (tokenTypes.aToken._farmingPct());
 
             assertApproxEqAbs(
                 tokenTypes.token.balanceOf(address(tokenTypes.aToken)),
@@ -256,7 +256,7 @@ contract RehypothecationTest is Common, LendingPoolTest {
                 "token amount in aToken is wrong"
             );
             uint256 expectedVaultBalance =
-                (tokenVars.depositSize * tokenTypes.aToken.farmingPct() + 5000) / 10000;
+                (tokenVars.depositSize * tokenTypes.aToken._farmingPct() + 5000) / 10000;
             assertApproxEqAbs(
                 tokenTypes.token.balanceOf(address(tokenVars.vault)),
                 expectedVaultBalance,
@@ -374,8 +374,8 @@ contract RehypothecationTest is Common, LendingPoolTest {
                 - maxBorrowTokenToBorrowInCollateralUnit;
         }
         // Starting here, vault should be able to handle asset
-        usdcVars.remainingPct = 10000 - (usdcTypes.aToken.farmingPct());
-        wbtcVars.remainingPct = 10000 - (wbtcTypes.aToken.farmingPct());
+        usdcVars.remainingPct = 10000 - (usdcTypes.aToken._farmingPct());
+        wbtcVars.remainingPct = 10000 - (wbtcTypes.aToken._farmingPct());
 
         assertApproxEqAbs(
             usdcTypes.token.balanceOf(address(usdcTypes.aToken)),
@@ -393,14 +393,14 @@ contract RehypothecationTest is Common, LendingPoolTest {
 
         assertApproxEqAbs(
             usdcTypes.token.balanceOf(address(usdcVars.vault)),
-            ((usdcVars.depositSize * usdcTypes.aToken.farmingPct()) + 5000) / 10000,
+            ((usdcVars.depositSize * usdcTypes.aToken._farmingPct()) + 5000) / 10000,
             1,
             "USDC amount in vault is wrong"
         );
 
         assertApproxEqAbs(
             wbtcTypes.token.balanceOf(address(wbtcVars.vault)),
-            ((availableFundsAfterBorrow * wbtcTypes.aToken.farmingPct()) + 5000) / 10000,
+            ((availableFundsAfterBorrow * wbtcTypes.aToken._farmingPct()) + 5000) / 10000,
             1,
             "WBTC amount in vault is wrong"
         );

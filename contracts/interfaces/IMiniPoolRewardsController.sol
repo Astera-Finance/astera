@@ -5,7 +5,19 @@ import {IMiniPoolRewardsDistributor} from
     "../../contracts/interfaces/IMiniPoolRewardsDistributor.sol";
 import {DistributionTypes} from "../../contracts/protocol/libraries/types/DistributionTypes.sol";
 
+/**
+ * @title IMiniPoolRewardsController interface.
+ * @author Cod3x
+ */
 interface IMiniPoolRewardsController is IMiniPoolRewardsDistributor {
+    /**
+     * @notice Emitted when rewards are claimed
+     * @param user The address of the user rewards are being claimed for
+     * @param reward The reward token being claimed
+     * @param to The address receiving the claimed rewards
+     * @param claimer The address executing the claim
+     * @param amount The amount of rewards being claimed
+     */
     event RewardsClaimed(
         address indexed user,
         address indexed reward,
@@ -14,7 +26,18 @@ interface IMiniPoolRewardsController is IMiniPoolRewardsDistributor {
         uint256 amount
     );
 
+    /**
+     * @notice Emitted when a claimer is set for a user
+     * @param user The address of the user
+     * @param claimer The address being set as the claimer
+     */
     event ClaimerSet(address indexed user, address indexed claimer);
+
+    /**
+     * @notice Emitted when the rewards vault is updated
+     * @param vault The new vault address
+     */
+    event RewardsVaultUpdated(address indexed vault);
 
     function setClaimer(address user, address claimer) external;
 

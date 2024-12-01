@@ -4,7 +4,19 @@ pragma solidity ^0.8.0;
 import {IRewardsDistributor} from "../../contracts/interfaces/IRewardsDistributor.sol";
 import {DistributionTypes} from "../../contracts/protocol/libraries/types/DistributionTypes.sol";
 
+/**
+ * @title IRewardsController interface.
+ * @author Cod3x
+ */
 interface IRewardsController is IRewardsDistributor {
+    /**
+     * @notice Emitted when rewards are claimed
+     * @param user The address of the user receiving rewards
+     * @param reward The address of the reward token
+     * @param to The address receiving the claimed rewards
+     * @param claimer The address that initiated the claim
+     * @param amount The amount of rewards claimed
+     */
     event RewardsClaimed(
         address indexed user,
         address indexed reward,
@@ -13,7 +25,18 @@ interface IRewardsController is IRewardsDistributor {
         uint256 amount
     );
 
+    /**
+     * @notice Emitted when a claimer is set for a user
+     * @param user The address of the user
+     * @param claimer The address authorized to claim on behalf of the user
+     */
     event ClaimerSet(address indexed user, address indexed claimer);
+
+    /**
+     * @notice Emitted when the rewards vault is updated
+     * @param vault The address of the new rewards vault
+     */
+    event RewardsVaultUpdated(address indexed vault);
 
     function setClaimer(address user, address claimer) external;
 

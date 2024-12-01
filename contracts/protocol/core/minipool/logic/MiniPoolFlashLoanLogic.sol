@@ -3,15 +3,12 @@ pragma solidity 0.8.23;
 
 import {IERC20} from "../../../../../contracts/dependencies/openzeppelin/contracts/IERC20.sol";
 import {SafeERC20} from "../../../../../contracts/dependencies/openzeppelin/contracts/SafeERC20.sol";
-import {IPriceOracleGetter} from "../../../../../contracts/interfaces/IPriceOracleGetter.sol";
 import {IMiniPoolAddressesProvider} from
     "../../../../../contracts/interfaces/IMiniPoolAddressesProvider.sol";
-import {IVariableDebtToken} from "../../../../../contracts/interfaces/IVariableDebtToken.sol";
 import {WadRayMath} from "../../../../../contracts/protocol/libraries/math/WadRayMath.sol";
 import {PercentageMath} from "../../../../../contracts/protocol/libraries/math/PercentageMath.sol";
 import {Errors} from "../../../../../contracts/protocol/libraries/helpers/Errors.sol";
 import {DataTypes} from "../../../../../contracts/protocol/libraries/types/DataTypes.sol";
-import {MiniPoolGenericLogic} from "./MiniPoolGenericLogic.sol";
 import {MiniPoolReserveLogic} from "./MiniPoolReserveLogic.sol";
 import {MiniPoolValidationLogic} from "./MiniPoolValidationLogic.sol";
 import {ReserveConfiguration} from
@@ -26,6 +23,8 @@ import {IAERC6909} from "../../../../../contracts/interfaces/IAERC6909.sol";
 /**
  * @title MiniPoolFlashLoanLogic
  * @author Cod3x
+ * @notice Library implementing flash loan functionality for the MiniPool protocol.
+ * @dev Handles flash loan execution, validation, and repayment logic.
  */
 library MiniPoolFlashLoanLogic {
     using WadRayMath for uint256;
@@ -35,6 +34,15 @@ library MiniPoolFlashLoanLogic {
     using ReserveConfiguration for DataTypes.ReserveConfigurationMap;
     using UserConfiguration for DataTypes.UserConfigurationMap;
 
+    /**
+     * @dev Emitted when a flash loan is executed.
+     * @param target The address of the flash loan receiver contract.
+     * @param initiator The address initiating the flash loan.
+     * @param asset The address of the asset being flash borrowed.
+     * @param interestRateMode The interest rate mode selected for the flash loan.
+     * @param amount The amount being flash borrowed.
+     * @param premium The fee charged for the flash loan.
+     */
     event FlashLoan(
         address indexed target,
         address indexed initiator,
@@ -44,6 +52,9 @@ library MiniPoolFlashLoanLogic {
         uint256 premium
     );
 
+    /**
+     * @dev Struct containing local variables used during flash loan execution.
+     */
     struct FlashLoanLocalVars {
         IFlashLoanReceiver receiver;
         uint256 i;
@@ -53,6 +64,9 @@ library MiniPoolFlashLoanLogic {
         uint256 currentPremium;
     }
 
+    /**
+     * @dev Parameters required for flash loan repayment.
+     */
     struct FlashLoanRepaymentParams {
         uint256 amount;
         uint256 totalPremium;
@@ -62,6 +76,9 @@ library MiniPoolFlashLoanLogic {
         address receiverAddress;
     }
 
+    /**
+     * @dev Parameters required for flash loan execution.
+     */
     struct FlashLoanParams {
         address receiverAddress;
         address[] assets;
@@ -75,11 +92,14 @@ library MiniPoolFlashLoanLogic {
     }
 
     /**
-     * @dev Allows smartcontracts to access the liquidity of the pool within one transaction,
+     * @notice Executes a flash loan operation.
+     * @dev Allows smart contracts to access protocol liquidity within one transaction.
      * as long as the amount taken plus a fee is returned.
      * IMPORTANT There are security concerns for developers of flashloan receiver contracts that must be kept into consideration.
-     * @param flashLoanParams struct containing receiverAddress, onBehalfOf, assets, amounts
-     *
+     * @param flashLoanParams Struct containing all necessary flash loan parameters.
+     * @param reservesList Storage mapping of reserve addresses by index.
+     * @param usersConfig Storage mapping of user configurations.
+     * @param reserves Storage mapping of reserve data.
      */
     function flashLoan(
         FlashLoanParams memory flashLoanParams,
@@ -142,7 +162,7 @@ library MiniPoolFlashLoanLogic {
                 );
             } else {
                 // If the user chose to not return the funds, the system checks if there is enough collateral and
-                // eventually opens a debt position
+                // eventually opens a debt position.
                 MiniPoolBorrowLogic.executeBorrow(
                     MiniPoolBorrowLogic.ExecuteBorrowParams(
                         vars.currentAsset,
@@ -175,6 +195,17 @@ library MiniPoolFlashLoanLogic {
         }
     }
 
+    /**
+     * @notice Retrieves aToken addresses and calculates flash loan premiums.
+     * @param receiverAddress The address receiving the flash loan.
+     * @param assets Array of asset addresses being borrowed.
+     * @param amounts Array of amounts being borrowed.
+     * @param _flashLoanPremiumTotal The total premium rate for flash loans.
+     * @param modes Array of interest rate modes.
+     * @param reserves Storage mapping of reserve data.
+     * @return aTokenAddresses Array of corresponding aToken addresses.
+     * @return premiums Array of calculated premiums for each flash loan.
+     */
     function getATokenAdressesAndPremiums(
         address receiverAddress,
         address[] memory assets,
@@ -199,10 +230,10 @@ library MiniPoolFlashLoanLogic {
     }
 
     /**
-     * @notice Handles repayment of flashloaned assets + premium
-     * @dev Will pull the amount + premium from the receiver, so must have approved pool
-     * @param reserve The state of the flashloaned reserve
-     * @param params The additional parameters needed to execute the repayment function
+     * @notice Handles the repayment of flash loaned assets plus premium.
+     * @dev Will pull the `amount` plus `premium` from the receiver, so must have approved pool.
+     * @param reserve The state of the flash loaned reserve.
+     * @param params The additional parameters needed to execute the repayment function.
      */
     function _handleFlashLoanRepayment(
         DataTypes.MiniPoolReserveData storage reserve,

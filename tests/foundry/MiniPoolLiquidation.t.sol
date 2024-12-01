@@ -50,7 +50,6 @@ contract MiniPoolLiquidationTest is MiniPoolDepositBorrowTest {
          * 1. Liquidator shall end up with more collateral tokens
          * 2. User's debtToken balance shall decrease
          * 3. Health factor shall be greater than 1
-         *
          */
 
         /* Fuzz vectors */
@@ -321,7 +320,6 @@ contract MiniPoolLiquidationTest is MiniPoolDepositBorrowTest {
          * 4. Some time elapse - aTokens and debtTokens appreciate in specific rate
          * Invariants:
          * 1. Health of miniPool position shall not go under 1 allowing lendingPool to liquidate position
-         *
          */
     }
 

@@ -13,26 +13,22 @@ import "contracts/protocol/libraries/types/DataTypes.sol";
 import "contracts/protocol/libraries/configuration/UserConfiguration.sol";
 
 import "contracts/interfaces/IAToken.sol";
-import "contracts/interfaces/IChainlinkAggregator.sol";
-import "contracts/interfaces/ICreditDelegationToken.sol";
-import "contracts/interfaces/IDelegationToken.sol";
-import "contracts/interfaces/IERC20WithPermit.sol";
-import "contracts/interfaces/IERC4626.sol";
-import "contracts/interfaces/IInitializableAToken.sol";
-import "contracts/interfaces/IInitializableDebtToken.sol";
+import "contracts/interfaces/base/IChainlinkAggregator.sol";
+import "lib/openzeppelin-contracts/lib/forge-std/src/interfaces/IERC4626.sol";
+import "contracts/interfaces/base/IInitializableAToken.sol";
+import "contracts/interfaces/base/IInitializableDebtToken.sol";
 import "contracts/interfaces/ILendingPool.sol";
 import "contracts/interfaces/ILendingPoolAddressesProvider.sol";
 import "contracts/interfaces/ILendingPoolConfigurator.sol";
 import "contracts/interfaces/IReserveInterestRateStrategy.sol";
 import "contracts/interfaces/IRewarder.sol";
-import "contracts/interfaces/IScaledBalanceToken.sol";
+import "contracts/interfaces/base/IScaledBalanceToken.sol";
 import "contracts/interfaces/IVariableDebtToken.sol";
-import "contracts/interfaces/IPriceOracleGetter.sol";
+import "contracts/interfaces/IOracle.sol";
 
 import "contracts/misc/Treasury.sol";
 import "contracts/protocol/core/Oracle.sol";
 import "contracts/misc/Cod3xLendDataProvider.sol";
-import "contracts/misc/UiPoolDataProviderV2.sol";
 import "contracts/misc/RewardsVault.sol";
 import "contracts/misc/WETHGateway.sol";
 

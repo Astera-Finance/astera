@@ -545,7 +545,7 @@ contract MiniPoolFlashloanTest is Common {
         IMiniPool.FlashLoanParams memory flashLoanParams =
             IMiniPool.FlashLoanParams(address(this), assets, address(this));
 
-        vm.expectRevert(bytes("95"));
+        vm.expectRevert(bytes(Errors.VL_TRANCHED_ASSET_CANNOT_BE_FLASHLOAN));
         IMiniPool(miniPool).flashLoan(flashLoanParams, amounts, modes, bytes("0"));
     }
 
@@ -569,7 +569,7 @@ contract MiniPoolFlashloanTest is Common {
         IMiniPool.FlashLoanParams memory flashLoanParams =
             IMiniPool.FlashLoanParams(address(this), assets, address(this));
 
-        vm.expectRevert(bytes("95"));
+        vm.expectRevert(bytes(Errors.VL_TRANCHED_ASSET_CANNOT_BE_FLASHLOAN));
         IMiniPool(miniPool).flashLoan(flashLoanParams, amounts, modes, bytes("0"));
     }
 

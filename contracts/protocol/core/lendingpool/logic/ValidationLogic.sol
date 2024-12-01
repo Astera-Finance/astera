@@ -14,15 +14,13 @@ import {UserConfiguration} from
     "../../../../../contracts/protocol/libraries/configuration/UserConfiguration.sol";
 import {Errors} from "../../../../../contracts/protocol/libraries/helpers/Errors.sol";
 import {Helpers} from "../../../../../contracts/protocol/libraries/helpers/Helpers.sol";
-import {IReserveInterestRateStrategy} from
-    "../../../../../contracts/interfaces/IReserveInterestRateStrategy.sol";
 import {DataTypes} from "../../../../../contracts/protocol/libraries/types/DataTypes.sol";
-import {IAToken} from "../../../../../contracts/interfaces/IAToken.sol";
 
 /**
- * @title ReserveLogic library
+ * @title ValidationLogic library
  * @author Cod3x
- * @notice Implements functions to validate the different actions of the protocol
+ * @notice Implements functions to validate the different actions of the protocol.
+ * @dev Contains validation functions for all protocol operations.
  */
 library ValidationLogic {
     using ReserveLogic for DataTypes.ReserveData;
@@ -33,9 +31,14 @@ library ValidationLogic {
     using UserConfiguration for DataTypes.UserConfigurationMap;
 
     /**
-     * @dev Validates a deposit action
-     * @param reserve The reserve object on which the user is depositing
-     * @param amount The amount to be deposited
+     * @dev Validates a deposit action.
+     * @param reserve The reserve object on which the user is depositing.
+     * @param amount The amount to be deposited.
+     * @notice Checks if deposit is allowed based on reserve status and deposit cap.
+     * @notice Checks that:
+     * - The reserve is active and not frozen.
+     * - The deposit cap has not been reached.
+     * - The amount is valid.
      */
     function validateDeposit(DataTypes.ReserveData storage reserve, uint256 amount) internal view {
         (bool isActive, bool isFrozen,) = reserve.configuration.getFlags();
@@ -56,15 +59,15 @@ library ValidationLogic {
     }
 
     /**
-     * @dev Validates a withdraw action
-     * @param reserveAddress The address of the reserve
-     * @param amount The amount to be withdrawn
-     * @param userBalance The balance of the user
-     * @param reserves The reserves state
-     * @param userConfig The user configuration
-     * @param reserves The addresses of the reserves
-     * @param reservesCount The number of reserves
-     * @param oracle The price oracle
+     * @dev Validates a withdraw action.
+     * @param reserveAddress The address of the reserve.
+     * @param amount The amount to be withdrawn.
+     * @param userBalance The balance of the user.
+     * @param reserves The reserves state.
+     * @param userConfig The user configuration.
+     * @param reserves The addresses of the reserves.
+     * @param reservesCount The number of reserves.
+     * @param oracle The price oracle.
      */
     struct ValidateWithdrawParams {
         address reserveAddress;
@@ -74,6 +77,17 @@ library ValidationLogic {
         uint256 reservesCount;
         address oracle;
     }
+    /**
+     * @dev Validates a withdraw action by checking various conditions.
+     * @param validateParams The parameters needed for validation including `reserveAddress`, `reserveType`, `amount`, `userBalance`, `reservesCount` and `oracle`.
+     * @param reserves The state of all the reserves.
+     * @param userConfig The user configuration containing the user's current state.
+     * @param reservesList The list of all reserves in the protocol.
+     * @notice Checks if:
+     * - The withdrawal amount is valid and available in user balance.
+     * - The reserve is active.
+     * - The withdrawal would not put the user's health factor below threshold.
+     */
 
     function validateWithdraw(
         ValidateWithdrawParams memory validateParams,
@@ -109,11 +123,12 @@ library ValidationLogic {
     }
 
     /**
-     * @param userAddress The address of the user
-     * @param amount The amount to be borrowed
-     * @param amountInETH The amount to be borrowed, in ETH
-     * @param reservesCount
-     * @param oracle The price oracle
+     * @dev Parameters for validating a borrow action.
+     * @param userAddress The address of the user.
+     * @param amount The amount to be borrowed.
+     * @param amountInETH The amount to be borrowed, in ETH.
+     * @param reservesCount The number of reserves.
+     * @param oracle The price oracle address.
      */
     struct ValidateBorrowParams {
         address userAddress;
@@ -123,6 +138,9 @@ library ValidationLogic {
         address oracle;
     }
 
+    /**
+     * @dev Local variables for borrow validation.
+     */
     struct ValidateBorrowLocalVars {
         uint256 currentLtv;
         uint256 currentLiquidationThreshold;
@@ -136,11 +154,18 @@ library ValidationLogic {
     }
 
     /**
-     * @dev Validates a borrow action
-     * @param reserve The reserve state from which the user is borrowing
-     * @param reserves The state of all the reserves
-     * @param userConfig The state of the user for the specific reserve
-     * @param reservesList The addresses of all the active reserves
+     * @dev Validates a borrow action.
+     * @param validateParams The parameters for validation.
+     * @param reserve The reserve state from which the user is borrowing.
+     * @param reserves The state of all the reserves.
+     * @param userConfig The state of the user for the specific reserve.
+     * @param reservesList The addresses of all the active reserves.
+     * @notice Checks that:
+     * - The reserve is active and not frozen.
+     * - The amount is valid and not zero.
+     * - Borrowing is enabled.
+     * - The user has sufficient collateral.
+     * - The resulting health factor is above the threshold.
      */
     function validateBorrow(
         ValidateBorrowParams memory validateParams,
@@ -177,7 +202,7 @@ library ValidationLogic {
             Errors.VL_HEALTH_FACTOR_LOWER_THAN_LIQUIDATION_THRESHOLD
         );
 
-        //add the current already borrowed amount to the amount requested to calculate the total collateral needed.
+        // Add the current already borrowed amount to the amount requested to calculate the total collateral needed.
         vars.amountOfCollateralNeededETH =
             (vars.userBorrowBalanceETH + validateParams.amountInETH).percentDiv(vars.currentLtv); //LTV is calculated in percentage
 
@@ -188,11 +213,15 @@ library ValidationLogic {
     }
 
     /**
-     * @dev Validates a repay action
-     * @param reserve The reserve state from which the user is repaying
-     * @param amountSent The amount sent for the repayment. Can be an actual value or uint(-1)
-     * @param onBehalfOf The address of the user msg.sender is repaying for
-     * @param variableDebt The borrow balance of the user
+     * @dev Validates a repay action.
+     * @param reserve The reserve state from which the user is repaying.
+     * @param amountSent The amount sent for the repayment. Can be an actual value or uint(-1).
+     * @param onBehalfOf The address of the user msg.sender is repaying for.
+     * @param variableDebt The borrow balance of the user.
+     * @notice Checks that:
+     * - The reserve is active.
+     * - The amount is valid and not zero.
+     * - The user has a non-zero borrow balance.
      */
     function validateRepay(
         DataTypes.ReserveData storage reserve,
@@ -204,9 +233,9 @@ library ValidationLogic {
 
         require(isActive, Errors.VL_NO_ACTIVE_RESERVE);
 
-        require(amountSent > 0, Errors.VL_INVALID_AMOUNT);
+        require(amountSent != 0, Errors.VL_INVALID_AMOUNT);
 
-        require(variableDebt > 0, Errors.VL_NO_DEBT_OF_SELECTED_TYPE);
+        require(variableDebt != 0, Errors.VL_NO_DEBT_OF_SELECTED_TYPE);
 
         require(
             amountSent != type(uint256).max || msg.sender == onBehalfOf,
@@ -215,13 +244,16 @@ library ValidationLogic {
     }
 
     /**
-     * @dev Validates the action of setting an asset as collateral
-     * @param reserve The state of the reserve that the user is enabling or disabling as collateral
-     * @param reserveAddress The address of the reserve
-     * @param reserves The data of all the reserves
-     * @param userConfig The state of the user for the specific reserve
-     * @param reservesList The addresses of all the active reserves
-     * @param oracle The price oracle
+     * @dev Validates the action of setting an asset as collateral.
+     * @param reserve The state of the reserve that the user is enabling or disabling as collateral.
+     * @param reserveAddress The address of the reserve.
+     * @param reserves The data of all the reserves.
+     * @param userConfig The state of the user for the specific reserve.
+     * @param reservesList The addresses of all the active reserves.
+     * @param oracle The price oracle.
+     * @notice Checks that:
+     * - The user has a non-zero balance of the reserve's aToken.
+     * - The user's balance decrease is allowed for the reserve.
      */
     function validateSetUseReserveAsCollateral(
         DataTypes.ReserveData storage reserve,
@@ -256,10 +288,14 @@ library ValidationLogic {
     }
 
     /**
-     * @notice Validates a flashloan action.
-     * @param reserves The state of all the reserves
-     * @param assets The assets being flash-borrowed
-     * @param amounts The amounts for each asset being borrowed
+     * @dev Validates a flashloan action.
+     * @param reserves The state of all the reserves.
+     * @param assets The assets being flash-borrowed.
+     * @param amounts The amounts for each asset being borrowed.
+     * @notice Checks that:
+     * - The number of assets and amounts are consistent.
+     * - Each reserve is active and not frozen.
+     * - Flash loans are enabled for each reserve.
      */
     function validateFlashloan(
         mapping(address => mapping(bool => DataTypes.ReserveData)) storage reserves,
@@ -274,8 +310,12 @@ library ValidationLogic {
     }
 
     /**
-     * @notice Validates a flashloan action.
-     * @param reserve The state of the reserve
+     * @dev Validates a flashloan action for a single reserve.
+     * @param reserve The state of the reserve.
+     * @notice Checks that:
+     * - The reserve is not frozen.
+     * - The reserve is active.
+     * - Flash loans are enabled for the reserve.
      */
     function validateFlashloanSimple(DataTypes.ReserveData storage reserve) internal view {
         DataTypes.ReserveConfigurationMap storage configuration = reserve.configuration;
@@ -285,13 +325,17 @@ library ValidationLogic {
     }
 
     /**
-     * @dev Validates the liquidation action
-     * @param collateralReserve The reserve data of the collateral
-     * @param principalReserve The reserve data of the principal
-     * @param userConfig The user configuration
-     * @param userHealthFactor The user's health factor
-     * @param userVariableDebt Total variable debt balance of the user
-     *
+     * @dev Validates the liquidation action.
+     * @param collateralReserve The reserve data of the collateral.
+     * @param principalReserve The reserve data of the principal.
+     * @param userConfig The user configuration.
+     * @param userHealthFactor The user's health factor.
+     * @param userVariableDebt Total variable debt balance of the user.
+     * @notice Checks that:
+     * - Both collateral and principal reserves are active.
+     * - The user's health factor is below the liquidation threshold.
+     * - The collateral is enabled as collateral for the user.
+     * - The user has a non-zero variable debt balance.
      */
     function validateLiquidationCall(
         DataTypes.ReserveData storage collateralReserve,
@@ -314,7 +358,7 @@ library ValidationLogic {
         bool isCollateralEnabled = collateralReserve.configuration.getLiquidationThreshold() > 0
             && userConfig.isUsingAsCollateral(collateralReserve.id);
 
-        //if collateral isn't enabled as collateral by user, it cannot be liquidated
+        // If collateral isn't enabled as collateral by user, it cannot be liquidated.
         if (!isCollateralEnabled) {
             revert(Errors.LPCM_COLLATERAL_CANNOT_BE_LIQUIDATED);
         }
@@ -325,12 +369,14 @@ library ValidationLogic {
     }
 
     /**
-     * @dev Validates an aToken transfer
-     * @param from The user from which the aTokens are being transferred
-     * @param reserves The state of all the reserves
-     * @param userConfig The state of the user for the specific reserve
-     * @param reservesList The addresses of all the active reserves
-     * @param oracle The price oracle
+     * @dev Validates an aToken transfer.
+     * @param from The user from which the aTokens are being transferred.
+     * @param reserves The state of all the reserves.
+     * @param userConfig The state of the user for the specific reserve.
+     * @param reservesList The addresses of all the active reserves.
+     * @param oracle The price oracle.
+     * @notice Checks that:
+     * - The user's health factor is above the liquidation threshold.
      */
     function validateTransfer(
         address from,

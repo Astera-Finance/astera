@@ -1,6 +1,10 @@
 // SPDX-License-Identifier: agpl-3.0
 pragma solidity ^0.8.0;
 
+/**
+ * @title IWETH interface.
+ * @author Cod3x
+ */
 interface IWETH {
     function deposit() external payable;
 

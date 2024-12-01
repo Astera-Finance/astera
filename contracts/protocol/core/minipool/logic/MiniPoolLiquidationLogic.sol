@@ -6,12 +6,8 @@ import {IMiniPoolAddressesProvider} from
 import {Errors} from "../../../../../contracts/protocol/libraries/helpers/Errors.sol";
 
 import {IERC20} from "../../../../../contracts/dependencies/openzeppelin/contracts/IERC20.sol";
-import {IAToken} from "../../../../../contracts/interfaces/IAToken.sol";
 import {IAERC6909} from "../../../../../contracts/interfaces/IAERC6909.sol";
-import {IVariableDebtToken} from "../../../../../contracts/interfaces/IVariableDebtToken.sol";
-import {IPriceOracleGetter} from "../../../../../contracts/interfaces/IPriceOracleGetter.sol";
-import {VersionedInitializable} from
-    "../../../../../contracts/protocol/libraries/upgradeability/VersionedInitializable.sol";
+import {IOracle} from "../../../../../contracts/interfaces/IOracle.sol";
 import {MiniPoolGenericLogic} from
     "../../../../../contracts/protocol/core/minipool/logic/MiniPoolGenericLogic.sol";
 import {Helpers} from "../../../../../contracts/protocol/libraries/helpers/Helpers.sol";
@@ -31,6 +27,8 @@ import {DataTypes} from "../../../../../contracts/protocol/libraries/types/DataT
 
 /**
  * @title MiniPoolLiquidationLogic
+ * @notice Library implementing liquidation functionality for the MiniPool protocol.
+ * @dev Contains core liquidation logic including health factor validation, collateral calculations and liquidation execution.
  * @author Cod3x
  */
 library MiniPoolLiquidationLogic {
@@ -41,18 +39,18 @@ library MiniPoolLiquidationLogic {
     using ReserveConfiguration for DataTypes.ReserveConfigurationMap;
     using UserConfiguration for DataTypes.UserConfigurationMap;
 
+    /// @dev The close factor percentage used in liquidations (50%).
     uint256 internal constant LIQUIDATION_CLOSE_FACTOR_PERCENT = 5000;
 
     /**
-     * @dev Emitted when a borrower is liquidated
-     * @param collateral The address of the collateral being liquidated
-     * @param principal The address of the reserve
-     * @param user The address of the user being liquidated
-     * @param debtToCover The total amount liquidated
-     * @param liquidatedCollateralAmount The amount of collateral being liquidated
-     * @param liquidator The address of the liquidator
-     * @param receiveAToken true if the liquidator wants to receive aTokens, false otherwise
-     *
+     * @dev Emitted when a borrower is liquidated.
+     * @param collateral The address of the collateral being liquidated.
+     * @param principal The address of the reserve.
+     * @param user The address of the user being liquidated.
+     * @param debtToCover The total amount liquidated.
+     * @param liquidatedCollateralAmount The amount of collateral being liquidated.
+     * @param liquidator The address of the liquidator.
+     * @param receiveAToken True if the liquidator wants to receive aTokens, false otherwise.
      */
     event LiquidationCall(
         address indexed collateral,
@@ -65,21 +63,22 @@ library MiniPoolLiquidationLogic {
     );
 
     /**
-     * @dev Emitted when a reserve is disabled as collateral for an user
-     * @param reserve The address of the reserve
-     * @param user The address of the user
-     *
+     * @dev Emitted when a reserve is disabled as collateral for an user.
+     * @param reserve The address of the reserve.
+     * @param user The address of the user.
      */
     event ReserveUsedAsCollateralDisabled(address indexed reserve, address indexed user);
 
     /**
-     * @dev Emitted when a reserve is enabled as collateral for an user
-     * @param reserve The address of the reserve
-     * @param user The address of the user
-     *
+     * @dev Emitted when a reserve is enabled as collateral for an user.
+     * @param reserve The address of the reserve.
+     * @param user The address of the user.
      */
     event ReserveUsedAsCollateralEnabled(address indexed reserve, address indexed user);
 
+    /**
+     * @dev Struct containing local variables used during liquidation execution.
+     */
     struct LiquidationCallLocalVars {
         uint256 userCollateralBalance;
         uint256 userVariableDebt;
@@ -94,6 +93,9 @@ library MiniPoolLiquidationLogic {
         uint256 aTokenID;
     }
 
+    /**
+     * @dev Parameters required for liquidation execution.
+     */
     struct liquidationCallParams {
         address addressesProvider;
         uint256 reservesCount;
@@ -105,13 +107,13 @@ library MiniPoolLiquidationLogic {
     }
 
     /**
-     * @dev Function to liquidate a position if its Health Factor drops below 1
-     * - The caller (liquidator) covers `debtToCover` amount of debt of the user getting liquidated, and receives
-     *   a proportionally amount of the `collateralAsset` plus a bonus to cover market risk
-     * @param reserves Data of all the reserves
-     * @param usersConfig The configuration of the user
-     * @param reservesList Reverves list
-     * @param params Liquidation parameters
+     * @notice Function to liquidate a position if its Health Factor drops below 1.
+     * @dev The caller (liquidator) covers `debtToCover` amount of debt of the user getting liquidated, and receives
+     * a proportionally amount of the `collateralAsset` plus a bonus to cover market risk.
+     * @param reserves Data of all the reserves.
+     * @param usersConfig The configuration of the user.
+     * @param reservesList Reserves list.
+     * @param params Liquidation parameters.
      */
     function liquidationCall(
         mapping(address => DataTypes.MiniPoolReserveData) storage reserves,
@@ -166,16 +168,16 @@ library MiniPoolLiquidationLogic {
             vars.userCollateralBalance
         );
 
-        // If debtAmountNeeded < actualDebtToLiquidate, there isn't enough
+        // If `debtAmountNeeded` < `actualDebtToLiquidate`, there isn't enough
         // collateral to cover the actual amount that is being liquidated, hence we liquidate
-        // a smaller amount
+        // a smaller amount.
 
         if (vars.debtAmountNeeded < vars.actualDebtToLiquidate) {
             vars.actualDebtToLiquidate = vars.debtAmountNeeded;
         }
 
         // If the liquidator reclaims the underlying asset, we make sure there is enough available liquidity in the
-        // collateral reserve
+        // collateral reserve.
         if (!params.receiveAToken) {
             uint256 currentAvailableCollateral =
                 IERC20(params.collateralAsset).balanceOf(address(vars.collateralAtoken));
@@ -226,7 +228,7 @@ library MiniPoolLiquidationLogic {
                 params.collateralAsset, 0, vars.maxCollateralToLiquidate
             );
 
-            // Burn the equivalent amount of aToken, sending the underlying to the liquidator
+            // Burn the equivalent amount of aToken, sending the underlying to the liquidator.
             vars.collateralAtoken.burn(
                 params.user,
                 msg.sender,
@@ -238,13 +240,13 @@ library MiniPoolLiquidationLogic {
         }
 
         // If the collateral being liquidated is equal to the user balance,
-        // we set the currency as not being used as collateral anymore
+        // we set the currency as not being used as collateral anymore.
         if (vars.maxCollateralToLiquidate == vars.userCollateralBalance) {
             userConfig.setUsingAsCollateral(collateralReserve.id, false);
             emit ReserveUsedAsCollateralDisabled(params.collateralAsset, params.user);
         }
 
-        // Transfers the debt asset being repaid to the aToken, where the liquidity is kept
+        // Transfers the debt asset being repaid to the aToken, where the liquidity is kept.
         IERC20(params.debtAsset).safeTransferFrom(
             msg.sender, debtReserve.aTokenAddress, vars.actualDebtToLiquidate
         );
@@ -264,6 +266,9 @@ library MiniPoolLiquidationLogic {
         );
     }
 
+    /**
+     * @dev Struct containing local variables used in collateral calculation.
+     */
     struct AvailableCollateralToLiquidateLocalVars {
         uint256 liquidationBonus;
         uint256 collateralPrice;
@@ -274,21 +279,19 @@ library MiniPoolLiquidationLogic {
     }
 
     /**
-     * @dev Calculates how much of a specific collateral can be liquidated, given
-     * a certain amount of debt asset.
-     * - This function needs to be called after all the checks to validate the liquidation have been performed,
-     *   otherwise it might fail.
-     * @param addressesProvider The lendingpool address provider
-     * @param collateralReserve The data of the collateral reserve
-     * @param debtReserve The data of the debt reserve
-     * @param collateralAsset The address of the underlying asset used as collateral, to receive as result of the liquidation
-     * @param debtAsset The address of the underlying borrowed asset to be repaid with the liquidation
-     * @param debtToCover The debt amount of borrowed `asset` the liquidator wants to cover
-     * @param userCollateralBalance The collateral balance for the specific `collateralAsset` of the user being liquidated
-     * @return collateralAmount: The maximum amount that is possible to liquidate given all the liquidation constraints
-     *                           (user balance, close factor)
-     *         debtAmountNeeded: The amount to repay with the liquidation
-     *
+     * @notice Calculates how much of a specific collateral can be liquidated, given a certain amount of debt asset.
+     * @dev This function needs to be called after all the checks to validate the liquidation have been performed,
+     * otherwise it might fail.
+     * @param addressesProvider The lendingpool address provider.
+     * @param collateralReserve The data of the collateral reserve.
+     * @param debtReserve The data of the debt reserve.
+     * @param collateralAsset The address of the underlying asset used as collateral, to receive as result of the liquidation.
+     * @param debtAsset The address of the underlying borrowed asset to be repaid with the liquidation.
+     * @param debtToCover The debt amount of borrowed `asset` the liquidator wants to cover.
+     * @param userCollateralBalance The collateral balance for the specific `collateralAsset` of the user being liquidated.
+     * @return collateralAmount The maximum amount that is possible to liquidate given all the liquidation constraints
+     * (user balance, close factor).
+     * @return debtAmountNeeded The amount to repay with the liquidation.
      */
     function _calculateAvailableCollateralToLiquidate(
         IMiniPoolAddressesProvider addressesProvider,
@@ -301,7 +304,7 @@ library MiniPoolLiquidationLogic {
     ) internal view returns (uint256, uint256) {
         uint256 collateralAmount = 0;
         uint256 debtAmountNeeded = 0;
-        IPriceOracleGetter oracle = IPriceOracleGetter(addressesProvider.getPriceOracle());
+        IOracle oracle = IOracle(addressesProvider.getPriceOracle());
 
         AvailableCollateralToLiquidateLocalVars memory vars;
 
@@ -313,7 +316,7 @@ library MiniPoolLiquidationLogic {
         vars.debtAssetDecimals = debtReserve.configuration.getDecimals();
 
         // This is the maximum possible amount of the selected collateral that can be liquidated, given the
-        // max amount of liquidatable debt
+        // max amount of liquidatable debt.
         vars.maxAmountCollateralToLiquidate = (
             (vars.debtAssetPrice * debtToCover * (10 ** vars.collateralDecimals)).percentMul(
                 vars.liquidationBonus

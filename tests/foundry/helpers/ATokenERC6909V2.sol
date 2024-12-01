@@ -1,23 +1,20 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity 0.8.23;
 
-import {ILendingPool} from "../../../../contracts/interfaces/ILendingPool.sol";
-import {IAToken} from "../../../../contracts/interfaces/IAToken.sol";
-import {WadRayMath} from "../../../../contracts/protocol/libraries/math/WadRayMath.sol";
-import {Errors} from "../../../../contracts/protocol/libraries/helpers/Errors.sol";
+import {ILendingPool} from "contracts/interfaces/ILendingPool.sol";
+import {IAToken} from "contracts/interfaces/IAToken.sol";
+import {WadRayMath} from "contracts/protocol/libraries/math/WadRayMath.sol";
+import {Errors} from "contracts/protocol/libraries/helpers/Errors.sol";
 import {VersionedInitializable} from
-    "../../../../contracts/protocol/libraries/upgradeability/VersionedInitializable.sol";
-import {DataTypes} from "../../../../contracts/protocol/libraries/types/DataTypes.sol";
-import {ReserveLogic} from "../../../../contracts/protocol/core/lendingpool/logic/ReserveLogic.sol";
-import {IncentivizedERC6909} from
-    "../../../../contracts/protocol/tokenization/ERC6909/IncentivizedERC6909.sol";
-import {IMiniPoolRewarder} from "../../../../contracts/interfaces/IMiniPoolRewarder.sol";
-import {IERC20} from "../../../../contracts/dependencies/openzeppelin/contracts/IERC20.sol";
-import {IMiniPoolAddressesProvider} from
-    "../../../../contracts/interfaces/IMiniPoolAddressesProvider.sol";
-import {IMiniPool} from "../../../../contracts/interfaces/IMiniPool.sol";
-import {ATokenNonRebasing} from
-    "../../../../contracts/protocol/tokenization/ERC20/ATokenNonRebasing.sol";
+    "contracts/protocol/libraries/upgradeability/VersionedInitializable.sol";
+import {DataTypes} from "contracts/protocol/libraries/types/DataTypes.sol";
+import {ReserveLogic} from "contracts/protocol/core/lendingpool/logic/ReserveLogic.sol";
+import {IncentivizedERC6909} from "contracts/protocol/tokenization/ERC6909/IncentivizedERC6909.sol";
+import {IMiniPoolRewarder} from "contracts/interfaces/IMiniPoolRewarder.sol";
+import {IERC20} from "contracts/dependencies/openzeppelin/contracts/IERC20.sol";
+import {IMiniPoolAddressesProvider} from "contracts/interfaces/IMiniPoolAddressesProvider.sol";
+import {IMiniPool} from "contracts/interfaces/IMiniPool.sol";
+import {ATokenNonRebasing} from "contracts/protocol/tokenization/ERC20/ATokenNonRebasing.sol";
 import {Strings} from "openzeppelin-contracts/contracts/utils/Strings.sol";
 
 /**
@@ -27,7 +24,7 @@ import {Strings} from "openzeppelin-contracts/contracts/utils/Strings.sol";
  * @dev Current implementation allows for 128 tranched tokens from the Main Pool and 1000-128 unique tokens
  *      from the MiniPool.
  */
-contract ATokenERC6909 is IncentivizedERC6909, VersionedInitializable {
+contract ATokenERC6909V2 is IncentivizedERC6909, VersionedInitializable {
     using WadRayMath for uint256;
     using ReserveLogic for DataTypes.ReserveData;
 
@@ -48,7 +45,7 @@ contract ATokenERC6909 is IncentivizedERC6909, VersionedInitializable {
     // ======================= Constant =======================
 
     /// @notice The revision number for the AToken implementation.
-    uint256 public constant ATOKEN_REVISION = 0x1;
+    uint256 public constant ATOKEN_REVISION = 0x2;
     /// @notice The first ID for aToken. This is the first ID for aToken.
     uint256 public constant ATOKEN_ADDRESSABLE_ID = 1000;
     /// @notice The first ID for debtToken. This is the first ID for debtToken.

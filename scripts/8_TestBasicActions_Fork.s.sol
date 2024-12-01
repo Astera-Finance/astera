@@ -248,7 +248,7 @@ contract TestBasicActions is Script, DeploymentUtils, Test {
         uint256 tokenUserBalance = aErc6909Token.balanceOf(user, tokenId);
         uint256 tokenBalance = collateral.balanceOf(user);
         collateral.approve(miniPool, amount);
-        IMiniPool(miniPool).deposit(address(collateral), amount, user);
+        IMiniPool(miniPool).deposit(address(collateral), false, amount, user);
         assertEq(tokenBalance - amount, collateral.balanceOf(user), "Token balance is wrong");
         assertEq(
             tokenUserBalance + amount,
@@ -300,7 +300,6 @@ contract TestBasicActions is Script, DeploymentUtils, Test {
          * Invariants:
          * 1. All users shall be able to withdraw the greater or equal amount of funds that they deposited
          * 2.
-         *
          */
         uint8 WBTC_OFFSET = 2;
         uint8 USDC_OFFSET = 1;
@@ -335,13 +334,17 @@ contract TestBasicActions is Script, DeploymentUtils, Test {
 
         console.log("----------------USER1 BORROW---------------");
         vm.startPrank(users.user1);
-        IMiniPool(miniPool).borrow(address(borrowParams.token), borrowAmount / 4, users.user1);
+        IMiniPool(miniPool).borrow(
+            address(borrowParams.token), false, borrowAmount / 4, users.user1
+        );
         assertEq(borrowParams.token.balanceOf(users.user1), borrowAmount / 4);
         vm.stopPrank();
 
         console.log("----------------USER2 BORROW---------------");
         vm.startPrank(users.user2);
-        IMiniPool(miniPool).borrow(address(collateralParams.token), depositAmount / 4, users.user2);
+        IMiniPool(miniPool).borrow(
+            address(collateralParams.token), false, depositAmount / 4, users.user2
+        );
         assertEq(collateralParams.token.balanceOf(users.user2), depositAmount / 4);
         vm.stopPrank();
 
@@ -376,6 +379,7 @@ contract TestBasicActions is Script, DeploymentUtils, Test {
         /* Give lacking amount to user 1 */
         IMiniPool(miniPool).repay(
             address(borrowParams.token),
+            false,
             aErc6909Token.balanceOf(users.user1, 2128 + WBTC_OFFSET),
             users.user1
         );
@@ -394,6 +398,7 @@ contract TestBasicActions is Script, DeploymentUtils, Test {
         console.log("User2 Repaying...");
         IMiniPool(miniPool).repay(
             address(collateralParams.token),
+            false,
             aErc6909Token.balanceOf(users.user2, 2128 + USDC_OFFSET),
             users.user2
         );
@@ -408,6 +413,7 @@ contract TestBasicActions is Script, DeploymentUtils, Test {
         console.log("Withdrawing... %s", aErc6909Token.balanceOf(users.user1, 1128 + USDC_OFFSET));
         IMiniPool(miniPool).withdraw(
             address(collateralParams.token),
+            false,
             aErc6909Token.balanceOf(users.user1, 1128 + USDC_OFFSET),
             users.user1
         );
@@ -426,6 +432,7 @@ contract TestBasicActions is Script, DeploymentUtils, Test {
         console.log("Withdrawing...");
         IMiniPool(miniPool).withdraw(
             address(borrowParams.token),
+            false,
             aErc6909Token.balanceOf(users.user2, 1128 + WBTC_OFFSET),
             users.user2
         );

@@ -3,7 +3,7 @@ pragma solidity 0.8.23;
 
 import {IERC20} from "../../../../../contracts/dependencies/openzeppelin/contracts/IERC20.sol";
 import {SafeERC20} from "../../../../../contracts/dependencies/openzeppelin/contracts/SafeERC20.sol";
-import {IPriceOracleGetter} from "../../../../../contracts/interfaces/IPriceOracleGetter.sol";
+import {IOracle} from "../../../../../contracts/interfaces/IOracle.sol";
 import {ILendingPoolAddressesProvider} from
     "../../../../../contracts/interfaces/ILendingPoolAddressesProvider.sol";
 import {IAToken} from "../../../../../contracts/interfaces/IAToken.sol";
@@ -20,12 +20,13 @@ import {ReserveConfiguration} from
 import {UserConfiguration} from
     "../../../../../contracts/protocol/libraries/configuration/UserConfiguration.sol";
 import {Helpers} from "../../../../../contracts/protocol/libraries/helpers/Helpers.sol";
-import {IFlowLimiter} from "../../../../../contracts/interfaces/IFlowLimiter.sol";
+import {IFlowLimiter} from "../../../../../contracts/interfaces/base/IFlowLimiter.sol";
 
 /**
  * @title BorrowLogic library
  * @author Cod3x
- * @notice Implements functions to validate actions related to borrowing
+ * @notice Implements functions to validate and execute borrowing-related actions in the protocol.
+ * @dev Contains core borrowing logic including user account data calculation, borrow execution and repayment handling.
  */
 library BorrowLogic {
     using ReserveLogic for DataTypes.ReserveData;
@@ -36,6 +37,14 @@ library BorrowLogic {
     using UserConfiguration for DataTypes.UserConfigurationMap;
     using ValidationLogic for ValidationLogic.ValidateBorrowParams;
 
+    /**
+     * @dev Emitted when a borrow occurs.
+     * @param reserve The address of the borrowed underlying asset.
+     * @param user The address initiating the borrow.
+     * @param onBehalfOf The address receiving the borrowed assets.
+     * @param amount The amount of assets borrowed.
+     * @param borrowRate The current borrow rate.
+     */
     event Borrow(
         address indexed reserve,
         address user,
@@ -44,6 +53,7 @@ library BorrowLogic {
         uint256 borrowRate
     );
 
+    /// @dev Struct containing local variables for calculating user account data.
     struct CalculateUserAccountDataVolatileLocalVars {
         uint256 reserveUnitPrice;
         uint256 tokenUnit;
@@ -63,11 +73,10 @@ library BorrowLogic {
     }
 
     /**
-     * @param user The address of the user
-     * @param reservesData Data of all the reserves
-     * @param userConfig The configuration of the user
-     * @param reserves The list of the available reserves
-     * @param oracle The price oracle address
+     * @dev Parameters for calculating user account data.
+     * @param user The address of the user.
+     * @param reservesCount Total number of initialized reserves.
+     * @param oracle The price oracle address.
      */
     struct CalculateUserAccountDataVolatileParams {
         address user;
@@ -77,11 +86,15 @@ library BorrowLogic {
 
     /**
      * @dev Calculates the user data across the reserves.
-     * this includes the total liquidity/collateral/borrow balances in ETH,
-     * the average Loan To Value, the average Liquidation Ratio, and the Health factor.
-     * @param params the params necessary to get the correct borrow data
-     * @return The total collateral and total debt of the user in ETH, the avg ltv, liquidation threshold and the HF
-     *
+     * @param params The parameters needed for calculation.
+     * @param reserves Mapping of reserve data.
+     * @param userConfig The user's configuration.
+     * @param reservesList Mapping of reserve references.
+     * @return totalCollateralETH Total collateral in ETH.
+     * @return totalDebtETH Total debt in ETH.
+     * @return avgLtv Average loan to value.
+     * @return avgLiquidationThreshold Average liquidation threshold.
+     * @return healthFactor The user's health factor.
      */
     function calculateUserAccountDataVolatile(
         CalculateUserAccountDataVolatileParams memory params,
@@ -109,8 +122,7 @@ library BorrowLogic {
                 currentReserve.configuration.getParams();
 
             vars.tokenUnit = 10 ** vars.decimals;
-            vars.reserveUnitPrice =
-                IPriceOracleGetter(params.oracle).getAssetPrice(vars.currentReserveAddress);
+            vars.reserveUnitPrice = IOracle(params.oracle).getAssetPrice(vars.currentReserveAddress);
 
             if (vars.liquidationThreshold != 0 && userConfig.isUsingAsCollateral(vars.i)) {
                 vars.compoundedLiquidityBalance =
@@ -153,6 +165,18 @@ library BorrowLogic {
         );
     }
 
+    /**
+     * @dev Parameters for executing a borrow operation.
+     * @param asset The address of the underlying asset.
+     * @param reserveType Whether the reserve is boosted by a vault.
+     * @param user The address initiating the borrow.
+     * @param onBehalfOf The address receiving the borrowed assets.
+     * @param amount The amount to borrow.
+     * @param aTokenAddress The address of the aToken contract.
+     * @param releaseUnderlying Whether to release the underlying asset.
+     * @param addressesProvider The addresses provider instance.
+     * @param reservesCount Total number of initialized reserves.
+     */
     struct ExecuteBorrowParams {
         address asset;
         bool reserveType;
@@ -165,6 +189,13 @@ library BorrowLogic {
         uint256 reservesCount;
     }
 
+    /**
+     * @dev Executes a borrow operation.
+     * @param vars The borrow parameters.
+     * @param reserves Mapping of reserve data.
+     * @param reservesList Mapping of reserve references.
+     * @param usersConfig Mapping of user configurations.
+     */
     function executeBorrow(
         ExecuteBorrowParams memory vars,
         mapping(address => mapping(bool => DataTypes.ReserveData)) storage reserves,
@@ -217,6 +248,16 @@ library BorrowLogic {
         );
     }
 
+    /**
+     * @dev Parameters for executing a mini pool borrow operation.
+     * @param asset The address of the underlying asset.
+     * @param reserveType Whether the reserve is boosted by a vault.
+     * @param amount The amount to borrow.
+     * @param miniPoolAddress The address of the mini pool.
+     * @param aTokenAddress The address of the aToken contract.
+     * @param addressesProvider The addresses provider instance.
+     * @param reservesCount Total number of initialized reserves.
+     */
     struct ExecuteMiniPoolBorrowParams {
         address asset;
         bool reserveType;
@@ -227,6 +268,11 @@ library BorrowLogic {
         uint256 reservesCount;
     }
 
+    /**
+     * @dev Executes a mini pool borrow operation.
+     * @param params The mini pool borrow parameters.
+     * @param reserves Mapping of reserve data.
+     */
     function executeMiniPoolBorrow(
         ExecuteMiniPoolBorrowParams memory params,
         mapping(address => mapping(bool => DataTypes.ReserveData)) storage reserves
@@ -266,14 +312,30 @@ library BorrowLogic {
         }
     }
 
+    /**
+     * @dev Calculates the amount in ETH for a given asset amount.
+     * @param asset The address of the asset.
+     * @param amount The amount to convert.
+     * @param decimals The decimals of the asset.
+     * @param oracle The price oracle address.
+     * @return The amount in ETH.
+     */
     function amountInETH(address asset, uint256 amount, uint256 decimals, address oracle)
         internal
         view
         returns (uint256)
     {
-        return IPriceOracleGetter(oracle).getAssetPrice(asset) * amount / (10 ** decimals);
+        return IOracle(oracle).getAssetPrice(asset) * amount / (10 ** decimals);
     }
 
+    /**
+     * @dev Parameters for repaying a borrow.
+     * @param asset The address of the borrowed asset.
+     * @param reserveType Whether the reserve is boosted by a vault.
+     * @param amount The amount to repay.
+     * @param onBehalfOf The address of the user who will get their debt reduced.
+     * @param addressesProvider The addresses provider instance.
+     */
     struct repayParams {
         address asset;
         bool reserveType;
@@ -282,10 +344,24 @@ library BorrowLogic {
         ILendingPoolAddressesProvider addressesProvider;
     }
 
+    /**
+     * @dev Emitted when a repayment occurs.
+     * @param reserve The address of the reserve.
+     * @param user The address of the user who got their debt reduced/removed.
+     * @param repayer The address of the repayer.
+     * @param amount The amount repaid.
+     */
     event Repay(
         address indexed reserve, address indexed user, address indexed repayer, uint256 amount
     );
 
+    /**
+     * @dev Handles the repayment of a borrow.
+     * @param params The repay parameters.
+     * @param _reserves Mapping of reserve data.
+     * @param _usersConfig Mapping of user configurations.
+     * @return The actual amount repaid.
+     */
     function repay(
         repayParams memory params,
         mapping(address => mapping(bool => DataTypes.ReserveData)) storage _reserves,
@@ -304,6 +380,13 @@ library BorrowLogic {
         return paybackAmount;
     }
 
+    /**
+     * @dev Handles the repayment of a borrow using aTokens.
+     * @param params The repay parameters.
+     * @param _reserves Mapping of reserve data.
+     * @param _usersConfig Mapping of user configurations.
+     * @return The actual amount repaid.
+     */
     function repayWithAtokens(
         repayParams memory params,
         mapping(address => mapping(bool => DataTypes.ReserveData)) storage _reserves,
@@ -322,7 +405,14 @@ library BorrowLogic {
         return paybackAmount;
     }
 
-    // Repay helper
+    /**
+     * @dev Helper function to handle repayment logic.
+     * @param params The repay parameters.
+     * @param reserve The reserve data.
+     * @param _usersConfig Mapping of user configurations.
+     * @return aToken The address of the aToken.
+     * @return paybackAmount The actual amount repaid.
+     */
     function _repay(
         repayParams memory params,
         DataTypes.ReserveData storage reserve,

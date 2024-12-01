@@ -111,9 +111,9 @@ abstract contract LendingPoolFixtures is Common {
         uint256 borrowTokenBalanceBeforeBorrow = borrowToken.token.balanceOf(borrower);
         uint256 debtBalanceBefore = borrowToken.debtToken.balanceOf(borrower);
 
-        (, uint256 totalDebt,,,,,) = deployedContracts.cod3xLendDataProvider.getLpReserveDynamicData(
-            address(borrowToken.token), true
-        );
+        DynamicData memory dynamicData = deployedContracts
+            .cod3xLendDataProvider
+            .getLpReserveDynamicData(address(borrowToken.token), true);
 
         StaticData memory staticData = deployedContracts
             .cod3xLendDataProvider
@@ -123,7 +123,7 @@ abstract contract LendingPoolFixtures is Common {
             address(borrowToken.aToken),
             0,
             maxBorrowTokenToBorrowInCollateralUnit,
-            totalDebt + maxBorrowTokenToBorrowInCollateralUnit,
+            dynamicData.totalVariableDebt + maxBorrowTokenToBorrowInCollateralUnit,
             staticData.cod3xReserveFactor
         );
         console.log("1. AToken balance: ", borrowToken.token.balanceOf(address(borrowToken.aToken)));
