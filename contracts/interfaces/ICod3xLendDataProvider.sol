@@ -46,6 +46,31 @@ struct DynamicData {
     uint256 liquidityIndex;
     uint256 variableBorrowIndex;
     uint40 lastUpdateTimestamp;
+    address interestRateStrategyAddress;
+    uint8 id;
+}
+
+struct AllPoolData {
+    uint256 decimals;
+    uint256 ltv;
+    uint256 liquidationThreshold;
+    uint256 liquidationBonus;
+    uint256 cod3xReserveFactor;
+    uint256 miniPoolOwnerReserveFactor;
+    uint256 depositCap;
+    bool borrowingEnabled;
+    bool flashloanEnabled;
+    bool isActive;
+    bool isFrozen;
+    uint256 availableLiquidity;
+    uint256 totalVariableDebt;
+    uint256 liquidityRate;
+    uint256 variableBorrowRate;
+    uint256 liquidityIndex;
+    uint256 variableBorrowIndex;
+    uint40 lastUpdateTimestamp;
+    address interestRateStrategyAddress;
+    uint8 id;
 }
 
 interface ICod3xLendDataProvider {
@@ -54,6 +79,11 @@ interface ICod3xLendDataProvider {
     function setMiniPoolAddressProvider(address _miniPoolAddressProvider) external;
 
     /* -------------- Lending Pool providers--------------*/
+    function getAllMpData(address asset, bool reserveType)
+        external
+        view
+        returns (AllPoolData memory allPoolData);
+
     /**
      * @notice Retrieves static configuration data for a given reserve in the lending pool.
      * @param asset The address of the asset to retrieve data for
@@ -142,6 +172,10 @@ interface ICod3xLendDataProvider {
         );
 
     /*------ Mini Pool data providers ------*/
+    function getAllMpData(address asset, address miniPool)
+        external
+        view
+        returns (AllPoolData memory allPoolData);
 
     /**
      * @notice Retrieves static configuration data for a given reserve in a mini pool.
@@ -153,6 +187,35 @@ interface ICod3xLendDataProvider {
         external
         view
         returns (StaticData memory staticData);
+
+    /**
+     * @notice Retrieves static configuration data for a given reserve in a mini pool.
+     * @param asset The address of the asset to retrieve data for
+     * @param miniPool The address of the mini pool
+     * @return staticData Struct containing static reserve configuration data
+     */
+    function getMpReserveStaticData(address asset, address miniPool)
+        external
+        view
+        returns (StaticData memory staticData);
+
+    /**
+     * @notice Retrieves dynamic reserve data for a given asset in a mini pool.
+     * @param asset The address of the asset
+     * @param miniPool The address of the mini pool
+     * @return dynamicData :
+     * - availableLiquidity - Current liquidity available
+     * - totalVariableDebt - Total outstanding variable debt
+     * - liquidityRate - Current liquidity rate
+     * - variableBorrowRate - Current variable borrow rate
+     * - liquidityIndex - Current liquidity index
+     * - variableBorrowIndex - Current variable borrow index
+     * - lastUpdateTimestamp - Last timestamp of reserve data update
+     */
+    function getMpReserveDynamicData(address asset, address miniPool)
+        external
+        view
+        returns (DynamicData memory dynamicData);
 
     /**
      * @notice Retrieves dynamic reserve data for a given asset in a mini pool.
@@ -283,10 +346,10 @@ interface ICod3xLendDataProvider {
     /**
      * @dev Gets remaining flow from main pool for specified mini pool.
      * @param asset The address of the reserve to check for availability.
-     * @param miniPoolId The ID of the MiniPool where the reserve's availability is checked.
+     * @param miniPool The ID of the MiniPool where the reserve's availability is checked.
      * @return remainingFlow The address of the MiniPool being checked.
      */
-    function getMpRemainingFlow(address asset, uint256 miniPoolId)
+    function getMpRemainingFlow(address asset, address miniPool)
         external
         view
         returns (uint256 remainingFlow);

@@ -15,10 +15,9 @@ import {Errors} from "contracts/protocol/libraries/helpers/Errors.sol";
 import {WadRayMath} from "contracts/protocol/libraries/math/WadRayMath.sol";
 import {PercentageMath} from "contracts/protocol/libraries/math/PercentageMath.sol";
 import {MiniPoolReserveLogic} from "contracts/protocol/core/minipool/logic/MiniPoolReserveLogic.sol";
-import {MiniPoolGenericLogic} from
-    "contracts/protocol/core/minipool//logic/MiniPoolGenericLogic.sol";
+import {MiniPoolGenericLogic} from "contracts/protocol/core/minipool/logic/MiniPoolGenericLogic.sol";
 import {MiniPoolValidationLogic} from
-    "contracts/protocol/core/minipool//logic/MiniPoolValidationLogic.sol";
+    "contracts/protocol/core/minipool/logic/MiniPoolValidationLogic.sol";
 import {ReserveConfiguration} from
     "contracts/protocol/libraries/configuration/ReserveConfiguration.sol";
 import {UserConfiguration} from "contracts/protocol/libraries/configuration/UserConfiguration.sol";
@@ -26,15 +25,14 @@ import {DataTypes} from "contracts/protocol/libraries/types/DataTypes.sol";
 import {MiniPoolStorage} from "contracts/protocol/core/minipool/MiniPoolStorage.sol";
 import {IMiniPool} from "contracts/interfaces/IMiniPool.sol";
 import {ATokenNonRebasing} from "contracts/protocol/tokenization/ERC20/ATokenNonRebasing.sol";
-import {MiniPoolDepositLogic} from
-    "contracts/protocol/core/minipool//logic/MiniPoolDepositLogic.sol";
+import {MiniPoolDepositLogic} from "contracts/protocol/core/minipool/logic/MiniPoolDepositLogic.sol";
 import {MiniPoolWithdrawLogic} from
-    "contracts/protocol/core/minipool//logic/MiniPoolWithdrawLogic.sol";
-import {MiniPoolBorrowLogic} from "contracts/protocol/core/minipool//logic/MiniPoolBorrowLogic.sol";
+    "contracts/protocol/core/minipool/logic/MiniPoolWithdrawLogic.sol";
+import {MiniPoolBorrowLogic} from "contracts/protocol/core/minipool/logic/MiniPoolBorrowLogic.sol";
 import {MiniPoolFlashLoanLogic} from
-    "contracts/protocol/core/minipool//logic/MiniPoolFlashLoanLogic.sol";
+    "contracts/protocol/core/minipool/logic/MiniPoolFlashLoanLogic.sol";
 import {MiniPoolLiquidationLogic} from
-    "contracts/protocol/core/minipool//logic/MiniPoolLiquidationLogic.sol";
+    "contracts/protocol/core/minipool/logic/MiniPoolLiquidationLogic.sol";
 import {IMiniPoolRewarder} from "contracts/interfaces/IMiniPoolRewarder.sol";
 
 /**

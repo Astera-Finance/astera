@@ -17,7 +17,7 @@ import "forge-std/StdUtils.sol";
 import "forge-std/console.sol";
 // import {ILendingPool} from "contracts/interfaces/ILendingPool.sol";
 
-contract UpgradesAndReconfigurations is MiniPoolFixtures {
+contract UpgradesAndReconfigurationsTest is MiniPoolFixtures {
     using PercentageMath for uint256;
     using WadRayMath for uint256;
 
@@ -198,32 +198,36 @@ contract UpgradesAndReconfigurations is MiniPoolFixtures {
 
         {
             LendingPoolV2 lpv2 = new LendingPoolV2();
-            address payable previousPoolImpl =
-                payable(address(deployedContracts.lendingPoolAddressesProvider.getLendingPool()));
+
+            address lendingPoolProxy =
+                address(deployedContracts.lendingPoolAddressesProvider.getLendingPool());
+
+            vm.prank(address(deployedContracts.lendingPoolAddressesProvider));
+            address previousPoolImpl = InitializableImmutableAdminUpgradeabilityProxy(
+                payable(lendingPoolProxy)
+            ).implementation();
+
             lpv2.initialize(
                 ILendingPoolAddressesProvider(deployedContracts.lendingPoolAddressesProvider)
             );
             deployedContracts.lendingPoolAddressesProvider.setLendingPoolImpl(address(lpv2));
-            address lendingPoolProxy =
+            lendingPoolProxy =
                 address(deployedContracts.lendingPoolAddressesProvider.getLendingPool());
+
             /* Check if addresses are updated */
-            console.log(
-                "getLendingPool: %s\tdeployedContracts.lendingPool: %s\tdeployedContracts.lendingPoolAddressesProvider: %s",
-                lendingPoolProxy,
-                address(deployedContracts.lendingPool),
-                address(deployedContracts.lendingPoolAddressesProvider)
-            );
+            deployedContracts.lendingPool = LendingPool(lendingPoolProxy);
+            vm.startPrank(address(deployedContracts.lendingPoolAddressesProvider));
             // console.log(
             //     "Impl: ",
             //     InitializableImmutableAdminUpgradeabilityProxy(payable(address(lendingPoolProxy)))
-            //         .getImplementation()
-            // );
-            // assertNotEq(
-            //     previousPoolImpl,
-            //     InitializableImmutableAdminUpgradeabilityProxy(payable(address(lendingPoolProxy)))
             //         .implementation()
             // );
-            deployedContracts.lendingPool = LendingPool(lendingPoolProxy);
+            assertNotEq(
+                previousPoolImpl,
+                InitializableImmutableAdminUpgradeabilityProxy(payable(lendingPoolProxy))
+                    .implementation()
+            );
+            vm.stopPrank();
         }
         /* 1. Storage data shouldn't be affected by the upgrade */
         DynamicData[] memory dynamicDataAfter = new DynamicData[](aTokens.length);
@@ -329,22 +333,29 @@ contract UpgradesAndReconfigurations is MiniPoolFixtures {
         {
             MiniPoolV2 mpv2 = new MiniPoolV2();
             ATokenERC6909V2 erc6909v2 = new ATokenERC6909V2();
-            // address previousMiniPool =
-            //     payable(miniPoolContracts.miniPoolAddressesProvider.getMiniPool(0)).implementation();
-            // address previousAErc6909 = payable(
-            //     miniPoolContracts.miniPoolAddressesProvider.getAToken6909(0)
-            // ).implementation();
+            address previousMiniPoolImpl = InitializableImmutableAdminUpgradeabilityProxy(
+                payable(miniPoolContracts.miniPoolAddressesProvider.getMiniPool(0))
+            ).implementation();
+            address previousAErc6909Impl = InitializableImmutableAdminUpgradeabilityProxy(
+                payable(miniPoolContracts.miniPoolAddressesProvider.getAToken6909(0))
+            ).implementation();
             miniPoolContracts.miniPoolAddressesProvider.setMiniPoolImpl(address(mpv2), 0);
             miniPoolContracts.miniPoolAddressesProvider.setAToken6909Impl(address(erc6909v2), 0);
             miniPoolContracts.miniPoolImpl = MiniPool(address(mpv2));
 
             /* Check if addresses are updated */
-            // assertNotEq(
-            //     miniPoolContracts.miniPoolAddressesProvider.getMiniPool(0), previousMiniPoolProxy
-            // );
-            // assertNotEq(
-            //     miniPoolContracts.miniPoolAddressesProvider.getAToken6909(0), previousAErc6909Proxy
-            // );
+            assertNotEq(
+                InitializableImmutableAdminUpgradeabilityProxy(
+                    payable(miniPoolContracts.miniPoolAddressesProvider.getMiniPool(0))
+                ).implementation(),
+                previousMiniPoolImpl
+            );
+            assertNotEq(
+                InitializableImmutableAdminUpgradeabilityProxy(
+                    payable(miniPoolContracts.miniPoolAddressesProvider.getAToken6909(0))
+                ).implementation(),
+                previousAErc6909Impl
+            );
         }
 
         /* 1. Storage data shouldn't be affected by the upgrade */
