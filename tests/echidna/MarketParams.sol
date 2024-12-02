@@ -6,17 +6,25 @@ pragma solidity ^0.8.13;
 contract MarketParams {
     uint internal constant BPS = 10000; 
 
-    string internal constant MARKET_ID = "GV2";
-    uint internal constant PROVIDER_ID = 1;
+    // Market config
+    string internal constant MARKET_ID = "Cod3x Lend";
     address internal constant FALLBACK_ORACLE = address(0);
     address internal constant BASE_CURRENCY = address(0);
     uint internal constant BASE_CURRENCY_UNIT = 100000000;
 
+    // Default rate strategies
     uint internal constant DEFAULT_OPTI_UTILIZATION_RATE = 0.45e27;
     uint internal constant DEFAULT_BASE_VARIABLE_BORROW_RATE = 0;
     uint internal constant DEFAULT_VARIABLE_RATE_SLOPE1 = 0.07e27;
     uint internal constant DEFAULT_VARIABLE_RATE_SLOPE2 = 3e27;
 
+    // Pi rate strategies
+    int internal constant DEFAULT_MIN_CONTROLLER_ERROR = 0;
+    int internal constant DEFAULT_MAX_I_TIME_AMP = 0;
+    uint internal constant DEFAULT_KP = 0;
+    uint internal constant DEFAULT_KI = 0;
+
+    // Lending pool Default reserve config
     uint internal constant DEFAULT_BASE_LTV = 8000;
     uint internal constant DEFAULT_LIQUIDATION_THRESHOLD = 8500;
     uint internal constant DEFAULT_LIQUIDATION_BONUS = 10500;
