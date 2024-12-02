@@ -66,16 +66,16 @@ contract Cod3xLendDataProvider is Ownable, ICod3xLendDataProvider {
     }
 
     /* -------------- Lending Pool providers--------------*/
-    function getAllMpData(address asset, bool reserveType)
+    function getAllLpData(address asset, bool reserveType)
         external
         view
         lendingPoolSet
         returns (AllPoolData memory allPoolData)
     {
-        allPoolData = _getAllMpData(asset, reserveType);
+        allPoolData = _getAllLpData(asset, reserveType);
     }
 
-    function _getAllMpData(address asset, bool reserveType)
+    function _getAllLpData(address asset, bool reserveType)
         internal
         view
         returns (AllPoolData memory allPoolData)
