@@ -79,7 +79,7 @@ interface ICod3xLendDataProvider {
     function setMiniPoolAddressProvider(address _miniPoolAddressProvider) external;
 
     /* -------------- Lending Pool providers--------------*/
-    function getAllMpData(address asset, bool reserveType)
+    function getAllLpData(address asset, bool reserveType)
         external
         view
         returns (AllPoolData memory allPoolData);
