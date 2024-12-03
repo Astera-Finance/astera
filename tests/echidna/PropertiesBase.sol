@@ -106,7 +106,7 @@ contract PropertiesBase is PropertiesAsserts, MarketParams {
     uint256 internal totalNbTokens = 4;
     uint256 internal initialMint = 100 ether;
     bool internal bootstrapLiquidity = true;
-    uint256 internal volatility = 500; // 5%
+    uint256 internal volatility = 200; // 5%
     // ------------------
 
     User internal bootstraper;

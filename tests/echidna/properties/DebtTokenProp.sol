@@ -8,10 +8,6 @@ contract DebtTokenProp is PropertiesBase {
 
     // --------------------- state updates ---------------------
 
-    // function randApproveDelegation() public {
-
-    // }
-
     /// @custom:invariant 400 - `approveDelegation()` must never revert.
     /// @custom:invariant 401 - Allowance must be modified correctly via `approve()`.
     function randApproveDelegation(LocalVars_UPTL memory vul, uint seedUser, uint seedSender, uint seedVToken, uint seedAmt) public {
