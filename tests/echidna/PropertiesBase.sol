@@ -305,11 +305,6 @@ contract PropertiesBase is PropertiesAsserts, MarketParams {
         }
     }
 
-    function rand(uint a) external {
-        require(a != 0);
-        assert(a !=0);
-    }
-
     /// ------- global state updates -------
 
     struct LocalVars_UPTL {
@@ -321,12 +316,12 @@ contract PropertiesBase is PropertiesAsserts, MarketParams {
         bool randReceiveAToken;
     }
 
-    // function randUpdatePriceAndTryLiquidate(LocalVars_UPTL memory v) public {
-    //     oraclePriceUpdate(v.seedAmtPrice);
-    //     tryLiquidate(
-    //         v.seedLiquidator, v.seedColl, v.seedDebtToken, v.seedAmtLiq, v.randReceiveAToken
-    //     );
-    // }
+    function randUpdatePriceAndTryLiquidate(LocalVars_UPTL memory v) public {
+        oraclePriceUpdate(v.seedAmtPrice);
+        tryLiquidate(
+            v.seedLiquidator, v.seedColl, v.seedDebtToken, v.seedAmtLiq, v.randReceiveAToken
+        );
+    }
 
     struct LocalVars_TryLiquidate {
         uint256 randLiquidator;

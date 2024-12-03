@@ -251,7 +251,7 @@ contract ATokenProp is PropertiesBase {
         uint randAsset = clampBetween(seedAsset, 0, totalNbTokens);
         uint randReceiver = clampBetween(seedReceiver, 0, 3);
 
-        ERC20 asset = assets[randAsset];
+        MintableERC20 asset = assets[randAsset];
 
         if (randReceiver == 0) {
             asset.transfer(address(pool), randAmt);

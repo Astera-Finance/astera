@@ -2,7 +2,7 @@
 pragma solidity ^0.8.13;
 
 import "../PropertiesBase.sol";
-import "contracts/dependencies/openzeppelin/contracts/ERC20.sol";
+import {ERC20} from "lib/openzeppelin-contracts/contracts/token/ERC20/ERC20.sol";
 
 
 contract LendingPoolProp is PropertiesBase {
@@ -22,7 +22,7 @@ contract LendingPoolProp is PropertiesBase {
 
         User user = users[randUser];
         User onBehalfOf  = users[randOnBehalfOf];
-        ERC20 asset = assets[randAsset];
+        MintableERC20 asset = assets[randAsset];
         AToken aToken = aTokens[randAsset];
 
         uint randAmt = clampBetween(seedAmt, 1, asset.balanceOf(address(user)) / 2);
@@ -59,7 +59,7 @@ contract LendingPoolProp is PropertiesBase {
 
         User user = users[randUser];
         User to  = users[randTo];
-        ERC20 asset = assets[randAsset];
+        MintableERC20 asset = assets[randAsset];
         AToken aToken = aTokens[randAsset];
 
         uint aTokenBalanceBefore = aToken.balanceOf(address(user));
@@ -98,7 +98,7 @@ contract LendingPoolProp is PropertiesBase {
         uint randAsset = clampBetween(seedAsset, 0 ,totalNbTokens);
 
         User onBehalfOf  = users[randOnBehalfOf];
-        ERC20 asset = assets[randAsset];
+        MintableERC20 asset = assets[randAsset];
         VariableDebtToken debtToken = debtTokens[randAsset];
         User user = users[randUser];
 
@@ -164,7 +164,7 @@ contract LendingPoolProp is PropertiesBase {
 
         User user = users[randUser];
         User onBehalfOf = users[randOnBehalfOf];
-        ERC20 asset = assets[randAsset];
+        MintableERC20 asset = assets[randAsset];
         AToken aToken = aTokens[randAsset];
         VariableDebtToken debtToken = debtTokens[randAsset];
 
@@ -204,7 +204,7 @@ contract LendingPoolProp is PropertiesBase {
         uint randAsset = clampBetween(seedAsset, 0 ,totalNbTokens);
 
         User user = users[randUser];
-        ERC20 asset = assets[randAsset];
+        MintableERC20 asset = assets[randAsset];
 
         (,,,,, uint256 healthFactorBefore) = pool.getUserAccountData(address(user));
 
@@ -238,7 +238,7 @@ contract LendingPoolProp is PropertiesBase {
 
         User user;
 
-        ERC20 asset;
+        MintableERC20 asset;
         VariableDebtToken debtToken;
 
         address[] assetsFl;
