@@ -25,8 +25,10 @@ import {
     DynamicData,
     UserReserveData,
     MiniPoolUserReserveData,
-    AllPoolData
+    AllLpPoolData,
+    AllMpPoolData
 } from "../../contracts/interfaces/ICod3xLendDataProvider.sol";
+import {IOracle} from "../../contracts/interfaces/IOracle.sol";
 
 /**
  * @title Cod3xLendDataProvider
@@ -66,45 +68,61 @@ contract Cod3xLendDataProvider is Ownable, ICod3xLendDataProvider {
     }
 
     /* -------------- Lending Pool providers--------------*/
-    function getAllLpData(address asset, bool reserveType)
+    /**
+     * @notice Retrieves all data for a given asset in a main pool.
+     * @return allLpPoolDataList all data related to main pool
+     */
+    function getAllLpData()
         external
         view
         lendingPoolSet
-        returns (AllPoolData memory allPoolData)
+        returns (AllLpPoolData[] memory allLpPoolDataList)
     {
-        allPoolData = _getAllLpData(asset, reserveType);
-    }
+        (
+            address[] memory reserves,
+            bool[] memory reserveTypes,
+            address[] memory aTokens,
+            address[] memory debtTokens
+        ) = getAllLpTokens();
 
-    function _getAllLpData(address asset, bool reserveType)
-        internal
-        view
-        returns (AllPoolData memory allPoolData)
-    {
-        StaticData memory staticData = _getLpReserveStaticData(asset, reserveType);
-        DynamicData memory dynamicData = _getLpReserveDynamicData(asset, reserveType);
-        allPoolData.ltv = staticData.ltv;
-        allPoolData.liquidationThreshold = staticData.liquidationThreshold;
-        allPoolData.liquidationBonus = staticData.liquidationBonus;
-        allPoolData.decimals = staticData.decimals;
-        allPoolData.cod3xReserveFactor = staticData.cod3xReserveFactor;
-        allPoolData.miniPoolOwnerReserveFactor = staticData.miniPoolOwnerReserveFactor;
-        allPoolData.depositCap = staticData.depositCap;
+        for (uint256 idx = 0; idx < reserves.length; idx++) {
+            AllLpPoolData memory allLpPoolData = allLpPoolDataList[idx];
+            allLpPoolData.reserve = reserves[idx];
+            allLpPoolData.aToken = aTokens[idx];
+            allLpPoolData.debtToken = debtTokens[idx];
+            allLpPoolData.reserveType = reserveTypes[idx];
 
-        allPoolData.availableLiquidity = dynamicData.availableLiquidity;
-        allPoolData.totalVariableDebt = dynamicData.totalVariableDebt;
-        allPoolData.liquidityRate = dynamicData.liquidityRate;
-        allPoolData.variableBorrowRate = dynamicData.variableBorrowRate;
-        allPoolData.liquidityIndex = dynamicData.liquidityIndex;
-        allPoolData.variableBorrowIndex = dynamicData.variableBorrowIndex;
-        allPoolData.lastUpdateTimestamp = dynamicData.lastUpdateTimestamp;
-        allPoolData.interestRateStrategyAddress = dynamicData.interestRateStrategyAddress;
-        allPoolData.id = dynamicData.id;
+            StaticData memory staticData = _getLpReserveStaticData(reserves[idx], reserveTypes[idx]);
+            allLpPoolData.symbol = staticData.symbol;
+            allLpPoolData.ltv = staticData.ltv;
+            allLpPoolData.liquidationThreshold = staticData.liquidationThreshold;
+            allLpPoolData.liquidationBonus = staticData.liquidationBonus;
+            allLpPoolData.decimals = staticData.decimals;
+            allLpPoolData.cod3xReserveFactor = staticData.cod3xReserveFactor;
+            allLpPoolData.miniPoolOwnerReserveFactor = staticData.miniPoolOwnerReserveFactor;
+            allLpPoolData.depositCap = staticData.depositCap;
+            allLpPoolData.usageAsCollateralEnabled = staticData.usageAsCollateralEnabled;
+
+            DynamicData memory dynamicData =
+                _getLpReserveDynamicData(reserves[idx], reserveTypes[idx]);
+            allLpPoolData.interestRateStrategyAddress = dynamicData.interestRateStrategyAddress;
+            allLpPoolData.availableLiquidity = dynamicData.availableLiquidity;
+            allLpPoolData.totalVariableDebt = dynamicData.totalVariableDebt;
+            allLpPoolData.liquidityRate = dynamicData.liquidityRate;
+            allLpPoolData.variableBorrowRate = dynamicData.variableBorrowRate;
+            allLpPoolData.liquidityIndex = dynamicData.liquidityIndex;
+            allLpPoolData.variableBorrowIndex = dynamicData.variableBorrowIndex;
+            allLpPoolData.priceInMarketReferenceCurrency =
+                dynamicData.priceInMarketReferenceCurrency;
+            allLpPoolData.lastUpdateTimestamp = dynamicData.lastUpdateTimestamp;
+            allLpPoolData.id = dynamicData.id;
+        }
     }
 
     /**
      * @notice Retrieves static configuration data for a given reserve in the lending pool.
      * @param asset The address of the asset to retrieve data for
-     * @param reserveType The type of reserve (true for type A, false for type B)
+     * @param reserveType The type of reserve
      * @return staticData Struct containing static reserve configuration data
      */
     function getLpReserveStaticData(address asset, bool reserveType)
@@ -125,6 +143,8 @@ contract Cod3xLendDataProvider is Ownable, ICod3xLendDataProvider {
             lendingPoolAddressProvider.getLendingPool()
         ).getConfiguration(asset, reserveType);
 
+        staticData.symbol = IERC20Detailed(asset).symbol();
+
         (
             staticData.ltv,
             staticData.liquidationThreshold,
@@ -141,12 +161,14 @@ contract Cod3xLendDataProvider is Ownable, ICod3xLendDataProvider {
             staticData.borrowingEnabled,
             staticData.flashloanEnabled
         ) = configuration.getFlagsMemory();
+
+        staticData.usageAsCollateralEnabled = (staticData.ltv != 0) ? true : false;
     }
 
     /**
      * @notice Retrieves dynamic reserve data for a given asset in the lending pool.
      * @param asset The address of the asset
-     * @param reserveType The type of reserve (true for type A, false for type B)
+     * @param reserveType The type of reserve
      * @return dynamicData :
      * - availableLiquidity - Current liquidity available
      * - totalVariableDebt - Total outstanding variable debt
@@ -181,6 +203,8 @@ contract Cod3xLendDataProvider is Ownable, ICod3xLendDataProvider {
         dynamicData.variableBorrowRate = reserve.currentVariableBorrowRate;
         dynamicData.liquidityIndex = reserve.liquidityIndex;
         dynamicData.variableBorrowIndex = reserve.variableBorrowIndex;
+        dynamicData.priceInMarketReferenceCurrency =
+            IOracle(lendingPoolAddressProvider.getPriceOracle()).getAssetPrice(asset);
         dynamicData.lastUpdateTimestamp = reserve.lastUpdateTimestamp;
         dynamicData.interestRateStrategyAddress = reserve.interestRateStrategyAddress;
         dynamicData.id = reserve.id;
@@ -190,17 +214,24 @@ contract Cod3xLendDataProvider is Ownable, ICod3xLendDataProvider {
 
     /**
      * @notice Retrieves the addresses of all aTokens and debt tokens in the lending pool.
+     * @return reserves Array of pool reserves
+     * @return reserveTypes Array of the reserve types
      * @return aTokens Array of aToken addresses
      * @return debtTokens Array of debt token addresses
      */
-    function getLpAllTokens()
-        external
+    function getAllLpTokens()
+        public
         view
         lendingPoolSet
-        returns (address[] memory aTokens, address[] memory debtTokens)
+        returns (
+            address[] memory reserves,
+            bool[] memory reserveTypes,
+            address[] memory aTokens,
+            address[] memory debtTokens
+        )
     {
         ILendingPool lendingPool = ILendingPool(lendingPoolAddressProvider.getLendingPool());
-        (address[] memory reserves, bool[] memory reserveTypes) = lendingPool.getReservesList();
+        (reserves, reserveTypes) = lendingPool.getReservesList();
         aTokens = new address[](reserves.length);
         debtTokens = new address[](reserves.length);
         for (uint256 idx = 0; idx < reserves.length; idx++) {
@@ -331,64 +362,77 @@ contract Cod3xLendDataProvider is Ownable, ICod3xLendDataProvider {
     }
 
     /*------ Mini Pool data providers ------*/
-
-    function getAllMpData(address asset, address miniPool)
+    /**
+     * @notice Retrieves dynamic reserve data for a given asset in a mini pool.
+     * @param miniPool The address of the mini pool
+     * @return allMpPoolDataList all data related to mini pool
+     */
+    function getAllMpData(address miniPool)
         external
         view
         miniPoolSet
-        returns (AllPoolData memory allPoolData)
+        returns (AllMpPoolData[] memory allMpPoolDataList)
     {
-        allPoolData = _getAllMpData(asset, miniPool);
-    }
-
-    function getAllMpData(address asset, uint256 miniPoolId)
-        external
-        view
-        miniPoolSet
-        returns (AllPoolData memory allPoolData)
-    {
-        allPoolData = _getAllMpData(asset, miniPoolAddressProvider.getMiniPool(miniPoolId));
-    }
-
-    function _getAllMpData(address asset, address miniPool)
-        internal
-        view
-        returns (AllPoolData memory allPoolData)
-    {
-        StaticData memory staticData = _getMpReserveStaticData(asset, miniPool);
-        DynamicData memory dynamicData = _getMpReserveDynamicData(asset, miniPool);
-        allPoolData.ltv = staticData.ltv;
-        allPoolData.liquidationThreshold = staticData.liquidationThreshold;
-        allPoolData.liquidationBonus = staticData.liquidationBonus;
-        allPoolData.decimals = staticData.decimals;
-        allPoolData.cod3xReserveFactor = staticData.cod3xReserveFactor;
-        allPoolData.miniPoolOwnerReserveFactor = staticData.miniPoolOwnerReserveFactor;
-        allPoolData.depositCap = staticData.depositCap;
-
-        allPoolData.availableLiquidity = dynamicData.availableLiquidity;
-        allPoolData.totalVariableDebt = dynamicData.totalVariableDebt;
-        allPoolData.liquidityRate = dynamicData.liquidityRate;
-        allPoolData.variableBorrowRate = dynamicData.variableBorrowRate;
-        allPoolData.liquidityIndex = dynamicData.liquidityIndex;
-        allPoolData.variableBorrowIndex = dynamicData.variableBorrowIndex;
-        allPoolData.lastUpdateTimestamp = dynamicData.lastUpdateTimestamp;
-        allPoolData.interestRateStrategyAddress = dynamicData.interestRateStrategyAddress;
-        allPoolData.id = dynamicData.id;
+        allMpPoolDataList = _getAllMpData(miniPool);
     }
 
     /**
-     * @notice Retrieves static configuration data for a given reserve in a mini pool.
-     * @param asset The address of the asset to retrieve data for
+     * @notice Retrieves dynamic reserve data for a given asset in a mini pool.
      * @param miniPoolId The ID of the mini pool
-     * @return staticData Struct containing static reserve configuration data
+     * @return allMpPoolDataList all data related to mini pool
      */
-    function getMpReserveStaticData(address asset, uint256 miniPoolId)
+    function getAllMpData(uint256 miniPoolId)
         external
         view
         miniPoolSet
-        returns (StaticData memory staticData)
+        returns (AllMpPoolData[] memory allMpPoolDataList)
     {
-        staticData = _getMpReserveStaticData(asset, miniPoolAddressProvider.getMiniPool(miniPoolId));
+        allMpPoolDataList = _getAllMpData(miniPoolAddressProvider.getMiniPool(miniPoolId));
+    }
+
+    function _getAllMpData(address miniPool)
+        internal
+        view
+        returns (AllMpPoolData[] memory allMpPoolDataList)
+    {
+        (
+            address[] memory aErc6909Token,
+            address[] memory reserves,
+            uint256[] memory aTokenIds,
+            uint256[] memory variableDebtTokenIds
+        ) = _getMpAllTokenInfo(miniPool);
+
+        for (uint256 idx = 0; idx < reserves.length; idx++) {
+            AllMpPoolData memory allMpPoolData = allMpPoolDataList[idx];
+            allMpPoolData.aErc6909Token = aErc6909Token[idx];
+            allMpPoolData.reserve = reserves[idx];
+            allMpPoolData.aTokenId = aTokenIds[idx];
+            allMpPoolData.variableDebtTokenId = variableDebtTokenIds[idx];
+
+            StaticData memory staticData = _getMpReserveStaticData(reserves[idx], miniPool);
+            allMpPoolData.symbol = staticData.symbol;
+            allMpPoolData.ltv = staticData.ltv;
+            allMpPoolData.liquidationThreshold = staticData.liquidationThreshold;
+            allMpPoolData.liquidationBonus = staticData.liquidationBonus;
+            allMpPoolData.decimals = staticData.decimals;
+            allMpPoolData.cod3xReserveFactor = staticData.cod3xReserveFactor;
+            allMpPoolData.miniPoolOwnerReserveFactor = staticData.miniPoolOwnerReserveFactor;
+            allMpPoolData.depositCap = staticData.depositCap;
+            allMpPoolData.usageAsCollateralEnabled = staticData.usageAsCollateralEnabled;
+
+            DynamicData memory dynamicData = _getMpReserveDynamicData(reserves[idx], miniPool);
+            allMpPoolData.availableLiquidity = dynamicData.availableLiquidity;
+            allMpPoolData.totalVariableDebt = dynamicData.totalVariableDebt;
+            allMpPoolData.liquidityRate = dynamicData.liquidityRate;
+            allMpPoolData.variableBorrowRate = dynamicData.variableBorrowRate;
+            allMpPoolData.liquidityIndex = dynamicData.liquidityIndex;
+            allMpPoolData.variableBorrowIndex = dynamicData.variableBorrowIndex;
+            allMpPoolData.priceInMarketReferenceCurrency =
+                dynamicData.priceInMarketReferenceCurrency;
+            allMpPoolData.lastUpdateTimestamp = dynamicData.lastUpdateTimestamp;
+            allMpPoolData.interestRateStrategyAddress = dynamicData.interestRateStrategyAddress;
+            allMpPoolData.id = dynamicData.id;
+        }
     }
 
     /**
@@ -406,6 +450,21 @@ contract Cod3xLendDataProvider is Ownable, ICod3xLendDataProvider {
         staticData = _getMpReserveStaticData(asset, miniPool);
     }
 
+    /**
+     * @notice Retrieves static configuration data for a given reserve in a mini pool.
+     * @param asset The address of the asset to retrieve data for
+     * @param miniPoolId The ID of the mini pool
+     * @return staticData Struct containing static reserve configuration data
+     */
+    function getMpReserveStaticData(address asset, uint256 miniPoolId)
+        external
+        view
+        miniPoolSet
+        returns (StaticData memory staticData)
+    {
+        staticData = _getMpReserveStaticData(asset, miniPoolAddressProvider.getMiniPool(miniPoolId));
+    }
+
     function _getMpReserveStaticData(address asset, address miniPool)
         internal
         view
@@ -413,6 +472,8 @@ contract Cod3xLendDataProvider is Ownable, ICod3xLendDataProvider {
     {
         DataTypes.ReserveConfigurationMap memory configuration =
             IMiniPool(miniPool).getConfiguration(asset);
+
+        staticData.symbol = IERC20Detailed(asset).symbol();
 
         (
             staticData.ltv,
@@ -430,28 +491,8 @@ contract Cod3xLendDataProvider is Ownable, ICod3xLendDataProvider {
             staticData.borrowingEnabled,
             staticData.flashloanEnabled
         ) = configuration.getFlagsMemory();
-    }
 
-    /**
-     * @notice Retrieves dynamic reserve data for a given asset in a mini pool.
-     * @param asset The address of the asset
-     * @param miniPoolId The ID of the mini pool
-     * @return dynamicData :
-     * - availableLiquidity - Current liquidity available
-     * - totalVariableDebt - Total outstanding variable debt
-     * - liquidityRate - Current liquidity rate
-     * - variableBorrowRate - Current variable borrow rate
-     * - liquidityIndex - Current liquidity index
-     * - variableBorrowIndex - Current variable borrow index
-     * - lastUpdateTimestamp - Last timestamp of reserve data update
-     */
-    function getMpReserveDynamicData(address asset, uint256 miniPoolId)
-        external
-        view
-        miniPoolSet
-        returns (DynamicData memory dynamicData)
-    {
-        return _getMpReserveDynamicData(asset, miniPoolAddressProvider.getMiniPool(miniPoolId));
+        staticData.usageAsCollateralEnabled = (staticData.ltv != 0) ? true : false;
     }
 
     /**
@@ -476,6 +517,28 @@ contract Cod3xLendDataProvider is Ownable, ICod3xLendDataProvider {
         return _getMpReserveDynamicData(asset, miniPool);
     }
 
+    /**
+     * @notice Retrieves dynamic reserve data for a given asset in a mini pool.
+     * @param asset The address of the asset
+     * @param miniPoolId The ID of the mini pool
+     * @return dynamicData :
+     * - availableLiquidity - Current liquidity available
+     * - totalVariableDebt - Total outstanding variable debt
+     * - liquidityRate - Current liquidity rate
+     * - variableBorrowRate - Current variable borrow rate
+     * - liquidityIndex - Current liquidity index
+     * - variableBorrowIndex - Current variable borrow index
+     * - lastUpdateTimestamp - Last timestamp of reserve data update
+     */
+    function getMpReserveDynamicData(address asset, uint256 miniPoolId)
+        external
+        view
+        miniPoolSet
+        returns (DynamicData memory dynamicData)
+    {
+        return _getMpReserveDynamicData(asset, miniPoolAddressProvider.getMiniPool(miniPoolId));
+    }
+
     function _getMpReserveDynamicData(address asset, address miniPool)
         internal
         view
@@ -486,6 +549,7 @@ contract Cod3xLendDataProvider is Ownable, ICod3xLendDataProvider {
 
         require(isReserveConfigured, Errors.DP_RESERVE_NOT_CONFIGURED);
 
+        dynamicData.interestRateStrategyAddress = reserve.interestRateStrategyAddress;
         dynamicData.availableLiquidity = IERC20Detailed(asset).balanceOf(reserve.aTokenAddress);
         dynamicData.totalVariableDebt =
             IAERC6909(reserve.aTokenAddress).scaledTotalSupply(reserve.variableDebtTokenID);
@@ -493,11 +557,34 @@ contract Cod3xLendDataProvider is Ownable, ICod3xLendDataProvider {
         dynamicData.variableBorrowRate = reserve.currentVariableBorrowRate;
         dynamicData.liquidityIndex = reserve.liquidityIndex;
         dynamicData.variableBorrowIndex = reserve.variableBorrowIndex;
+        dynamicData.priceInMarketReferenceCurrency =
+            IOracle(lendingPoolAddressProvider.getPriceOracle()).getAssetPrice(asset);
         dynamicData.lastUpdateTimestamp = reserve.lastUpdateTimestamp;
-        dynamicData.interestRateStrategyAddress = reserve.interestRateStrategyAddress;
         dynamicData.id = reserve.id;
 
         return dynamicData;
+    }
+
+    /**
+     * @dev Returns the addresses of multi tokens contracts, underlying reserves, aToken ids and debt token ids for a specific MiniPool.
+     * @param miniPool The address of the MiniPool from which the tokens are retrieved.
+     * @return aErc6909Token An array of addresses of all multi tokens contracts in the MiniPool.
+     * @return reserves An array of addresses of all underlying reserves in the MiniPool.
+     * @return aTokenIds An array of IDs for all aTokens in the MiniPool.
+     * @return variableDebtTokenIds An array of IDs for all variable debt tokens in the MiniPool.
+     */
+    function getMpAllTokenInfo(address miniPool)
+        external
+        view
+        miniPoolSet
+        returns (
+            address[] memory aErc6909Token,
+            address[] memory reserves,
+            uint256[] memory aTokenIds,
+            uint256[] memory variableDebtTokenIds
+        )
+    {
+        (aErc6909Token, reserves, aTokenIds, variableDebtTokenIds) = _getMpAllTokenInfo(miniPool);
     }
 
     /**
@@ -521,28 +608,6 @@ contract Cod3xLendDataProvider is Ownable, ICod3xLendDataProvider {
     {
         (aErc6909Token, reserves, aTokenIds, variableDebtTokenIds) =
             _getMpAllTokenInfo(miniPoolAddressProvider.getMiniPool(miniPoolId));
-    }
-
-    /**
-     * @dev Returns the addresses of multi tokens contracts, underlying reserves, aToken ids and debt token ids for a specific MiniPool.
-     * @param miniPool The address of the MiniPool from which the tokens are retrieved.
-     * @return aErc6909Token An array of addresses of all multi tokens contracts in the MiniPool.
-     * @return reserves An array of addresses of all underlying reserves in the MiniPool.
-     * @return aTokenIds An array of IDs for all aTokens in the MiniPool.
-     * @return variableDebtTokenIds An array of IDs for all variable debt tokens in the MiniPool.
-     */
-    function getMpAllTokenInfo(address miniPool)
-        external
-        view
-        miniPoolSet
-        returns (
-            address[] memory aErc6909Token,
-            address[] memory reserves,
-            uint256[] memory aTokenIds,
-            uint256[] memory variableDebtTokenIds
-        )
-    {
-        (aErc6909Token, reserves, aTokenIds, variableDebtTokenIds) = _getMpAllTokenInfo(miniPool);
     }
 
     function _getMpAllTokenInfo(address miniPool)

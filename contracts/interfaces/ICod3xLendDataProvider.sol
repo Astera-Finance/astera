@@ -25,6 +25,7 @@ struct MiniPoolUserReserveData {
 }
 
 struct StaticData {
+    string symbol;
     uint256 decimals;
     uint256 ltv;
     uint256 liquidationThreshold;
@@ -36,21 +37,28 @@ struct StaticData {
     bool flashloanEnabled;
     bool isActive;
     bool isFrozen;
+    bool usageAsCollateralEnabled;
 }
 
 struct DynamicData {
+    address interestRateStrategyAddress;
     uint256 availableLiquidity;
     uint256 totalVariableDebt;
     uint256 liquidityRate;
     uint256 variableBorrowRate;
     uint256 liquidityIndex;
     uint256 variableBorrowIndex;
+    uint256 priceInMarketReferenceCurrency;
     uint40 lastUpdateTimestamp;
-    address interestRateStrategyAddress;
     uint8 id;
 }
 
-struct AllPoolData {
+struct AllLpPoolData {
+    string symbol;
+    address reserve;
+    address aToken;
+    address debtToken;
+    address interestRateStrategyAddress;
     uint256 decimals;
     uint256 ltv;
     uint256 liquidationThreshold;
@@ -58,19 +66,51 @@ struct AllPoolData {
     uint256 cod3xReserveFactor;
     uint256 miniPoolOwnerReserveFactor;
     uint256 depositCap;
-    bool borrowingEnabled;
-    bool flashloanEnabled;
-    bool isActive;
-    bool isFrozen;
     uint256 availableLiquidity;
     uint256 totalVariableDebt;
     uint256 liquidityRate;
     uint256 variableBorrowRate;
     uint256 liquidityIndex;
     uint256 variableBorrowIndex;
+    uint256 priceInMarketReferenceCurrency;
     uint40 lastUpdateTimestamp;
-    address interestRateStrategyAddress;
     uint8 id;
+    bool reserveType;
+    bool borrowingEnabled;
+    bool flashloanEnabled;
+    bool isActive;
+    bool isFrozen;
+    bool usageAsCollateralEnabled;
+}
+
+struct AllMpPoolData {
+    string symbol;
+    address aErc6909Token;
+    address reserve;
+    address interestRateStrategyAddress;
+    uint256 aTokenId;
+    uint256 variableDebtTokenId;
+    uint256 decimals;
+    uint256 ltv;
+    uint256 liquidationThreshold;
+    uint256 liquidationBonus;
+    uint256 cod3xReserveFactor;
+    uint256 miniPoolOwnerReserveFactor;
+    uint256 depositCap;
+    uint256 availableLiquidity;
+    uint256 totalVariableDebt;
+    uint256 liquidityRate;
+    uint256 variableBorrowRate;
+    uint256 liquidityIndex;
+    uint256 variableBorrowIndex;
+    uint256 priceInMarketReferenceCurrency;
+    uint40 lastUpdateTimestamp;
+    uint8 id;
+    bool borrowingEnabled;
+    bool flashloanEnabled;
+    bool isActive;
+    bool isFrozen;
+    bool usageAsCollateralEnabled;
 }
 
 interface ICod3xLendDataProvider {
@@ -79,15 +119,16 @@ interface ICod3xLendDataProvider {
     function setMiniPoolAddressProvider(address _miniPoolAddressProvider) external;
 
     /* -------------- Lending Pool providers--------------*/
-    function getAllLpData(address asset, bool reserveType)
-        external
-        view
-        returns (AllPoolData memory allPoolData);
+    /**
+     * @notice Retrieves all data for a given asset in a main pool.
+     * @return allLpPoolDataList all data related to main pool
+     */
+    function getAllLpData() external view returns (AllLpPoolData[] memory allLpPoolDataList);
 
     /**
      * @notice Retrieves static configuration data for a given reserve in the lending pool.
      * @param asset The address of the asset to retrieve data for
-     * @param reserveType The type of reserve (true for type A, false for type B)
+     * @param reserveType The type of reserve
      * @return staticData Struct containing static reserve configuration data
      */
     function getLpReserveStaticData(address asset, bool reserveType)
@@ -98,7 +139,7 @@ interface ICod3xLendDataProvider {
     /**
      * @notice Retrieves dynamic reserve data for a given asset in the lending pool.
      * @param asset The address of the asset
-     * @param reserveType The type of reserve (true for type A, false for type B)
+     * @param reserveType The type of reserve
      * @return dynamicData :
      * - availableLiquidity - Current liquidity available
      * - totalVariableDebt - Total outstanding variable debt
@@ -115,13 +156,20 @@ interface ICod3xLendDataProvider {
 
     /**
      * @notice Retrieves the addresses of all aTokens and debt tokens in the lending pool.
+     * @return reserves Array of pool reserves
+     * @return reserveTypes Array of the reserve types
      * @return aTokens Array of aToken addresses
      * @return debtTokens Array of debt token addresses
      */
-    function getLpAllTokens()
+    function getAllLpTokens()
         external
         view
-        returns (address[] memory aTokens, address[] memory debtTokens);
+        returns (
+            address[] memory reserves,
+            bool[] memory reserveTypes,
+            address[] memory aTokens,
+            address[] memory debtTokens
+        );
 
     function getLpTokens(address asset, bool reserveType)
         external
@@ -172,10 +220,25 @@ interface ICod3xLendDataProvider {
         );
 
     /*------ Mini Pool data providers ------*/
-    function getAllMpData(address asset, address miniPool)
+    /**
+     * @notice Retrieves dynamic reserve data for a given asset in a mini pool.
+     * @param miniPool The address of the mini pool
+     * @return allMpPoolDataList all data related to mini pool
+     */
+    function getAllMpData(address miniPool)
         external
         view
-        returns (AllPoolData memory allPoolData);
+        returns (AllMpPoolData[] memory allMpPoolDataList);
+
+    /**
+     * @notice Retrieves dynamic reserve data for a given asset in a mini pool.
+     * @param miniPoolId The ID of the mini pool
+     * @return allMpPoolDataList all data related to mini pool
+     */
+    function getAllMpData(uint256 miniPoolId)
+        external
+        view
+        returns (AllMpPoolData[] memory allMpPoolDataList);
 
     /**
      * @notice Retrieves static configuration data for a given reserve in a mini pool.
@@ -237,6 +300,24 @@ interface ICod3xLendDataProvider {
 
     /**
      * @dev Returns the addresses of multi tokens contracts, underlying reserves, aToken ids and debt token ids for a specific MiniPool.
+     * @param miniPool The address of the MiniPool from which the tokens are retrieved.
+     * @return aErc6909Token An array of addresses of all multi tokens contracts in the MiniPool.
+     * @return reserves An array of addresses of all underlying reserves in the MiniPool.
+     * @return aTokenIds An array of IDs for all aTokens in the MiniPool.
+     * @return variableDebtTokenIds An array of IDs for all variable debt tokens in the MiniPool.
+     */
+    function getMpAllTokenInfo(address miniPool)
+        external
+        view
+        returns (
+            address[] memory aErc6909Token,
+            address[] memory reserves,
+            uint256[] memory aTokenIds,
+            uint256[] memory variableDebtTokenIds
+        );
+
+    /**
+     * @dev Returns the addresses of multi tokens contracts, underlying reserves, aToken ids and debt token ids for a specific MiniPool.
      * @param miniPoolId The ID of the MiniPool from which the tokens are retrieved.
      * @return aErc6909Token An array of addresses of all multi tokens contracts in the MiniPool.
      * @return reserves An array of addresses of all underlying reserves in the MiniPool.
@@ -256,6 +337,17 @@ interface ICod3xLendDataProvider {
     /**
      * @dev Returns all aToken and debt token data and balances for a user in a specified MiniPool.
      * @param user The address of the user for whom the data is being retrieved.
+     * @param miniPool The address of the MiniPool from which the user's data is retrieved.
+     * @return userReservesData An array of `MiniPoolUserReserveData` structures containing the user's reserve data.
+     */
+    function getAllMpUserData(address user, address miniPool)
+        external
+        view
+        returns (MiniPoolUserReserveData[] memory userReservesData);
+
+    /**
+     * @dev Returns all aToken and debt token data and balances for a user in a specified MiniPool.
+     * @param user The address of the user for whom the data is being retrieved.
      * @param miniPoolId The ID of the MiniPool from which the user's data is retrieved.
      * @return userReservesData An array of `MiniPoolUserReserveData` structures containing the user's reserve data.
      */
@@ -267,6 +359,17 @@ interface ICod3xLendDataProvider {
     /**
      * @dev Returns all aToken and debt token data and balances for a user in a specified MiniPool.
      * @param user The address of the user for whom the data is being retrieved.
+     * @param miniPool The address of the MiniPool from which the user's data is retrieved.
+     * @return userReservesData An array of `MiniPoolUserReserveData` structures containing the user's reserve data.
+     */
+    function getMpUserData(address user, address miniPool, address reserve)
+        external
+        view
+        returns (MiniPoolUserReserveData memory userReservesData);
+
+    /**
+     * @dev Returns all aToken and debt token data and balances for a user in a specified MiniPool.
+     * @param user The address of the user for whom the data is being retrieved.
      * @param miniPoolId The ID of the MiniPool from which the user's data is retrieved.
      * @return userReservesData An array of `MiniPoolUserReserveData` structures containing the user's reserve data.
      */
@@ -274,6 +377,31 @@ interface ICod3xLendDataProvider {
         external
         view
         returns (MiniPoolUserReserveData memory userReservesData);
+
+    /**
+     * @notice Returns the overall account data for a user in a specified MiniPool.
+     *      Includes metrics such as collateral, debt, borrowing power, and health factor.
+     * @dev Idea is to have everything in the same contract, but the same function might be found in the LendingPool
+     * @param user The address of the user for whom the account data is retrieved.
+     * @param miniPool The address of the MiniPool from which the user's account data is retrieved.
+     * @return totalCollateralETH The total collateral amount in ETH.
+     * @return totalDebtETH The total debt amount in ETH.
+     * @return availableBorrowsETH The amount available for borrowing in ETH.
+     * @return currentLiquidationThreshold The current liquidation threshold as a percentage.
+     * @return ltv The current loan-to-value (LTV) ratio for the user's account.
+     * @return healthFactor The current health factor of the user's account.
+     */
+    function getMpUserAccountData(address user, address miniPool)
+        external
+        view
+        returns (
+            uint256 totalCollateralETH,
+            uint256 totalDebtETH,
+            uint256 availableBorrowsETH,
+            uint256 currentLiquidationThreshold,
+            uint256 ltv,
+            uint256 healthFactor
+        );
 
     /**
      * @notice Returns the overall account data for a user in a specified MiniPool.
@@ -313,6 +441,17 @@ interface ICod3xLendDataProvider {
     /**
      * @dev Returns the underlying balance of a specified ERC6909 token in a MiniPool.
      * @param tokenId The ID of the ERC6909 token for which the balance is calculated.
+     * @param miniPool The address of the MiniPool where the token's balance is calculated.
+     * @return underlyingBalance The underlying balance of the specified token in the specified MiniPool.
+     */
+    function getMpUnderlyingBalanceOf(uint256 tokenId, address miniPool)
+        external
+        view
+        returns (uint256 underlyingBalance);
+
+    /**
+     * @dev Returns the underlying balance of a specified ERC6909 token in a MiniPool.
+     * @param tokenId The ID of the ERC6909 token for which the balance is calculated.
      * @param miniPoolId The ID of the MiniPool where the token's balance is calculated.
      * @return underlyingBalance The underlying balance of the specified token in the specified MiniPool.
      */
@@ -320,6 +459,17 @@ interface ICod3xLendDataProvider {
         external
         view
         returns (uint256 underlyingBalance);
+
+    /**
+     * @dev Returns the address of the underlying asset for a specified ERC6909 token in a MiniPool.
+     * @param tokenId The ID of the ERC6909 token for which the underlying asset address is retrieved.
+     * @param miniPool The address of the MiniPool where the token's underlying asset is located.
+     * @return underlyingAsset The address of the underlying asset.
+     */
+    function getUnderlyingAssetFromId(uint256 tokenId, address miniPool)
+        external
+        view
+        returns (address underlyingAsset);
 
     /**
      * @dev Returns the address of the underlying asset for a specified ERC6909 token in a MiniPool.
@@ -346,7 +496,7 @@ interface ICod3xLendDataProvider {
     /**
      * @dev Gets remaining flow from main pool for specified mini pool.
      * @param asset The address of the reserve to check for availability.
-     * @param miniPool The ID of the MiniPool where the reserve's availability is checked.
+     * @param miniPool The address of the MiniPool where the reserve's availability is checked.
      * @return remainingFlow The address of the MiniPool being checked.
      */
     function getMpRemainingFlow(address asset, address miniPool)

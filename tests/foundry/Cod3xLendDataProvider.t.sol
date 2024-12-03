@@ -209,8 +209,8 @@ contract Cod3xLendDataProviderTest is MiniPoolFixtures {
             console.log("lastUpdateTimestamp ", dynamicData.lastUpdateTimestamp);
         }
         {
-            (address[] memory aTokens, address[] memory debtTokens) =
-                deployedContracts.cod3xLendDataProvider.getLpAllTokens();
+            (,, address[] memory aTokens, address[] memory debtTokens) =
+                deployedContracts.cod3xLendDataProvider.getAllLpTokens();
             for (uint256 idx = 0; idx < aTokens.length; idx++) {
                 console.log(
                     "%sa. Address: %s (%s)", idx, aTokens[idx], ERC20(aTokens[idx]).symbol()

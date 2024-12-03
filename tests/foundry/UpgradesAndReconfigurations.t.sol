@@ -178,7 +178,7 @@ contract UpgradesAndReconfigurationsTest is MiniPoolFixtures {
             fixture_depositAndBorrow(collateralType, borrowType, user, address(this), amount);
 
         /* Checks */
-        (address[] memory aTokens,) = deployedContracts.cod3xLendDataProvider.getLpAllTokens();
+        (,, address[] memory aTokens,) = deployedContracts.cod3xLendDataProvider.getAllLpTokens();
         DynamicData[] memory dynamicDataBefore = new DynamicData[](aTokens.length);
         for (uint8 idx; idx < aTokens.length; idx++) {
             console.log(
@@ -333,17 +333,20 @@ contract UpgradesAndReconfigurationsTest is MiniPoolFixtures {
         {
             MiniPoolV2 mpv2 = new MiniPoolV2();
             ATokenERC6909V2 erc6909v2 = new ATokenERC6909V2();
+            vm.startPrank(address(miniPoolContracts.miniPoolAddressesProvider));
             address previousMiniPoolImpl = InitializableImmutableAdminUpgradeabilityProxy(
                 payable(miniPoolContracts.miniPoolAddressesProvider.getMiniPool(0))
             ).implementation();
             address previousAErc6909Impl = InitializableImmutableAdminUpgradeabilityProxy(
                 payable(miniPoolContracts.miniPoolAddressesProvider.getAToken6909(0))
             ).implementation();
+            vm.stopPrank();
             miniPoolContracts.miniPoolAddressesProvider.setMiniPoolImpl(address(mpv2), 0);
             miniPoolContracts.miniPoolAddressesProvider.setAToken6909Impl(address(erc6909v2), 0);
             miniPoolContracts.miniPoolImpl = MiniPool(address(mpv2));
 
             /* Check if addresses are updated */
+            vm.startPrank(address(miniPoolContracts.miniPoolAddressesProvider));
             assertNotEq(
                 InitializableImmutableAdminUpgradeabilityProxy(
                     payable(miniPoolContracts.miniPoolAddressesProvider.getMiniPool(0))
@@ -356,6 +359,7 @@ contract UpgradesAndReconfigurationsTest is MiniPoolFixtures {
                 ).implementation(),
                 previousAErc6909Impl
             );
+            vm.stopPrank();
         }
 
         /* 1. Storage data shouldn't be affected by the upgrade */
