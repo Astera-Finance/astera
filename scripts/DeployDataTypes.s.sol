@@ -72,6 +72,8 @@ struct General {
     string aTokenSymbolPrefix;
     string debtTokenNamePrefix;
     string debtTokenSymbolPrefix;
+    address marketReferenceCurrencyAggregator;
+    address networkBaseTokenAggregator;
     address treasury;
 }
 
@@ -171,4 +173,10 @@ struct Rehypothecation {
     string symbol;
     address tokenAddress;
     address vault;
+}
+
+struct DataProvider {
+    bool deploy;
+    address marketReferenceCurrencyAggregator;
+    address networkBaseTokenAggregator;
 }

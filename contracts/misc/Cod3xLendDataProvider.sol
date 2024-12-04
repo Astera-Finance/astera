@@ -26,9 +26,11 @@ import {
     UserReserveData,
     MiniPoolUserReserveData,
     AllLpPoolData,
-    AllMpPoolData
+    AllMpPoolData,
+    BaseCurrencyInfo
 } from "../../contracts/interfaces/ICod3xLendDataProvider.sol";
 import {IOracle} from "../../contracts/interfaces/IOracle.sol";
+import {IChainlinkAggregator} from "../../contracts/interfaces/base/IChainlinkAggregator.sol";
 
 /**
  * @title Cod3xLendDataProvider
@@ -50,12 +52,25 @@ contract Cod3xLendDataProvider is Ownable, ICod3xLendDataProvider {
         _;
     }
 
+    uint256 constant ETH_CURRENCY_UNIT = 1 ether;
+
     /// @notice The address provider for the Lending Pool
     ILendingPoolAddressesProvider public lendingPoolAddressProvider;
     /// @notice The address provider for the Mini Pool
     IMiniPoolAddressesProvider public miniPoolAddressProvider;
 
-    constructor() Ownable(msg.sender) {}
+    IChainlinkAggregator public immutable networkBaseTokenPriceInUsdProxyAggregator;
+    IChainlinkAggregator public immutable marketReferenceCurrencyPriceInUsdProxyAggregator;
+
+    constructor(
+        address _networkBaseTokenPriceInUsdProxyAggregator,
+        address _marketReferenceCurrencyPriceInUsdProxyAggregator
+    ) Ownable(msg.sender) {
+        networkBaseTokenPriceInUsdProxyAggregator =
+            IChainlinkAggregator(_networkBaseTokenPriceInUsdProxyAggregator);
+        marketReferenceCurrencyPriceInUsdProxyAggregator =
+            IChainlinkAggregator(_marketReferenceCurrencyPriceInUsdProxyAggregator);
+    }
 
     /*------ Lending Pool data providers ------*/
 
@@ -84,6 +99,8 @@ contract Cod3xLendDataProvider is Ownable, ICod3xLendDataProvider {
             address[] memory aTokens,
             address[] memory debtTokens
         ) = getAllLpTokens();
+
+        allLpPoolDataList = new AllLpPoolData[](reserves.length);
 
         for (uint256 idx = 0; idx < reserves.length; idx++) {
             AllLpPoolData memory allLpPoolData = allLpPoolDataList[idx];
@@ -402,6 +419,8 @@ contract Cod3xLendDataProvider is Ownable, ICod3xLendDataProvider {
             uint256[] memory variableDebtTokenIds
         ) = _getMpAllTokenInfo(miniPool);
 
+        allMpPoolDataList = new AllMpPoolData[](reserves.length);
+
         for (uint256 idx = 0; idx < reserves.length; idx++) {
             AllMpPoolData memory allMpPoolData = allMpPoolDataList[idx];
             allMpPoolData.aErc6909Token = aErc6909Token[idx];
@@ -558,7 +577,7 @@ contract Cod3xLendDataProvider is Ownable, ICod3xLendDataProvider {
         dynamicData.liquidityIndex = reserve.liquidityIndex;
         dynamicData.variableBorrowIndex = reserve.variableBorrowIndex;
         dynamicData.priceInMarketReferenceCurrency =
-            IOracle(lendingPoolAddressProvider.getPriceOracle()).getAssetPrice(asset);
+            IOracle(lendingPoolAddressProvider.getPriceOracle()).getAssetPrice(asset); //Oracle is the same so can be retrieved from main pool
         dynamicData.lastUpdateTimestamp = reserve.lastUpdateTimestamp;
         dynamicData.id = reserve.id;
 
@@ -992,16 +1011,41 @@ contract Cod3xLendDataProvider is Ownable, ICod3xLendDataProvider {
         return ((data.aTokenAddress == address(0) ? false : true), data);
     }
 
-    /* Copied from previous UI provider */
-    function bytes32ToString(bytes32 _bytes32) public pure returns (string memory) {
-        uint8 i = 0;
-        while (i < 32 && _bytes32[i] != 0) {
-            i++;
+    function getBaseCurrencyInfo()
+        external
+        view
+        returns (BaseCurrencyInfo memory baseCurrencyInfo)
+    {
+        baseCurrencyInfo.networkBaseTokenPriceInUsd =
+            networkBaseTokenPriceInUsdProxyAggregator.latestAnswer();
+        baseCurrencyInfo.networkBaseTokenPriceDecimals =
+            networkBaseTokenPriceInUsdProxyAggregator.decimals();
+        IOracle oracle = IOracle(lendingPoolAddressProvider.getPriceOracle()); //Oracle is the same so can be retrieved only from main pool
+        try oracle.BASE_CURRENCY_UNIT() returns (uint256 baseCurrencyUnit) {
+            if (ETH_CURRENCY_UNIT == baseCurrencyUnit) {
+                baseCurrencyInfo.marketReferenceCurrencyUnit = ETH_CURRENCY_UNIT;
+                // baseCurrencyInfo.marketReferenceCurrencyPriceInUsd =
+                //     marketReferenceCurrencyPriceInUsdProxyAggregator.latestAnswer();
+            } else {
+                baseCurrencyInfo.marketReferenceCurrencyUnit = baseCurrencyUnit;
+                // baseCurrencyInfo.marketReferenceCurrencyPriceInUsd = int256(baseCurrencyUnit);
+            }
+        } catch (bytes memory) /*lowLevelData*/ {
+            baseCurrencyInfo.marketReferenceCurrencyUnit = ETH_CURRENCY_UNIT;
+            // baseCurrencyInfo.marketReferenceCurrencyPriceInUsd =
+            //     marketReferenceCurrencyPriceInUsdProxyAggregator.latestAnswer();
         }
-        bytes memory bytesArray = new bytes(i);
-        for (i = 0; i < 32 && _bytes32[i] != 0; i++) {
-            bytesArray[i] = _bytes32[i];
-        }
-        return string(bytesArray);
+        (uint80 roundId, int256 price, uint256 startedAt, uint256 timestamp,) =
+            marketReferenceCurrencyPriceInUsdProxyAggregator.latestRoundData();
+
+        require(
+            (
+                roundId == 0 || timestamp == 0 || timestamp > block.timestamp || price <= 0
+                    || startedAt == 0
+            ),
+            Errors.O_PRICE_FEED_INCONSISTENCY
+        );
+
+        baseCurrencyInfo.marketReferenceCurrencyPriceInUsd = price;
     }
 }

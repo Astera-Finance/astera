@@ -54,7 +54,7 @@ contract DeploymentUtils {
         PoolReserversConfig[] memory _poolReserversConfig,
         address deployer
     ) public {
-        _deployLendingPoolContracts(deployer);
+        _deployLendingPoolContracts(deployer, _general);
 
         _deployStrategies(
             contracts.lendingPoolAddressesProvider, _volatileStrats, _stableStrats, _piStrategies
@@ -210,7 +210,7 @@ contract DeploymentUtils {
         // contracts.treasury = new Treasury(lendingPoolAddressesProvider);
     }
 
-    function _deployLendingPoolContracts(address deployer) internal {
+    function _deployLendingPoolContracts(address deployer, General memory general) internal {
         contracts.lendingPoolAddressesProvider = new LendingPoolAddressesProvider();
         console.log("provider's owner: ", contracts.lendingPoolAddressesProvider.owner());
 
@@ -240,7 +240,9 @@ contract DeploymentUtils {
         contracts.lendingPoolAddressesProvider.setPoolAdmin(deployer);
 
         contracts.lendingPoolAddressesProvider.setPriceOracle(address(contracts.oracle));
-        contracts.cod3xLendDataProvider = new Cod3xLendDataProvider();
+        contracts.cod3xLendDataProvider = new Cod3xLendDataProvider(
+            general.networkBaseTokenAggregator, general.marketReferenceCurrencyAggregator
+        );
         contracts.cod3xLendDataProvider.setLendingPoolAddressProvider(
             address(contracts.lendingPoolAddressesProvider)
         );

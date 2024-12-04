@@ -53,6 +53,13 @@ struct DynamicData {
     uint8 id;
 }
 
+struct BaseCurrencyInfo {
+    uint256 marketReferenceCurrencyUnit;
+    int256 marketReferenceCurrencyPriceInUsd;
+    int256 networkBaseTokenPriceInUsd;
+    uint8 networkBaseTokenPriceDecimals;
+}
+
 struct AllLpPoolData {
     string symbol;
     address reserve;
@@ -528,6 +535,8 @@ interface ICod3xLendDataProvider {
         view
         returns (bool isConfigured, DataTypes.MiniPoolReserveData memory data);
 
-    /* Copied from previous UI provider */
-    function bytes32ToString(bytes32 _bytes32) external pure returns (string memory);
+    function getBaseCurrencyInfo()
+        external
+        view
+        returns (BaseCurrencyInfo memory baseCurrencyInfo);
 }

@@ -68,7 +68,8 @@ contract ChangePeripherials is Script, DeploymentUtils, Test {
             abi.decode(config.parseRaw(".rehypothecation"), (Rehypothecation[]));
 
         uint256 miniPoolId = config.readUint(".miniPoolId");
-        bool deployCod3xLendDataProvider = config.readBool(".deployCod3xLendDataProvider");
+        DataProvider memory cod3xLendDataProvider =
+            abi.decode(config.parseRaw(".cod3xLendDataProvider"), (DataProvider));
 
         require(treasury.length == rehypothecation.length, "Lengths settings must be the same");
 
@@ -92,8 +93,12 @@ contract ChangePeripherials is Script, DeploymentUtils, Test {
                 treasury, miniPoolCod3xTreasury, vault, rewarder, rewarder6909, miniPoolId
             );
             _turnOnRehypothecation(rehypothecation);
-            if (deployCod3xLendDataProvider) {
-                contracts.cod3xLendDataProvider = new Cod3xLendDataProvider();
+            /* Data Provider */
+            if (cod3xLendDataProvider.deploy) {
+                contracts.cod3xLendDataProvider = new Cod3xLendDataProvider(
+                    cod3xLendDataProvider.networkBaseTokenAggregator,
+                    cod3xLendDataProvider.marketReferenceCurrencyAggregator
+                );
                 contracts.cod3xLendDataProvider.setLendingPoolAddressProvider(
                     lendingPoolAddressesProvider
                 );
@@ -178,8 +183,12 @@ contract ChangePeripherials is Script, DeploymentUtils, Test {
                 treasury, miniPoolCod3xTreasury, vault, rewarder, rewarder6909, miniPoolId
             );
             _turnOnRehypothecation(rehypothecation);
-            if (deployCod3xLendDataProvider) {
-                contracts.cod3xLendDataProvider = new Cod3xLendDataProvider();
+            /* Data Provider */
+            if (cod3xLendDataProvider.deploy) {
+                contracts.cod3xLendDataProvider = new Cod3xLendDataProvider(
+                    cod3xLendDataProvider.networkBaseTokenAggregator,
+                    cod3xLendDataProvider.marketReferenceCurrencyAggregator
+                );
                 contracts.cod3xLendDataProvider.setLendingPoolAddressProvider(
                     lendingPoolAddressesProvider
                 );
@@ -219,8 +228,12 @@ contract ChangePeripherials is Script, DeploymentUtils, Test {
                 treasury, miniPoolCod3xTreasury, vault, rewarder, rewarder6909, miniPoolId
             );
             _turnOnRehypothecation(rehypothecation);
-            if (deployCod3xLendDataProvider) {
-                contracts.cod3xLendDataProvider = new Cod3xLendDataProvider();
+            /* Data Provider */
+            if (cod3xLendDataProvider.deploy) {
+                contracts.cod3xLendDataProvider = new Cod3xLendDataProvider(
+                    cod3xLendDataProvider.networkBaseTokenAggregator,
+                    cod3xLendDataProvider.marketReferenceCurrencyAggregator
+                );
                 contracts.cod3xLendDataProvider.setLendingPoolAddressProvider(
                     lendingPoolAddressesProvider
                 );

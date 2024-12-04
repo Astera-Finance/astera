@@ -164,6 +164,9 @@ contract Common is Test {
     address constant WETH_WHALE = 0x240F670a93e7DAC470d22722Aba5f7ff8915c5f2;
     address constant DAI_WHALE = 0x1eED63EfBA5f81D95bfe37d82C8E736b974F477b;
 
+    address constant ETH_USD_SOURCE = 0xb7B9A39CC63f856b90B364911CC324dC46aC1770;
+    address constant USDC_USD_SOURCE = 0x16a9FA2FDa030272Ce99B29CF780dFA30361E0f3;
+
     /* Utilization rate targeted by the model, beyond the variable interest rate rises sharply */
     uint256 constant VOLATILE_OPTIMAL_UTILIZATION_RATE = 0.45e27;
     uint256 constant STABLE_OPTIMAL_UTILIZATION_RATE = 0.8e27;
@@ -320,7 +323,8 @@ contract Common is Test {
         fixture_deployMocks(address(deployedContracts.treasury));
         deployedContracts.lendingPoolAddressesProvider.setPriceOracle(address(oracle));
         vm.label(address(oracle), "Oracle");
-        deployedContracts.cod3xLendDataProvider = new Cod3xLendDataProvider();
+        deployedContracts.cod3xLendDataProvider =
+            new Cod3xLendDataProvider(ETH_USD_SOURCE, USDC_USD_SOURCE);
         deployedContracts.cod3xLendDataProvider.setLendingPoolAddressProvider(
             address(deployedContracts.lendingPoolAddressesProvider)
         );
