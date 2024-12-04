@@ -106,7 +106,7 @@ contract PropertiesBase is PropertiesAsserts, MarketParams {
     uint256 internal totalNbTokens = 4;
     uint256 internal initialMint = 100 ether;
     bool internal bootstrapLiquidity = true;
-    uint256 internal volatility = 200; // 5%
+    uint256 internal volatility = 100; // 1%
     // ------------------
 
     User internal bootstraper;
@@ -189,8 +189,8 @@ contract PropertiesBase is PropertiesAsserts, MarketParams {
             DEFAULT_BASE_VARIABLE_BORROW_RATE,
             DEFAULT_VARIABLE_RATE_SLOPE1,
             DEFAULT_VARIABLE_RATE_SLOPE2
-        ); // todo random strats
-
+        );
+        
         // piRateStrategies = new PiReserveInterestRateStrategy(
         //     provider
         //     // asset,

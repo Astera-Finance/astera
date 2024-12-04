@@ -17,9 +17,14 @@ You can fine in `/echidna` 3 config files to run the fuzzer:
 
 # TODO
 
-- Improve the bootstraping with users setup with coherante positions.
+- Randomly activate rehypothecation on lendingpool reserves.
+- Improve the tryLiquidate function and uncomment usersSolvencyCheck.
+- Random PI IR strategies for reserves.
 - Implemente all "To implement" invariants.
 - Fix all todos in the echidna/codebase.
+- Add minipools.
+- Randomly activation flow borrowing on minipools
+- Add rewarders.
 
 # Invariant testing
 
@@ -49,7 +54,7 @@ You can fine in `/echidna` 3 config files to run the fuzzer:
 213. ✅ `setUseReserveAsCollateral` must not reduce the health factor below 1.
 214. ✅ Users must not be able to steal funds from flashloans.
 215. ✅ The total value borrowed must always be less than the value of the collaterals.
-216. ✅ Each user postions must remain solvent.
+216. 🚧 Each user postions must remain solvent.
 217. ✅ The `liquidityIndex` should monotonically increase when there's total debt.
 218. ✅ The `variableBorrowIndex` should monotonically increase when there's total debt.
 219. ✅ A user with debt should have at least an aToken balance `setUsingAsCollateral`.

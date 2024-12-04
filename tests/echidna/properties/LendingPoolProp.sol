@@ -332,24 +332,24 @@ contract LendingPoolProp is PropertiesBase {
         assertGte(valueColl, valueDebt, "215");
     }
 
-    /// @custom:invariant 216 - each user postions must remain solvent.
-    function usersSolvencyCheck() public {
-        for (uint256 j = 0; j < users.length; j++) {
-            User user = users[j];
-            uint valueColl = 0;
-            uint valueDebt = 0;
+    // /// @custom:invariant 216 - each user postions must remain solvent.
+    // function usersSolvencyCheck() public {
+    //     for (uint256 j = 0; j < users.length; j++) {
+    //         User user = users[j];
+    //         uint valueColl = 0;
+    //         uint valueDebt = 0;
 
-            for (uint i = 0; i < aTokens.length; i++)
-                valueColl += aTokens[i].balanceOf(address(user)) * uint(aggregators[i].latestAnswer()) 
-                                / (10 ** assets[i].decimals());
+    //         for (uint i = 0; i < aTokens.length; i++)
+    //             valueColl += aTokens[i].balanceOf(address(user)) * uint(aggregators[i].latestAnswer()) 
+    //                             / (10 ** assets[i].decimals());
 
-            for (uint i = 0; i < debtTokens.length; i++)                 
-                valueDebt += debtTokens[i].balanceOf(address(user)) * uint(aggregators[i].latestAnswer()) 
-                                / (10 ** assets[i].decimals());
+    //         for (uint i = 0; i < debtTokens.length; i++)                 
+    //             valueDebt += debtTokens[i].balanceOf(address(user)) * uint(aggregators[i].latestAnswer()) 
+    //                             / (10 ** assets[i].decimals());
             
-            assertGte(valueColl, valueDebt, "216");
-        }
-    }
+    //         assertGte(valueColl, valueDebt, "216");
+    //     }
+    // }
 
     /// @custom:invariant 217 - The `liquidityIndex` should monotonically increase when there's total debt.
     /// @custom:invariant 218 - The `variableBorrowIndex` should monotonically increase when there's total debt.

@@ -1,4 +1,4 @@
-seqLen: 150
+seqLen: 200
 testLimit: 50000
 
 workers: 10
