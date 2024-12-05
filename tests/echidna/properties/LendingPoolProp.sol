@@ -13,7 +13,7 @@ contract LendingPoolProp is PropertiesBase {
     /// @custom:invariant 200 - Users must always be able to deposit in normal condition.
     /// @custom:invariant 201 - `deposit()` must increase the user aToken balance by `amount`.
     /// @custom:invariant 202 - `deposit()` must decrease the user asset balance by `amount`.
-    function randDeposit(LocalVars_UPTL memory vul, uint seedUser, uint seedOnBeHalfOf, uint seedAsset, uint seedAmt) public {
+    function randDeposit(LocalVars_UPTL memory vul, uint8 seedUser, uint8 seedOnBeHalfOf, uint8 seedAsset, uint128 seedAmt) public {
         randUpdatePriceAndTryLiquidate(vul);
         
         uint randUser = clampBetween(seedUser, 0 ,totalNbUsers);
@@ -50,7 +50,7 @@ contract LendingPoolProp is PropertiesBase {
 
     /// @custom:invariant 203 - `withdraw()` must decrease the user aToken balance by `amount`.
     /// @custom:invariant 204 - `withdraw()` must increase the user asset balance by `amount`.
-    function randWithdraw(LocalVars_UPTL memory vul, uint seedUser, uint seedTo, uint seedAsset, uint seedAmt) public {
+    function randWithdraw(LocalVars_UPTL memory vul, uint8 seedUser, uint8 seedTo, uint8 seedAsset, uint128 seedAmt) public {
         randUpdatePriceAndTryLiquidate(vul);
 
         uint randUser = clampBetween(seedUser, 0 ,totalNbUsers);
@@ -90,7 +90,7 @@ contract LendingPoolProp is PropertiesBase {
     /// @custom:invariant 207 - `borrow()` must not result in a health factor of less than 1.
     /// @custom:invariant 208 - `borrow()` must increase the user debtToken balance by `amount`.
     /// @custom:invariant 209 - `borrow()` must decrease `borrowAllowance()` by `amount` if `user != onBehalf`.
-    function randBorrow(LocalVars_UPTL memory vul, uint seedUser, uint seedOnBeHalfOf, uint seedAsset, uint seedAmt) public {
+    function randBorrow(LocalVars_UPTL memory vul, uint8 seedUser, uint8 seedOnBeHalfOf, uint8 seedAsset, uint128 seedAmt) public {
         randUpdatePriceAndTryLiquidate(vul);
 
         uint randUser = clampBetween(seedUser, 0 ,totalNbUsers);
@@ -155,7 +155,7 @@ contract LendingPoolProp is PropertiesBase {
     /// @custom:invariant 210 - `repay()` must decrease the onBehalfOf debtToken balance by `amount`.
     /// @custom:invariant 211 - `repay()` must decrease the user asset balance by `amount`.
     /// @custom:invariant 212 - `healthFactorAfter` must be greater than `healthFactorBefore`.
-    function randRepay(LocalVars_UPTL memory vul, uint seedUser, uint seedOnBeHalfOf, uint seedAsset, uint seedAmt) public {
+    function randRepay(LocalVars_UPTL memory vul, uint8 seedUser, uint8 seedOnBeHalfOf, uint8 seedAsset, uint128 seedAmt) public {
         randUpdatePriceAndTryLiquidate(vul);
 
         uint randUser = clampBetween(seedUser, 0 ,totalNbUsers);
@@ -197,7 +197,7 @@ contract LendingPoolProp is PropertiesBase {
     }
     
     /// @custom:invariant 213 - `setUseReserveAsCollateral` must not reduce the health factor below 1.
-    function randSetUseReserveAsCollateral(LocalVars_UPTL memory vul, uint seedUser, uint seedAsset, bool randIsColl) public {
+    function randSetUseReserveAsCollateral(LocalVars_UPTL memory vul, uint8 seedUser, uint8 seedAsset, bool randIsColl) public {
         randUpdatePriceAndTryLiquidate(vul);
 
         uint randUser = clampBetween(seedUser, 0 ,totalNbUsers);
@@ -250,7 +250,7 @@ contract LendingPoolProp is PropertiesBase {
     }
 
     /// @custom:invariant 214 - Users must not be able to steal funds from flashloans.
-    function randFlashloan(LocalVars_UPTL memory vul, uint seedUser, uint seedAsset, uint seedMode, uint seedNbAssetFl, uint seedAmt) public {
+    function randFlashloan(LocalVars_UPTL memory vul, uint8 seedUser, uint8 seedAsset/* , uint8 seedMode */, uint8 seedNbAssetFl, uint128 seedAmt) public {
         randUpdatePriceAndTryLiquidate(vul);
         
         LocalVars_RandFlashloan memory v;
@@ -332,24 +332,24 @@ contract LendingPoolProp is PropertiesBase {
         assertGte(valueColl, valueDebt, "215");
     }
 
-    // /// @custom:invariant 216 - each user postions must remain solvent.
-    // function usersSolvencyCheck() public {
-    //     for (uint256 j = 0; j < users.length; j++) {
-    //         User user = users[j];
-    //         uint valueColl = 0;
-    //         uint valueDebt = 0;
+    /// @custom:invariant 216 - each user postions must remain solvent.
+    function usersSolvencyCheck() public {
+        for (uint256 j = 0; j < users.length; j++) {
+            User user = users[j];
+            uint valueColl = 0;
+            uint valueDebt = 0;
 
-    //         for (uint i = 0; i < aTokens.length; i++)
-    //             valueColl += aTokens[i].balanceOf(address(user)) * uint(aggregators[i].latestAnswer()) 
-    //                             / (10 ** assets[i].decimals());
+            for (uint i = 0; i < aTokens.length; i++)
+                valueColl += aTokens[i].balanceOf(address(user)) * uint(aggregators[i].latestAnswer()) 
+                                / (10 ** assets[i].decimals());
 
-    //         for (uint i = 0; i < debtTokens.length; i++)                 
-    //             valueDebt += debtTokens[i].balanceOf(address(user)) * uint(aggregators[i].latestAnswer()) 
-    //                             / (10 ** assets[i].decimals());
+            for (uint i = 0; i < debtTokens.length; i++)                 
+                valueDebt += debtTokens[i].balanceOf(address(user)) * uint(aggregators[i].latestAnswer()) 
+                                / (10 ** assets[i].decimals());
             
-    //         assertGte(valueColl, valueDebt, "216");
-    //     }
-    // }
+            assertGte(valueColl, valueDebt, "216");
+        }
+    }
 
     /// @custom:invariant 217 - The `liquidityIndex` should monotonically increase when there's total debt.
     /// @custom:invariant 218 - The `variableBorrowIndex` should monotonically increase when there's total debt.

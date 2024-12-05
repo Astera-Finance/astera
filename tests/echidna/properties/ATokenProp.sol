@@ -14,7 +14,7 @@ contract ATokenProp is PropertiesBase {
     /// @custom:invariant 302 - Transfers for more than available balance should not be allowed.
     /// @custom:invariant 303 - Transfers should update accounting correctly.
     /// @custom:invariant 304 - Self transfers should not break accounting.
-    function randTransfer(LocalVars_UPTL memory vul, uint seedUser, uint seedRecipient, uint seedAToken, uint seedAmt) public {
+    function randTransfer(LocalVars_UPTL memory vul, uint8 seedUser, uint8 seedRecipient, uint8 seedAToken, uint128 seedAmt) public {
         randUpdatePriceAndTryLiquidate(vul);
 
         uint randUser = clampBetween(seedUser, 0 ,totalNbUsers);
@@ -65,7 +65,7 @@ contract ATokenProp is PropertiesBase {
     /// @custom:invariant 309 - Transfers must update accounting correctly.
     /// @custom:invariant 310 - Self transfers must not break accounting.
     /// @custom:invariant 311 - `transferFrom()` must decrease allowance.
-    function randTransferFrom(LocalVars_UPTL memory vul, uint seedUser, uint seedFrom, uint seedRecipient, uint seedAToken, uint seedAmt) public {
+    function randTransferFrom(LocalVars_UPTL memory vul, uint8 seedUser, uint8 seedFrom, uint8 seedRecipient, uint8 seedAToken, uint128 seedAmt) public {
         randUpdatePriceAndTryLiquidate(vul);
 
         uint randUser = clampBetween(seedUser, 0 ,totalNbUsers);
@@ -120,7 +120,7 @@ contract ATokenProp is PropertiesBase {
 
     /// @custom:invariant 312 - `approve()` must never revert.
     /// @custom:invariant 313 - Allowance must be modified correctly via `approve()`.
-    function randApprove(LocalVars_UPTL memory vul, uint seedUser, uint seedSender, uint seedAToken, uint seedAmt) public {
+    function randApprove(LocalVars_UPTL memory vul, uint8 seedUser, uint8 seedSender, uint8 seedAToken, uint128 seedAmt) public {
         randUpdatePriceAndTryLiquidate(vul);
 
         uint randUser = clampBetween(seedUser, 0 ,totalNbUsers);
@@ -148,7 +148,7 @@ contract ATokenProp is PropertiesBase {
     
     /// @custom:invariant 314 - `increaseAllowance()` must never revert.
     /// @custom:invariant 315 - Allowance must be modified correctly via `increaseAllowance()`.
-    function randIncreaseAllowance(LocalVars_UPTL memory vul, uint seedUser, uint seedSender, uint seedAToken, uint seedAmt) public {
+    function randIncreaseAllowance(LocalVars_UPTL memory vul, uint8 seedUser, uint8 seedSender, uint8 seedAToken, uint128 seedAmt) public {
         randUpdatePriceAndTryLiquidate(vul);
         
         uint randUser = clampBetween(seedUser, 0 ,totalNbUsers);
@@ -178,7 +178,7 @@ contract ATokenProp is PropertiesBase {
 
     /// @custom:invariant 316 - `decreaseAllowance()` must revert when user tries to decrease more than currently allowed.
     /// @custom:invariant 317 - Allowance must be modified correctly via `decreaseAllowance()`.
-    function randDecreaseAllowance(LocalVars_UPTL memory vul, uint seedUser, uint seedSender, uint seedAToken, uint seedAmt) public {
+    function randDecreaseAllowance(LocalVars_UPTL memory vul, uint8 seedUser, uint8 seedSender, uint8 seedAToken, uint128 seedAmt) public {
         randUpdatePriceAndTryLiquidate(vul);
 
         uint randUser = clampBetween(seedUser, 0 ,totalNbUsers);
@@ -212,7 +212,7 @@ contract ATokenProp is PropertiesBase {
     // /// @custom:invariant 319 - Mutation in the signature must make `permit()` revert.
     // /// @custom:invariant 320 - Mutation in parameters must make `permit()` revert.
     // /// @custom:invariant 321 - User allowance must be equal to `amount` when sender call `permit()`.
-    // function randPermit(LocalVars_UPTL memory vul, uint seedUser, uint seedSender, uint seedAToken, uint seedAmt, uint randDeadline) public {
+    // function randPermit(LocalVars_UPTL memory vul, uint8 seedUser, uint8 seedSender, uint8 seedAToken, uint128 seedAmt, uint48 randDeadline) public {
     //     randUpdatePriceAndTryLiquidate(vul);
     //     uint randUser = clampBetween(seedUser, 0 ,totalNbUsers);
     //     uint randSender = clampBetween(seedSender, 0 ,totalNbUsers);
@@ -244,7 +244,7 @@ contract ATokenProp is PropertiesBase {
     // }
 
     /// @custom:invariant 322 - Force feeding assets in LendingPool, ATokens or debtTokens must not change the final result.
-    function randForceFeedAsset(LocalVars_UPTL memory vul, uint seedAmt, uint seedAsset, uint seedReceiver) public {
+    function randForceFeedAsset(LocalVars_UPTL memory vul, uint128 seedAmt, uint8 seedAsset, uint8 seedReceiver) public {
         randUpdatePriceAndTryLiquidate(vul);
 
         uint randAmt = clampBetween(seedAmt, 1, type(uint80).max);
@@ -265,7 +265,7 @@ contract ATokenProp is PropertiesBase {
     }
 
     /// @custom:invariant 323 - Force feeding aToken in LendingPool, ATokens or debtTokens must not change the final result.
-    function randForceFeedATokens(LocalVars_UPTL memory vul, uint seedUser, uint seedAmt, uint seedAsset, uint seedReceiver) public {
+    function randForceFeedATokens(LocalVars_UPTL memory vul, uint8 seedUser, uint128 seedAmt, uint8 seedAsset, uint8 seedReceiver) public {
         randUpdatePriceAndTryLiquidate(vul);
 
         uint randUser = clampBetween(seedUser, 0, totalNbUsers);

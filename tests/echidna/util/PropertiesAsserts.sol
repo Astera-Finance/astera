@@ -284,6 +284,21 @@ abstract contract PropertiesAsserts {
         return ans;
     }
 
+    function clampBetweenProportional(uint16 value, uint256 low, uint256 high) internal returns (uint256) {
+        uint ans = value * (high - low) / type(uint16).max + low;
+
+        string memory valueStr = PropertiesLibString.toString(value);
+        string memory ansStr = PropertiesLibString.toString(ans);
+        bytes memory message = abi.encodePacked(
+            "Clamping proportional value ",
+            valueStr,
+            " to ",
+            ansStr
+        );
+        emit LogString(string(message));
+        return ans;
+    }
+
     /// @notice Clamps value to be between low and high, both inclusive
     function clampBetweenEqual(
         uint256 value,

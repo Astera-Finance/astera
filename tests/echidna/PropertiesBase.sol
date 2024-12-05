@@ -102,8 +102,8 @@ import {RewardsDistributor6909} from "contracts/protocol/rewarder/minipool/Rewar
 // Admin is address(this)
 contract PropertiesBase is PropertiesAsserts, MarketParams {
     // config -----------
-    uint256 internal totalNbUsers = 4;
-    uint256 internal totalNbTokens = 4;
+    uint256 internal totalNbUsers = 4; // max 255
+    uint256 internal totalNbTokens = 8; // max 8
     uint256 internal initialMint = 100 ether;
     bool internal bootstrapLiquidity = true;
     uint256 internal volatility = 100; // 1%
@@ -308,16 +308,34 @@ contract PropertiesBase is PropertiesAsserts, MarketParams {
     /// ------- global state updates -------
 
     struct LocalVars_UPTL {
-        uint256[] seedAmtPrice;
-        uint256 seedLiquidator;
-        uint256 seedColl;
-        uint256 seedDebtToken;
-        uint256 seedAmtLiq;
+        uint16 seedAmtPrice1;
+        uint16 seedAmtPrice2;
+        uint16 seedAmtPrice3;
+        uint16 seedAmtPrice4;
+        uint16 seedAmtPrice5;
+        uint16 seedAmtPrice6;
+        uint16 seedAmtPrice7;
+        uint16 seedAmtPrice8; // max 8 assets
+
+        uint8 seedLiquidator;
+        uint8 seedColl;
+        uint8 seedDebtToken;
+        uint128 seedAmtLiq;
         bool randReceiveAToken;
     }
 
     function randUpdatePriceAndTryLiquidate(LocalVars_UPTL memory v) public {
-        oraclePriceUpdate(v.seedAmtPrice);
+        uint16[] memory seedAmt = new uint16[](8);
+        seedAmt[0] = v.seedAmtPrice1;
+        seedAmt[1] = v.seedAmtPrice2;
+        seedAmt[2] = v.seedAmtPrice3;
+        seedAmt[3] = v.seedAmtPrice4;
+        seedAmt[4] = v.seedAmtPrice5;
+        seedAmt[5] = v.seedAmtPrice6;
+        seedAmt[6] = v.seedAmtPrice7;
+        seedAmt[7] = v.seedAmtPrice8;
+
+        oraclePriceUpdate(seedAmt);
         tryLiquidate(
             v.seedLiquidator, v.seedColl, v.seedDebtToken, v.seedAmtLiq, v.randReceiveAToken
         );
@@ -362,10 +380,10 @@ contract PropertiesBase is PropertiesAsserts, MarketParams {
     /// @custom:invariant 104 - `liquidationCall()` must increase the liquidator `aTokenColl` (or `collAsset`) balance.
     /// @custom:invariant 105 - `liquidationCall()` must decrease the liquidator debt asset balance if `randReceiveAToken == true` or `collAsset != debtAsset`.
     function tryLiquidate(
-        uint256 seedLiquidator,
-        uint256 seedColl,
-        uint256 seedDebtToken,
-        uint256 seedAmt,
+        uint8 seedLiquidator,
+        uint8 seedColl,
+        uint8 seedDebtToken,
+        uint128 seedAmt,
         bool randReceiveAToken
     ) internal {
         for (uint256 i = 0; i < users.length; i++) {
@@ -379,7 +397,6 @@ contract PropertiesBase is PropertiesAsserts, MarketParams {
 
                 v.randColl = clampBetween(seedColl, 0, v.lenATokenUser);
                 v.randDebtToken = clampBetween(seedDebtToken, 0, v.lenDebtTokenUser);
-
                 v.randLiquidator = clampBetween(seedLiquidator, 0, totalNbUsers);
 
                 v.liquidator = users[v.randLiquidator];
@@ -446,15 +463,15 @@ contract PropertiesBase is PropertiesAsserts, MarketParams {
 
     /// ------- Helpers -------
 
-    function oraclePriceUpdate(uint256[] memory seedAmt) internal {
+    function oraclePriceUpdate(uint16[] memory seedAmt) internal {
         for (uint256 i = 0; i < aggregators.length; i++) {
             uint256 latestAnswer = uint256(aggregators[i].latestAnswer());
             uint256 maxPriceChange = latestAnswer * volatility / BPS; // max VOLATILITY price change
 
             uint256 max = latestAnswer + maxPriceChange;
             uint256 min = latestAnswer < maxPriceChange ? 1 : latestAnswer - maxPriceChange;
-
-            aggregators[i].setAssetPrice(clampBetween(seedAmt[i], min, max));
+            
+            aggregators[i].setAssetPrice(clampBetweenProportional(seedAmt[i], min, max));
             emit LogUint256("=> ", latestAnswer);
         }
     }
