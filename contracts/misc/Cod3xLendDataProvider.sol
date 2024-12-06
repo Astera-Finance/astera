@@ -1040,8 +1040,8 @@ contract Cod3xLendDataProvider is Ownable, ICod3xLendDataProvider {
 
         require(
             (
-                roundId == 0 || timestamp == 0 || timestamp > block.timestamp || price <= 0
-                    || startedAt == 0
+                roundId != 0 && timestamp == 0 && timestamp > block.timestamp && price <= 0
+                    && startedAt == 0
             ),
             Errors.O_PRICE_FEED_INCONSISTENCY
         );

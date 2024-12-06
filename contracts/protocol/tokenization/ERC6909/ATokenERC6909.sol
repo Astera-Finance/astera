@@ -438,7 +438,7 @@ contract ATokenERC6909 is IncentivizedERC6909, VersionedInitializable {
      * @return bool True if the address is an AToken, false otherwise.
      */
     function _determineIfAToken(address underlying, address MLP) internal view returns (bool) {
-        try IAToken(underlying).getPool() returns (address pool) {
+        try IAToken(underlying).getPool{gas: 4000}() returns (address pool) {
             return pool == MLP;
         } catch {
             return false;
