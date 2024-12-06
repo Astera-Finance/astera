@@ -215,7 +215,7 @@ contract PropertiesBase is PropertiesAsserts, MarketParams {
                 treasury: address(treasury),
                 incentivesController: address(0),
                 underlyingAssetName: "",
-                reserveType: false, // Todo tests with vault boosted
+                reserveType: true, // By default, all assets are potentially rehypothecable but we don't necesserly activate it.
                 aTokenName: "",
                 aTokenSymbol: "",
                 variableDebtTokenName: "",
@@ -232,7 +232,7 @@ contract PropertiesBase is PropertiesAsserts, MarketParams {
         for (uint256 i = 0; i < totalNbTokens; i++) {
             cri = ATokensAndRatesHelper.ConfigureReserveInput({
                 asset: address(assets[i]),
-                reserveType: false,
+                reserveType: true,
                 baseLTV: DEFAULT_BASE_LTV,
                 liquidationThreshold: DEFAULT_LIQUIDATION_THRESHOLD,
                 liquidationBonus: DEFAULT_LIQUIDATION_BONUS,
@@ -247,7 +247,7 @@ contract PropertiesBase is PropertiesAsserts, MarketParams {
 
         for (uint256 i = 0; i < totalNbTokens; i++) {
             (address aTokenAddress, address variableDebtTokenAddress) =
-                cod3xLendDataProvider.getLpTokens(address(assets[i]), false);
+                cod3xLendDataProvider.getLpTokens(address(assets[i]), true);
             aTokens.push(AToken(aTokenAddress));
             debtTokens.push(VariableDebtToken(variableDebtTokenAddress));
         }
@@ -272,7 +272,7 @@ contract PropertiesBase is PropertiesAsserts, MarketParams {
                     abi.encodeWithSelector(
                         pool.deposit.selector,
                         address(assets[j]),
-                        false,
+                        true,
                         initialMint,
                         address(bootstraper)
                     )
@@ -285,8 +285,8 @@ contract PropertiesBase is PropertiesAsserts, MarketParams {
         for (uint256 i = 0; i < assets.length; i++) {
             address asset = address(assets[i]);
 
-            lastLiquidityIndex[asset] = pool.getReserveData(asset, false).liquidityIndex;
-            lastVariableBorrowIndex[asset] = pool.getReserveData(asset, false).variableBorrowIndex;
+            lastLiquidityIndex[asset] = pool.getReserveData(asset, true).liquidityIndex;
+            lastVariableBorrowIndex[asset] = pool.getReserveData(asset, true).variableBorrowIndex;
         }
 
         /// setup users
@@ -419,9 +419,9 @@ contract PropertiesBase is PropertiesAsserts, MarketParams {
                     abi.encodeWithSelector(
                         pool.liquidationCall.selector,
                         address(v.collAsset),
-                        false,
+                        true,
                         address(v.debtAsset),
-                        false,
+                        true,
                         address(v.target),
                         v.randAmt,
                         randReceiveAToken

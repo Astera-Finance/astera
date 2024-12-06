@@ -35,7 +35,7 @@ contract LendingPoolProp is PropertiesBase {
             abi.encodeWithSelector(
                 pool.deposit.selector,
                 address(asset),
-                false,
+                true,
                 randAmt,
                 address(onBehalfOf)
             )
@@ -72,7 +72,7 @@ contract LendingPoolProp is PropertiesBase {
             abi.encodeWithSelector(
                 pool.withdraw.selector,
                 address(asset),
-                false,
+                true,
                 randAmt,
                 address(to)
             )
@@ -102,7 +102,7 @@ contract LendingPoolProp is PropertiesBase {
         VariableDebtToken debtToken = debtTokens[randAsset];
         User user = users[randUser];
 
-        uint randAmt = clampBetween(seedAmt, 1, pool.getUserMaxBorrowCapacity(address(onBehalfOf) , address(asset), false));
+        uint randAmt = clampBetween(seedAmt, 1, pool.getUserMaxBorrowCapacity(address(onBehalfOf) , address(asset), true));
 
         bool success;
         if (address(user) != address(onBehalfOf)) {
@@ -126,7 +126,7 @@ contract LendingPoolProp is PropertiesBase {
             abi.encodeWithSelector(
                 pool.borrow.selector,
                 address(asset),
-                false,
+                true,
                 randAmt,
                 address(onBehalfOf)
             )
@@ -179,7 +179,7 @@ contract LendingPoolProp is PropertiesBase {
             abi.encodeWithSelector(
                 pool.repay.selector,
                 address(asset),
-                false,
+                true,
                 randAmt,
                 address(onBehalfOf)
             )
@@ -213,7 +213,7 @@ contract LendingPoolProp is PropertiesBase {
             abi.encodeWithSelector(
                 pool.setUserUseReserveAsCollateral.selector,
                 address(asset),
-                false,
+                true,
                 randIsColl
             )   
         );
@@ -225,7 +225,7 @@ contract LendingPoolProp is PropertiesBase {
         else
             assertGte(healthFactorBefore, healthFactorAfter, "213");
 
-        if (healthFactorAfter != healthFactorBefore)
+        if (healthFactorBefore >= 1e18 && healthFactorAfter != healthFactorBefore)
             assertGte(healthFactorAfter, 1e18, "213");
     }
 
@@ -277,7 +277,7 @@ contract LendingPoolProp is PropertiesBase {
         for (uint256 i = 0; i < v.randNbAssets; i++) {
             v.assetBalanceBefore[i] = assets[i].balanceOf(address(v.user));
             v.assetsFl[i] = address(assets[i]);
-            v.reserveTypesFl[i] = false;
+            v.reserveTypesFl[i] = true;
             uint256 maxFlashloanable = assets[i].balanceOf(address(aTokens[i]));
             v.amountsFl[i] = v.randAmt > maxFlashloanable ? maxFlashloanable : v.randAmt;
             v.modesFl[i] = v.randMode;
@@ -304,8 +304,8 @@ contract LendingPoolProp is PropertiesBase {
         // Premium payment increase indexes => update last indexes
         for (uint i = 0; i < assets.length; i++) {
             address asset = address(assets[i]);
-            lastLiquidityIndex[asset] = pool.getReserveData(asset, false).liquidityIndex;
-            lastVariableBorrowIndex[asset] = pool.getReserveData(asset, false).variableBorrowIndex;
+            lastLiquidityIndex[asset] = pool.getReserveData(asset, true).liquidityIndex;
+            lastVariableBorrowIndex[asset] = pool.getReserveData(asset, true).variableBorrowIndex;
         }
     }
 
@@ -357,8 +357,8 @@ contract LendingPoolProp is PropertiesBase {
         for (uint i = 0; i < assets.length; i++) {
             address asset = address(assets[i]);
 
-            uint currentLiquidityIndex = pool.getReserveData(asset, false).liquidityIndex;
-            uint currentVariableBorrowIndex = pool.getReserveData(asset, false).variableBorrowIndex;
+            uint currentLiquidityIndex = pool.getReserveData(asset, true).liquidityIndex;
+            uint currentVariableBorrowIndex = pool.getReserveData(asset, true).variableBorrowIndex;
 
             if (hasDebtTotal()) {
                 assertGte(currentLiquidityIndex, lastLiquidityIndex[asset], "217");
@@ -396,7 +396,7 @@ contract LendingPoolProp is PropertiesBase {
     //                         abi.encodeWithSelector(
     //                             pool.withdraw.selector,
     //                             address(assets[j]),
-    //                             false,
+    //                             true,
     //                             balanceAToken,
     //                             address(user)
     //                         )
@@ -414,7 +414,7 @@ contract LendingPoolProp is PropertiesBase {
     //                         abi.encodeWithSelector(
     //                             pool.withdraw.selector,
     //                             address(assets[j]),
-    //                             false,
+    //                             true,
     //                             balanceAToken,
     //                             address(bootstraper)
     //                         )

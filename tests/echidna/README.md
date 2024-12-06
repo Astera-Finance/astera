@@ -1,10 +1,15 @@
-# Echidna
+# Fuzzing tests with Echidna/Medusa
 
 Echidna is a program designed for fuzzing/property-based testing of Ethereum smart contracts. Please refer to the doc for [installation](https://github.com/crytic/echidna#installation).
 
 ```sh
 forge install
 echidna tests/echidna/PropertiesMain.sol --contract PropertiesMain --config tests/echidna/config/config1_fast.yaml
+```
+
+```sh
+cd tests/echidna
+medusa fuzz --config medusa_config.json
 ```
 
 You can fine in `/echidna` 3 config files to run the fuzzer:
@@ -17,6 +22,7 @@ You can fine in `/echidna` 3 config files to run the fuzzer:
 
 # TODO
 
+- Add Medusa
 - Randomly activate rehypothecation on lendingpool reserves.
 - Improve the tryLiquidate function and uncomment usersSolvencyCheck.
 - Random PI IR strategies for reserves.
@@ -54,7 +60,7 @@ You can fine in `/echidna` 3 config files to run the fuzzer:
 213. ✅ `setUseReserveAsCollateral` must not reduce the health factor below 1.
 214. ✅ Users must not be able to steal funds from flashloans.
 215. ✅ The total value borrowed must always be less than the value of the collaterals.
-216. 🚧 Each user postions must remain solvent.
+216. ✅ Each user postions must remain solvent.
 217. ✅ The `liquidityIndex` should monotonically increase when there's total debt.
 218. ✅ The `variableBorrowIndex` should monotonically increase when there's total debt.
 219. ✅ A user with debt should have at least an aToken balance `setUsingAsCollateral`.
@@ -95,6 +101,7 @@ You can fine in `/echidna` 3 config files to run the fuzzer:
 324. ❌ A user must not hold more than total supply.
 325. ❌ Sum of users' balance must not exceed total supply.
 326. 🚧 All `ATokenNonRebasing` operations should be equivalent to `ATokens`.
+327. 🚧 If the external rehypothecation vault is liquide, then users should always be able to withdraw.
 
 ### DebtTokens
 

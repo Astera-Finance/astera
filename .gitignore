@@ -28,11 +28,16 @@ cache_forge
 pyenv
 data/
 
-# Echidna
+# Echidna /Medusa
 corpus/
+medusa-corpus/
+echidna-corpus/
 **/crytic-compile
 **/crytic-export
 **/corpus
+**/medusa-corpus
+**/echidna-corpus
+
 cache_forge
 
 *.csv
