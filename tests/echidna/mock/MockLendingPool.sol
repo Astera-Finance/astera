@@ -7,10 +7,13 @@ import "contracts/dependencies/openzeppelin/contracts/ERC20.sol";
 import "contracts/protocol/core/Oracle.sol";
 
 contract MockLendingPool is LendingPool {
-
     constructor() {}
 
-    function getUserMaxBorrowCapacity(address addUser, address addAsset, bool reserveType) public view returns(uint256) {
+    function getUserMaxBorrowCapacity(address addUser, address addAsset, bool reserveType)
+        public
+        view
+        returns (uint256)
+    {
         DataTypes.ReserveData storage reserve = _reserves[addAsset][reserveType];
 
         address oracle = _addressesProvider.getPriceOracle();
@@ -20,20 +23,15 @@ contract MockLendingPool is LendingPool {
         params.reservesCount = _reservesCount;
         params.oracle = oracle;
 
-        (uint userCollateralBalanceETH, uint userBorrowBalanceETH,,,) 
-            = BorrowLogic.calculateUserAccountDataVolatile(
-                params,
-                _reserves,
-                _usersConfig[addUser],
-                _reservesList
-        );
+        (uint256 userCollateralBalanceETH, uint256 userBorrowBalanceETH,,,) = BorrowLogic
+            .calculateUserAccountDataVolatile(params, _reserves, _usersConfig[addUser], _reservesList);
 
         require(userCollateralBalanceETH > 0);
         require(userCollateralBalanceETH >= userBorrowBalanceETH);
 
-        uint amtEthAvailable = userCollateralBalanceETH - userBorrowBalanceETH;
-        uint price = Oracle(oracle).getAssetPrice(addAsset); // price addAsset/ETH
-        uint assetAmtAvailable = amtEthAvailable * 10**ERC20(addAsset).decimals() / price;
+        uint256 amtEthAvailable = userCollateralBalanceETH - userBorrowBalanceETH;
+        uint256 price = Oracle(oracle).getAssetPrice(addAsset); // price addAsset/ETH
+        uint256 assetAmtAvailable = amtEthAvailable * 10 ** ERC20(addAsset).decimals() / price;
 
         return assetAmtAvailable;
     }

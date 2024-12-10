@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: agpl-3.0
 pragma solidity 0.8.23;
 
-import {ERC20} from 'contracts/dependencies/openzeppelin/contracts/ERC20.sol';
-import {IERC20} from 'contracts/dependencies/openzeppelin/contracts/IERC20.sol';
+import {ERC20} from "contracts/dependencies/openzeppelin/contracts/ERC20.sol";
+import {IERC20} from "contracts/dependencies/openzeppelin/contracts/IERC20.sol";
 
 /**
  * @title MockERC4626
@@ -13,12 +13,9 @@ contract MockERC4626 is ERC20 {
     uint256 public totalDeposited;
     uint8 private _decimals;
 
-    constructor(
-        address _token,
-        string memory _name,
-        string memory _symbol,
-        uint8 _decimals
-    ) ERC20(_name, _symbol) {
+    constructor(address _token, string memory _name, string memory _symbol, uint8 _decimals)
+        ERC20(_name, _symbol)
+    {
         token = _token;
         _setupDecimals(_decimals);
     }
@@ -34,7 +31,7 @@ contract MockERC4626 is ERC20 {
     function deposit(uint256 assets, address receiver) external returns (uint256 shares) {
         IERC20(token).transferFrom(msg.sender, address(this), assets);
         totalDeposited += assets;
-        if(totalSupply() == 0) {
+        if (totalSupply() == 0) {
             shares = assets;
         } else {
             shares = (assets * totalDeposited) / IERC20(token).balanceOf(address(this));
@@ -46,11 +43,10 @@ contract MockERC4626 is ERC20 {
         return convertToAssets(balanceOf(owner));
     }
 
-    function withdraw(
-        uint256 assets,
-        address receiver,
-        address owner
-    ) external returns (uint256 shares) {
+    function withdraw(uint256 assets, address receiver, address owner)
+        external
+        returns (uint256 shares)
+    {
         shares = (IERC20(token).balanceOf(address(this)) * assets) / totalDeposited;
         _burn(owner, assets);
         totalDeposited -= assets;
@@ -62,17 +58,18 @@ contract MockERC4626 is ERC20 {
         return (shares * IERC20(token).balanceOf(address(this)) / totalDeposited);
     }
 
-
     /// Can artificially be increased by sending token to this contract
     function getPricePerFullShare() public view returns (uint256) {
-        return totalDeposited == 0 ? 10**decimals() : (IERC20(token).balanceOf(address(this)) * 10**decimals()) / totalDeposited;
+        return totalDeposited == 0
+            ? 10 ** decimals()
+            : (IERC20(token).balanceOf(address(this)) * 10 ** decimals()) / totalDeposited;
     }
 
     function _setupDecimals(uint8 decimals_) internal {
         _decimals = decimals_;
     }
 
-    function decimals() public override view virtual returns (uint8) {
-            return _decimals;
+    function decimals() public view virtual override returns (uint8) {
+        return _decimals;
     }
 }

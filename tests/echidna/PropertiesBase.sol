@@ -5,7 +5,8 @@ import {User} from "./util/User.sol";
 import {PropertiesAsserts} from "./util/PropertiesAsserts.sol";
 import {MarketParams} from "./MarketParams.sol";
 
-import {BaseImmutableAdminUpgradeabilityProxy} from "contracts/protocol/libraries/upgradeability/BaseImmutableAdminUpgradeabilityProxy.sol";
+import {BaseImmutableAdminUpgradeabilityProxy} from
+    "contracts/protocol/libraries/upgradeability/BaseImmutableAdminUpgradeabilityProxy.sol";
 import {ERC20} from "lib/openzeppelin-contracts/contracts/token/ERC20/ERC20.sol";
 
 import {ATokensAndRatesHelper} from "contracts/deployments/ATokensAndRatesHelper.sol";
@@ -16,7 +17,8 @@ import {MockAggregator} from "./mock/oracle/MockAggregator.sol";
 
 import {DataTypes} from "contracts/protocol/libraries/types/DataTypes.sol";
 import {UserConfiguration} from "contracts/protocol/libraries/configuration/UserConfiguration.sol";
-import {ReserveConfiguration} from "contracts/protocol/libraries/configuration/ReserveConfiguration.sol";
+import {ReserveConfiguration} from
+    "contracts/protocol/libraries/configuration/ReserveConfiguration.sol";
 
 import {IAERC6909} from "contracts/interfaces/IAERC6909.sol";
 import {IAToken} from "contracts/interfaces/IAToken.sol";
@@ -29,7 +31,8 @@ import {ILendingPoolConfigurator} from "contracts/interfaces/ILendingPoolConfigu
 import {IMiniPool} from "contracts/interfaces/IMiniPool.sol";
 import {IMiniPoolAddressesProvider} from "contracts/interfaces/IMiniPoolAddressesProvider.sol";
 import {IMiniPoolConfigurator} from "contracts/interfaces/IMiniPoolConfigurator.sol";
-import {IMiniPoolReserveInterestRateStrategy} from "contracts/interfaces/IMiniPoolReserveInterestRateStrategy.sol";
+import {IMiniPoolReserveInterestRateStrategy} from
+    "contracts/interfaces/IMiniPoolReserveInterestRateStrategy.sol";
 import {IMiniPoolRewarder} from "contracts/interfaces/IMiniPoolRewarder.sol";
 import {IMiniPoolRewardsController} from "contracts/interfaces/IMiniPoolRewardsController.sol";
 import {IMiniPoolRewardsDistributor} from "contracts/interfaces/IMiniPoolRewardsDistributor.sol";
@@ -46,9 +49,9 @@ import {WETHGateway} from "contracts/misc/WETHGateway.sol";
 
 import {Oracle} from "contracts/protocol/core/Oracle.sol";
 
-
 /// LendingPool
-import {LendingPoolAddressesProvider} from "contracts/protocol/configuration/LendingPoolAddressesProvider.sol";
+import {LendingPoolAddressesProvider} from
+    "contracts/protocol/configuration/LendingPoolAddressesProvider.sol";
 
 import {DefaultReserveInterestRateStrategy} from
     "contracts/protocol/core/interestRateStrategies/lendingpool/DefaultReserveInterestRateStrategy.sol";
@@ -56,7 +59,8 @@ import {PiReserveInterestRateStrategy} from
     "contracts/protocol/core/interestRateStrategies/lendingpool/PiReserveInterestRateStrategy.sol";
 
 import {LendingPool} from "contracts/protocol/core/lendingpool/LendingPool.sol";
-import {LendingPoolConfigurator} from "contracts/protocol/core/lendingpool/LendingPoolConfigurator.sol";
+import {LendingPoolConfigurator} from
+    "contracts/protocol/core/lendingpool/LendingPoolConfigurator.sol";
 import {LendingPoolStorage} from "contracts/protocol/core/lendingpool/LendingPoolStorage.sol";
 
 import {BorrowLogic} from "contracts/protocol/core/lendingpool/logic/BorrowLogic.sol";
@@ -88,18 +92,23 @@ import {MiniPoolStorage} from "contracts/protocol/core/minipool/MiniPoolStorage.
 
 import {MiniPoolBorrowLogic} from "contracts/protocol/core/minipool/logic/MiniPoolBorrowLogic.sol";
 import {MiniPoolDepositLogic} from "contracts/protocol/core/minipool/logic/MiniPoolDepositLogic.sol";
-import {MiniPoolFlashLoanLogic} from "contracts/protocol/core/minipool/logic/MiniPoolFlashLoanLogic.sol";
+import {MiniPoolFlashLoanLogic} from
+    "contracts/protocol/core/minipool/logic/MiniPoolFlashLoanLogic.sol";
 import {MiniPoolGenericLogic} from "contracts/protocol/core/minipool/logic/MiniPoolGenericLogic.sol";
-import {MiniPoolLiquidationLogic} from "contracts/protocol/core/minipool/logic/MiniPoolLiquidationLogic.sol";
+import {MiniPoolLiquidationLogic} from
+    "contracts/protocol/core/minipool/logic/MiniPoolLiquidationLogic.sol";
 import {MiniPoolReserveLogic} from "contracts/protocol/core/minipool/logic/MiniPoolReserveLogic.sol";
-import {MiniPoolValidationLogic} from "contracts/protocol/core/minipool/logic/MiniPoolValidationLogic.sol";
-import {MiniPoolWithdrawLogic} from "contracts/protocol/core/minipool/logic/MiniPoolWithdrawLogic.sol";
+import {MiniPoolValidationLogic} from
+    "contracts/protocol/core/minipool/logic/MiniPoolValidationLogic.sol";
+import {MiniPoolWithdrawLogic} from
+    "contracts/protocol/core/minipool/logic/MiniPoolWithdrawLogic.sol";
 
 import {ATokenERC6909} from "contracts/protocol/tokenization/ERC6909/ATokenERC6909.sol";
 
 import {Rewarder6909} from "contracts/protocol/rewarder/minipool/Rewarder6909.sol";
 import {RewardsController6909} from "contracts/protocol/rewarder/minipool/RewardsController6909.sol";
-import {RewardsDistributor6909} from "contracts/protocol/rewarder/minipool/RewardsDistributor6909.sol";
+import {RewardsDistributor6909} from
+    "contracts/protocol/rewarder/minipool/RewardsDistributor6909.sol";
 
 // Users are defined in users
 // Admin is address(this)
@@ -188,7 +197,7 @@ contract PropertiesBase is PropertiesAsserts, MarketParams {
 
         cod3xLendDataProvider = new Cod3xLendDataProvider();
         cod3xLendDataProvider.setLendingPoolAddressProvider(address(provider));
-        
+
         defaultRateStrategies = new DefaultReserveInterestRateStrategy(
             provider,
             DEFAULT_OPTI_UTILIZATION_RATE,
@@ -196,7 +205,7 @@ contract PropertiesBase is PropertiesAsserts, MarketParams {
             DEFAULT_VARIABLE_RATE_SLOPE1,
             DEFAULT_VARIABLE_RATE_SLOPE2
         );
-        
+
         // piRateStrategies = new PiReserveInterestRateStrategy(
         //     provider
         //     // asset,
@@ -263,9 +272,11 @@ contract PropertiesBase is PropertiesAsserts, MarketParams {
         // Rehypothecation
         for (uint256 i = 0; i < totalNbTokens; i++) {
             mockedVaults.push(
-                new MockReaperVault2(address(assets[i]), "Mock ERC4626", "mock", type(uint256).max, treasury)
+                new MockReaperVault2(
+                    address(assets[i]), "Mock ERC4626", "mock", type(uint256).max, treasury
+                )
             );
-            if(i % 2 == 0){
+            if (i % 2 == 0) {
                 turnOnRehypothecation(address(aTokens[i]), address(mockedVaults[i]));
             }
         }
@@ -274,7 +285,6 @@ contract PropertiesBase is PropertiesAsserts, MarketParams {
         // provider.setFlowLimiter(address(0));
         // provider.setMiniPoolAddressesProvider(address(0));
         // cod3xLendDataProvider.setMiniPoolAddressProvider(address(0));
-
 
         /// bootstrap liquidity
         if (bootstrapLiquidity) {
@@ -331,7 +341,6 @@ contract PropertiesBase is PropertiesAsserts, MarketParams {
         uint8 seedAmtPrice6;
         uint8 seedAmtPrice7;
         uint8 seedAmtPrice8; // max 8 assets
-
         uint8 seedLiquidator;
         uint8 seedColl;
         uint8 seedDebtToken;
@@ -485,7 +494,7 @@ contract PropertiesBase is PropertiesAsserts, MarketParams {
 
             uint256 max = latestAnswer + maxPriceChange;
             uint256 min = latestAnswer < maxPriceChange ? 1 : latestAnswer - maxPriceChange;
-            
+
             aggregators[i].setAssetPrice(clampBetweenProportional(seedAmt[i], min, max));
             emit LogUint256("=> ", latestAnswer);
         }
@@ -606,10 +615,7 @@ contract PropertiesBase is PropertiesAsserts, MarketParams {
         }
     }
 
-    function turnOnRehypothecation(
-        address _aToken,
-        address _vaultAddr
-    ) internal {
+    function turnOnRehypothecation(address _aToken, address _vaultAddr) internal {
         poolConfigurator.setVault(_aToken, _vaultAddr);
         poolConfigurator.setFarmingPct(_aToken, DEFAULT_FARMING_PCT);
         poolConfigurator.setClaimingThreshold(_aToken, DEFAULT_CLAIMING_THRESHOLD);

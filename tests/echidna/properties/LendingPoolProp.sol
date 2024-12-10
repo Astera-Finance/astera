@@ -4,7 +4,6 @@ pragma solidity ^0.8.13;
 import "../PropertiesBase.sol";
 import {ERC20} from "lib/openzeppelin-contracts/contracts/token/ERC20/ERC20.sol";
 
-
 contract LendingPoolProp is PropertiesBase {
     constructor() {}
 
@@ -13,37 +12,39 @@ contract LendingPoolProp is PropertiesBase {
     /// @custom:invariant 200 - Users must always be able to deposit in normal condition.
     /// @custom:invariant 201 - `deposit()` must increase the user aToken balance by `amount`.
     /// @custom:invariant 202 - `deposit()` must decrease the user asset balance by `amount`.
-    function randDeposit(LocalVars_UPTL memory vul, uint8 seedUser, uint8 seedOnBeHalfOf, uint8 seedAsset, uint128 seedAmt) public {
+    function randDeposit(
+        LocalVars_UPTL memory vul,
+        uint8 seedUser,
+        uint8 seedOnBeHalfOf,
+        uint8 seedAsset,
+        uint128 seedAmt
+    ) public {
         randUpdatePriceAndTryLiquidate(vul);
-        
-        uint randUser = clampBetween(seedUser, 0 ,totalNbUsers);
-        uint randOnBehalfOf = clampBetween(seedOnBeHalfOf, 0 ,totalNbUsers);
-        uint randAsset = clampBetween(seedAsset, 0 ,totalNbTokens);
+
+        uint256 randUser = clampBetween(seedUser, 0, totalNbUsers);
+        uint256 randOnBehalfOf = clampBetween(seedOnBeHalfOf, 0, totalNbUsers);
+        uint256 randAsset = clampBetween(seedAsset, 0, totalNbTokens);
 
         User user = users[randUser];
-        User onBehalfOf  = users[randOnBehalfOf];
+        User onBehalfOf = users[randOnBehalfOf];
         MintableERC20 asset = assets[randAsset];
         AToken aToken = aTokens[randAsset];
 
-        uint randAmt = clampBetween(seedAmt, 1, asset.balanceOf(address(user)) / 2);
+        uint256 randAmt = clampBetween(seedAmt, 1, asset.balanceOf(address(user)) / 2);
 
-        uint aTokenBalanceBefore = aToken.balanceOf(address(onBehalfOf));
-        uint assetBalanceBefore = asset.balanceOf(address(user));
+        uint256 aTokenBalanceBefore = aToken.balanceOf(address(onBehalfOf));
+        uint256 assetBalanceBefore = asset.balanceOf(address(user));
 
-        (bool success, ) = user.proxy(
+        (bool success,) = user.proxy(
             address(pool),
             abi.encodeWithSelector(
-                pool.deposit.selector,
-                address(asset),
-                true,
-                randAmt,
-                address(onBehalfOf)
+                pool.deposit.selector, address(asset), true, randAmt, address(onBehalfOf)
             )
         );
         assertWithMsg(success, "200");
 
-        uint aTokenBalanceAfter = aToken.balanceOf(address(onBehalfOf));
-        uint assetBalanceAfter = asset.balanceOf(address(user));
+        uint256 aTokenBalanceAfter = aToken.balanceOf(address(onBehalfOf));
+        uint256 assetBalanceAfter = asset.balanceOf(address(user));
         assertEqApprox(aTokenBalanceAfter - aTokenBalanceBefore, randAmt, 1, "201");
         assertEq(assetBalanceBefore - assetBalanceAfter, randAmt, "202");
     }
@@ -52,31 +53,33 @@ contract LendingPoolProp is PropertiesBase {
     /// @custom:invariant 227 - Rehypothecation: if the external rehypothecation vault is liquid, users should always be able to withdraw if all other withdrawal conditions are met.
     /// @custom:invariant 203 - `withdraw()` must decrease the user aToken balance by `amount`.
     /// @custom:invariant 204 - `withdraw()` must increase the user asset balance by `amount`.
-    function randWithdraw(LocalVars_UPTL memory vul, uint8 seedUser, uint8 seedTo, uint8 seedAsset, uint128 seedAmt) public {
+    function randWithdraw(
+        LocalVars_UPTL memory vul,
+        uint8 seedUser,
+        uint8 seedTo,
+        uint8 seedAsset,
+        uint128 seedAmt
+    ) public {
         randUpdatePriceAndTryLiquidate(vul);
 
-        uint randUser = clampBetween(seedUser, 0 ,totalNbUsers);
-        uint randTo = clampBetween(seedTo, 0 ,totalNbUsers);
-        uint randAsset = clampBetween(seedAsset, 0 ,totalNbTokens);
+        uint256 randUser = clampBetween(seedUser, 0, totalNbUsers);
+        uint256 randTo = clampBetween(seedTo, 0, totalNbUsers);
+        uint256 randAsset = clampBetween(seedAsset, 0, totalNbTokens);
 
         User user = users[randUser];
-        User to  = users[randTo];
+        User to = users[randTo];
         MintableERC20 asset = assets[randAsset];
         AToken aToken = aTokens[randAsset];
 
-        uint aTokenBalanceBefore = aToken.balanceOf(address(user));
-        uint assetBalanceBefore = asset.balanceOf(address(to));
+        uint256 aTokenBalanceBefore = aToken.balanceOf(address(user));
+        uint256 assetBalanceBefore = asset.balanceOf(address(to));
 
-        uint randAmt = clampBetween(seedAmt, 0, aTokenBalanceBefore);
+        uint256 randAmt = clampBetween(seedAmt, 0, aTokenBalanceBefore);
 
-        (bool success, ) = user.proxy(
+        (bool success,) = user.proxy(
             address(pool),
             abi.encodeWithSelector(
-                pool.withdraw.selector,
-                address(asset),
-                true,
-                randAmt,
-                address(to)
+                pool.withdraw.selector, address(asset), true, randAmt, address(to)
             )
         );
         // (,,,,, uint256 healthFactorAfter) = pool.getUserAccountData(address(to));
@@ -90,8 +93,8 @@ contract LendingPoolProp is PropertiesBase {
         //     assertWithMsg(!success, "230");
         // }
 
-        uint aTokenBalanceAfter = aToken.balanceOf(address(user));
-        uint assetBalanceAfter = asset.balanceOf(address(to));
+        uint256 aTokenBalanceAfter = aToken.balanceOf(address(user));
+        uint256 assetBalanceAfter = asset.balanceOf(address(to));
         assertEqApprox(aTokenBalanceBefore - aTokenBalanceAfter, randAmt, 1, "203");
         assertEq(assetBalanceAfter - assetBalanceBefore, randAmt, "204");
     }
@@ -101,53 +104,56 @@ contract LendingPoolProp is PropertiesBase {
     /// @custom:invariant 207 - `borrow()` must not result in a health factor of less than 1.
     /// @custom:invariant 208 - `borrow()` must increase the user debtToken balance by `amount`.
     /// @custom:invariant 209 - `borrow()` must decrease `borrowAllowance()` by `amount` if `user != onBehalf`.
-    function randBorrow(LocalVars_UPTL memory vul, uint8 seedUser, uint8 seedOnBeHalfOf, uint8 seedAsset, uint128 seedAmt) public {
+    function randBorrow(
+        LocalVars_UPTL memory vul,
+        uint8 seedUser,
+        uint8 seedOnBeHalfOf,
+        uint8 seedAsset,
+        uint128 seedAmt
+    ) public {
         randUpdatePriceAndTryLiquidate(vul);
 
-        uint randUser = clampBetween(seedUser, 0 ,totalNbUsers);
-        uint randOnBehalfOf = clampBetween(seedOnBeHalfOf, 0 ,totalNbUsers);
-        uint randAsset = clampBetween(seedAsset, 0 ,totalNbTokens);
+        uint256 randUser = clampBetween(seedUser, 0, totalNbUsers);
+        uint256 randOnBehalfOf = clampBetween(seedOnBeHalfOf, 0, totalNbUsers);
+        uint256 randAsset = clampBetween(seedAsset, 0, totalNbTokens);
 
-        User onBehalfOf  = users[randOnBehalfOf];
+        User onBehalfOf = users[randOnBehalfOf];
         MintableERC20 asset = assets[randAsset];
         VariableDebtToken debtToken = debtTokens[randAsset];
         User user = users[randUser];
 
-        uint randAmt = clampBetween(seedAmt, 1, pool.getUserMaxBorrowCapacity(address(onBehalfOf) , address(asset), true));
+        uint256 randAmt = clampBetween(
+            seedAmt, 1, pool.getUserMaxBorrowCapacity(address(onBehalfOf), address(asset), true)
+        );
 
         bool success;
         if (address(user) != address(onBehalfOf)) {
-            (success, ) = onBehalfOf.proxy(
+            (success,) = onBehalfOf.proxy(
                 address(debtToken),
-                abi.encodeWithSelector(
-                    debtToken.approveDelegation.selector,
-                    address(user),
-                    randAmt
-                )
+                abi.encodeWithSelector(debtToken.approveDelegation.selector, address(user), randAmt)
             );
             assert(success);
         }
-        
-        uint borrowAllowanceBefore = debtToken.borrowAllowance(address(onBehalfOf), address(user));
-        uint vTokenBalanceBefore = debtToken.balanceOf(address(onBehalfOf));
+
+        uint256 borrowAllowanceBefore =
+            debtToken.borrowAllowance(address(onBehalfOf), address(user));
+        uint256 vTokenBalanceBefore = debtToken.balanceOf(address(onBehalfOf));
         (,,,,, uint256 healthFactorBefore) = pool.getUserAccountData(address(onBehalfOf));
 
-        (success, ) = user.proxy(
+        (success,) = user.proxy(
             address(pool),
             abi.encodeWithSelector(
-                pool.borrow.selector,
-                address(asset),
-                true,
-                randAmt,
-                address(onBehalfOf)
+                pool.borrow.selector, address(asset), true, randAmt, address(onBehalfOf)
             )
         );
 
-        if (!hasATokens(onBehalfOf)) 
+        if (!hasATokens(onBehalfOf)) {
             assertWithMsg(!success, "205");
+        }
 
-        if (healthFactorBefore < 1e18)
+        if (healthFactorBefore < 1e18) {
             assertWithMsg(!success, "206");
+        }
 
         // (,,,,, uint256 healthFactorAfter) = pool.getUserAccountData(address(onBehalfOf));
         // if (healthFactorAfter < 1e18){
@@ -156,23 +162,33 @@ contract LendingPoolProp is PropertiesBase {
 
         require(success);
 
-        uint vTokenBalanceAfter = debtToken.balanceOf(address(onBehalfOf));
+        uint256 vTokenBalanceAfter = debtToken.balanceOf(address(onBehalfOf));
         assertEqApprox(vTokenBalanceAfter - vTokenBalanceBefore, randAmt, 1, "208");
 
-        if (address(user) != address(onBehalfOf))
-            assertEq(borrowAllowanceBefore, debtToken.borrowAllowance(address(onBehalfOf), address(user)) + randAmt, "209");
-
+        if (address(user) != address(onBehalfOf)) {
+            assertEq(
+                borrowAllowanceBefore,
+                debtToken.borrowAllowance(address(onBehalfOf), address(user)) + randAmt,
+                "209"
+            );
+        }
     }
 
     /// @custom:invariant 210 - `repay()` must decrease the onBehalfOf debtToken balance by `amount`.
     /// @custom:invariant 211 - `repay()` must decrease the user asset balance by `amount`.
     /// @custom:invariant 212 - `healthFactorAfter` must be greater than `healthFactorBefore`.
-    function randRepay(LocalVars_UPTL memory vul, uint8 seedUser, uint8 seedOnBeHalfOf, uint8 seedAsset, uint128 seedAmt) public {
+    function randRepay(
+        LocalVars_UPTL memory vul,
+        uint8 seedUser,
+        uint8 seedOnBeHalfOf,
+        uint8 seedAsset,
+        uint128 seedAmt
+    ) public {
         randUpdatePriceAndTryLiquidate(vul);
 
-        uint randUser = clampBetween(seedUser, 0 ,totalNbUsers);
-        uint randOnBehalfOf = clampBetween(seedOnBeHalfOf, 0 ,totalNbUsers);
-        uint randAsset = clampBetween(seedAsset, 0 ,totalNbTokens);
+        uint256 randUser = clampBetween(seedUser, 0, totalNbUsers);
+        uint256 randOnBehalfOf = clampBetween(seedOnBeHalfOf, 0, totalNbUsers);
+        uint256 randAsset = clampBetween(seedAsset, 0, totalNbTokens);
 
         User user = users[randUser];
         User onBehalfOf = users[randOnBehalfOf];
@@ -180,27 +196,23 @@ contract LendingPoolProp is PropertiesBase {
         AToken aToken = aTokens[randAsset];
         VariableDebtToken debtToken = debtTokens[randAsset];
 
-        uint vTokenBalanceBefore = debtToken.balanceOf(address(onBehalfOf));
-        uint assetBalanceBefore = asset.balanceOf(address(user));
+        uint256 vTokenBalanceBefore = debtToken.balanceOf(address(onBehalfOf));
+        uint256 assetBalanceBefore = asset.balanceOf(address(user));
         (,,,,, uint256 healthFactorBefore) = pool.getUserAccountData(address(onBehalfOf));
 
-        uint randAmt = clampBetween(seedAmt, 0, vTokenBalanceBefore);    
+        uint256 randAmt = clampBetween(seedAmt, 0, vTokenBalanceBefore);
 
-        (bool success, ) = user.proxy(
+        (bool success,) = user.proxy(
             address(pool),
             abi.encodeWithSelector(
-                pool.repay.selector,
-                address(asset),
-                true,
-                randAmt,
-                address(onBehalfOf)
+                pool.repay.selector, address(asset), true, randAmt, address(onBehalfOf)
             )
         );
 
         require(success);
-        
-        uint vTokenBalanceAfter = debtToken.balanceOf(address(onBehalfOf));
-        uint assetBalanceAfter = asset.balanceOf(address(user));
+
+        uint256 vTokenBalanceAfter = debtToken.balanceOf(address(onBehalfOf));
+        uint256 assetBalanceAfter = asset.balanceOf(address(user));
         (,,,,, uint256 healthFactorAfter) = pool.getUserAccountData(address(onBehalfOf));
 
         assertEqApprox(vTokenBalanceBefore - vTokenBalanceAfter, randAmt, 1, "210");
@@ -213,72 +225,84 @@ contract LendingPoolProp is PropertiesBase {
     function randRehypothecationRebalance(LocalVars_UPTL memory vul, uint8 seedAToken) public {
         randUpdatePriceAndTryLiquidate(vul);
 
-        uint randAToken = clampBetween(seedAToken, 0 ,totalNbTokens);
+        uint256 randAToken = clampBetween(seedAToken, 0, totalNbTokens);
         AToken aToken = aTokens[randAToken];
 
         if (aToken._farmingPct() != 0 && address(aToken._vault()) != address(0)) {
-            uint balanceProfitHandlerBefore = ERC20(aToken.UNDERLYING_ASSET_ADDRESS()).balanceOf(aToken._profitHandler());
+            uint256 balanceProfitHandlerBefore =
+                ERC20(aToken.UNDERLYING_ASSET_ADDRESS()).balanceOf(aToken._profitHandler());
 
             poolConfigurator.rebalance(address(aToken));
 
-            uint balanceProfitHandlerAfter = ERC20(aToken.UNDERLYING_ASSET_ADDRESS()).balanceOf(aToken._profitHandler());
+            uint256 balanceProfitHandlerAfter =
+                ERC20(aToken.UNDERLYING_ASSET_ADDRESS()).balanceOf(aToken._profitHandler());
 
-            assertEqApproxPct(aToken._farmingBal(), aToken._underlyingAmount(), BPS - aToken._farmingPctDrift(), "228"); 
-            
+            assertEqApproxPct(
+                aToken._farmingBal(),
+                aToken._underlyingAmount(),
+                BPS - aToken._farmingPctDrift(),
+                "228"
+            );
+
             uint256 farmingBal = aToken._farmingBal();
             uint256 vaultBalance = ERC20(address(aToken._vault())).balanceOf(address(aToken));
             uint256 vaultAssets = aToken._vault().convertToAssets(vaultBalance);
-            if(vaultAssets - farmingBal >= aToken._claimingThreshold()) {
-                assertGt(balanceProfitHandlerBefore, balanceProfitHandlerAfter - balanceProfitHandlerBefore, "229");
+            if (vaultAssets - farmingBal >= aToken._claimingThreshold()) {
+                assertGt(
+                    balanceProfitHandlerBefore,
+                    balanceProfitHandlerAfter - balanceProfitHandlerBefore,
+                    "229"
+                );
             }
         }
     }
-    
+
     /// @custom:invariant 213 - `setUseReserveAsCollateral` must not reduce the health factor below 1.
-    function randSetUseReserveAsCollateral(LocalVars_UPTL memory vul, uint8 seedUser, uint8 seedAsset, bool randIsColl) public {
+    function randSetUseReserveAsCollateral(
+        LocalVars_UPTL memory vul,
+        uint8 seedUser,
+        uint8 seedAsset,
+        bool randIsColl
+    ) public {
         randUpdatePriceAndTryLiquidate(vul);
 
-        uint randUser = clampBetween(seedUser, 0 ,totalNbUsers);
-        uint randAsset = clampBetween(seedAsset, 0 ,totalNbTokens);
+        uint256 randUser = clampBetween(seedUser, 0, totalNbUsers);
+        uint256 randAsset = clampBetween(seedAsset, 0, totalNbTokens);
 
         User user = users[randUser];
         MintableERC20 asset = assets[randAsset];
 
         (,,,,, uint256 healthFactorBefore) = pool.getUserAccountData(address(user));
 
-        (bool success, ) = user.proxy(
+        (bool success,) = user.proxy(
             address(pool),
             abi.encodeWithSelector(
-                pool.setUserUseReserveAsCollateral.selector,
-                address(asset),
-                true,
-                randIsColl
-            )   
+                pool.setUserUseReserveAsCollateral.selector, address(asset), true, randIsColl
+            )
         );
         require(success);
 
         (,,,,, uint256 healthFactorAfter) = pool.getUserAccountData(address(user));
-        if (randIsColl)
-            assertLte(healthFactorBefore, healthFactorAfter, "213");        
-        else
+        if (randIsColl) {
+            assertLte(healthFactorBefore, healthFactorAfter, "213");
+        } else {
             assertGte(healthFactorBefore, healthFactorAfter, "213");
+        }
 
-        if (healthFactorBefore >= 1e18 && healthFactorAfter != healthFactorBefore)
+        if (healthFactorBefore >= 1e18 && healthFactorAfter != healthFactorBefore) {
             assertGte(healthFactorAfter, 1e18, "213");
+        }
     }
 
     struct LocalVars_RandFlashloan {
-        uint randUser;
-        uint randAsset;
-        uint randMode;
-        uint randNbAssets;
-        uint randAmt;
-
+        uint256 randUser;
+        uint256 randAsset;
+        uint256 randMode;
+        uint256 randNbAssets;
+        uint256 randAmt;
         User user;
-
         MintableERC20 asset;
         VariableDebtToken debtToken;
-
         address[] assetsFl;
         bool[] reserveTypesFl;
         uint256[] amountsFl;
@@ -288,14 +312,20 @@ contract LendingPoolProp is PropertiesBase {
     }
 
     /// @custom:invariant 214 - Users must not be able to steal funds from flashloans.
-    function randFlashloan(LocalVars_UPTL memory vul, uint8 seedUser, uint8 seedAsset/* , uint8 seedMode */, uint8 seedNbAssetFl, uint128 seedAmt) public {
+    function randFlashloan(
+        LocalVars_UPTL memory vul,
+        uint8 seedUser,
+        uint8 seedAsset, /* , uint8 seedMode */
+        uint8 seedNbAssetFl,
+        uint128 seedAmt
+    ) public {
         randUpdatePriceAndTryLiquidate(vul);
-        
+
         LocalVars_RandFlashloan memory v;
 
-        v.randUser = clampBetween(seedUser, 0 ,totalNbUsers);
-        v.randAsset = clampBetween(seedAsset, 0 ,totalNbTokens);
-        v.randMode = 0; // clampBetween(seedMode, 0, 1);   
+        v.randUser = clampBetween(seedUser, 0, totalNbUsers);
+        v.randAsset = clampBetween(seedAsset, 0, totalNbTokens);
+        v.randMode = 0; // clampBetween(seedMode, 0, 1);
         v.randNbAssets = clampBetween(seedNbAssetFl, 1, totalNbTokens);
 
         v.user = users[v.randUser];
@@ -328,19 +358,14 @@ contract LendingPoolProp is PropertiesBase {
             onBehalfOf: address(v.user)
         });
 
-        v.user.execFl(
-            flp,
-            v.amountsFl,
-            v.modesFl,
-            v.params
-        );
+        v.user.execFl(flp, v.amountsFl, v.modesFl, v.params);
 
         for (uint256 i = 0; i < v.randNbAssets; i++) {
-            assertGte(v.assetBalanceBefore[i] , assets[i].balanceOf(address(v.user)), "214");
+            assertGte(v.assetBalanceBefore[i], assets[i].balanceOf(address(v.user)), "214");
         }
 
         // Premium payment increase indexes => update last indexes
-        for (uint i = 0; i < assets.length; i++) {
+        for (uint256 i = 0; i < assets.length; i++) {
             address asset = address(assets[i]);
             lastLiquidityIndex[asset] = pool.getReserveData(asset, true).liquidityIndex;
             lastVariableBorrowIndex[asset] = pool.getReserveData(asset, true).variableBorrowIndex;
@@ -348,23 +373,25 @@ contract LendingPoolProp is PropertiesBase {
     }
 
     // ---------------------- Invariants ----------------------
-    
+
     /// @custom:invariant 215 - The total value borrowed must always be less than the value of the collaterals.
     function globalSolvencyCheck() public {
-        uint valueColl;
-        uint valueDebt;
-        for (uint i = 0; i < aTokens.length; i++) {
+        uint256 valueColl;
+        uint256 valueDebt;
+        for (uint256 i = 0; i < aTokens.length; i++) {
             AToken aToken = aTokens[i];
             MockAggregator aTokenOracle = aggregators[i];
-            
-            valueColl += aToken.totalSupply() * uint(aggregators[i].latestAnswer()) / (10 ** assets[i].decimals());
+
+            valueColl += aToken.totalSupply() * uint256(aggregators[i].latestAnswer())
+                / (10 ** assets[i].decimals());
         }
 
-        for (uint i = 0; i < debtTokens.length; i++) {
+        for (uint256 i = 0; i < debtTokens.length; i++) {
             VariableDebtToken vToken = debtTokens[i];
             MockAggregator aTokenOracle = aggregators[i];
-            
-            valueDebt += vToken.totalSupply() * uint(aggregators[i].latestAnswer()) / (10 ** assets[i].decimals());
+
+            valueDebt += vToken.totalSupply() * uint256(aggregators[i].latestAnswer())
+                / (10 ** assets[i].decimals());
         }
 
         assertGte(valueColl, valueDebt, "215");
@@ -378,13 +405,13 @@ contract LendingPoolProp is PropertiesBase {
     //         uint valueDebt = 0;
 
     //         for (uint i = 0; i < aTokens.length; i++)
-    //             valueColl += aTokens[i].balanceOf(address(user)) * uint(aggregators[i].latestAnswer()) 
+    //             valueColl += aTokens[i].balanceOf(address(user)) * uint(aggregators[i].latestAnswer())
     //                             / (10 ** assets[i].decimals());
 
-    //         for (uint i = 0; i < debtTokens.length; i++)                 
-    //             valueDebt += debtTokens[i].balanceOf(address(user)) * uint(aggregators[i].latestAnswer()) 
+    //         for (uint i = 0; i < debtTokens.length; i++)
+    //             valueDebt += debtTokens[i].balanceOf(address(user)) * uint(aggregators[i].latestAnswer())
     //                             / (10 ** assets[i].decimals());
-            
+
     //         assertGte(valueColl, valueDebt, "216");
     //     }
     // }
@@ -392,17 +419,17 @@ contract LendingPoolProp is PropertiesBase {
     /// @custom:invariant 217 - The `liquidityIndex` should monotonically increase when there's total debt.
     /// @custom:invariant 218 - The `variableBorrowIndex` should monotonically increase when there's total debt.
     function indexIntegrity() public {
-        for (uint i = 0; i < assets.length; i++) {
+        for (uint256 i = 0; i < assets.length; i++) {
             address asset = address(assets[i]);
 
-            uint currentLiquidityIndex = pool.getReserveData(asset, true).liquidityIndex;
-            uint currentVariableBorrowIndex = pool.getReserveData(asset, true).variableBorrowIndex;
+            uint256 currentLiquidityIndex = pool.getReserveData(asset, true).liquidityIndex;
+            uint256 currentVariableBorrowIndex =
+                pool.getReserveData(asset, true).variableBorrowIndex;
 
             if (hasDebtTotal()) {
                 assertGte(currentLiquidityIndex, lastLiquidityIndex[asset], "217");
                 assertGte(currentVariableBorrowIndex, lastVariableBorrowIndex[asset], "218");
-            }
-            else {
+            } else {
                 assertEq(currentLiquidityIndex, lastLiquidityIndex[asset], "217");
                 assertEq(currentVariableBorrowIndex, lastVariableBorrowIndex[asset], "218");
             }
@@ -413,15 +440,16 @@ contract LendingPoolProp is PropertiesBase {
 
     /// @custom:invariant 219 - A user with debt should have at least an aToken balance `setUsingAsCollateral`.
     function userDebtIntegrity() public {
-        for (uint i = 0; i < users.length; i++) {
+        for (uint256 i = 0; i < users.length; i++) {
             User user = users[i];
-            if (hasDebt(user))
+            if (hasDebt(user)) {
                 assertWithMsg(hasDebt(user), "219");
+            }
         }
     }
 
     /// @custom:invariant 220 - If all debt is repaid, all `aToken` holder should be able to claim their collateral.
-    /// @custom:invariant 221 - If all users withdraw their liquidity, there must not be aTokens supply left. 
+    /// @custom:invariant 221 - If all users withdraw their liquidity, there must not be aTokens supply left.
     // function usersFullCollateralClaim() public {
     //     if (!hasDebtTotal()) {
     //         for (uint i = 0; i < users.length; i++) {

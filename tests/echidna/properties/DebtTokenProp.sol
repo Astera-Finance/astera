@@ -10,26 +10,28 @@ contract DebtTokenProp is PropertiesBase {
 
     /// @custom:invariant 400 - `approveDelegation()` must never revert.
     /// @custom:invariant 401 - Allowance must be modified correctly via `approve()`.
-    function randApproveDelegation(LocalVars_UPTL memory vul, uint8 seedUser, uint8 seedSender, uint8 seedVToken, uint128 seedAmt) public {
+    function randApproveDelegation(
+        LocalVars_UPTL memory vul,
+        uint8 seedUser,
+        uint8 seedSender,
+        uint8 seedVToken,
+        uint128 seedAmt
+    ) public {
         randUpdatePriceAndTryLiquidate(vul);
 
-        uint randUser = clampBetween(seedUser, 0 ,totalNbUsers);
-        uint randSender = clampBetween(seedSender, 0 ,totalNbUsers);
-        uint randVToken = clampBetween(seedVToken, 0 ,totalNbTokens);
+        uint256 randUser = clampBetween(seedUser, 0, totalNbUsers);
+        uint256 randSender = clampBetween(seedSender, 0, totalNbUsers);
+        uint256 randVToken = clampBetween(seedVToken, 0, totalNbTokens);
 
         User user = users[randUser];
         User sender = users[randUser];
         VariableDebtToken debtTokens = debtTokens[randVToken];
 
-        uint randAmt = clampBetween(seedAmt, 0, initialMint * 2);
+        uint256 randAmt = clampBetween(seedAmt, 0, initialMint * 2);
 
         (bool success, bytes memory data) = user.proxy(
             address(debtTokens),
-            abi.encodeWithSelector(
-                debtTokens.approveDelegation.selector,
-                address(sender),
-                randAmt
-            )
+            abi.encodeWithSelector(debtTokens.approveDelegation.selector, address(sender), randAmt)
         );
 
         assertWithMsg(success, "400");
@@ -37,6 +39,6 @@ contract DebtTokenProp is PropertiesBase {
     }
 
     // ---------------------- Invariants ----------------------
-    
+
     // ---------------------- Helpers ----------------------
 }

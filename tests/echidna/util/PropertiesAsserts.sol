@@ -26,14 +26,8 @@ abstract contract PropertiesAsserts {
         if (a != b) {
             string memory aStr = PropertiesLibString.toString(a);
             string memory bStr = PropertiesLibString.toString(b);
-            bytes memory assertMsg = abi.encodePacked(
-                "Invalid: ",
-                aStr,
-                "!=",
-                bStr,
-                ", reason: ",
-                reason
-            );
+            bytes memory assertMsg =
+                abi.encodePacked("Invalid: ", aStr, "!=", bStr, ", reason: ", reason);
             emit AssertEqFail(string(assertMsg));
             assert(false);
         }
@@ -44,14 +38,8 @@ abstract contract PropertiesAsserts {
         if (a != b) {
             string memory aStr = PropertiesLibString.toString(a);
             string memory bStr = PropertiesLibString.toString(b);
-            bytes memory assertMsg = abi.encodePacked(
-                "Invalid: ",
-                aStr,
-                "!=",
-                bStr,
-                ", reason: ",
-                reason
-            );
+            bytes memory assertMsg =
+                abi.encodePacked("Invalid: ", aStr, "!=", bStr, ", reason: ", reason);
             emit AssertEqFail(string(assertMsg));
             assert(false);
         }
@@ -62,14 +50,8 @@ abstract contract PropertiesAsserts {
         if (a == b) {
             string memory aStr = PropertiesLibString.toString(a);
             string memory bStr = PropertiesLibString.toString(b);
-            bytes memory assertMsg = abi.encodePacked(
-                "Invalid: ",
-                aStr,
-                "==",
-                bStr,
-                ", reason: ",
-                reason
-            );
+            bytes memory assertMsg =
+                abi.encodePacked("Invalid: ", aStr, "==", bStr, ", reason: ", reason);
             emit AssertNeqFail(string(assertMsg));
             assert(false);
         }
@@ -80,14 +62,8 @@ abstract contract PropertiesAsserts {
         if (a == b) {
             string memory aStr = PropertiesLibString.toString(a);
             string memory bStr = PropertiesLibString.toString(b);
-            bytes memory assertMsg = abi.encodePacked(
-                "Invalid: ",
-                aStr,
-                "==",
-                bStr,
-                ", reason: ",
-                reason
-            );
+            bytes memory assertMsg =
+                abi.encodePacked("Invalid: ", aStr, "==", bStr, ", reason: ", reason);
             emit AssertNeqFail(string(assertMsg));
             assert(false);
         }
@@ -98,14 +74,8 @@ abstract contract PropertiesAsserts {
         if (!(a >= b)) {
             string memory aStr = PropertiesLibString.toString(a);
             string memory bStr = PropertiesLibString.toString(b);
-            bytes memory assertMsg = abi.encodePacked(
-                "Invalid: ",
-                aStr,
-                "<",
-                bStr,
-                " failed, reason: ",
-                reason
-            );
+            bytes memory assertMsg =
+                abi.encodePacked("Invalid: ", aStr, "<", bStr, " failed, reason: ", reason);
             emit AssertGteFail(string(assertMsg));
             assert(false);
         }
@@ -116,14 +86,8 @@ abstract contract PropertiesAsserts {
         if (!(a >= b)) {
             string memory aStr = PropertiesLibString.toString(a);
             string memory bStr = PropertiesLibString.toString(b);
-            bytes memory assertMsg = abi.encodePacked(
-                "Invalid: ",
-                aStr,
-                "<",
-                bStr,
-                " failed, reason: ",
-                reason
-            );
+            bytes memory assertMsg =
+                abi.encodePacked("Invalid: ", aStr, "<", bStr, " failed, reason: ", reason);
             emit AssertGteFail(string(assertMsg));
             assert(false);
         }
@@ -134,14 +98,8 @@ abstract contract PropertiesAsserts {
         if (!(a > b)) {
             string memory aStr = PropertiesLibString.toString(a);
             string memory bStr = PropertiesLibString.toString(b);
-            bytes memory assertMsg = abi.encodePacked(
-                "Invalid: ",
-                aStr,
-                "<=",
-                bStr,
-                " failed, reason: ",
-                reason
-            );
+            bytes memory assertMsg =
+                abi.encodePacked("Invalid: ", aStr, "<=", bStr, " failed, reason: ", reason);
             emit AssertGtFail(string(assertMsg));
             assert(false);
         }
@@ -152,14 +110,8 @@ abstract contract PropertiesAsserts {
         if (!(a > b)) {
             string memory aStr = PropertiesLibString.toString(a);
             string memory bStr = PropertiesLibString.toString(b);
-            bytes memory assertMsg = abi.encodePacked(
-                "Invalid: ",
-                aStr,
-                "<=",
-                bStr,
-                " failed, reason: ",
-                reason
-            );
+            bytes memory assertMsg =
+                abi.encodePacked("Invalid: ", aStr, "<=", bStr, " failed, reason: ", reason);
             emit AssertGtFail(string(assertMsg));
             assert(false);
         }
@@ -170,14 +122,8 @@ abstract contract PropertiesAsserts {
         if (!(a <= b)) {
             string memory aStr = PropertiesLibString.toString(a);
             string memory bStr = PropertiesLibString.toString(b);
-            bytes memory assertMsg = abi.encodePacked(
-                "Invalid: ",
-                aStr,
-                ">",
-                bStr,
-                " failed, reason: ",
-                reason
-            );
+            bytes memory assertMsg =
+                abi.encodePacked("Invalid: ", aStr, ">", bStr, " failed, reason: ", reason);
             emit AssertLteFail(string(assertMsg));
             assert(false);
         }
@@ -188,14 +134,8 @@ abstract contract PropertiesAsserts {
         if (!(a <= b)) {
             string memory aStr = PropertiesLibString.toString(a);
             string memory bStr = PropertiesLibString.toString(b);
-            bytes memory assertMsg = abi.encodePacked(
-                "Invalid: ",
-                aStr,
-                ">",
-                bStr,
-                " failed, reason: ",
-                reason
-            );
+            bytes memory assertMsg =
+                abi.encodePacked("Invalid: ", aStr, ">", bStr, " failed, reason: ", reason);
             emit AssertLteFail(string(assertMsg));
             assert(false);
         }
@@ -206,14 +146,8 @@ abstract contract PropertiesAsserts {
         if (!(a < b)) {
             string memory aStr = PropertiesLibString.toString(a);
             string memory bStr = PropertiesLibString.toString(b);
-            bytes memory assertMsg = abi.encodePacked(
-                "Invalid: ",
-                aStr,
-                ">=",
-                bStr,
-                " failed, reason: ",
-                reason
-            );
+            bytes memory assertMsg =
+                abi.encodePacked("Invalid: ", aStr, ">=", bStr, " failed, reason: ", reason);
             emit AssertLtFail(string(assertMsg));
             assert(false);
         }
@@ -224,14 +158,8 @@ abstract contract PropertiesAsserts {
         if (!(a < b)) {
             string memory aStr = PropertiesLibString.toString(a);
             string memory bStr = PropertiesLibString.toString(b);
-            bytes memory assertMsg = abi.encodePacked(
-                "Invalid: ",
-                aStr,
-                ">=",
-                bStr,
-                " failed, reason: ",
-                reason
-            );
+            bytes memory assertMsg =
+                abi.encodePacked("Invalid: ", aStr, ">=", bStr, " failed, reason: ", reason);
             emit AssertLtFail(string(assertMsg));
             assert(false);
         }
@@ -239,53 +167,43 @@ abstract contract PropertiesAsserts {
 
     /// @notice asserts that a is approximately equal to b. Violations are logged using reason.
     function assertEqApprox(uint256 a, uint256 b, uint256 approx, string memory reason) internal {
-        emit LogUint256("abs(int(a - b))", abs(int(a - b)));
+        emit LogUint256("abs(int(a - b))", abs(int256(a - b)));
         emit LogUint256("approx", approx);
-        if (abs(int(int(a) - int(b))) > approx) {
+        if (abs(int256(int256(a) - int256(b))) > approx) {
             string memory aStr = PropertiesLibString.toString(a);
             string memory bStr = PropertiesLibString.toString(b);
-            string memory diff = PropertiesLibString.toString(abs(int(int(a) - int(b))));
+            string memory diff = PropertiesLibString.toString(abs(int256(int256(a) - int256(b))));
             bytes memory assertMsg = abi.encodePacked(
-                "Invalid: ",
-                aStr,
-                " to far from ",
-                bStr,
-                " by ",
-                diff,
-                " failed, reason: ",
-                reason
+                "Invalid: ", aStr, " to far from ", bStr, " by ", diff, " failed, reason: ", reason
             );
             emit AssertGtFail(string(assertMsg));
             assert(false);
-        }    
+        }
     }
 
     /// @notice asserts that a is approximately equal to b. Violations are logged using reason. Uses percentage for approximation.
-    function assertEqApproxPct(uint256 a, uint256 b, uint256 approx, string memory reason) internal {
-        emit LogUint256("abs(int(a - b))", abs(int(int(a) - int(b))));
+    function assertEqApproxPct(uint256 a, uint256 b, uint256 approx, string memory reason)
+        internal
+    {
+        emit LogUint256("abs(int(a - b))", abs(int256(int256(a) - int256(b))));
         emit LogUint256("approx", approx);
 
         uint256 maxDiff = (b * approx) / 10000;
 
         emit LogUint256("maxDiff", maxDiff);
 
-        if (abs(int(int(a) - int(b))) > maxDiff) {
+        if (abs(int256(int256(a) - int256(b))) > maxDiff) {
             string memory aStr = PropertiesLibString.toString(a);
             string memory bStr = PropertiesLibString.toString(b);
-            string memory diff = PropertiesLibString.toString(uint(abs(int(abs(int(int(a) - int(b)))) - int(maxDiff))));
+            string memory diff = PropertiesLibString.toString(
+                uint256(abs(int256(abs(int256(int256(a) - int256(b)))) - int256(maxDiff)))
+            );
             bytes memory assertMsg = abi.encodePacked(
-                "Invalid: ",
-                aStr,
-                " to far from ",
-                bStr,
-                " by ",
-                diff,
-                " failed, reason: ",
-                reason
+                "Invalid: ", aStr, " to far from ", bStr, " by ", diff, " failed, reason: ", reason
             );
             emit AssertGtFail(string(assertMsg));
             assert(false);
-        }    
+        }
     }
 
     /// @notice calculates the absolute value of x.
@@ -294,54 +212,38 @@ abstract contract PropertiesAsserts {
     }
 
     /// @notice Clamps value to be between low and high, both inclusive
-    function clampBetween(
-        uint256 value,
-        uint256 low,
-        uint256 high
-    ) internal returns (uint256) {
-        uint ans = low + (value % (high - low));
+    function clampBetween(uint256 value, uint256 low, uint256 high) internal returns (uint256) {
+        uint256 ans = low + (value % (high - low));
         string memory valueStr = PropertiesLibString.toString(value);
         string memory ansStr = PropertiesLibString.toString(ans);
-        bytes memory message = abi.encodePacked(
-            "Clamping value ",
-            valueStr,
-            " to ",
-            ansStr
-        );
+        bytes memory message = abi.encodePacked("Clamping value ", valueStr, " to ", ansStr);
         emit LogString(string(message));
         return ans;
     }
 
-    function clampBetweenProportional(uint16 value, uint256 low, uint256 high) internal returns (uint256) {
-        uint ans = value * (high - low) / type(uint16).max + low;
+    function clampBetweenProportional(uint16 value, uint256 low, uint256 high)
+        internal
+        returns (uint256)
+    {
+        uint256 ans = value * (high - low) / type(uint16).max + low;
 
         string memory valueStr = PropertiesLibString.toString(value);
         string memory ansStr = PropertiesLibString.toString(ans);
-        bytes memory message = abi.encodePacked(
-            "Clamping proportional value ",
-            valueStr,
-            " to ",
-            ansStr
-        );
+        bytes memory message =
+            abi.encodePacked("Clamping proportional value ", valueStr, " to ", ansStr);
         emit LogString(string(message));
         return ans;
     }
 
     /// @notice Clamps value to be between low and high, both inclusive
-    function clampBetweenEqual(
-        uint256 value,
-        uint256 low,
-        uint256 high
-    ) internal returns (uint256) {
-        uint ans = low + (value % (high - low + 1));
+    function clampBetweenEqual(uint256 value, uint256 low, uint256 high)
+        internal
+        returns (uint256)
+    {
+        uint256 ans = low + (value % (high - low + 1));
         string memory valueStr = PropertiesLibString.toString(value);
         string memory ansStr = PropertiesLibString.toString(ans);
-        bytes memory message = abi.encodePacked(
-            "Clamping value ",
-            valueStr,
-            " to ",
-            ansStr
-        );
+        bytes memory message = abi.encodePacked("Clamping value ", valueStr, " to ", ansStr);
         emit LogString(string(message));
         return ans;
     }
@@ -395,7 +297,7 @@ library PropertiesLibString {
                 // Keep dividing temp until zero.
                 temp := div(temp, 10)
 
-                 // prettier-ignore
+                // prettier-ignore
                 if iszero(temp) { break }
             }
 
@@ -412,10 +314,8 @@ library PropertiesLibString {
 
     function toString(address value) internal pure returns (string memory str) {
         bytes memory s = new bytes(40);
-        for (uint i = 0; i < 20; i++) {
-            bytes1 b = bytes1(
-                uint8(uint(uint160(value)) / (2 ** (8 * (19 - i))))
-            );
+        for (uint256 i = 0; i < 20; i++) {
+            bytes1 b = bytes1(uint8(uint256(uint160(value)) / (2 ** (8 * (19 - i)))));
             bytes1 hi = bytes1(uint8(b) / 16);
             bytes1 lo = bytes1(uint8(b) - 16 * uint8(hi));
             s[2 * i] = char(hi);

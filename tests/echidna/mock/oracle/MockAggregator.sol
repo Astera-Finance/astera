@@ -5,11 +5,7 @@ contract MockAggregator {
     int256 private latestAnswer_;
     int256 private decimals_;
 
-    event AnswerUpdated(
-        int256 indexed current,
-        uint256 indexed roundId,
-        uint256 timestamp
-    );
+    event AnswerUpdated(int256 indexed current, uint256 indexed roundId, uint256 timestamp);
 
     constructor(int256 _initialAnswer, int256 decimals) {
         latestAnswer_ = _initialAnswer;
@@ -34,17 +30,16 @@ contract MockAggregator {
     }
 
     function latestRoundData()
-    external
-    view
-    returns (
-        uint80 roundId,
-        int256 answer,
-        uint256 startedAt,
-        uint256 updatedAt,
-        uint80 answeredInRound
-    )
-{
-    return (1, latestAnswer_, 1, block.timestamp, 0);
-}
-
+        external
+        view
+        returns (
+            uint80 roundId,
+            int256 answer,
+            uint256 startedAt,
+            uint256 updatedAt,
+            uint80 answeredInRound
+        )
+    {
+        return (1, latestAnswer_, 1, block.timestamp, 0);
+    }
 }
