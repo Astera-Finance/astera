@@ -77,6 +77,9 @@ import {RewardForwarder} from "contracts/protocol/rewarder/lendingpool/RewardFor
 import {RewardsController} from "contracts/protocol/rewarder/lendingpool/RewardsController.sol";
 import {RewardsDistributor} from "contracts/protocol/rewarder/lendingpool/RewardsDistributor.sol";
 
+import {MockReaperVault2} from "contracts/mocks/tokens/MockVault.sol";
+import {MockStrategy} from "contracts/mocks/tokens/MockStrategy.sol";
+
 /// MiniPool
 import {FlowLimiter} from "contracts/protocol/core/minipool/FlowLimiter.sol";
 import {MiniPool} from "contracts/protocol/core/minipool/MiniPool.sol";
@@ -124,11 +127,13 @@ contract PropertiesBase is PropertiesAsserts, MarketParams {
     AToken[] internal aTokens;
     VariableDebtToken[] internal debtTokens;
     uint256[] internal timeouts;
+    MockReaperVault2[] internal mockedVaults;
 
     // Cod3x Lend contracts
     LendingPoolAddressesProvider internal provider;
     MockLendingPool internal pool;
     address internal treasury;
+    address internal profitHandler;
     LendingPoolConfigurator internal poolConfigurator;
     ATokensAndRatesHelper internal aHelper;
     AToken internal aToken;
@@ -153,6 +158,7 @@ contract PropertiesBase is PropertiesAsserts, MarketParams {
         provider.setPoolAdmin(address(this));
         provider.setEmergencyAdmin(address(this));
         treasury = address(0xAAAA);
+        profitHandler = address(0xBBBB);
 
         pool = new MockLendingPool();
         pool.initialize(provider);
@@ -254,8 +260,17 @@ contract PropertiesBase is PropertiesAsserts, MarketParams {
 
         poolConfigurator.setPoolPause(false);
 
-        // /// Setup Minipool
+        // Rehypothecation
+        for (uint256 i = 0; i < totalNbTokens; i++) {
+            mockedVaults.push(
+                new MockReaperVault2(address(assets[i]), "Mock ERC4626", "mock", type(uint256).max, treasury)
+            );
+            if(i % 2 == 0){
+                turnOnRehypothecation(address(aTokens[i]), address(mockedVaults[i]));
+            }
+        }
 
+        // /// Setup Minipool
         // provider.setFlowLimiter(address(0));
         // provider.setMiniPoolAddressesProvider(address(0));
         // cod3xLendDataProvider.setMiniPoolAddressProvider(address(0));
@@ -308,14 +323,14 @@ contract PropertiesBase is PropertiesAsserts, MarketParams {
     /// ------- global state updates -------
 
     struct LocalVars_UPTL {
-        uint16 seedAmtPrice1;
-        uint16 seedAmtPrice2;
-        uint16 seedAmtPrice3;
-        uint16 seedAmtPrice4;
-        uint16 seedAmtPrice5;
-        uint16 seedAmtPrice6;
-        uint16 seedAmtPrice7;
-        uint16 seedAmtPrice8; // max 8 assets
+        uint8 seedAmtPrice1;
+        uint8 seedAmtPrice2;
+        uint8 seedAmtPrice3;
+        uint8 seedAmtPrice4;
+        uint8 seedAmtPrice5;
+        uint8 seedAmtPrice6;
+        uint8 seedAmtPrice7;
+        uint8 seedAmtPrice8; // max 8 assets
 
         uint8 seedLiquidator;
         uint8 seedColl;
@@ -325,7 +340,7 @@ contract PropertiesBase is PropertiesAsserts, MarketParams {
     }
 
     function randUpdatePriceAndTryLiquidate(LocalVars_UPTL memory v) public {
-        uint16[] memory seedAmt = new uint16[](8);
+        uint8[] memory seedAmt = new uint8[](8);
         seedAmt[0] = v.seedAmtPrice1;
         seedAmt[1] = v.seedAmtPrice2;
         seedAmt[2] = v.seedAmtPrice3;
@@ -463,7 +478,7 @@ contract PropertiesBase is PropertiesAsserts, MarketParams {
 
     /// ------- Helpers -------
 
-    function oraclePriceUpdate(uint16[] memory seedAmt) internal {
+    function oraclePriceUpdate(uint8[] memory seedAmt) internal {
         for (uint256 i = 0; i < aggregators.length; i++) {
             uint256 latestAnswer = uint256(aggregators[i].latestAnswer());
             uint256 maxPriceChange = latestAnswer * volatility / BPS; // max VOLATILITY price change
@@ -589,5 +604,16 @@ contract PropertiesBase is PropertiesAsserts, MarketParams {
                 lenDebtTokenUser++;
             }
         }
+    }
+
+    function turnOnRehypothecation(
+        address _aToken,
+        address _vaultAddr
+    ) internal {
+        poolConfigurator.setVault(_aToken, _vaultAddr);
+        poolConfigurator.setFarmingPct(_aToken, DEFAULT_FARMING_PCT);
+        poolConfigurator.setClaimingThreshold(_aToken, DEFAULT_CLAIMING_THRESHOLD);
+        poolConfigurator.setFarmingPctDrift(_aToken, DEFAULT_FARMING_PCT_DRIFT);
+        poolConfigurator.setProfitHandler(_aToken, profitHandler);
     }
 }

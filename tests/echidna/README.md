@@ -7,6 +7,7 @@ forge install
 echidna tests/echidna/PropertiesMain.sol --contract PropertiesMain --config tests/echidna/config/config1_fast.yaml
 ```
 
+Medusa: to be fixed.
 ```sh
 cd tests/echidna
 medusa fuzz --config medusa_config.json
@@ -22,8 +23,6 @@ You can fine in `/echidna` 3 config files to run the fuzzer:
 
 # TODO
 
-- Add Medusa
-- Randomly activate rehypothecation on lendingpool reserves.
 - Improve the tryLiquidate function and uncomment usersSolvencyCheck.
 - Random PI IR strategies for reserves.
 - Implemente all "To implement" invariants.
@@ -31,6 +30,8 @@ You can fine in `/echidna` 3 config files to run the fuzzer:
 - Add minipools.
 - Randomly activation flow borrowing on minipools
 - Add rewarders.
+- Fix randBorrow "207".
+- Add Medusa support
 
 # Invariant testing
 
@@ -51,26 +52,30 @@ You can fine in `/echidna` 3 config files to run the fuzzer:
 204. ✅ `withdraw()` must increase the user asset balance by `amount`.
 205. ✅ A user must not be able to `borrow()` if they don't own aTokens.
 206. ✅ `borrow()` must only be possible if the user health factor is greater than 1.
-207. ✅ `borrow()` must not result in a health factor of less than 1.
+207. ❌ `borrow()` must not result in a health factor of less than 1.
 208. ✅ `borrow()` must increase the user debtToken balance by `amount`.
 209. ✅ `borrow()` must decrease `borrowAllowance()` by `amount` if `user != onBehalf`.
 210. ✅ `repay()` must decrease the onBehalfOf debtToken balance by `amount`.
 211. ✅ `repay()` must decrease the user asset balance by `amount`.
-212. ✅ `healthFactorAfter` must be greater than `healthFactorBefore` as long as liquidations are done in time..
+212. ✅ `healthFactorAfter` must be greater than `healthFactorBefore` as long as liquidations are done in time.
 213. ✅ `setUseReserveAsCollateral` must not reduce the health factor below 1.
 214. ✅ Users must not be able to steal funds from flashloans.
 215. ✅ The total value borrowed must always be less than the value of the collaterals.
-216. ✅ Each user postions must remain solvent.
+216. ✅ Each user position must remain solvent.
 217. ✅ The `liquidityIndex` should monotonically increase when there's total debt.
 218. ✅ The `variableBorrowIndex` should monotonically increase when there's total debt.
 219. ✅ A user with debt should have at least an aToken balance `setUsingAsCollateral`.
-220. ❌ If all debt is repaid, all `aToken` holder should be able to claim their collateral.
+220. ❌ If all debt is repaid, all `aToken` holders should be able to claim their collateral.
 221. ❌ If all users withdraw their liquidity, there must not be aTokens supply left.
 222. 🚧 Integrity of Supply Cap - aToken supply shall never exceed the cap.
 223. 🚧 `UserConfigurationMap` integrity: If a user has a given aToken then `isUsingAsCollateralOrBorrowing` and `isUsingAsCollateral` should return true.
 224. 🚧 `UserConfigurationMap` integrity: If a user has a given debtToken then `isUsingAsCollateralOrBorrowing`, `isBorrowing` and `isBorrowingAny` should return true.
 225. 🚧 `ReserveConfigurationMap` integrity: If reserve is active and not frozen then user can interact with the lending market.
-226. 🚧 Repaying or Liquidate a position must result in the same final state.
+226. 🚧 Repaying or Liquidating a position must result in the same final state.
+227. ❌ Rehypothecation: if the external rehypothecation vault is liquid, users should always be able to withdraw if all other withdrawal conditions are met.
+228. ✅ Rehypothecation: farming percentage must be respected (+/- the drift) after a rebalance occured.
+229. ✅ Rehypothecation: The profit handler address must see its balance increase after reaching the claiming threshold.
+230. ❌ `withdraw()` must not result in a health factor of less than 1.
 
 ### ATokens/ATokenNonRebasing
 
@@ -99,9 +104,8 @@ You can fine in `/echidna` 3 config files to run the fuzzer:
 322. ✅ Force feeding assets in LendingPool, ATokens, or debtTokens must not change the final result.
 323. ✅ Force feeding aToken in LendingPool, ATokens, or debtTokens must not change the final result.
 324. ❌ A user must not hold more than total supply.
-325. ❌ Sum of users' balance must not exceed total supply.
+325. ❌ Sum of users' balances must not exceed total supply.
 326. 🚧 All `ATokenNonRebasing` operations should be equivalent to `ATokens`.
-327. 🚧 If the external rehypothecation vault is liquide, then users should always be able to withdraw.
 
 ### DebtTokens
 
@@ -125,11 +129,11 @@ You can fine in `/echidna` 3 config files to run the fuzzer:
 513. 🚧 `setUseReserveAsCollateral` must not reduce the health factor below 1.
 514. 🚧 Users must not be able to steal funds from flashloans.
 515. 🚧 The total value borrowed must always be less than the value of the collaterals.
-516. 🚧 Each user postions must remain solvent.
+516. 🚧 Each user position must remain solvent.
 517. 🚧 The `liquidityIndex` should monotonically increase when there's total debt.
 518. 🚧 The `variableBorrowIndex` should monotonically increase when there's total debt.
 519. 🚧 A user with debt should have at least an AToken6909 balance `setUsingAsCollateral`.
-520. 🚧 If all debt is repaid, all aToken holder should be able to claim their collateral.
+520. 🚧 If all debt is repaid, all aToken holders should be able to claim their collateral.
 521. 🚧 If all users withdraw their liquidity, there must not be aTokens supply left.
 522. 🚧 Integrity of Supply Cap - aToken supply shall never exceed the cap.
 523. 🚧 `UserConfigurationMap` integrity: If a user has a given aToken then `isUsingAsCollateralOrBorrowing` and `isUsingAsCollateral` should return true.
@@ -137,7 +141,7 @@ You can fine in `/echidna` 3 config files to run the fuzzer:
 525. 🚧 `ReserveConfigurationMap` integrity: If reserve is active and not frozen then user can interact with the lending market.
 526. 🚧 If flow reached the maximum, Minipools must not be able to borrow more.
 527. 🚧 Minipool flow borrow integrity: debt from the Lendingpool should never be greater than the collateral owned by Minipools.
-528. 🚧 Repaying or Liquidate a position must result in the same final state.
+528. 🚧 Repaying or Liquidating a position must result in the same final state.
 
 (ADD MINIPOOL BORROWFLOW INVARIANTS)
 
@@ -160,7 +164,7 @@ You can fine in `/echidna` 3 config files to run the fuzzer:
 614. 🚧 Force feeding assets in MiniPools or AToken6909 must not change the final result.
 615. 🚧 Force feeding aToken or AToken6909 in MiniPools or AToken6909 must not change the final result.
 616. 🚧 A user must not hold more than total supply.
-617. 🚧 Sum of users' balance must not exceed total supply.
+617. 🚧 Sum of users' balances must not exceed total supply.
 618. 🚧 `approveDelegation()` must never revert.
 619. 🚧 Allowance must be modified correctly via `approve()`.
 

@@ -239,12 +239,40 @@ abstract contract PropertiesAsserts {
 
     /// @notice asserts that a is approximately equal to b. Violations are logged using reason.
     function assertEqApprox(uint256 a, uint256 b, uint256 approx, string memory reason) internal {
-        // emit LogUint256("abs(int(a - b))", abs(int(a - b)));
-        // emit LogUint256("approx", approx);
+        emit LogUint256("abs(int(a - b))", abs(int(a - b)));
+        emit LogUint256("approx", approx);
         if (abs(int(int(a) - int(b))) > approx) {
             string memory aStr = PropertiesLibString.toString(a);
             string memory bStr = PropertiesLibString.toString(b);
             string memory diff = PropertiesLibString.toString(abs(int(int(a) - int(b))));
+            bytes memory assertMsg = abi.encodePacked(
+                "Invalid: ",
+                aStr,
+                " to far from ",
+                bStr,
+                " by ",
+                diff,
+                " failed, reason: ",
+                reason
+            );
+            emit AssertGtFail(string(assertMsg));
+            assert(false);
+        }    
+    }
+
+    /// @notice asserts that a is approximately equal to b. Violations are logged using reason. Uses percentage for approximation.
+    function assertEqApproxPct(uint256 a, uint256 b, uint256 approx, string memory reason) internal {
+        emit LogUint256("abs(int(a - b))", abs(int(int(a) - int(b))));
+        emit LogUint256("approx", approx);
+
+        uint256 maxDiff = (b * approx) / 10000;
+
+        emit LogUint256("maxDiff", maxDiff);
+
+        if (abs(int(int(a) - int(b))) > maxDiff) {
+            string memory aStr = PropertiesLibString.toString(a);
+            string memory bStr = PropertiesLibString.toString(b);
+            string memory diff = PropertiesLibString.toString(uint(abs(int(abs(int(int(a) - int(b)))) - int(maxDiff))));
             bytes memory assertMsg = abi.encodePacked(
                 "Invalid: ",
                 aStr,

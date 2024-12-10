@@ -29,4 +29,9 @@ contract MarketParams {
     uint internal constant DEFAULT_LIQUIDATION_THRESHOLD = 8500;
     uint internal constant DEFAULT_LIQUIDATION_BONUS = 10500;
     uint internal constant DEFAULT_RESERVE_FACTOR = 1500;
+
+    // Rehypothecation
+    uint internal constant DEFAULT_FARMING_PCT = 9000; // 90%
+    uint internal constant DEFAULT_CLAIMING_THRESHOLD = 100_000; // 100,000 wei of assets
+    uint internal constant DEFAULT_FARMING_PCT_DRIFT = 100; // 1%
 }

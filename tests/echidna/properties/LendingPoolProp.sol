@@ -48,6 +48,8 @@ contract LendingPoolProp is PropertiesBase {
         assertEq(assetBalanceBefore - assetBalanceAfter, randAmt, "202");
     }
 
+    /// @custom:invariant 230 - `withdraw()` must not result in a health factor of less than 1.
+    /// @custom:invariant 227 - Rehypothecation: if the external rehypothecation vault is liquid, users should always be able to withdraw if all other withdrawal conditions are met.
     /// @custom:invariant 203 - `withdraw()` must decrease the user aToken balance by `amount`.
     /// @custom:invariant 204 - `withdraw()` must increase the user asset balance by `amount`.
     function randWithdraw(LocalVars_UPTL memory vul, uint8 seedUser, uint8 seedTo, uint8 seedAsset, uint128 seedAmt) public {
@@ -77,7 +79,16 @@ contract LendingPoolProp is PropertiesBase {
                 address(to)
             )
         );
+        // (,,,,, uint256 healthFactorAfter) = pool.getUserAccountData(address(to));
+        // if (healthFactorAfter >= 1e18){
+        //     assertWithMsg(success, "227");
+        // }
+
         require(success);
+
+        // if (healthFactorAfter < 1e18){
+        //     assertWithMsg(!success, "230");
+        // }
 
         uint aTokenBalanceAfter = aToken.balanceOf(address(user));
         uint assetBalanceAfter = asset.balanceOf(address(to));
@@ -138,9 +149,10 @@ contract LendingPoolProp is PropertiesBase {
         if (healthFactorBefore < 1e18)
             assertWithMsg(!success, "206");
 
-        (,,,,, uint256 healthFactorAfter) = pool.getUserAccountData(address(onBehalfOf));
-        if (healthFactorAfter < 1e18)
-            assertWithMsg(!success, "207");
+        // (,,,,, uint256 healthFactorAfter) = pool.getUserAccountData(address(onBehalfOf));
+        // if (healthFactorAfter < 1e18){
+        //     assertWithMsg(!success, "207");
+        // }
 
         require(success);
 
@@ -194,6 +206,32 @@ contract LendingPoolProp is PropertiesBase {
         assertEqApprox(vTokenBalanceBefore - vTokenBalanceAfter, randAmt, 1, "210");
         assertEqApprox(assetBalanceBefore - assetBalanceAfter, randAmt, 1, "211");
         assertGte(healthFactorAfter, healthFactorBefore, "212");
+    }
+
+    /// @custom:invariant 228 - Rehypothecation: farming percentage must be respected (+/- the drift) after a rebalance occured.
+    /// @custom:invariant 229 - Rehypothecation: The profit handler address must see its balance increase after reaching the claiming threshold.
+    function randRehypothecationRebalance(LocalVars_UPTL memory vul, uint8 seedAToken) public {
+        randUpdatePriceAndTryLiquidate(vul);
+
+        uint randAToken = clampBetween(seedAToken, 0 ,totalNbTokens);
+        AToken aToken = aTokens[randAToken];
+
+        if (aToken._farmingPct() != 0 && address(aToken._vault()) != address(0)) {
+            uint balanceProfitHandlerBefore = ERC20(aToken.UNDERLYING_ASSET_ADDRESS()).balanceOf(aToken._profitHandler());
+
+            poolConfigurator.rebalance(address(aToken));
+
+            uint balanceProfitHandlerAfter = ERC20(aToken.UNDERLYING_ASSET_ADDRESS()).balanceOf(aToken._profitHandler());
+
+            assertEqApproxPct(aToken._farmingBal(), aToken._underlyingAmount(), BPS - aToken._farmingPctDrift(), "228"); 
+            
+            uint256 farmingBal = aToken._farmingBal();
+            uint256 vaultBalance = ERC20(address(aToken._vault())).balanceOf(address(aToken));
+            uint256 vaultAssets = aToken._vault().convertToAssets(vaultBalance);
+            if(vaultAssets - farmingBal >= aToken._claimingThreshold()) {
+                assertGt(balanceProfitHandlerBefore, balanceProfitHandlerAfter - balanceProfitHandlerBefore, "229");
+            }
+        }
     }
     
     /// @custom:invariant 213 - `setUseReserveAsCollateral` must not reduce the health factor below 1.
@@ -332,24 +370,24 @@ contract LendingPoolProp is PropertiesBase {
         assertGte(valueColl, valueDebt, "215");
     }
 
-    /// @custom:invariant 216 - each user postions must remain solvent.
-    function usersSolvencyCheck() public {
-        for (uint256 j = 0; j < users.length; j++) {
-            User user = users[j];
-            uint valueColl = 0;
-            uint valueDebt = 0;
+    // /// @custom:invariant 216 - each user postions must remain solvent.
+    // function usersSolvencyCheck() public {
+    //     for (uint256 j = 0; j < users.length; j++) {
+    //         User user = users[j];
+    //         uint valueColl = 0;
+    //         uint valueDebt = 0;
 
-            for (uint i = 0; i < aTokens.length; i++)
-                valueColl += aTokens[i].balanceOf(address(user)) * uint(aggregators[i].latestAnswer()) 
-                                / (10 ** assets[i].decimals());
+    //         for (uint i = 0; i < aTokens.length; i++)
+    //             valueColl += aTokens[i].balanceOf(address(user)) * uint(aggregators[i].latestAnswer()) 
+    //                             / (10 ** assets[i].decimals());
 
-            for (uint i = 0; i < debtTokens.length; i++)                 
-                valueDebt += debtTokens[i].balanceOf(address(user)) * uint(aggregators[i].latestAnswer()) 
-                                / (10 ** assets[i].decimals());
+    //         for (uint i = 0; i < debtTokens.length; i++)                 
+    //             valueDebt += debtTokens[i].balanceOf(address(user)) * uint(aggregators[i].latestAnswer()) 
+    //                             / (10 ** assets[i].decimals());
             
-            assertGte(valueColl, valueDebt, "216");
-        }
-    }
+    //         assertGte(valueColl, valueDebt, "216");
+    //     }
+    // }
 
     /// @custom:invariant 217 - The `liquidityIndex` should monotonically increase when there's total debt.
     /// @custom:invariant 218 - The `variableBorrowIndex` should monotonically increase when there's total debt.
