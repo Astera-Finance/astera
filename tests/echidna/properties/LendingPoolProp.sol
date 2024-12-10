@@ -244,10 +244,9 @@ contract LendingPoolProp is PropertiesBase {
                 "228"
             );
 
-            uint256 farmingBal = aToken._farmingBal();
             uint256 vaultBalance = ERC20(address(aToken._vault())).balanceOf(address(aToken));
             uint256 vaultAssets = aToken._vault().convertToAssets(vaultBalance);
-            if (vaultAssets - farmingBal >= aToken._claimingThreshold()) {
+            if (vaultAssets - aToken._farmingBal() >= aToken._claimingThreshold()) {
                 assertGt(
                     balanceProfitHandlerBefore,
                     balanceProfitHandlerAfter - balanceProfitHandlerBefore,
@@ -373,6 +372,20 @@ contract LendingPoolProp is PropertiesBase {
     }
 
     // ---------------------- Invariants ----------------------
+    /// @custom:invariant 228 - Rehypothecation: farming percentage must be respected (+/- the drift) after any operation.
+    function invariantRebalance() public {
+        for (uint256 i = 0; i < aTokens.length; i++) {
+            AToken aToken = aTokens[i];
+            if (aToken._farmingPct() != 0 && address(aToken._vault()) != address(0)) {
+                assertEqApproxPct(
+                    aToken._farmingBal(),
+                    aToken._underlyingAmount(),
+                    BPS - aToken._farmingPctDrift(),
+                    "228"
+                );
+            }
+        }
+    }
 
     /// @custom:invariant 215 - The total value borrowed must always be less than the value of the collaterals.
     function globalSolvencyCheck() public {

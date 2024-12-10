@@ -76,6 +76,8 @@ You can fine in `/echidna` 3 config files to run the fuzzer:
 228. ✅ Rehypothecation: farming percentage must be respected (+/- the drift) after a rebalance occured.
 229. ✅ Rehypothecation: The profit handler address must see its balance increase after reaching the claiming threshold.
 230. ❌ `withdraw()` must not result in a health factor of less than 1.
+231. ✅ Rehypothecation: farming percentage must be respected (+/- the drift) after any operation.
+
 
 ### ATokens/ATokenNonRebasing
 
