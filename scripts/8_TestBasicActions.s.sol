@@ -2,25 +2,70 @@
 
 pragma solidity ^0.8.23;
 
-// import "./DeployArbTestNet.s.sol";
-// import "./localDeployConfig.s.sol";
-import "./DeployDataTypes.s.sol";
-import "./DeploymentUtils.s.sol";
-import "lib/forge-std/src/Test.sol";
-import "lib/forge-std/src/Script.sol";
-import "lib/forge-std/src/console.sol";
-import {AddAssets} from "./4_AddAssets.s.sol";
+import {IERC20, ERC20} from "contracts/dependencies/openzeppelin/contracts/ERC20.sol";
+import {DeployedContracts, PoolAddressesProviderConfig} from "./DeployDataTypes.sol";
+
 import {WadRayMath} from "contracts/protocol/libraries/math/WadRayMath.sol";
 import {DataTypes} from "../contracts/protocol/libraries/types/DataTypes.sol";
+import {AToken} from "contracts/protocol/tokenization/ERC20/AToken.sol";
+import {ATokenERC6909} from "contracts/protocol/tokenization/ERC6909/ATokenERC6909.sol";
+import {VariableDebtToken} from "contracts/protocol/tokenization/ERC20/VariableDebtToken.sol";
+import {IAERC6909} from "contracts/interfaces/IAERC6909.sol";
+import {Oracle} from "contracts/protocol/core/Oracle.sol";
+import {Cod3xLendDataProvider} from "contracts/misc/Cod3xLendDataProvider.sol";
+import {StaticData, DynamicData} from "contracts/interfaces/ICod3xLendDataProvider.sol";
+import {IMiniPool} from "contracts/interfaces/IMiniPool.sol";
 
-contract TestBasicActionsStaging is Script, DeploymentUtils, Test {
+import {DefaultReserveInterestRateStrategy} from
+    "contracts/protocol/core/interestRateStrategies/lendingpool/DefaultReserveInterestRateStrategy.sol";
+import {PiReserveInterestRateStrategy} from
+    "contracts/protocol/core/interestRateStrategies/lendingpool/PiReserveInterestRateStrategy.sol";
+import {MiniPoolDefaultReserveInterestRateStrategy} from
+    "contracts/protocol/core/interestRateStrategies/minipool/MiniPoolDefaultReserveInterestRate.sol";
+import {MiniPoolPiReserveInterestRateStrategy} from
+    "contracts/protocol/core/interestRateStrategies/minipool/MiniPoolPiReserveInterestRateStrategy.sol";
+import {MintableERC20} from "contracts/mocks/tokens/MintableERC20.sol";
+import {LendingPool} from "contracts/protocol/core/lendingpool/LendingPool.sol";
+import {LendingPoolConfigurator} from
+    "contracts/protocol/core/lendingpool/LendingPoolConfigurator.sol";
+// import "contracts/protocol/core/minipool/MiniPool.sol";
+import {MiniPoolAddressesProvider} from
+    "contracts/protocol/configuration/MiniPoolAddressProvider.sol";
+import {MiniPoolConfigurator} from "contracts/protocol/core/minipool/MiniPoolConfigurator.sol";
+import {LendingPoolAddressesProvider} from
+    "contracts/protocol/configuration/LendingPoolAddressesProvider.sol";
+
+import "lib/forge-std/src/console.sol";
+import "lib/forge-std/src/Test.sol";
+import "lib/forge-std/src/Script.sol";
+
+contract TestBasicActions is Script, Test {
     using stdJson for string;
     using WadRayMath for uint256;
+
+    DeployedContracts contracts;
 
     struct TokenTypes {
         ERC20 token;
         AToken aToken;
         VariableDebtToken debtToken;
+    }
+
+    struct Users {
+        address user1;
+        address user2;
+        address user3;
+        address user4;
+        address user5;
+        address user6;
+        address user7;
+        address user8;
+        address user9;
+    }
+
+    struct TokenParams {
+        ERC20 token;
+        AToken aToken;
     }
 
     uint256 constant RAY_DECIMALS = 27;
@@ -156,23 +201,6 @@ contract TestBasicActionsStaging is Script, DeploymentUtils, Test {
         assertEq(tokenBalance - amount, collateral.balanceOf(user));
         assertEq(tokenUserBalance + amount, aErc6909Token.balanceOf(user, tokenId));
         vm.stopBroadcast();
-    }
-
-    struct Users {
-        address user1;
-        address user2;
-        address user3;
-        address user4;
-        address user5;
-        address user6;
-        address user7;
-        address user8;
-        address user9;
-    }
-
-    struct TokenParams {
-        ERC20 token;
-        AToken aToken;
     }
 
     function testMultipleUsersBorrowRepayAndWithdraw(
@@ -312,9 +340,8 @@ contract TestBasicActionsStaging is Script, DeploymentUtils, Test {
         );
     }
 
-    function readContracts(string memory root) public {
-        string memory path = string.concat(root, "/scripts/outputs/1_LendingPoolContracts.json");
-        string memory deployedContracts = vm.readFile(path);
+    function readContracts(string memory pathMain, string memory pathMini) public {
+        string memory deployedContracts = vm.readFile(pathMain);
 
         contracts.lendingPool = LendingPool(deployedContracts.readAddress(".lendingPool"));
         contracts.cod3xLendDataProvider =
@@ -324,17 +351,15 @@ contract TestBasicActionsStaging is Script, DeploymentUtils, Test {
         );
         contracts.lendingPoolConfigurator =
             LendingPoolConfigurator(deployedContracts.readAddress(".lendingPoolConfigurator"));
-
-        path = string.concat(root, "/scripts/outputs/2_MiniPoolContracts.json");
-        deployedContracts = vm.readFile(path);
+        contracts.oracle = Oracle(deployedContracts.readAddress(".oracle"));
+        deployedContracts = vm.readFile(pathMini);
         contracts.miniPoolAddressesProvider =
             MiniPoolAddressesProvider(deployedContracts.readAddress(".miniPoolAddressesProvider"));
         contracts.miniPoolConfigurator =
             MiniPoolConfigurator(deployedContracts.readAddress(".miniPoolConfigurator"));
     }
 
-    function readStrategiesToContracts(string memory root) public {
-        string memory path = string.concat(root, "/scripts/outputs/3_DeployedStrategies.json");
+    function readStrategiesToContracts(string memory path) public {
         string memory deployedStrategies = vm.readFile(path);
         /* Pi miniPool strats */
         address[] memory tmpStrats = deployedStrategies.readAddressArray(".miniPoolPiStrategies");
@@ -384,11 +409,10 @@ contract TestBasicActionsStaging is Script, DeploymentUtils, Test {
         public
         returns (address collateral, address borrowAsset)
     {
-        string memory path = string.concat(root, "/scripts/outputs/0_MockedTokens.json");
+        string memory path = string.concat(root, "/scripts/outputs/testnet/0_MockedTokens.json");
         string memory deployedMocks = vm.readFile(path);
 
         address[] memory mocks = deployedMocks.readAddressArray(".mockedTokens");
-        contracts.oracle = Oracle(deployedMocks.readAddress(".mockedOracle"));
         for (uint8 idx = 0; idx < mocks.length; idx++) {
             console.log("Minting user1... ");
             vm.broadcast(users.user1);
@@ -413,7 +437,7 @@ contract TestBasicActionsStaging is Script, DeploymentUtils, Test {
         string memory borrowAsetSymbol,
         Users memory users
     ) public returns (address collateral, address borrowAsset) {
-        string memory path = string.concat(root, "/scripts/outputs/0_MockedTokens.json");
+        string memory path = string.concat(root, "/scripts/outputs/testnet/0_MockedTokens.json");
         string memory deployedMocks = vm.readFile(path);
 
         address[] memory mocks = deployedMocks.readAddressArray(".mockedTokens");
@@ -461,18 +485,26 @@ contract TestBasicActionsStaging is Script, DeploymentUtils, Test {
         (address[] memory assets, bool[] memory reserveTypes) =
             contracts.lendingPool.getReservesList();
         for (uint256 idx = 0; idx < assets.length; idx++) {
-            DataTypes.ReserveData memory data =
-                contracts.lendingPool.getReserveData(assets[idx], reserveTypes[idx]);
-            console.log("Price: ", contracts.oracle.getAssetPrice(assets[idx]));
-            uint256 collateralAmount = (amount * 1e8) / contracts.oracle.getAssetPrice(assets[idx]);
-            console.log("Collateral amount: ", collateralAmount);
-            uint256 depositAmount = collateralAmount / (10 ** (18 - ERC20(assets[idx]).decimals()));
-            console.log("depositAmount: ", depositAmount);
-            AToken aToken = fixture_getATokenWrapper(assets[idx], contracts.cod3xLendDataProvider);
-            TokenParams memory collateralParams =
-                TokenParams({token: ERC20(assets[idx]), aToken: aToken});
-            console.log("Depositing: ", depositAmount);
-            fixture_deposit(ERC20(assets[idx]), aToken, user, user, depositAmount);
+            StaticData memory staticData = contracts.cod3xLendDataProvider.getLpReserveStaticData(
+                assets[idx], reserveTypes[idx]
+            );
+            if (!staticData.isFrozen) {
+                DataTypes.ReserveData memory data =
+                    contracts.lendingPool.getReserveData(assets[idx], reserveTypes[idx]);
+                console.log("Price: ", contracts.oracle.getAssetPrice(assets[idx]));
+                uint256 collateralAmount =
+                    (amount * 1e8) / contracts.oracle.getAssetPrice(assets[idx]);
+                console.log("Collateral amount: ", collateralAmount);
+                uint256 depositAmount =
+                    collateralAmount / (10 ** (18 - ERC20(assets[idx]).decimals()));
+                console.log("depositAmount: ", depositAmount);
+                AToken aToken =
+                    fixture_getATokenWrapper(assets[idx], contracts.cod3xLendDataProvider);
+                TokenParams memory collateralParams =
+                    TokenParams({token: ERC20(assets[idx]), aToken: aToken});
+                console.log("Depositing: ", depositAmount);
+                fixture_deposit(ERC20(assets[idx]), aToken, user, user, depositAmount);
+            }
         }
     }
 
@@ -518,12 +550,22 @@ contract TestBasicActionsStaging is Script, DeploymentUtils, Test {
 
         (address[] memory assets,) = IMiniPool(miniPool).getReservesList();
         for (uint256 idx = 0; idx < assets.length; idx++) {
-            DataTypes.MiniPoolReserveData memory data =
-                IMiniPool(miniPool).getReserveData(assets[idx]);
-            uint256 depositAmount = amount / (10 ** (18 - ERC20(assets[idx]).decimals()));
-            fixture_depositTokensToMiniPool(
-                depositAmount, data.aTokenID, user, ERC20(assets[idx]), aErc6909Token, miniPool
+            StaticData memory staticData = contracts.cod3xLendDataProvider.getMpReserveStaticData(
+                assets[idx], contracts.miniPoolAddressesProvider.getMiniPoolId(miniPool)
             );
+            if (!staticData.isFrozen) {
+                DataTypes.MiniPoolReserveData memory data =
+                    IMiniPool(miniPool).getReserveData(assets[idx]);
+                console.log("Price: ", contracts.oracle.getAssetPrice(assets[idx]));
+                uint256 collateralAmount =
+                    (amount * 1e8) / contracts.oracle.getAssetPrice(assets[idx]);
+                console.log("Collateral amount: ", collateralAmount);
+                uint256 depositAmount =
+                    collateralAmount / (10 ** (18 - ERC20(assets[idx]).decimals()));
+                fixture_depositTokensToMiniPool(
+                    depositAmount, data.aTokenID, user, ERC20(assets[idx]), aErc6909Token, miniPool
+                );
+            }
         }
         vm.startBroadcast(admin);
         contracts.miniPoolConfigurator.setPoolPause(true, IMiniPool(miniPool));
@@ -535,8 +577,15 @@ contract TestBasicActionsStaging is Script, DeploymentUtils, Test {
         // Config fetching
         string memory root = vm.projectRoot();
 
-        readContracts(root);
-        readStrategiesToContracts(root);
+        string memory chainText = (vm.envBool("MAINNET") ? "mainnet" : "testnet");
+
+        readContracts(
+            string.concat(root, "/scripts/outputs/", chainText, "/1_LendingPoolContracts.json"),
+            string.concat(root, "/scripts/outputs/", chainText, "/2_MiniPoolContracts.json")
+        );
+        readStrategiesToContracts(
+            string.concat(root, "/scripts/outputs/", chainText, "/3_DeployedStrategies.json")
+        );
         string memory testConfigs;
         {
             // Config fetching
@@ -591,12 +640,16 @@ contract TestBasicActionsStaging is Script, DeploymentUtils, Test {
         }
 
         if (bootstrapMainPool == true && bootstrapMiniPool == true) {
-            mintAllMockedTokens(root, 5 ether, users);
+            if (vm.envBool("TESTNET")) {
+                mintAllMockedTokens(root, 5 ether, users);
+            }
             console.log("Bootstrapping main and mini pools...");
             depositToMainPool(1 ether, users.user1);
             depositToMiniPool(1 ether, users.user1, users.user1, mp);
         } else if (bootstrapMiniPool == true) {
-            mintAllMockedTokens(root, 5 ether, users);
+            if (vm.envBool("TESTNET")) {
+                mintAllMockedTokens(root, 5 ether, users);
+            }
             console.log("Bootstrapping only mini pool...");
             depositToMiniPool(1 ether, users.user1, users.user1, mp);
         } else {

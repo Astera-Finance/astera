@@ -2,18 +2,16 @@
 
 pragma solidity ^0.8.23;
 
-// import "./DeployArbTestNet.s.sol";
-// import "./localDeployConfig.s.sol";
-import "./DeployDataTypes.s.sol";
-import "./DeploymentUtils.s.sol";
+import "./DeployDataTypes.sol";
+import "./helpers/LendingPoolHelper.s.sol";
 import "lib/forge-std/src/Test.sol";
 import "lib/forge-std/src/Script.sol";
 import "lib/forge-std/src/console.sol";
 
-contract DeployLendingPool is Script, DeploymentUtils, Test {
+contract DeployLendingPool is Script, LendingPoolHelper, Test {
     using stdJson for string;
 
-    function writeJsonData(string memory root, string memory path) internal {
+    function writeJsonData(string memory path) internal {
         vm.serializeAddress("lendingPoolContracts", "oracle", address(contracts.oracle));
         {
             address[] memory stableAddresses = new address[](contracts.stableStrategies.length);
@@ -36,6 +34,18 @@ contract DeployLendingPool is Script, DeploymentUtils, Test {
             }
             vm.serializeAddress("lendingPoolContracts", "piStrategies", piAddresses);
         }
+
+        (,, address[] memory aTokens, address[] memory debtTokens) =
+            contracts.cod3xLendDataProvider.getAllLpTokens();
+
+        vm.serializeAddress("lendingPoolContracts", "aTokens", aTokens);
+        // vm.serializeAddress("lendingPoolContracts", "aTokensWrappers", AToken(aTokens))
+        vm.serializeAddress("lendingPoolContracts", "debtTokens", debtTokens);
+        vm.serializeAddress("lendingPoolContracts", "aTokenImpl", address(contracts.aToken));
+        vm.serializeAddress(
+            "lendingPoolContracts", "variableDebtTokenImpl", address(contracts.variableDebtToken)
+        );
+
         vm.serializeAddress(
             "lendingPoolContracts",
             "cod3xLendDataProvider",
@@ -46,12 +56,12 @@ contract DeployLendingPool is Script, DeploymentUtils, Test {
             "aTokensAndRatesHelper",
             address(contracts.aTokensAndRatesHelper)
         );
-        vm.serializeAddress("lendingPoolContracts", "aToken", address(contracts.aToken));
-        vm.serializeAddress(
-            "lendingPoolContracts", "variableDebtToken", address(contracts.variableDebtToken)
-        );
 
-        vm.serializeAddress("lendingPoolContracts", "lendingPool", address(contracts.lendingPool));
+        vm.serializeAddress(
+            "lendingPoolContracts",
+            "lendingPool",
+            contracts.lendingPoolAddressesProvider.getLendingPool()
+        );
         vm.serializeAddress(
             "lendingPoolContracts",
             "lendingPoolAddressesProvider",
@@ -63,9 +73,7 @@ contract DeployLendingPool is Script, DeploymentUtils, Test {
             address(contracts.lendingPoolConfigurator)
         );
 
-        vm.writeJson(output, "./scripts/outputs/1_LendingPoolContracts.json");
-
-        path = string.concat(root, "/scripts/1_LendingPoolContracts.json");
+        vm.writeJson(output, path);
 
         console.log("PROTOCOL DEPLOYED (check out addresses on %s)", path);
     }
@@ -90,31 +98,13 @@ contract DeployLendingPool is Script, DeploymentUtils, Test {
         OracleConfig memory oracleConfig =
             abi.decode(deploymentConfig.parseRaw(".oracleConfig"), (OracleConfig));
 
-        if (vm.envBool("LOCAL_FORK")) {
-            // Fork Identifier
-            string memory RPC = vm.envString("BASE_RPC_URL");
-            uint256 FORK_BLOCK = 21838058;
-            uint256 fork;
-            fork = vm.createSelectFork(RPC, FORK_BLOCK);
-
-            // Deployment
-            vm.startPrank(FOUNDRY_DEFAULT);
-            contracts.oracle = _deployOracle(oracleConfig);
-            deployLendingPoolInfra(
-                general,
-                volatileStrategies,
-                stableStrategies,
-                piStrategies,
-                poolReserversConfig,
-                FOUNDRY_DEFAULT
-            );
-            vm.stopPrank();
-
-            /* Write important contracts into the file */
-        } else if (vm.envBool("TESTNET")) {
+        if (vm.envBool("TESTNET")) {
             console.log("Testnet Deployment");
+            if (!vm.exists(string.concat(root, "/scripts/outputs/testnet"))) {
+                vm.createDir(string.concat(root, "/scripts/outputs/testnet"), true);
+            }
             /* Read all mocks deployed */
-            path = string.concat(root, "/scripts/outputs/0_MockedTokens.json");
+            path = string.concat(root, "/scripts/outputs/testnet/0_MockedTokens.json");
             console.log("PATH: ", path);
             string memory config = vm.readFile(path);
             address[] memory mockedTokens = config.readAddressArray(".mockedTokens");
@@ -132,7 +122,9 @@ contract DeployLendingPool is Script, DeploymentUtils, Test {
                                 == keccak256(abi.encodePacked(poolReserversConfig[idx].symbol))
                         ) {
                             poolReserversConfig[idx].tokenAddress = address(mockedTokens[i]);
-                            piStrategies[idx].tokenAddress = address(mockedTokens[i]);
+                            if (piStrategies.length > i) {
+                                piStrategies[idx].tokenAddress = address(mockedTokens[i]);
+                            }
                             break;
                         }
                     }
@@ -154,9 +146,13 @@ contract DeployLendingPool is Script, DeploymentUtils, Test {
                 vm.addr(vm.envUint("PRIVATE_KEY"))
             );
             vm.stopBroadcast();
+
+            path = string.concat(root, "/scripts/outputs/testnet/1_LendingPoolContracts.json");
         } else if (vm.envBool("MAINNET")) {
             console.log("Mainnet Deployment");
-
+            if (!vm.exists(string.concat(root, "/scripts/outputs/mainnet"))) {
+                vm.createDir(string.concat(root, "/scripts/outputs/mainnet"), true);
+            }
             /* Deploy to the mainnet */
             vm.startBroadcast(vm.envUint("PRIVATE_KEY"));
             contracts.oracle = _deployOracle(oracleConfig);
@@ -169,12 +165,13 @@ contract DeployLendingPool is Script, DeploymentUtils, Test {
                 vm.addr(vm.envUint("PRIVATE_KEY"))
             );
             vm.stopBroadcast();
+
+            path = string.concat(root, "/scripts/outputs/mainnet/1_LendingPoolContracts.json");
         } else {
             console.log("No deployment type selected in .env");
         }
-
         /* Write data to json */
-        writeJsonData(root, path);
+        writeJsonData(path);
 
         return contracts;
     }

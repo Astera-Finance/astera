@@ -313,7 +313,7 @@ interface ICod3xLendDataProvider {
      * @return aTokenIds An array of IDs for all aTokens in the MiniPool.
      * @return variableDebtTokenIds An array of IDs for all variable debt tokens in the MiniPool.
      */
-    function getMpAllTokenInfo(address miniPool)
+    function getAllMpTokenInfo(address miniPool)
         external
         view
         returns (
@@ -331,7 +331,7 @@ interface ICod3xLendDataProvider {
      * @return aTokenIds An array of IDs for all aTokens in the MiniPool.
      * @return variableDebtTokenIds An array of IDs for all variable debt tokens in the MiniPool.
      */
-    function getMpAllTokenInfo(uint256 miniPoolId)
+    function getAllMpTokenInfo(uint256 miniPoolId)
         external
         view
         returns (

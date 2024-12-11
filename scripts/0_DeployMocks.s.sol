@@ -4,13 +4,13 @@ pragma solidity ^0.8.23;
 
 // import "./DeployArbTestNet.s.sol";
 // import "./localDeployConfig.s.sol";
-import "./DeployDataTypes.s.sol";
-import "./DeploymentUtils.s.sol";
+import "./DeployDataTypes.sol";
+import "./helpers/MocksHelper.s.sol";
 import "lib/forge-std/src/Test.sol";
 import "lib/forge-std/src/Script.sol";
 import "lib/forge-std/src/console.sol";
 
-contract DeployMocks is Script, DeploymentUtils, Test {
+contract DeployMocks is Script, MocksHelper, Test {
     using stdJson for string;
 
     function run() external returns (DeployedContracts memory) {
@@ -50,8 +50,20 @@ contract DeployMocks is Script, DeploymentUtils, Test {
                 string memory out;
                 vm.serializeAddress("mockedContracts", "mockedOracle", address(mockedOracle));
                 out = vm.serializeAddress("mockedContracts", "mockedTokens", mockedTokens);
-
-                vm.writeJson(out, "./scripts/outputs/0_MockedTokens.json");
+                if (!vm.exists(string.concat(root, "/scripts/outputs"))) {
+                    vm.createDir(string.concat(root, "/scripts/outputs"), false);
+                }
+                if (vm.envBool("TESTNET")) {
+                    if (!vm.exists(string.concat(root, "/scripts/outputs/testnet"))) {
+                        vm.createDir(string.concat(root, "/scripts/outputs/testnet"), false);
+                    }
+                    vm.writeJson(out, "./scripts/outputs/testnet/0_MockedTokens.json");
+                } else {
+                    if (!vm.exists(string.concat(root, "/scripts/outputs/mainnet"))) {
+                        vm.createDir(string.concat(root, "/scripts/outputs/mainnet"), false);
+                    }
+                    vm.writeJson(out, "./scripts/outputs/mainnet/0_MockedTokens.json");
+                }
             }
         }
     }

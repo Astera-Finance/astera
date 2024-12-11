@@ -1,20 +1,20 @@
 {
     "miniPoolId": 0,
     "cod3xLendDataProvider": {
-        "deploy": true,
+        "deploy": false,
         "marketReferenceCurrencyAggregator": "0x7e860098F58bBFC8648a4311b374B1D669a2bc6B",
         "networkBaseTokenAggregator": "0x71041dddad3595F9CEd3DcCFBe3D1F4b0a16Bb70"
     },
     "treasury": [
         {
-            "configure": false,
+            "configure": true,
             "newAddress": "0x3151CfCA393FE5Eec690feD2a2446DA5a073d01B",
             "reserveType": true,
             "symbol": "USDC",
             "tokenAddress": "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913"
         },
         {
-            "configure": false,
+            "configure": true,
             "newAddress": "0x3151CfCA393FE5Eec690feD2a2446DA5a073d01B",
             "reserveType": true,
             "symbol": "WETH",
@@ -22,20 +22,20 @@
         }
     ],
     "miniPoolCod3xTreasury": {
-        "configure": false,
+        "configure": true,
         "newAddress": "0x3151CfCA393FE5Eec690feD2a2446DA5a073d01B",
         "owner": "0x3151CfCA393FE5Eec690feD2a2446DA5a073d01B"
     },
     "vault": [
         {
-            "configure": false,
+            "configure": true,
             "newAddress": "0x3151CfCA393FE5Eec690feD2a2446DA5a073d01B",
             "reserveType": true,
             "symbol": "USDC",
             "tokenAddress": "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913"
         },
         {
-            "configure": false,
+            "configure": true,
             "newAddress": "0x3151CfCA393FE5Eec690feD2a2446DA5a073d01B",
             "reserveType": true,
             "symbol": "WETH",
@@ -44,14 +44,14 @@
     ],
     "rewarder": [
         {
-            "configure": false,
+            "configure": true,
             "newAddress": "0x3151CfCA393FE5Eec690feD2a2446DA5a073d01B",
             "reserveType": true,
             "symbol": "USDC",
             "tokenAddress": "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913"
         },
         {
-            "configure": false,
+            "configure": true,
             "newAddress": "0x3151CfCA393FE5Eec690feD2a2446DA5a073d01B",
             "reserveType": true,
             "symbol": "WETH",
@@ -60,7 +60,7 @@
     ],
     "rewarder6909": [
         {
-            "configure": false,
+            "configure": true,
             "newAddress": "0x3151CfCA393FE5Eec690feD2a2446DA5a073d01B",
             "reserveType": true,
             "symbol": "USDC",
@@ -77,7 +77,7 @@
     "rehypothecation": [
         {
             "claimingThreshold": 1e8,
-            "configure": false,
+            "configure": true,
             "drift": 200,
             "farmingPct": 2000,
             "profitHandler": "0x3151CfCA393FE5Eec690feD2a2446DA5a073d01B",

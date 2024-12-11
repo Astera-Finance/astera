@@ -2,20 +2,67 @@
 
 pragma solidity ^0.8.23;
 
-// import "./DeployArbTestNet.s.sol";
-// import "./localDeployConfig.s.sol";
-import "./DeployDataTypes.s.sol";
-import "./DeploymentUtils.s.sol";
+import {IERC20, ERC20} from "contracts/dependencies/openzeppelin/contracts/ERC20.sol";
+import {DeployedContracts, PoolAddressesProviderConfig} from "../DeployDataTypes.s.sol";
+
+import {WadRayMath} from "contracts/protocol/libraries/math/WadRayMath.sol";
+import {DataTypes} from "contracts/protocol/libraries/types/DataTypes.sol";
+import {AToken} from "contracts/protocol/tokenization/ERC20/AToken.sol";
+import {ATokenERC6909} from "contracts/protocol/tokenization/ERC6909/ATokenERC6909.sol";
+import {VariableDebtToken} from "contracts/protocol/tokenization/ERC20/VariableDebtToken.sol";
+import {IAERC6909} from "contracts/interfaces/IAERC6909.sol";
+import {Oracle} from "contracts/protocol/core/Oracle.sol";
+import {Cod3xLendDataProvider} from "contracts/misc/Cod3xLendDataProvider.sol";
+import {StaticData, DynamicData} from "contracts/interfaces/ICod3xLendDataProvider.sol";
+import {IMiniPool} from "contracts/interfaces/IMiniPool.sol";
+
+import {DefaultReserveInterestRateStrategy} from
+    "contracts/protocol/core/interestRateStrategies/lendingpool/DefaultReserveInterestRateStrategy.sol";
+import {PiReserveInterestRateStrategy} from
+    "contracts/protocol/core/interestRateStrategies/lendingpool/PiReserveInterestRateStrategy.sol";
+import {MiniPoolDefaultReserveInterestRateStrategy} from
+    "contracts/protocol/core/interestRateStrategies/minipool/MiniPoolDefaultReserveInterestRate.sol";
+import {MiniPoolPiReserveInterestRateStrategy} from
+    "contracts/protocol/core/interestRateStrategies/minipool/MiniPoolPiReserveInterestRateStrategy.sol";
+import {MintableERC20} from "contracts/mocks/tokens/MintableERC20.sol";
+import {LendingPool} from "contracts/protocol/core/lendingpool/LendingPool.sol";
+import {LendingPoolConfigurator} from
+    "contracts/protocol/core/lendingpool/LendingPoolConfigurator.sol";
+// import "contracts/protocol/core/minipool/MiniPool.sol";
+import {MiniPoolAddressesProvider} from
+    "contracts/protocol/configuration/MiniPoolAddressProvider.sol";
+import {MiniPoolConfigurator} from "contracts/protocol/core/minipool/MiniPoolConfigurator.sol";
+import {LendingPoolAddressesProvider} from
+    "contracts/protocol/configuration/LendingPoolAddressesProvider.sol";
+import {AddAssetsLocal} from "./4_AddAssetsLocal.s.sol";
+
+import "lib/forge-std/src/console.sol";
 import "lib/forge-std/src/Test.sol";
 import "lib/forge-std/src/Script.sol";
-import "lib/forge-std/src/console.sol";
-import {AddAssets} from "./4_AddAssets.s.sol";
-import {WadRayMath} from "contracts/protocol/libraries/math/WadRayMath.sol";
-import {DataTypes} from "../contracts/protocol/libraries/types/DataTypes.sol";
 
-contract TestBasicActions is Script, DeploymentUtils, Test {
+contract TestBasicActions is Script, Test {
     using stdJson for string;
     using WadRayMath for uint256;
+
+    address constant FOUNDRY_DEFAULT = 0x1804c8AB1F12E6bbf3894d4083f33e07309d1f38;
+    DeployedContracts contracts;
+
+    struct Users {
+        address user1;
+        address user2;
+        address user3;
+        address user4;
+        address user5;
+        address user6;
+        address user7;
+        address user8;
+        address user9;
+    }
+
+    struct TokenParams {
+        ERC20 token;
+        AToken aToken;
+    }
 
     struct TokenTypes {
         ERC20 token;
@@ -258,23 +305,6 @@ contract TestBasicActions is Script, DeploymentUtils, Test {
         vm.stopPrank();
     }
 
-    struct Users {
-        address user1;
-        address user2;
-        address user3;
-        address user4;
-        address user5;
-        address user6;
-        address user7;
-        address user8;
-        address user9;
-    }
-
-    struct TokenParams {
-        ERC20 token;
-        AToken aToken;
-    }
-
     function testMultipleUsersBorrowRepayAndWithdraw(
         TokenParams memory collateralParams,
         TokenParams memory borrowParams,
@@ -506,7 +536,7 @@ contract TestBasicActions is Script, DeploymentUtils, Test {
             string memory deploymentConfig;
             {
                 /* Config fetching */
-                AddAssets addAssets = new AddAssets();
+                AddAssetsLocal addAssets = new AddAssetsLocal();
                 contracts = addAssets.run();
 
                 // Config fetching

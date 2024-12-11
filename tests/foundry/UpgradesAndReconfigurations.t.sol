@@ -317,7 +317,7 @@ contract UpgradesAndReconfigurationsTest is MiniPoolFixtures {
 
         /* Checks */
         (, address[] memory reserves,,) =
-            deployedContracts.cod3xLendDataProvider.getMpAllTokenInfo(0);
+            deployedContracts.cod3xLendDataProvider.getAllMpTokenInfo(0);
         DynamicData[] memory dynamicDataBefore = new DynamicData[](reserves.length);
         for (uint8 idx; idx < reserves.length; idx++) {
             console.log("%s (%s)", reserves[idx], ERC20(reserves[idx]).symbol());

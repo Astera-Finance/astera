@@ -417,7 +417,7 @@ contract Cod3xLendDataProvider is Ownable, ICod3xLendDataProvider {
             address[] memory reserves,
             uint256[] memory aTokenIds,
             uint256[] memory variableDebtTokenIds
-        ) = _getMpAllTokenInfo(miniPool);
+        ) = _getAllMpTokenInfo(miniPool);
 
         allMpPoolDataList = new AllMpPoolData[](reserves.length);
 
@@ -592,7 +592,7 @@ contract Cod3xLendDataProvider is Ownable, ICod3xLendDataProvider {
      * @return aTokenIds An array of IDs for all aTokens in the MiniPool.
      * @return variableDebtTokenIds An array of IDs for all variable debt tokens in the MiniPool.
      */
-    function getMpAllTokenInfo(address miniPool)
+    function getAllMpTokenInfo(address miniPool)
         external
         view
         miniPoolSet
@@ -603,7 +603,7 @@ contract Cod3xLendDataProvider is Ownable, ICod3xLendDataProvider {
             uint256[] memory variableDebtTokenIds
         )
     {
-        (aErc6909Token, reserves, aTokenIds, variableDebtTokenIds) = _getMpAllTokenInfo(miniPool);
+        (aErc6909Token, reserves, aTokenIds, variableDebtTokenIds) = _getAllMpTokenInfo(miniPool);
     }
 
     /**
@@ -614,7 +614,7 @@ contract Cod3xLendDataProvider is Ownable, ICod3xLendDataProvider {
      * @return aTokenIds An array of IDs for all aTokens in the MiniPool.
      * @return variableDebtTokenIds An array of IDs for all variable debt tokens in the MiniPool.
      */
-    function getMpAllTokenInfo(uint256 miniPoolId)
+    function getAllMpTokenInfo(uint256 miniPoolId)
         external
         view
         miniPoolSet
@@ -626,10 +626,10 @@ contract Cod3xLendDataProvider is Ownable, ICod3xLendDataProvider {
         )
     {
         (aErc6909Token, reserves, aTokenIds, variableDebtTokenIds) =
-            _getMpAllTokenInfo(miniPoolAddressProvider.getMiniPool(miniPoolId));
+            _getAllMpTokenInfo(miniPoolAddressProvider.getMiniPool(miniPoolId));
     }
 
-    function _getMpAllTokenInfo(address miniPool)
+    function _getAllMpTokenInfo(address miniPool)
         internal
         view
         returns (

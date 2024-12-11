@@ -357,7 +357,7 @@ contract Cod3xLendDataProviderTest is MiniPoolFixtures {
                 address[] memory reserves,
                 uint256[] memory aTokenIds,
                 uint256[] memory variableDebtTokenIds
-            ) = deployedContracts.cod3xLendDataProvider.getMpAllTokenInfo(0);
+            ) = deployedContracts.cod3xLendDataProvider.getAllMpTokenInfo(0);
             for (uint256 idx = 0; idx < aTokens.length; idx++) {
                 console.log("%sa. Address: %s ", idx, aErc6909Token[idx]);
                 console.log(

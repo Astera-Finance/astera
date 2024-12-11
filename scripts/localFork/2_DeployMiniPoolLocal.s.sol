@@ -2,16 +2,19 @@
 
 pragma solidity ^0.8.23;
 
-import "./DeployDataTypes.sol";
-import "./helpers/MiniPoolHelper.s.sol";
+import "../DeployDataTypes.sol";
+import "../helpers/MiniPoolHelper.s.sol";
 import "lib/forge-std/src/Test.sol";
 import "lib/forge-std/src/Script.sol";
 import "lib/forge-std/src/console.sol";
+import {DeployLendingPoolLocal} from "./1_DeployLendingPoolLocal.s.sol";
 
-contract DeployMiniPool is Script, Test, MiniPoolHelper {
+contract DeployMiniPoolLocal is Script, Test, MiniPoolHelper {
     using stdJson for string;
 
-    function readPreviousDeployments(string memory path) internal returns (bool readPrevious) {
+    function readPreviousDeployments(string memory root) internal returns (bool readPrevious) {
+        string memory path =
+            string.concat(root, "/scripts/localFork/outputs/2_MiniPoolContracts.json");
         console.log("PREVIOUS DEPLOYMENT PATH: ", path);
         try vm.readFile(path) returns (string memory previousContracts) {
             address[] memory tmpContracts;
@@ -57,12 +60,9 @@ contract DeployMiniPool is Script, Test, MiniPoolHelper {
     function writeJsonData(string memory path) internal {
         /* Write important contracts into the file */
         address[] memory contractAddresses = new address[](contracts.miniPoolImpl.length);
-        address[] memory miniPools = new address[](contracts.miniPoolImpl.length);
         for (uint256 idx = 0; idx < contracts.miniPoolImpl.length; idx++) {
             contractAddresses[idx] = address(contracts.miniPoolImpl[idx]);
-            miniPools[idx] = contracts.miniPoolAddressesProvider.getMiniPool(idx);
         }
-        vm.serializeAddress("miniPoolContracts", "miniPoolProxy", miniPools);
         vm.serializeAddress("miniPoolContracts", "miniPoolImpl", contractAddresses);
         contractAddresses = new address[](contracts.aTokenErc6909.length);
         for (uint256 idx = 0; idx < contracts.aTokenErc6909.length; idx++) {
@@ -135,121 +135,35 @@ contract DeployMiniPool is Script, Test, MiniPoolHelper {
         bool usePreviousStrats = config.readBool(".usePreviousStrats");
         bool readPreviousContracts = config.readBool(".readPreviousContracts");
 
-        if (vm.envBool("TESTNET")) {
-            console.log("Testnet Deployment");
-
-            /* Read all mocks deployed */
-            path = string.concat(root, "/scripts/outputs/testnet/0_MockedTokens.json");
-            console.log("PATH: ", path);
-            config = vm.readFile(path);
-            address[] memory mockedTokens = config.readAddressArray(".mockedTokens");
-            contracts.oracle = Oracle(config.readAddress(".mockedOracle"));
-            if (readPreviousContracts) {
-                readPreviousDeployments(
-                    string.concat(root, "/scripts/outputs/testnet/2_MiniPoolContracts.json")
-                );
-            }
-
-            require(
-                mockedTokens.length >= poolReserversConfig.length,
-                "There are not enough mocked tokens. Deploy mocks.. "
-            );
-            {
-                for (uint8 idx = 0; idx < poolReserversConfig.length; idx++) {
-                    for (uint8 i = 0; i < mockedTokens.length; i++) {
-                        if (
-                            keccak256(abi.encodePacked(ERC20(mockedTokens[i]).symbol()))
-                                == keccak256(abi.encodePacked(poolReserversConfig[idx].symbol))
-                        ) {
-                            poolReserversConfig[idx].tokenAddress = address(mockedTokens[i]);
-                            if (piStrategies.length > i) {
-                                piStrategies[idx].tokenAddress = address(mockedTokens[i]);
-                            }
-                            break;
-                        }
-                    }
-                    require(
-                        poolReserversConfig[idx].tokenAddress != address(0),
-                        "Mocked token not assigned"
-                    );
-                }
-            }
-
-            /* Read all lending pool contracts deployed */
-            {
-                string memory outputPath =
-                    string.concat(root, "/scripts/outputs/testnet/1_LendingPoolContracts.json");
-                console.log("PATH: ", outputPath);
-                config = vm.readFile(outputPath);
-            }
-
-            contracts.lendingPoolAddressesProvider =
-                LendingPoolAddressesProvider(config.readAddress(".lendingPoolAddressesProvider"));
-            contracts.lendingPool = LendingPool(config.readAddress(".lendingPool"));
-            contracts.lendingPoolConfigurator =
-                LendingPoolConfigurator(config.readAddress(".lendingPoolConfigurator"));
-            contracts.cod3xLendDataProvider =
-                Cod3xLendDataProvider(config.readAddress(".cod3xLendDataProvider"));
-
-            /* Deploy on testnet */
-            vm.startBroadcast(vm.envUint("PRIVATE_KEY"));
-            console.log("Deploying lending pool infra");
-            deployMiniPoolInfra(
-                volatileStrategies,
-                stableStrategies,
-                piStrategies,
-                poolReserversConfig,
-                vm.addr(vm.envUint("PRIVATE_KEY")),
-                usePreviousStrats
-            );
-            vm.stopBroadcast();
-            path = string.concat(root, "/scripts/outputs/testnet/2_MiniPoolContracts.json");
-        } else if (vm.envBool("MAINNET")) {
-            console.log("Mainnet Deployment");
-            /* Get deployed lending pool infra dontracts */
-            {
-                string memory outputPath =
-                    string.concat(root, "/scripts/outputs/mainnet/1_LendingPoolContracts.json");
-                console.log("PATH: ", outputPath);
-                config = vm.readFile(outputPath);
-            }
-            contracts.lendingPoolAddressesProvider =
-                LendingPoolAddressesProvider(config.readAddress(".lendingPoolAddressesProvider"));
-            contracts.lendingPool = LendingPool(config.readAddress(".lendingPool"));
-            contracts.lendingPoolConfigurator =
-                LendingPoolConfigurator(config.readAddress(".lendingPoolConfigurator"));
-            contracts.cod3xLendDataProvider =
-                Cod3xLendDataProvider(config.readAddress(".cod3xLendDataProvider"));
-
-            if (readPreviousContracts) {
-                readPreviousDeployments(
-                    string.concat(root, "/scripts/outputs/mainnet/2_MiniPoolContracts.json")
-                );
-            }
-
-            /* Deploy on mainnet */
-            vm.startBroadcast(vm.envUint("PRIVATE_KEY"));
-            console.log("Getting oracle");
-            contracts.oracle = Oracle(contracts.lendingPoolAddressesProvider.getPriceOracle());
-            contracts.oracle.setAssetSources(
-                oracleConfig.assets, oracleConfig.sources, oracleConfig.timeouts
-            );
-            console.log("Deploying mini pool infra");
-            deployMiniPoolInfra(
-                volatileStrategies,
-                stableStrategies,
-                piStrategies,
-                poolReserversConfig,
-                vm.addr(vm.envUint("PRIVATE_KEY")),
-                usePreviousStrats
-            );
-            vm.stopBroadcast();
-            path = string.concat(root, "/scripts/outputs/mainnet/2_MiniPoolContracts.json");
-        } else {
-            console.log("No deployment type selected in .env");
+        /* Fork Identifier */
+        {
+            string memory RPC = vm.envString("BASE_RPC_URL");
+            uint256 FORK_BLOCK = 21838058;
+            uint256 fork;
+            fork = vm.createSelectFork(RPC, FORK_BLOCK);
         }
+
+        /* Config fetching */
+        DeployLendingPoolLocal deployLendingPool = new DeployLendingPoolLocal();
+        contracts = deployLendingPool.run();
+
+        /* Deployment */
+        vm.startPrank(FOUNDRY_DEFAULT);
+        contracts.oracle.setAssetSources(
+            oracleConfig.assets, oracleConfig.sources, oracleConfig.timeouts
+        );
+        deployMiniPoolInfra(
+            volatileStrategies,
+            stableStrategies,
+            piStrategies,
+            poolReserversConfig,
+            FOUNDRY_DEFAULT,
+            false
+        );
+        vm.stopPrank();
+
         /* Write important contracts into the file */
-        writeJsonData(path);
+        writeJsonData(string.concat(root, "/scripts/localFork/outputs/2_MiniPoolContracts.json"));
         return contracts;
     }
 }

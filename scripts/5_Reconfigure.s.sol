@@ -2,17 +2,60 @@
 
 pragma solidity ^0.8.23;
 
-// import "./DeployArbTestNet.s.sol";
-// import "./localDeployConfig.s.sol";
-import "./DeployDataTypes.s.sol";
-import "./DeploymentUtils.s.sol";
+import {InitAndConfigurationHelper} from "./helpers/InitAndConfigurationHelper.s.sol";
+import "./DeployDataTypes.sol";
 import "lib/forge-std/src/Test.sol";
 import "lib/forge-std/src/Script.sol";
 import "lib/forge-std/src/console.sol";
-import {AddAssets} from "./4_AddAssets.s.sol";
 
-contract Reconfigure is Script, DeploymentUtils, Test {
+contract Reconfigure is Script, InitAndConfigurationHelper, Test {
     using stdJson for string;
+
+    function readAddressesToContracts(string memory path) public {
+        string memory deployedStrategies = vm.readFile(path);
+        /* Pi miniPool strats */
+        address[] memory tmpStrats = deployedStrategies.readAddressArray(".miniPoolPiStrategies");
+        delete contracts.miniPoolPiStrategies;
+        for (uint8 idx = 0; idx < tmpStrats.length; idx++) {
+            contracts.miniPoolPiStrategies.push(
+                MiniPoolPiReserveInterestRateStrategy(tmpStrats[idx])
+            );
+        }
+        /* Stable miniPool strats */
+        tmpStrats = deployedStrategies.readAddressArray(".miniPoolStableStrategies");
+        delete contracts.miniPoolStableStrategies;
+        for (uint8 idx = 0; idx < tmpStrats.length; idx++) {
+            contracts.miniPoolStableStrategies.push(
+                MiniPoolDefaultReserveInterestRateStrategy(tmpStrats[idx])
+            );
+        }
+        /* Volatile miniPool strats */
+        tmpStrats = deployedStrategies.readAddressArray(".miniPoolVolatileStrategies");
+        delete contracts.miniPoolVolatileStrategies;
+        for (uint8 idx = 0; idx < tmpStrats.length; idx++) {
+            contracts.miniPoolVolatileStrategies.push(
+                MiniPoolDefaultReserveInterestRateStrategy(tmpStrats[idx])
+            );
+        }
+        /* Pi strats */
+        tmpStrats = deployedStrategies.readAddressArray(".piStrategies");
+        delete contracts.piStrategies;
+        for (uint8 idx = 0; idx < tmpStrats.length; idx++) {
+            contracts.piStrategies.push(PiReserveInterestRateStrategy(tmpStrats[idx]));
+        }
+        /* Stable strats */
+        tmpStrats = deployedStrategies.readAddressArray(".stableStrategies");
+        delete contracts.stableStrategies;
+        for (uint8 idx = 0; idx < tmpStrats.length; idx++) {
+            contracts.stableStrategies.push(DefaultReserveInterestRateStrategy(tmpStrats[idx]));
+        }
+        /* Volatile strats */
+        tmpStrats = deployedStrategies.readAddressArray(".volatileStrategies");
+        delete contracts.volatileStrategies;
+        for (uint8 idx = 0; idx < tmpStrats.length; idx++) {
+            contracts.volatileStrategies.push(DefaultReserveInterestRateStrategy(tmpStrats[idx]));
+        }
+    }
 
     function run() external returns (DeployedContracts memory) {
         console.log("5_Reconfigure");
@@ -35,33 +78,12 @@ contract Reconfigure is Script, DeploymentUtils, Test {
             deploymentConfig.parseRaw(".miniPoolReserversConfig"), (PoolReserversConfig[])
         );
 
-        if (vm.envBool("LOCAL_FORK")) {
-            /* Fork Identifier */
-            string memory RPC = vm.envString("BASE_RPC_URL");
-            uint256 FORK_BLOCK = 21838058;
-            uint256 fork;
-            fork = vm.createSelectFork(RPC, FORK_BLOCK);
-
-            /* Config fetching */
-            AddAssets addAssets = new AddAssets();
-            contracts = addAssets.run();
-
-            vm.startPrank(FOUNDRY_DEFAULT);
-            _configureReserves(contracts, lendingPoolReserversConfig);
-            _changeStrategies(contracts, lendingPoolReserversConfig);
-
-            address mp =
-                contracts.miniPoolAddressesProvider.getMiniPool(poolAddressesProviderConfig.poolId);
-            _configureMiniPoolReserves(contracts, miniPoolReserversConfig, mp);
-            _changeMiniPoolStrategies(contracts, miniPoolReserversConfig, mp);
-
-            vm.stopPrank();
-        } else if (vm.envBool("TESTNET")) {
+        if (vm.envBool("TESTNET")) {
             console.log("Testnet");
             /* *********** Lending pool settings *********** */
             {
                 string memory outputPath =
-                    string.concat(root, "/scripts/outputs/1_LendingPoolContracts.json");
+                    string.concat(root, "/scripts/outputs/testnet/1_LendingPoolContracts.json");
                 console.log("PATH: ", outputPath);
                 deploymentConfig = vm.readFile(outputPath);
             }
@@ -74,8 +96,12 @@ contract Reconfigure is Script, DeploymentUtils, Test {
             contracts.aTokensAndRatesHelper =
                 ATokensAndRatesHelper(deploymentConfig.readAddress(".aTokensAndRatesHelper"));
 
+            readAddressesToContracts(
+                string.concat(root, "/scripts/outputs/testnet/3_DeployedStrategies.json")
+            );
+
             /* Read all mocks deployed */
-            string memory path = string.concat(root, "/scripts/outputs/0_MockedTokens.json");
+            path = string.concat(root, "/scripts/outputs/testnet/0_MockedTokens.json");
             console.log("PATH: ", path);
             string memory config = vm.readFile(path);
             address[] memory mockedTokens = config.readAddressArray(".mockedTokens");
@@ -106,12 +132,13 @@ contract Reconfigure is Script, DeploymentUtils, Test {
             vm.startBroadcast(vm.envUint("PRIVATE_KEY"));
             console.log("Reconfiguring..");
             _configureReserves(contracts, lendingPoolReserversConfig);
+            _changeStrategies(contracts, lendingPoolReserversConfig);
             vm.stopBroadcast();
 
             /* *********** Mini pool settings *********** */
             {
                 string memory outputPath =
-                    string.concat(root, "/scripts/outputs/2_MiniPoolContracts.json");
+                    string.concat(root, "/scripts/outputs/testnet/2_MiniPoolContracts.json");
                 console.log("PATH: ", outputPath);
                 deploymentConfig = vm.readFile(outputPath);
             }
@@ -150,13 +177,14 @@ contract Reconfigure is Script, DeploymentUtils, Test {
             address mp =
                 contracts.miniPoolAddressesProvider.getMiniPool(poolAddressesProviderConfig.poolId);
             _configureMiniPoolReserves(contracts, miniPoolReserversConfig, mp);
+            _changeMiniPoolStrategies(contracts, miniPoolReserversConfig, mp);
             vm.stopBroadcast();
         } else if (vm.envBool("MAINNET")) {
             console.log("Mainnet");
             /* *********** Lending pool settings *********** */
             {
                 string memory outputPath =
-                    string.concat(root, "/scripts/outputs/1_LendingPoolContracts.json");
+                    string.concat(root, "/scripts/outputs/mainnet/1_LendingPoolContracts.json");
                 console.log("PATH: ", outputPath);
                 deploymentConfig = vm.readFile(outputPath);
             }
@@ -170,15 +198,20 @@ contract Reconfigure is Script, DeploymentUtils, Test {
             contracts.aTokensAndRatesHelper =
                 ATokensAndRatesHelper(deploymentConfig.readAddress(".aTokensAndRatesHelper"));
 
+            readAddressesToContracts(
+                string.concat(root, "/scripts/outputs/mainnet/3_DeployedStrategies.json")
+            );
+
             /* Reconfigure */
             vm.startBroadcast(vm.envUint("PRIVATE_KEY"));
             _configureReserves(contracts, lendingPoolReserversConfig);
+            _changeStrategies(contracts, lendingPoolReserversConfig);
             vm.stopBroadcast();
 
             /* *********** Mini pool settings *********** */
             {
                 string memory outputPath =
-                    string.concat(root, "/scripts/outputs/2_MiniPoolContracts.json");
+                    string.concat(root, "/scripts/outputs/mainnet/2_MiniPoolContracts.json");
                 console.log("PATH: ", outputPath);
                 deploymentConfig = vm.readFile(outputPath);
             }
@@ -195,6 +228,7 @@ contract Reconfigure is Script, DeploymentUtils, Test {
             address mp =
                 contracts.miniPoolAddressesProvider.getMiniPool(poolAddressesProviderConfig.poolId);
             _configureMiniPoolReserves(contracts, miniPoolReserversConfig, mp);
+            _changeMiniPoolStrategies(contracts, miniPoolReserversConfig, mp);
             vm.stopBroadcast();
         } else {
             console.log("No deployment type selected in .env");
