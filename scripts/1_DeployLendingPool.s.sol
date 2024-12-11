@@ -39,7 +39,17 @@ contract DeployLendingPool is Script, LendingPoolHelper, Test {
             contracts.cod3xLendDataProvider.getAllLpTokens();
 
         vm.serializeAddress("lendingPoolContracts", "aTokens", aTokens);
+
+        {
+            address[] memory wrappedTokens = new address[](aTokens.length);
+            for (uint256 idx = 0; idx < aTokens.length; idx++) {
+                wrappedTokens[idx] = AToken(aTokens[idx]).WRAPPER_ADDRESS();
+            }
+            vm.serializeAddress("lendingPoolContracts", "wrappedTokens", wrappedTokens);
+        }
+
         // vm.serializeAddress("lendingPoolContracts", "aTokensWrappers", AToken(aTokens))
+        vm.serializeAddress("lendingPoolContracts", "wethGateway", address(contracts.wethGateway));
         vm.serializeAddress("lendingPoolContracts", "debtTokens", debtTokens);
         vm.serializeAddress("lendingPoolContracts", "aTokenImpl", address(contracts.aToken));
         vm.serializeAddress(
@@ -98,6 +108,8 @@ contract DeployLendingPool is Script, LendingPoolHelper, Test {
         OracleConfig memory oracleConfig =
             abi.decode(deploymentConfig.parseRaw(".oracleConfig"), (OracleConfig));
 
+        address wethGateway = deploymentConfig.readAddress(".wethGateway");
+
         if (vm.envBool("TESTNET")) {
             console.log("Testnet Deployment");
             if (!vm.exists(string.concat(root, "/scripts/outputs/testnet"))) {
@@ -143,7 +155,8 @@ contract DeployLendingPool is Script, LendingPoolHelper, Test {
                 stableStrategies,
                 piStrategies,
                 poolReserversConfig,
-                vm.addr(vm.envUint("PRIVATE_KEY"))
+                vm.addr(vm.envUint("PRIVATE_KEY")),
+                wethGateway
             );
             vm.stopBroadcast();
 
@@ -162,7 +175,8 @@ contract DeployLendingPool is Script, LendingPoolHelper, Test {
                 stableStrategies,
                 piStrategies,
                 poolReserversConfig,
-                vm.addr(vm.envUint("PRIVATE_KEY"))
+                vm.addr(vm.envUint("PRIVATE_KEY")),
+                wethGateway
             );
             vm.stopBroadcast();
 

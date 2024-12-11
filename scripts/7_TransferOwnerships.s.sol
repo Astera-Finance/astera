@@ -41,11 +41,12 @@ contract TransferOwnerships is Script, TransferOwnershipHelper, Test {
             );
             contracts.aTokensAndRatesHelper =
                 ATokensAndRatesHelper(deploymentConfig.readAddress(".aTokensAndRatesHelper"));
-
             // contracts.treasury = Treasury(deploymentConfig.readAddress(".treasury"));
             contracts.oracle = Oracle(deploymentConfig.readAddress(".oracle"));
             contracts.cod3xLendDataProvider =
                 Cod3xLendDataProvider(deploymentConfig.readAddress(".cod3xLendDataProvider"));
+            contracts.wethGateway =
+                WETHGateway(payable(deploymentConfig.readAddress(".wethGateway")));
 
             /* *********** Mini pool settings *********** */
             {
@@ -133,6 +134,8 @@ contract TransferOwnerships is Script, TransferOwnershipHelper, Test {
             contracts.oracle = Oracle(deploymentConfig.readAddress(".oracle"));
             contracts.cod3xLendDataProvider =
                 Cod3xLendDataProvider(deploymentConfig.readAddress(".cod3xLendDataProvider"));
+            contracts.wethGateway =
+                WETHGateway(payable(deploymentConfig.readAddress(".wethGateway")));
 
             /* *********** Mini pool settings *********** */
             {

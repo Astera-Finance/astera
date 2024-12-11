@@ -1,4 +1,5 @@
 {
+    "wethGateway": "0x4200000000000000000000000000000000000006",
     "general": {
         "aTokenNamePrefix": "Cod3x Lend ",
         "aTokenSymbolPrefix": "cl",
@@ -12,7 +13,7 @@
         {
             "baseLtv": 7000,
             "borrowingEnabled": true,
-            "interestStrat": "PI",
+            "interestStrat": "STABLE",
             "interestStratId": 0,
             "liquidationBonus": 10500,
             "liquidationThreshold": 7500,
@@ -41,18 +42,7 @@
             "variableRateSlope2": 0.75e27
         }
     ],
-    "piStrategies": [
-        {
-            "assetReserveType": true,
-            "ki": 13e19,
-            "kp": 1e27,
-            "maxITimeAmp": 1728000,
-            "minControllerError": -400e24,
-            "optimalUtilizationRate": 45e25,
-            "symbol": "WETH",
-            "tokenAddress": "0x4200000000000000000000000000000000000006"
-        }
-    ],
+    "piStrategies": [],
     "oracleConfig": {
         "assets": [
             "0x4200000000000000000000000000000000000006"
@@ -61,7 +51,7 @@
         "baseCurrencyUnit": 1e18,
         "fallbackOracle": "0x0000000000000000000000000000000000000000",
         "sources": [
-            "0x639Fe6ab55C921f74e7fac1ee960C0B6293ba612"
+            "0x71041dddad3595F9CEd3DcCFBe3D1F4b0a16Bb70"
         ],
         "timeouts": [
             100000

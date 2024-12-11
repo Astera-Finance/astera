@@ -22,6 +22,7 @@ contract TransferOwnershipHelper {
     function _transferOwnershipsAndRenounceRoles(Roles memory roles) internal {
         contracts.lendingPoolAddressesProvider.setPoolAdmin(roles.poolAdmin);
         contracts.aTokensAndRatesHelper.transferOwnership(roles.poolAdmin);
+        contracts.wethGateway.transferOwnership(roles.poolAdmin);
         contracts.lendingPoolAddressesProvider.setEmergencyAdmin(roles.emergencyAdmin);
         contracts.lendingPoolAddressesProvider.transferOwnership(roles.addressesProviderOwner);
         contracts.miniPoolAddressesProvider.transferOwnership(roles.addressesProviderOwner);

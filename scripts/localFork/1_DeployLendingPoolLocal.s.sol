@@ -88,6 +88,8 @@ contract DeployLendingPoolLocal is Script, LendingPoolHelper, Test {
         OracleConfig memory oracleConfig =
             abi.decode(deploymentConfig.parseRaw(".oracleConfig"), (OracleConfig));
 
+        address wethGateway = deploymentConfig.readAddress(".wethGateway");
+
         // Fork Identifier
         string memory RPC = vm.envString("BASE_RPC_URL");
         uint256 FORK_BLOCK = 21838058;
@@ -103,7 +105,8 @@ contract DeployLendingPoolLocal is Script, LendingPoolHelper, Test {
             stableStrategies,
             piStrategies,
             poolReserversConfig,
-            FOUNDRY_DEFAULT
+            FOUNDRY_DEFAULT,
+            wethGateway
         );
         vm.stopPrank();
 

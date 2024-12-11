@@ -17,6 +17,14 @@ contract AddAssets is Script, InitAndConfigurationHelper, Test {
         (,, address[] memory aTokens, address[] memory debtTokens) =
             contracts.cod3xLendDataProvider.getAllLpTokens();
 
+        {
+            address[] memory wrappedTokens = new address[](aTokens.length);
+            for (uint256 idx = 0; idx < aTokens.length; idx++) {
+                wrappedTokens[idx] = AToken(aTokens[idx]).WRAPPER_ADDRESS();
+            }
+            vm.serializeAddress("addedAssets", "wrappedTokens", wrappedTokens);
+        }
+
         vm.serializeAddress("addedAssets", "aTokens", aTokens);
         vm.serializeAddress("addedAssets", "debtTokens", debtTokens);
         vm.serializeAddress("addedAssets", "aTokenImpl", address(contracts.aToken));
@@ -29,7 +37,7 @@ contract AddAssets is Script, InitAndConfigurationHelper, Test {
         console.log("PROTOCOL DEPLOYED (check out addresses on %s)", path);
     }
 
-    function readAddressesToContracts(string memory path) public {
+    function readStratAddresses(string memory path) public {
         string memory deployedStrategies = vm.readFile(path);
         /* Pi miniPool strats */
         address[] memory tmpStrats = deployedStrategies.readAddressArray(".miniPoolPiStrategies");
@@ -75,6 +83,23 @@ contract AddAssets is Script, InitAndConfigurationHelper, Test {
         }
     }
 
+    function readLendingPoolAddresses(string memory path) public {
+        string memory config = vm.readFile(path);
+
+        contracts.aToken = AToken(config.readAddress(".aTokenImpl"));
+        contracts.variableDebtToken =
+            VariableDebtToken(config.readAddress(".variableDebtTokenImpl"));
+        contracts.lendingPoolConfigurator =
+            LendingPoolConfigurator(config.readAddress(".lendingPoolConfigurator"));
+        contracts.lendingPoolAddressesProvider =
+            LendingPoolAddressesProvider(config.readAddress(".lendingPoolAddressesProvider"));
+        contracts.aTokensAndRatesHelper =
+            ATokensAndRatesHelper(config.readAddress(".aTokensAndRatesHelper"));
+        contracts.cod3xLendDataProvider =
+            Cod3xLendDataProvider(config.readAddress(".cod3xLendDataProvider"));
+        // contracts.wethGateway = WETHGateway(payable(config.readAddress(".wethGateway")));
+    }
+
     function run() external returns (DeployedContracts memory) {
         console.log("4_AddAssets");
 
@@ -101,26 +126,11 @@ contract AddAssets is Script, InitAndConfigurationHelper, Test {
             console.log("Testnet");
 
             /* Lending pool settings */
-            {
-                string memory outputPath =
-                    string.concat(root, "/scripts/outputs/testnet/1_LendingPoolContracts.json");
-                console.log("PATH: ", outputPath);
-                config = vm.readFile(outputPath);
-            }
+            readLendingPoolAddresses(
+                string.concat(root, "/scripts/outputs/testnet/1_LendingPoolContracts.json")
+            );
 
-            contracts.aToken = AToken(config.readAddress(".aTokenImpl"));
-            contracts.variableDebtToken =
-                VariableDebtToken(config.readAddress(".variableDebtTokenImpl"));
-            contracts.lendingPoolConfigurator =
-                LendingPoolConfigurator(config.readAddress(".lendingPoolConfigurator"));
-            contracts.lendingPoolAddressesProvider =
-                LendingPoolAddressesProvider(config.readAddress(".lendingPoolAddressesProvider"));
-            contracts.aTokensAndRatesHelper =
-                ATokensAndRatesHelper(config.readAddress(".aTokensAndRatesHelper"));
-            contracts.cod3xLendDataProvider =
-                Cod3xLendDataProvider(config.readAddress(".cod3xLendDataProvider"));
-
-            readAddressesToContracts(
+            readStratAddresses(
                 string.concat(root, "/scripts/outputs/testnet/3_DeployedStrategies.json")
             );
 
@@ -208,28 +218,12 @@ contract AddAssets is Script, InitAndConfigurationHelper, Test {
         } else if (vm.envBool("MAINNET")) {
             console.log("Mainnet");
             /* Lending pool settings */
-            {
-                string memory outputPath =
-                    string.concat(root, "/scripts/outputs/mainnet/1_LendingPoolContracts.json");
-                console.log("PATH: ", outputPath);
-                config = vm.readFile(outputPath);
-            }
+            readLendingPoolAddresses(
+                string.concat(root, "/scripts/outputs/mainnet/1_LendingPoolContracts.json")
+            );
 
-            /* Read lending pool contracts settings */
-            contracts.aToken = AToken(config.readAddress(".aTokenImpl"));
-            contracts.variableDebtToken =
-                VariableDebtToken(config.readAddress(".variableDebtTokenImpl"));
-            contracts.lendingPoolConfigurator =
-                LendingPoolConfigurator(config.readAddress(".lendingPoolConfigurator"));
-            contracts.lendingPoolAddressesProvider =
-                LendingPoolAddressesProvider(config.readAddress(".lendingPoolAddressesProvider"));
-            contracts.aTokensAndRatesHelper =
-                ATokensAndRatesHelper(config.readAddress(".aTokensAndRatesHelper"));
-            contracts.cod3xLendDataProvider =
-                Cod3xLendDataProvider(config.readAddress(".cod3xLendDataProvider"));
-
-            readAddressesToContracts(
-                string.concat(root, "/scripts/outputs/testnet/3_DeployedStrategies.json")
+            readStratAddresses(
+                string.concat(root, "/scripts/outputs/mainnet/3_DeployedStrategies.json")
             );
 
             /* Configure reserve */

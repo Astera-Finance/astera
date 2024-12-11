@@ -51,8 +51,12 @@ contract MiniPoolHelper {
     }
 
     function _deployMiniPoolContracts(address deployer) internal returns (uint256) {
-        contracts.miniPoolImpl.push(new MiniPool());
-        contracts.aTokenErc6909.push(new ATokenERC6909());
+        if (address(contracts.miniPoolImpl) == address(0)) {
+            contracts.miniPoolImpl = new MiniPool();
+        }
+        if (address(contracts.aTokenErc6909Impl) == address(0)) {
+            contracts.aTokenErc6909Impl = new ATokenERC6909();
+        }
         uint256 miniPoolId;
         console.log("Mini pool addresses Provider: ", address(contracts.miniPoolAddressesProvider));
         if (address(contracts.miniPoolAddressesProvider) == address(0)) {
@@ -61,9 +65,7 @@ contract MiniPoolHelper {
             contracts.miniPoolAddressesProvider =
                 new MiniPoolAddressesProvider(contracts.lendingPoolAddressesProvider);
             miniPoolId = contracts.miniPoolAddressesProvider.deployMiniPool(
-                address(contracts.miniPoolImpl[contracts.miniPoolImpl.length - 1]),
-                address(contracts.aTokenErc6909[contracts.aTokenErc6909.length - 1]),
-                deployer
+                address(contracts.miniPoolImpl), address(contracts.aTokenErc6909Impl), deployer
             );
             contracts.flowLimiter = new FlowLimiter(
                 IMiniPoolAddressesProvider(address(contracts.miniPoolAddressesProvider)),
@@ -84,9 +86,7 @@ contract MiniPoolHelper {
             );
         } else {
             miniPoolId = contracts.miniPoolAddressesProvider.deployMiniPool(
-                address(contracts.miniPoolImpl[contracts.miniPoolImpl.length - 1]),
-                address(contracts.aTokenErc6909[contracts.aTokenErc6909.length - 1]),
-                deployer
+                address(contracts.miniPoolImpl), address(contracts.aTokenErc6909Impl), deployer
             );
         }
 
@@ -191,6 +191,7 @@ contract MiniPoolHelper {
         PoolReserversConfig memory _reserveConfig
     ) internal returns (address) {
         address interestStrategy;
+        console.log("STRAT LENGTH: ", _contracts.miniPoolVolatileStrategies.length);
         if (keccak256(bytes(_reserveConfig.interestStrat)) == keccak256(bytes("PI"))) {
             require(
                 _contracts.miniPoolPiStrategies[_reserveConfig.interestStratId]._asset()

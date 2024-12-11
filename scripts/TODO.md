@@ -32,3 +32,13 @@
 - [x] Script for adding assets
 - [x] Script for reconfigure lending params
 - [x] Script for basic tests
+  
+## Improvements:
+- [x] Bootstrap liquidity feature
+- [x] Get rid of the multiple library deployment (different script structure)
+- [x] Add more contracts to the outputs (list of wrappers, impl, proxies etc.)
+- [ ] Python script for preparing contract table
+- [x] Add wethGateway
+- [x] Distinction between mainnet and testnet
+- [ ] Other fixes
+

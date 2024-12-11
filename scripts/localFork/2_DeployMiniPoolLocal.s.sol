@@ -18,14 +18,16 @@ contract DeployMiniPoolLocal is Script, Test, MiniPoolHelper {
         console.log("PREVIOUS DEPLOYMENT PATH: ", path);
         try vm.readFile(path) returns (string memory previousContracts) {
             address[] memory tmpContracts;
-            tmpContracts = previousContracts.readAddressArray(".miniPoolImpl");
-            for (uint256 idx = 0; idx < tmpContracts.length; idx++) {
-                contracts.miniPoolImpl.push(MiniPool(tmpContracts[idx]));
-            }
-            tmpContracts = previousContracts.readAddressArray(".aTokenErc6909");
-            for (uint256 idx = 0; idx < tmpContracts.length; idx++) {
-                contracts.aTokenErc6909.push(ATokenERC6909(tmpContracts[idx]));
-            }
+            contracts.miniPoolImpl = MiniPool(previousContracts.readAddress(".miniPoolImpl"));
+            // tmpContracts = previousContracts.readAddressArray(".miniPoolProxy");
+            // for (uint256 idx = 0; idx < tmpContracts.length; idx++) {
+            //     contracts.miniPools.push(MiniPool(tmpContracts[idx]));
+            // }
+            contracts.aTokenErc6909Impl =
+                ATokenERC6909(previousContracts.readAddress(".aTokenErc6909Impl"));
+            // for (uint256 idx = 0; idx < tmpContracts.length; idx++) {
+            //     contracts.aTokenErc6909.push(ATokenERC6909(tmpContracts[idx]));
+            // }
             tmpContracts = previousContracts.readAddressArray(".miniPoolPiStrategies");
             for (uint256 idx = 0; idx < tmpContracts.length; idx++) {
                 contracts.miniPoolPiStrategies.push(
@@ -59,16 +61,22 @@ contract DeployMiniPoolLocal is Script, Test, MiniPoolHelper {
 
     function writeJsonData(string memory path) internal {
         /* Write important contracts into the file */
-        address[] memory contractAddresses = new address[](contracts.miniPoolImpl.length);
-        for (uint256 idx = 0; idx < contracts.miniPoolImpl.length; idx++) {
-            contractAddresses[idx] = address(contracts.miniPoolImpl[idx]);
+        uint256 nrOfMiniPools = contracts.miniPoolAddressesProvider.getMiniPoolCount();
+        address[] memory miniPools = new address[](nrOfMiniPools);
+        address[] memory aErc6909s = new address[](nrOfMiniPools);
+        for (uint256 idx = 0; idx < nrOfMiniPools; idx++) {
+            miniPools[idx] = contracts.miniPoolAddressesProvider.getMiniPool(idx);
         }
-        vm.serializeAddress("miniPoolContracts", "miniPoolImpl", contractAddresses);
-        contractAddresses = new address[](contracts.aTokenErc6909.length);
-        for (uint256 idx = 0; idx < contracts.aTokenErc6909.length; idx++) {
-            contractAddresses[idx] = address(contracts.aTokenErc6909[idx]);
+        vm.serializeAddress("miniPoolContracts", "miniPoolProxy", miniPools);
+        vm.serializeAddress("miniPoolContracts", "miniPoolImpl", address(contracts.miniPoolImpl));
+        for (uint256 idx = 0; idx < nrOfMiniPools; idx++) {
+            aErc6909s[idx] = contracts.miniPoolAddressesProvider.getAToken6909(idx);
         }
-        vm.serializeAddress("miniPoolContracts", "aTokenErc6909", contractAddresses);
+        vm.serializeAddress("miniPoolContracts", "aTokenErc6909Proxy", aErc6909s);
+        vm.serializeAddress(
+            "miniPoolContracts", "aTokenErc6909Impl", address(contracts.aTokenErc6909Impl)
+        );
+
         vm.serializeAddress(
             "miniPoolContracts",
             "miniPoolAddressesProvider",

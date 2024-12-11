@@ -36,9 +36,10 @@ contract LendingPoolHelper {
         LinearStrategy[] memory _stableStrats,
         PiStrategy[] memory _piStrategies,
         PoolReserversConfig[] memory _poolReserversConfig,
-        address deployer
+        address _deployer,
+        address _wethGateway
     ) public {
-        _deployLendingPoolContracts(deployer, _general);
+        _deployLendingPoolContracts(_deployer, _general, _wethGateway);
 
         _deployStrategies(
             contracts.lendingPoolAddressesProvider, _volatileStrats, _stableStrats, _piStrategies
@@ -48,7 +49,11 @@ contract LendingPoolHelper {
         _initAndConfigureReserves(contracts, _poolReserversConfig, _general);
     }
 
-    function _deployLendingPoolContracts(address deployer, General memory general) internal {
+    function _deployLendingPoolContracts(
+        address deployer,
+        General memory general,
+        address wethGateway
+    ) internal {
         contracts.lendingPoolAddressesProvider = new LendingPoolAddressesProvider();
         console.log("provider's owner: ", contracts.lendingPoolAddressesProvider.owner());
 
@@ -84,6 +89,8 @@ contract LendingPoolHelper {
         contracts.cod3xLendDataProvider.setLendingPoolAddressProvider(
             address(contracts.lendingPoolAddressesProvider)
         );
+        contracts.wethGateway = new WETHGateway(wethGateway);
+        contracts.wethGateway.authorizeLendingPool(address(contracts.lendingPool));
     }
 
     function _deployStrategies(
