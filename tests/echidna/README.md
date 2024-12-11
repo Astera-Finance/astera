@@ -29,6 +29,7 @@ You can fine in `/echidna` 3 config files to run the fuzzer:
 - Fix all todos in the echidna/codebase.
 - Add minipools.
 - Randomly activation flow borrowing on minipools
+- ATokenNonRebasing test
 - Add rewarders.
 - Fix randBorrow "207".
 - Add Medusa support

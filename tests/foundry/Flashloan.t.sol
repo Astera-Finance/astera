@@ -209,4 +209,76 @@ contract FlashloanTest is Common {
         vm.expectRevert(bytes("ERC20: transfer amount exceeds allowance"));
         deployedContracts.lendingPool.flashLoan(flashloanParams, amounts, modes, params);
     }
+
+    function testFlashloanRehypothecation() public {
+        bool[] memory reserveTypes = new bool[](tokens.length);
+        address[] memory tokenAddresses = new address[](tokens.length);
+        uint256[] memory amounts = new uint256[](tokens.length);
+        uint256[] memory modes = new uint256[](tokens.length);
+        Balances memory balances;
+        balances.balancesBefore = new uint256[](tokens.length);
+        balances.aTokenBalancesBefore = new uint256[](tokens.length);
+        balances.totalManagedAssetsBefore = new uint256[](tokens.length);
+
+        for (uint32 idx = 0; idx < tokens.length; idx++) {
+            console.log(
+                "Rehypothecation amt 1: %s", IERC20(tokens[idx]).balanceOf(address(aTokens[idx]))
+            );
+
+            turnOnRehypothecation(
+                deployedContracts.lendingPoolConfigurator,
+                address(aTokens[idx]),
+                address(mockVaultUnits[idx]),
+                admin,
+                5000,
+                10,
+                200
+            );
+
+            console.log(
+                "Rehypothecation amt 2: %s", IERC20(tokens[idx]).balanceOf(address(aTokens[idx]))
+            );
+
+            uint256 amountToDeposit = IERC20(tokens[idx]).balanceOf(address(this)) / 2;
+            erc20Tokens[idx].approve(address(deployedContracts.lendingPool), amountToDeposit);
+            deployedContracts.lendingPool.deposit(
+                address(erc20Tokens[idx]), true, amountToDeposit, address(this)
+            );
+
+            console.log(
+                "Rehypothecation amt 3: %s", IERC20(tokens[idx]).balanceOf(address(aTokens[idx]))
+            );
+
+            reserveTypes[idx] = true;
+            tokenAddresses[idx] = address(erc20Tokens[idx]);
+            amounts[idx] = IERC20(tokens[idx]).balanceOf(address(this)) / 2;
+            modes[idx] = 0;
+
+            balances.balancesBefore[idx] = IERC20(tokens[idx]).balanceOf(address(this));
+            balances.aTokenBalancesBefore[idx] =
+                IERC20(tokens[idx]).balanceOf(address(aTokens[idx]));
+            balances.totalManagedAssetsBefore[idx] = AToken(aTokens[idx]).getTotalManagedAssets();
+        }
+
+        ILendingPool.FlashLoanParams memory flashloanParams =
+            ILendingPool.FlashLoanParams(address(this), tokenAddresses, reserveTypes, address(this));
+        bytes memory params = abi.encode(balances.balancesBefore, address(this));
+
+        deployedContracts.lendingPool.flashLoan(flashloanParams, amounts, modes, params);
+
+        for (uint32 idx = 0; idx < tokens.length; idx++) {
+            console.log(
+                "Rehypothecation amt 4: %s", IERC20(tokens[idx]).balanceOf(address(aTokens[idx]))
+            );
+            console.log("Rehypothecation amt 5: %s", aTokens[idx]._underlyingAmount());
+            console.log("Rehypothecation amt 6: %s", aTokens[idx]._farmingBal());
+            console.log("--------------------------------");
+
+            assertApproxEqRel(
+                aTokens[idx]._farmingBal(),
+                aTokens[idx]._underlyingAmount() * aTokens[idx]._farmingPct() / 10000,
+                aTokens[idx]._farmingPctDrift() * 1e14
+            );
+        }
+    }
 }

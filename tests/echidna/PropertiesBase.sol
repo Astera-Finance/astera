@@ -5,9 +5,11 @@ import {User} from "./util/User.sol";
 import {PropertiesAsserts} from "./util/PropertiesAsserts.sol";
 import {MarketParams} from "./MarketParams.sol";
 
+import {
+    IERC20, ERC20, IERC20Metadata
+} from "contracts/dependencies/openzeppelin/contracts/ERC20.sol";
 import {BaseImmutableAdminUpgradeabilityProxy} from
     "contracts/protocol/libraries/upgradeability/BaseImmutableAdminUpgradeabilityProxy.sol";
-import {ERC20} from "lib/openzeppelin-contracts/contracts/token/ERC20/ERC20.sol";
 
 import {ATokensAndRatesHelper} from "contracts/deployments/ATokensAndRatesHelper.sol";
 
@@ -81,8 +83,9 @@ import {RewardForwarder} from "contracts/protocol/rewarder/lendingpool/RewardFor
 import {RewardsController} from "contracts/protocol/rewarder/lendingpool/RewardsController.sol";
 import {RewardsDistributor} from "contracts/protocol/rewarder/lendingpool/RewardsDistributor.sol";
 
-import {MockReaperVault2} from "contracts/mocks/tokens/MockVault.sol";
+// import {MockVaultUnit} from "contracts/mocks/tokens/MockVault.sol";
 import {MockStrategy} from "contracts/mocks/tokens/MockStrategy.sol";
+import {MockVaultUnit} from "contracts/mocks/tokens/MockVaultUnit.sol";
 
 /// MiniPool
 import {FlowLimiter} from "contracts/protocol/core/minipool/FlowLimiter.sol";
@@ -136,7 +139,7 @@ contract PropertiesBase is PropertiesAsserts, MarketParams {
     AToken[] internal aTokens;
     VariableDebtToken[] internal debtTokens;
     uint256[] internal timeouts;
-    MockReaperVault2[] internal mockedVaults;
+    MockVaultUnit[] internal mockedVaults;
 
     // Cod3x Lend contracts
     LendingPoolAddressesProvider internal provider;
@@ -271,11 +274,7 @@ contract PropertiesBase is PropertiesAsserts, MarketParams {
 
         // Rehypothecation
         for (uint256 i = 0; i < totalNbTokens; i++) {
-            mockedVaults.push(
-                new MockReaperVault2(
-                    address(assets[i]), "Mock ERC4626", "mock", type(uint256).max, treasury
-                )
-            );
+            mockedVaults.push(new MockVaultUnit(IERC20(address(assets[i]))));
             if (i % 2 == 0) {
                 turnOnRehypothecation(address(aTokens[i]), address(mockedVaults[i]));
             }
@@ -348,7 +347,7 @@ contract PropertiesBase is PropertiesAsserts, MarketParams {
         bool randReceiveAToken;
     }
 
-    function randUpdatePriceAndTryLiquidate(LocalVars_UPTL memory v) public {
+    function randUpdatePriceAndTryLiquidate(LocalVars_UPTL memory v) internal {
         uint8[] memory seedAmt = new uint8[](8);
         seedAmt[0] = v.seedAmtPrice1;
         seedAmt[1] = v.seedAmtPrice2;

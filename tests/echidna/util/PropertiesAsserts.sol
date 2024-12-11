@@ -206,6 +206,19 @@ abstract contract PropertiesAsserts {
         }
     }
 
+    function assertEqApproxPctRel(uint256 a, uint256 b, uint256 approx)
+        internal
+        view
+        returns (bool)
+    {
+        uint256 maxDiff = (b * approx) / 10000;
+
+        if (abs(int256(int256(a) - int256(b))) > maxDiff) {
+            return false;
+        }
+        return true;
+    }
+
     /// @notice calculates the absolute value of x.
     function abs(int256 x) internal pure returns (uint256) {
         return uint256(x >= 0 ? x : -x);

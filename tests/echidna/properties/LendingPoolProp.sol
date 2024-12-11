@@ -2,7 +2,6 @@
 pragma solidity ^0.8.13;
 
 import "../PropertiesBase.sol";
-import {ERC20} from "lib/openzeppelin-contracts/contracts/token/ERC20/ERC20.sol";
 
 contract LendingPoolProp is PropertiesBase {
     constructor() {}
@@ -239,8 +238,8 @@ contract LendingPoolProp is PropertiesBase {
 
             assertEqApproxPct(
                 aToken._farmingBal(),
-                aToken._underlyingAmount(),
-                BPS - aToken._farmingPctDrift(),
+                aToken._underlyingAmount() * aToken._farmingPct() / BPS,
+                aToken._farmingPctDrift() * 15000 / BPS, // +10% margin
                 "228"
             );
 
@@ -298,7 +297,6 @@ contract LendingPoolProp is PropertiesBase {
         uint256 randAsset;
         uint256 randMode;
         uint256 randNbAssets;
-        uint256 randAmt;
         User user;
         MintableERC20 asset;
         VariableDebtToken debtToken;
@@ -337,16 +335,15 @@ contract LendingPoolProp is PropertiesBase {
         v.modesFl = new uint256[](v.randNbAssets);
         v.params = new bytes(0);
 
-        v.randAmt = clampBetween(seedAmt, 1, v.asset.balanceOf(address(aTokens[v.randAsset])));
-
         v.assetBalanceBefore = new uint256[](v.randNbAssets);
 
         for (uint256 i = 0; i < v.randNbAssets; i++) {
             v.assetBalanceBefore[i] = assets[i].balanceOf(address(v.user));
             v.assetsFl[i] = address(assets[i]);
             v.reserveTypesFl[i] = true;
-            uint256 maxFlashloanable = assets[i].balanceOf(address(aTokens[i]));
-            v.amountsFl[i] = v.randAmt > maxFlashloanable ? maxFlashloanable : v.randAmt;
+            v.amountsFl[i] = clampBetween(
+                seedAmt, 1, aTokens[i].getTotalManagedAssets()
+            );
             v.modesFl[i] = v.randMode;
         }
 
@@ -372,15 +369,15 @@ contract LendingPoolProp is PropertiesBase {
     }
 
     // ---------------------- Invariants ----------------------
-    /// @custom:invariant 228 - Rehypothecation: farming percentage must be respected (+/- the drift) after any operation.
-    function invariantRebalance() public {
+    /// @custom:invariant 228 - Rehypothecation: farming percentage must be respected (+/- the drift) after a rebalance occured.
+    function invariantRehypothecation() public {
         for (uint256 i = 0; i < aTokens.length; i++) {
             AToken aToken = aTokens[i];
             if (aToken._farmingPct() != 0 && address(aToken._vault()) != address(0)) {
                 assertEqApproxPct(
                     aToken._farmingBal(),
-                    aToken._underlyingAmount(),
-                    BPS - aToken._farmingPctDrift(),
+                    aToken._underlyingAmount() * aToken._farmingPct() / BPS,
+                    aToken._farmingPctDrift() * 15000 / BPS, // +50% margin
                     "228"
                 );
             }
