@@ -359,76 +359,244 @@ contract ATokenProp is PropertiesBase {
         );
     }
 
+    /// @custom:invariant 303 - Transfers should update accounting correctly.
+    /// @custom:invariant 304 - Self transfers should not break accounting.
     /// @custom:invariant 327 - `ATokenNonRebasing` `transfer()` should be equivalent to `ATokens` adjusted to the conversion rate.
-    // function randATokenNonRebasingTransfer(
-    //     LocalVars_UPTL memory vul,
-    //     uint8 seedUser,
-    //     uint8 seedAsset,
-    //     uint8 seedAmt,
-    //     uint8 seedReceiver
-    // ) public {
-    //     randUpdatePriceAndTryLiquidate(vul);
+    function randATokenNonRebasingTransfer(
+        LocalVars_UPTL memory vul,
+        uint8 seedUser,
+        uint8 seedReceiver,
+        uint8 seedAsset,
+        uint8 seedAmt
+    ) public {
+        randUpdatePriceAndTryLiquidate(vul);
 
-    //     uint256 randUser = clampBetween(seedUser, 0, totalNbUsers);
-    //     User user = users[randUser];
+        User user = users[clampBetween(seedUser, 0, totalNbUsers)];
+        User receiver = users[clampBetween(seedReceiver, 0, totalNbUsers)];
 
-    //     uint256 randAsset = clampBetween(seedAsset, 0, totalNbTokens);
-    //     AToken aToken = aTokens[randAsset];
-    //     ATokenNonRebasing aTokenNonRebasing = aTokensNonRebasing[randAsset];
+        uint256 randAsset = clampBetween(seedAsset, 0, totalNbTokens);
+        AToken aToken = aTokens[randAsset];
+        ATokenNonRebasing aTokenNonRebasing = aTokensNonRebasing[randAsset];
 
-    //     uint256 randAmt = clampBetween(seedAmt, 1, aTokenNonRebasing.balanceOf(address(user)));
-    //     uint256 randReceiver = clampBetween(seedReceiver, 0, 3);
+        uint256 randAmt = clampBetween(seedAmt, 1, aTokenNonRebasing.balanceOf(address(user)) * 2);
 
-    //     address receiver;
-    //     if (randReceiver == 0) {
-    //         receiver = address(pool);
-    //     } else if (randReceiver == 1) {
-    //         receiver = address(aToken);
-    //     } else {
-    //         receiver = address(debtTokens[randAsset]);
-    //     }
+        uint256 senderBalanceBefore = aToken.balanceOf(address(user));
+        uint256 receiverBalanceBefore = aToken.balanceOf(address(receiver));
 
-    //     uint256 senderBalanceBefore = aToken.balanceOf(address(user));
-    //     uint256 receiverBalanceBefore = aToken.balanceOf(receiver);
+        (bool success,) = user.proxy(
+            address(aTokenNonRebasing),
+            abi.encodeWithSelector(aTokenNonRebasing.transfer.selector, address(receiver), randAmt)
+        );
+        if (!success) {
+            return;
+        }
 
-    //     user.proxy(
-    //         address(aTokenNonRebasing),
-    //         abi.encodeWithSelector(aTokenNonRebasing.transfer.selector, receiver, randAmt)
-    //     );
+        if (address(user) != address(receiver)) {
+            // Test aTokenNonRebasing balances
+            assertEqApprox(
+                aToken.convertToShares(senderBalanceBefore),
+                aTokenNonRebasing.balanceOf(address(user)) + randAmt,
+                1,
+                "303"
+            );
+            assertEqApprox(
+                aToken.convertToShares(receiverBalanceBefore),
+                aTokenNonRebasing.balanceOf(address(receiver)) - randAmt,
+                1,
+                "303"
+            );
 
-    //     assertEq(
-    //         aTokenNonRebasing.balanceOf(address(user)),
-    //         aToken.convertToShares(aToken.balanceOf(address(user))),
-    //         "327"
-    //     );
-    //     assertEq(
-    //         aTokenNonRebasing.balanceOf(receiver),
-    //         aToken.convertToShares(aToken.balanceOf(receiver)),
-    //         "327"
-    //     );
-    // }
+            // Test aToken balances
+            assertEqApprox(
+                senderBalanceBefore,
+                aToken.balanceOf(address(user)) + aToken.convertToAssets(randAmt),
+                1,
+                "303"
+            );
+            assertEqApprox(
+                receiverBalanceBefore,
+                aToken.balanceOf(address(receiver)) - aToken.convertToAssets(randAmt),
+                1,
+                "303"
+            );
+        } else {
+            // Test aTokenNonRebasing balances
+            assertEqApprox(
+                aToken.convertToShares(senderBalanceBefore),
+                aTokenNonRebasing.balanceOf(address(user)),
+                1,
+                "304"
+            );
+
+            // Test aToken balances
+            assertEqApprox(senderBalanceBefore, aToken.balanceOf(address(user)), 1, "304");
+        }
+
+        (success,) = receiver.proxy(
+            address(aTokenNonRebasing),
+            abi.encodeWithSelector(aTokenNonRebasing.transfer.selector, address(user), randAmt)
+        );
+
+        assertEqApprox(
+            aToken.convertToShares(senderBalanceBefore),
+            aTokenNonRebasing.balanceOf(address(user)),
+            1,
+            "327"
+        );
+        assertEqApprox(
+            aToken.convertToShares(receiverBalanceBefore),
+            aTokenNonRebasing.balanceOf(address(receiver)),
+            1,
+            "327"
+        );
+
+        assertEqApprox(senderBalanceBefore, aToken.balanceOf(address(user)), 1, "327");
+        assertEqApprox(receiverBalanceBefore, aToken.balanceOf(address(receiver)), 1, "327");
+    }
+
+    /// @custom:invariant 303 - Transfers should update accounting correctly.
+    /// @custom:invariant 304 - Self transfers should not break accounting.
+    /// @custom:invariant 328 - `ATokenNonRebasing` `transferFrom()` should be equivalent to `ATokens` adjusted to the conversion rate.
+    function randATokenNonRebasingTransferFrom(
+        LocalVars_UPTL memory vul,
+        uint8 seedOwner,
+        uint8 seedSpender,
+        uint8 seedReceiver,
+        uint8 seedAsset,
+        uint8 seedAmt
+    ) public {
+        randUpdatePriceAndTryLiquidate(vul);
+
+        User owner = users[clampBetween(seedOwner, 0, totalNbUsers)];
+        User spender = users[clampBetween(seedSpender, 0, totalNbUsers)];
+        User receiver = users[clampBetween(seedReceiver, 0, totalNbUsers)];
+
+        uint256 randAsset = clampBetween(seedAsset, 0, totalNbTokens);
+        AToken aToken = aTokens[randAsset];
+        ATokenNonRebasing aTokenNonRebasing = aTokensNonRebasing[randAsset];
+
+        uint256 randAmt = clampBetween(seedAmt, 1, aTokenNonRebasing.balanceOf(address(owner)) * 2);
+
+        uint256 ownerBalanceBefore = aToken.balanceOf(address(owner));
+        uint256 receiverBalanceBefore = aToken.balanceOf(address(receiver));
+
+        // Approve spender
+        owner.proxy(
+            address(aTokenNonRebasing),
+            abi.encodeWithSelector(aTokenNonRebasing.approve.selector, address(spender), randAmt)
+        );
+
+        // Execute transferFrom
+        (bool success,) = spender.proxy(
+            address(aTokenNonRebasing),
+            abi.encodeWithSelector(
+                aTokenNonRebasing.transferFrom.selector, address(owner), address(receiver), randAmt
+            )
+        );
+        if (!success) {
+            return;
+        }
+
+        if (address(owner) != address(receiver)) {
+            // Test aTokenNonRebasing balances
+            assertEqApprox(
+                aToken.convertToShares(ownerBalanceBefore),
+                aTokenNonRebasing.balanceOf(address(owner)) + randAmt,
+                1,
+                "328"
+            );
+            assertEqApprox(
+                aToken.convertToShares(receiverBalanceBefore),
+                aTokenNonRebasing.balanceOf(address(receiver)) - randAmt,
+                1,
+                "328"
+            );
+
+            // Test aToken balances
+            assertEqApprox(
+                ownerBalanceBefore,
+                aToken.balanceOf(address(owner)) + aToken.convertToAssets(randAmt),
+                1,
+                "328"
+            );
+            assertEqApprox(
+                receiverBalanceBefore,
+                aToken.balanceOf(address(receiver)) - aToken.convertToAssets(randAmt),
+                1,
+                "328"
+            );
+        } else {
+            // Test aTokenNonRebasing balances
+            assertEqApprox(
+                aToken.convertToShares(ownerBalanceBefore),
+                aTokenNonRebasing.balanceOf(address(owner)),
+                1,
+                "328"
+            );
+
+            // Test aToken balances
+            assertEqApprox(ownerBalanceBefore, aToken.balanceOf(address(owner)), 1, "328");
+        }
+    }
+
+    /// @custom:invariant 312 - `approve()` must never revert.
+    /// @custom:invariant 329 - Allowance must be modified correctly via `ATokenNonRebasing.approve()`.
+    /// @custom:invariant 330 - `ATokenNonRebasing.approve()` must not modify `AToken.allowance()`.
+    function randATokenNonRebasingApprove(
+        LocalVars_UPTL memory vul,
+        uint8 seedUser,
+        uint8 seedSender,
+        uint8 seedAToken,
+        uint128 seedAmt
+    ) public {
+        randUpdatePriceAndTryLiquidate(vul);
+
+        uint256 randUser = clampBetween(seedUser, 0, totalNbUsers);
+        uint256 randSender = clampBetween(seedSender, 0, totalNbUsers);
+        uint256 randAToken = clampBetween(seedAToken, 0, totalNbTokens);
+
+        User user = users[randUser];
+        User sender = users[randUser];
+        AToken aToken = aTokens[randAToken];
+        ATokenNonRebasing aTokenNonRebasing = aTokensNonRebasing[randAToken];
+
+        uint256 randAmt = clampBetween(seedAmt, 0, initialMint * 2);
+
+        uint256 aTokenAllowanceBefore = aToken.allowance(address(user), address(sender));
+
+        (bool success, bytes memory data) = user.proxy(
+            address(aTokenNonRebasing),
+            abi.encodeWithSelector(aTokenNonRebasing.approve.selector, address(sender), randAmt)
+        );
+
+        assertWithMsg(success, "312");
+
+        assertEq(aTokenNonRebasing.allowance(address(user), address(sender)), randAmt, "329");
+        assertEq(aToken.allowance(address(user), address(sender)), aTokenAllowanceBefore, "330");
+    }
 
     // ---------------------- Invariants ----------------------
 
-    // todo - failing
-    /// @custom:invariant 324 -A user must not hold more than total supply.
-    /// @custom:invariant 325- Sum of users balance must not exceed total supply.
-    // function balanceIntegrity(LocalVars_UPTL memory vul) public {
-    //     randUpdatePriceAndTryLiquidate(vul);
-    //     for (uint256 j = 0; j < aTokens.length; j++) {
-    //         AToken t = aTokens[j];
-    //         uint sum = 0;
-    //         uint ts = t.totalSupply();
-    //         for (uint256 i = 0; i < users.length; i++) {
-    //             uint bu = t.balanceOf(address(users[i]));
-    //             sum += bu;
-    //             assertLt(bu, ts, "324");
-    //         }
-    //         if (bootstrapLiquidity)
-    //             sum += t.balanceOf(address(bootstraper));
-    //         assertEqApprox(sum, ts, 1e10, "325");
-    //     }
-    // }
+    /// @custom:invariant 324 - A user must not hold more than total supply.
+    /// @custom:invariant 325 - Sum of users balance must not exceed total supply.
+    function balanceIntegrity(LocalVars_UPTL memory vul) public {
+        randUpdatePriceAndTryLiquidate(vul);
+
+        for (uint256 j = 0; j < aTokens.length; j++) {
+            AToken t = aTokens[j];
+            uint256 sum = 0;
+            uint256 ts = t.totalSupply();
+            for (uint256 i = 0; i < users.length; i++) {
+                uint256 bu = t.balanceOf(address(users[i]));
+                sum += bu;
+                assertLte(bu, ts, "324");
+            }
+            if (bootstrapLiquidity) {
+                sum += t.balanceOf(address(bootstraper));
+            }
+            assertEqApprox(sum, ts, 1e10, "325");
+        }
+    }
 
     // ---------------------- Helpers ----------------------
 }

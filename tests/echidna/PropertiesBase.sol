@@ -543,7 +543,7 @@ contract PropertiesBase is PropertiesAsserts, MarketParams {
         return false;
     }
 
-    function hasATokensPeriod(User user) internal view returns (bool) {
+    function hasATokensStrict(User user) internal view returns (bool) {
         for (uint256 i = 0; i < aTokens.length; i++) {
             if (aTokens[i].balanceOf(address(user)) != 0) {
                 return true;
@@ -562,8 +562,14 @@ contract PropertiesBase is PropertiesAsserts, MarketParams {
     }
 
     function hasATokenTotal() internal view returns (bool) {
+        if (bootstrapLiquidity) {
+            if (hasATokensStrict(bootstraper)) {
+                return true;
+            }
+        }
+
         for (uint256 i = 0; i < users.length; i++) {
-            if (hasATokensPeriod(users[i])) {
+            if (hasATokensStrict(users[i])) {
                 return true;
             }
         }
@@ -571,6 +577,12 @@ contract PropertiesBase is PropertiesAsserts, MarketParams {
     }
 
     function hasDebtTotal() internal view returns (bool) {
+        if (bootstrapLiquidity) {
+            if (hasDebt(bootstraper)) {
+                return true;
+            }
+        }
+
         for (uint256 i = 0; i < users.length; i++) {
             if (hasDebt(users[i])) {
                 return true;

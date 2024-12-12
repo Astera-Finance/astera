@@ -63,8 +63,8 @@ You can fine in `/echidna` 3 config files to run the fuzzer:
 217. ✅ The `liquidityIndex` should monotonically increase when there's total debt.
 218. ✅ The `variableBorrowIndex` should monotonically increase when there's total debt.
 219. ✅ A user with debt should have at least an aToken balance `setUsingAsCollateral`.
-220. ❌ If all debt is repaid, all `aToken` holders should be able to claim their collateral.
-221. ❌ If all users withdraw their liquidity, there must not be aTokens supply left.
+220. ✅ If all debt is repaid, all `aToken` holders should be able to claim their collateral.
+221. ✅ If all users withdraw their liquidity, there must not be aTokens supply left.
 222. 🚧 Integrity of Supply Cap - aToken supply shall never exceed the cap.
 223. 🚧 `UserConfigurationMap` integrity: If a user has a given aToken then `isUsingAsCollateralOrBorrowing` and `isUsingAsCollateral` should return true.
 224. 🚧 `UserConfigurationMap` integrity: If a user has a given debtToken then `isUsingAsCollateralOrBorrowing`, `isBorrowing` and `isBorrowingAny` should return true.
@@ -73,7 +73,7 @@ You can fine in `/echidna` 3 config files to run the fuzzer:
 227. ❌ Rehypothecation: if the external rehypothecation vault is liquid, users should always be able to withdraw if all other withdrawal conditions are met.
 228. ✅ Rehypothecation: farming percentage must be respected (+/- the drift) after a rebalance occured.
 229. ✅ Rehypothecation: The profit handler address must see its balance increase after reaching the claiming threshold.
-230. ❌ `withdraw()` must not result in a health factor of less than 1.
+230. ✅ `withdraw()` must not result in a health factor of less than 1.
 231. ✅ Rehypothecation: farming percentage must be respected (+/- the drift) after any operation.
 
 
@@ -103,12 +103,13 @@ You can fine in `/echidna` 3 config files to run the fuzzer:
 321. 🚧 User allowance must be equal to `amount` when the sender calls `permit()`.
 322. ✅ Force feeding assets in LendingPool, ATokens, or debtTokens must not change the final result.
 323. ✅ Force feeding aToken in LendingPool, ATokens, or debtTokens must not change the final result.
-324. ❌ A user must not hold more than total supply.
-325. ❌ Sum of users' balances must not exceed total supply.
-326. 🚧 `ATokenNonRebasing` `balanceOf()` should be equivalent to `ATokens` adjusted to the conversion rate.
-327. 🚧 `ATokenNonRebasing` `transfer()` should be equivalent to `ATokens` adjusted to the conversion rate.
-328. 🚧 `ATokenNonRebasing` `transferFrom()` should be equivalent to `ATokens` adjusted to the conversion rate.
-329. 🚧 `ATokenNonRebasing` `approve()` should be equivalent to `ATokens` adjusted to the conversion rate.
+324. ✅ A user must not hold more than total supply.
+325. ✅ Sum of users' balances must not exceed total supply.
+326. ✅ `ATokenNonRebasing` `balanceOf()` should be equivalent to `ATokens` adjusted to the conversion rate.
+327. ✅ `ATokenNonRebasing` `transfer()` should be equivalent to `ATokens` adjusted to the conversion rate.
+328. ✅ `ATokenNonRebasing` `transferFrom()` should be equivalent to `ATokens` adjusted to the conversion rate.
+329. ✅ Allowance must be modified correctly via `ATokenNonRebasing.approve()`.
+330. ✅ `ATokenNonRebasing.approve()` must not modify `AToken.allowance()`.
 
 ### DebtTokens
 
