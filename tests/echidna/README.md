@@ -23,16 +23,14 @@ You can fine in `/echidna` 3 config files to run the fuzzer:
 
 # TODO
 
-- Improve the tryLiquidate function and uncomment usersSolvencyCheck.
 - Random PI IR strategies for reserves.
-- Implemente all "To implement" invariants.
-- Fix all todos in the echidna/codebase.
 - Add minipools.
 - Randomly activation flow borrowing on minipools
 - ATokenNonRebasing test
-- Add rewarders.
+- Implemente all "To implement" invariants.
 - Fix randBorrow "207".
 - Add Medusa support
+- Add rewarders.
 
 # Invariant testing
 
@@ -62,7 +60,7 @@ You can fine in `/echidna` 3 config files to run the fuzzer:
 213. ✅ `setUseReserveAsCollateral` must not reduce the health factor below 1.
 214. ✅ Users must not be able to steal funds from flashloans.
 215. ✅ The total value borrowed must always be less than the value of the collaterals.
-216. ✅ Each user position must remain solvent.
+216. 🚚 Each user position must remain solvent.
 217. ✅ The `liquidityIndex` should monotonically increase when there's total debt.
 218. ✅ The `variableBorrowIndex` should monotonically increase when there's total debt.
 219. ✅ A user with debt should have at least an aToken balance `setUsingAsCollateral`.
@@ -132,19 +130,18 @@ You can fine in `/echidna` 3 config files to run the fuzzer:
 513. 🚧 `setUseReserveAsCollateral` must not reduce the health factor below 1.
 514. 🚧 Users must not be able to steal funds from flashloans.
 515. 🚧 The total value borrowed must always be less than the value of the collaterals.
-516. 🚧 Each user position must remain solvent.
-517. 🚧 The `liquidityIndex` should monotonically increase when there's total debt.
-518. 🚧 The `variableBorrowIndex` should monotonically increase when there's total debt.
-519. 🚧 A user with debt should have at least an AToken6909 balance `setUsingAsCollateral`.
-520. 🚧 If all debt is repaid, all aToken holders should be able to claim their collateral.
-521. 🚧 If all users withdraw their liquidity, there must not be aTokens supply left.
-522. 🚧 Integrity of Supply Cap - aToken supply shall never exceed the cap.
-523. 🚧 `UserConfigurationMap` integrity: If a user has a given aToken then `isUsingAsCollateralOrBorrowing` and `isUsingAsCollateral` should return true.
-524. 🚧 `UserConfigurationMap` integrity: If a user has a given debtToken then `isUsingAsCollateralOrBorrowing`, `isBorrowing` and `isBorrowingAny` should return true.
-525. 🚧 `ReserveConfigurationMap` integrity: If reserve is active and not frozen then user can interact with the lending market.
-526. 🚧 If flow reached the maximum, Minipools must not be able to borrow more.
-527. 🚧 Minipool flow borrow integrity: debt from the Lendingpool should never be greater than the collateral owned by Minipools.
-528. 🚧 Repaying or Liquidating a position must result in the same final state.
+516. 🚧 The `liquidityIndex` should monotonically increase when there's total debt.
+517. 🚧 The `variableBorrowIndex` should monotonically increase when there's total debt.
+518. 🚧 A user with debt should have at least an AToken6909 balance `setUsingAsCollateral`.
+519. 🚧 If all debt is repaid, all aToken holders should be able to claim their collateral.
+520. 🚧 If all users withdraw their liquidity, there must not be aTokens supply left.
+521. 🚧 Integrity of Supply Cap - aToken supply shall never exceed the cap.
+522. 🚧 `UserConfigurationMap` integrity: If a user has a given aToken then `isUsingAsCollateralOrBorrowing` and `isUsingAsCollateral` should return true.
+523. 🚧 `UserConfigurationMap` integrity: If a user has a given debtToken then `isUsingAsCollateralOrBorrowing`, `isBorrowing` and `isBorrowingAny` should return true.
+524. 🚧 `ReserveConfigurationMap` integrity: If reserve is active and not frozen then user can interact with the lending market.
+525. 🚧 If flow reached the maximum, Minipools must not be able to borrow more.
+526. 🚧 Minipool flow borrow integrity: debt from the Lendingpool should never be greater than the collateral owned by Minipools.
+527. 🚧 Repaying or Liquidating a position must result in the same final state.
 
 (ADD MINIPOOL BORROWFLOW INVARIANTS)
 
