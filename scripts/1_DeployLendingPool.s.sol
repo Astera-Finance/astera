@@ -127,24 +127,24 @@ contract DeployLendingPool is Script, LendingPoolHelper, Test {
                 "There are not enough mocked tokens. Deploy mocks.. "
             );
             {
-                for (uint8 idx = 0; idx < poolReserversConfig.length; idx++) {
-                    for (uint8 i = 0; i < mockedTokens.length; i++) {
-                        if (
-                            keccak256(abi.encodePacked(ERC20(mockedTokens[i]).symbol()))
-                                == keccak256(abi.encodePacked(poolReserversConfig[idx].symbol))
-                        ) {
-                            poolReserversConfig[idx].tokenAddress = address(mockedTokens[i]);
-                            if (piStrategies.length > i) {
-                                piStrategies[idx].tokenAddress = address(mockedTokens[i]);
-                            }
-                            break;
-                        }
-                    }
-                    require(
-                        poolReserversConfig[idx].tokenAddress != address(0),
-                        "Mocked token not assigned"
-                    );
-                }
+                // for (uint8 idx = 0; idx < poolReserversConfig.length; idx++) {
+                //     for (uint8 i = 0; i < mockedTokens.length; i++) {
+                //         if (
+                //             keccak256(abi.encodePacked(ERC20(mockedTokens[i]).symbol()))
+                //                 == keccak256(abi.encodePacked(poolReserversConfig[idx].symbol))
+                //         ) {
+                //             poolReserversConfig[idx].tokenAddress = address(mockedTokens[i]);
+                //             if (piStrategies.length > i) {
+                //                 piStrategies[idx].tokenAddress = address(mockedTokens[i]);
+                //             }
+                //             break;
+                //         }
+                //     }
+                //     require(
+                //         poolReserversConfig[idx].tokenAddress != address(0),
+                //         "Mocked token not assigned"
+                //     );
+                // }
             }
             /* Deploy to testnet */
             vm.startBroadcast(vm.envUint("PRIVATE_KEY"));

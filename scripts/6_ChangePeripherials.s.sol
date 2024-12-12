@@ -99,35 +99,35 @@ contract ChangePeripherials is Script, ChangePeripherialsHelper, Test {
                 "There are not enough mocked tokens. Deploy mocks.. "
             );
             {
-                for (uint8 idx = 0; idx < vault.length; idx++) {
-                    for (uint8 i = 0; i < mockedTokens.length; i++) {
-                        if (
-                            keccak256(abi.encodePacked(ERC20(mockedTokens[i]).symbol()))
-                                == keccak256(abi.encodePacked(vault[idx].symbol))
-                        ) {
-                            console.log(
-                                "Assigning %s instead of %s",
-                                address(mockedTokens[i]),
-                                vault[idx].tokenAddress
-                            );
-                            vault[idx].tokenAddress = address(mockedTokens[i]);
-                            rehypothecation[idx].tokenAddress = address(mockedTokens[i]);
-                            treasury[idx].tokenAddress = address(mockedTokens[i]);
-                            rewarder[idx].tokenAddress = address(mockedTokens[i]);
-                            rewarder6909[idx].tokenAddress = address(mockedTokens[i]);
-                            break;
-                        }
-                    }
-                    require(vault[idx].tokenAddress != address(0), "Mocked token not assigned");
-                    require(
-                        rehypothecation[idx].tokenAddress != address(0), "Mocked token not assigned"
-                    );
-                    require(treasury[idx].tokenAddress != address(0), "Mocked token not assigned");
-                    require(rewarder[idx].tokenAddress != address(0), "Mocked token not assigned");
-                    require(
-                        rewarder6909[idx].tokenAddress != address(0), "Mocked token not assigned"
-                    );
-                }
+                // for (uint8 idx = 0; idx < vault.length; idx++) {
+                //     for (uint8 i = 0; i < mockedTokens.length; i++) {
+                //         if (
+                //             keccak256(abi.encodePacked(ERC20(mockedTokens[i]).symbol()))
+                //                 == keccak256(abi.encodePacked(vault[idx].symbol))
+                //         ) {
+                //             console.log(
+                //                 "Assigning %s instead of %s",
+                //                 address(mockedTokens[i]),
+                //                 vault[idx].tokenAddress
+                //             );
+                //             vault[idx].tokenAddress = address(mockedTokens[i]);
+                //             rehypothecation[idx].tokenAddress = address(mockedTokens[i]);
+                //             treasury[idx].tokenAddress = address(mockedTokens[i]);
+                //             rewarder[idx].tokenAddress = address(mockedTokens[i]);
+                //             rewarder6909[idx].tokenAddress = address(mockedTokens[i]);
+                //             break;
+                //         }
+                //     }
+                //     require(vault[idx].tokenAddress != address(0), "Mocked token not assigned");
+                //     require(
+                //         rehypothecation[idx].tokenAddress != address(0), "Mocked token not assigned"
+                //     );
+                //     require(treasury[idx].tokenAddress != address(0), "Mocked token not assigned");
+                //     require(rewarder[idx].tokenAddress != address(0), "Mocked token not assigned");
+                //     require(
+                //         rewarder6909[idx].tokenAddress != address(0), "Mocked token not assigned"
+                //     );
+                // }
             }
 
             /* Change peripherials */
