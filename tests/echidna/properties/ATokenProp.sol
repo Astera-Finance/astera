@@ -335,6 +335,79 @@ contract ATokenProp is PropertiesBase {
         }
     }
 
+    // --- ATokenNonRebasing Properties ---
+
+    /// @custom:invariant 326 - `ATokenNonRebasing` `balanceOf()` should be equivalent to `ATokens` adjusted to the conversion rate.
+    function randATokenNonRebasingBalanceOf(
+        LocalVars_UPTL memory vul,
+        uint8 seedUser,
+        uint8 seedAsset
+    ) public {
+        randUpdatePriceAndTryLiquidate(vul);
+
+        uint256 randUser = clampBetween(seedUser, 0, totalNbUsers);
+        User user = users[randUser];
+
+        uint256 randAsset = clampBetween(seedAsset, 0, totalNbTokens);
+        AToken aToken = aTokens[randAsset];
+        ATokenNonRebasing aTokenNonRebasing = aTokensNonRebasing[randAsset];
+
+        assertEq(
+            aTokenNonRebasing.balanceOf(address(user)),
+            aToken.convertToShares(aToken.balanceOf(address(user))),
+            "326"
+        );
+    }
+
+    /// @custom:invariant 327 - `ATokenNonRebasing` `transfer()` should be equivalent to `ATokens` adjusted to the conversion rate.
+    // function randATokenNonRebasingTransfer(
+    //     LocalVars_UPTL memory vul,
+    //     uint8 seedUser,
+    //     uint8 seedAsset,
+    //     uint8 seedAmt,
+    //     uint8 seedReceiver
+    // ) public {
+    //     randUpdatePriceAndTryLiquidate(vul);
+
+    //     uint256 randUser = clampBetween(seedUser, 0, totalNbUsers);
+    //     User user = users[randUser];
+
+    //     uint256 randAsset = clampBetween(seedAsset, 0, totalNbTokens);
+    //     AToken aToken = aTokens[randAsset];
+    //     ATokenNonRebasing aTokenNonRebasing = aTokensNonRebasing[randAsset];
+
+    //     uint256 randAmt = clampBetween(seedAmt, 1, aTokenNonRebasing.balanceOf(address(user)));
+    //     uint256 randReceiver = clampBetween(seedReceiver, 0, 3);
+
+    //     address receiver;
+    //     if (randReceiver == 0) {
+    //         receiver = address(pool);
+    //     } else if (randReceiver == 1) {
+    //         receiver = address(aToken);
+    //     } else {
+    //         receiver = address(debtTokens[randAsset]);
+    //     }
+
+    //     uint256 senderBalanceBefore = aToken.balanceOf(address(user));
+    //     uint256 receiverBalanceBefore = aToken.balanceOf(receiver);
+
+    //     user.proxy(
+    //         address(aTokenNonRebasing),
+    //         abi.encodeWithSelector(aTokenNonRebasing.transfer.selector, receiver, randAmt)
+    //     );
+
+    //     assertEq(
+    //         aTokenNonRebasing.balanceOf(address(user)),
+    //         aToken.convertToShares(aToken.balanceOf(address(user))),
+    //         "327"
+    //     );
+    //     assertEq(
+    //         aTokenNonRebasing.balanceOf(receiver),
+    //         aToken.convertToShares(aToken.balanceOf(receiver)),
+    //         "327"
+    //     );
+    // }
+
     // ---------------------- Invariants ----------------------
 
     // todo - failing

@@ -341,9 +341,7 @@ contract LendingPoolProp is PropertiesBase {
             v.assetBalanceBefore[i] = assets[i].balanceOf(address(v.user));
             v.assetsFl[i] = address(assets[i]);
             v.reserveTypesFl[i] = true;
-            v.amountsFl[i] = clampBetween(
-                seedAmt, 1, aTokens[i].getTotalManagedAssets()
-            );
+            v.amountsFl[i] = clampBetween(seedAmt, 1, aTokens[i].getTotalManagedAssets());
             v.modesFl[i] = v.randMode;
         }
 

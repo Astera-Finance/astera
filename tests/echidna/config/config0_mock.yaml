@@ -3,7 +3,7 @@ testLimit: 1
 
 workers: 1
 coverage: true
-corpusDir: "corpus"
+corpusDir: "echidna-corpus"
 testMode: assertion
 deployer: "0x10000"
 sender: ["0x10000", "0x20000", "0x30000"]

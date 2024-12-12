@@ -127,7 +127,7 @@ contract PropertiesBase is PropertiesAsserts, MarketParams {
     User internal bootstraper;
     User[] internal users;
     DefaultReserveInterestRateStrategy /*[]*/ internal defaultRateStrategies;
-    PiReserveInterestRateStrategy /*[]*/ internal piRateStrategies;
+    PiReserveInterestRateStrategy[] internal piRateStrategies;
 
     mapping(address => uint256) internal lastLiquidityIndex;
     mapping(address => uint256) internal lastVariableBorrowIndex;
@@ -137,6 +137,7 @@ contract PropertiesBase is PropertiesAsserts, MarketParams {
     MintableERC20[] internal assets; // assets[0] is weth
     MockAggregator[] internal aggregators; // aggregators[0] is the reference (eth pricefeed)
     AToken[] internal aTokens;
+    ATokenNonRebasing[] internal aTokensNonRebasing;
     VariableDebtToken[] internal debtTokens;
     uint256[] internal timeouts;
     MockVaultUnit[] internal mockedVaults;
@@ -209,16 +210,20 @@ contract PropertiesBase is PropertiesAsserts, MarketParams {
             DEFAULT_VARIABLE_RATE_SLOPE2
         );
 
-        // piRateStrategies = new PiReserveInterestRateStrategy(
-        //     provider
-        //     // asset,
-        //     // assetReserveType,
-        //     DEFAULT_MIN_CONTROLLER_ERROR,
-        //     DEFAULT_MAX_I_TIME_AMP,
-        //     DEFAULT_OPTI_UTILIZATION_RATE,
-        //     DEFAULT_KP,
-        //     DEFAULT_KI
-        // ); // todo setup for some assets
+        for (uint256 i = 0; i < totalNbTokens; i++) {
+            piRateStrategies.push(
+                new PiReserveInterestRateStrategy(
+                    address(provider),
+                    address(assets[i]),
+                    true,
+                    DEFAULT_MIN_CONTROLLER_ERROR,
+                    DEFAULT_MAX_I_TIME_AMP,
+                    DEFAULT_OPTI_UTILIZATION_RATE_PI,
+                    DEFAULT_KP,
+                    DEFAULT_KI
+                )
+            );
+        }
 
         ILendingPoolConfigurator.InitReserveInput memory ri;
         ILendingPoolConfigurator.InitReserveInput[] memory initInputParams =
@@ -228,7 +233,9 @@ contract PropertiesBase is PropertiesAsserts, MarketParams {
                 aTokenImpl: address(aToken),
                 variableDebtTokenImpl: address(vToken),
                 underlyingAssetDecimals: assets[i].decimals(),
-                interestRateStrategyAddress: address(defaultRateStrategies),
+                interestRateStrategyAddress: i % 2 == 0
+                    ? address(defaultRateStrategies)
+                    : address(piRateStrategies[i]),
                 underlyingAsset: address(assets[i]),
                 treasury: address(treasury),
                 incentivesController: address(0),
@@ -267,6 +274,7 @@ contract PropertiesBase is PropertiesAsserts, MarketParams {
             (address aTokenAddress, address variableDebtTokenAddress) =
                 cod3xLendDataProvider.getLpTokens(address(assets[i]), true);
             aTokens.push(AToken(aTokenAddress));
+            aTokensNonRebasing.push(ATokenNonRebasing(AToken(aTokenAddress).WRAPPER_ADDRESS()));
             debtTokens.push(VariableDebtToken(variableDebtTokenAddress));
         }
 

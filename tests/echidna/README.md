@@ -23,7 +23,6 @@ You can fine in `/echidna` 3 config files to run the fuzzer:
 
 # TODO
 
-- Random PI IR strategies for reserves.
 - Add minipools.
 - Randomly activation flow borrowing on minipools
 - ATokenNonRebasing test
@@ -60,7 +59,7 @@ You can fine in `/echidna` 3 config files to run the fuzzer:
 213. ✅ `setUseReserveAsCollateral` must not reduce the health factor below 1.
 214. ✅ Users must not be able to steal funds from flashloans.
 215. ✅ The total value borrowed must always be less than the value of the collaterals.
-216. 🚚 Each user position must remain solvent.
+216. 🚚
 217. ✅ The `liquidityIndex` should monotonically increase when there's total debt.
 218. ✅ The `variableBorrowIndex` should monotonically increase when there's total debt.
 219. ✅ A user with debt should have at least an aToken balance `setUsingAsCollateral`.
@@ -106,7 +105,10 @@ You can fine in `/echidna` 3 config files to run the fuzzer:
 323. ✅ Force feeding aToken in LendingPool, ATokens, or debtTokens must not change the final result.
 324. ❌ A user must not hold more than total supply.
 325. ❌ Sum of users' balances must not exceed total supply.
-326. 🚧 All `ATokenNonRebasing` operations should be equivalent to `ATokens`.
+326. 🚧 `ATokenNonRebasing` `balanceOf()` should be equivalent to `ATokens` adjusted to the conversion rate.
+327. 🚧 `ATokenNonRebasing` `transfer()` should be equivalent to `ATokens` adjusted to the conversion rate.
+328. 🚧 `ATokenNonRebasing` `transferFrom()` should be equivalent to `ATokens` adjusted to the conversion rate.
+329. 🚧 `ATokenNonRebasing` `approve()` should be equivalent to `ATokens` adjusted to the conversion rate.
 
 ### DebtTokens
 
@@ -142,6 +144,7 @@ You can fine in `/echidna` 3 config files to run the fuzzer:
 525. 🚧 If flow reached the maximum, Minipools must not be able to borrow more.
 526. 🚧 Minipool flow borrow integrity: debt from the Lendingpool should never be greater than the collateral owned by Minipools.
 527. 🚧 Repaying or Liquidating a position must result in the same final state.
+528. 🚧 If a minipool is flow borrowing, for a given reserve, the Lendingpool interest rate must always be lower than the minipool interest rate.
 
 (ADD MINIPOOL BORROWFLOW INVARIANTS)
 

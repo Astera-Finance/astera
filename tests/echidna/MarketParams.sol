@@ -13,16 +13,17 @@ contract MarketParams {
     uint256 internal constant BASE_CURRENCY_UNIT = 100000000;
 
     // Default rate strategies
-    uint256 internal constant DEFAULT_OPTI_UTILIZATION_RATE = 0.45e27;
+    uint256 internal constant DEFAULT_OPTI_UTILIZATION_RATE = 0.75e27;
     uint256 internal constant DEFAULT_BASE_VARIABLE_BORROW_RATE = 0;
     uint256 internal constant DEFAULT_VARIABLE_RATE_SLOPE1 = 0.07e27;
     uint256 internal constant DEFAULT_VARIABLE_RATE_SLOPE2 = 3e27;
 
     // Pi rate strategies
-    int256 internal constant DEFAULT_MIN_CONTROLLER_ERROR = 0;
-    int256 internal constant DEFAULT_MAX_I_TIME_AMP = 0;
-    uint256 internal constant DEFAULT_KP = 0;
-    uint256 internal constant DEFAULT_KI = 0;
+    uint256 internal constant DEFAULT_OPTI_UTILIZATION_RATE_PI = 0.5e27;
+    int256 internal constant DEFAULT_MIN_CONTROLLER_ERROR = 1e25;
+    int256 internal constant DEFAULT_MAX_I_TIME_AMP = 50e25;
+    uint256 internal constant DEFAULT_KP = 1e27;
+    uint256 internal constant DEFAULT_KI = 13e19;
 
     // Lending pool Default reserve config
     uint256 internal constant DEFAULT_BASE_LTV = 8000;
