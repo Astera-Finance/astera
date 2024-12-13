@@ -8,50 +8,51 @@ import "./PropertiesBase.sol";
 contract PropertiesMock is PropertiesBase {
     constructor() {}
 
-    function randRebalance(uint8 seedUser) public {
-        User user = users[clampBetween(seedUser, 0, users.length - 1)];
+    function randInitMiniPool() public {
+        for (uint256 i = 0; i < totalNbMinipool; i++) {
+            uint256 _minipoolId =
+                miniPoolProvider.deployMiniPool(minipoolImpl, aToken6909Impl, address(this));
+            ATokenERC6909 _aToken6909 = ATokenERC6909(miniPoolProvider.getAToken6909(_minipoolId));
+            MiniPool _miniPool = MiniPool(miniPoolProvider.getMiniPool(_minipoolId));
 
-        address[] memory assetsFl = new address[](1);
-        assetsFl[0] = address(assets[0]);
+            miniPoolId.push(_minipoolId);
+            aToken6909.push(_aToken6909);
+            miniPool.push(_miniPool);
 
-        bool[] memory reserveTypesFl = new bool[](1);
-        reserveTypesFl[0] = true;
+            IMiniPoolConfigurator.InitReserveInput[] memory initInputParams =
+                new IMiniPoolConfigurator.InitReserveInput[](totalNbTokens * 2); // classic assets + lendingpool aTokens
 
-        uint256[] memory amountsFl = new uint256[](1);
-        amountsFl[0] = aTokens[0].getTotalManagedAssets() / 2;
+            for (uint256 j = 0; j < 1; /* totalNbTokens * 2 */ j++) {
+                address token =
+                    j < totalNbTokens ? address(assets[j]) : address(aTokensNonRebasing[j]);
 
-        uint256[] memory modesFl = new uint256[](1);
-        modesFl[0] = 0;
+                string memory tmpSymbol = ERC20(token).symbol();
+                string memory tmpName = ERC20(token).name();
 
-        bytes memory params = new bytes(0);
+                address interestStrategy = address(minipoolDefaultRateStrategies);
 
-        ILendingPool.FlashLoanParams memory flp = ILendingPool.FlashLoanParams({
-            receiverAddress: address(user),
-            assets: assetsFl,
-            reserveTypes: reserveTypesFl,
-            onBehalfOf: address(user)
-        });
+                initInputParams[j] = IMiniPoolConfigurator.InitReserveInput({
+                    underlyingAssetDecimals: ERC20(token).decimals(),
+                    interestRateStrategyAddress: interestStrategy,
+                    underlyingAsset: token,
+                    underlyingAssetName: tmpName,
+                    underlyingAssetSymbol: tmpSymbol
+                });
+            }
+            miniPoolConfigurator.batchInitReserve(initInputParams, IMiniPool(address(_miniPool)));
 
-        user.execFl(flp, amountsFl, modesFl, params);
-
-        AToken aToken = aTokens[0];
-
-        emit LogUint256("aToken._farmingBal()", aToken._farmingBal());
-        emit LogUint256("aToken._underlyingAmount()", aToken._underlyingAmount());
-        emit LogUint256("aToken._farmingPct()", aToken._farmingPct());
-        emit LogUint256("aToken._farmingPctDrift()", aToken._farmingPctDrift());
-        emit LogUint256(
-            "aToken._underlyingAmount() * aToken._farmingPct() / 10000",
-            aToken._underlyingAmount() * aToken._farmingPct() / 10000
-        );
-
-        assertEqApproxPct(
-            aToken._farmingBal(),
-            aToken._underlyingAmount() * aToken._farmingPct() / BPS,
-            aToken._farmingPctDrift() * 11000 / BPS, // +10% margin
-            "228"
-        );
-
-        assert(false);
+            // for (uint256 j = 0; j < totalNbTokens * 2; j++) {
+            //     miniPoolConfigurator.configureReserveAsCollateral(
+            //         tokenToPrepare, DEFAULT_BASE_LTV, DEFAULT_LIQUIDATION_THRESHOLD, DEFAULT_LIQUIDATION_BONUS, IMiniPool(address(_miniPool))
+            //     );
+            //     miniPoolConfigurator.activateReserve(tokenToPrepare, IMiniPool(_miniPool));
+            //     miniPoolConfigurator.enableBorrowingOnReserve(tokenToPrepare, IMiniPool(_miniPool));
+            //     miniPoolConfigurator.setCod3xReserveFactor(address(assets[0]), 10000, IMiniPool(_miniPool));
+            //     miniPoolConfigurator.setDepositCap(address(assets[0]), 10000, IMiniPool(address(_miniPool)));
+            //    miniPoolConfigurator.setMinipoolOwnerTreasuryToMiniPool(address(this), IMiniPool(address(_miniPool)));
+            //    miniPoolConfigurator.setMinipoolOwnerReserveFactor(address(assets[0]), 10000, IMiniPool(address(_miniPool)));
+            // }
+            assert(false);
+        }
     }
 }

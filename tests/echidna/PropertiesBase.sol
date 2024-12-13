@@ -92,6 +92,13 @@ import {MiniPool} from "contracts/protocol/core/minipool/MiniPool.sol";
 import {MiniPoolConfigurator} from "contracts/protocol/core/minipool/MiniPoolConfigurator.sol";
 import {MiniPoolStorage} from "contracts/protocol/core/minipool/MiniPoolStorage.sol";
 
+import {MiniPoolDefaultReserveInterestRateStrategy} from
+    "contracts/protocol/core/interestRateStrategies/minipool/MiniPoolDefaultReserveInterestRate.sol";
+import {MiniPoolPiReserveInterestRateStrategy} from
+    "contracts/protocol/core/interestRateStrategies/minipool/MiniPoolPiReserveInterestRateStrategy.sol";
+import {MiniPoolAddressesProvider} from
+    "contracts/protocol/configuration/MiniPoolAddressProvider.sol";
+
 import {MiniPoolBorrowLogic} from "contracts/protocol/core/minipool/logic/MiniPoolBorrowLogic.sol";
 import {MiniPoolDepositLogic} from "contracts/protocol/core/minipool/logic/MiniPoolDepositLogic.sol";
 import {MiniPoolFlashLoanLogic} from
@@ -118,6 +125,7 @@ contract PropertiesBase is PropertiesAsserts, MarketParams {
     // config -----------
     uint256 internal totalNbUsers = 4; // max 255
     uint256 internal totalNbTokens = 8; // max 8
+    uint256 internal totalNbMinipool = 10;
     uint256 internal initialMint = 100 ether;
     bool internal bootstrapLiquidity = true;
     uint256 internal volatility = 100; // 1%
@@ -125,8 +133,6 @@ contract PropertiesBase is PropertiesAsserts, MarketParams {
 
     User internal bootstraper;
     User[] internal users;
-    DefaultReserveInterestRateStrategy /*[]*/ internal defaultRateStrategies;
-    PiReserveInterestRateStrategy[] internal piRateStrategies;
 
     mapping(address => uint256) internal lastLiquidityIndex;
     mapping(address => uint256) internal lastVariableBorrowIndex;
@@ -141,24 +147,41 @@ contract PropertiesBase is PropertiesAsserts, MarketParams {
     uint256[] internal timeouts;
     MockVaultUnit[] internal mockedVaults;
 
-    // Cod3x Lend contracts
-    LendingPoolAddressesProvider internal provider;
-    MockLendingPool internal pool;
+    /// Cod3x Lend contracts
+    Oracle internal oracle;
+    Cod3xLendDataProvider internal cod3xLendDataProvider;
     address internal treasury;
+    address internal cod3xTreasury;
+
+    // LendingPool
+    LendingPoolAddressesProvider internal lendingPoolProvider;
+    MockLendingPool internal pool;
     address internal profitHandler;
     LendingPoolConfigurator internal poolConfigurator;
     ATokensAndRatesHelper internal aHelper;
     AToken internal aToken;
     VariableDebtToken internal vToken;
-    Oracle internal oracle;
-    Cod3xLendDataProvider internal cod3xLendDataProvider;
+    DefaultReserveInterestRateStrategy /*[]*/ internal defaultRateStrategies;
+    PiReserveInterestRateStrategy[] internal piRateStrategies;
+
+    // MiniPool
+    MiniPoolAddressesProvider internal miniPoolProvider;
+    MiniPoolConfigurator internal miniPoolConfigurator;
+    FlowLimiter internal flowLimiter;
+    address internal minipoolImpl;
+    address internal aToken6909Impl;
+    MiniPool[] internal miniPool;
+    uint256[] internal miniPoolId;
+    ATokenERC6909[] internal aToken6909;
+    MiniPoolDefaultReserveInterestRateStrategy /*[]*/ internal minipoolDefaultRateStrategies;
+    MiniPoolPiReserveInterestRateStrategy[] internal minipoolPiRateStrategies;
 
     constructor() {
         /// mocks
         uint8 tokenDec = 18;
         for (uint256 i = 0; i < totalNbTokens; i++) {
             uint8 tokenDecTemp = (i % 2 == 0) ? uint8(tokenDec - i) : uint8(tokenDec + i); // various dec [18, 19, 17, 20, 16, 21, 15, 22, 14 ...]
-            MintableERC20 t = new MintableERC20("", "", tokenDecTemp);
+            MintableERC20 t = new MintableERC20("TKN", "TKN", tokenDecTemp);
             assets.push(t);
             MockAggregator a = new MockAggregator(1e18, int256(uint256(tokenDecTemp)));
             aggregators.push(a);
@@ -166,24 +189,25 @@ contract PropertiesBase is PropertiesAsserts, MarketParams {
         }
 
         /// setup LendingPool
-        provider = new LendingPoolAddressesProvider();
-        provider.setPoolAdmin(address(this));
-        provider.setEmergencyAdmin(address(this));
+        lendingPoolProvider = new LendingPoolAddressesProvider();
+        lendingPoolProvider.setPoolAdmin(address(this));
+        lendingPoolProvider.setEmergencyAdmin(address(this));
         treasury = address(0xAAAA);
-        profitHandler = address(0xBBBB);
+        cod3xTreasury = address(0xBBBB);
+        profitHandler = address(0xCCCC);
 
         pool = new MockLendingPool();
-        pool.initialize(provider);
-        provider.setLendingPoolImpl(address(pool));
-        pool = MockLendingPool(provider.getLendingPool());
+        pool.initialize(lendingPoolProvider);
+        lendingPoolProvider.setLendingPoolImpl(address(pool));
+        pool = MockLendingPool(lendingPoolProvider.getLendingPool());
 
         poolConfigurator = new LendingPoolConfigurator();
-        provider.setLendingPoolConfiguratorImpl(address(poolConfigurator));
-        poolConfigurator = LendingPoolConfigurator(provider.getLendingPoolConfigurator());
+        lendingPoolProvider.setLendingPoolConfiguratorImpl(address(poolConfigurator));
+        poolConfigurator = LendingPoolConfigurator(lendingPoolProvider.getLendingPoolConfigurator());
         poolConfigurator.setPoolPause(true);
 
         aHelper = new ATokensAndRatesHelper(
-            payable(address(pool)), address(provider), address(poolConfigurator)
+            payable(address(pool)), address(lendingPoolProvider), address(poolConfigurator)
         );
         aToken = new AToken();
         vToken = new VariableDebtToken();
@@ -196,13 +220,13 @@ contract PropertiesBase is PropertiesAsserts, MarketParams {
             BASE_CURRENCY_UNIT
         );
 
-        provider.setPriceOracle(address(oracle));
+        lendingPoolProvider.setPriceOracle(address(oracle));
 
         cod3xLendDataProvider = new Cod3xLendDataProvider();
-        cod3xLendDataProvider.setLendingPoolAddressProvider(address(provider));
+        cod3xLendDataProvider.setLendingPoolAddressProvider(address(lendingPoolProvider));
 
         defaultRateStrategies = new DefaultReserveInterestRateStrategy(
-            provider,
+            lendingPoolProvider,
             DEFAULT_OPTI_UTILIZATION_RATE,
             DEFAULT_BASE_VARIABLE_BORROW_RATE,
             DEFAULT_VARIABLE_RATE_SLOPE1,
@@ -212,7 +236,7 @@ contract PropertiesBase is PropertiesAsserts, MarketParams {
         for (uint256 i = 0; i < totalNbTokens; i++) {
             piRateStrategies.push(
                 new PiReserveInterestRateStrategy(
-                    address(provider),
+                    address(lendingPoolProvider),
                     address(assets[i]),
                     true,
                     DEFAULT_MIN_CONTROLLER_ERROR,
@@ -238,12 +262,12 @@ contract PropertiesBase is PropertiesAsserts, MarketParams {
                 underlyingAsset: address(assets[i]),
                 treasury: address(treasury),
                 incentivesController: address(0),
-                underlyingAssetName: "",
+                underlyingAssetName: "TKN",
                 reserveType: true, // By default, all assets are potentially rehypothecable but we don't necesserly activate it.
-                aTokenName: "",
-                aTokenSymbol: "",
-                variableDebtTokenName: "",
-                variableDebtTokenSymbol: "",
+                aTokenName: "TKN",
+                aTokenSymbol: "TKN",
+                variableDebtTokenName: "TKN",
+                variableDebtTokenSymbol: "TKN",
                 params: new bytes(0x10)
             });
             initInputParams[i] = ri;
@@ -265,9 +289,9 @@ contract PropertiesBase is PropertiesAsserts, MarketParams {
             });
             configureReserveInput[i] = cri;
         }
-        provider.setPoolAdmin(address(aHelper));
+        lendingPoolProvider.setPoolAdmin(address(aHelper));
         aHelper.configureReserves(configureReserveInput);
-        provider.setPoolAdmin(address(this));
+        lendingPoolProvider.setPoolAdmin(address(this));
 
         for (uint256 i = 0; i < totalNbTokens; i++) {
             (address aTokenAddress, address variableDebtTokenAddress) =
@@ -287,15 +311,104 @@ contract PropertiesBase is PropertiesAsserts, MarketParams {
             }
         }
 
-        // /// Setup Minipool
-        // provider.setFlowLimiter(address(0));
-        // provider.setMiniPoolAddressesProvider(address(0));
-        // cod3xLendDataProvider.setMiniPoolAddressProvider(address(0));
+        /// Setup Minipool
+        miniPoolProvider = new MiniPoolAddressesProvider(
+            ILendingPoolAddressesProvider(address(lendingPoolProvider))
+        );
+
+        miniPoolProvider.setMiniPoolConfigurator(address(new MiniPoolConfigurator()));
+        miniPoolConfigurator = MiniPoolConfigurator(miniPoolProvider.getMiniPoolConfigurator());
+        miniPoolConfigurator.setCod3xTreasury(cod3xTreasury);
+
+        lendingPoolProvider.setMiniPoolAddressesProvider(address(miniPoolProvider));
+
+        flowLimiter = new FlowLimiter(
+            IMiniPoolAddressesProvider(address(miniPoolProvider)), ILendingPool(address(pool))
+        );
+        lendingPoolProvider.setFlowLimiter(address(flowLimiter));
+        cod3xLendDataProvider.setMiniPoolAddressProvider(address(miniPoolProvider));
+
+        minipoolDefaultRateStrategies = new MiniPoolDefaultReserveInterestRateStrategy(
+            IMiniPoolAddressesProvider(address(miniPoolProvider)),
+            DEFAULT_OPTI_UTILIZATION_RATE,
+            DEFAULT_BASE_VARIABLE_BORROW_RATE,
+            DEFAULT_VARIABLE_RATE_SLOPE1,
+            DEFAULT_VARIABLE_RATE_SLOPE2
+        );
+        // TODO: add minipoolPiRateStrategies
+
+        minipoolImpl = address(new MiniPool());
+        aToken6909Impl = address(new ATokenERC6909());
+        for (uint256 i = 0; i < totalNbMinipool; i++) {
+            uint256 _minipoolId =
+                miniPoolProvider.deployMiniPool(minipoolImpl, aToken6909Impl, address(this));
+            ATokenERC6909 _aToken6909 = ATokenERC6909(miniPoolProvider.getAToken6909(_minipoolId));
+            MiniPool _miniPool = MiniPool(miniPoolProvider.getMiniPool(_minipoolId));
+
+            miniPoolId.push(_minipoolId);
+            aToken6909.push(_aToken6909);
+            miniPool.push(_miniPool);
+
+            uint256 lenNbToken = totalNbTokens * 2; // classic assets + lendingpool aTokens
+            IMiniPoolConfigurator.InitReserveInput[] memory initInputParams =
+                new IMiniPoolConfigurator.InitReserveInput[](lenNbToken);
+
+            for (uint256 j = 0; j < lenNbToken; j++) {
+                address token = j < totalNbTokens
+                    ? address(assets[j])
+                    : address(aTokensNonRebasing[j - totalNbTokens]);
+
+                string memory tmpSymbol = ERC20(token).symbol();
+                string memory tmpName = ERC20(token).name();
+
+                address interestStrategy = address(minipoolDefaultRateStrategies);
+
+                initInputParams[j] = IMiniPoolConfigurator.InitReserveInput({
+                    underlyingAssetDecimals: ERC20(token).decimals(),
+                    interestRateStrategyAddress: interestStrategy,
+                    underlyingAsset: token,
+                    underlyingAssetName: tmpName,
+                    underlyingAssetSymbol: tmpSymbol
+                });
+            }
+            miniPoolConfigurator.batchInitReserve(initInputParams, IMiniPool(address(_miniPool)));
+
+            for (uint256 j = 0; j < lenNbToken; j++) {
+                address token = j < totalNbTokens
+                    ? address(assets[j])
+                    : address(aTokensNonRebasing[j - totalNbTokens]);
+
+                miniPoolConfigurator.configureReserveAsCollateral(
+                    token,
+                    DEFAULT_BASE_LTV,
+                    DEFAULT_LIQUIDATION_THRESHOLD,
+                    DEFAULT_LIQUIDATION_BONUS,
+                    IMiniPool(address(_miniPool))
+                );
+                miniPoolConfigurator.activateReserve(token, IMiniPool(_miniPool));
+                miniPoolConfigurator.enableBorrowingOnReserve(token, IMiniPool(_miniPool));
+                miniPoolConfigurator.setCod3xReserveFactor(
+                    token, DEFAULT_RESERVE_FACTOR, IMiniPool(address(_miniPool))
+                );
+                // TODO: set deposit cap
+                // miniPoolConfigurator.setDepositCap(
+                //     token, 10000, IMiniPool(address(_miniPool))
+                // );
+                miniPoolConfigurator.setMinipoolOwnerTreasuryToMiniPool(
+                    address(this), IMiniPool(address(_miniPool))
+                );
+                miniPoolConfigurator.setMinipoolOwnerReserveFactor(
+                    token, DEFAULT_RESERVE_FACTOR, IMiniPool(address(_miniPool))
+                );
+            }
+        }
 
         /// bootstrap liquidity
         if (bootstrapLiquidity) {
-            bootstraper = new User(provider);
+            bootstraper = new User(lendingPoolProvider);
             for (uint256 j = 0; j < totalNbTokens; j++) {
+
+                // LendingPool
                 assets[j].mint(address(bootstraper), initialMint);
                 bootstraper.approveERC20(assets[j], address(pool));
                 (bool success,) = bootstraper.proxy(
@@ -309,6 +422,23 @@ contract PropertiesBase is PropertiesAsserts, MarketParams {
                     )
                 );
                 assert(success);
+
+                // Minipools
+                for (uint256 k = 0; k < totalNbMinipool; k++) {
+                    assets[j].mint(address(bootstraper), initialMint);
+                    bootstraper.approveERC20(assets[j], address(miniPool[k]));
+                    (bool success,) = bootstraper.proxy(
+                        address(miniPool[k]),
+                        abi.encodeWithSelector(
+                            pool.deposit.selector,
+                            address(assets[j]),
+                            false,
+                            initialMint,
+                            address(bootstraper)
+                        )
+                    );
+                    assert(success);
+                }
             }
         }
 
@@ -322,7 +452,7 @@ contract PropertiesBase is PropertiesAsserts, MarketParams {
 
         /// setup users
         for (uint256 i = 0; i < totalNbUsers; i++) {
-            User user = new User(provider);
+            User user = new User(lendingPoolProvider);
             users.push(user);
             for (uint256 j = 0; j < totalNbTokens; j++) {
                 assets[j].mint(address(user), initialMint);

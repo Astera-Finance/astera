@@ -29,6 +29,7 @@ You can fine in `/echidna` 3 config files to run the fuzzer:
 - Fix randBorrow "207", "220", "221".
 - Add Medusa support
 - Add rewarders.
+- test setDepositCap
 
 # Invariant testing
 
