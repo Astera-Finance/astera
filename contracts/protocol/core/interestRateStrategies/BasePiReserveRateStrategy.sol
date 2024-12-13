@@ -310,7 +310,7 @@ abstract contract BasePiReserveRateStrategy is Ownable {
 
     /**
      * @notice Transfer Function for calculation of currentVariableBorrowRate.
-     * @dev See https://www.desmos.com/calculator/dj5puy23wz for the mathematical model.
+     * @dev See https://www.desmos.com/calculator/d9baparlv3 for the mathematical model.
      * @param controllerError The controller error input.
      * @return The calculated variable borrow rate.
      */
