@@ -25,9 +25,8 @@ You can fine in `/echidna` 3 config files to run the fuzzer:
 
 - Add minipools.
 - Randomly activation flow borrowing on minipools
-- ATokenNonRebasing test
 - Implemente all "To implement" invariants.
-- Fix randBorrow "207".
+- Fix randBorrow "207", "220", "221".
 - Add Medusa support
 - Add rewarders.
 
@@ -63,8 +62,8 @@ You can fine in `/echidna` 3 config files to run the fuzzer:
 217. ✅ The `liquidityIndex` should monotonically increase when there's total debt.
 218. ✅ The `variableBorrowIndex` should monotonically increase when there's total debt.
 219. ✅ A user with debt should have at least an aToken balance `setUsingAsCollateral`.
-220. ✅ If all debt is repaid, all `aToken` holders should be able to claim their collateral.
-221. ✅ If all users withdraw their liquidity, there must not be aTokens supply left.
+220. ❌ If all debt is repaid, all `aToken` holders should be able to claim their collateral.
+221. ❌ If all users withdraw their liquidity, there must not be aTokens supply left.
 222. 🚧 Integrity of Supply Cap - aToken supply shall never exceed the cap.
 223. 🚧 `UserConfigurationMap` integrity: If a user has a given aToken then `isUsingAsCollateralOrBorrowing` and `isUsingAsCollateral` should return true.
 224. 🚧 `UserConfigurationMap` integrity: If a user has a given debtToken then `isUsingAsCollateralOrBorrowing`, `isBorrowing` and `isBorrowingAny` should return true.

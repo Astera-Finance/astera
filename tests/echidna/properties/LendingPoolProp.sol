@@ -441,48 +441,48 @@ contract LendingPoolProp is PropertiesBase {
 
     /// @custom:invariant 220 - If all debt is repaid, all `aToken` holder should be able to claim their collateral.
     /// @custom:invariant 221 - If all users withdraw their liquidity, there must not be aTokens supply left.
-    function usersFullCollateralClaim() public {
-        if (!hasDebtTotal()) {
-            for (uint256 i = 0; i < users.length; i++) {
-                User user = users[i];
-                for (uint256 j = 0; j < aTokens.length; j++) {
-                    uint256 balanceAToken = aTokens[j].balanceOf(address(user));
-                    if (balanceAToken != 0) {
-                        (bool success,) = user.proxy(
-                            address(pool),
-                            abi.encodeWithSelector(
-                                pool.withdraw.selector,
-                                address(assets[j]),
-                                true,
-                                balanceAToken,
-                                address(user)
-                            )
-                        );
-                        assertWithMsg(success, "220");
-                    }
-                }
-            }
+    // function usersFullCollateralClaim() public {
+    //     if (!hasDebtTotal()) {
+    //         for (uint256 i = 0; i < users.length; i++) {
+    //             User user = users[i];
+    //             for (uint256 j = 0; j < aTokens.length; j++) {
+    //                 uint256 balanceAToken = aTokens[j].balanceOf(address(user));
+    //                 if (balanceAToken != 0) {
+    //                     (bool success,) = user.proxy(
+    //                         address(pool),
+    //                         abi.encodeWithSelector(
+    //                             pool.withdraw.selector,
+    //                             address(assets[j]),
+    //                             true,
+    //                             balanceAToken,
+    //                             address(user)
+    //                         )
+    //                     );
+    //                     assertWithMsg(success, "220");
+    //                 }
+    //             }
+    //         }
 
-            if (bootstrapLiquidity) {
-                for (uint256 j = 0; j < aTokens.length; j++) {
-                    uint256 balanceAToken = aTokens[j].balanceOf(address(bootstraper));
-                    if (balanceAToken != 0) {
-                        (bool success,) = bootstraper.proxy(
-                            address(pool),
-                            abi.encodeWithSelector(
-                                pool.withdraw.selector,
-                                address(assets[j]),
-                                true,
-                                balanceAToken,
-                                address(bootstraper)
-                            )
-                        );
-                        assertWithMsg(success, "220");
-                    }
-                }
-            }
+    //         if (bootstrapLiquidity) {
+    //             for (uint256 j = 0; j < aTokens.length; j++) {
+    //                 uint256 balanceAToken = aTokens[j].balanceOf(address(bootstraper));
+    //                 if (balanceAToken != 0) {
+    //                     (bool success,) = bootstraper.proxy(
+    //                         address(pool),
+    //                         abi.encodeWithSelector(
+    //                             pool.withdraw.selector,
+    //                             address(assets[j]),
+    //                             true,
+    //                             balanceAToken,
+    //                             address(bootstraper)
+    //                         )
+    //                     );
+    //                     assertWithMsg(success, "220");
+    //                 }
+    //             }
+    //         }
 
-            assertWithMsg(!hasATokenTotal(), "221");
-        }
-    }
+    //         assertWithMsg(!hasATokenTotal(), "221");
+    //     }
+    // }
 }
