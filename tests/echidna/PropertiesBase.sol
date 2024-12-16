@@ -87,6 +87,7 @@ import {MockStrategy} from "contracts/mocks/tokens/MockStrategy.sol";
 import {MockVaultUnit} from "contracts/mocks/tokens/MockVaultUnit.sol";
 
 /// MiniPool
+import {MockMiniPool} from "./mock/MockMiniPool.sol";
 import {FlowLimiter} from "contracts/protocol/core/minipool/FlowLimiter.sol";
 import {MiniPool} from "contracts/protocol/core/minipool/MiniPool.sol";
 import {MiniPoolConfigurator} from "contracts/protocol/core/minipool/MiniPoolConfigurator.sol";
@@ -125,7 +126,7 @@ contract PropertiesBase is PropertiesAsserts, MarketParams {
     // config -----------
     uint256 internal totalNbUsers = 4; // max 255
     uint256 internal totalNbTokens = 8; // max 8
-    uint256 internal totalNbMinipool = 10;
+    uint256 internal totalNbMinipool = 1;
     uint256 internal initialMint = 100 ether;
     bool internal bootstrapLiquidity = true;
     uint256 internal volatility = 100; // 1%
@@ -170,9 +171,9 @@ contract PropertiesBase is PropertiesAsserts, MarketParams {
     FlowLimiter internal flowLimiter;
     address internal minipoolImpl;
     address internal aToken6909Impl;
-    MiniPool[] internal miniPool;
-    uint256[] internal miniPoolId;
-    ATokenERC6909[] internal aToken6909;
+    MockMiniPool[] internal miniPools;
+    uint256[] internal miniPoolIds;
+    ATokenERC6909[] internal aTokens6909;
     MiniPoolDefaultReserveInterestRateStrategy /*[]*/ internal minipoolDefaultRateStrategies;
     MiniPoolPiReserveInterestRateStrategy[] internal minipoolPiRateStrategies;
 
@@ -307,7 +308,12 @@ contract PropertiesBase is PropertiesAsserts, MarketParams {
         for (uint256 i = 0; i < totalNbTokens; i++) {
             mockedVaults.push(new MockVaultUnit(IERC20(address(assets[i]))));
             if (i % 2 == 0) {
-                turnOnRehypothecation(address(aTokens[i]), address(mockedVaults[i]));
+                address _aToken = address(aTokens[i]);
+                poolConfigurator.setVault(_aToken, address(mockedVaults[i]));
+                poolConfigurator.setFarmingPct(_aToken, DEFAULT_FARMING_PCT);
+                poolConfigurator.setClaimingThreshold(_aToken, DEFAULT_CLAIMING_THRESHOLD);
+                poolConfigurator.setFarmingPctDrift(_aToken, DEFAULT_FARMING_PCT_DRIFT);
+                poolConfigurator.setProfitHandler(_aToken, profitHandler);
             }
         }
 
@@ -337,17 +343,17 @@ contract PropertiesBase is PropertiesAsserts, MarketParams {
         );
         // TODO: add minipoolPiRateStrategies
 
-        minipoolImpl = address(new MiniPool());
+        minipoolImpl = address(new MockMiniPool());
         aToken6909Impl = address(new ATokenERC6909());
         for (uint256 i = 0; i < totalNbMinipool; i++) {
             uint256 _minipoolId =
                 miniPoolProvider.deployMiniPool(minipoolImpl, aToken6909Impl, address(this));
             ATokenERC6909 _aToken6909 = ATokenERC6909(miniPoolProvider.getAToken6909(_minipoolId));
-            MiniPool _miniPool = MiniPool(miniPoolProvider.getMiniPool(_minipoolId));
+            MockMiniPool _miniPool = MockMiniPool(miniPoolProvider.getMiniPool(_minipoolId));
 
-            miniPoolId.push(_minipoolId);
-            aToken6909.push(_aToken6909);
-            miniPool.push(_miniPool);
+            miniPoolIds.push(_minipoolId);
+            aTokens6909.push(_aToken6909);
+            miniPools.push(_miniPool);
 
             uint256 lenNbToken = totalNbTokens * 2; // classic assets + lendingpool aTokens
             IMiniPoolConfigurator.InitReserveInput[] memory initInputParams =
@@ -407,7 +413,6 @@ contract PropertiesBase is PropertiesAsserts, MarketParams {
         if (bootstrapLiquidity) {
             bootstraper = new User(lendingPoolProvider);
             for (uint256 j = 0; j < totalNbTokens; j++) {
-
                 // LendingPool
                 assets[j].mint(address(bootstraper), initialMint);
                 bootstraper.approveERC20(assets[j], address(pool));
@@ -426,9 +431,9 @@ contract PropertiesBase is PropertiesAsserts, MarketParams {
                 // Minipools
                 for (uint256 k = 0; k < totalNbMinipool; k++) {
                     assets[j].mint(address(bootstraper), initialMint);
-                    bootstraper.approveERC20(assets[j], address(miniPool[k]));
-                    (bool success,) = bootstraper.proxy(
-                        address(miniPool[k]),
+                    bootstraper.approveERC20(assets[j], address(miniPools[k]));
+                    (success,) = bootstraper.proxy(
+                        address(miniPools[k]),
                         abi.encodeWithSelector(
                             pool.deposit.selector,
                             address(assets[j]),
@@ -457,6 +462,9 @@ contract PropertiesBase is PropertiesAsserts, MarketParams {
             for (uint256 j = 0; j < totalNbTokens; j++) {
                 assets[j].mint(address(user), initialMint);
                 user.approveERC20(assets[j], address(pool));
+                for (uint256 k = 0; k < totalNbMinipool; k++) {
+                    user.approveERC20(assets[j], address(miniPools[k]));
+                }
             }
         }
 
@@ -484,7 +492,7 @@ contract PropertiesBase is PropertiesAsserts, MarketParams {
         bool randReceiveAToken;
     }
 
-    function randUpdatePriceAndTryLiquidate(LocalVars_UPTL memory v) internal {
+    function randUpdatePriceAndTryLiquidateLP(LocalVars_UPTL memory v) internal {
         uint8[] memory seedAmt = new uint8[](8);
         seedAmt[0] = v.seedAmtPrice1;
         seedAmt[1] = v.seedAmtPrice2;
@@ -496,7 +504,24 @@ contract PropertiesBase is PropertiesAsserts, MarketParams {
         seedAmt[7] = v.seedAmtPrice8;
 
         oraclePriceUpdate(seedAmt);
-        tryLiquidate(
+        tryLiquidateLP(
+            v.seedLiquidator, v.seedColl, v.seedDebtToken, v.seedAmtLiq, v.randReceiveAToken
+        );
+    }
+
+    function randUpdatePriceAndTryLiquidateMP(LocalVars_UPTL memory v) internal {
+        uint8[] memory seedAmt = new uint8[](8);
+        seedAmt[0] = v.seedAmtPrice1;
+        seedAmt[1] = v.seedAmtPrice2;
+        seedAmt[2] = v.seedAmtPrice3;
+        seedAmt[3] = v.seedAmtPrice4;
+        seedAmt[4] = v.seedAmtPrice5;
+        seedAmt[5] = v.seedAmtPrice6;
+        seedAmt[6] = v.seedAmtPrice7;
+        seedAmt[7] = v.seedAmtPrice8;
+
+        oraclePriceUpdate(seedAmt);
+        tryLiquidateMP(
             v.seedLiquidator, v.seedColl, v.seedDebtToken, v.seedAmtLiq, v.randReceiveAToken
         );
     }
@@ -526,11 +551,15 @@ contract PropertiesBase is PropertiesAsserts, MarketParams {
         uint256 liquidatorATokenCollBefore;
         uint256 liquidatorATokenCollAfter;
         AToken[] userAToken;
+        uint256[] userAToken6909Ids;
         ERC20[] userCollAssets;
         VariableDebtToken[] userDebtToken;
+        uint256[] userDebtToken6909Ids;
         ERC20[] userDebtAssets;
         uint256 lenATokenUser;
         uint256 lenDebtTokenUser;
+        uint256 aTokenID;
+        uint256 debtTokenID;
     }
 
     /// @custom:invariant 100 - To be liquidated on a given collateral asset, the target user must own the associated `aTokenColl`.
@@ -539,7 +568,7 @@ contract PropertiesBase is PropertiesAsserts, MarketParams {
     /// @custom:invariant 103 - `liquidationCall()` must decrease the target `vTokenDebt` balance by `amount`.
     /// @custom:invariant 104 - `liquidationCall()` must increase the liquidator `aTokenColl` (or `collAsset`) balance.
     /// @custom:invariant 105 - `liquidationCall()` must decrease the liquidator debt asset balance if `randReceiveAToken == true` or `collAsset != debtAsset`.
-    function tryLiquidate(
+    function tryLiquidateLP(
         uint8 seedLiquidator,
         uint8 seedColl,
         uint8 seedDebtToken,
@@ -621,6 +650,104 @@ contract PropertiesBase is PropertiesAsserts, MarketParams {
         }
     }
 
+    /// @custom:invariant 100 - To be liquidated on a given collateral asset, the target user must own the associated `aTokenColl`.
+    /// @custom:invariant 101 - To be liquidated on a given token, the target user must own the associated `vTokenDebt`.
+    /// @custom:invariant 102 - `liquidationCall()` must only be callable when the target health factor is < 1.
+    /// @custom:invariant 103 - `liquidationCall()` must decrease the target `vTokenDebt` balance by `amount`.
+    /// @custom:invariant 104 - `liquidationCall()` must increase the liquidator `aTokenColl` (or `collAsset`) balance.
+    /// @custom:invariant 105 - `liquidationCall()` must decrease the liquidator debt asset balance if `randReceiveAToken == true` or `collAsset != debtAsset`.
+    function tryLiquidateMP(
+        uint8 seedLiquidator,
+        uint8 seedColl,
+        uint8 seedDebtToken,
+        uint128 seedAmt,
+        bool randReceiveAToken
+    ) internal {
+        for (uint256 k = 0; k < miniPools.length; k++) {
+            MiniPool pool_ = miniPools[k];
+            ATokenERC6909 aToken6909 = aTokens6909[k];
+
+            for (uint256 i = 0; i < users.length; i++) {
+                LocalVars_TryLiquidate memory v;
+
+                v.target = users[i];
+                (,,,,, v.targetHealthFactorBefore) = pool_.getUserAccountData(address(v.target));
+                if (v.targetHealthFactorBefore < 1e18) {
+                    (v.userAToken6909Ids, v.userCollAssets, v.lenATokenUser) =
+                        getAllATokens6909Ids(v.target, k);
+                    (v.userDebtToken6909Ids, v.userDebtAssets, v.lenDebtTokenUser) =
+                        getAllDebtTokens6909Ids(v.target, k);
+
+                    v.randColl = clampBetween(seedColl, 0, v.lenATokenUser);
+                    v.randDebtToken = clampBetween(seedDebtToken, 0, v.lenDebtTokenUser);
+                    v.randLiquidator = clampBetween(seedLiquidator, 0, totalNbUsers);
+
+                    v.liquidator = users[v.randLiquidator];
+                    v.collAsset = v.userCollAssets[v.randColl];
+                    v.aTokenID = v.userAToken6909Ids[v.randColl];
+                    v.debtAsset = v.userDebtAssets[v.randDebtToken];
+                    v.debtTokenID = v.userDebtToken6909Ids[v.randDebtToken];
+                    v.targetATokenCollBalanceBefore =
+                        aToken6909.balanceOf(address(v.target), v.aTokenID);
+                    v.targetVTokenDebtBalanceBefore =
+                        aToken6909.balanceOf(address(v.target), v.debtTokenID);
+
+                    v.liquidatorCollAssetBefore = v.collAsset.balanceOf(address(v.liquidator));
+                    v.liquidatorATokenCollBefore =
+                        aToken6909.balanceOf(address(v.liquidator), v.aTokenID);
+                    v.liquidatorDebtAssetBefore = v.debtAsset.balanceOf(address(v.liquidator));
+
+                    v.randAmt = clampBetween(seedAmt, 0, v.targetVTokenDebtBalanceBefore);
+                    // ---
+
+                    (bool success,) = v.liquidator.proxy(
+                        address(pool_),
+                        abi.encodeWithSelector(
+                            pool_.liquidationCall.selector,
+                            address(v.collAsset),
+                            address(v.debtAsset),
+                            address(v.target),
+                            v.randAmt,
+                            randReceiveAToken
+                        )
+                    );
+
+                    if (v.targetATokenCollBalanceBefore == 0) {
+                        assertWithMsg(!success, "100");
+                    }
+
+                    if (v.targetVTokenDebtBalanceBefore == 0) {
+                        assertWithMsg(!success, "101");
+                    }
+
+                    if (v.targetHealthFactorBefore >= 1e18) {
+                        assertWithMsg(!success, "102");
+                    }
+
+                    require(success);
+
+                    v.targetVTokenDebtBalanceAfter =
+                        aToken6909.balanceOf(address(v.target), v.debtTokenID);
+                    assertGt(v.targetVTokenDebtBalanceBefore, v.targetVTokenDebtBalanceAfter, "103");
+
+                    v.liquidatorCollAssetAfter = v.collAsset.balanceOf(address(v.liquidator));
+                    v.liquidatorATokenCollAfter =
+                        aToken6909.balanceOf(address(v.liquidator), v.aTokenID);
+                    if (randReceiveAToken) {
+                        assertGte(v.liquidatorATokenCollAfter, v.liquidatorATokenCollBefore, "104");
+                    } else {
+                        assertGte(v.liquidatorCollAssetAfter, v.liquidatorCollAssetBefore, "104");
+                    }
+
+                    v.liquidatorDebtAssetAfter = v.debtAsset.balanceOf(address(v.liquidator));
+                    if (randReceiveAToken || address(v.collAsset) != address(v.debtAsset)) {
+                        assertGt(v.liquidatorDebtAssetBefore, v.liquidatorDebtAssetAfter, "105");
+                    }
+                }
+            }
+        }
+    }
+
     /// ------- Helpers -------
 
     function oraclePriceUpdate(uint8[] memory seedAmt) internal {
@@ -664,6 +791,22 @@ contract PropertiesBase is PropertiesAsserts, MarketParams {
                 aTokens[i].balanceOf(address(user)) != 0
                     && UserConfiguration.isUsingAsCollateral(
                         pool.getUserConfiguration(address(user)), i
+                    )
+            ) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    function hasATokens6909(User user, uint256 minipoolId) internal view returns (bool) {
+        ATokenERC6909 aToken6909 = aTokens6909[minipoolId];
+        for (uint256 i = 0; i < totalNbTokens * 2; i++) {
+            (uint256 aTokenID,, bool isAToken) = aToken6909.getIdForUnderlying(allTokens(i));
+            if (
+                aToken6909.balanceOf(address(user), aTokenID) != 0
+                    && UserConfiguration.isUsingAsCollateral(
+                        miniPools[minipoolId].getUserConfiguration(address(user)), i
                     )
             ) {
                 return true;
@@ -742,6 +885,39 @@ contract PropertiesBase is PropertiesAsserts, MarketParams {
         }
     }
 
+    function getAllATokens6909Ids(User user, uint256 minipoolId)
+        internal
+        view
+        returns (
+            uint256[] memory userATokensIds,
+            ERC20[] memory userCollAssets,
+            uint256 lenATokenUser
+        )
+    {
+        MiniPool pool_ = miniPools[minipoolId];
+        ATokenERC6909 aToken6909 = aTokens6909[minipoolId]; // Assuming single aToken6909 per minipool
+        uint256 len = totalNbTokens * 2; // assets + aTokens length
+        userATokensIds = new uint256[](len);
+        userCollAssets = new ERC20[](len);
+
+        for (uint256 i = 0; i < len; i++) {
+            address asset = allTokens(i);
+            (uint256 aTokenID,, bool isAToken) = aToken6909.getIdForUnderlying(asset);
+
+            if (
+                aToken6909.balanceOf(address(user), aTokenID) != 0
+                    && UserConfiguration.isUsingAsCollateral(
+                        pool_.getUserConfiguration(address(user)), i % totalNbTokens
+                    )
+            ) {
+                userATokensIds[lenATokenUser] = aTokenID;
+                userCollAssets[lenATokenUser] =
+                    ERC20(isAToken ? IAToken(asset).UNDERLYING_ASSET_ADDRESS() : asset);
+                lenATokenUser++;
+            }
+        }
+    }
+
     function getAllDebtTokens(User user)
         internal
         view
@@ -763,11 +939,43 @@ contract PropertiesBase is PropertiesAsserts, MarketParams {
         }
     }
 
-    function turnOnRehypothecation(address _aToken, address _vaultAddr) internal {
-        poolConfigurator.setVault(_aToken, _vaultAddr);
-        poolConfigurator.setFarmingPct(_aToken, DEFAULT_FARMING_PCT);
-        poolConfigurator.setClaimingThreshold(_aToken, DEFAULT_CLAIMING_THRESHOLD);
-        poolConfigurator.setFarmingPctDrift(_aToken, DEFAULT_FARMING_PCT_DRIFT);
-        poolConfigurator.setProfitHandler(_aToken, profitHandler);
+    function getAllDebtTokens6909Ids(User user, uint256 minipoolId)
+        internal
+        view
+        returns (
+            uint256[] memory userDebtTokensIds,
+            ERC20[] memory userDebtAssets,
+            uint256 lenDebtTokenUser
+        )
+    {
+        ATokenERC6909 aToken6909 = aTokens6909[minipoolId];
+        uint256 len = totalNbTokens * 2;
+        userDebtTokensIds = new uint256[](len);
+        userDebtAssets = new ERC20[](len);
+
+        for (uint256 i = 0; i < len; i++) {
+            address asset = allTokens(i);
+            (, uint256 debtTokenID, bool isAToken) = aToken6909.getIdForUnderlying(asset);
+
+            if (aToken6909.balanceOf(address(user), debtTokenID) != 0) {
+                userDebtTokensIds[lenDebtTokenUser] = debtTokenID;
+                userDebtAssets[lenDebtTokenUser] =
+                    ERC20(isAToken ? IAToken(asset).UNDERLYING_ASSET_ADDRESS() : asset);
+                lenDebtTokenUser++;
+            }
+        }
+    }
+
+    function isAToken(address underlying) internal view returns (bool) {
+        try IAToken(underlying).UNDERLYING_ASSET_ADDRESS() returns (address pool) {
+            return true;
+        } catch {
+            return false;
+        }
+    }
+
+    function allTokens(uint256 j) internal view returns (address ret) {
+        return
+            j < totalNbTokens ? address(assets[j]) : address(aTokensNonRebasing[j - totalNbTokens]);
     }
 }

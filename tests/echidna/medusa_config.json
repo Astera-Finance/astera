@@ -9,7 +9,22 @@
 		"coverageEnabled": true,
 		"targetContracts": ["PropertiesMain"],
 		"targetContractsBalances": [],
-		"predeployedContracts": {},
+		"predeployedContracts": [
+			["0xf01", "BorrowLogic"],
+			["0xf03", "DepositLogic"],
+			["0xf11", "FlashLoanLogic"],
+			["0xf12", "GenericLogic"],
+			["0xf13", "LiquidationLogic"],
+		  
+			["0xa01", "MiniPoolBorrowLogic"],
+			["0xa03", "MiniPoolDepositLogic"],
+			["0xa11", "MiniPoolFlashLoanLogic"],
+			["0xa12", "MiniPoolGenericLogic"],
+			["0xa13", "MiniPoolLiquidationLogic"],
+			["0xa15", "MiniPoolReserveLogic"],
+			["0xa16", "MiniPoolValidationLogic"],
+			["0xa17", "MiniPoolWithdrawLogic"]
+		],
 		"constructorArgs": {},
 		"deployerAddress": "0x30000",
 		"senderAddresses": [

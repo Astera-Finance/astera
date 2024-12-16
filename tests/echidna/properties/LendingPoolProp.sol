@@ -11,14 +11,14 @@ contract LendingPoolProp is PropertiesBase {
     /// @custom:invariant 200 - Users must always be able to deposit in normal condition.
     /// @custom:invariant 201 - `deposit()` must increase the user aToken balance by `amount`.
     /// @custom:invariant 202 - `deposit()` must decrease the user asset balance by `amount`.
-    function randDeposit(
+    function randDepositLP(
         LocalVars_UPTL memory vul,
         uint8 seedUser,
         uint8 seedOnBeHalfOf,
         uint8 seedAsset,
         uint128 seedAmt
     ) public {
-        randUpdatePriceAndTryLiquidate(vul);
+        randUpdatePriceAndTryLiquidateLP(vul);
 
         uint256 randUser = clampBetween(seedUser, 0, totalNbUsers);
         uint256 randOnBehalfOf = clampBetween(seedOnBeHalfOf, 0, totalNbUsers);
@@ -29,7 +29,7 @@ contract LendingPoolProp is PropertiesBase {
         MintableERC20 asset = assets[randAsset];
         AToken aToken = aTokens[randAsset];
 
-        uint256 randAmt = clampBetween(seedAmt, 1, asset.balanceOf(address(user)) / 2);
+        uint256 randAmt = clampBetween(seedAmt, 1, asset.balanceOf(address(user)) / 10);
 
         uint256 aTokenBalanceBefore = aToken.balanceOf(address(onBehalfOf));
         uint256 assetBalanceBefore = asset.balanceOf(address(user));
@@ -52,14 +52,14 @@ contract LendingPoolProp is PropertiesBase {
     /// @custom:invariant 227 - Rehypothecation: if the external rehypothecation vault is liquid, users should always be able to withdraw if all other withdrawal conditions are met.
     /// @custom:invariant 203 - `withdraw()` must decrease the user aToken balance by `amount`.
     /// @custom:invariant 204 - `withdraw()` must increase the user asset balance by `amount`.
-    function randWithdraw(
+    function randWithdrawLP(
         LocalVars_UPTL memory vul,
         uint8 seedUser,
         uint8 seedTo,
         uint8 seedAsset,
         uint128 seedAmt
     ) public {
-        randUpdatePriceAndTryLiquidate(vul);
+        randUpdatePriceAndTryLiquidateLP(vul);
 
         uint256 randUser = clampBetween(seedUser, 0, totalNbUsers);
         uint256 randTo = clampBetween(seedTo, 0, totalNbUsers);
@@ -104,14 +104,14 @@ contract LendingPoolProp is PropertiesBase {
     /// @custom:invariant 207 - `borrow()` must not result in a health factor of less than 1.
     /// @custom:invariant 208 - `borrow()` must increase the user debtToken balance by `amount`.
     /// @custom:invariant 209 - `borrow()` must decrease `borrowAllowance()` by `amount` if `user != onBehalf`.
-    function randBorrow(
+    function randBorrowLP(
         LocalVars_UPTL memory vul,
         uint8 seedUser,
         uint8 seedOnBeHalfOf,
         uint8 seedAsset,
         uint128 seedAmt
     ) public {
-        randUpdatePriceAndTryLiquidate(vul);
+        randUpdatePriceAndTryLiquidateLP(vul);
 
         uint256 randUser = clampBetween(seedUser, 0, totalNbUsers);
         uint256 randOnBehalfOf = clampBetween(seedOnBeHalfOf, 0, totalNbUsers);
@@ -123,7 +123,7 @@ contract LendingPoolProp is PropertiesBase {
         User user = users[randUser];
 
         uint256 randAmt = clampBetween(
-            seedAmt, 1, pool.getUserMaxBorrowCapacity(address(onBehalfOf), address(asset), true)
+            seedAmt, 1, pool.getUserMaxBorrowCapacity(address(onBehalfOf), address(asset))
         );
 
         bool success;
@@ -177,14 +177,14 @@ contract LendingPoolProp is PropertiesBase {
     /// @custom:invariant 210 - `repay()` must decrease the onBehalfOf debtToken balance by `amount`.
     /// @custom:invariant 211 - `repay()` must decrease the user asset balance by `amount`.
     /// @custom:invariant 212 - `healthFactorAfter` must be greater than `healthFactorBefore`.
-    function randRepay(
+    function randRepayLP(
         LocalVars_UPTL memory vul,
         uint8 seedUser,
         uint8 seedOnBeHalfOf,
         uint8 seedAsset,
         uint128 seedAmt
     ) public {
-        randUpdatePriceAndTryLiquidate(vul);
+        randUpdatePriceAndTryLiquidateLP(vul);
 
         uint256 randUser = clampBetween(seedUser, 0, totalNbUsers);
         uint256 randOnBehalfOf = clampBetween(seedOnBeHalfOf, 0, totalNbUsers);
@@ -222,8 +222,8 @@ contract LendingPoolProp is PropertiesBase {
 
     /// @custom:invariant 228 - Rehypothecation: farming percentage must be respected (+/- the drift) after a rebalance occured.
     /// @custom:invariant 229 - Rehypothecation: The profit handler address must see its balance increase after reaching the claiming threshold.
-    function randRehypothecationRebalance(LocalVars_UPTL memory vul, uint8 seedAToken) public {
-        randUpdatePriceAndTryLiquidate(vul);
+    function randRehypothecationRebalanceLP(LocalVars_UPTL memory vul, uint8 seedAToken) public {
+        randUpdatePriceAndTryLiquidateLP(vul);
 
         uint256 randAToken = clampBetween(seedAToken, 0, totalNbTokens);
         AToken aToken = aTokens[randAToken];
@@ -257,13 +257,13 @@ contract LendingPoolProp is PropertiesBase {
     }
 
     /// @custom:invariant 213 - `setUseReserveAsCollateral` must not reduce the health factor below 1.
-    function randSetUseReserveAsCollateral(
+    function randSetUseReserveAsCollateralLP(
         LocalVars_UPTL memory vul,
         uint8 seedUser,
         uint8 seedAsset,
         bool randIsColl
     ) public {
-        randUpdatePriceAndTryLiquidate(vul);
+        randUpdatePriceAndTryLiquidateLP(vul);
 
         uint256 randUser = clampBetween(seedUser, 0, totalNbUsers);
         uint256 randAsset = clampBetween(seedAsset, 0, totalNbTokens);
@@ -310,14 +310,14 @@ contract LendingPoolProp is PropertiesBase {
     }
 
     /// @custom:invariant 214 - Users must not be able to steal funds from flashloans.
-    function randFlashloan(
+    function randFlashloanLP(
         LocalVars_UPTL memory vul,
         uint8 seedUser,
         uint8 seedAsset, /* , uint8 seedMode */
         uint8 seedNbAssetFl,
         uint128 seedAmt
     ) public {
-        randUpdatePriceAndTryLiquidate(vul);
+        randUpdatePriceAndTryLiquidateLP(vul);
 
         LocalVars_RandFlashloan memory v;
 
@@ -370,7 +370,7 @@ contract LendingPoolProp is PropertiesBase {
     // ---------------------- Invariants ----------------------
 
     /// @custom:invariant 228 - Rehypothecation: farming percentage must be respected (+/- the drift) after a rebalance occured.
-    function invariantRehypothecation() public {
+    function invariantRehypothecationLP() public {
         for (uint256 i = 0; i < aTokens.length; i++) {
             AToken aToken = aTokens[i];
             if (aToken._farmingPct() != 0 && address(aToken._vault()) != address(0)) {
@@ -385,7 +385,7 @@ contract LendingPoolProp is PropertiesBase {
     }
 
     /// @custom:invariant 215 - The total value borrowed must always be less than the value of the collaterals.
-    function globalSolvencyCheck() public {
+    function globalSolvencyCheckLP() public {
         uint256 valueColl;
         uint256 valueDebt;
         for (uint256 i = 0; i < aTokens.length; i++) {
@@ -409,7 +409,7 @@ contract LendingPoolProp is PropertiesBase {
 
     /// @custom:invariant 217 - The `liquidityIndex` should monotonically increase when there's total debt.
     /// @custom:invariant 218 - The `variableBorrowIndex` should monotonically increase when there's total debt.
-    function indexIntegrity() public {
+    function indexIntegrityLP() public {
         for (uint256 i = 0; i < assets.length; i++) {
             address asset = address(assets[i]);
 
@@ -430,7 +430,7 @@ contract LendingPoolProp is PropertiesBase {
     }
 
     /// @custom:invariant 219 - A user with debt should have at least an aToken balance `setUsingAsCollateral`.
-    function userDebtIntegrity() public {
+    function userDebtIntegrityLP() public {
         for (uint256 i = 0; i < users.length; i++) {
             User user = users[i];
             if (hasDebt(user)) {
@@ -441,7 +441,7 @@ contract LendingPoolProp is PropertiesBase {
 
     /// @custom:invariant 220 - If all debt is repaid, all `aToken` holder should be able to claim their collateral.
     /// @custom:invariant 221 - If all users withdraw their liquidity, there must not be aTokens supply left.
-    // function usersFullCollateralClaim() public {
+    // function usersFullCollateralClaimLP() public {
     //     if (!hasDebtTotal()) {
     //         for (uint256 i = 0; i < users.length; i++) {
     //             User user = users[i];

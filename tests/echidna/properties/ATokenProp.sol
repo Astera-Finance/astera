@@ -21,7 +21,7 @@ contract ATokenProp is PropertiesBase {
         uint8 seedAToken,
         uint128 seedAmt
     ) public {
-        randUpdatePriceAndTryLiquidate(vul);
+        randUpdatePriceAndTryLiquidateLP(vul);
 
         uint256 randUser = clampBetween(seedUser, 0, totalNbUsers);
         uint256 randRecipient = clampBetween(seedRecipient, 0, totalNbUsers);
@@ -83,7 +83,7 @@ contract ATokenProp is PropertiesBase {
         uint8 seedAToken,
         uint128 seedAmt
     ) public {
-        randUpdatePriceAndTryLiquidate(vul);
+        randUpdatePriceAndTryLiquidateLP(vul);
 
         uint256 randUser = clampBetween(seedUser, 0, totalNbUsers);
         uint256 randFrom = clampBetween(seedFrom, 0, totalNbUsers);
@@ -152,7 +152,7 @@ contract ATokenProp is PropertiesBase {
         uint8 seedAToken,
         uint128 seedAmt
     ) public {
-        randUpdatePriceAndTryLiquidate(vul);
+        randUpdatePriceAndTryLiquidateLP(vul);
 
         uint256 randUser = clampBetween(seedUser, 0, totalNbUsers);
         uint256 randSender = clampBetween(seedSender, 0, totalNbUsers);
@@ -182,7 +182,7 @@ contract ATokenProp is PropertiesBase {
         uint8 seedAToken,
         uint128 seedAmt
     ) public {
-        randUpdatePriceAndTryLiquidate(vul);
+        randUpdatePriceAndTryLiquidateLP(vul);
 
         uint256 randUser = clampBetween(seedUser, 0, totalNbUsers);
         uint256 randSender = clampBetween(seedSender, 0, totalNbUsers);
@@ -213,7 +213,7 @@ contract ATokenProp is PropertiesBase {
         uint8 seedAToken,
         uint128 seedAmt
     ) public {
-        randUpdatePriceAndTryLiquidate(vul);
+        randUpdatePriceAndTryLiquidateLP(vul);
 
         uint256 randUser = clampBetween(seedUser, 0, totalNbUsers);
         uint256 randSender = clampBetween(seedSender, 0, totalNbUsers);
@@ -244,7 +244,7 @@ contract ATokenProp is PropertiesBase {
     // /// @custom:invariant 320 - Mutation in parameters must make `permit()` revert.
     // /// @custom:invariant 321 - User allowance must be equal to `amount` when sender call `permit()`.
     // function randPermit(LocalVars_UPTL memory vul, uint8 seedUser, uint8 seedSender, uint8 seedAToken, uint128 seedAmt, uint48 randDeadline) public {
-    //     randUpdatePriceAndTryLiquidate(vul);
+    //     randUpdatePriceAndTryLiquidateLP(vul);
     //     uint randUser = clampBetween(seedUser, 0 ,totalNbUsers);
     //     uint randSender = clampBetween(seedSender, 0 ,totalNbUsers);
     //     uint randAToken = clampBetween(seedAToken, 0 ,totalNbTokens);
@@ -281,7 +281,7 @@ contract ATokenProp is PropertiesBase {
         uint8 seedAsset,
         uint8 seedReceiver
     ) public {
-        randUpdatePriceAndTryLiquidate(vul);
+        randUpdatePriceAndTryLiquidateLP(vul);
 
         uint256 randAmt = clampBetween(seedAmt, 1, type(uint80).max);
         uint256 randAsset = clampBetween(seedAsset, 0, totalNbTokens);
@@ -306,7 +306,7 @@ contract ATokenProp is PropertiesBase {
         uint8 seedAsset,
         uint8 seedReceiver
     ) public {
-        randUpdatePriceAndTryLiquidate(vul);
+        randUpdatePriceAndTryLiquidateLP(vul);
 
         uint256 randUser = clampBetween(seedUser, 0, totalNbUsers);
         User user = users[randUser];
@@ -343,7 +343,7 @@ contract ATokenProp is PropertiesBase {
         uint8 seedUser,
         uint8 seedAsset
     ) public {
-        randUpdatePriceAndTryLiquidate(vul);
+        randUpdatePriceAndTryLiquidateLP(vul);
 
         uint256 randUser = clampBetween(seedUser, 0, totalNbUsers);
         User user = users[randUser];
@@ -369,7 +369,7 @@ contract ATokenProp is PropertiesBase {
         uint8 seedAsset,
         uint8 seedAmt
     ) public {
-        randUpdatePriceAndTryLiquidate(vul);
+        randUpdatePriceAndTryLiquidateLP(vul);
 
         User user = users[clampBetween(seedUser, 0, totalNbUsers)];
         User receiver = users[clampBetween(seedReceiver, 0, totalNbUsers)];
@@ -465,7 +465,7 @@ contract ATokenProp is PropertiesBase {
         uint8 seedAsset,
         uint8 seedAmt
     ) public {
-        randUpdatePriceAndTryLiquidate(vul);
+        randUpdatePriceAndTryLiquidateLP(vul);
 
         User owner = users[clampBetween(seedOwner, 0, totalNbUsers)];
         User spender = users[clampBetween(seedSpender, 0, totalNbUsers)];
@@ -549,7 +549,7 @@ contract ATokenProp is PropertiesBase {
         uint8 seedAToken,
         uint128 seedAmt
     ) public {
-        randUpdatePriceAndTryLiquidate(vul);
+        randUpdatePriceAndTryLiquidateLP(vul);
 
         uint256 randUser = clampBetween(seedUser, 0, totalNbUsers);
         uint256 randSender = clampBetween(seedSender, 0, totalNbUsers);
@@ -580,7 +580,7 @@ contract ATokenProp is PropertiesBase {
     /// @custom:invariant 324 - A user must not hold more than total supply.
     /// @custom:invariant 325 - Sum of users balance must not exceed total supply.
     function balanceIntegrity(LocalVars_UPTL memory vul) public {
-        randUpdatePriceAndTryLiquidate(vul);
+        randUpdatePriceAndTryLiquidateLP(vul);
 
         for (uint256 j = 0; j < aTokens.length; j++) {
             AToken t = aTokens[j];

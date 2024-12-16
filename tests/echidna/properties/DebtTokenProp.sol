@@ -17,7 +17,7 @@ contract DebtTokenProp is PropertiesBase {
         uint8 seedVToken,
         uint128 seedAmt
     ) public {
-        randUpdatePriceAndTryLiquidate(vul);
+        randUpdatePriceAndTryLiquidateLP(vul);
 
         uint256 randUser = clampBetween(seedUser, 0, totalNbUsers);
         uint256 randSender = clampBetween(seedSender, 0, totalNbUsers);

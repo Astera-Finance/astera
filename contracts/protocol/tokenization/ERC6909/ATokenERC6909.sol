@@ -335,11 +335,13 @@ contract ATokenERC6909 is IncentivizedERC6909, VersionedInitializable {
 
     /**
      * @notice Approves delegation of borrowing power.
+     * @dev This view function only works for debt tokens id.
      * @param delegatee The address receiving the delegation.
      * @param id The token ID.
      * @param amount The amount of borrowing power to delegate.
      */
     function approveDelegation(address delegatee, uint256 id, uint256 amount) external {
+        require(isDebtToken(id), Errors.AT_INVALID_ATOKEN_ID);
         _borrowAllowances[id][msg.sender][delegatee] = amount;
     }
 
