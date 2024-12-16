@@ -670,6 +670,23 @@ contract ATokenERC6909 is IncentivizedERC6909, VersionedInitializable {
     }
 
     /**
+     * @notice Returns the borrow allowance of the user.
+     * @dev This view function only works for debt tokens id.
+     * @param id The token ID.
+     * @param fromUser The user giving allowance.
+     * @param toUser The user to give allowance to.
+     * @return The current allowance of `toUser`.
+     */
+    function borrowAllowance(uint256 id, address fromUser, address toUser)
+        external
+        view
+        returns (uint256)
+    {
+        require(isDebtToken(id), Errors.AT_INVALID_ATOKEN_ID);
+        return _borrowAllowances[id][fromUser][toUser];
+    }
+
+    /**
      * @notice Checks if a token represents a tranche token by querying internal mapping.
      * @param id The token identifier to check.
      * @return True if the `id` represents a tranche token, false otherwise.
