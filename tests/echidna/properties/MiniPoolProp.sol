@@ -210,7 +210,266 @@ contract MiniPoolProp is PropertiesBase {
         }
     }
 
+    /// @custom:invariant 511 - `repay()` must decrease the onBehalfOf debtToken balance by `amount`.
+    /// @custom:invariant 512 - `repay()` must decrease the user asset balance by `amount`.
+    /// @custom:invariant 513 - `healthFactorAfter` must be greater than `healthFactorBefore` as long as liquidations are done in time.
+    function randRepayMP(
+        LocalVars_UPTL memory vul,
+        uint8 seedMinipool,
+        uint8 seedUser,
+        uint8 seedOnBeHalfOf,
+        uint8 seedAsset,
+        uint128 seedAmt
+    ) public {
+        randUpdatePriceAndTryLiquidateMP(vul);
+
+        uint256 randMinipool = clampBetween(seedMinipool, 0, totalNbMinipool);
+        uint256 randAsset = clampBetween(seedAsset, 0, totalNbTokens * 2); // assets + aTokens length
+
+        MiniPool minipool = miniPools[randMinipool];
+        ATokenERC6909 aToken6909 = aTokens6909[randMinipool];
+        User user = users[clampBetween(seedUser, 0, totalNbUsers)];
+        User onBehalfOf = users[clampBetween(seedOnBeHalfOf, 0, totalNbUsers)];
+        MintableERC20 asset = MintableERC20(allTokens(randAsset));
+
+        (, uint256 debtTokenID, bool isAToken) = aToken6909.getIdForUnderlying(address(asset));
+
+        uint256 debtTokenBalanceBefore = aToken6909.balanceOf(address(onBehalfOf), debtTokenID);
+        uint256 assetBalanceBefore = isAToken
+            ? IERC20(IAToken(address(asset)).UNDERLYING_ASSET_ADDRESS()).balanceOf(address(user))
+            : asset.balanceOf(address(user));
+        (,,,,, uint256 healthFactorBefore) = minipool.getUserAccountData(address(onBehalfOf));
+
+        uint256 randAmt = clampBetween(seedAmt, 0, debtTokenBalanceBefore);
+
+        (bool success,) = user.proxy(
+            address(minipool),
+            abi.encodeWithSelector(
+                minipool.repay.selector,
+                address(asset),
+                isAToken ? true : false,
+                randAmt,
+                address(onBehalfOf)
+            )
+        );
+
+        require(success);
+
+        uint256 debtTokenBalanceAfter = aToken6909.balanceOf(address(onBehalfOf), debtTokenID);
+        uint256 assetBalanceAfter = isAToken
+            ? IERC20(IAToken(address(asset)).UNDERLYING_ASSET_ADDRESS()).balanceOf(address(user))
+            : asset.balanceOf(address(user));
+        (,,,,, uint256 healthFactorAfter) = minipool.getUserAccountData(address(onBehalfOf));
+
+        assertEqApprox(debtTokenBalanceBefore - debtTokenBalanceAfter, randAmt, 1, "511");
+        assertEqApprox(
+            assetBalanceBefore - assetBalanceAfter,
+            isAToken ? IAToken(address(asset)).convertToAssets(randAmt) : randAmt,
+            1,
+            "512"
+        );
+        assertGte(healthFactorAfter, healthFactorBefore, "513");
+    }
+
+    /// @custom:invariant 514 - `setUseReserveAsCollateral` must not reduce the health factor below 1.
+    function randSetUseReserveAsCollateralMP(
+        LocalVars_UPTL memory vul,
+        uint8 seedMinipool,
+        uint8 seedUser,
+        uint8 seedAsset,
+        bool randIsColl
+    ) public {
+        randUpdatePriceAndTryLiquidateMP(vul);
+
+        uint256 randMinipool = clampBetween(seedMinipool, 0, totalNbMinipool);
+        uint256 randUser = clampBetween(seedUser, 0, totalNbUsers);
+        uint256 randAsset = clampBetween(seedAsset, 0, totalNbTokens * 2); // assets + aTokens length
+
+        MiniPool minipool = miniPools[randMinipool];
+        User user = users[randUser];
+        MintableERC20 asset = MintableERC20(allTokens(randAsset));
+
+        (,,,,, uint256 healthFactorBefore) = minipool.getUserAccountData(address(user));
+
+        (bool success,) = user.proxy(
+            address(minipool),
+            abi.encodeWithSelector(
+                minipool.setUserUseReserveAsCollateral.selector, address(asset), randIsColl
+            )
+        );
+        require(success);
+
+        (,,,,, uint256 healthFactorAfter) = minipool.getUserAccountData(address(user));
+        if (randIsColl) {
+            assertLte(healthFactorBefore, healthFactorAfter, "514");
+        } else {
+            assertGte(healthFactorBefore, healthFactorAfter, "514");
+        }
+
+        if (healthFactorBefore >= 1e18 && healthFactorAfter != healthFactorBefore) {
+            assertGte(healthFactorAfter, 1e18, "514");
+        }
+    }
+
+    struct LocalVars_RandFlashloanMP {
+        uint256 randUser;
+        uint256 randAsset;
+        uint256 randMode;
+        uint256 randNbAssets;
+        User user;
+        MintableERC20 asset;
+        VariableDebtToken debtToken;
+        address[] assetsFl;
+        uint256[] amountsFl;
+        uint256[] modesFl;
+        bytes params;
+        uint256[] assetBalanceBefore;
+    }
+
+    /// @custom:invariant 214 - Users must not be able to steal funds from flashloans.
+    function randFlashloanMP(
+        LocalVars_UPTL memory vul,
+        uint8 seedMinipool,
+        uint8 seedUser,
+        uint8 seedAsset, /* , uint8 seedMode */
+        uint8 seedNbAssetFl,
+        uint128 seedAmt
+    ) public {
+        randUpdatePriceAndTryLiquidateMP(vul);
+
+        LocalVars_RandFlashloanMP memory v;
+
+        v.randUser = clampBetween(seedUser, 0, totalNbUsers);
+        v.randAsset = clampBetween(seedAsset, 0, totalNbTokens * 2); // assets + aTokens length
+        v.randMode = 0; // clampBetween(seedMode, 0, 1);
+        v.randNbAssets = clampBetween(seedNbAssetFl, 1, totalNbTokens * 2);
+
+        v.user = users[v.randUser];
+        v.asset = MintableERC20(allTokens(v.randAsset));
+
+        v.assetsFl = new address[](v.randNbAssets);
+        v.amountsFl = new uint256[](v.randNbAssets);
+        v.modesFl = new uint256[](v.randNbAssets);
+        v.params = new bytes(0);
+
+        v.assetBalanceBefore = new uint256[](v.randNbAssets);
+
+        MiniPool minipool = miniPools[clampBetween(seedMinipool, 0, totalNbMinipool)];
+
+        for (uint256 i = 0; i < v.randNbAssets; i++) {
+            v.assetBalanceBefore[i] = MintableERC20(allTokens(i)).balanceOf(address(v.user));
+            v.assetsFl[i] = allTokens(i);
+            v.amountsFl[i] =
+                clampBetween(seedAmt, 1, minipool.getReserveData(allTokens(i)).currentLiquidityRate);
+            v.modesFl[i] = v.randMode;
+        }
+
+        IMiniPool.FlashLoanParams memory flp = IMiniPool.FlashLoanParams({
+            receiverAddress: address(v.user),
+            assets: v.assetsFl,
+            onBehalfOf: address(v.user)
+        });
+
+        v.user.execFlMP(address(minipool), flp, v.amountsFl, v.modesFl, v.params);
+
+        for (uint256 i = 0; i < v.randNbAssets; i++) {
+            assertGte(
+                v.assetBalanceBefore[i],
+                MintableERC20(allTokens(i)).balanceOf(address(v.user)),
+                "214"
+            );
+        }
+
+        // Premium payment increase indexes => update last indexes
+        for (uint256 i = 0; i < totalNbTokens * 2; i++) {
+            address asset = allTokens(i);
+            lastLiquidityIndexMP[address(minipool)][asset] =
+                minipool.getReserveData(asset).liquidityIndex;
+            lastVariableBorrowIndexMP[address(minipool)][asset] =
+                minipool.getReserveData(asset).variableBorrowIndex;
+        }
+    }
+
     // ---------------------- Invariants ----------------------
+
+    /// @custom:invariant 516 - The total value borrowed must always be less than the value of the collaterals.
+    function globalSolvencyCheckMP() public {
+        for (uint256 j = 0; j < totalNbMinipool; j++) {
+            MiniPool minipool = miniPools[j];
+            ATokenERC6909 aToken6909 = aTokens6909[j];
+            uint256 valueColl;
+            uint256 valueDebt;
+
+            for (uint256 i = 0; i < totalNbTokens * 2; i++) {
+                address asset = allTokens(i);
+
+                (uint256 aTokenId, uint256 debtTokenId,) =
+                    aToken6909.getIdForUnderlying(address(asset));
+                uint256 price = oracle.getAssetPrice(asset);
+                uint256 decimals = MintableERC20(asset).decimals();
+
+                valueColl += aToken6909.totalSupply(aTokenId) * price / (10 ** decimals);
+
+                valueDebt += aToken6909.totalSupply(debtTokenId) * price / (10 ** decimals);
+            }
+
+            assertGte(valueColl, valueDebt, "516");
+        }
+    }
+
+    // /// @custom:invariant 517 - The `liquidityIndex` should monotonically increase when there's total debt.
+    // /// @custom:invariant 518 - The `variableBorrowIndex` should monotonically increase when there's total debt.
+    // function indexIntegrityMP() public {
+    //     for (uint256 j = 0; j < totalNbMinipool; j++) {
+    //         MiniPool minipool = miniPools[j];
+    //         for (uint256 i = 0; i < totalNbTokens * 2; i++) {
+    //             address asset = allTokens(i);
+
+    //             uint256 currentLiquidityIndex = minipool.getReserveData(asset).liquidityIndex;
+    //             uint256 currentVariableBorrowIndex =
+    //                 minipool.getReserveData(asset).variableBorrowIndex;
+
+    //             if (hasDebtTotal()) {
+    //                 assertGte(
+    //                     currentLiquidityIndex, lastLiquidityIndexMP[address(minipool)][asset], "517"
+    //                 );
+    //                 assertGte(
+    //                     currentVariableBorrowIndex,
+    //                     lastVariableBorrowIndexMP[address(minipool)][asset],
+    //                     "518"
+    //                 );
+    //             } else {
+    //                 assertEq(
+    //                     currentLiquidityIndex, lastLiquidityIndexMP[address(minipool)][asset], "517"
+    //                 );
+    //                 assertEq(
+    //                     currentVariableBorrowIndex,
+    //                     lastVariableBorrowIndexMP[address(minipool)][asset],
+    //                     "518"
+    //                 );
+    //             }
+    //             lastLiquidityIndexMP[address(minipool)][asset] = currentLiquidityIndex;
+    //             lastVariableBorrowIndexMP[address(minipool)][asset] = currentVariableBorrowIndex;
+    //         }
+    //     }
+    // }
+
+    /// @custom:invariant 519 - A user with debt should have at least an AToken6909 balance `setUsingAsCollateral`.
+    function userDebtIntegrityMP() public {
+        for (uint256 j = 0; j < totalNbMinipool; j++) {
+            for (uint256 i = 0; i < users.length; i++) {
+                User user = users[i];
+                if (hasDebtTokens6909(user, j)) {
+                    assertWithMsg(hasATokens6909(user, j), "519");
+                }
+            }
+        }
+    }
+
+    // /// @custom:invariant 520 - If all debt is repaid, all aToken holders should be able to claim their collateral.
+    // /// @custom:invariant 521 - If all users withdraw their liquidity, there must not be aTokens supply left.
+    // function usersFullCollateralClaimMP() public {
+    // }
 
     // ---------------------- Helpers ----------------------
 }

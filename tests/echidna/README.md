@@ -30,6 +30,7 @@ You can fine in `/echidna` 3 config files to run the fuzzer:
 - Add Medusa support
 - Add rewarders.
 - test setDepositCap
+- fix lastLiquidityIndex and lastBorrowIndex
 
 # Invariant testing
 
@@ -130,17 +131,17 @@ You can fine in `/echidna` 3 config files to run the fuzzer:
 508. ✅ `borrow()` must not result in a health factor of less than 1.
 509. ✅ `borrow()` must increase the user debtToken balance by `amount`.
 510. ✅ `borrow()` must decrease `borrowAllowance()` by `amount` if `user != onBehalf`.
-511. 🚧 `repay()` must decrease the onBehalfOf debtToken balance by `amount`.
-512. 🚧 `repay()` must decrease the user asset balance by `amount`.
-513. 🚧 `healthFactorAfter` must be greater than `healthFactorBefore` as long as liquidations are done in time.
-514. 🚧 `setUseReserveAsCollateral` must not reduce the health factor below 1.
-515. 🚧 Users must not be able to steal funds from flashloans.
-516. 🚧 The total value borrowed must always be less than the value of the collaterals.
-517. 🚧 The `liquidityIndex` should monotonically increase when there's total debt.
-518. 🚧 The `variableBorrowIndex` should monotonically increase when there's total debt.
-519. 🚧 A user with debt should have at least an AToken6909 balance `setUsingAsCollateral`.
-520. 🚧 If all debt is repaid, all aToken holders should be able to claim their collateral.
-521. 🚧 If all users withdraw their liquidity, there must not be aTokens supply left.
+511. ✅ `repay()` must decrease the onBehalfOf debtToken balance by `amount`.
+512. ✅ `repay()` must decrease the user asset balance by `amount`.
+513. ✅ `healthFactorAfter` must be greater than `healthFactorBefore` as long as liquidations are done in time.
+514. ✅ `setUseReserveAsCollateral` must not reduce the health factor below 1.
+515. ✅ Users must not be able to steal funds from flashloans.
+516. ✅ The total value borrowed must always be less than the value of the collaterals.
+517. ❌ The `liquidityIndex` should monotonically increase when there's total debt.
+518. ❌ The `variableBorrowIndex` should monotonically increase when there's total debt.
+519. ✅ A user with debt should have at least an AToken6909 balance `setUsingAsCollateral`.
+520. ❌ If all debt is repaid, all aToken holders should be able to claim their collateral.
+521. ❌ If all users withdraw their liquidity, there must not be aTokens supply left.
 522. 🚧 Integrity of Supply Cap - aToken supply shall never exceed the cap.
 523. 🚧 `UserConfigurationMap` integrity: If a user has a given aToken then `isUsingAsCollateralOrBorrowing` and `isUsingAsCollateral` should return true.
 524. 🚧 `UserConfigurationMap` integrity: If a user has a given debtToken then `isUsingAsCollateralOrBorrowing`, `isBorrowing` and `isBorrowingAny` should return true.

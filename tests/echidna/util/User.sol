@@ -22,7 +22,7 @@ contract User is FlashLoanReceiverBase {
         target.approve(spender, type(uint256).max);
     }
 
-    function execFl(
+    function execFlLP(
         ILendingPool.FlashLoanParams memory flp,
         uint256[] calldata amounts,
         uint256[] calldata modes,
@@ -32,6 +32,20 @@ contract User is FlashLoanReceiverBase {
 
         for (uint256 i = 0; i < flp.assets.length; i++) {
             IERC20(flp.assets[i]).approve(address(LENDING_POOL), type(uint256).max);
+        }
+    }
+
+    function execFlMP(
+        address minipool,
+        IMiniPool.FlashLoanParams memory flp,
+        uint256[] calldata amounts,
+        uint256[] calldata modes,
+        bytes calldata params
+    ) public {
+        IMiniPool(minipool).flashLoan(flp, amounts, modes, params);
+
+        for (uint256 i = 0; i < flp.assets.length; i++) {
+            IERC20(flp.assets[i]).approve(minipool, type(uint256).max);
         }
     }
 

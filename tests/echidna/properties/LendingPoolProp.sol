@@ -176,7 +176,7 @@ contract LendingPoolProp is PropertiesBase {
 
     /// @custom:invariant 210 - `repay()` must decrease the onBehalfOf debtToken balance by `amount`.
     /// @custom:invariant 211 - `repay()` must decrease the user asset balance by `amount`.
-    /// @custom:invariant 212 - `healthFactorAfter` must be greater than `healthFactorBefore`.
+    /// @custom:invariant 212 - `healthFactorAfter` must be greater than `healthFactorBefore` as long as liquidations are done in time.
     function randRepayLP(
         LocalVars_UPTL memory vul,
         uint8 seedUser,
@@ -293,7 +293,7 @@ contract LendingPoolProp is PropertiesBase {
         }
     }
 
-    struct LocalVars_RandFlashloan {
+    struct LocalVars_RandFlashloanLP {
         uint256 randUser;
         uint256 randAsset;
         uint256 randMode;
@@ -319,7 +319,7 @@ contract LendingPoolProp is PropertiesBase {
     ) public {
         randUpdatePriceAndTryLiquidateLP(vul);
 
-        LocalVars_RandFlashloan memory v;
+        LocalVars_RandFlashloanLP memory v;
 
         v.randUser = clampBetween(seedUser, 0, totalNbUsers);
         v.randAsset = clampBetween(seedAsset, 0, totalNbTokens);
@@ -353,7 +353,7 @@ contract LendingPoolProp is PropertiesBase {
             onBehalfOf: address(v.user)
         });
 
-        v.user.execFl(flp, v.amountsFl, v.modesFl, v.params);
+        v.user.execFlLP(flp, v.amountsFl, v.modesFl, v.params);
 
         for (uint256 i = 0; i < v.randNbAssets; i++) {
             assertGte(v.assetBalanceBefore[i], assets[i].balanceOf(address(v.user)), "214");
@@ -362,8 +362,8 @@ contract LendingPoolProp is PropertiesBase {
         // Premium payment increase indexes => update last indexes
         for (uint256 i = 0; i < assets.length; i++) {
             address asset = address(assets[i]);
-            lastLiquidityIndex[asset] = pool.getReserveData(asset, true).liquidityIndex;
-            lastVariableBorrowIndex[asset] = pool.getReserveData(asset, true).variableBorrowIndex;
+            lastLiquidityIndexLP[asset] = pool.getReserveData(asset, true).liquidityIndex;
+            lastVariableBorrowIndexLP[asset] = pool.getReserveData(asset, true).variableBorrowIndex;
         }
     }
 
@@ -390,20 +390,15 @@ contract LendingPoolProp is PropertiesBase {
         uint256 valueDebt;
         for (uint256 i = 0; i < aTokens.length; i++) {
             AToken aToken = aTokens[i];
-            MockAggregator aTokenOracle = aggregators[i];
-
-            valueColl += aToken.totalSupply() * uint256(aggregators[i].latestAnswer())
-                / (10 ** assets[i].decimals());
-        }
-
-        for (uint256 i = 0; i < debtTokens.length; i++) {
             VariableDebtToken vToken = debtTokens[i];
-            MockAggregator aTokenOracle = aggregators[i];
+            MintableERC20 asset = assets[i];
+            uint256 price = oracle.getAssetPrice(address(asset));
+            uint256 decimals = MintableERC20(asset).decimals();
 
-            valueDebt += vToken.totalSupply() * uint256(aggregators[i].latestAnswer())
-                / (10 ** assets[i].decimals());
+            valueColl += aToken.totalSupply() * price / (10 ** decimals);
+
+            valueDebt += vToken.totalSupply() * price / (10 ** decimals);
         }
-
         assertGte(valueColl, valueDebt, "215");
     }
 
@@ -418,14 +413,14 @@ contract LendingPoolProp is PropertiesBase {
                 pool.getReserveData(asset, true).variableBorrowIndex;
 
             if (hasDebtTotal()) {
-                assertGte(currentLiquidityIndex, lastLiquidityIndex[asset], "217");
-                assertGte(currentVariableBorrowIndex, lastVariableBorrowIndex[asset], "218");
+                assertGte(currentLiquidityIndex, lastLiquidityIndexLP[asset], "217");
+                assertGte(currentVariableBorrowIndex, lastVariableBorrowIndexLP[asset], "218");
             } else {
-                assertEq(currentLiquidityIndex, lastLiquidityIndex[asset], "217");
-                assertEq(currentVariableBorrowIndex, lastVariableBorrowIndex[asset], "218");
+                assertEq(currentLiquidityIndex, lastLiquidityIndexLP[asset], "217");
+                assertEq(currentVariableBorrowIndex, lastVariableBorrowIndexLP[asset], "218");
             }
-            lastLiquidityIndex[asset] = currentLiquidityIndex;
-            lastVariableBorrowIndex[asset] = currentVariableBorrowIndex;
+            lastLiquidityIndexLP[asset] = currentLiquidityIndex;
+            lastVariableBorrowIndexLP[asset] = currentVariableBorrowIndex;
         }
     }
 
@@ -434,7 +429,7 @@ contract LendingPoolProp is PropertiesBase {
         for (uint256 i = 0; i < users.length; i++) {
             User user = users[i];
             if (hasDebt(user)) {
-                assertWithMsg(hasDebt(user), "219");
+                assertWithMsg(hasATokens(user), "219");
             }
         }
     }

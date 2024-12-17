@@ -129,14 +129,19 @@ contract PropertiesBase is PropertiesAsserts, MarketParams {
     uint256 internal totalNbMinipool = 1;
     uint256 internal initialMint = 100 ether;
     bool internal bootstrapLiquidity = true;
-    uint256 internal volatility = 100; // 1%
+    uint256 internal volatility = 300; // 1%
     // ------------------
 
     User internal bootstraper;
     User[] internal users;
 
-    mapping(address => uint256) internal lastLiquidityIndex;
-    mapping(address => uint256) internal lastVariableBorrowIndex;
+    // LendingPool
+    mapping(address => uint256) internal lastLiquidityIndexLP;
+    mapping(address => uint256) internal lastVariableBorrowIndexLP;
+
+    // MiniPool
+    mapping(address => mapping(address => uint256)) internal lastLiquidityIndexMP;
+    mapping(address => mapping(address => uint256)) internal lastVariableBorrowIndexMP;
 
     // A given assets[i] is accosiated with the liquidity token aTokens[i]
     // and the debt token debtTokens[i].
@@ -451,8 +456,15 @@ contract PropertiesBase is PropertiesAsserts, MarketParams {
         for (uint256 i = 0; i < assets.length; i++) {
             address asset = address(assets[i]);
 
-            lastLiquidityIndex[asset] = pool.getReserveData(asset, true).liquidityIndex;
-            lastVariableBorrowIndex[asset] = pool.getReserveData(asset, true).variableBorrowIndex;
+            lastLiquidityIndexLP[asset] = pool.getReserveData(asset, true).liquidityIndex;
+            lastVariableBorrowIndexLP[asset] = pool.getReserveData(asset, true).variableBorrowIndex;
+
+            for (uint256 j = 0; j < totalNbMinipool; j++) {
+                lastLiquidityIndexMP[address(miniPools[j])][asset] =
+                    miniPools[j].getReserveData(asset).liquidityIndex;
+                lastVariableBorrowIndexMP[address(miniPools[j])][asset] =
+                    miniPools[j].getReserveData(asset).variableBorrowIndex;
+            }
         }
 
         /// setup users
@@ -802,7 +814,7 @@ contract PropertiesBase is PropertiesAsserts, MarketParams {
     function hasATokens6909(User user, uint256 minipoolId) internal view returns (bool) {
         ATokenERC6909 aToken6909 = aTokens6909[minipoolId];
         for (uint256 i = 0; i < totalNbTokens * 2; i++) {
-            (uint256 aTokenID,, bool isAToken) = aToken6909.getIdForUnderlying(allTokens(i));
+            (uint256 aTokenID,,) = aToken6909.getIdForUnderlying(allTokens(i));
             if (
                 aToken6909.balanceOf(address(user), aTokenID) != 0
                     && UserConfiguration.isUsingAsCollateral(
@@ -827,6 +839,17 @@ contract PropertiesBase is PropertiesAsserts, MarketParams {
     function hasDebt(User user) internal view returns (bool) {
         for (uint256 i = 0; i < debtTokens.length; i++) {
             if (debtTokens[i].balanceOf(address(user)) != 0) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    function hasDebtTokens6909(User user, uint256 minipoolId) internal view returns (bool) {
+        ATokenERC6909 aToken6909 = aTokens6909[minipoolId];
+        for (uint256 i = 0; i < totalNbTokens * 2; i++) {
+            (, uint256 debtTokenID,) = aToken6909.getIdForUnderlying(allTokens(i));
+            if (aToken6909.balanceOf(address(user), debtTokenID) != 0) {
                 return true;
             }
         }
