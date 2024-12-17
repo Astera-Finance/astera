@@ -64,8 +64,8 @@ abstract contract LendingPoolFixtures is Common {
         view
         returns (uint256)
     {
-        uint256 borrowTokenPrice = oracle.getAssetPrice(address(borrowToken));
-        uint256 collateralPrice = oracle.getAssetPrice(address(collateral));
+        uint256 borrowTokenPrice = commonContracts.oracle.getAssetPrice(address(borrowToken));
+        uint256 collateralPrice = commonContracts.oracle.getAssetPrice(address(collateral));
         uint256 collateralDepositValue = amount * collateralPrice / (10 ** PRICE_FEED_DECIMALS);
         StaticData memory staticData = deployedContracts
             .cod3xLendDataProvider

@@ -128,7 +128,7 @@ contract Oracle is IOracle, Ownable {
         address underlying;
 
         // Check if `asset` is an aToken.
-        try ATokenNonRebasing(asset).UNDERLYING_ASSET_ADDRESS{gas: 4000}() returns (
+        try ATokenNonRebasing(asset).UNDERLYING_ASSET_ADDRESS{gas: 8000}() returns (
             address underlying_
         ) {
             underlying = underlying_;

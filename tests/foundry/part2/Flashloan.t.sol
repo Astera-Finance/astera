@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.0;
 
-import "./Common.sol";
+import "../Common.sol";
 import "contracts/protocol/libraries/helpers/Errors.sol";
 import {WadRayMath} from "contracts/protocol/libraries/math/WadRayMath.sol";
 // import {ILendingPool} from "contracts/interfaces/ILendingPool.sol";
@@ -39,13 +39,14 @@ contract FlashloanTest is Common {
 
         fixture_configureProtocol(
             address(deployedContracts.lendingPool),
-            address(aToken),
+            address(commonContracts.aToken),
             configAddresses,
             deployedContracts.lendingPoolConfigurator,
             deployedContracts.lendingPoolAddressesProvider
         );
 
-        mockedVaults = fixture_deployReaperVaultMocks(tokens, address(deployedContracts.treasury));
+        commonContracts.mockedVaults =
+            fixture_deployReaperVaultMocks(tokens, address(deployedContracts.treasury));
         erc20Tokens = fixture_getErc20Tokens(tokens);
         fixture_transferTokensToTestContract(erc20Tokens, 100_000 ether, address(this));
     }
@@ -114,8 +115,9 @@ contract FlashloanTest is Common {
             modes[idx] = 0;
             balances.balancesBefore[idx] = IERC20(tokens[idx]).balanceOf(address(this));
             balances.aTokenBalancesBefore[idx] =
-                IERC20(tokens[idx]).balanceOf(address(aTokens[idx]));
-            balances.totalManagedAssetsBefore[idx] = AToken(aTokens[idx]).getTotalManagedAssets();
+                IERC20(tokens[idx]).balanceOf(address(commonContracts.aTokens[idx]));
+            balances.totalManagedAssetsBefore[idx] =
+                AToken(commonContracts.aTokens[idx]).getTotalManagedAssets();
         }
 
         ILendingPool.FlashLoanParams memory flashloanParams =
@@ -138,20 +140,21 @@ contract FlashloanTest is Common {
         for (uint32 idx = 0; idx < tokens.length; idx++) {
             console.log(
                 "Balance now: %s vs Balance before: %s",
-                IERC20(tokens[idx]).balanceOf(address(aTokens[idx])),
+                IERC20(tokens[idx]).balanceOf(address(commonContracts.aTokens[idx])),
                 balances.aTokenBalancesBefore[idx]
             );
             assertGe(
-                IERC20(tokens[idx]).balanceOf(address(aTokens[idx])),
+                IERC20(tokens[idx]).balanceOf(address(commonContracts.aTokens[idx])),
                 balances.aTokenBalancesBefore[idx]
             );
             console.log(
                 "Managed assets now: %s vs Managed assets before: %s",
-                AToken(aTokens[idx]).getTotalManagedAssets(),
+                AToken(commonContracts.aTokens[idx]).getTotalManagedAssets(),
                 balances.totalManagedAssetsBefore[idx]
             );
             assertGe(
-                AToken(aTokens[idx]).getTotalManagedAssets(), balances.totalManagedAssetsBefore[idx]
+                AToken(commonContracts.aTokens[idx]).getTotalManagedAssets(),
+                balances.totalManagedAssetsBefore[idx]
             );
         }
     }

@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.0;
 
-import "./Common.sol";
+import "../Common.sol";
 import "contracts/protocol/libraries/helpers/Errors.sol";
 import "contracts/misc/RewardsVault.sol";
 import "contracts/protocol/rewarder/minipool/Rewarder6909.sol";
@@ -96,15 +96,15 @@ contract MiniPoolRewarderTest is Common {
     ) public {
         DistributionTypes.RewardsConfigInput[] memory configs =
             new DistributionTypes.RewardsConfigInput[](erc20Tokens.length);
-        for (uint256 idx = 0; idx < aTokens.length; idx++) {
+        for (uint256 idx = 0; idx < commonContracts.aTokens.length; idx++) {
             configs[idx] = DistributionTypes.RewardsConfigInput(
                 emissionsPerSecond,
                 1000 ether,
                 distributionEnd,
-                address(aTokens[idx]),
+                address(commonContracts.aTokens[idx]),
                 address(rewardTokens[rewardTokenIndex])
             );
-            rewardedTokens.push(address(aTokens[idx]));
+            rewardedTokens.push(address(commonContracts.aTokens[idx]));
         }
 
         for (uint256 idx = 0; idx < rewardTokens.length; idx++) {
@@ -127,15 +127,15 @@ contract MiniPoolRewarderTest is Common {
         }
 
         deployedContracts.rewarder.configureAssets(configs);
-        for (uint256 idx = 0; idx < variableDebtTokens.length; idx++) {
+        for (uint256 idx = 0; idx < commonContracts.variableDebtTokens.length; idx++) {
             configs[idx] = DistributionTypes.RewardsConfigInput(
                 emissionsPerSecond,
                 1000 ether,
                 distributionEnd,
-                address(variableDebtTokens[idx]),
+                address(commonContracts.variableDebtTokens[idx]),
                 address(rewardTokens[rewardTokenIndex])
             );
-            rewardedTokens.push(address(variableDebtTokens[idx]));
+            rewardedTokens.push(address(commonContracts.variableDebtTokens[idx]));
         }
         deployedContracts.rewarder.setMiniPoolAddressesProvider(miniPoolAddressesProvider);
     }
@@ -154,12 +154,13 @@ contract MiniPoolRewarderTest is Common {
         );
         fixture_configureProtocol(
             address(deployedContracts.lendingPool),
-            address(aToken),
+            address(commonContracts.aToken),
             configAddresses,
             deployedContracts.lendingPoolConfigurator,
             deployedContracts.lendingPoolAddressesProvider
         );
-        mockedVaults = fixture_deployReaperVaultMocks(tokens, address(deployedContracts.treasury));
+        commonContracts.mockedVaults =
+            fixture_deployReaperVaultMocks(tokens, address(deployedContracts.treasury));
         erc20Tokens = fixture_getErc20Tokens(tokens);
         fixture_transferTokensToTestContract(erc20Tokens, 100_000 ether, address(this));
         (miniPoolContracts,) = fixture_deployMiniPoolSetup(
@@ -175,7 +176,8 @@ contract MiniPoolRewarderTest is Common {
             if (idx < tokens.length) {
                 reserves[idx] = tokens[idx];
             } else {
-                reserves[idx] = address(aTokens[idx - tokens.length].WRAPPER_ADDRESS());
+                reserves[idx] =
+                    address(commonContracts.aTokens[idx - tokens.length].WRAPPER_ADDRESS());
             }
             console.log("reserves[idx] : ", reserves[idx]);
         }
@@ -253,8 +255,10 @@ contract MiniPoolRewarderTest is Common {
         vm.stopPrank();
 
         vm.startPrank(user1);
-        aTokensWrapper[2].approve(address(miniPool), 100 ether);
-        IMiniPool(miniPool).deposit(address(aTokensWrapper[2]), false, 100 ether, user1);
+        commonContracts.aTokensWrapper[2].approve(address(miniPool), 100 ether);
+        IMiniPool(miniPool).deposit(
+            address(commonContracts.aTokensWrapper[2]), false, 100 ether, user1
+        );
         vm.stopPrank();
 
         // vm.warp(block.timestamp + 100);
@@ -300,8 +304,10 @@ contract MiniPoolRewarderTest is Common {
         vm.startPrank(user1);
         erc20Tokens[2].approve(address(deployedContracts.lendingPool), 100 ether);
         deployedContracts.lendingPool.deposit(address(erc20Tokens[2]), true, 100 ether, user1);
-        aTokensWrapper[2].approve(miniPool, 100 ether);
-        IMiniPool(miniPool).deposit(address(aTokensWrapper[2]), false, 10 ether, user1);
+        commonContracts.aTokensWrapper[2].approve(miniPool, 100 ether);
+        IMiniPool(miniPool).deposit(
+            address(commonContracts.aTokensWrapper[2]), false, 10 ether, user1
+        );
         vm.stopPrank();
 
         vm.startPrank(user2);
@@ -324,14 +330,16 @@ contract MiniPoolRewarderTest is Common {
         );
 
         vm.prank(user3);
-        IMiniPool(miniPool).borrow(address(aTokensWrapper[2]), false, 50 ether, user3);
+        IMiniPool(miniPool).borrow(
+            address(commonContracts.aTokensWrapper[2]), false, 50 ether, user3
+        );
         vm.warp(block.timestamp + 100);
         vm.roll(block.number + 1);
 
         // This is checking WETH rewards for the main pools aTokens and VariableDebtTokens
         address[] memory aTokenAddresses = new address[](2);
-        aTokenAddresses[0] = address(aTokens[2]);
-        aTokenAddresses[1] = address(variableDebtTokens[2]);
+        aTokenAddresses[0] = address(commonContracts.aTokens[2]);
+        aTokenAddresses[1] = address(commonContracts.variableDebtTokens[2]);
 
         vm.startPrank(user1);
         (, uint256[] memory user1Rewards) =
@@ -426,14 +434,16 @@ contract MiniPoolRewarderTest is Common {
         );
 
         vm.prank(user3);
-        IMiniPool(miniPool).borrow(address(aTokensWrapper[2]), false, 50 ether, user3);
+        IMiniPool(miniPool).borrow(
+            address(commonContracts.aTokensWrapper[2]), false, 50 ether, user3
+        );
         vm.warp(block.timestamp + 100);
         vm.roll(block.number + 1);
 
         // This is checking WETH rewards for the main pools aTokens and VariableDebtTokens
         address[] memory aTokenAddresses = new address[](2);
-        aTokenAddresses[0] = address(aTokens[2]);
-        aTokenAddresses[1] = address(variableDebtTokens[2]);
+        aTokenAddresses[0] = address(commonContracts.aTokens[2]);
+        aTokenAddresses[1] = address(commonContracts.variableDebtTokens[2]);
 
         vm.startPrank(user1);
         (, uint256[] memory user1Rewards) =
@@ -519,15 +529,17 @@ contract MiniPoolRewarderTest is Common {
         vm.stopPrank();
 
         vm.startPrank(user1);
-        aTokensWrapper[2].approve(address(miniPool), 100 ether);
-        IMiniPool(miniPool).deposit(address(aTokensWrapper[2]), false, 100 ether, user1);
+        commonContracts.aTokensWrapper[2].approve(address(miniPool), 100 ether);
+        IMiniPool(miniPool).deposit(
+            address(commonContracts.aTokensWrapper[2]), false, 100 ether, user1
+        );
         vm.stopPrank();
 
         vm.warp(block.timestamp + 100);
         vm.roll(block.number + 1);
 
         address[] memory aTokenAddresses = new address[](1);
-        aTokenAddresses[0] = address(aTokens[2]);
+        aTokenAddresses[0] = address(commonContracts.aTokens[2]);
 
         address vault = deployedContracts.rewarder.getRewardsVault(address(rewardTokens[0]));
         console.log("vault", address(vault));

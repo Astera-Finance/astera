@@ -210,6 +210,7 @@ contract PidReserveInterestRateStrategyTest is Common {
     }
 
     function plateau(uint256 period) public {
+        ERC20 dai = erc20Tokens[3];
         for (uint256 i = 0; i < period; i++) {
             repay(users[0], dai, 1);
             borrow(users[0], dai, 1);

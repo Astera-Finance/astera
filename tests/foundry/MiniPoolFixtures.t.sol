@@ -16,8 +16,8 @@ abstract contract MiniPoolFixtures is LendingPoolFixtures {
     address aTokensErc6909Addr;
     address miniPool;
 
-    uint256[] grainTokenIds = [1000, 1001, 1002, 1003];
-    uint256[] tokenIds = [1128, 1129, 1130, 1131];
+    // uint256[] grainTokenIds = [1000, 1001, 1002, 1003];
+    // uint256[] tokenIds = [1128, 1129, 1130, 1131];
 
     function fixture_depositTokensToMainPool(
         uint256 amount,

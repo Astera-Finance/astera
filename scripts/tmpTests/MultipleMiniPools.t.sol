@@ -21,18 +21,11 @@ contract MultiplePools is MiniPoolFixtures {
     address[] miniPools;
     uint256 id;
 
-    struct TestParams {
-        ERC20 token;
-        AToken aToken;
-        AToken aTokenWrapper;
-        MockVaultUnit vault;
-        uint256 price;
-    }
-
-    function logState(TestParams memory collateral, TestParams memory borrowToken, uint256 idx)
-        internal
-        view
-    {
+    function logState(
+        TokenParamsExtended memory collateral,
+        TokenParamsExtended memory borrowToken,
+        uint256 idx
+    ) internal view {
         console.log(
             "%s. Balance of USDC in ATOKEN: %s",
             idx,
@@ -193,14 +186,14 @@ contract MultiplePools is MiniPoolFixtures {
         /* Fuzz vectors */
         skipDuration = 300 days; //bound(skipDuration, 0, 300 days);
 
-        TestParams memory usdcParams = TestParams(
+        TokenParamsExtended memory usdcParams = TokenParamsExtended(
             erc20Tokens[USDC_OFFSET],
             aTokens[USDC_OFFSET],
             aTokensWrapper[USDC_OFFSET],
             mockVaultUnits[USDC_OFFSET],
             oracle.getAssetPrice(address(erc20Tokens[USDC_OFFSET]))
         );
-        TestParams memory wbtcParams = TestParams(
+        TokenParamsExtended memory wbtcParams = TokenParamsExtended(
             erc20Tokens[WBTC_OFFSET],
             aTokens[WBTC_OFFSET],
             aTokensWrapper[WBTC_OFFSET],

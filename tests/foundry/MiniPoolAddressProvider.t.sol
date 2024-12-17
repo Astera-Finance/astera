@@ -32,12 +32,13 @@ contract MiniPoolAddressProvider is Common {
         );
         fixture_configureProtocol(
             address(deployedContracts.lendingPool),
-            address(aToken),
+            address(commonContracts.aToken),
             configAddresses,
             deployedContracts.lendingPoolConfigurator,
             deployedContracts.lendingPoolAddressesProvider
         );
-        mockedVaults = fixture_deployReaperVaultMocks(tokens, address(deployedContracts.treasury));
+        commonContracts.mockedVaults =
+            fixture_deployReaperVaultMocks(tokens, address(deployedContracts.treasury));
         erc20Tokens = fixture_getErc20Tokens(tokens);
         fixture_transferTokensToTestContract(erc20Tokens, 1_000_000 ether, address(this));
         (miniPoolContracts,) = fixture_deployMiniPoolSetup(
@@ -52,7 +53,8 @@ contract MiniPoolAddressProvider is Common {
             if (idx < tokens.length) {
                 reserves[idx] = tokens[idx];
             } else {
-                reserves[idx] = address(aTokens[idx - tokens.length].WRAPPER_ADDRESS());
+                reserves[idx] =
+                    address(commonContracts.aTokens[idx - tokens.length].WRAPPER_ADDRESS());
             }
         }
 

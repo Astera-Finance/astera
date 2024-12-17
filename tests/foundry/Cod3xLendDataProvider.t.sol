@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.0;
 
-import "contracts/protocol/libraries/helpers/Errors.sol";
 import {WadRayMath} from "contracts/protocol/libraries/math/WadRayMath.sol";
 import {PercentageMath} from "contracts/protocol/libraries/math/PercentageMath.sol";
 import {ReserveConfiguration} from
@@ -9,12 +8,12 @@ import {ReserveConfiguration} from
 import {LendingPoolConfigurator} from
     "contracts/protocol/core/lendingpool/LendingPoolConfigurator.sol";
 import {MiniPoolConfigurator} from "contracts/protocol/core/minipool/MiniPoolConfigurator.sol";
-import "forge-std/StdUtils.sol";
 import {MathUtils} from "contracts/protocol/libraries/math/MathUtils.sol";
-// import "./LendingPoolFixtures.t.sol";
-import "./MiniPoolFixtures.t.sol";
-import "contracts/misc/Cod3xLendDataProvider.sol";
+import {Cod3xLendDataProvider} from "contracts/misc/Cod3xLendDataProvider.sol";
 import "contracts/interfaces/ICod3xLendDataProvider.sol";
+import "forge-std/StdUtils.sol";
+import "contracts/protocol/libraries/helpers/Errors.sol";
+import "./MiniPoolFixtures.t.sol";
 
 contract Cod3xLendDataProviderTest is MiniPoolFixtures {
     using WadRayMath for uint256;
@@ -37,12 +36,13 @@ contract Cod3xLendDataProviderTest is MiniPoolFixtures {
         );
         fixture_configureProtocol(
             address(deployedContracts.lendingPool),
-            address(aToken),
+            address(commonContracts.aToken),
             configAddresses,
             deployedContracts.lendingPoolConfigurator,
             deployedContracts.lendingPoolAddressesProvider
         );
-        mockedVaults = fixture_deployReaperVaultMocks(tokens, address(deployedContracts.treasury));
+        commonContracts.mockedVaults =
+            fixture_deployReaperVaultMocks(tokens, address(deployedContracts.treasury));
         erc20Tokens = fixture_getErc20Tokens(tokens);
         fixture_transferTokensToTestContract(erc20Tokens, 1_000_000 ether, address(this));
         uint256 miniPoolId;
@@ -59,7 +59,8 @@ contract Cod3xLendDataProviderTest is MiniPoolFixtures {
             if (idx < tokens.length) {
                 reserves[idx] = tokens[idx];
             } else {
-                reserves[idx] = address(aTokens[idx - tokens.length].WRAPPER_ADDRESS());
+                reserves[idx] =
+                    address(commonContracts.aTokens[idx - tokens.length].WRAPPER_ADDRESS());
             }
         }
         configAddresses.stableStrategy = address(miniPoolContracts.stableStrategy);
@@ -77,14 +78,14 @@ contract Cod3xLendDataProviderTest is MiniPoolFixtures {
         uint256 usdcDepositAmount = 1e16; // bound(usdcDepositAmount, 1e12, 10_000e18);
         TokenTypes memory usdcTypes = TokenTypes({
             token: erc20Tokens[0],
-            aToken: aTokens[0],
-            debtToken: variableDebtTokens[0]
+            aToken: commonContracts.aTokens[0],
+            debtToken: commonContracts.variableDebtTokens[0]
         });
 
         TokenTypes memory wbtcTypes = TokenTypes({
             token: erc20Tokens[1],
-            aToken: aTokens[1],
-            debtToken: variableDebtTokens[1]
+            aToken: commonContracts.aTokens[1],
+            debtToken: commonContracts.variableDebtTokens[1]
         });
         console.log("Dealing...");
         deal(address(wbtcTypes.token), address(this), type(uint256).max / 2);
@@ -112,14 +113,14 @@ contract Cod3xLendDataProviderTest is MiniPoolFixtures {
         uint256 usdcDepositAmount = 1e16; // bound(usdcDepositAmount, 1e12, 10_000e18);
         TokenTypes memory usdcTypes = TokenTypes({
             token: erc20Tokens[0],
-            aToken: aTokens[0],
-            debtToken: variableDebtTokens[0]
+            aToken: commonContracts.aTokens[0],
+            debtToken: commonContracts.variableDebtTokens[0]
         });
 
         TokenTypes memory wbtcTypes = TokenTypes({
             token: erc20Tokens[1],
-            aToken: aTokens[1],
-            debtToken: variableDebtTokens[1]
+            aToken: commonContracts.aTokens[1],
+            debtToken: commonContracts.variableDebtTokens[1]
         });
         console.log("Dealing...");
         deal(address(wbtcTypes.token), address(this), type(uint256).max / 2);
@@ -211,14 +212,17 @@ contract Cod3xLendDataProviderTest is MiniPoolFixtures {
         {
             (,, address[] memory aTokens, address[] memory debtTokens) =
                 deployedContracts.cod3xLendDataProvider.getAllLpTokens();
-            for (uint256 idx = 0; idx < aTokens.length; idx++) {
-                console.log(
-                    "%sa. Address: %s (%s)", idx, aTokens[idx], ERC20(aTokens[idx]).symbol()
-                );
-                console.log(
-                    "%sb. Address: %s (%s)", idx, debtTokens[idx], ERC20(debtTokens[idx]).symbol()
-                );
-            }
+            // for (uint256 idx = 0; idx < aTokens.length; idx++) {
+            //     console.log(
+            //         "%sa. Address: %s (%s)",
+            //         idx,
+            //         commonContracts.aTokens[idx],
+            //         ERC20(aTokens[idx]).symbol()
+            //     );
+            //     console.log(
+            //         "%sb. Address: %s (%s)", idx, debtTokens[idx], ERC20(debtTokens[idx]).symbol()
+            //     );
+            // }
         }
         {
             console.log("\n>>>> USER USDC <<<<");
@@ -267,14 +271,14 @@ contract Cod3xLendDataProviderTest is MiniPoolFixtures {
         borrowAmount = 1e19; // bound(usdcDepositAmount, 1e12, 10_000e18);
         TokenParams memory usdcParams = TokenParams({
             token: erc20Tokens[0],
-            aToken: aTokensWrapper[0],
-            price: oracle.getAssetPrice(address(erc20Tokens[0]))
+            aToken: commonContracts.aTokensWrapper[0],
+            price: commonContracts.oracle.getAssetPrice(address(erc20Tokens[0]))
         });
 
         TokenParams memory wbtcParams = TokenParams({
             token: erc20Tokens[1],
-            aToken: aTokensWrapper[1],
-            price: oracle.getAssetPrice(address(erc20Tokens[1]))
+            aToken: commonContracts.aTokensWrapper[1],
+            price: commonContracts.oracle.getAssetPrice(address(erc20Tokens[1]))
         });
         console.log("Dealing...");
         deal(address(wbtcParams.token), address(this), type(uint256).max / 2);
@@ -358,7 +362,7 @@ contract Cod3xLendDataProviderTest is MiniPoolFixtures {
                 uint256[] memory aTokenIds,
                 uint256[] memory variableDebtTokenIds
             ) = deployedContracts.cod3xLendDataProvider.getAllMpTokenInfo(0);
-            for (uint256 idx = 0; idx < aTokens.length; idx++) {
+            for (uint256 idx = 0; idx < commonContracts.aTokens.length; idx++) {
                 console.log("%sa. Address: %s ", idx, aErc6909Token[idx]);
                 console.log(
                     "%sb. Address: %s (%s)", idx, reserves[idx], ERC20(reserves[idx]).symbol()
@@ -420,14 +424,14 @@ contract Cod3xLendDataProviderTest is MiniPoolFixtures {
         borrowAmount = 1e18; // bound(usdcDepositAmount, 1e12, 10_000e18);
         TokenParams memory usdcParams = TokenParams({
             token: erc20Tokens[0],
-            aToken: aTokensWrapper[0],
-            price: oracle.getAssetPrice(address(erc20Tokens[0]))
+            aToken: commonContracts.aTokensWrapper[0],
+            price: commonContracts.oracle.getAssetPrice(address(erc20Tokens[0]))
         });
 
         TokenParams memory wbtcParams = TokenParams({
             token: erc20Tokens[1],
-            aToken: aTokensWrapper[1],
-            price: oracle.getAssetPrice(address(erc20Tokens[1]))
+            aToken: commonContracts.aTokensWrapper[1],
+            price: commonContracts.oracle.getAssetPrice(address(erc20Tokens[1]))
         });
         console.log("Dealing...");
         deal(address(wbtcParams.token), address(this), type(uint256).max / 2);
@@ -453,7 +457,8 @@ contract Cod3xLendDataProviderTest is MiniPoolFixtures {
             if (idx < tokens.length) {
                 reserves[idx] = tokens[idx];
             } else {
-                reserves[idx] = address(aTokens[idx - tokens.length].WRAPPER_ADDRESS());
+                reserves[idx] =
+                    address(commonContracts.aTokens[idx - tokens.length].WRAPPER_ADDRESS());
             }
         }
         miniPool = fixture_configureMiniPoolReserves(

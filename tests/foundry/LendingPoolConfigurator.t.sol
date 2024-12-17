@@ -73,13 +73,14 @@ contract LendingPoolConfiguratorTest is Common {
         );
         fixture_configureProtocol(
             address(deployedContracts.lendingPool),
-            address(aToken),
+            address(commonContracts.aToken),
             configAddresses,
             deployedContracts.lendingPoolConfigurator,
             deployedContracts.lendingPoolAddressesProvider
         );
 
-        mockedVaults = fixture_deployReaperVaultMocks(tokens, address(deployedContracts.treasury));
+        commonContracts.mockedVaults =
+            fixture_deployReaperVaultMocks(tokens, address(deployedContracts.treasury));
         erc20Tokens = fixture_getErc20Tokens(tokens);
         // fixture_transferTokensToTestContract(erc20Tokens, 100_000 ether, address(this));
     }
@@ -206,7 +207,7 @@ contract LendingPoolConfiguratorTest is Common {
     }
 
     function testPoolInteractions(uint256 farmingPct, uint256 claimingThreshold) public {
-        address aTokenAddress = address(aTokens[0]);
+        address aTokenAddress = address(commonContracts.aTokens[0]);
 
         address lendingPoolAddr = address(deployedContracts.lendingPool);
 
@@ -215,10 +216,13 @@ contract LendingPoolConfiguratorTest is Common {
         vm.expectCall(
             lendingPoolAddr,
             abi.encodeCall(
-                deployedContracts.lendingPool.setVault, (aTokenAddress, address(mockedVaults[0]))
+                deployedContracts.lendingPool.setVault,
+                (aTokenAddress, address(commonContracts.mockedVaults[0]))
             )
         );
-        deployedContracts.lendingPoolConfigurator.setVault(aTokenAddress, address(mockedVaults[0]));
+        deployedContracts.lendingPoolConfigurator.setVault(
+            aTokenAddress, address(commonContracts.mockedVaults[0])
+        );
 
         /* set vault negative - 84 */
         vm.expectRevert(bytes(Errors.AT_INVALID_ADDRESS));
@@ -350,19 +354,22 @@ contract LendingPoolConfiguratorTest is Common {
     function testGetTotalManagedAssets() public {
         uint256 amount = 1e18;
         address user = makeAddr("user");
-        for (uint32 idx = 0; idx < aTokens.length; idx++) {
+        for (uint32 idx = 0; idx < commonContracts.aTokens.length; idx++) {
             deal(address(erc20Tokens[idx]), address(this), amount);
-            uint256 _userGrainBalanceBefore = aTokens[idx].balanceOf(address(user));
+            uint256 _userGrainBalanceBefore = commonContracts.aTokens[idx].balanceOf(address(user));
             uint256 _thisBalanceTokenBefore = erc20Tokens[idx].balanceOf(address(this));
 
             /* Deposit on behalf of user */
             erc20Tokens[idx].approve(address(deployedContracts.lendingPool), amount);
             deployedContracts.lendingPool.deposit(address(erc20Tokens[idx]), true, amount, user);
             assertEq(_thisBalanceTokenBefore, erc20Tokens[idx].balanceOf(address(this)) + amount);
-            assertEq(_userGrainBalanceBefore + amount, aTokens[idx].balanceOf(address(user)));
+            assertEq(
+                _userGrainBalanceBefore + amount,
+                commonContracts.aTokens[idx].balanceOf(address(user))
+            );
             assertEq(
                 deployedContracts.lendingPoolConfigurator.getTotalManagedAssets(
-                    address(aTokens[idx])
+                    address(commonContracts.aTokens[idx])
                 ),
                 amount
             );
@@ -390,8 +397,11 @@ contract LendingPoolConfiguratorTest is Common {
             deployedContracts.lendingPoolConfigurator.setRewarderForReserve(
                 address(erc20Tokens[idx]), true, newRewarder
             );
-            assertEq(address(aTokens[idx].getIncentivesController()), newRewarder);
-            assertEq(address(variableDebtTokens[idx].getIncentivesController()), newRewarder);
+            assertEq(address(commonContracts.aTokens[idx].getIncentivesController()), newRewarder);
+            assertEq(
+                address(commonContracts.variableDebtTokens[idx].getIncentivesController()),
+                newRewarder
+            );
         }
     }
 
@@ -402,7 +412,7 @@ contract LendingPoolConfiguratorTest is Common {
             deployedContracts.lendingPoolConfigurator.setTreasury(
                 address(erc20Tokens[idx]), true, newTreasury
             );
-            assertEq(aTokens[idx].RESERVE_TREASURY_ADDRESS(), newTreasury);
+            assertEq(commonContracts.aTokens[idx].RESERVE_TREASURY_ADDRESS(), newTreasury);
         }
     }
 }

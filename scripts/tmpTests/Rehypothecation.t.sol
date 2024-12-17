@@ -222,7 +222,7 @@ contract RehypothecationTest is Common, LendingPoolTest {
             amount = bound(amount, 1e2, erc20Tokens[idx].balanceOf(address(this)));
             TokenTypes memory tokenTypes = TokenTypes({
                 token: erc20Tokens[idx],
-                aToken: aTokens[idx],
+                aToken: commonContracts.aTokens[idx],
                 debtToken: variableDebtTokens[idx]
             });
             TokenVars memory tokenVars = TokenVars({

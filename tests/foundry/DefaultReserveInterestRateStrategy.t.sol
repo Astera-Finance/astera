@@ -27,15 +27,17 @@ contract DefaultReserveInterestRateStrategyTest is Common {
         );
         fixture_configureProtocol(
             address(deployedContracts.lendingPool),
-            address(aToken),
+            address(commonContracts.aToken),
             configAddresses,
             deployedContracts.lendingPoolConfigurator,
             deployedContracts.lendingPoolAddressesProvider
         );
-        aTokens = fixture_getATokens(tokens, deployedContracts.cod3xLendDataProvider);
-        variableDebtTokens =
+        commonContracts.aTokens =
+            fixture_getATokens(tokens, deployedContracts.cod3xLendDataProvider);
+        commonContracts.variableDebtTokens =
             fixture_getVarDebtTokens(tokens, deployedContracts.cod3xLendDataProvider);
-        mockedVaults = fixture_deployReaperVaultMocks(tokens, address(deployedContracts.treasury));
+        commonContracts.mockedVaults =
+            fixture_deployReaperVaultMocks(tokens, address(deployedContracts.treasury));
         erc20Tokens = fixture_getErc20Tokens(tokens);
         fixture_transferTokensToTestContract(erc20Tokens, 100_000 ether, address(this));
     }
@@ -52,7 +54,7 @@ contract DefaultReserveInterestRateStrategyTest is Common {
                 .stableStrategy
                 .calculateInterestRates(
                 address(erc20Tokens[idx]),
-                address(aTokens[idx]),
+                address(commonContracts.aTokens[idx]),
                 0,
                 0,
                 0,
@@ -75,7 +77,7 @@ contract DefaultReserveInterestRateStrategyTest is Common {
                 .stableStrategy
                 .calculateInterestRates(
                 address(erc20Tokens[idx]),
-                address(aTokens[idx]),
+                address(commonContracts.aTokens[idx]),
                 200000000000000000,
                 0,
                 800000000000000000,
@@ -106,7 +108,7 @@ contract DefaultReserveInterestRateStrategyTest is Common {
                 .stableStrategy
                 .calculateInterestRates(
                 address(erc20Tokens[idx]),
-                address(aTokens[idx]),
+                address(commonContracts.aTokens[idx]),
                 0,
                 0,
                 800000000000000000,

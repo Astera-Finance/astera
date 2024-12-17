@@ -296,13 +296,13 @@ contract MiniPoolConfiguratorTest is MiniPoolDepositBorrowTest {
             IAERC6909(miniPoolContracts.miniPoolAddressesProvider.getMiniPoolToAERC6909(miniPool));
         TokenParams memory collateralTokenParams = TokenParams(
             erc20Tokens[collateralOffset],
-            aTokensWrapper[collateralOffset],
-            oracle.getAssetPrice(address(erc20Tokens[collateralOffset]))
+            commonContracts.aTokensWrapper[collateralOffset],
+            commonContracts.oracle.getAssetPrice(address(erc20Tokens[collateralOffset]))
         );
         TokenParams memory borrowTokenParams = TokenParams(
             erc20Tokens[borrowOffset],
-            aTokensWrapper[borrowOffset],
-            oracle.getAssetPrice(address(erc20Tokens[borrowOffset]))
+            commonContracts.aTokensWrapper[borrowOffset],
+            commonContracts.oracle.getAssetPrice(address(erc20Tokens[borrowOffset]))
         );
         address user = makeAddr("user");
         vm.label(address(aErc6909Token), "aErc6909Token");
@@ -400,13 +400,13 @@ contract MiniPoolConfiguratorTest is MiniPoolDepositBorrowTest {
         address user = makeAddr("user");
         TokenParams memory collateralTokenParams = TokenParams(
             erc20Tokens[collateralOffset],
-            aTokensWrapper[collateralOffset],
-            oracle.getAssetPrice(address(erc20Tokens[collateralOffset]))
+            commonContracts.aTokensWrapper[collateralOffset],
+            commonContracts.oracle.getAssetPrice(address(erc20Tokens[collateralOffset]))
         );
         TokenParams memory borrowTokenParams = TokenParams(
             erc20Tokens[borrowOffset],
-            aTokensWrapper[borrowOffset],
-            oracle.getAssetPrice(address(erc20Tokens[borrowOffset]))
+            commonContracts.aTokensWrapper[borrowOffset],
+            commonContracts.oracle.getAssetPrice(address(erc20Tokens[borrowOffset]))
         );
         /* Assumptions */
         amount = bound(
@@ -550,8 +550,8 @@ contract MiniPoolConfiguratorTest is MiniPoolDepositBorrowTest {
         vm.label(vars.daiWhale, "DaiWhale");
 
         vars.usdc = erc20Tokens[0];
-        vars.grainUSDC = aTokensWrapper[0];
-        vars.debtUSDC = variableDebtTokens[0];
+        vars.grainUSDC = commonContracts.aTokensWrapper[0];
+        vars.debtUSDC = commonContracts.variableDebtTokens[0];
         vars.amount = 5e8; //bound(amount, 1E6, 1E13); /* $500 */ // consider fuzzing here
         uint256 usdcAID = 1000;
         // uint256 usdcDID = 2000;
@@ -605,7 +605,7 @@ contract MiniPoolConfiguratorTest is MiniPoolDepositBorrowTest {
             IERC20(reserveData.variableDebtTokenAddress).balanceOf(vars.user)
         );
         DataTypes.MiniPoolReserveData memory mpReserveData =
-            IMiniPool(vars.mp).getReserveData(address(aTokensWrapper[0]));
+            IMiniPool(vars.mp).getReserveData(address(commonContracts.aTokensWrapper[0]));
         uint128 mpCurrentLiquidityRate = mpReserveData.currentLiquidityRate;
         uint128 mpCurrentVariableBorrowRate = mpReserveData.currentVariableBorrowRate;
 
