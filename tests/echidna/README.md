@@ -155,21 +155,21 @@ You can fine in `/echidna` 3 config files to run the fuzzer:
 
 ### AToken6909
 
-600. 🚧 Zero amount transfers should not break accounting.
-601. 🚧 Once a user has a debt, they must not be able to transfer aTokens if this results in a health factor less than 1.
-602. 🚧 Transfers for more than available balance should not be allowed.
-603. 🚧 Transfers should update accounting correctly.
-604. 🚧 Self transfers should not break accounting.
-605. 🚧 Zero amount transfers must not break accounting.
-606. 🚧 Once a user has a debt, they must not be able to transfer AToken6909s if this results in a health factor less than 1.
-607. 🚧 Transfers for more than available balance must not be allowed.
-608. 🚧 `transferFrom()` must only transfer if the sender has enough allowance from the `from` address.
-609. 🚧 Transfers must update accounting correctly.
-610. 🚧 Self transfers must not break accounting.
-611. 🚧 `transferFrom()` must decrease allowance.
-612. 🚧 `approve()` must never revert.
-613. 🚧 Allowance must be modified correctly via `approve()`.
-614. 🚧 Force feeding assets in MiniPools or AToken6909 must not change the final result.
+600. ✅ Zero amount transfers should not break accounting.
+601. ✅ Once a user has a debt, they must not be able to transfer aTokens if this results in a health factor less than 1.
+602. ✅ Transfers for more than available balance should not be allowed.
+603. ✅ Transfers should update accounting correctly.
+604. ✅ Self transfers should not break accounting.
+605. ✅ Zero amount transfers must not break accounting.
+606. ✅ Once a user has a debt, they must not be able to transfer AToken6909s if this results in a health factor less than 1.
+607. ✅ Transfers for more than available balance must not be allowed.
+608. ✅ `transferFrom()` must only transfer if the sender has enough allowance from the `from` address.
+609. ✅ Transfers must update accounting correctly.
+610. ✅ Self transfers must not break accounting.
+611. ✅ `transferFrom()` must decrease allowance.
+612. ✅ `approve()` must never revert.
+613. ✅ Allowance must be modified correctly via `approve()`.
+614. ✅ Force feeding assets in MiniPools or AToken6909 must not change the final result.
 615. 🚧 Force feeding aToken or AToken6909 in MiniPools or AToken6909 must not change the final result.
 616. 🚧 A user must not hold more than total supply.
 617. 🚧 Sum of users' balances must not exceed total supply.

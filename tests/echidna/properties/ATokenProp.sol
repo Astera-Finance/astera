@@ -14,7 +14,7 @@ contract ATokenProp is PropertiesBase {
     /// @custom:invariant 302 - Transfers for more than available balance should not be allowed.
     /// @custom:invariant 303 - Transfers should update accounting correctly.
     /// @custom:invariant 304 - Self transfers should not break accounting.
-    function randTransfer(
+    function randTransferLP(
         LocalVars_UPTL memory vul,
         uint8 seedUser,
         uint8 seedRecipient,
@@ -75,7 +75,7 @@ contract ATokenProp is PropertiesBase {
     /// @custom:invariant 309 - Transfers must update accounting correctly.
     /// @custom:invariant 310 - Self transfers must not break accounting.
     /// @custom:invariant 311 - `transferFrom()` must decrease allowance.
-    function randTransferFrom(
+    function randTransferFromLP(
         LocalVars_UPTL memory vul,
         uint8 seedUser,
         uint8 seedFrom,
@@ -145,7 +145,7 @@ contract ATokenProp is PropertiesBase {
 
     /// @custom:invariant 312 - `approve()` must never revert.
     /// @custom:invariant 313 - Allowance must be modified correctly via `approve()`.
-    function randApprove(
+    function randApproveLP(
         LocalVars_UPTL memory vul,
         uint8 seedUser,
         uint8 seedSender,
@@ -175,7 +175,7 @@ contract ATokenProp is PropertiesBase {
 
     /// @custom:invariant 314 - `increaseAllowance()` must never revert.
     /// @custom:invariant 315 - Allowance must be modified correctly via `increaseAllowance()`.
-    function randIncreaseAllowance(
+    function randIncreaseAllowanceLP(
         LocalVars_UPTL memory vul,
         uint8 seedUser,
         uint8 seedSender,
@@ -206,7 +206,7 @@ contract ATokenProp is PropertiesBase {
 
     /// @custom:invariant 316 - `decreaseAllowance()` must revert when user tries to decrease more than currently allowed.
     /// @custom:invariant 317 - Allowance must be modified correctly via `decreaseAllowance()`.
-    function randDecreaseAllowance(
+    function randDecreaseAllowanceLP(
         LocalVars_UPTL memory vul,
         uint8 seedUser,
         uint8 seedSender,
@@ -243,7 +243,7 @@ contract ATokenProp is PropertiesBase {
     // /// @custom:invariant 319 - Mutation in the signature must make `permit()` revert.
     // /// @custom:invariant 320 - Mutation in parameters must make `permit()` revert.
     // /// @custom:invariant 321 - User allowance must be equal to `amount` when sender call `permit()`.
-    // function randPermit(LocalVars_UPTL memory vul, uint8 seedUser, uint8 seedSender, uint8 seedAToken, uint128 seedAmt, uint48 randDeadline) public {
+    // function randPermitLP(LocalVars_UPTL memory vul, uint8 seedUser, uint8 seedSender, uint8 seedAToken, uint128 seedAmt, uint48 randDeadline) public {
     //     randUpdatePriceAndTryLiquidateLP(vul);
     //     uint randUser = clampBetween(seedUser, 0 ,totalNbUsers);
     //     uint randSender = clampBetween(seedSender, 0 ,totalNbUsers);
@@ -275,7 +275,7 @@ contract ATokenProp is PropertiesBase {
     // }
 
     /// @custom:invariant 322 - Force feeding assets in LendingPool, ATokens or debtTokens must not change the final result.
-    function randForceFeedAsset(
+    function randForceFeedAssetLP(
         LocalVars_UPTL memory vul,
         uint128 seedAmt,
         uint8 seedAsset,
@@ -299,7 +299,7 @@ contract ATokenProp is PropertiesBase {
     }
 
     /// @custom:invariant 323 - Force feeding aToken in LendingPool, ATokens or debtTokens must not change the final result.
-    function randForceFeedATokens(
+    function randForceFeedATokensLP(
         LocalVars_UPTL memory vul,
         uint8 seedUser,
         uint128 seedAmt,
@@ -338,7 +338,7 @@ contract ATokenProp is PropertiesBase {
     // --- ATokenNonRebasing Properties ---
 
     /// @custom:invariant 326 - `ATokenNonRebasing` `balanceOf()` should be equivalent to `ATokens` adjusted to the conversion rate.
-    function randATokenNonRebasingBalanceOf(
+    function randATokenNonRebasingBalanceOfLP(
         LocalVars_UPTL memory vul,
         uint8 seedUser,
         uint8 seedAsset
@@ -362,7 +362,7 @@ contract ATokenProp is PropertiesBase {
     /// @custom:invariant 303 - Transfers should update accounting correctly.
     /// @custom:invariant 304 - Self transfers should not break accounting.
     /// @custom:invariant 327 - `ATokenNonRebasing` `transfer()` should be equivalent to `ATokens` adjusted to the conversion rate.
-    function randATokenNonRebasingTransfer(
+    function randATokenNonRebasingTransferLP(
         LocalVars_UPTL memory vul,
         uint8 seedUser,
         uint8 seedReceiver,
@@ -457,7 +457,7 @@ contract ATokenProp is PropertiesBase {
     /// @custom:invariant 303 - Transfers should update accounting correctly.
     /// @custom:invariant 304 - Self transfers should not break accounting.
     /// @custom:invariant 328 - `ATokenNonRebasing` `transferFrom()` should be equivalent to `ATokens` adjusted to the conversion rate.
-    function randATokenNonRebasingTransferFrom(
+    function randATokenNonRebasingTransferFromLP(
         LocalVars_UPTL memory vul,
         uint8 seedOwner,
         uint8 seedSpender,
@@ -542,7 +542,7 @@ contract ATokenProp is PropertiesBase {
     /// @custom:invariant 312 - `approve()` must never revert.
     /// @custom:invariant 329 - Allowance must be modified correctly via `ATokenNonRebasing.approve()`.
     /// @custom:invariant 330 - `ATokenNonRebasing.approve()` must not modify `AToken.allowance()`.
-    function randATokenNonRebasingApprove(
+    function randATokenNonRebasingApproveLP(
         LocalVars_UPTL memory vul,
         uint8 seedUser,
         uint8 seedSender,
@@ -579,7 +579,7 @@ contract ATokenProp is PropertiesBase {
 
     /// @custom:invariant 324 - A user must not hold more than total supply.
     /// @custom:invariant 325 - Sum of users balance must not exceed total supply.
-    function balanceIntegrity(LocalVars_UPTL memory vul) public {
+    function balanceIntegrityLP(LocalVars_UPTL memory vul) public {
         randUpdatePriceAndTryLiquidateLP(vul);
 
         for (uint256 j = 0; j < aTokens.length; j++) {
