@@ -600,64 +600,62 @@ contract Common is Test {
         address _lendingPoolAddressesProvider,
         address _lendingPool,
         address _cod3xLendDataProvider,
-        address _miniPoolAddressProvider
+        DeployedMiniPoolContracts memory miniPoolContracts
     ) public returns (DeployedMiniPoolContracts memory, uint256) {
-        DeployedMiniPoolContracts memory deployedMiniPoolContracts;
         uint256 miniPoolId;
-        deployedMiniPoolContracts.miniPoolImpl = new MiniPool();
-        deployedMiniPoolContracts.aToken6909Impl = new ATokenERC6909();
+        if (address(miniPoolContracts.miniPoolImpl) == address(0)) {
+            miniPoolContracts.miniPoolImpl = new MiniPool();
+        }
 
-        if (_miniPoolAddressProvider == address(0)) {
+        if (address(miniPoolContracts.aToken6909Impl) == address(0)) {
+            miniPoolContracts.aToken6909Impl = new ATokenERC6909();
+        }
+
+        if (address(miniPoolContracts.miniPoolAddressesProvider) == address(0)) {
             /* First deployment so configure everything */
 
-            deployedMiniPoolContracts.miniPoolAddressesProvider = new MiniPoolAddressesProvider(
+            miniPoolContracts.miniPoolAddressesProvider = new MiniPoolAddressesProvider(
                 ILendingPoolAddressesProvider(_lendingPoolAddressesProvider)
             );
-            console.log("miniPoolImpl: ", address(deployedMiniPoolContracts.miniPoolImpl));
-            console.log("aToken6909Impl: ", address(deployedMiniPoolContracts.aToken6909Impl));
-            miniPoolId = deployedMiniPoolContracts.miniPoolAddressesProvider.deployMiniPool(
-                address(deployedMiniPoolContracts.miniPoolImpl),
-                address(deployedMiniPoolContracts.aToken6909Impl),
+            console.log("miniPoolImpl: ", address(miniPoolContracts.miniPoolImpl));
+            console.log("aToken6909Impl: ", address(miniPoolContracts.aToken6909Impl));
+            miniPoolId = miniPoolContracts.miniPoolAddressesProvider.deployMiniPool(
+                address(miniPoolContracts.miniPoolImpl),
+                address(miniPoolContracts.aToken6909Impl),
                 poolOwner
             );
-            deployedMiniPoolContracts.flowLimiter = new FlowLimiter(
-                IMiniPoolAddressesProvider(
-                    address(deployedMiniPoolContracts.miniPoolAddressesProvider)
-                ),
+            miniPoolContracts.flowLimiter = new FlowLimiter(
+                IMiniPoolAddressesProvider(address(miniPoolContracts.miniPoolAddressesProvider)),
                 ILendingPool(_lendingPool)
             );
             address miniPoolConfigImpl = address(new MiniPoolConfigurator());
-            deployedMiniPoolContracts.miniPoolAddressesProvider.setMiniPoolConfigurator(
-                miniPoolConfigImpl
-            );
-            deployedMiniPoolContracts.miniPoolConfigurator = MiniPoolConfigurator(
-                deployedMiniPoolContracts.miniPoolAddressesProvider.getMiniPoolConfigurator()
+            miniPoolContracts.miniPoolAddressesProvider.setMiniPoolConfigurator(miniPoolConfigImpl);
+            miniPoolContracts.miniPoolConfigurator = MiniPoolConfigurator(
+                miniPoolContracts.miniPoolAddressesProvider.getMiniPoolConfigurator()
             );
 
             ILendingPoolAddressesProvider(_lendingPoolAddressesProvider)
-                .setMiniPoolAddressesProvider(
-                address(deployedMiniPoolContracts.miniPoolAddressesProvider)
-            );
+                .setMiniPoolAddressesProvider(address(miniPoolContracts.miniPoolAddressesProvider));
             ILendingPoolAddressesProvider(_lendingPoolAddressesProvider).setFlowLimiter(
-                address(deployedMiniPoolContracts.flowLimiter)
+                address(miniPoolContracts.flowLimiter)
             );
 
             /* Strategies */
-            deployedMiniPoolContracts.stableStrategy = new MiniPoolDefaultReserveInterestRateStrategy(
+            miniPoolContracts.stableStrategy = new MiniPoolDefaultReserveInterestRateStrategy(
                 IMiniPoolAddressesProvider(_lendingPoolAddressesProvider),
                 sStrat[0],
                 sStrat[1],
                 sStrat[2],
                 sStrat[3]
             );
-            deployedMiniPoolContracts.volatileStrategy = new MiniPoolDefaultReserveInterestRateStrategy(
+            miniPoolContracts.volatileStrategy = new MiniPoolDefaultReserveInterestRateStrategy(
                 IMiniPoolAddressesProvider(_lendingPoolAddressesProvider),
                 volStrat[0],
                 volStrat[1],
                 volStrat[2],
                 volStrat[3]
             );
-            deployedMiniPoolContracts.piStrategy = new MiniPoolPiReserveInterestRateStrategy(
+            miniPoolContracts.piStrategy = new MiniPoolPiReserveInterestRateStrategy(
                 _lendingPoolAddressesProvider,
                 0, // minipool ID
                 defaultPidConfig.asset,
@@ -669,18 +667,18 @@ contract Common is Test {
                 defaultPidConfig.ki
             );
             Cod3xLendDataProvider(_cod3xLendDataProvider).setMiniPoolAddressProvider(
-                address(deployedMiniPoolContracts.miniPoolAddressesProvider)
+                address(miniPoolContracts.miniPoolAddressesProvider)
             );
         } else {
             /* Get the same AERC6909 impl as previously */
-            miniPoolId = IMiniPoolAddressesProvider(_miniPoolAddressProvider).deployMiniPool(
-                address(deployedMiniPoolContracts.miniPoolImpl),
-                address(deployedMiniPoolContracts.aToken6909Impl),
+            miniPoolId = miniPoolContracts.miniPoolAddressesProvider.deployMiniPool(
+                address(miniPoolContracts.miniPoolImpl),
+                address(miniPoolContracts.aToken6909Impl),
                 poolOwner
             );
         }
 
-        return (deployedMiniPoolContracts, miniPoolId);
+        return (miniPoolContracts, miniPoolId);
     }
 
     function fixture_convertWithDecimals(uint256 amountRaw, uint256 decimalsA, uint256 decimalsB)

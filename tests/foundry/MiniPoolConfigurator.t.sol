@@ -235,7 +235,7 @@ contract MiniPoolConfiguratorTest is MiniPoolDepositBorrowTest {
         }
     }
 
-    function testsetCod3xReserveFactor_Positive(uint256 validReserveFactor) public {
+    function testSetCod3xReserveFactor_Positive(uint256 validReserveFactor) public {
         validReserveFactor = bound(validReserveFactor, 0, MAX_VALID_RESERVE_FACTOR);
         for (uint32 idx; idx < erc20Tokens.length; idx++) {
             DataTypes.ReserveConfigurationMap memory configuration =

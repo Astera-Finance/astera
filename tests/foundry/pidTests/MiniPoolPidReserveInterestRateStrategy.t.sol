@@ -34,7 +34,7 @@ contract MiniPoolPidReserveInterestRateStrategyTest is Common {
             address(deployedContracts.lendingPoolAddressesProvider),
             address(deployedContracts.lendingPool),
             address(deployedContracts.cod3xLendDataProvider),
-            address(0)
+            deployedMiniPoolContracts
         );
         console.log("PiReserveInterestRateStrategy deployment: ");
         pidStrat = new PiReserveInterestRateStrategy(

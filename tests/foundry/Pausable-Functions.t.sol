@@ -38,7 +38,7 @@ contract PausableFunctionsTest is Common {
             address(deployedContracts.lendingPoolAddressesProvider),
             address(deployedContracts.lendingPool),
             address(deployedContracts.cod3xLendDataProvider),
-            address(0)
+            miniPoolContracts
         );
 
         address[] memory reserves = new address[](2 * tokens.length);

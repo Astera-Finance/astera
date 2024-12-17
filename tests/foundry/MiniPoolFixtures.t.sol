@@ -34,8 +34,15 @@ abstract contract MiniPoolFixtures is LendingPoolFixtures {
             deployedContracts.lendingPool.deposit(address(tokenParams.token), true, amount, user);
             console.log("User token balance shall be {initialTokenBalance - amount}");
             assertEq(tokenParams.token.balanceOf(user), initialTokenBalance - amount, "01");
+            DynamicData memory dynamicData = deployedContracts
+                .cod3xLendDataProvider
+                .getLpReserveDynamicData(address(tokenParams.token), true);
             console.log("User atoken balance shall be {initialATokenBalance + amount}");
-            assertEq(tokenParams.aToken.balanceOf(user), initialATokenBalance + amount, "02");
+            assertEq(
+                tokenParams.aToken.balanceOf(user),
+                initialATokenBalance + amount.rayDiv(dynamicData.liquidityIndex),
+                "Wrong user's atoken balance"
+            );
         }
         vm.stopPrank();
     }
@@ -62,9 +69,12 @@ abstract contract MiniPoolFixtures is LendingPoolFixtures {
             IMiniPool(miniPool).getReserveNormalizedIncome(address(tokenParams.aToken))
         );
         console.log("User atoken 6909 balance shall be initial balance + scaled amount");
-        console.log("aTokenUserBalance: ", aErc6909Token.balanceOf(user, aTokenId));
-        console.log("amount: ", amount);
-        console.log("BalanceOf: ", aErc6909Token.balanceOf(user, aTokenId));
+        console.log(
+            "User's aTokenUserBalance (tranched): ", aErc6909Token.balanceOf(user, aTokenId)
+        );
+        console.log("User's aTokenUserBalance : ", aErc6909Token.balanceOf(user, aTokenId + 128));
+        console.log("ScaledAmount: ", scaledAmount);
+        console.log("Users's main aToken: ", tokenParams.aToken.balanceOf(user));
         assertEq(
             aToken6909Balance + scaledAmount,
             aErc6909Token.scaledTotalSupply(aTokenId),
