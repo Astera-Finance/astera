@@ -621,9 +621,15 @@ contract ATokenERC6909 is IncentivizedERC6909, VersionedInitializable {
             return 0;
         }
 
-        return currentSupplyScaled.rayMul(
-            POOL.getReserveNormalizedIncome(_underlyingAssetAddresses[id])
-        );
+        if (isDebtToken(id)) {
+            return currentSupplyScaled.rayMul(
+                POOL.getReserveNormalizedVariableDebt(_underlyingAssetAddresses[id])
+            );
+        } else {
+            return currentSupplyScaled.rayMul(
+                POOL.getReserveNormalizedIncome(_underlyingAssetAddresses[id])
+            );
+        }
     }
 
     /**
