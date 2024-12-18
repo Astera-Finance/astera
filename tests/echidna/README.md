@@ -103,8 +103,8 @@ You can fine in `/echidna` 3 config files to run the fuzzer:
 319. 🚧 Mutation in the signature must make `permit()` revert.
 320. 🚧 Mutation in parameters must make `permit()` revert.
 321. 🚧 User allowance must be equal to `amount` when the sender calls `permit()`.
-322. ✅ Force feeding assets in LendingPool, ATokens, or debtTokens must not change the final result.
-323. ✅ Force feeding aToken in LendingPool, ATokens, or debtTokens must not change the final result.
+322. ✅ Force feeding assets in LendingPool, ATokens, debtTokens, MiniPools or AToken6909 must not change the final result.
+323. ✅ Force feeding aToken in LendingPool, ATokens, debtTokens, MiniPools or AToken6909 must not change the final result.
 324. ✅ A user must not hold more than total supply.
 325. ✅ Sum of users' balances must not exceed total supply.
 326. ✅ `ATokenNonRebasing` `balanceOf()` should be equivalent to `ATokens` adjusted to the conversion rate.
@@ -169,12 +169,11 @@ You can fine in `/echidna` 3 config files to run the fuzzer:
 611. ✅ `transferFrom()` must decrease allowance.
 612. ✅ `approve()` must never revert.
 613. ✅ Allowance must be modified correctly via `approve()`.
-614. ✅ Force feeding assets in MiniPools or AToken6909 must not change the final result.
-615. 🚧 Force feeding aToken or AToken6909 in MiniPools or AToken6909 must not change the final result.
-616. 🚧 A user must not hold more than total supply.
-617. 🚧 Sum of users' balances must not exceed total supply.
-618. 🚧 `approveDelegation()` must never revert.
-619. 🚧 Allowance must be modified correctly via `approve()`.
+614. ✅ Force feeding AToken6909 in MiniPools or AToken6909 must not change the final result.
+615. ✅ `approveDelegation()` must never revert.
+616. ✅ Allowance must be modified correctly via `approve()`.
+617. ✅ A user must not hold more than total supply.
+618. ✅ Sum of users' balances must not exceed total supply.
 
 ## Admin entry points
 

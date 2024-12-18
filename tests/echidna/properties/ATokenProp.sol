@@ -274,33 +274,43 @@ contract ATokenProp is PropertiesBase {
     //     assertEq(aToken.allowance(address(user), address(sender)), randAmt, "321");
     // }
 
-    /// @custom:invariant 322 - Force feeding assets in LendingPool, ATokens or debtTokens must not change the final result.
+    /// @custom:invariant 322 - Force feeding assets in LendingPool, ATokens, debtTokens, MiniPools or AToken6909 must not change the final result.
     function randForceFeedAssetLP(
         LocalVars_UPTL memory vul,
+        uint8 seedMinipool,
         uint128 seedAmt,
         uint8 seedAsset,
         uint8 seedReceiver
     ) public {
         randUpdatePriceAndTryLiquidateLP(vul);
 
-        uint256 randAmt = clampBetween(seedAmt, 1, type(uint80).max);
         uint256 randAsset = clampBetween(seedAsset, 0, totalNbTokens);
-        uint256 randReceiver = clampBetween(seedReceiver, 0, 3);
-
         MintableERC20 asset = assets[randAsset];
+
+        uint256 randAmt = clampBetween(seedAmt, 1, asset.balanceOf(address(this)) / 2);
+        uint256 randReceiver = clampBetween(seedReceiver, 0, 5);
+
+        uint256 randMinipool = clampBetween(seedMinipool, 0, totalNbMinipool);
+        MiniPool minipool = miniPools[randMinipool];
+        ATokenERC6909 aToken6909 = aTokens6909[randMinipool];
 
         if (randReceiver == 0) {
             asset.transfer(address(pool), randAmt);
         } else if (randReceiver == 1) {
             asset.transfer(address(aTokens[randAsset]), randAmt);
-        } else {
+        } else if (randReceiver == 2) {
             asset.transfer(address(debtTokens[randAsset]), randAmt);
+        } else if (randReceiver == 3) {
+            asset.transfer(address(minipool), randAmt);
+        } else {
+            asset.transfer(address(aToken6909), randAmt);
         }
     }
 
-    /// @custom:invariant 323 - Force feeding aToken in LendingPool, ATokens or debtTokens must not change the final result.
+    /// @custom:invariant 323 - Force feeding aToken in LendingPool, ATokens, debtTokens, MiniPools or AToken6909 must not change the final result.
     function randForceFeedATokensLP(
         LocalVars_UPTL memory vul,
+        uint8 seedMinipool,
         uint8 seedUser,
         uint128 seedAmt,
         uint8 seedAsset,
@@ -313,7 +323,11 @@ contract ATokenProp is PropertiesBase {
         uint256 randAsset = clampBetween(seedAsset, 0, totalNbTokens);
         AToken aToken = aTokens[randAsset];
         uint256 randAmt = clampBetween(seedAmt, 1, aToken.balanceOf(address(user)));
-        uint256 randReceiver = clampBetween(seedReceiver, 0, 3);
+        uint256 randReceiver = clampBetween(seedReceiver, 0, 5);
+
+        uint256 randMinipool = clampBetween(seedMinipool, 0, totalNbMinipool);
+        MiniPool minipool = miniPools[randMinipool];
+        ATokenERC6909 aToken6909 = aTokens6909[randMinipool];
 
         if (randReceiver == 0) {
             user.proxy(
@@ -325,12 +339,22 @@ contract ATokenProp is PropertiesBase {
                 address(aToken),
                 abi.encodeWithSelector(aToken.transfer.selector, address(aToken), randAmt)
             );
-        } else {
+        } else if (randReceiver == 2) {
             user.proxy(
                 address(aToken),
                 abi.encodeWithSelector(
                     aToken.transfer.selector, address(debtTokens[randAsset]), randAmt
                 )
+            );
+        } else if (randReceiver == 3) {
+            user.proxy(
+                address(aToken),
+                abi.encodeWithSelector(aToken.transfer.selector, address(minipool), randAmt)
+            );
+        } else {
+            user.proxy(
+                address(aToken),
+                abi.encodeWithSelector(aToken.transfer.selector, address(aToken6909), randAmt)
             );
         }
     }

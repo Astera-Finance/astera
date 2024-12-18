@@ -34,6 +34,8 @@ contract LendingPoolProp is PropertiesBase {
         uint256 aTokenBalanceBefore = aToken.balanceOf(address(onBehalfOf));
         uint256 assetBalanceBefore = asset.balanceOf(address(user));
 
+        user.approveERC20(IERC20(address(asset)), address(pool));
+
         (bool success,) = user.proxy(
             address(pool),
             abi.encodeWithSelector(
@@ -429,7 +431,7 @@ contract LendingPoolProp is PropertiesBase {
         for (uint256 i = 0; i < users.length; i++) {
             User user = users[i];
             if (hasDebt(user)) {
-                assertWithMsg(hasATokens(user), "219");
+                assertWithMsg(hasATokensStrict(user), "219");
             }
         }
     }

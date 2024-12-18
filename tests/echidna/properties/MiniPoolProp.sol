@@ -460,7 +460,7 @@ contract MiniPoolProp is PropertiesBase {
             for (uint256 i = 0; i < users.length; i++) {
                 User user = users[i];
                 if (hasDebtTokens6909(user, j)) {
-                    assertWithMsg(hasATokens6909(user, j), "519");
+                    assertWithMsg(hasATokens6909Strict(user, j), "519");
                 }
             }
         }

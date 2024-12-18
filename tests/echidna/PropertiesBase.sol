@@ -468,14 +468,31 @@ contract PropertiesBase is PropertiesAsserts, MarketParams {
         }
 
         /// setup users
+
+        // lendingpool
         for (uint256 i = 0; i < totalNbUsers; i++) {
             User user = new User(lendingPoolProvider);
             users.push(user);
             for (uint256 j = 0; j < totalNbTokens; j++) {
                 assets[j].mint(address(user), initialMint);
                 user.approveERC20(assets[j], address(pool));
+            }
+        }
+
+        // minipool
+        for (uint256 i = 0; i < totalNbUsers; i++) {
+            User user = users[i];
+
+            for (uint256 j = 0; j < totalNbTokens * 2; j++) {
+                MintableERC20 asset = MintableERC20(allTokens(j));
+
+                // only mint for classic assets (not aTokens)
+                if (j < totalNbTokens) {
+                    asset.mint(address(user), initialMint);
+                }
+
                 for (uint256 k = 0; k < totalNbMinipool; k++) {
-                    user.approveERC20(assets[j], address(miniPools[k]));
+                    user.approveERC20(IERC20(address(asset)), address(miniPools[k]));
                 }
             }
         }
@@ -821,6 +838,17 @@ contract PropertiesBase is PropertiesAsserts, MarketParams {
                         miniPools[minipoolId].getUserConfiguration(address(user)), i
                     )
             ) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    function hasATokens6909Strict(User user, uint256 minipoolId) internal view returns (bool) {
+        ATokenERC6909 aToken6909 = aTokens6909[minipoolId];
+        for (uint256 i = 0; i < totalNbTokens * 2; i++) {
+            (uint256 aTokenID,,) = aToken6909.getIdForUnderlying(allTokens(i));
+            if (aToken6909.balanceOf(address(user), aTokenID) != 0) {
                 return true;
             }
         }
