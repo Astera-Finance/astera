@@ -391,7 +391,7 @@ contract ATokenProp is PropertiesBase {
         uint8 seedUser,
         uint8 seedReceiver,
         uint8 seedAsset,
-        uint8 seedAmt
+        uint128 seedAmt
     ) public {
         randUpdatePriceAndTryLiquidateLP(vul);
 
@@ -487,7 +487,7 @@ contract ATokenProp is PropertiesBase {
         uint8 seedSpender,
         uint8 seedReceiver,
         uint8 seedAsset,
-        uint8 seedAmt
+        uint128 seedAmt
     ) public {
         randUpdatePriceAndTryLiquidateLP(vul);
 

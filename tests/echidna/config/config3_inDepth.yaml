@@ -16,7 +16,7 @@ maxBlockDelay: 8640
 # Ignore helpers
 filterBlacklist: true
 filterFunctions: []
-codeSize: 0xf000
+codeSize: 0xffffffff
 
 # Library linking
 cryticArgs: [

@@ -305,6 +305,10 @@ contract PropertiesBase is PropertiesAsserts, MarketParams {
             aTokens.push(AToken(aTokenAddress));
             aTokensNonRebasing.push(ATokenNonRebasing(AToken(aTokenAddress).WRAPPER_ADDRESS()));
             debtTokens.push(VariableDebtToken(variableDebtTokenAddress));
+
+            if (i % 2 == 1) {
+                poolConfigurator.setDepositCap(address(assets[i]), true, initialMint * 2);
+            }
         }
 
         poolConfigurator.setPoolPause(false);
@@ -401,10 +405,11 @@ contract PropertiesBase is PropertiesAsserts, MarketParams {
                 miniPoolConfigurator.setCod3xReserveFactor(
                     token, DEFAULT_RESERVE_FACTOR, IMiniPool(address(_miniPool))
                 );
-                // TODO: set deposit cap
-                // miniPoolConfigurator.setDepositCap(
-                //     token, 10000, IMiniPool(address(_miniPool))
-                // );
+                if (j % 2 == 0) {
+                    miniPoolConfigurator.setDepositCap(
+                        token, initialMint * 2, IMiniPool(address(_miniPool))
+                    );
+                }
                 miniPoolConfigurator.setMinipoolOwnerTreasuryToMiniPool(
                     address(this), IMiniPool(address(_miniPool))
                 );
@@ -1028,5 +1033,15 @@ contract PropertiesBase is PropertiesAsserts, MarketParams {
     function allTokens(uint256 j) internal view returns (address ret) {
         return
             j < totalNbTokens ? address(assets[j]) : address(aTokensNonRebasing[j - totalNbTokens]);
+    }
+
+    /// @dev getDepositCap Memory helper
+    function getDepositCap(DataTypes.ReserveConfigurationMap memory self)
+        internal
+        view
+        returns (uint256)
+    {
+        return (self.data & ~ReserveConfiguration.DEPOSIT_CAP_MASK)
+            >> ReserveConfiguration.DEPOSIT_CAP_START_BIT_POSITION;
     }
 }

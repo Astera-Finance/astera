@@ -2,6 +2,8 @@
 pragma solidity ^0.8.13;
 
 import "../PropertiesBase.sol";
+import {MathUtils} from "../../../contracts/protocol/libraries/math/MathUtils.sol";
+import {WadRayMath} from "../../../contracts/protocol/libraries/math/WadRayMath.sol";
 
 contract MiniPoolProp is PropertiesBase {
     constructor() {}
@@ -470,6 +472,34 @@ contract MiniPoolProp is PropertiesBase {
     // /// @custom:invariant 521 - If all users withdraw their liquidity, there must not be aTokens supply left.
     // function usersFullCollateralClaimMP() public {
     // }
+
+    /// @custom:invariant 522 - Integrity of Deposit Cap - aToken supply should never exceed the cap.
+    function integrityOfDepositCapMP() public {
+        for (uint256 j = 0; j < miniPools.length; j++) {
+            MiniPool minipool = miniPools[j];
+            ATokenERC6909 aToken6909 = aTokens6909[j];
+
+            for (uint256 i = 0; i < totalNbTokens * 2; i++) {
+                address asset = allTokens(i);
+
+                DataTypes.MiniPoolReserveData memory reserve = minipool.getReserveData(asset);
+
+                uint256 depositCap = getDepositCap(reserve.configuration);
+                uint8 decimals = ERC20(asset).decimals();
+                uint256 aTokenSupply = aToken6909.totalSupply(i);
+                if (depositCap != 0) {
+                    assertWithMsg(
+                        aTokenSupply
+                            <= WadRayMath.rayMul(
+                                minipool.getReserveNormalizedIncome(asset),
+                                depositCap * (10 ** decimals)
+                            ),
+                        "522"
+                    );
+                }
+            }
+        }
+    }
 
     // ---------------------- Helpers ----------------------
 }

@@ -23,16 +23,18 @@ You can fine in `/echidna` 3 config files to run the fuzzer:
 
 # TODO
 
-- Add minipools.
+- add minipoolPiRateStrategies
 - Randomly activation flow borrowing on minipools
-- Implemente all "To implement" invariants.
-- Fix randBorrow "207", "220", "221".
 - Add Medusa support
 - Add rewarders.
-- test setDepositCap
 - fix lastLiquidityIndex and lastBorrowIndex
 
 # Invariant testing
+
+✅ : Passing
+❌ : Failing
+🚧 : To be implemented
+🚚 : To be removed 
 
 ### General (same for the LendingPool and MiniPools)
 
@@ -64,14 +66,14 @@ You can fine in `/echidna` 3 config files to run the fuzzer:
 216. 🚚
 217. ✅ The `liquidityIndex` should monotonically increase when there's total debt.
 218. ✅ The `variableBorrowIndex` should monotonically increase when there's total debt.
-219. ✅ A user with debt should have at least an aToken balance `setUsingAsCollateral`.
+219. ❌ (L-01) A user with debt should have at least an aToken balance `setUsingAsCollateral`.
 220. ❌ If all debt is repaid, all `aToken` holders should be able to claim their collateral.
 221. ❌ If all users withdraw their liquidity, there must not be aTokens supply left.
-222. 🚧 Integrity of Supply Cap - aToken supply shall never exceed the cap.
+222. ✅ Integrity of Deposit Cap - aToken supply should never exceed the cap.
 223. 🚧 `UserConfigurationMap` integrity: If a user has a given aToken then `isUsingAsCollateralOrBorrowing` and `isUsingAsCollateral` should return true.
 224. 🚧 `UserConfigurationMap` integrity: If a user has a given debtToken then `isUsingAsCollateralOrBorrowing`, `isBorrowing` and `isBorrowingAny` should return true.
 225. 🚧 `ReserveConfigurationMap` integrity: If reserve is active and not frozen then user can interact with the lending market.
-226. 🚧 Repaying or Liquidating a position must result in the same final state.
+226. 🚚
 227. ❌ Rehypothecation: if the external rehypothecation vault is liquid, users should always be able to withdraw if all other withdrawal conditions are met.
 228. ✅ Rehypothecation: farming percentage must be respected (+/- the drift) after a rebalance occured.
 229. ✅ Rehypothecation: The profit handler address must see its balance increase after reaching the claiming threshold.
@@ -142,14 +144,13 @@ You can fine in `/echidna` 3 config files to run the fuzzer:
 519. ✅ A user with debt should have at least an AToken6909 balance `setUsingAsCollateral`.
 520. ❌ If all debt is repaid, all aToken holders should be able to claim their collateral.
 521. ❌ If all users withdraw their liquidity, there must not be aTokens supply left.
-522. 🚧 Integrity of Supply Cap - aToken supply shall never exceed the cap.
+522. ✅ Integrity of Deposit Cap - aToken supply should never exceed the cap.
 523. 🚧 `UserConfigurationMap` integrity: If a user has a given aToken then `isUsingAsCollateralOrBorrowing` and `isUsingAsCollateral` should return true.
 524. 🚧 `UserConfigurationMap` integrity: If a user has a given debtToken then `isUsingAsCollateralOrBorrowing`, `isBorrowing` and `isBorrowingAny` should return true.
 525. 🚧 `ReserveConfigurationMap` integrity: If reserve is active and not frozen then user can interact with the lending market.
-526. 🚧 Repaying or Liquidating a position must result in the same final state.
-527. 🚧 If flow reached the maximum, Minipools must not be able to borrow more.
-528. 🚧 Minipool flow borrow integrity: debt from the Lendingpool should never be greater than the collateral owned by Minipools.
-529. 🚧 If a minipool is flow borrowing, for a given reserve, the Lendingpool interest rate must always be lower than the minipool interest rate.
+526. 🚧 If flow reached the maximum, Minipools must not be able to borrow more.
+527. 🚧 Minipool flow borrow integrity: debt from the Lendingpool should never be greater than the collateral owned by Minipools.
+528. 🚧 If a minipool is flow borrowing, for a given reserve, the Lendingpool interest rate must always be lower than the minipool interest rate.
 
 (MINIPOOL BORROWFLOW INVARIANTS)
 
