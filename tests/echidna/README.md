@@ -43,6 +43,7 @@ forge t --mt testCallSequence -vvvv
 - Add Medusa support
 - Add rewarders.
 - fix lastLiquidityIndex and lastBorrowIndex
+- Search fot minipool flow borrow properties
 
     if deactivated all of these should fail
     - deposit
@@ -101,7 +102,7 @@ forge t --mt testCallSequence -vvvv
 220. ❌ If all debt is repaid, all `aToken` holders should be able to claim their collateral.
 221. ❌ If all users withdraw their liquidity, there must not be aTokens supply left.
 222. ✅ Integrity of Deposit Cap - aToken supply should never exceed the cap.
-223. 🚧 `UserConfigurationMap` integrity: If a user has a given aToken then `isUsingAsCollateralOrBorrowing` and `isUsingAsCollateral` should return true.
+223. ✅ `UserConfigurationMap` integrity: If a user has a given aToken then `isUsingAsCollateralOrBorrowing` and `isUsingAsCollateral` should return true.
 224. ✅ `UserConfigurationMap` integrity: If a user has a given debtToken then `isUsingAsCollateralOrBorrowing`, `isBorrowing` and `isBorrowingAny` should return true.
 225. 🚚
 226. 🚚
@@ -175,13 +176,11 @@ forge t --mt testCallSequence -vvvv
 520. ❌ If all debt is repaid, all aToken holders should be able to claim their collateral.
 521. ❌ If all users withdraw their liquidity, there must not be aTokens supply left.
 522. ✅ Integrity of Deposit Cap - aToken supply should never exceed the cap.
-523. 🚧 `UserConfigurationMap` integrity: If a user has a given aToken then `isUsingAsCollateralOrBorrowing` and `isUsingAsCollateral` should return true.
+523. ✅ `UserConfigurationMap` integrity: If a user has a given aToken then `isUsingAsCollateralOrBorrowing` and `isUsingAsCollateral` should return true.
 524. ✅ `UserConfigurationMap` integrity: If a user has a given debtToken then `isUsingAsCollateralOrBorrowing`, `isBorrowing` and `isBorrowingAny` should return true.
 525. 🚧 If flow reached the maximum, Minipools must not be able to borrow more.
 526. 🚧 Minipool flow borrow integrity: debt from the Lendingpool should never be greater than the collateral owned by Minipools.
 527. 🚧 If a minipool is flow borrowing, for a given reserve, the Lendingpool interest rate must always be lower than the minipool interest rate.
-
-(MINIPOOL BORROWFLOW INVARIANTS)
 
 ### AToken6909
 

@@ -301,6 +301,9 @@ contract MiniPoolProp is PropertiesBase {
         );
         require(success);
 
+        isUseReserveAsCollateralDeactivatedMP[randMinipool][address(user)][address(asset)] =
+            !randIsColl;
+
         (,,,,, uint256 healthFactorAfter) = minipool.getUserAccountData(address(user));
         if (randIsColl) {
             assertLte(healthFactorBefore, healthFactorAfter, "514");
@@ -501,25 +504,33 @@ contract MiniPoolProp is PropertiesBase {
         }
     }
 
-    // /// @custom:invariant 223 - `UserConfigurationMap` integrity: If a user has a given aToken then `isUsingAsCollateralOrBorrowing` and `isUsingAsCollateral` should return true.
-    // function userConfigurationMapIntegrityLiquidityMP() public {
-    //     for (uint256 j = 0; j < miniPools.length; j++) {
-    //         MiniPool minipool = miniPools[j];
-    //         ATokenERC6909 aToken6909 = aTokens6909[j];
+    /// @custom:invariant 223 - `UserConfigurationMap` integrity: If a user has a given aToken then `isUsingAsCollateralOrBorrowing` and `isUsingAsCollateral` should return true.
+    function userConfigurationMapIntegrityLiquidityMP() public {
+        for (uint256 j = 0; j < miniPools.length; j++) {
+            MiniPool minipool = miniPools[j];
+            ATokenERC6909 aToken6909 = aTokens6909[j];
 
-    //         for (uint256 i = 0; i < users.length; i++) {
-    //             User user = users[i];
-    //             for (uint256 k = 0; k < totalNbTokens * 2; k++) {
-    //                 (uint256 aTokenId,,) = aToken6909.getIdForUnderlying(address(allTokens(k)));
-    //                 DataTypes.UserConfigurationMap memory userConfig = minipool.getUserConfiguration(address(user));
-    //                 if (aToken6909.balanceOf(address(user), aTokenId) != 0) {
-    //                     assertWithMsg(UserConfiguration.isUsingAsCollateralOrBorrowing(userConfig, k), "223");
-    //                     assertWithMsg(UserConfiguration.isUsingAsCollateral(userConfig, k), "223");
-    //                 }
-    //             }
-    //         }
-    //     }
-    // }
+            for (uint256 i = 0; i < users.length; i++) {
+                User user = users[i];
+                for (uint256 k = 0; k < totalNbTokens * 2; k++) {
+                    (uint256 aTokenId,,) = aToken6909.getIdForUnderlying(address(allTokens(k)));
+                    DataTypes.UserConfigurationMap memory userConfig =
+                        minipool.getUserConfiguration(address(user));
+                    if (
+                        aToken6909.balanceOf(address(user), aTokenId) != 0
+                            && !isUseReserveAsCollateralDeactivatedMP[j][address(user)][address(
+                                allTokens(k)
+                            )]
+                    ) {
+                        assertWithMsg(
+                            UserConfiguration.isUsingAsCollateralOrBorrowing(userConfig, k), "223"
+                        );
+                        assertWithMsg(UserConfiguration.isUsingAsCollateral(userConfig, k), "223");
+                    }
+                }
+            }
+        }
+    }
 
     /// @custom:invariant 524 - `UserConfigurationMap` integrity: If a user has a given debtToken then `isUsingAsCollateralOrBorrowing`, `isBorrowing` and `isBorrowingAny` should return true.
     function userConfigurationMapIntegrityDebtMP() public {

@@ -289,6 +289,7 @@ contract LendingPoolProp is PropertiesBase {
             )
         );
         require(success);
+        isUseReserveAsCollateralDeactivatedLP[address(user)][address(asset)] = !randIsColl;
 
         (,,,,, uint256 healthFactorAfter) = pool.getUserAccountData(address(user));
         if (randIsColl) {
@@ -514,19 +515,26 @@ contract LendingPoolProp is PropertiesBase {
         }
     }
 
-    // /// @custom:invariant 223 - `UserConfigurationMap` integrity: If a user has a given aToken then `isUsingAsCollateralOrBorrowing` and `isUsingAsCollateral` should return true.
-    // function userConfigurationMapIntegrityLiquidityLP() public {
-    //     for (uint256 i = 0; i < users.length; i++) {
-    //         User user = users[i];
-    //         for (uint256 j = 0; j < aTokens.length; j++) { // j == reserve index
-    //             DataTypes.UserConfigurationMap memory userConfig = pool.getUserConfiguration(address(user));
-    //             if (aTokens[j].balanceOf(address(user)) != 0 && ) {
-    //                 assertWithMsg(UserConfiguration.isUsingAsCollateralOrBorrowing(userConfig, j), "223");
-    //                 assertWithMsg(UserConfiguration.isUsingAsCollateral(userConfig, j), "223");
-    //             }
-    //         }
-    //     }
-    // }
+    /// @custom:invariant 223 - `UserConfigurationMap` integrity: If a user has a given aToken then `isUsingAsCollateralOrBorrowing` and `isUsingAsCollateral` should return true.
+    function userConfigurationMapIntegrityLiquidityLP() public {
+        for (uint256 i = 0; i < users.length; i++) {
+            User user = users[i];
+            for (uint256 j = 0; j < aTokens.length; j++) {
+                // j == reserve index
+                DataTypes.UserConfigurationMap memory userConfig =
+                    pool.getUserConfiguration(address(user));
+                if (
+                    aTokens[j].balanceOf(address(user)) != 0
+                        && !isUseReserveAsCollateralDeactivatedLP[address(user)][address(assets[j])]
+                ) {
+                    assertWithMsg(
+                        UserConfiguration.isUsingAsCollateralOrBorrowing(userConfig, j), "223"
+                    );
+                    assertWithMsg(UserConfiguration.isUsingAsCollateral(userConfig, j), "223");
+                }
+            }
+        }
+    }
 
     /// @custom:invariant 224 - `UserConfigurationMap` integrity: If a user has a given debtToken then `isUsingAsCollateralOrBorrowing`, `isBorrowing` and `isBorrowingAny` should return true.
     function userConfigurationMapIntegrityDebtLP() public {

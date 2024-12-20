@@ -169,6 +169,7 @@ contract PropertiesBase is PropertiesAsserts, MarketParams {
     VariableDebtToken internal vToken;
     DefaultReserveInterestRateStrategy /*[]*/ internal defaultRateStrategies;
     PiReserveInterestRateStrategy[] internal piRateStrategies;
+    mapping(address => mapping(address => bool)) internal isUseReserveAsCollateralDeactivatedLP; // [user][asset] = isUseReserveAsCollateral
 
     // MiniPool
     MiniPoolAddressesProvider internal miniPoolProvider;
@@ -181,6 +182,8 @@ contract PropertiesBase is PropertiesAsserts, MarketParams {
     ATokenERC6909[] internal aTokens6909;
     MiniPoolDefaultReserveInterestRateStrategy /*[]*/ internal minipoolDefaultRateStrategies;
     mapping(uint256 => MiniPoolPiReserveInterestRateStrategy[]) internal minipoolPiRateStrategies; // [minipoolId][tokenId]
+    mapping(uint256 => mapping(address => mapping(address => bool))) internal
+        isUseReserveAsCollateralDeactivatedMP; // [minipoolId][user][asset] = isUseReserveAsCollateral
 
     constructor() {
         /// mocks
