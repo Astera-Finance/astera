@@ -2,6 +2,8 @@
 
 Echidna is a program designed for fuzzing/property-based testing of Ethereum smart contracts. Please refer to the doc for [installation](https://github.com/crytic/echidna#installation).
 
+### Fuzzing
+
 ```sh
 forge install
 echidna tests/echidna/PropertiesMain.sol --contract PropertiesMain --config tests/echidna/config/config1_fast.yaml
@@ -21,9 +23,22 @@ You can fine in `/echidna` 3 config files to run the fuzzer:
 
 ![inheritance graph](./images/inheritance_graph.png)
 
+### Testing Echidna's failed sequences
+
+Copy/Paste the Echidna's failed sequence in the `FromSeqToFoudry.py` `input_text` variable.
+
+```sh
+python3 tests/echidna/echidnaToFoundry/FromSeqToFoudry.py
+```
+
+This script will automatically generate `echidnaToFoundry.sol`. So you just have to run the Forge test.
+
+```sh
+forge t --mt testCallSequence -vvvv
+```
+
 # TODO
 
-- add minipoolPiRateStrategies
 - Randomly activation flow borrowing on minipools
 - Add Medusa support
 - Add rewarders.

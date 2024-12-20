@@ -180,7 +180,7 @@ contract PropertiesBase is PropertiesAsserts, MarketParams {
     uint256[] internal miniPoolIds;
     ATokenERC6909[] internal aTokens6909;
     MiniPoolDefaultReserveInterestRateStrategy /*[]*/ internal minipoolDefaultRateStrategies;
-    MiniPoolPiReserveInterestRateStrategy[] internal minipoolPiRateStrategies;
+    mapping(uint256 => MiniPoolPiReserveInterestRateStrategy[]) internal minipoolPiRateStrategies; // [minipoolId][tokenId]
 
     constructor() {
         /// mocks
@@ -350,7 +350,29 @@ contract PropertiesBase is PropertiesAsserts, MarketParams {
             DEFAULT_VARIABLE_RATE_SLOPE1,
             DEFAULT_VARIABLE_RATE_SLOPE2
         );
-        // TODO: add minipoolPiRateStrategies
+
+        uint256 lenNbToken = totalNbTokens * 2; // classic assets + lendingpool aTokens
+        for (uint256 i = 0; i < totalNbMinipool; i++) {
+            for (uint256 j = 0; j < lenNbToken; j++) {
+                address token = j < totalNbTokens
+                    ? address(assets[j])
+                    : address(aTokensNonRebasing[j - totalNbTokens]);
+
+                minipoolPiRateStrategies[i].push(
+                    new MiniPoolPiReserveInterestRateStrategy(
+                        address(miniPoolProvider),
+                        i,
+                        token,
+                        true, // not used
+                        DEFAULT_MIN_CONTROLLER_ERROR,
+                        DEFAULT_MAX_I_TIME_AMP,
+                        DEFAULT_OPTI_UTILIZATION_RATE_PI,
+                        DEFAULT_KP,
+                        DEFAULT_KI
+                    )
+                );
+            }
+        }
 
         minipoolImpl = address(new MockMiniPool());
         aToken6909Impl = address(new ATokenERC6909());
@@ -360,11 +382,12 @@ contract PropertiesBase is PropertiesAsserts, MarketParams {
             ATokenERC6909 _aToken6909 = ATokenERC6909(miniPoolProvider.getAToken6909(_minipoolId));
             MockMiniPool _miniPool = MockMiniPool(miniPoolProvider.getMiniPool(_minipoolId));
 
+            assert(i == _minipoolId);
+
             miniPoolIds.push(_minipoolId);
             aTokens6909.push(_aToken6909);
             miniPools.push(_miniPool);
 
-            uint256 lenNbToken = totalNbTokens * 2; // classic assets + lendingpool aTokens
             IMiniPoolConfigurator.InitReserveInput[] memory initInputParams =
                 new IMiniPoolConfigurator.InitReserveInput[](lenNbToken);
 
@@ -376,7 +399,9 @@ contract PropertiesBase is PropertiesAsserts, MarketParams {
                 string memory tmpSymbol = ERC20(token).symbol();
                 string memory tmpName = ERC20(token).name();
 
-                address interestStrategy = address(minipoolDefaultRateStrategies);
+                address interestStrategy = j % 2 == 0
+                    ? address(minipoolPiRateStrategies[i][j])
+                    : address(minipoolDefaultRateStrategies);
 
                 initInputParams[j] = IMiniPoolConfigurator.InitReserveInput({
                     underlyingAssetDecimals: ERC20(token).decimals(),
