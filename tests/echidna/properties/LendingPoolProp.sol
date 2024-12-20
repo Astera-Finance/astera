@@ -7,6 +7,8 @@ import {ReserveConfiguration} from
 import {ReserveLogic} from "../../../contracts/protocol/core/lendingpool/logic/ReserveLogic.sol";
 import {MathUtils} from "../../../contracts/protocol/libraries/math/MathUtils.sol";
 import {WadRayMath} from "../../../contracts/protocol/libraries/math/WadRayMath.sol";
+import {UserConfiguration} from
+    "../../../contracts/protocol/libraries/configuration/UserConfiguration.sol";
 
 contract LendingPoolProp is PropertiesBase {
     constructor() {}
@@ -511,6 +513,48 @@ contract LendingPoolProp is PropertiesBase {
             }
         }
     }
+
+    // /// @custom:invariant 223 - `UserConfigurationMap` integrity: If a user has a given aToken then `isUsingAsCollateralOrBorrowing` and `isUsingAsCollateral` should return true.
+    // function userConfigurationMapIntegrityLiquidityLP() public {
+    //     for (uint256 i = 0; i < users.length; i++) {
+    //         User user = users[i];
+    //         for (uint256 j = 0; j < aTokens.length; j++) { // j == reserve index
+    //             DataTypes.UserConfigurationMap memory userConfig = pool.getUserConfiguration(address(user));
+    //             if (aTokens[j].balanceOf(address(user)) != 0 && ) {
+    //                 assertWithMsg(UserConfiguration.isUsingAsCollateralOrBorrowing(userConfig, j), "223");
+    //                 assertWithMsg(UserConfiguration.isUsingAsCollateral(userConfig, j), "223");
+    //             }
+    //         }
+    //     }
+    // }
+
+    /// @custom:invariant 224 - `UserConfigurationMap` integrity: If a user has a given debtToken then `isUsingAsCollateralOrBorrowing`, `isBorrowing` and `isBorrowingAny` should return true.
+    function userConfigurationMapIntegrityDebtLP() public {
+        for (uint256 i = 0; i < users.length; i++) {
+            User user = users[i];
+            for (uint256 j = 0; j < debtTokens.length; j++) {
+                DataTypes.UserConfigurationMap memory userConfig =
+                    pool.getUserConfiguration(address(user));
+                if (debtTokens[j].balanceOf(address(user)) != 0) {
+                    assertWithMsg(
+                        UserConfiguration.isUsingAsCollateralOrBorrowing(userConfig, j), "224"
+                    );
+                    assertWithMsg(UserConfiguration.isBorrowing(userConfig, j), "224");
+                    assertWithMsg(UserConfiguration.isBorrowingAny(userConfig), "224");
+                }
+            }
+        }
+    }
+
+    // function reserveConfigurationMapIntegrityLP() public {
+    //     for (uint256 i = 0; i < assets.length; i++) {
+    //         DataTypes.ReserveData memory reserve = pool.getReserveData(address(assets[i]), true);
+
+    //         (bool isActive, bool isFrozen,,,,) = reserve.configuration.getFlags();
+
+    //         if (isActive && !isFrozen) {
+    //     }
+    // }
 
     // ---------------------- Helpers ----------------------
 }

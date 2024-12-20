@@ -44,6 +44,22 @@ forge t --mt testCallSequence -vvvv
 - Add rewarders.
 - fix lastLiquidityIndex and lastBorrowIndex
 
+    if deactivated all of these should fail
+    - deposit
+    - withdraw
+    - borrow
+    - repay
+    - flashloan
+    - liquidation
+      
+    if frozen all of these should fail:
+    - Deposit
+    - Borrow
+
+    othersflags
+    - isFlashLoanEnable
+    - isBorrowingEnable
+
 # Invariant testing
 
 ✅ : Passing
@@ -86,15 +102,14 @@ forge t --mt testCallSequence -vvvv
 221. ❌ If all users withdraw their liquidity, there must not be aTokens supply left.
 222. ✅ Integrity of Deposit Cap - aToken supply should never exceed the cap.
 223. 🚧 `UserConfigurationMap` integrity: If a user has a given aToken then `isUsingAsCollateralOrBorrowing` and `isUsingAsCollateral` should return true.
-224. 🚧 `UserConfigurationMap` integrity: If a user has a given debtToken then `isUsingAsCollateralOrBorrowing`, `isBorrowing` and `isBorrowingAny` should return true.
-225. 🚧 `ReserveConfigurationMap` integrity: If reserve is active and not frozen then user can interact with the lending market.
+224. ✅ `UserConfigurationMap` integrity: If a user has a given debtToken then `isUsingAsCollateralOrBorrowing`, `isBorrowing` and `isBorrowingAny` should return true.
+225. 🚚
 226. 🚚
 227. ❌ Rehypothecation: if the external rehypothecation vault is liquid, users should always be able to withdraw if all other withdrawal conditions are met.
 228. ✅ Rehypothecation: farming percentage must be respected (+/- the drift) after a rebalance occured.
 229. ✅ Rehypothecation: The profit handler address must see its balance increase after reaching the claiming threshold.
 230. ✅ `withdraw()` must not result in a health factor of less than 1.
 231. ✅ Rehypothecation: farming percentage must be respected (+/- the drift) after any operation.
-
 
 ### ATokens/ATokenNonRebasing
 
@@ -161,11 +176,10 @@ forge t --mt testCallSequence -vvvv
 521. ❌ If all users withdraw their liquidity, there must not be aTokens supply left.
 522. ✅ Integrity of Deposit Cap - aToken supply should never exceed the cap.
 523. 🚧 `UserConfigurationMap` integrity: If a user has a given aToken then `isUsingAsCollateralOrBorrowing` and `isUsingAsCollateral` should return true.
-524. 🚧 `UserConfigurationMap` integrity: If a user has a given debtToken then `isUsingAsCollateralOrBorrowing`, `isBorrowing` and `isBorrowingAny` should return true.
-525. 🚧 `ReserveConfigurationMap` integrity: If reserve is active and not frozen then user can interact with the lending market.
-526. 🚧 If flow reached the maximum, Minipools must not be able to borrow more.
-527. 🚧 Minipool flow borrow integrity: debt from the Lendingpool should never be greater than the collateral owned by Minipools.
-528. 🚧 If a minipool is flow borrowing, for a given reserve, the Lendingpool interest rate must always be lower than the minipool interest rate.
+524. ✅ `UserConfigurationMap` integrity: If a user has a given debtToken then `isUsingAsCollateralOrBorrowing`, `isBorrowing` and `isBorrowingAny` should return true.
+525. 🚧 If flow reached the maximum, Minipools must not be able to borrow more.
+526. 🚧 Minipool flow borrow integrity: debt from the Lendingpool should never be greater than the collateral owned by Minipools.
+527. 🚧 If a minipool is flow borrowing, for a given reserve, the Lendingpool interest rate must always be lower than the minipool interest rate.
 
 (MINIPOOL BORROWFLOW INVARIANTS)
 
@@ -190,7 +204,7 @@ forge t --mt testCallSequence -vvvv
 616. ✅ Allowance must be modified correctly via `approve()`.
 617. ✅ A user must not hold more than total supply.
 618. ✅ Sum of users' balances must not exceed total supply.
-
+  
 ## Admin entry points
 
 ### LendingPoolAddressesProvider
