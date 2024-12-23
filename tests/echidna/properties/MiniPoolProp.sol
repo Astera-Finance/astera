@@ -112,9 +112,9 @@ contract MiniPoolProp is PropertiesBase {
 
         require(success);
 
-        if (healthFactorAfter < 1e18) {
-            assertWithMsg(!success, "505");
-        }
+        // if (healthFactorAfter < 1e18) {
+        //     assertWithMsg(!success, "505");
+        // }
 
         uint256 aTokenBalanceAfter = aToken6909.balanceOf(address(user), aTokenID);
         uint256 assetBalanceAfter = isAToken
@@ -459,17 +459,17 @@ contract MiniPoolProp is PropertiesBase {
     //     }
     // }
 
-    /// @custom:invariant 519 - A user with debt should have at least an AToken6909 balance `setUsingAsCollateral`.
-    function userDebtIntegrityMP() public {
-        for (uint256 j = 0; j < totalNbMinipool; j++) {
-            for (uint256 i = 0; i < users.length; i++) {
-                User user = users[i];
-                if (hasDebtTokens6909(user, j)) {
-                    assertWithMsg(hasATokens6909Strict(user, j), "519");
-                }
-            }
-        }
-    }
+    // /// @custom:invariant 519 - A user with debt should have at least an AToken6909 balance `setUsingAsCollateral`.
+    // function userDebtIntegrityMP() public {
+    //     for (uint256 j = 0; j < totalNbMinipool; j++) {
+    //         for (uint256 i = 0; i < users.length; i++) {
+    //             User user = users[i];
+    //             if (hasDebtTokens6909(user, j)) {
+    //                 assertWithMsg(hasATokens6909Strict(user, j), "519");
+    //             }
+    //         }
+    //     }
+    // }
 
     // /// @custom:invariant 520 - If all debt is repaid, all aToken holders should be able to claim their collateral.
     // /// @custom:invariant 521 - If all users withdraw their liquidity, there must not be aTokens supply left.

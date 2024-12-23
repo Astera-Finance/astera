@@ -158,7 +158,7 @@ forge t --mt testCallSequence -vvvv
 502. ✅ `deposit()` must decrease the user asset balance by `amount`.
 503. ✅ `withdraw()` must decrease the user AToken6909 balance by `amount`.
 504. ✅ `withdraw()` must increase the user asset balance by `amount`.
-505. ✅ `withdraw()` must not result in a health factor of less than 1.
+505. ❌ `withdraw()` must not result in a health factor of less than 1.
 506. ✅ A user must not be able to `borrow()` if they don't own AToken6909.
 507. ✅ `borrow()` must only be possible if the user health factor is greater than 1.
 508. ✅ `borrow()` must not result in a health factor of less than 1.
@@ -172,7 +172,7 @@ forge t --mt testCallSequence -vvvv
 516. ✅ The total value borrowed must always be less than the value of the collaterals.
 517. ❌ The `liquidityIndex` should monotonically increase when there's total debt.
 518. ❌ The `variableBorrowIndex` should monotonically increase when there's total debt.
-519. ✅ A user with debt should have at least an AToken6909 balance `setUsingAsCollateral`.
+519. ❌ A user with debt should have at least an AToken6909 balance `setUsingAsCollateral`.
 520. ❌ If all debt is repaid, all aToken holders should be able to claim their collateral.
 521. ❌ If all users withdraw their liquidity, there must not be aTokens supply left.
 522. ✅ Integrity of Deposit Cap - aToken supply should never exceed the cap.
