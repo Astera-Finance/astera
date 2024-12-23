@@ -538,6 +538,27 @@ contract PropertiesBase is PropertiesAsserts, MarketParams {
 
     /// ------- global state updates -------
 
+    /// @custom:invariant 106 - `setFlowLimit()` must correctly decrease the flow.
+    function randSetFlowLimit(uint8 seedAsset, uint8 seedMiniPool, uint256 seedLimit) public {
+        uint256 randAsset = clampBetween(seedAsset, 0, totalNbTokens);
+        uint256 randMiniPool = clampBetween(seedMiniPool, 0, totalNbMinipool);
+
+        address asset = address(aTokensNonRebasing[randAsset]);
+        address miniPool = address(miniPools[randMiniPool]);
+
+        uint256 randLimit = clampBetween(
+            seedLimit, flowLimiter.currentFlow(asset, miniPool), aTokens[randAsset].totalSupply() * 2
+        );
+
+        miniPoolConfigurator.setFlowLimit(asset, miniPool, randLimit);
+
+        assertWithMsg(
+            flowLimiter.getFlowLimit(asset, miniPool) == randLimit ||
+                flowLimiter.getFlowLimit(asset, miniPool) == flowLimiter.currentFlow(asset, miniPool),
+            "106"
+        );
+    }
+
     struct LocalVars_UPTL {
         uint8 seedAmtPrice1;
         uint8 seedAmtPrice2;

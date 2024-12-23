@@ -44,7 +44,7 @@ forge t --mt testCallSequence -vvvv
 - Add rewarders.
 - fix lastLiquidityIndex and lastBorrowIndex
 - Search fot minipool flow borrow properties
-
+- Flags
     if deactivated all of these should fail
     - deposit
     - withdraw
@@ -76,6 +76,7 @@ forge t --mt testCallSequence -vvvv
 103. ✅ `liquidationCall()` must decrease the target `vTokenDebt` balance by `amount`.
 104. ✅ `liquidationCall()` must increase the liquidator `aTokenColl` (or `collAsset`) balance.
 105. ✅ `liquidationCall()` must decrease the liquidator debt asset balance if `randReceiveAToken` is true or `collAsset` is not equal to `debtAsset`.
+106. ✅ `setFlowLimit()` must correctly decrease the flow. 
 
 ### LendingPool
 
@@ -107,7 +108,7 @@ forge t --mt testCallSequence -vvvv
 225. 🚚
 226. 🚚
 227. ❌ Rehypothecation: if the external rehypothecation vault is liquid, users should always be able to withdraw if all other withdrawal conditions are met.
-228. ✅ Rehypothecation: farming percentage must be respected (+/- the drift) after a rebalance occured.
+228. ✅ (M-01) Rehypothecation: farming percentage must be respected (+/- the drift) after a rebalance occured.
 229. ✅ Rehypothecation: The profit handler address must see its balance increase after reaching the claiming threshold.
 230. ✅ `withdraw()` must not result in a health factor of less than 1.
 231. ✅ Rehypothecation: farming percentage must be respected (+/- the drift) after any operation.
@@ -158,7 +159,7 @@ forge t --mt testCallSequence -vvvv
 502. ✅ `deposit()` must decrease the user asset balance by `amount`.
 503. ✅ `withdraw()` must decrease the user AToken6909 balance by `amount`.
 504. ✅ `withdraw()` must increase the user asset balance by `amount`.
-505. ❌ `withdraw()` must not result in a health factor of less than 1.
+505. ❌ (L-02) `withdraw()` must not result in a health factor of less than 1.
 506. ✅ A user must not be able to `borrow()` if they don't own AToken6909.
 507. ✅ `borrow()` must only be possible if the user health factor is greater than 1.
 508. ✅ `borrow()` must not result in a health factor of less than 1.
@@ -172,11 +173,11 @@ forge t --mt testCallSequence -vvvv
 516. ✅ The total value borrowed must always be less than the value of the collaterals.
 517. ❌ The `liquidityIndex` should monotonically increase when there's total debt.
 518. ❌ The `variableBorrowIndex` should monotonically increase when there's total debt.
-519. ❌ A user with debt should have at least an AToken6909 balance `setUsingAsCollateral`.
+519. ❌ (L-03) A user with debt should have at least an AToken6909 balance `setUsingAsCollateral`.
 520. ❌ If all debt is repaid, all aToken holders should be able to claim their collateral.
 521. ❌ If all users withdraw their liquidity, there must not be aTokens supply left.
 522. ✅ Integrity of Deposit Cap - aToken supply should never exceed the cap.
-523. ✅ `UserConfigurationMap` integrity: If a user has a given aToken then `isUsingAsCollateralOrBorrowing` and `isUsingAsCollateral` should return true.
+523. ❌ `UserConfigurationMap` integrity: If a user has a given aToken then `isUsingAsCollateralOrBorrowing` and `isUsingAsCollateral` should return true.
 524. ✅ `UserConfigurationMap` integrity: If a user has a given debtToken then `isUsingAsCollateralOrBorrowing`, `isBorrowing` and `isBorrowingAny` should return true.
 525. 🚧 If flow reached the maximum, Minipools must not be able to borrow more.
 526. 🚧 Minipool flow borrow integrity: debt from the Lendingpool should never be greater than the collateral owned by Minipools.
@@ -201,7 +202,7 @@ forge t --mt testCallSequence -vvvv
 614. ✅ Force feeding AToken6909 in MiniPools or AToken6909 must not change the final result.
 615. ✅ `approveDelegation()` must never revert.
 616. ✅ Allowance must be modified correctly via `approve()`.
-617. ✅ A user must not hold more than total supply.
+617. ✅ (M-02) A user must not hold more than total supply.
 618. ✅ Sum of users' balances must not exceed total supply.
   
 ## Admin entry points

@@ -504,7 +504,7 @@ contract MiniPoolProp is PropertiesBase {
         }
     }
 
-    /// @custom:invariant 223 - `UserConfigurationMap` integrity: If a user has a given aToken then `isUsingAsCollateralOrBorrowing` and `isUsingAsCollateral` should return true.
+    /// @custom:invariant 523 - `UserConfigurationMap` integrity: If a user has a given aToken then `isUsingAsCollateralOrBorrowing` and `isUsingAsCollateral` should return true.
     function userConfigurationMapIntegrityLiquidityMP() public {
         for (uint256 j = 0; j < miniPools.length; j++) {
             MiniPool minipool = miniPools[j];
@@ -523,9 +523,9 @@ contract MiniPoolProp is PropertiesBase {
                             )]
                     ) {
                         assertWithMsg(
-                            UserConfiguration.isUsingAsCollateralOrBorrowing(userConfig, k), "223"
+                            UserConfiguration.isUsingAsCollateralOrBorrowing(userConfig, k), "523"
                         );
-                        assertWithMsg(UserConfiguration.isUsingAsCollateral(userConfig, k), "223");
+                        assertWithMsg(UserConfiguration.isUsingAsCollateral(userConfig, k), "523");
                     }
                 }
             }

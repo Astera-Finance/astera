@@ -234,11 +234,11 @@ abstract contract PropertiesAsserts {
         return ans;
     }
 
-    function clampBetweenProportional(uint16 value, uint256 low, uint256 high)
+    function clampBetweenProportional(uint8 value, uint256 low, uint256 high)
         internal
         returns (uint256)
     {
-        uint256 ans = value * (high - low) / type(uint16).max + low;
+        uint256 ans = value * (high - low) / type(uint8).max + low;
 
         string memory valueStr = PropertiesLibString.toString(value);
         string memory ansStr = PropertiesLibString.toString(ans);
