@@ -20,6 +20,8 @@ import {ATokenNonRebasing} from
     "../../../../contracts/protocol/tokenization/ERC20/ATokenNonRebasing.sol";
 import {Strings} from "openzeppelin-contracts/contracts/utils/Strings.sol";
 
+import "forge-std/console.sol";
+
 /**
  * @title ERC6909-MultiToken
  * @author Cod3x - 0xGoober
@@ -401,7 +403,9 @@ contract ATokenERC6909 is IncentivizedERC6909, VersionedInitializable {
         uint256 oldFromBalance = balanceOf(from, id);
         uint256 oldToBalance = balanceOf(to, id);
         //If the token was minted.
+        console.log("AfterTokenTransferCall !!!!");
         if (from == address(0) && to != address(0)) {
+            console.log("Minted token - > incentive controller: ", address(INCENTIVES_CONTROLLER));
             oldSupply = _incrementTotalSupply(id, amount);
             oldToBalance = oldToBalance - amount;
             oldFromBalance = 0;

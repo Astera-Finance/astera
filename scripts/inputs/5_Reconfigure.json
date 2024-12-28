@@ -8,23 +8,8 @@
         {
             "baseLtv": 7000,
             "borrowingEnabled": true,
-            "interestStrat": "PI",
-            "interestStratId": 1,
-            "liquidationBonus": 10400,
-            "liquidationThreshold": 7400,
-            "miniPoolOwnerFee": 230,
-            "params": "0x10",
-            "rates": 0.04e27,
-            "reserveFactor": 1500,
-            "reserveType": true,
-            "symbol": "WBTC",
-            "tokenAddress": "0x0555E30da8f98308EdB960aa94C0Db47230d2B9c"
-        },
-        {
-            "baseLtv": 7000,
-            "borrowingEnabled": true,
-            "interestStrat": "PI",
-            "interestStratId": 2,
+            "interestStrat": "STABLE",
+            "interestStratId": 0,
             "liquidationBonus": 10500,
             "liquidationThreshold": 7400,
             "miniPoolOwnerFee": 230,
@@ -34,29 +19,12 @@
             "reserveType": true,
             "symbol": "USDC",
             "tokenAddress": "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913"
-        }
-    ],
-    "miniPoolReserversConfig": [
-        {
-            "baseLtv": 7000,
-            "borrowingEnabled": true,
-            "interestStrat": "PI",
-            "interestStratId": 2,
-            "liquidationBonus": 10500,
-            "liquidationThreshold": 7700,
-            "miniPoolOwnerFee": 250,
-            "params": "0x10",
-            "rates": 0.02e27,
-            "reserveFactor": 1500,
-            "reserveType": true,
-            "symbol": "WBTC",
-            "tokenAddress": "0x0555E30da8f98308EdB960aa94C0Db47230d2B9c"
         },
         {
             "baseLtv": 7000,
             "borrowingEnabled": true,
-            "interestStrat": "PI",
-            "interestStratId": 3,
+            "interestStrat": "STABLE",
+            "interestStratId": 0,
             "liquidationBonus": 10500,
             "liquidationThreshold": 7100,
             "miniPoolOwnerFee": 233,
@@ -66,6 +34,68 @@
             "reserveType": true,
             "symbol": "USDT",
             "tokenAddress": "0xfde4C96c8593536E31F229EA8f37b2ADa2699bb2"
+        },
+        {
+            "baseLtv": 7000,
+            "borrowingEnabled": true,
+            "interestStrat": "VOLATILE",
+            "interestStratId": 0,
+            "liquidationBonus": 10500,
+            "liquidationThreshold": 7500,
+            "miniPoolOwnerFee": 0,
+            "params": "0x10",
+            "rates": 0.03e27,
+            "reserveFactor": 1500,
+            "reserveType": true,
+            "symbol": "WETH",
+            "tokenAddress": "0x4200000000000000000000000000000000000006"
+        }
+    ],
+    "miniPoolReserversConfig": [
+        {
+            "baseLtv": 7000,
+            "borrowingEnabled": true,
+            "interestStrat": "VOLATILE",
+            "interestStratId": 0,
+            "liquidationBonus": 10500,
+            "liquidationThreshold": 7400,
+            "miniPoolOwnerFee": 230,
+            "params": "0x10",
+            "rates": 0.03e27,
+            "reserveFactor": 1500,
+            "reserveType": true,
+            "symbol": "USDC",
+            "tokenAddress": "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913"
+        },
+        {
+            "baseLtv": 7000,
+            "borrowingEnabled": true,
+            "interestStrat": "VOLATILE",
+            "interestStratId": 0,
+            "liquidationBonus": 10500,
+            "liquidationThreshold": 7100,
+            "miniPoolOwnerFee": 233,
+            "params": "0x10",
+            "rates": 0.03e27,
+            "reserveFactor": 1400,
+            "reserveType": true,
+            "symbol": "USDT",
+            "tokenAddress": "0xfde4C96c8593536E31F229EA8f37b2ADa2699bb2"
+        },
+        {
+            "baseLtv": 7000,
+            "borrowingEnabled": true,
+            "interestStrat": "VOLATILE",
+            "interestStratId": 0,
+            "liquidationBonus": 10500,
+            "liquidationThreshold": 7500,
+            "miniPoolOwnerFee": 0,
+            "params": "0x10",
+            "rates": 0.03e27,
+            "reserveFactor": 1500,
+            "reserveType": true,
+            "symbol": "WETH",
+            "tokenAddress": "0x4200000000000000000000000000000000000006"
         }
     ]
 }

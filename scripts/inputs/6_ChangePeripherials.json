@@ -11,14 +11,14 @@
             "newAddress": "0x3151CfCA393FE5Eec690feD2a2446DA5a073d01B",
             "reserveType": true,
             "symbol": "USDC",
-            "tokenAddress": "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913"
+            "tokenAddress": "0xC3E0372C8a5278b11D1454507BCFB9085d3AAD84"
         },
         {
             "configure": true,
             "newAddress": "0x3151CfCA393FE5Eec690feD2a2446DA5a073d01B",
             "reserveType": true,
             "symbol": "WETH",
-            "tokenAddress": "0x4200000000000000000000000000000000000006"
+            "tokenAddress": "0xe43208266aEad29736433aA0b6F035a2Ffc3BB9F"
         }
     ],
     "miniPoolCod3xTreasury": {
@@ -32,14 +32,14 @@
             "newAddress": "0x3151CfCA393FE5Eec690feD2a2446DA5a073d01B",
             "reserveType": true,
             "symbol": "USDC",
-            "tokenAddress": "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913"
+            "tokenAddress": "0xC3E0372C8a5278b11D1454507BCFB9085d3AAD84"
         },
         {
             "configure": true,
             "newAddress": "0x3151CfCA393FE5Eec690feD2a2446DA5a073d01B",
             "reserveType": true,
             "symbol": "WETH",
-            "tokenAddress": "0x4200000000000000000000000000000000000006"
+            "tokenAddress": "0xe43208266aEad29736433aA0b6F035a2Ffc3BB9F"
         }
     ],
     "rewarder": [
@@ -48,30 +48,30 @@
             "newAddress": "0x3151CfCA393FE5Eec690feD2a2446DA5a073d01B",
             "reserveType": true,
             "symbol": "USDC",
-            "tokenAddress": "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913"
+            "tokenAddress": "0xC3E0372C8a5278b11D1454507BCFB9085d3AAD84"
         },
         {
             "configure": true,
             "newAddress": "0x3151CfCA393FE5Eec690feD2a2446DA5a073d01B",
             "reserveType": true,
             "symbol": "WETH",
-            "tokenAddress": "0x4200000000000000000000000000000000000006"
+            "tokenAddress": "0xe43208266aEad29736433aA0b6F035a2Ffc3BB9F"
         }
     ],
     "rewarder6909": [
         {
-            "configure": true,
-            "newAddress": "0x3151CfCA393FE5Eec690feD2a2446DA5a073d01B",
-            "reserveType": true,
-            "symbol": "USDC",
-            "tokenAddress": "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913"
-        },
-        {
             "configure": false,
             "newAddress": "0x3151CfCA393FE5Eec690feD2a2446DA5a073d01B",
             "reserveType": true,
-            "symbol": "WETH",
-            "tokenAddress": "0x4200000000000000000000000000000000000006"
+            "symbol": "aUSDC",
+            "tokenAddress": "0xF491AF584A573d3accd5B61Ab9677D769CB1c806"
+        },
+        {
+            "configure": true,
+            "newAddress": "0x3151CfCA393FE5Eec690feD2a2446DA5a073d01B",
+            "reserveType": true,
+            "symbol": "aWETH",
+            "tokenAddress": "0x5D06644F64cEf0299d8dFF67f08E1eC5e883C1a4"
         }
     ],
     "rehypothecation": [
@@ -83,18 +83,18 @@
             "profitHandler": "0x3151CfCA393FE5Eec690feD2a2446DA5a073d01B",
             "reserveType": true,
             "symbol": "USDC",
-            "tokenAddress": "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913",
+            "tokenAddress": "0xC3E0372C8a5278b11D1454507BCFB9085d3AAD84",
             "vault": "0x3151CfCA393FE5Eec690feD2a2446DA5a073d01B"
         },
         {
             "claimingThreshold": 1e8,
-            "configure": false,
+            "configure": true,
             "drift": 200,
             "farmingPct": 2000,
             "profitHandler": "0x3151CfCA393FE5Eec690feD2a2446DA5a073d01B",
             "reserveType": true,
             "symbol": "WETH",
-            "tokenAddress": "0x4200000000000000000000000000000000000006",
+            "tokenAddress": "0xe43208266aEad29736433aA0b6F035a2Ffc3BB9F",
             "vault": "0x3151CfCA393FE5Eec690feD2a2446DA5a073d01B"
         }
     ]

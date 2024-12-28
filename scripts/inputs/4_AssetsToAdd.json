@@ -13,7 +13,8 @@
         "poolId": 0,
         "poolOwner": "0xf298Db641560E5B733C43181937207482Ff79bc9"
     },
-    "lendingPoolReserversConfig": [
+    "lendingPoolReserversConfig": [],
+    "miniPoolReserversConfig": [
         {
             "baseLtv": 7000,
             "borrowingEnabled": true,
@@ -26,78 +27,22 @@
             "rates": 0.03e27,
             "reserveFactor": 1500,
             "reserveType": true,
-            "symbol": "USDC",
-            "tokenAddress": "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913"
-        },
-        {
-            "baseLtv": 7000,
-            "borrowingEnabled": true,
-            "interestStrat": "VOLATILE",
-            "interestStratId": 0,
-            "liquidationBonus": 10500,
-            "liquidationThreshold": 7500,
-            "miniPoolOwnerFee": 250,
-            "params": "0x10",
-            "rates": 0.03e27,
-            "reserveFactor": 1500,
-            "reserveType": true,
-            "symbol": "WBTC",
-            "tokenAddress": "0x0555E30da8f98308EdB960aa94C0Db47230d2B9c"
-        }
-    ],
-    "miniPoolReserversConfig": [
-        {
-            "baseLtv": 7000,
-            "borrowingEnabled": true,
-            "interestStrat": "VOLATILE",
-            "interestStratId": 0,
-            "liquidationBonus": 10500,
-            "liquidationThreshold": 7500,
-            "miniPoolOwnerFee": 250,
-            "params": "0x10",
-            "rates": 0.03e27,
-            "reserveFactor": 1500,
-            "reserveType": true,
-            "symbol": "WBTC",
-            "tokenAddress": "0x0555E30da8f98308EdB960aa94C0Db47230d2B9c"
-        },
-        {
-            "baseLtv": 7000,
-            "borrowingEnabled": true,
-            "interestStrat": "STABLE",
-            "interestStratId": 0,
-            "liquidationBonus": 10500,
-            "liquidationThreshold": 7500,
-            "miniPoolOwnerFee": 250,
-            "params": "0x10",
-            "rates": 0.03e27,
-            "reserveFactor": 1500,
-            "reserveType": true,
-            "symbol": "USDT",
-            "tokenAddress": "0xfde4C96c8593536E31F229EA8f37b2ADa2699bb2"
+            "symbol": "aUSDC",
+            "tokenAddress": "0xF491AF584A573d3accd5B61Ab9677D769CB1c806"
         }
     ],
     "oracleConfig": {
         "assets": [
-            "0x4200000000000000000000000000000000000006",
-            "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913",
-            "0x0555E30da8f98308EdB960aa94C0Db47230d2B9c",
-            "0xfde4C96c8593536E31F229EA8f37b2ADa2699bb2"
+            "0x2B812E48426C99524B4Ea711AC4A9A7b5B7D0104"
         ],
         "baseCurrency": "0x0000000000000000000000000000000000000000",
         "baseCurrencyUnit": 1e18,
         "fallbackOracle": "0x0000000000000000000000000000000000000000",
         "sources": [
-            "0x71041dddad3595F9CEd3DcCFBe3D1F4b0a16Bb70",
-            "0x7e860098F58bBFC8648a4311b374B1D669a2bc6B",
-            "0x64c911996D3c6aC71f9b455B1E8E7266BcbD848F",
-            "0xf19d560eB8d2ADf07BD6D13ed03e1D11215721F9"
+            "0xCCADC697c55bbB68dc5bCdf8d3CBe83CdD4E071E"
         ],
         "timeouts": [
-            100000,
-            100000,
-            200000,
-            200000
+            100000
         ]
     }
 }

@@ -702,21 +702,6 @@ contract MiniPoolRewarderTest is Common {
         // assertEq(rewardTokens[0].balanceOf(forwardDestinationA), 50 ether);
     }
 
-    function testRewardsFromFlowLimitAndWithout() public {
-        /**
-         * Deposit ETH to main pool
-         * Deposit WBTC to main pool
-         * Deposit ETH to mini pool
-         * Borrow ETH
-         * Set flow limit
-         * Borrow BTW with FlowLimit
-         * Move forward in time
-         * Invariant:
-         * Rewards hsallbe distributed in equally regardless flow limit
-         * (use for log nad coverage getAllUserRewardsBalance)
-         */
-    }
-
     function testClaimRewardsOnBehalf() public {
         /**
          * Necessary deposits
@@ -906,7 +891,7 @@ contract MiniPoolRewarderTest is Common {
         assertEq(
             ERC20(rewardTokens[0]).balanceOf(villain),
             75 ether, // 50 from minipool after 50 secs staking and 25 from main pool for 50 secs staking half of the liquidity
-            "Wrong balance after second deposit"
+            "Wrong villain balance after second deposit"
         );
 
         /* TEST */
@@ -920,9 +905,9 @@ contract MiniPoolRewarderTest is Common {
         );
 
         assertEq(
-            ERC20(rewardTokens[0]).balanceOf(villain),
+            ERC20(rewardTokens[0]).balanceOf(user2),
             50 ether, // 50 from main pool for 100 secs staking half of the liquidity
-            "Wrong balance after second deposit"
+            "Wrong user2 balance after second deposit"
         );
     }
 
@@ -1092,5 +1077,20 @@ contract MiniPoolRewarderTest is Common {
         assertEq(
             rewardTokens[0].balanceOf(user2), 18 ether, "2. Wrong amount of reward tokens (user2)"
         );
+    }
+
+    function testRewardsFromFlowLimitAndWithout() public {
+        /**
+         * Deposit ETH to main pool
+         * Deposit WBTC to main pool
+         * Deposit ETH to mini pool
+         * Borrow ETH
+         * Set flow limit
+         * Borrow BTW with FlowLimit
+         * Move forward in time
+         * Invariant:
+         * Rewards hsallbe distributed in equally regardless flow limit
+         * (use for log nad coverage getAllUserRewardsBalance)
+         */
     }
 }

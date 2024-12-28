@@ -66,7 +66,7 @@ To see coverage on the side bar:
   - [ ] Increase/decrease allowance
 
 - Cod3xLendDataProvider.t.sol
-  - [ ]
+  - [ ] Dev In progress
 
 - DefaultReserveInterestRateStrategy.t.sol - DONE
 

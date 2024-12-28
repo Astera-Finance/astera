@@ -1,5 +1,5 @@
 {
-    "wethGateway": "0x4200000000000000000000000000000000000006",
+    "wethGateway": "0xe43208266aEad29736433aA0b6F035a2Ffc3BB9F",
     "general": {
         "aTokenNamePrefix": "Cod3x Lend ",
         "aTokenSymbolPrefix": "cl",
@@ -23,7 +23,22 @@
             "reserveFactor": 1500,
             "reserveType": true,
             "symbol": "WETH",
-            "tokenAddress": "0x4200000000000000000000000000000000000006"
+            "tokenAddress": "0xe43208266aEad29736433aA0b6F035a2Ffc3BB9F"
+        },
+        {
+            "baseLtv": 7000,
+            "borrowingEnabled": true,
+            "interestStrat": "PI",
+            "interestStratId": 0,
+            "liquidationBonus": 10500,
+            "liquidationThreshold": 7500,
+            "miniPoolOwnerFee": 0,
+            "params": "0x10",
+            "rates": 0.03e27,
+            "reserveFactor": 1500,
+            "reserveType": true,
+            "symbol": "USDC",
+            "tokenAddress": "0xC3E0372C8a5278b11D1454507BCFB9085d3AAD84"
         }
     ],
     "volatileStrategies": [
@@ -42,18 +57,32 @@
             "variableRateSlope2": 0.75e27
         }
     ],
-    "piStrategies": [],
+    "piStrategies": [
+        {
+            "assetReserveType": true,
+            "ki": 13e19,
+            "kp": 1e27,
+            "maxITimeAmp": 1728000,
+            "minControllerError": -400e24,
+            "optimalUtilizationRate": 45e25,
+            "symbol": "USDC",
+            "tokenAddress": "0xC3E0372C8a5278b11D1454507BCFB9085d3AAD84"
+        }
+    ],
     "oracleConfig": {
         "assets": [
-            "0x4200000000000000000000000000000000000006"
+            "0xe43208266aEad29736433aA0b6F035a2Ffc3BB9F",
+            "0xC3E0372C8a5278b11D1454507BCFB9085d3AAD84"
         ],
         "baseCurrency": "0x0000000000000000000000000000000000000000",
         "baseCurrencyUnit": 1e18,
         "fallbackOracle": "0x0000000000000000000000000000000000000000",
         "sources": [
-            "0x71041dddad3595F9CEd3DcCFBe3D1F4b0a16Bb70"
+            "0x71041dddad3595F9CEd3DcCFBe3D1F4b0a16Bb70",
+            "0x7e860098F58bBFC8648a4311b374B1D669a2bc6B"
         ],
         "timeouts": [
+            100000,
             100000
         ]
     }
