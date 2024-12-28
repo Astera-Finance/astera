@@ -40,7 +40,8 @@ contract MiniPoolRepayWithdrawTransferTest is MiniPoolDepositBorrowTest {
         offset = bound(offset, 0, tokens.length - 1);
         console.log("[Withdrawal]Offset: ", offset);
 
-        TokenParams memory tokenParams = TokenParams(erc20Tokens[offset], aTokensWrapper[offset], 0);
+        TokenParams memory tokenParams =
+            TokenParams(erc20Tokens[offset], commonContracts.aTokensWrapper[offset], 0);
 
         address user = makeAddr("user");
         IAERC6909 aErc6909Token =
@@ -74,7 +75,8 @@ contract MiniPoolRepayWithdrawTransferTest is MiniPoolDepositBorrowTest {
 
         address user = makeAddr("user");
         address user2 = makeAddr("user2");
-        TokenParams memory tokenParams = TokenParams(erc20Tokens[offset], aTokensWrapper[offset], 0);
+        TokenParams memory tokenParams =
+            TokenParams(erc20Tokens[offset], commonContracts.aTokensWrapper[offset], 0);
         IAERC6909 aErc6909Token =
             IAERC6909(miniPoolContracts.miniPoolAddressesProvider.getMiniPoolToAERC6909(miniPool));
         vm.label(address(aErc6909Token), "aErc6909Token");
@@ -137,13 +139,13 @@ contract MiniPoolRepayWithdrawTransferTest is MiniPoolDepositBorrowTest {
 
         TokenParams memory collateralParams = TokenParams(
             erc20Tokens[collateralOffset],
-            aTokensWrapper[collateralOffset],
-            oracle.getAssetPrice(address(erc20Tokens[collateralOffset]))
+            commonContracts.aTokensWrapper[collateralOffset],
+            commonContracts.oracle.getAssetPrice(address(erc20Tokens[collateralOffset]))
         );
         TokenParams memory borrowParams = TokenParams(
             erc20Tokens[borrowOffset],
-            aTokensWrapper[borrowOffset],
-            oracle.getAssetPrice(address(erc20Tokens[borrowOffset]))
+            commonContracts.aTokensWrapper[borrowOffset],
+            commonContracts.oracle.getAssetPrice(address(erc20Tokens[borrowOffset]))
         );
         address user = makeAddr("user");
         IAERC6909 aErc6909Token =
@@ -220,13 +222,13 @@ contract MiniPoolRepayWithdrawTransferTest is MiniPoolDepositBorrowTest {
 
         TokenParams memory collateralParams = TokenParams(
             erc20Tokens[collateralOffset],
-            aTokensWrapper[collateralOffset],
-            oracle.getAssetPrice(address(erc20Tokens[collateralOffset]))
+            commonContracts.aTokensWrapper[collateralOffset],
+            commonContracts.oracle.getAssetPrice(address(erc20Tokens[collateralOffset]))
         );
         TokenParams memory borrowParams = TokenParams(
             erc20Tokens[borrowOffset],
-            aTokensWrapper[borrowOffset],
-            oracle.getAssetPrice(address(erc20Tokens[borrowOffset]))
+            commonContracts.aTokensWrapper[borrowOffset],
+            commonContracts.oracle.getAssetPrice(address(erc20Tokens[borrowOffset]))
         );
         address user = makeAddr("user");
         amount = bound(
@@ -305,13 +307,13 @@ contract MiniPoolRepayWithdrawTransferTest is MiniPoolDepositBorrowTest {
 
         TokenParams memory collateralParams = TokenParams(
             erc20Tokens[collateralOffset],
-            aTokensWrapper[collateralOffset],
-            oracle.getAssetPrice(address(erc20Tokens[collateralOffset]))
+            commonContracts.aTokensWrapper[collateralOffset],
+            commonContracts.oracle.getAssetPrice(address(erc20Tokens[collateralOffset]))
         );
         TokenParams memory borrowParams = TokenParams(
             erc20Tokens[borrowOffset],
-            aTokensWrapper[borrowOffset],
-            oracle.getAssetPrice(address(erc20Tokens[borrowOffset]))
+            commonContracts.aTokensWrapper[borrowOffset],
+            commonContracts.oracle.getAssetPrice(address(erc20Tokens[borrowOffset]))
         );
         address user = makeAddr("user");
         IAERC6909 aErc6909Token =
@@ -394,13 +396,13 @@ contract MiniPoolRepayWithdrawTransferTest is MiniPoolDepositBorrowTest {
 
         TokenParams memory collateralParams = TokenParams(
             erc20Tokens[collateralOffset],
-            aTokensWrapper[collateralOffset],
-            oracle.getAssetPrice(address(erc20Tokens[collateralOffset]))
+            commonContracts.aTokensWrapper[collateralOffset],
+            commonContracts.oracle.getAssetPrice(address(erc20Tokens[collateralOffset]))
         );
         TokenParams memory borrowParams = TokenParams(
             erc20Tokens[borrowOffset],
-            aTokensWrapper[borrowOffset],
-            oracle.getAssetPrice(address(erc20Tokens[borrowOffset]))
+            commonContracts.aTokensWrapper[borrowOffset],
+            commonContracts.oracle.getAssetPrice(address(erc20Tokens[borrowOffset]))
         );
         address user = makeAddr("user");
         IAERC6909 aErc6909Token =
@@ -493,13 +495,13 @@ contract MiniPoolRepayWithdrawTransferTest is MiniPoolDepositBorrowTest {
 
         TokenParams memory usdcParams = TokenParams(
             erc20Tokens[USDC_OFFSET],
-            aTokensWrapper[USDC_OFFSET],
-            oracle.getAssetPrice(address(erc20Tokens[USDC_OFFSET]))
+            commonContracts.aTokensWrapper[USDC_OFFSET],
+            commonContracts.oracle.getAssetPrice(address(erc20Tokens[USDC_OFFSET]))
         );
         TokenParams memory wbtcParams = TokenParams(
             erc20Tokens[WBTC_OFFSET],
-            aTokensWrapper[WBTC_OFFSET],
-            oracle.getAssetPrice(address(erc20Tokens[WBTC_OFFSET]))
+            commonContracts.aTokensWrapper[WBTC_OFFSET],
+            commonContracts.oracle.getAssetPrice(address(erc20Tokens[WBTC_OFFSET]))
         );
         IAERC6909 aErc6909Token =
             IAERC6909(miniPoolContracts.miniPoolAddressesProvider.getMiniPoolToAERC6909(miniPool));
@@ -585,7 +587,7 @@ contract MiniPoolRepayWithdrawTransferTest is MiniPoolDepositBorrowTest {
         console.log("Balance: ", aErc6909Token.balanceOf(users.user1, 1000 + USDC_OFFSET));
         console.log("Balance: ", aErc6909Token.balanceOf(users.user1, 1128 + USDC_OFFSET));
         uint256 availableLiquidity =
-            IERC20(aTokensWrapper[USDC_OFFSET]).balanceOf(address(aErc6909Token));
+            IERC20(commonContracts.aTokensWrapper[USDC_OFFSET]).balanceOf(address(aErc6909Token));
         console.log("AvailableLiquidity: ", availableLiquidity);
         console.log("Withdrawing... %s", aErc6909Token.balanceOf(users.user1, 1128 + USDC_OFFSET));
         IMiniPool(miniPool).withdraw(
@@ -595,14 +597,16 @@ contract MiniPoolRepayWithdrawTransferTest is MiniPoolDepositBorrowTest {
             users.user1
         );
         console.log("After Balance: ", aErc6909Token.balanceOf(users.user1, 1128 + USDC_OFFSET));
-        availableLiquidity = IERC20(aTokensWrapper[USDC_OFFSET]).balanceOf(address(aErc6909Token));
+        availableLiquidity =
+            IERC20(commonContracts.aTokensWrapper[USDC_OFFSET]).balanceOf(address(aErc6909Token));
         console.log("After availableLiquidity: ", availableLiquidity);
         vm.stopPrank();
 
         vm.startPrank(users.user2);
         console.log("----------------USER2 TRANSFER---------------");
 
-        availableLiquidity = IERC20(aTokensWrapper[WBTC_OFFSET]).balanceOf(address(aErc6909Token));
+        availableLiquidity =
+            IERC20(commonContracts.aTokensWrapper[WBTC_OFFSET]).balanceOf(address(aErc6909Token));
         console.log("Balance: ", aErc6909Token.balanceOf(users.user2, 1000 + WBTC_OFFSET));
         console.log("Balance: ", aErc6909Token.balanceOf(users.user2, 1128 + WBTC_OFFSET));
         console.log("AvailableLiquidity: ", availableLiquidity);
@@ -654,13 +658,13 @@ contract MiniPoolRepayWithdrawTransferTest is MiniPoolDepositBorrowTest {
 
         TokenParams memory usdcParams = TokenParams(
             erc20Tokens[USDC_OFFSET],
-            aTokensWrapper[USDC_OFFSET],
-            oracle.getAssetPrice(address(erc20Tokens[USDC_OFFSET]))
+            commonContracts.aTokensWrapper[USDC_OFFSET],
+            commonContracts.oracle.getAssetPrice(address(erc20Tokens[USDC_OFFSET]))
         );
         TokenParams memory wbtcParams = TokenParams(
             erc20Tokens[WBTC_OFFSET],
-            aTokensWrapper[WBTC_OFFSET],
-            oracle.getAssetPrice(address(erc20Tokens[WBTC_OFFSET]))
+            commonContracts.aTokensWrapper[WBTC_OFFSET],
+            commonContracts.oracle.getAssetPrice(address(erc20Tokens[WBTC_OFFSET]))
         );
         IAERC6909 aErc6909Token =
             IAERC6909(miniPoolContracts.miniPoolAddressesProvider.getMiniPoolToAERC6909(miniPool));
@@ -710,7 +714,7 @@ contract MiniPoolRepayWithdrawTransferTest is MiniPoolDepositBorrowTest {
         console.log("0. Balance aToken: ", aErc6909Token.balanceOf(users.user1, 1000 + USDC_OFFSET));
         console.log(
             "0. AvailableLiquidity: ",
-            IERC20(aTokens[USDC_OFFSET]).balanceOf(address(aErc6909Token))
+            IERC20(commonContracts.aTokens[USDC_OFFSET]).balanceOf(address(aErc6909Token))
         );
         console.log("----------------TIME TRAVEL---------------");
         skip(skipDuration);
@@ -743,7 +747,7 @@ contract MiniPoolRepayWithdrawTransferTest is MiniPoolDepositBorrowTest {
         console.log("1. Balance aToken: ", aErc6909Token.balanceOf(users.user1, 1000 + USDC_OFFSET));
         console.log(
             "1. AvailableLiquidity: ",
-            IERC20(aTokens[USDC_OFFSET]).balanceOf(address(aErc6909Token))
+            IERC20(commonContracts.aTokens[USDC_OFFSET]).balanceOf(address(aErc6909Token))
         );
         console.log("User1 Repaying...");
         IMiniPool(miniPool).repay(
@@ -811,7 +815,8 @@ contract MiniPoolRepayWithdrawTransferTest is MiniPoolDepositBorrowTest {
             "2. Normalized income aWBTC: ",
             IMiniPool(miniPool).getReserveNormalizedIncome(address(wbtcParams.aToken))
         );
-        uint256 availableLiquidity = IERC20(aTokens[USDC_OFFSET]).balanceOf(address(aErc6909Token));
+        uint256 availableLiquidity =
+            IERC20(commonContracts.aTokens[USDC_OFFSET]).balanceOf(address(aErc6909Token));
         console.log("2. AvailableLiquidity: ", availableLiquidity);
         console.log("Provider repaying...");
         /* Give lacking amount to user */
@@ -829,7 +834,8 @@ contract MiniPoolRepayWithdrawTransferTest is MiniPoolDepositBorrowTest {
         vm.startPrank(users.user1);
         uint256 balanceAToken = aErc6909Token.balanceOf(users.user1, 1000 + USDC_OFFSET);
         console.log("3. Balance aToken: ", balanceAToken);
-        availableLiquidity = IERC20(aTokens[USDC_OFFSET]).balanceOf(address(aErc6909Token));
+        availableLiquidity =
+            IERC20(commonContracts.aTokens[USDC_OFFSET]).balanceOf(address(aErc6909Token));
         // IERC20(reserve).balanceOf(aToken)
         console.log("3. AvailableLiquidity: ", availableLiquidity);
         console.log(
@@ -861,7 +867,8 @@ contract MiniPoolRepayWithdrawTransferTest is MiniPoolDepositBorrowTest {
             users.user1
         );
         console.log("After Balance: ", aErc6909Token.balanceOf(users.user1, 1000 + USDC_OFFSET));
-        availableLiquidity = IERC20(aTokensWrapper[USDC_OFFSET]).balanceOf(address(aErc6909Token));
+        availableLiquidity =
+            IERC20(commonContracts.aTokensWrapper[USDC_OFFSET]).balanceOf(address(aErc6909Token));
         console.log("After availableLiquidity: ", availableLiquidity);
         assertEq(
             aErc6909Token.balanceOf(users.user1, 1000 + USDC_OFFSET),
@@ -895,8 +902,10 @@ contract MiniPoolRepayWithdrawTransferTest is MiniPoolDepositBorrowTest {
         address user = makeAddr("user");
         address user2 = makeAddr("user2");
 
-        TokenParams memory tokenParamsUsdc = TokenParams(erc20Tokens[0], aTokensWrapper[0], 0);
-        TokenParams memory tokenParamsWbtc = TokenParams(erc20Tokens[1], aTokensWrapper[1], 0);
+        TokenParams memory tokenParamsUsdc =
+            TokenParams(erc20Tokens[USDC_OFFSET], commonContracts.aTokensWrapper[USDC_OFFSET], 0);
+        TokenParams memory tokenParamsWbtc =
+            TokenParams(erc20Tokens[WBTC_OFFSET], commonContracts.aTokensWrapper[WBTC_OFFSET], 0);
 
         uint256 amountUsdc = 1000 * (10 ** tokenParamsUsdc.token.decimals());
         uint256 amountwBtc = 1 * (10 ** tokenParamsWbtc.token.decimals());
@@ -927,7 +936,7 @@ contract MiniPoolRepayWithdrawTransferTest is MiniPoolDepositBorrowTest {
 
         skip(10 days);
 
-        assertLt(amtAUsdc, aTokens[0].balanceOf(address(aErc6909Token)));
+        assertLt(amtAUsdc, commonContracts.aTokens[USDC_OFFSET].balanceOf(address(aErc6909Token)));
         console.log("Balance before: ", tokenParamsUsdc.aToken.balanceOf(address(aErc6909Token)));
         console.log("Balance to withdraw: ", aErc6909Token.balanceOf(user, 1000 + USDC_OFFSET));
         vm.startPrank(user);
@@ -952,8 +961,10 @@ contract MiniPoolRepayWithdrawTransferTest is MiniPoolDepositBorrowTest {
         address user = makeAddr("user");
         address user2 = makeAddr("user2");
 
-        TokenParams memory tokenParamsUsdc = TokenParams(erc20Tokens[0], aTokensWrapper[0], 0);
-        TokenParams memory tokenParamsWbtc = TokenParams(erc20Tokens[1], aTokensWrapper[1], 0);
+        TokenParams memory tokenParamsUsdc =
+            TokenParams(erc20Tokens[USDC_OFFSET], commonContracts.aTokensWrapper[USDC_OFFSET], 0);
+        TokenParams memory tokenParamsWbtc =
+            TokenParams(erc20Tokens[WBTC_OFFSET], commonContracts.aTokensWrapper[WBTC_OFFSET], 0);
 
         uint256 amountUsdc = 100000 * (10 ** tokenParamsUsdc.token.decimals());
         uint256 amountwBtc = 1 * (10 ** tokenParamsWbtc.token.decimals());
@@ -1003,8 +1014,10 @@ contract MiniPoolRepayWithdrawTransferTest is MiniPoolDepositBorrowTest {
         address user = makeAddr("user");
         address user2 = makeAddr("user2");
 
-        TokenParams memory tokenParamsUsdc = TokenParams(erc20Tokens[0], aTokensWrapper[0], 0);
-        TokenParams memory tokenParamsWbtc = TokenParams(erc20Tokens[1], aTokensWrapper[1], 0);
+        TokenParams memory tokenParamsUsdc =
+            TokenParams(erc20Tokens[USDC_OFFSET], commonContracts.aTokensWrapper[USDC_OFFSET], 0);
+        TokenParams memory tokenParamsWbtc =
+            TokenParams(erc20Tokens[WBTC_OFFSET], commonContracts.aTokensWrapper[WBTC_OFFSET], 0);
 
         uint256 amountUsdc = 100000 * (10 ** tokenParamsUsdc.token.decimals());
         uint256 amountwBtc = 1 * (10 ** tokenParamsWbtc.token.decimals());
@@ -1060,7 +1073,7 @@ contract MiniPoolRepayWithdrawTransferTest is MiniPoolDepositBorrowTest {
         logMinipoolFlow(address(tokenParamsUsdc.token), user2);
 
         address treasury = miniPoolContracts.miniPoolAddressesProvider.getMiniPoolCod3xTreasury();
-        uint256 treasuryBalance = aTokens[0].balanceOf(treasury);
+        uint256 treasuryBalance = commonContracts.aTokens[USDC_OFFSET].balanceOf(treasury);
 
         assertApproxEqRel(
             100_000,
@@ -1079,8 +1092,10 @@ contract MiniPoolRepayWithdrawTransferTest is MiniPoolDepositBorrowTest {
         address user = makeAddr("user");
         address user2 = makeAddr("user2");
 
-        TokenParams memory tokenParamsUsdc = TokenParams(erc20Tokens[0], aTokensWrapper[0], 0);
-        TokenParams memory tokenParamsWbtc = TokenParams(erc20Tokens[1], aTokensWrapper[1], 0);
+        TokenParams memory tokenParamsUsdc =
+            TokenParams(erc20Tokens[USDC_OFFSET], commonContracts.aTokensWrapper[USDC_OFFSET], 0);
+        TokenParams memory tokenParamsWbtc =
+            TokenParams(erc20Tokens[WBTC_OFFSET], commonContracts.aTokensWrapper[WBTC_OFFSET], 0);
 
         uint256 amountUsdc = 100000 * (10 ** tokenParamsUsdc.token.decimals());
         uint256 amountwBtc = 1 * (10 ** tokenParamsWbtc.token.decimals());
@@ -1136,7 +1151,7 @@ contract MiniPoolRepayWithdrawTransferTest is MiniPoolDepositBorrowTest {
         logMinipoolFlow(address(tokenParamsUsdc.token), user2);
 
         address treasury = miniPoolContracts.miniPoolAddressesProvider.getMiniPoolCod3xTreasury();
-        uint256 treasuryBalance = aTokens[0].balanceOf(treasury);
+        uint256 treasuryBalance = commonContracts.aTokens[USDC_OFFSET].balanceOf(treasury);
 
         assertEq(treasuryBalance, 0, "3");
 
@@ -1153,7 +1168,7 @@ contract MiniPoolRepayWithdrawTransferTest is MiniPoolDepositBorrowTest {
             "4"
         );
 
-        treasuryBalance = aTokens[0].balanceOf(treasury);
+        treasuryBalance = commonContracts.aTokens[USDC_OFFSET].balanceOf(treasury);
         assertGt(treasuryBalance, 0, "5");
         console.log("treasuryBalance    :: ", treasuryBalance);
         console.log(
@@ -1178,8 +1193,10 @@ contract MiniPoolRepayWithdrawTransferTest is MiniPoolDepositBorrowTest {
             miniPoolContracts.miniPoolAddressesProvider, 1e27, 0
         );
 
-        TokenParams memory tokenParamsUsdc = TokenParams(erc20Tokens[0], aTokensWrapper[0], 0);
-        TokenParams memory tokenParamsWbtc = TokenParams(erc20Tokens[1], aTokensWrapper[1], 0);
+        TokenParams memory tokenParamsUsdc =
+            TokenParams(erc20Tokens[USDC_OFFSET], commonContracts.aTokensWrapper[USDC_OFFSET], 0);
+        TokenParams memory tokenParamsWbtc =
+            TokenParams(erc20Tokens[WBTC_OFFSET], commonContracts.aTokensWrapper[WBTC_OFFSET], 0);
 
         address user = makeAddr("user");
         address user2 = makeAddr("user2");
@@ -1346,8 +1363,10 @@ contract MiniPoolRepayWithdrawTransferTest is MiniPoolDepositBorrowTest {
             miniPoolContracts.miniPoolAddressesProvider, 1e27, 0
         );
 
-        TokenParams memory tokenParamsUsdc = TokenParams(erc20Tokens[0], aTokensWrapper[0], 0);
-        TokenParams memory tokenParamsWbtc = TokenParams(erc20Tokens[1], aTokensWrapper[1], 0);
+        TokenParams memory tokenParamsUsdc =
+            TokenParams(erc20Tokens[USDC_OFFSET], commonContracts.aTokensWrapper[USDC_OFFSET], 0);
+        TokenParams memory tokenParamsWbtc =
+            TokenParams(erc20Tokens[WBTC_OFFSET], commonContracts.aTokensWrapper[WBTC_OFFSET], 0);
 
         address user = makeAddr("user");
         address user2 = makeAddr("user2");
@@ -1458,8 +1477,10 @@ contract MiniPoolRepayWithdrawTransferTest is MiniPoolDepositBorrowTest {
             miniPoolContracts.miniPoolAddressesProvider, 1e27, 1e27
         );
 
-        TokenParams memory tokenParamsUsdc = TokenParams(erc20Tokens[0], aTokensWrapper[0], 0);
-        TokenParams memory tokenParamsWbtc = TokenParams(erc20Tokens[1], aTokensWrapper[1], 0);
+        TokenParams memory tokenParamsUsdc =
+            TokenParams(erc20Tokens[USDC_OFFSET], commonContracts.aTokensWrapper[USDC_OFFSET], 0);
+        TokenParams memory tokenParamsWbtc =
+            TokenParams(erc20Tokens[WBTC_OFFSET], commonContracts.aTokensWrapper[WBTC_OFFSET], 0);
 
         address user = makeAddr("user");
         address user2 = makeAddr("user2");
@@ -1608,8 +1629,10 @@ contract MiniPoolRepayWithdrawTransferTest is MiniPoolDepositBorrowTest {
             miniPoolContracts.miniPoolAddressesProvider, 1e27, 1e27
         );
 
-        TokenParams memory tokenParamsUsdc = TokenParams(erc20Tokens[0], aTokensWrapper[0], 0);
-        TokenParams memory tokenParamsWbtc = TokenParams(erc20Tokens[1], aTokensWrapper[1], 0);
+        TokenParams memory tokenParamsUsdc =
+            TokenParams(erc20Tokens[USDC_OFFSET], commonContracts.aTokensWrapper[USDC_OFFSET], 0);
+        TokenParams memory tokenParamsWbtc =
+            TokenParams(erc20Tokens[WBTC_OFFSET], commonContracts.aTokensWrapper[WBTC_OFFSET], 0);
 
         address user = makeAddr("user");
         address user2 = makeAddr("user2");
@@ -1759,8 +1782,10 @@ contract MiniPoolRepayWithdrawTransferTest is MiniPoolDepositBorrowTest {
             miniPoolContracts.miniPoolAddressesProvider, 1e27, 1e27
         );
 
-        TokenParams memory tokenParamsUsdc = TokenParams(erc20Tokens[0], aTokensWrapper[0], 0);
-        TokenParams memory tokenParamsWbtc = TokenParams(erc20Tokens[1], aTokensWrapper[1], 0);
+        TokenParams memory tokenParamsUsdc =
+            TokenParams(erc20Tokens[USDC_OFFSET], commonContracts.aTokensWrapper[USDC_OFFSET], 0);
+        TokenParams memory tokenParamsWbtc =
+            TokenParams(erc20Tokens[WBTC_OFFSET], commonContracts.aTokensWrapper[WBTC_OFFSET], 0);
 
         address user = makeAddr("user");
         address user2 = makeAddr("user2");
@@ -1931,9 +1956,81 @@ contract MiniPoolRepayWithdrawTransferTest is MiniPoolDepositBorrowTest {
         console.log("---");
     }
 
-    // function changePrice(address asset, uint256 newPrice) public {
-    //     address collateralSource = oracle.getSourceOfAsset(asset);
-    //     MockAggregator agg = MockAggregator(collateralSource);
-    //     agg.setLastAnswer(int256(newPrice));
-    // }
+    function testMiniPoolMultiRepay(uint256 amount, uint256 collateralOffset, uint256 borrowOffset)
+        public
+    {
+        /**
+         * Preconditions:
+         * 1. Reserves in MiniPool must be configured
+         * Test Scenario:
+         * 1. User adds token as collateral into the miniPool
+         * 2. User borrows tokens
+         * 3. User repays tokens
+         * Invariants:
+         * 1. Balance of debtToken for user in IERC6909 standard shall decrease
+         * 2. Total supply of debtToken shall decrease
+         * 3. Health of user's position shall increase
+         * 4. User's borrowed assets balance shall decrease
+         */
+
+        /* Fuzz vectors */
+        collateralOffset = bound(collateralOffset, 0, tokens.length - 1);
+        borrowOffset = bound(borrowOffset, 0, tokens.length - 1);
+
+        TokenParams memory collateralParams = TokenParams(
+            erc20Tokens[collateralOffset],
+            commonContracts.aTokensWrapper[collateralOffset],
+            commonContracts.oracle.getAssetPrice(address(erc20Tokens[collateralOffset]))
+        );
+        TokenParams memory borrowParams = TokenParams(
+            erc20Tokens[borrowOffset],
+            commonContracts.aTokensWrapper[borrowOffset],
+            commonContracts.oracle.getAssetPrice(address(erc20Tokens[borrowOffset]))
+        );
+        address user = makeAddr("user");
+        IAERC6909 aErc6909Token =
+            IAERC6909(miniPoolContracts.miniPoolAddressesProvider.getMiniPoolToAERC6909(miniPool));
+
+        amount = bound(
+            amount,
+            10 ** borrowParams.token.decimals() / 100,
+            borrowParams.token.balanceOf(address(this)) / 10
+        );
+
+        deal(address(collateralParams.token), user, collateralParams.token.balanceOf(address(this)));
+
+        /* Borrow */
+        fixture_miniPoolBorrow(
+            amount, collateralOffset, borrowOffset, collateralParams, borrowParams, user
+        );
+
+        /* Repay */
+        vm.startPrank(user);
+        Balances memory balances;
+        (,,,,, uint256 healthFactorBefore) = IMiniPool(miniPool).getUserAccountData(user);
+        /* AToken repayment */
+        balances.totalSupply = aErc6909Token.scaledTotalSupply(2000 + borrowOffset);
+        balances.debtToken = aErc6909Token.balanceOf(user, 2000 + borrowOffset);
+        balances.token = borrowParams.aToken.balanceOf(user);
+        borrowParams.aToken.approve(address(miniPool), amount);
+        IMiniPool(miniPool).repay(address(borrowParams.aToken), false, amount, user);
+
+        console.log("Balance of total supply must be lower than before borrow");
+        assertEq(
+            aErc6909Token.scaledTotalSupply(2000 + borrowOffset), balances.totalSupply - amount
+        );
+        console.log("Balance of AToken debt must be lower than before borrow");
+        assertEq(aErc6909Token.balanceOf(user, 2000 + borrowOffset), balances.debtToken - amount);
+        console.log("Balance of AToken must be lower than before borrow");
+        assertEq(borrowParams.aToken.balanceOf(user), balances.token - amount);
+
+        /* Token repayment */
+        balances.totalSupply = aErc6909Token.scaledTotalSupply(2128 + borrowOffset);
+        balances.debtToken = aErc6909Token.balanceOf(user, 2128 + borrowOffset);
+        balances.token = borrowParams.token.balanceOf(user);
+        borrowParams.token.approve(address(miniPool), amount);
+        IMiniPool(miniPool).repay(address(borrowParams.token), false, amount, user);
+        vm.expectRevert(bytes(Errors.VL_NO_DEBT_OF_SELECTED_TYPE));
+        IMiniPool(miniPool).repay(address(borrowParams.token), false, amount, user);
+    }
 }

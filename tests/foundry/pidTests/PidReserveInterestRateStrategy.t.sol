@@ -61,15 +61,17 @@ contract PidReserveInterestRateStrategyTest is Common {
         );
         fixture_configureProtocol(
             address(deployedContracts.lendingPool),
-            address(aToken),
+            address(commonContracts.aToken),
             configAddresses,
             deployedContracts.lendingPoolConfigurator,
             deployedContracts.lendingPoolAddressesProvider
         );
-        aTokens = fixture_getATokens(tokens, deployedContracts.cod3xLendDataProvider);
-        variableDebtTokens =
+        commonContracts.aTokens =
+            fixture_getATokens(tokens, deployedContracts.cod3xLendDataProvider);
+        commonContracts.variableDebtTokens =
             fixture_getVarDebtTokens(tokens, deployedContracts.cod3xLendDataProvider);
-        mockedVaults = fixture_deployReaperVaultMocks(tokens, address(deployedContracts.treasury));
+        commonContracts.mockedVaults =
+            fixture_deployReaperVaultMocks(tokens, address(deployedContracts.treasury));
         erc20Tokens = fixture_getErc20Tokens(tokens);
         fixture_transferTokensToTestContract(erc20Tokens, 100_000_000 ether, address(this));
 

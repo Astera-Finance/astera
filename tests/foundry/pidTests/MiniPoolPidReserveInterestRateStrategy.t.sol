@@ -73,7 +73,7 @@ contract MiniPoolPidReserveInterestRateStrategyTest is Common {
         );
         fixture_configureProtocol(
             address(deployedContracts.lendingPool),
-            address(aToken),
+            address(commonContracts.aToken),
             configAddresses,
             deployedContracts.lendingPoolConfigurator,
             deployedContracts.lendingPoolAddressesProvider
@@ -82,9 +82,11 @@ contract MiniPoolPidReserveInterestRateStrategyTest is Common {
         miniPool = deployedMiniPoolContracts.miniPoolAddressesProvider.getMiniPool(0);
         console.log("2.Minipool: ", miniPool);
 
-        aTokens = fixture_getATokens(tokens, deployedContracts.cod3xLendDataProvider);
+        commonContracts.aTokens =
+            fixture_getATokens(tokens, deployedContracts.cod3xLendDataProvider);
         // variableDebtTokens = fixture_getVarDebtTokens(tokens, deployedContracts.cod3xLendDataProvider);
-        mockedVaults = fixture_deployReaperVaultMocks(tokens, address(deployedContracts.treasury));
+        commonContracts.mockedVaults =
+            fixture_deployReaperVaultMocks(tokens, address(deployedContracts.treasury));
         erc20Tokens = fixture_getErc20Tokens(tokens);
         fixture_transferTokensToTestContract(erc20Tokens, 100_000_000 ether, address(this));
         console.log("strat address: ", address(miniPoolPidStrat));
@@ -103,7 +105,8 @@ contract MiniPoolPidReserveInterestRateStrategyTest is Common {
             if (idx < tokens.length) {
                 reserves[idx] = tokens[idx];
             } else {
-                reserves[idx] = address(aTokens[idx - tokens.length].WRAPPER_ADDRESS());
+                reserves[idx] =
+                    address(commonContracts.aTokens[idx - tokens.length].WRAPPER_ADDRESS());
             }
         }
         console.log("Mini pool reserve configuration..... ");

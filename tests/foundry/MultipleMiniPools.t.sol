@@ -73,12 +73,13 @@ contract MultiplePools is MiniPoolFixtures {
         );
         fixture_configureProtocol(
             address(deployedContracts.lendingPool),
-            address(aToken),
+            address(commonContracts.aToken),
             configLpAddresses,
             deployedContracts.lendingPoolConfigurator,
             deployedContracts.lendingPoolAddressesProvider
         );
-        mockedVaults = fixture_deployReaperVaultMocks(tokens, address(deployedContracts.treasury));
+        commonContracts.mockedVaults =
+            fixture_deployReaperVaultMocks(tokens, address(deployedContracts.treasury));
         erc20Tokens = fixture_getErc20Tokens(tokens);
         fixture_transferTokensToTestContract(erc20Tokens, 1_000_000 ether, address(this));
 
@@ -118,7 +119,8 @@ contract MultiplePools is MiniPoolFixtures {
             if (idx < tokens.length) {
                 reserves[idx] = tokens[idx];
             } else {
-                reserves[idx] = address(aTokens[idx - tokens.length].WRAPPER_ADDRESS());
+                reserves[idx] =
+                    address(commonContracts.aTokens[idx - tokens.length].WRAPPER_ADDRESS());
             }
         }
         configLpAddresses.cod3xLendDataProvider =
@@ -188,17 +190,17 @@ contract MultiplePools is MiniPoolFixtures {
 
         TokenParamsExtended memory usdcParams = TokenParamsExtended(
             erc20Tokens[USDC_OFFSET],
-            aTokens[USDC_OFFSET],
-            aTokensWrapper[USDC_OFFSET],
-            mockVaultUnits[USDC_OFFSET],
-            oracle.getAssetPrice(address(erc20Tokens[USDC_OFFSET]))
+            commonContracts.aTokens[USDC_OFFSET],
+            commonContracts.aTokensWrapper[USDC_OFFSET],
+            commonContracts.mockVaultUnits[USDC_OFFSET],
+            commonContracts.oracle.getAssetPrice(address(erc20Tokens[USDC_OFFSET]))
         );
         TokenParamsExtended memory wbtcParams = TokenParamsExtended(
             erc20Tokens[WBTC_OFFSET],
-            aTokens[WBTC_OFFSET],
-            aTokensWrapper[WBTC_OFFSET],
-            mockVaultUnits[WBTC_OFFSET],
-            oracle.getAssetPrice(address(erc20Tokens[WBTC_OFFSET]))
+            commonContracts.aTokens[WBTC_OFFSET],
+            commonContracts.aTokensWrapper[WBTC_OFFSET],
+            commonContracts.mockVaultUnits[WBTC_OFFSET],
+            commonContracts.oracle.getAssetPrice(address(erc20Tokens[WBTC_OFFSET]))
         );
         console.log("\n---------------->>>>>>>>>>> FIRST MINI POOL <<<<<<<<--------------");
         miniPool = miniPools[0];
@@ -248,13 +250,13 @@ contract MultiplePools is MiniPoolFixtures {
         {
             TokenParams memory usdcTokenParams = TokenParams(
                 erc20Tokens[USDC_OFFSET],
-                aTokensWrapper[USDC_OFFSET],
-                oracle.getAssetPrice(address(erc20Tokens[USDC_OFFSET]))
+                commonContracts.aTokensWrapper[USDC_OFFSET],
+                commonContracts.oracle.getAssetPrice(address(erc20Tokens[USDC_OFFSET]))
             );
             TokenParams memory wbtcTokenParams = TokenParams(
                 erc20Tokens[WBTC_OFFSET],
-                aTokensWrapper[WBTC_OFFSET],
-                oracle.getAssetPrice(address(erc20Tokens[USDC_OFFSET]))
+                commonContracts.aTokensWrapper[WBTC_OFFSET],
+                commonContracts.oracle.getAssetPrice(address(erc20Tokens[USDC_OFFSET]))
             );
             console.log("----------------PROVIDER DEPOSITs LIQUIDITY (WBTC)---------------");
             fixture_depositTokensToMainPool(amount2, users.user2, wbtcTokenParams);
@@ -304,7 +306,7 @@ contract MultiplePools is MiniPoolFixtures {
         console.log("5. Balance aToken: ", aErc6909Token.balanceOf(users.user1, 1000 + USDC_OFFSET));
         console.log(
             "5. AvailableLiquidity: ",
-            IERC20(aTokens[USDC_OFFSET]).balanceOf(address(aErc6909Token))
+            IERC20(commonContracts.aTokens[USDC_OFFSET]).balanceOf(address(aErc6909Token))
         );
 
         assertEq(
@@ -338,8 +340,8 @@ contract MultiplePools is MiniPoolFixtures {
             uint8 WETH_OFFSET = 2;
             TokenParams memory wethTokenParams = TokenParams(
                 erc20Tokens[WETH_OFFSET],
-                aTokensWrapper[WETH_OFFSET],
-                oracle.getAssetPrice(address(erc20Tokens[WETH_OFFSET]))
+                commonContracts.aTokensWrapper[WETH_OFFSET],
+                commonContracts.oracle.getAssetPrice(address(erc20Tokens[WETH_OFFSET]))
             );
             amount1 = 2e18; //1 ETH
 

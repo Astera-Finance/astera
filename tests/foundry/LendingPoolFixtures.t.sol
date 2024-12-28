@@ -74,29 +74,23 @@ abstract contract LendingPoolFixtures is Common {
         {
             uint256 collateralMaxBorrowValue = staticData.ltv * collateralDepositValue / 10_000;
 
-            uint256 wbtcMaxBorrowAmountRay = collateralMaxBorrowValue.rayDiv(borrowTokenPrice);
+            uint256 borrowTokenMaxBorrowAmountRay =
+                collateralMaxBorrowValue.rayDiv(borrowTokenPrice);
             maxBorrowTokenToBorrowInCollateralUnit = fixture_preciseConvertWithDecimals(
-                wbtcMaxBorrowAmountRay, collateral.decimals(), borrowToken.decimals()
+                borrowTokenMaxBorrowAmountRay, collateral.decimals(), borrowToken.decimals()
             );
             // (usdcMaxBorrowValue * 10 ** PRICE_FEED_DECIMALS) / wbtcPrice;
         }
         return maxBorrowTokenToBorrowInCollateralUnit;
     }
 
-    function fixture_depositAndBorrow(
-        TokenTypes memory collateral,
+    function fixture_borrow(
         TokenTypes memory borrowToken,
         address provider,
         address borrower,
-        uint256 amount
-    ) public returns (uint256) {
-        /* Borrower deposits collateral and wants to borrow */
-        fixture_deposit(collateral.token, collateral.aToken, borrower, borrower, amount);
-
-        uint256 maxBorrowTokenToBorrowInCollateralUnit =
-            fixture_getMaxValueToBorrow(collateral.token, borrowToken.token, amount);
-
-        uint256 borrowTokenDepositAmount = maxBorrowTokenToBorrowInCollateralUnit * 15 / 10;
+        uint256 amountToBorrow
+    ) public {
+        uint256 borrowTokenDepositAmount = amountToBorrow * 15 / 10;
 
         require(
             borrowToken.token.balanceOf(provider) > borrowTokenDepositAmount, "Too less borrowToken"
@@ -122,8 +116,8 @@ abstract contract LendingPoolFixtures is Common {
             address(borrowToken.token),
             address(borrowToken.aToken),
             0,
-            maxBorrowTokenToBorrowInCollateralUnit,
-            dynamicData.totalVariableDebt + maxBorrowTokenToBorrowInCollateralUnit,
+            amountToBorrow,
+            dynamicData.totalVariableDebt + amountToBorrow,
             staticData.cod3xReserveFactor
         );
         console.log("1. AToken balance: ", borrowToken.token.balanceOf(address(borrowToken.aToken)));
@@ -131,28 +125,82 @@ abstract contract LendingPoolFixtures is Common {
         vm.startPrank(borrower);
         vm.expectEmit(true, true, true, true);
         emit Borrow(
-            address(borrowToken.token),
-            borrower,
-            borrower,
-            maxBorrowTokenToBorrowInCollateralUnit,
-            expectedBorrowRate
+            address(borrowToken.token), borrower, borrower, amountToBorrow, expectedBorrowRate
         );
         deployedContracts.lendingPool.borrow(
-            address(borrowToken.token), true, maxBorrowTokenToBorrowInCollateralUnit, borrower
+            address(borrowToken.token), true, amountToBorrow, borrower
         );
         vm.stopPrank();
         console.log("2. AToken balance: ", borrowToken.token.balanceOf(address(borrowToken.aToken)));
         /* Main user's balance should be: initial amount + borrowed amount */
         assertEq(
-            borrowTokenBalanceBeforeBorrow + maxBorrowTokenToBorrowInCollateralUnit,
+            borrowTokenBalanceBeforeBorrow + amountToBorrow,
             borrowToken.token.balanceOf(borrower),
             "Borrower hasn't more borrowToken than before"
         );
         assertEq(
-            debtBalanceBefore + maxBorrowTokenToBorrowInCollateralUnit,
+            debtBalanceBefore + amountToBorrow,
             borrowToken.debtToken.balanceOf(borrower),
             "Borrower hasn't more borrowToken than before"
         );
+    }
+
+    function fixture_depositAndBorrow(
+        TokenTypes memory collateral,
+        TokenTypes memory borrowToken,
+        address provider,
+        address borrower,
+        uint256 amount
+    ) public returns (uint256) {
+        /* Borrower deposits collateral and wants to borrow */
+        fixture_deposit(collateral.token, collateral.aToken, borrower, borrower, amount);
+        uint256 maxBorrowTokenToBorrowInCollateralUnit =
+            fixture_getMaxValueToBorrow(collateral.token, borrowToken.token, amount);
+
+        fixture_borrow(borrowToken, provider, borrower, maxBorrowTokenToBorrowInCollateralUnit);
+
         return (maxBorrowTokenToBorrowInCollateralUnit);
+    }
+
+    function fixture_repay(
+        TokenTypes memory borrowToken,
+        uint256 maxBorrowTokenToBorrowInCollateralUnit,
+        address user
+    ) public {
+        vm.startPrank(user);
+        uint256 wbtcBalanceBeforeRepay = borrowToken.token.balanceOf(address(this));
+        uint256 wbtcDebtBeforeRepay = borrowToken.debtToken.balanceOf(address(this));
+        borrowToken.token.approve(
+            address(deployedContracts.lendingPool), maxBorrowTokenToBorrowInCollateralUnit
+        );
+        deployedContracts.lendingPool.repay(
+            address(borrowToken.token), true, maxBorrowTokenToBorrowInCollateralUnit, address(this)
+        );
+        /* Main user's balance should be the same as before borrowing */
+        assertEq(
+            wbtcBalanceBeforeRepay,
+            borrowToken.token.balanceOf(address(this)) + maxBorrowTokenToBorrowInCollateralUnit,
+            "User after repayment has less borrowed tokens"
+        );
+        assertEq(
+            wbtcDebtBeforeRepay,
+            borrowToken.debtToken.balanceOf(address(this)) + maxBorrowTokenToBorrowInCollateralUnit,
+            "User after repayment has less debt"
+        );
+        vm.stopPrank();
+    }
+
+    function fixture_performAllActions(
+        TokenTypes memory collateral,
+        TokenTypes memory borrowToken,
+        address provider,
+        address borrower,
+        uint256 amount
+    ) public {
+        uint256 maxBorrowTokenToBorrowInCollateralUnit;
+        maxBorrowTokenToBorrowInCollateralUnit =
+            fixture_depositAndBorrow(collateral, borrowToken, provider, borrower, amount);
+        fixture_repay(borrowToken, maxBorrowTokenToBorrowInCollateralUnit, borrower);
+        fixture_withdraw(collateral.token, borrower, borrower, amount);
     }
 }

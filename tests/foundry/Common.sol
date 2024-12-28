@@ -247,16 +247,6 @@ contract Common is Test {
 
     CommonContracts public commonContracts;
 
-    // commonContracts.defaultPidConfig = PidConfig({
-    //     asset: DAI,
-    //     assetReserveType: true,
-    //     minControllerError: -400e24,
-    //     maxITimeAmp: 20 days,
-    //     optimalUtilizationRate: 45e25,
-    //     kp: 1e27,
-    //     ki: 13e19
-    // });
-
     function uintToString(uint256 value) public pure returns (string memory) {
         // Special case for 0
         if (value == 0) {
@@ -364,6 +354,16 @@ contract Common is Test {
             volStrat[2],
             volStrat[3]
         );
+
+        commonContracts.defaultPidConfig = PidConfig({
+            asset: DAI,
+            assetReserveType: true,
+            minControllerError: -400e24,
+            maxITimeAmp: 20 days,
+            optimalUtilizationRate: 45e25,
+            kp: 1e27,
+            ki: 13e19
+        });
         deployedContracts.piStrategy = new PiReserveInterestRateStrategy(
             address(deployedContracts.lendingPoolAddressesProvider),
             commonContracts.defaultPidConfig.asset,

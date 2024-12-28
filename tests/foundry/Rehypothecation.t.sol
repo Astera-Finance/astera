@@ -39,24 +39,27 @@ contract RehypothecationTest is Common, LendingPoolTest {
         deployedContracts.lendingPool.deposit(address(token), true, depositSize, address(this));
         turnOnRehypothecation(
             deployedContracts.lendingPoolConfigurator,
-            address(aTokens[idx]),
-            address(mockVaultUnits[idx]),
+            address(commonContracts.aTokens[idx]),
+            address(commonContracts.mockVaultUnits[idx]),
             admin,
             2000,
             10 ** (token.decimals() - 1),
             200
         );
 
-        assertEq(token.balanceOf(address(aTokens[idx])), depositSize);
+        assertEq(token.balanceOf(address(commonContracts.aTokens[idx])), depositSize);
 
         vm.startPrank(admin);
         deployedContracts.lendingPoolConfigurator.setPoolPause(true);
-        deployedContracts.lendingPoolConfigurator.rebalance(address(aTokens[idx]));
+        deployedContracts.lendingPoolConfigurator.rebalance(address(commonContracts.aTokens[idx]));
         vm.stopPrank();
 
-        uint256 remainingPct = 10000 - (aTokens[idx]._farmingPct());
-        assertEq(token.balanceOf(address(aTokens[idx])), depositSize * remainingPct / 10000);
-        assertEq(aTokens[idx].getTotalManagedAssets(), depositSize);
+        uint256 remainingPct = 10000 - (commonContracts.aTokens[idx]._farmingPct());
+        assertEq(
+            token.balanceOf(address(commonContracts.aTokens[idx])),
+            depositSize * remainingPct / 10000
+        );
+        assertEq(commonContracts.aTokens[idx].getTotalManagedAssets(), depositSize);
     }
 
     function testDepositAndWithdrawYield(uint256 timeDiff) public {
@@ -64,16 +67,16 @@ contract RehypothecationTest is Common, LendingPoolTest {
         // idx = bound(idx, 0, tokens.length - 1);
         TokenTypes memory usdcTypes = TokenTypes({
             token: erc20Tokens[0],
-            aToken: aTokens[0],
-            debtToken: variableDebtTokens[0]
+            aToken: commonContracts.aTokens[0],
+            debtToken: commonContracts.variableDebtTokens[0]
         });
 
         TokenTypes memory wbtcTypes = TokenTypes({
             token: erc20Tokens[1],
-            aToken: aTokens[1],
-            debtToken: variableDebtTokens[1]
+            aToken: commonContracts.aTokens[1],
+            debtToken: commonContracts.variableDebtTokens[1]
         });
-        MockVaultUnit wbtcVault = mockVaultUnits[1];
+        MockVaultUnit wbtcVault = commonContracts.mockVaultUnits[1];
         uint256 depositSize = 10000 * 10 ** usdcTypes.token.decimals();
 
         address user = makeAddr("user");
@@ -223,10 +226,10 @@ contract RehypothecationTest is Common, LendingPoolTest {
             TokenTypes memory tokenTypes = TokenTypes({
                 token: erc20Tokens[idx],
                 aToken: commonContracts.aTokens[idx],
-                debtToken: variableDebtTokens[idx]
+                debtToken: commonContracts.variableDebtTokens[idx]
             });
             TokenVars memory tokenVars = TokenVars({
-                vault: mockVaultUnits[idx],
+                vault: commonContracts.mockVaultUnits[idx],
                 depositSize: amount,
                 initialBalance: tokenTypes.token.balanceOf(address(this)),
                 remainingPct: 0
@@ -308,24 +311,24 @@ contract RehypothecationTest is Common, LendingPoolTest {
         // idx = bound(idx, 0, tokens.length - 1);
         TokenTypes memory usdcTypes = TokenTypes({
             token: erc20Tokens[0],
-            aToken: aTokens[0],
-            debtToken: variableDebtTokens[0]
+            aToken: commonContracts.aTokens[0],
+            debtToken: commonContracts.variableDebtTokens[0]
         });
 
         TokenTypes memory wbtcTypes = TokenTypes({
             token: erc20Tokens[1],
-            aToken: aTokens[1],
-            debtToken: variableDebtTokens[1]
+            aToken: commonContracts.aTokens[1],
+            debtToken: commonContracts.variableDebtTokens[1]
         });
 
         TokenVars memory usdcVars = TokenVars({
-            vault: mockVaultUnits[0],
+            vault: commonContracts.mockVaultUnits[0],
             depositSize: 10000 * 10 ** usdcTypes.token.decimals(),
             initialBalance: usdcTypes.token.balanceOf(address(this)),
             remainingPct: 0
         });
         TokenVars memory wbtcVars = TokenVars({
-            vault: mockVaultUnits[1],
+            vault: commonContracts.mockVaultUnits[1],
             depositSize: 10 ** (wbtcTypes.token.decimals() - 1),
             initialBalance: wbtcTypes.token.balanceOf(address(this)),
             remainingPct: 0

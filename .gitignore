@@ -1,7 +1,6 @@
 node_modules
 .env
 .openzeppelin
-coverage
 coverage.json
 typechain
 typechain-types
@@ -10,9 +9,11 @@ package-lock.json
 providers.json
 docs
 .vscode/
-
 *outputs
 *broadcast
+comp*.txt
+lcov*.infoBackup
+lcov.info
 
 # Hardhat
 hardhat.config.ts
@@ -23,6 +24,7 @@ artifacts
 forge-cache
 out
 cache_forge
+*tmpTests*
 
 # Python
 pyenv
