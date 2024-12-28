@@ -7,7 +7,6 @@ import {IERC6909} from "../../../../contracts/interfaces/base/IERC6909.sol";
 import {DistributionTypes} from
     "../../../../contracts/protocol/libraries/types/DistributionTypes.sol";
 import {Ownable} from "lib/openzeppelin-contracts/contracts/access/Ownable.sol";
-import "forge-std/console.sol";
 
 /**
  * @title RewardsDistributor6909
@@ -240,11 +239,6 @@ abstract contract RewardsDistributor6909 is IMiniPoolRewardsDistributor, Ownable
                 _rewardTokens.push(rewardsInput[i].reward);
             }
 
-            console.log("rewardsInput[i].asset.market6909: ", rewardsInput[i].asset.market6909);
-            console.log("rewardsInput[i].asset.assetID: ", rewardsInput[i].asset.assetID);
-            console.log("rewardsInput[i].reward: ", rewardsInput[i].reward);
-            console.log("rewardsInput[i].totalSupply: ", rewardsInput[i].totalSupply);
-
             // Due emissions is still zero, updates only latestUpdateTimestamp.
             _updateAssetStateInternal(
                 rewardsInput[i].asset.market6909,
@@ -292,13 +286,6 @@ abstract contract RewardsDistributor6909 is IMiniPoolRewardsDistributor, Ownable
         if (block.timestamp == rewardConfig.lastUpdateTimestamp) {
             return oldIndex;
         }
-        console.log(">>> [MINI] TOTAL SUPPLY: ", totalSupply);
-        console.log(">>> [MINI] rewardConfig.emissionPerSecond: ", rewardConfig.emissionPerSecond);
-        console.log(
-            ">>> [MINI] rewardConfig.lastUpdateTimestamp: ", rewardConfig.lastUpdateTimestamp
-        );
-        console.log(">>> [MINI] rewardConfig.distributionEnd: ", rewardConfig.distributionEnd);
-        console.log(">>> [MINI] oldIndex: ", oldIndex);
         uint256 newIndex = _getAssetIndex(
             oldIndex,
             rewardConfig.emissionPerSecond,
@@ -307,7 +294,6 @@ abstract contract RewardsDistributor6909 is IMiniPoolRewardsDistributor, Ownable
             totalSupply,
             decimals
         );
-        console.log(">>> [MINI] newIndex: ", totalSupply);
 
         if (newIndex != oldIndex) {
             require(newIndex <= type(uint104).max, "Index overflow");
@@ -348,11 +334,9 @@ abstract contract RewardsDistributor6909 is IMiniPoolRewardsDistributor, Ownable
         uint256 newIndex = _updateAssetStateInternal(
             market6909, assetID, reward, rewardData, totalSupply, assetDecimals
         );
-        console.log(" >>>> >>> {MINI} user index: %s, new index: %s", userIndex, newIndex);
         if (userIndex != newIndex) {
             if (userBalance != 0) {
                 accruedRewards = _getRewards(userBalance, newIndex, userIndex, assetDecimals);
-                console.log("Accrued rewards: %s", accruedRewards);
             }
 
             rewardData.usersIndex[user] = newIndex;
