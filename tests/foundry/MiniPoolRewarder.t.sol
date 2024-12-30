@@ -59,7 +59,7 @@ contract MiniPoolRewarderTest is Common {
             rewardsVault.approveIncentivesController(type(uint256).max);
             miniPoolRewardsVaults.push(rewardsVault);
             vm.prank(address(rewardsVault));
-            rewardTokens[idx].mint(400 ether);
+            rewardTokens[idx].mint(600 ether);
             miniPoolRewarder.setRewardsVault(address(rewardsVault), address(rewardTokens[idx]));
         }
     }
@@ -231,7 +231,7 @@ contract MiniPoolRewarderTest is Common {
         fixture_configureMainPoolRewarder(
             address(deployedContracts.rewarder), // The address of the rewarder contract
             0, // The index of the reward token
-            100 ether, // The amount of reward tokens
+            200 ether, // The amount of reward tokens
             1 ether, // The emissions per second of the reward tokens
             uint32(block.timestamp + 100), // The end timestamp for the distribution of rewards
             address(miniPoolContracts.miniPoolAddressesProvider) // The address of the mini pool addresses provider
@@ -1081,16 +1081,207 @@ contract MiniPoolRewarderTest is Common {
 
     function testRewardsFromFlowLimitAndWithout() public {
         /**
-         * Deposit ETH to main pool
-         * Deposit WBTC to main pool
-         * Deposit ETH to mini pool
-         * Borrow ETH
-         * Set flow limit
-         * Borrow BTW with FlowLimit
+         * User3 deposits USDC to main pool
+         * User3 deposits half of the amount to the mini pool
+         * User2 deposits WBTC to main pool
+         * User2 deposits WBTC to mini pool
+         * User1 deposits WETH to main pool
+         * User1 deposits WETH to mini pool
+         * User2 borrows USDC
+         * Set flow limit for USDC
+         * User1 borrows USDC (with flow from main pool)
          * Move forward in time
          * Invariant:
-         * Rewards hsallbe distributed in equally regardless flow limit
-         * (use for log nad coverage getAllUserRewardsBalance)
+         * Rewards shall be distributed equally regardless of flow limit
+         * (use for log and coverage getAllUserRewardsBalance)
          */
+        console.log("INITIAL BLOCK TIMESTAMP: ", block.timestamp);
+        address user1 = makeAddr("user1");
+        address user2 = makeAddr("user2");
+        address user3 = makeAddr("user3");
+
+        deal(address(erc20Tokens[WETH_OFFSET]), user1, 100 ether);
+        deal(address(erc20Tokens[WBTC_OFFSET]), user2, 100 ether);
+        deal(address(erc20Tokens[USDC_OFFSET]), user3, 1000 ether);
+
+        TokenParamsExtended memory wethParams = TokenParamsExtended({
+            token: erc20Tokens[WETH_OFFSET],
+            aToken: commonContracts.aTokens[WETH_OFFSET],
+            aTokenWrapper: commonContracts.aTokensWrapper[WETH_OFFSET],
+            vault: new MockVaultUnit(erc20Tokens[WETH_OFFSET]),
+            price: commonContracts.oracle.getAssetPrice(address(tokens[WETH_OFFSET]))
+        });
+
+        TokenParamsExtended memory wbtcParams = TokenParamsExtended({
+            token: erc20Tokens[WBTC_OFFSET],
+            aToken: commonContracts.aTokens[WBTC_OFFSET],
+            aTokenWrapper: commonContracts.aTokensWrapper[WBTC_OFFSET],
+            vault: new MockVaultUnit(erc20Tokens[WBTC_OFFSET]),
+            price: commonContracts.oracle.getAssetPrice(address(tokens[WBTC_OFFSET]))
+        });
+
+        TokenParamsExtended memory usdcParams = TokenParamsExtended({
+            token: erc20Tokens[USDC_OFFSET],
+            aToken: commonContracts.aTokens[USDC_OFFSET],
+            aTokenWrapper: commonContracts.aTokensWrapper[USDC_OFFSET],
+            vault: new MockVaultUnit(erc20Tokens[USDC_OFFSET]),
+            price: commonContracts.oracle.getAssetPrice(address(tokens[USDC_OFFSET]))
+        });
+
+        uint256 wethAmount = (1000 ether / wethParams.price) * 10 ** PRICE_FEED_DECIMALS
+            / (10 ** (18 - wethParams.token.decimals()));
+        console.log("wethAmount: %s for price: %s", wethAmount, wethParams.price);
+
+        uint256 wbtcAmount = (1000 ether / wbtcParams.price) * 10 ** PRICE_FEED_DECIMALS
+            / (10 ** (18 - wbtcParams.token.decimals()));
+
+        console.log("wbtcAmount: %s for price: %s", wbtcAmount, wbtcParams.price);
+
+        uint256 usdcAmount = (1000 ether / usdcParams.price) * 10 ** PRICE_FEED_DECIMALS
+            / (10 ** (18 - usdcParams.token.decimals()));
+
+        console.log("usdcAmount: %s for price: %s", usdcAmount, usdcParams.price);
+
+        address[] memory aTokenAddresses = new address[](4);
+        aTokenAddresses[0] = address(wethParams.aToken);
+        aTokenAddresses[1] = address(wbtcParams.aToken);
+        aTokenAddresses[2] = address(usdcParams.aToken);
+        aTokenAddresses[3] = address(commonContracts.variableDebtTokens[USDC_OFFSET]);
+
+        DistributionTypes.Asset6909[] memory assets = new DistributionTypes.Asset6909[](4);
+        assets[0] = DistributionTypes.Asset6909(aTokensErc6909Addr, 1000 + WETH_OFFSET); //Wrapper WETH
+        assets[1] = DistributionTypes.Asset6909(aTokensErc6909Addr, 1000 + WBTC_OFFSET);
+        assets[2] = DistributionTypes.Asset6909(aTokensErc6909Addr, 1000 + USDC_OFFSET);
+        assets[3] = DistributionTypes.Asset6909(aTokensErc6909Addr, 2000 + USDC_OFFSET);
+
+        vm.startPrank(user3);
+        console.log("User3 deposits USDC to main pool");
+        erc20Tokens[USDC_OFFSET].approve(address(deployedContracts.lendingPool), usdcAmount);
+        deployedContracts.lendingPool.deposit(address(usdcParams.token), true, usdcAmount, user3);
+        console.log("User3 deposits half of USDC to mini pool");
+        usdcParams.aTokenWrapper.approve(miniPool, usdcAmount);
+        IMiniPool(miniPool).deposit(address(usdcParams.aTokenWrapper), false, usdcAmount / 2, user3);
+        vm.stopPrank();
+
+        vm.startPrank(user2);
+        console.log("User2 deposits WBTC to main pool");
+        erc20Tokens[WBTC_OFFSET].approve(address(deployedContracts.lendingPool), wbtcAmount);
+        deployedContracts.lendingPool.deposit(address(wbtcParams.token), true, wbtcAmount, user2);
+        console.log("User2 deposits WBTC to mini pool");
+        wbtcParams.aTokenWrapper.approve(address(miniPool), wbtcAmount);
+        IMiniPool(miniPool).deposit(address(wbtcParams.aTokenWrapper), false, wbtcAmount, user2);
+        vm.stopPrank();
+
+        vm.startPrank(user1);
+        console.log("User1 deposits WETH to main pool");
+        wethParams.token.approve(address(deployedContracts.lendingPool), wethAmount);
+        deployedContracts.lendingPool.deposit(address(wethParams.token), true, wethAmount, user1);
+        console.log("User1 deposits WETH to mini pool");
+        wethParams.aTokenWrapper.approve(address(miniPool), wethAmount);
+        IMiniPool(miniPool).deposit(address(wethParams.aTokenWrapper), false, wethAmount, user1);
+        vm.stopPrank();
+
+        vm.startPrank(user2);
+        console.log("User2 borrows USDC from mini pool");
+        IMiniPool(miniPool).borrow(address(usdcParams.aTokenWrapper), false, usdcAmount / 3, user2);
+        vm.stopPrank();
+
+        vm.prank(miniPoolContracts.miniPoolAddressesProvider.getMainPoolAdmin());
+        miniPoolContracts.miniPoolConfigurator.setFlowLimit(
+            tokens[USDC_OFFSET], miniPool, usdcAmount / 2
+        );
+
+        vm.startPrank(user1);
+        console.log("User1 borrows USDC from mini pool");
+        IMiniPool(miniPool).borrow(address(usdcParams.aTokenWrapper), false, usdcAmount / 3, user1);
+        vm.stopPrank();
+
+        console.log("Time travel 1");
+        vm.warp(block.timestamp + 100);
+        vm.roll(block.number + 1);
+
+        // console.log("Time travel 2");
+        // vm.warp(block.timestamp + 40);
+        // vm.roll(block.number + 1);
+
+        DistributionTypes.Asset6909[] memory assets1 = new DistributionTypes.Asset6909[](1);
+        assets1[0] = DistributionTypes.Asset6909(aTokensErc6909Addr, 2000 + USDC_OFFSET);
+
+        vm.startPrank(user1);
+        console.log(
+            "_1.User1 Debt: ",
+            ATokenERC6909(aTokensErc6909Addr).balanceOf(user1, 2000 + USDC_OFFSET)
+        );
+        console.log("_1.User1 balance: ", rewardTokens[0].balanceOf(user1));
+        miniPoolRewarder.claimAllRewardsToSelf(assets1);
+        console.log("_2.User1 balance: ", rewardTokens[0].balanceOf(user1));
+        vm.stopPrank();
+
+        vm.startPrank(user2);
+        console.log(
+            "_1.User1 Debt: ",
+            ATokenERC6909(aTokensErc6909Addr).balanceOf(user2, 2000 + USDC_OFFSET)
+        );
+        console.log("_1.User2 balance: ", rewardTokens[0].balanceOf(user2));
+        miniPoolRewarder.claimAllRewardsToSelf(assets1);
+        console.log("_2.User2 balance: ", rewardTokens[0].balanceOf(user2));
+        vm.stopPrank();
+
+        vm.startPrank(user1);
+        deployedContracts.rewarder.claimAllRewardsToSelf(aTokenAddresses);
+        console.log("1.User1 balance: ", rewardTokens[0].balanceOf(user1));
+        miniPoolRewarder.claimAllRewardsToSelf(assets);
+        console.log("2.User1 balance: ", rewardTokens[0].balanceOf(user1));
+        vm.stopPrank();
+
+        vm.startPrank(user2);
+        deployedContracts.rewarder.claimAllRewardsToSelf(aTokenAddresses);
+        console.log("1.User2 balance: ", rewardTokens[0].balanceOf(user2));
+        miniPoolRewarder.claimAllRewardsToSelf(assets);
+        console.log("2.User2 balance: ", rewardTokens[0].balanceOf(user2));
+        vm.stopPrank();
+
+        vm.startPrank(user3);
+        deployedContracts.rewarder.claimAllRewardsToSelf(aTokenAddresses);
+        console.log("1.User3 balance: ", rewardTokens[0].balanceOf(user3));
+        miniPoolRewarder.claimAllRewardsToSelf(assets);
+        console.log("2.User3 balance: ", rewardTokens[0].balanceOf(user3));
+        vm.stopPrank();
+
+        // assertLt(rewardTokens[0].balanceOf(user1), 100 ether);
+        // assertLt(rewardTokens[0].balanceOf(user2), 100 ether);
+        // assertLt(rewardTokens[0].balanceOf(user3), 100 ether);
+
+        assertEq(
+            rewardTokens[0].balanceOf(user1),
+            rewardTokens[0].balanceOf(user2),
+            "1. Users have different amounts of rewards"
+        );
+
+        console.log("Time travel 3");
+        vm.warp(block.timestamp + 20);
+        vm.roll(block.number + 1);
+
+        vm.startPrank(user1);
+        // deployedContracts.rewarder.claimAllRewardsToSelf(aTokenAddresses);
+        miniPoolRewarder.claimAllRewardsToSelf(assets);
+        vm.stopPrank();
+
+        vm.startPrank(user2);
+        // deployedContracts.rewarder.claimAllRewardsToSelf(aTokenAddresses);
+        miniPoolRewarder.claimAllRewardsToSelf(assets);
+        vm.stopPrank();
+        console.log(
+            "1. User1 balance %s vs user2 balance %s",
+            ERC20(rewardTokens[0]).balanceOf(user1),
+            ERC20(rewardTokens[0]).balanceOf(user2)
+        );
+
+        // assertEq(
+        //     rewardTokens[0].balanceOf(user1), 42 ether, "2. Wrong amount of reward tokens (user1)"
+        // );
+        // assertEq(
+        //     rewardTokens[0].balanceOf(user2), 18 ether, "2. Wrong amount of reward tokens (user2)"
+        // );
     }
 }
