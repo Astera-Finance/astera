@@ -62,11 +62,6 @@ abstract contract RewardsController6909 is RewardsDistributor6909, IMiniPoolRewa
         override
         onlyOwner
     {
-        for (uint256 i = 0; i < config.length; i++) {
-            // Fix Token Configuration
-            config[i].totalSupply =
-                IAERC6909(config[i].asset.market6909).scaledTotalSupply(config[i].asset.assetID);
-        }
         _configureAssets(config);
     }
 

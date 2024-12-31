@@ -34,7 +34,6 @@ library DistributionTypes {
      */
     struct MiniPoolRewardsConfigInput {
         uint88 emissionPerSecond;
-        uint256 totalSupply;
         uint32 distributionEnd;
         Asset6909 asset;
         address reward;

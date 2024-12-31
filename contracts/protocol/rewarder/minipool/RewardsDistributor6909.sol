@@ -245,7 +245,9 @@ abstract contract RewardsDistributor6909 is IMiniPoolRewardsDistributor, Ownable
                 rewardsInput[i].asset.assetID,
                 rewardsInput[i].reward,
                 rewardConfig,
-                rewardsInput[i].totalSupply,
+                IERC6909(rewardsInput[i].asset.market6909).scaledTotalSupply(
+                    rewardsInput[i].asset.assetID
+                ),
                 _assets[rewardsInput[i].asset.market6909][rewardsInput[i].asset.assetID].decimals
             );
 

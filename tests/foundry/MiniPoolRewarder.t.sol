@@ -78,13 +78,8 @@ contract MiniPoolRewarderTest is Common {
             DistributionTypes.Asset6909(aTokensErc6909Addr, assetID);
         console.log("rewardTokenAmount: ", rewardTokenAmount);
         configs[0] = DistributionTypes.MiniPoolRewardsConfigInput(
-            emissionsPerSecond,
-            rewardTokenAmount,
-            distributionEnd,
-            asset,
-            address(rewardTokens[rewardTokenIndex])
+            emissionsPerSecond, distributionEnd, asset, address(rewardTokens[rewardTokenIndex])
         );
-        console.log("configs[0].totalSupply: ", configs[0].totalSupply);
         miniPoolRewarder.configureAssets(configs);
 
         IMiniPool _miniPool = IMiniPool(ATokenERC6909(aTokensErc6909Addr).getMinipoolAddress());
@@ -1257,5 +1252,52 @@ contract MiniPoolRewarderTest is Common {
             rewardTokens[0].balanceOf(user2),
             "1. Users have different amounts of rewards"
         );
+    }
+
+    function testClaimingRewardsWhenRewarderIsNotSet() public {
+        address user1 = makeAddr("user1");
+
+        TokenParamsExtended memory wethParams = TokenParamsExtended({
+            token: erc20Tokens[WETH_OFFSET],
+            aToken: commonContracts.aTokens[WETH_OFFSET],
+            aTokenWrapper: commonContracts.aTokensWrapper[WETH_OFFSET],
+            vault: new MockVaultUnit(erc20Tokens[WETH_OFFSET]),
+            price: commonContracts.oracle.getAssetPrice(address(tokens[WETH_OFFSET]))
+        });
+        uint256 wethAmount = (1000 ether / wethParams.price) * 10 ** PRICE_FEED_DECIMALS
+            / (10 ** (18 - wethParams.token.decimals()));
+        console.log("wethAmount: %s for price: %s", wethAmount, wethParams.price);
+
+        uint256 balanceBefore = rewardTokens[0].balanceOf(user1);
+
+        deal(address(erc20Tokens[WETH_OFFSET]), user1, 100 ether);
+
+        vm.startPrank(miniPoolContracts.miniPoolAddressesProvider.getMainPoolAdmin());
+        miniPoolContracts.miniPoolConfigurator.setRewarderForReserve(
+            address(wethParams.token), address(0), IMiniPool(miniPool)
+        );
+        vm.stopPrank();
+
+        vm.startPrank(user1);
+        console.log("User1 deposits WETH to main pool");
+        wethParams.token.approve(address(deployedContracts.lendingPool), wethAmount);
+        deployedContracts.lendingPool.deposit(address(wethParams.token), true, wethAmount, user1);
+        console.log("User1 deposits WETH to mini pool");
+        wethParams.aTokenWrapper.approve(address(miniPool), wethAmount);
+        IMiniPool(miniPool).deposit(address(wethParams.aTokenWrapper), false, wethAmount, user1);
+        vm.stopPrank();
+
+        DistributionTypes.Asset6909[] memory assets = new DistributionTypes.Asset6909[](1);
+        assets[0] = DistributionTypes.Asset6909(aTokensErc6909Addr, 1000 + WETH_OFFSET);
+
+        console.log("Time travel 1");
+        vm.warp(block.timestamp + 100);
+        vm.roll(block.number + 1);
+
+        vm.startPrank(user1);
+        miniPoolRewarder.claimAllRewardsToSelf(assets);
+        vm.stopPrank();
+
+        assertEq(rewardTokens[0].balanceOf(user1), balanceBefore);
     }
 }
