@@ -1257,31 +1257,5 @@ contract MiniPoolRewarderTest is Common {
             rewardTokens[0].balanceOf(user2),
             "1. Users have different amounts of rewards"
         );
-
-        console.log("Time travel 3");
-        vm.warp(block.timestamp + 20);
-        vm.roll(block.number + 1);
-
-        vm.startPrank(user1);
-        // deployedContracts.rewarder.claimAllRewardsToSelf(aTokenAddresses);
-        miniPoolRewarder.claimAllRewardsToSelf(assets);
-        vm.stopPrank();
-
-        vm.startPrank(user2);
-        // deployedContracts.rewarder.claimAllRewardsToSelf(aTokenAddresses);
-        miniPoolRewarder.claimAllRewardsToSelf(assets);
-        vm.stopPrank();
-        console.log(
-            "1. User1 balance %s vs user2 balance %s",
-            ERC20(rewardTokens[0]).balanceOf(user1),
-            ERC20(rewardTokens[0]).balanceOf(user2)
-        );
-
-        // assertEq(
-        //     rewardTokens[0].balanceOf(user1), 42 ether, "2. Wrong amount of reward tokens (user1)"
-        // );
-        // assertEq(
-        //     rewardTokens[0].balanceOf(user2), 18 ether, "2. Wrong amount of reward tokens (user2)"
-        // );
     }
 }

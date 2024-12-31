@@ -44,7 +44,7 @@ To see coverage on the side bar:
 - FlashLoanLogic:
   - [ ] Flashloan with mode different than NONE
 - GenericLogic:
-  - [ ] balanceDecreaseAllowed
+  - [x] balanceDecreaseAllowed
 - LiquidationLogic:
   - [ ] liquidation in following situations:
     - [ ] vars.userVariableDebt < vars.actualDebtToLiquidate
@@ -89,7 +89,7 @@ MiniPoolDepositLogic: DONE
 MiniPoolFlashLoanLogic: 
  - [ ] combination to exploit sth (optional)
 MiniPoolGenericLogic:
-- [ ] balanceDecreaseAllowed
+- [x] balanceDecreaseAllowed -> Errors.VL_TRANSFER_NOT_ALLOWED - covered
 MiniPoolLiquidationLogic:
 - [ ] liquidation in following situations:
   - [ ] vars.userVariableDebt < vars.actualDebtToLiquidate

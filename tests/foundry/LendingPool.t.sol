@@ -279,4 +279,32 @@ contract LendingPoolTest is LendingPoolFixtures {
             commonContracts.variableDebtTokens[idx].balanceOf(address(this)), tokenMaxBorrowAmount
         );
     }
+
+    function testNormalWithdrawDuringBorrow(uint256 offset) public {
+        offset = 1;
+        TokenTypes memory borrowToken = TokenTypes({
+            token: erc20Tokens[offset],
+            aToken: commonContracts.aTokens[offset],
+            debtToken: commonContracts.variableDebtTokens[offset]
+        });
+        uint256 usdcAmount = 100000 * 10 ** erc20Tokens[USDC_OFFSET].decimals();
+        uint256 borrowAmount = 10 ** borrowToken.token.decimals();
+
+        address provider = makeAddr("provider");
+        deal(address(borrowToken.token), provider, 2 * borrowAmount);
+
+        fixture_deposit(
+            erc20Tokens[USDC_OFFSET],
+            commonContracts.aTokens[USDC_OFFSET],
+            address(this),
+            address(this),
+            usdcAmount
+        );
+        fixture_borrow(borrowToken, provider, address(this), borrowAmount);
+
+        vm.expectRevert(bytes(Errors.VL_TRANSFER_NOT_ALLOWED));
+        deployedContracts.lendingPool.withdraw(
+            address(erc20Tokens[USDC_OFFSET]), true, usdcAmount, address(this)
+        );
+    }
 }
