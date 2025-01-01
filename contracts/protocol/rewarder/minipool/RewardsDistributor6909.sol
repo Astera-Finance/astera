@@ -3,7 +3,7 @@ pragma solidity 0.8.23;
 
 import {IMiniPoolRewardsDistributor} from
     "../../../../contracts/interfaces/IMiniPoolRewardsDistributor.sol";
-import {IERC6909} from "../../../../contracts/interfaces/base/IERC6909.sol";
+import {IAERC6909} from "../../../../contracts/interfaces/IAERC6909.sol";
 import {DistributionTypes} from
     "../../../../contracts/protocol/libraries/types/DistributionTypes.sol";
 import {Ownable} from "lib/openzeppelin-contracts/contracts/access/Ownable.sol";
@@ -220,7 +220,7 @@ abstract contract RewardsDistributor6909 is IMiniPoolRewardsDistributor, Ownable
     {
         for (uint256 i = 0; i < rewardsInput.length; i++) {
             _assets[rewardsInput[i].asset.market6909][rewardsInput[i].asset.assetID].decimals =
-                IERC6909(rewardsInput[i].asset.market6909).decimals(rewardsInput[i].asset.assetID);
+                IAERC6909(rewardsInput[i].asset.market6909).decimals(rewardsInput[i].asset.assetID);
 
             RewardData storage rewardConfig = _assets[rewardsInput[i].asset.market6909][rewardsInput[i]
                 .asset
@@ -245,7 +245,7 @@ abstract contract RewardsDistributor6909 is IMiniPoolRewardsDistributor, Ownable
                 rewardsInput[i].asset.assetID,
                 rewardsInput[i].reward,
                 rewardConfig,
-                IERC6909(rewardsInput[i].asset.market6909).scaledTotalSupply(
+                IAERC6909(rewardsInput[i].asset.market6909).scaledTotalSupply(
                     rewardsInput[i].asset.assetID
                 ),
                 _assets[rewardsInput[i].asset.market6909][rewardsInput[i].asset.assetID].decimals
@@ -363,6 +363,10 @@ abstract contract RewardsDistributor6909 is IMiniPoolRewardsDistributor, Ownable
         uint256 userBalance,
         uint256 totalSupply
     ) internal {
+        require(
+            address(IAERC6909(market6909).getIncentivesController()) != address(0),
+            "Rewarder not set for market6909"
+        );
         for (uint256 r = 0; r < _assets[market6909][assetID].availableRewards.length; r++) {
             address reward = _assets[market6909][assetID].availableRewards[r];
             uint256 accruedRewards = _updateUserRewardsInternal(

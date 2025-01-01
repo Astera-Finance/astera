@@ -60,6 +60,4 @@ interface IERC6909 {
 
     /// @notice Returns true if this contract implements the interface defined by `interfaceId`.
     function supportsInterface(bytes4 interfaceId) external view returns (bool);
-
-    function scaledTotalSupply(uint256 id) external view returns (uint256);
 }

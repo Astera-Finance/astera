@@ -1254,7 +1254,7 @@ contract MiniPoolRewarderTest is Common {
         );
     }
 
-    function testClaimingRewardsWhenRewarderIsNotSet() public {
+    function testClaimingRewards6909WhenRewarderIsNotSet() public {
         address user1 = makeAddr("user1");
 
         TokenParamsExtended memory wethParams = TokenParamsExtended({
@@ -1295,6 +1295,7 @@ contract MiniPoolRewarderTest is Common {
         vm.roll(block.number + 1);
 
         vm.startPrank(user1);
+        vm.expectRevert(bytes("Rewarder not set for market6909"));
         miniPoolRewarder.claimAllRewardsToSelf(assets);
         vm.stopPrank();
 
