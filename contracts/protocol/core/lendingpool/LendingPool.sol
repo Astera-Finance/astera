@@ -779,8 +779,8 @@ contract LendingPool is VersionedInitializable, ILendingPool, LendingPoolStorage
 
         require(reservesCount < _maxNumberOfReserves, Errors.LP_NO_MORE_RESERVES_ALLOWED);
 
-        bool reserveAlreadyAdded =
-            _reserves[asset][reserveType].id != 0 || _reservesList[0].asset == asset;
+        bool reserveAlreadyAdded = _reserves[asset][reserveType].id != 0
+            || (_reservesList[0].asset == asset && _reservesList[0].reserveType == reserveType);
 
         if (!reserveAlreadyAdded) {
             _reserves[asset][reserveType].id = uint8(reservesCount);
