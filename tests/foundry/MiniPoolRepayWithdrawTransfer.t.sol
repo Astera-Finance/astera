@@ -487,8 +487,6 @@ contract MiniPoolRepayWithdrawTransferTest is MiniPoolDepositBorrowTest {
          * 1. All users shall be able to withdraw the greater or equal amount of funds that they deposited
          * 2.
          */
-        uint8 WBTC_OFFSET = 1;
-        uint8 USDC_OFFSET = 0;
 
         /* Fuzz vectors */
         skipDuration = bound(skipDuration, 100, 300 days);
@@ -650,8 +648,6 @@ contract MiniPoolRepayWithdrawTransferTest is MiniPoolDepositBorrowTest {
          * 1. User shall be able to withdraw all user's balance with accrued interests (always greater than deposit)
          */
         /* Constants */
-        uint8 WBTC_OFFSET = 1;
-        uint8 USDC_OFFSET = 0;
 
         /* Fuzz vectors */
         skipDuration = 300 days; //bound(skipDuration, 0, 300 days);
@@ -977,9 +973,6 @@ contract MiniPoolRepayWithdrawTransferTest is MiniPoolDepositBorrowTest {
         IAERC6909 aErc6909Token =
             IAERC6909(miniPoolContracts.miniPoolAddressesProvider.getMiniPoolToAERC6909(miniPool));
 
-        uint256 USDC_OFFSET = 0;
-        uint256 WBTC_OFFSET = 1;
-
         /* Deposit tests */
         fixture_depositTokensToMainPool(amountUsdc, user, tokenParamsUsdc);
 
@@ -1031,9 +1024,6 @@ contract MiniPoolRepayWithdrawTransferTest is MiniPoolDepositBorrowTest {
 
         IAERC6909 aErc6909Token =
             IAERC6909(miniPoolContracts.miniPoolAddressesProvider.getMiniPoolToAERC6909(miniPool));
-
-        uint256 USDC_OFFSET = 0;
-        uint256 WBTC_OFFSET = 1;
 
         vm.prank(miniPoolContracts.miniPoolAddressesProvider.getMainPoolAdmin());
         miniPoolContracts.miniPoolConfigurator.setCod3xTreasury(address(0x1111));
@@ -1109,9 +1099,6 @@ contract MiniPoolRepayWithdrawTransferTest is MiniPoolDepositBorrowTest {
 
         IAERC6909 aErc6909Token =
             IAERC6909(miniPoolContracts.miniPoolAddressesProvider.getMiniPoolToAERC6909(miniPool));
-
-        uint256 USDC_OFFSET = 0;
-        uint256 WBTC_OFFSET = 1;
 
         vm.prank(miniPoolContracts.miniPoolAddressesProvider.getMainPoolAdmin());
         miniPoolContracts.miniPoolConfigurator.setCod3xTreasury(address(0x1111));
@@ -1235,9 +1222,6 @@ contract MiniPoolRepayWithdrawTransferTest is MiniPoolDepositBorrowTest {
 
         IAERC6909 aErc6909Token =
             IAERC6909(miniPoolContracts.miniPoolAddressesProvider.getMiniPoolToAERC6909(miniPool));
-
-        uint256 USDC_OFFSET = 0;
-        uint256 WBTC_OFFSET = 1;
 
         /* Deposit tests */
         fixture_depositTokensToMainPool(amountUsdc, user, tokenParamsUsdc);
@@ -1406,9 +1390,6 @@ contract MiniPoolRepayWithdrawTransferTest is MiniPoolDepositBorrowTest {
         IAERC6909 aErc6909Token =
             IAERC6909(miniPoolContracts.miniPoolAddressesProvider.getMiniPoolToAERC6909(miniPool));
 
-        uint256 USDC_OFFSET = 0;
-        uint256 WBTC_OFFSET = 1;
-
         /* Deposit tests */
         fixture_depositTokensToMainPool(amountUsdc, user, tokenParamsUsdc);
 
@@ -1519,9 +1500,6 @@ contract MiniPoolRepayWithdrawTransferTest is MiniPoolDepositBorrowTest {
 
         IAERC6909 aErc6909Token =
             IAERC6909(miniPoolContracts.miniPoolAddressesProvider.getMiniPoolToAERC6909(miniPool));
-
-        uint256 USDC_OFFSET = 0;
-        uint256 WBTC_OFFSET = 1;
 
         /* Deposit tests */
         fixture_depositTokensToMainPool(amountUsdc, user, tokenParamsUsdc);
@@ -1672,9 +1650,6 @@ contract MiniPoolRepayWithdrawTransferTest is MiniPoolDepositBorrowTest {
         IAERC6909 aErc6909Token =
             IAERC6909(miniPoolContracts.miniPoolAddressesProvider.getMiniPoolToAERC6909(miniPool));
 
-        uint256 USDC_OFFSET = 0;
-        uint256 WBTC_OFFSET = 1;
-
         /* Deposit tests */
         fixture_depositTokensToMainPool(amountUsdc, user, tokenParamsUsdc);
 
@@ -1824,9 +1799,6 @@ contract MiniPoolRepayWithdrawTransferTest is MiniPoolDepositBorrowTest {
 
         IAERC6909 aErc6909Token =
             IAERC6909(miniPoolContracts.miniPoolAddressesProvider.getMiniPoolToAERC6909(miniPool));
-
-        uint256 USDC_OFFSET = 0;
-        uint256 WBTC_OFFSET = 1;
 
         /* Deposit tests */
         fixture_depositTokensToMainPool(amountUsdc, user, tokenParamsUsdc);
