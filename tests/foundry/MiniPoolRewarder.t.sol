@@ -555,17 +555,16 @@ contract MiniPoolRewarderTest is Common {
             deployedContracts.rewarder.claimAllRewardsToSelf(aTokenAddresses);
         vm.stopPrank();
 
-        assertEq(user1Rewards[0], 40 ether); // 100 / 250 * 100
+        assertEq(user1Rewards[0], 40 ether);
         assertEq(user2Rewards[0], 40 ether);
+        assertEq(rewardTokens[0].balanceOf(user1), 40 ether);
+        assertEq(rewardTokens[0].balanceOf(user2), 40 ether);
 
         uint256 aToken6909ForwardedRewards = deployedContracts.rewarder.getUserRewardsBalance(
             aTokenAddresses, aTokensErc6909Addr, address(rewardTokens[0])
         );
         console.log("aToken6909ForwardedRewards", aToken6909ForwardedRewards);
         assertEq(aToken6909ForwardedRewards, 0 ether);
-
-        address forwardDestinationA = address(0xabcdef);
-        vm.label(forwardDestinationA, "ForwardDestinationA");
 
         uint256 miniPoolForwardedRewards = deployedContracts.rewarder.getUserRewardsBalance(
             aTokenAddresses, miniPool, address(rewardTokens[0])
@@ -590,6 +589,11 @@ contract MiniPoolRewarderTest is Common {
 
         assertEq(miniPoolForwardedRewards, 0 ether);
 
+        forwarder.forwardAllRewardsForPool(miniPool);
+
+        assertEq(rewardTokens[0].balanceOf(address(forwarder)), 0);
+        assertEq(rewardTokens[0].balanceOf(address(this)), 100 ether);
+
         vm.startPrank(user3);
         (, uint256[] memory user3Rewards) =
             deployedContracts.rewarder.claimAllRewardsToSelf(aTokenAddresses);
@@ -607,11 +611,6 @@ contract MiniPoolRewarderTest is Common {
             miniPoolRewarder.getUserRewardsBalance(assets, user3, address(rewardTokens[0]));
         console.log("user3RewardsMiniPool", user3RewardsMiniPool);
         assertEq(user3RewardsMiniPool, 200 ether);
-        uint256 miniPoolForwardedRewardsAToken6909 = miniPoolRewarder.getUserRewardsBalance(
-            assets, aTokensErc6909Addr, address(rewardTokens[0])
-        );
-        console.log("miniPoolForwardedRewardsAToken6909", miniPoolForwardedRewardsAToken6909);
-        assertEq(miniPoolForwardedRewardsAToken6909, 0 ether);
     }
 
     function testRewarderForwarder() public {

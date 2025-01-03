@@ -99,10 +99,21 @@ contract RewardForwarder is Ownable {
      * @notice Forwards all claimed rewards for a mini pool to their respective forwarders.
      * @param claimee The address of the mini pool to forward rewards for.
      */
-    function forwardRewardsForPool(address claimee) public {
+    function forwardAllRewardsForPool(address claimee) public {
+        for (uint256 idx = 0; idx < rewardTokens.length; idx++) {
+            forwardRewardForPool(claimee, idx);
+        }
+    }
+
+    /**
+     * @notice Forwards specific claimed rewards for a mini pool to their respective forwarders.
+     * @param claimee The address of the mini pool to forward rewards for.
+     * @param rewardsIndex Index for reward.
+     */
+    function forwardRewardForPool(address claimee, uint256 rewardsIndex) public {
         for (uint256 i = 0; i < rewardedPoolTokens.length; i++) {
             address token = rewardedPoolTokens[i];
-            forwardRewards(claimee, token, i);
+            forwardRewards(claimee, token, rewardsIndex);
         }
     }
 
@@ -119,6 +130,7 @@ contract RewardForwarder is Ownable {
         assets[0] = token;
         (address[] memory rewardTokens_, uint256[] memory claimedAmounts_) =
             rewardsController.claimAllRewardsOnBehalf(assets, claimee, address(this));
+        require(rewardTokens.length >= rewardTokens_.length, "Too many rewardTokens");
         for (uint256 i = 0; i < rewardTokens_.length; i++) {
             claimedRewards[claimee][token][i] += claimedAmounts_[i];
         }
@@ -135,7 +147,9 @@ contract RewardForwarder is Ownable {
     function forwardRewards(address claimee, address token, uint256 rewardTokenIndex) public {
         address rewardToken = rewardTokens[rewardTokenIndex];
         uint256 amount = claimedRewards[claimee][token][rewardTokenIndex];
-        require(amount != 0, "No rewards to forward");
+        if (amount == 0) {
+            return;
+        }
         claimedRewards[claimee][token][rewardTokenIndex] = 0;
         address forwarder = forwarders[claimee][rewardTokenIndex];
         require(forwarder != address(0), "No forwarder set");
