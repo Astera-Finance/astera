@@ -21,9 +21,6 @@ contract RewardForwarder is Ownable {
     /// @dev Array of tokens that can receive rewards (aTokens and variable debt tokens).
     address[] public rewardedPoolTokens;
 
-    /// @dev Array containing all registered claimee addresses.
-    address[] public registeredClaimees;
-
     /// @dev Mapping to track if an address is a registered claimee.
     mapping(address => bool) public isRegisteredClaimee;
 
@@ -85,7 +82,6 @@ contract RewardForwarder is Ownable {
      */
     function registerClaimee(address claimee) external onlyOwner {
         isRegisteredClaimee[claimee] = true;
-        registeredClaimees.push(claimee);
     }
 
     /**
