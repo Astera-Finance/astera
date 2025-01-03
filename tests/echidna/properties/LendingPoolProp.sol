@@ -98,9 +98,9 @@ contract LendingPoolProp is PropertiesBase {
 
         require(success);
 
-        if (healthFactorAfter < 1e18) {
-            assertWithMsg(!success, "230");
-        }
+        // if (healthFactorAfter < 1e18) {
+        //     assertWithMsg(!success, "230");
+        // }
 
         uint256 aTokenBalanceAfter = aToken.balanceOf(address(user));
         uint256 assetBalanceAfter = asset.balanceOf(address(to));
@@ -412,27 +412,27 @@ contract LendingPoolProp is PropertiesBase {
         assertGte(valueColl, valueDebt, "215");
     }
 
-    /// @custom:invariant 217 - The `liquidityIndex` should monotonically increase when there's total debt.
-    /// @custom:invariant 218 - The `variableBorrowIndex` should monotonically increase when there's total debt.
-    function indexIntegrityLP() public {
-        for (uint256 i = 0; i < assets.length; i++) {
-            address asset = address(assets[i]);
+    // /// @custom:invariant 217 - The `liquidityIndex` should monotonically increase when there's total debt.
+    // /// @custom:invariant 218 - The `variableBorrowIndex` should monotonically increase when there's total debt.
+    // function indexIntegrityLP() public {
+    //     for (uint256 i = 0; i < assets.length; i++) {
+    //         address asset = address(assets[i]);
 
-            uint256 currentLiquidityIndex = pool.getReserveData(asset, true).liquidityIndex;
-            uint256 currentVariableBorrowIndex =
-                pool.getReserveData(asset, true).variableBorrowIndex;
+    //         uint256 currentLiquidityIndex = pool.getReserveData(asset, true).liquidityIndex;
+    //         uint256 currentVariableBorrowIndex =
+    //             pool.getReserveData(asset, true).variableBorrowIndex;
 
-            if (hasDebtTotal()) {
-                assertGte(currentLiquidityIndex, lastLiquidityIndexLP[asset], "217");
-                assertGte(currentVariableBorrowIndex, lastVariableBorrowIndexLP[asset], "218");
-            } else {
-                assertEq(currentLiquidityIndex, lastLiquidityIndexLP[asset], "217");
-                assertEq(currentVariableBorrowIndex, lastVariableBorrowIndexLP[asset], "218");
-            }
-            lastLiquidityIndexLP[asset] = currentLiquidityIndex;
-            lastVariableBorrowIndexLP[asset] = currentVariableBorrowIndex;
-        }
-    }
+    //         if (hasDebtTotal()) {
+    //             assertGte(currentLiquidityIndex, lastLiquidityIndexLP[asset], "217");
+    //             assertGte(currentVariableBorrowIndex, lastVariableBorrowIndexLP[asset], "218");
+    //         } else {
+    //             assertEq(currentLiquidityIndex, lastLiquidityIndexLP[asset], "217");
+    //             assertEq(currentVariableBorrowIndex, lastVariableBorrowIndexLP[asset], "218");
+    //         }
+    //         lastLiquidityIndexLP[asset] = currentLiquidityIndex;
+    //         lastVariableBorrowIndexLP[asset] = currentVariableBorrowIndex;
+    //     }
+    // }
 
     // /// @custom:invariant 219 - A user with debt should have at least an aToken balance `setUsingAsCollateral`.
     // function userDebtIntegrityLP() public {

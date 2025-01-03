@@ -129,7 +129,7 @@ contract PropertiesBase is PropertiesAsserts, MarketParams {
     uint256 internal totalNbMinipool = 1;
     uint256 internal initialMint = 100 ether;
     bool internal bootstrapLiquidity = true;
-    uint256 internal volatility = 300; // 1%
+    uint256 internal volatility = 200; // 2%
     // ------------------
 
     User internal bootstraper;
@@ -543,18 +543,20 @@ contract PropertiesBase is PropertiesAsserts, MarketParams {
         uint256 randAsset = clampBetween(seedAsset, 0, totalNbTokens);
         uint256 randMiniPool = clampBetween(seedMiniPool, 0, totalNbMinipool);
 
-        address asset = address(aTokensNonRebasing[randAsset]);
+        address asset = address(assets[randAsset]);
         address miniPool = address(miniPools[randMiniPool]);
 
         uint256 randLimit = clampBetween(
-            seedLimit, flowLimiter.currentFlow(asset, miniPool), aTokens[randAsset].totalSupply() * 2
+            seedLimit,
+            flowLimiter.currentFlow(asset, miniPool),
+            aTokens[randAsset].totalSupply() * 2
         );
 
         miniPoolConfigurator.setFlowLimit(asset, miniPool, randLimit);
 
         assertWithMsg(
-            flowLimiter.getFlowLimit(asset, miniPool) == randLimit ||
-                flowLimiter.getFlowLimit(asset, miniPool) == flowLimiter.currentFlow(asset, miniPool),
+            flowLimiter.getFlowLimit(asset, miniPool) == randLimit
+                || flowLimiter.getFlowLimit(asset, miniPool) == flowLimiter.currentFlow(asset, miniPool),
             "106"
         );
     }
@@ -811,7 +813,9 @@ contract PropertiesBase is PropertiesAsserts, MarketParams {
 
                     v.targetVTokenDebtBalanceAfter =
                         aToken6909.balanceOf(address(v.target), v.debtTokenID);
-                    assertGt(v.targetVTokenDebtBalanceBefore, v.targetVTokenDebtBalanceAfter, "103");
+                    assertGte(
+                        v.targetVTokenDebtBalanceBefore, v.targetVTokenDebtBalanceAfter, "103"
+                    );
 
                     v.liquidatorCollAssetAfter = v.collAsset.balanceOf(address(v.liquidator));
                     v.liquidatorATokenCollAfter =

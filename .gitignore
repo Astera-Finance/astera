@@ -32,6 +32,7 @@ data/
 corpus/
 medusa-corpus/
 echidna-corpus/
+echidna-corpus-deep/
 **/crytic-compile
 **/crytic-export
 **/corpus

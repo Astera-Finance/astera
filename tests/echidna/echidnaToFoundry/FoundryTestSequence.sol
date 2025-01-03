@@ -16,194 +16,1737 @@ contract FoundryTestSequence is Test {
 
     function testCallSequence() public {
         propertiesMain.userConfigurationMapIntegrityLiquidityLP();
-        propertiesMain.randApproveMP((PropertiesBase.LocalVars_UPTL(23, 3, 34, 7, 185, 188, 13, 37, 68, 15, 233, 8000, false)),54,0,58,124,161996569505584861824992575397343759821);
-        propertiesMain.randDepositLP((PropertiesBase.LocalVars_UPTL(99, 11, 233, 128, 91, 138, 33, 205, 132, 125, 255, 288230376151711745, false)),9,251,196,319489586722768322494058480292276437960); skip(62310);
-        propertiesMain.userConfigurationMapIntegrityDebtMP(); skip(14299);
-        propertiesMain.randDepositMP((PropertiesBase.LocalVars_UPTL(22, 121, 99, 193, 216, 11, 44, 12, 132, 60, 28, 77507239986625076067294359011081772938, true)),85,150,85,130,287551094376422544245156328420653708976); skip(85203);
+        propertiesMain.randApproveMP(
+            (
+                PropertiesBase.LocalVars_UPTL(
+                    23, 3, 34, 7, 185, 188, 13, 37, 68, 15, 233, 8000, false
+                )
+            ),
+            54,
+            0,
+            58,
+            124,
+            161996569505584861824992575397343759821
+        );
+        propertiesMain.randDepositLP(
+            (
+                PropertiesBase.LocalVars_UPTL(
+                    99, 11, 233, 128, 91, 138, 33, 205, 132, 125, 255, 288230376151711745, false
+                )
+            ),
+            9,
+            251,
+            196,
+            319489586722768322494058480292276437960
+        );
+        skip(62310);
+        propertiesMain.userConfigurationMapIntegrityDebtMP();
+        skip(14299);
+        propertiesMain.randDepositMP(
+            (
+                PropertiesBase.LocalVars_UPTL(
+                    22,
+                    121,
+                    99,
+                    193,
+                    216,
+                    11,
+                    44,
+                    12,
+                    132,
+                    60,
+                    28,
+                    77507239986625076067294359011081772938,
+                    true
+                )
+            ),
+            85,
+            150,
+            85,
+            130,
+            287551094376422544245156328420653708976
+        );
+        skip(85203);
         propertiesMain.userConfigurationMapIntegrityDebtLP();
-        propertiesMain.balanceIntegrityMP((PropertiesBase.LocalVars_UPTL(38, 61, 16, 25, 59, 5, 2, 215, 41, 46, 72, 10211031725069638327912689960430323101, false))); skip(8832);
+        propertiesMain.balanceIntegrityMP(
+            (
+                PropertiesBase.LocalVars_UPTL(
+                    38,
+                    61,
+                    16,
+                    25,
+                    59,
+                    5,
+                    2,
+                    215,
+                    41,
+                    46,
+                    72,
+                    10211031725069638327912689960430323101,
+                    false
+                )
+            )
+        );
+        skip(8832);
         propertiesMain.integrityOfDepositCapLP();
-        propertiesMain.randATokenNonRebasingApproveLP((PropertiesBase.LocalVars_UPTL(7, 119, 65, 32, 10, 38, 11, 100, 3, 2, 222, 37605905037815459132019520105447212090, false)),4,1,208,3898796210); skip(46622);
+        propertiesMain.randATokenNonRebasingApproveLP(
+            (
+                PropertiesBase.LocalVars_UPTL(
+                    7,
+                    119,
+                    65,
+                    32,
+                    10,
+                    38,
+                    11,
+                    100,
+                    3,
+                    2,
+                    222,
+                    37605905037815459132019520105447212090,
+                    false
+                )
+            ),
+            4,
+            1,
+            208,
+            3898796210
+        );
+        skip(46622);
         skip(95564);
         propertiesMain.integrityOfDepositCapMP();
         skip(68963);
-        propertiesMain.randFlashloanLP((PropertiesBase.LocalVars_UPTL(12, 56, 1, 141, 101, 12, 223, 90, 207, 160, 161, 20750477666298616995502764467272820362, true)),13,90,223,164); skip(20);
-        propertiesMain.randApproveDelegation((PropertiesBase.LocalVars_UPTL(180, 129, 2, 17, 159, 0, 101, 71, 68, 27, 64, 20572047950394613250954051800198127865, false)),64,17,81,4107696312);
+        propertiesMain.randFlashloanLP(
+            (
+                PropertiesBase.LocalVars_UPTL(
+                    12,
+                    56,
+                    1,
+                    141,
+                    101,
+                    12,
+                    223,
+                    90,
+                    207,
+                    160,
+                    161,
+                    20750477666298616995502764467272820362,
+                    true
+                )
+            ),
+            13,
+            90,
+            223,
+            164
+        );
+        skip(20);
+        propertiesMain.randApproveDelegation(
+            (
+                PropertiesBase.LocalVars_UPTL(
+                    180,
+                    129,
+                    2,
+                    17,
+                    159,
+                    0,
+                    101,
+                    71,
+                    68,
+                    27,
+                    64,
+                    20572047950394613250954051800198127865,
+                    false
+                )
+            ),
+            64,
+            17,
+            81,
+            4107696312
+        );
         skip(4011);
-        propertiesMain.randIncreaseAllowanceLP((PropertiesBase.LocalVars_UPTL(203, 43, 10, 53, 77, 133, 14, 23, 0, 100, 18, 287760096374733335756673257419790389982, false)),68,115,165,28); skip(2001);
-        propertiesMain.randATokenNonRebasingBalanceOfLP((PropertiesBase.LocalVars_UPTL(70, 37, 164, 140, 6, 56, 17, 128, 163, 142, 11, 258158514, true)),25,225); skip(13);
-        propertiesMain.randDepositLP((PropertiesBase.LocalVars_UPTL(105, 129, 99, 51, 17, 81, 97, 0, 163, 27, 154, 129, true)),92,129,96,4); skip(7832);
-        propertiesMain.userConfigurationMapIntegrityLiquidityLP(); skip(30300);
-        propertiesMain.integrityOfDepositCapLP(); skip(13427);
-        propertiesMain.randApproveLP((PropertiesBase.LocalVars_UPTL(44, 255, 190, 1, 57, 14, 42, 4, 171, 2, 45, 154151862604076946056839735192885441772, false)),51,162,26,500000000000000000000000000); skip(80854);
-        propertiesMain.randApproveDelegation((PropertiesBase.LocalVars_UPTL(18, 165, 160, 12, 60, 19, 44, 5, 248, 104, 5, 153027462413969145832724960634594999733, false)),136,7,44,45); skip(16795);
+        propertiesMain.randIncreaseAllowanceLP(
+            (
+                PropertiesBase.LocalVars_UPTL(
+                    203,
+                    43,
+                    10,
+                    53,
+                    77,
+                    133,
+                    14,
+                    23,
+                    0,
+                    100,
+                    18,
+                    287760096374733335756673257419790389982,
+                    false
+                )
+            ),
+            68,
+            115,
+            165,
+            28
+        );
+        skip(2001);
+        propertiesMain.randATokenNonRebasingBalanceOfLP(
+            (
+                PropertiesBase.LocalVars_UPTL(
+                    70, 37, 164, 140, 6, 56, 17, 128, 163, 142, 11, 258158514, true
+                )
+            ),
+            25,
+            225
+        );
+        skip(13);
+        propertiesMain.randDepositLP(
+            (
+                PropertiesBase.LocalVars_UPTL(
+                    105, 129, 99, 51, 17, 81, 97, 0, 163, 27, 154, 129, true
+                )
+            ),
+            92,
+            129,
+            96,
+            4
+        );
+        skip(7832);
+        propertiesMain.userConfigurationMapIntegrityLiquidityLP();
+        skip(30300);
+        propertiesMain.integrityOfDepositCapLP();
+        skip(13427);
+        propertiesMain.randApproveLP(
+            (
+                PropertiesBase.LocalVars_UPTL(
+                    44,
+                    255,
+                    190,
+                    1,
+                    57,
+                    14,
+                    42,
+                    4,
+                    171,
+                    2,
+                    45,
+                    154151862604076946056839735192885441772,
+                    false
+                )
+            ),
+            51,
+            162,
+            26,
+            500000000000000000000000000
+        );
+        skip(80854);
+        propertiesMain.randApproveDelegation(
+            (
+                PropertiesBase.LocalVars_UPTL(
+                    18,
+                    165,
+                    160,
+                    12,
+                    60,
+                    19,
+                    44,
+                    5,
+                    248,
+                    104,
+                    5,
+                    153027462413969145832724960634594999733,
+                    false
+                )
+            ),
+            136,
+            7,
+            44,
+            45
+        );
+        skip(16795);
         propertiesMain.userConfigurationMapIntegrityLiquidityLP();
         skip(34166);
         propertiesMain.userConfigurationMapIntegrityDebtMP();
-        propertiesMain.randApproveMP((PropertiesBase.LocalVars_UPTL(0, 52, 53, 132, 251, 7, 43, 21, 37, 187, 42, 17134693113846643008, true)),163,80,13,37,19); skip(32815);
+        propertiesMain.randApproveMP(
+            (
+                PropertiesBase.LocalVars_UPTL(
+                    0, 52, 53, 132, 251, 7, 43, 21, 37, 187, 42, 17134693113846643008, true
+                )
+            ),
+            163,
+            80,
+            13,
+            37,
+            19
+        );
+        skip(32815);
         propertiesMain.indexIntegrityLP();
-        propertiesMain.randIncreaseAllowanceLP((PropertiesBase.LocalVars_UPTL(133, 105, 197, 3, 182, 27, 40, 104, 160, 224, 186, 19770094214932864677613797880335107884, true)),242,252,6,91); skip(11759);
-        propertiesMain.integrityOfDepositCapLP(); skip(18673);
-        propertiesMain.indexIntegrityLP(); skip(85205);
-        propertiesMain.randATokenNonRebasingBalanceOfLP((PropertiesBase.LocalVars_UPTL(126, 77, 138, 234, 159, 33, 71, 56, 211, 162, 0, 1000000000, false)),161,2);
-        propertiesMain.randForceFeedAssetLP((PropertiesBase.LocalVars_UPTL(3, 13, 11, 251, 45, 95, 92, 27, 60, 129, 203, 238931790907274882394682070669516058262, false)),91,3858086693,71,91); skip(82761);
-        propertiesMain.randDepositMP((PropertiesBase.LocalVars_UPTL(16, 201, 181, 60, 9, 80, 6, 56, 64, 8, 192, 887250, false)),15,1,144,180,0); skip(6);
-        propertiesMain.integrityOfDepositCapLP(); skip(16915);
+        propertiesMain.randIncreaseAllowanceLP(
+            (
+                PropertiesBase.LocalVars_UPTL(
+                    133,
+                    105,
+                    197,
+                    3,
+                    182,
+                    27,
+                    40,
+                    104,
+                    160,
+                    224,
+                    186,
+                    19770094214932864677613797880335107884,
+                    true
+                )
+            ),
+            242,
+            252,
+            6,
+            91
+        );
+        skip(11759);
+        propertiesMain.integrityOfDepositCapLP();
+        skip(18673);
+        propertiesMain.indexIntegrityLP();
+        skip(85205);
+        propertiesMain.randATokenNonRebasingBalanceOfLP(
+            (
+                PropertiesBase.LocalVars_UPTL(
+                    126, 77, 138, 234, 159, 33, 71, 56, 211, 162, 0, 1000000000, false
+                )
+            ),
+            161,
+            2
+        );
+        propertiesMain.randForceFeedAssetLP(
+            (
+                PropertiesBase.LocalVars_UPTL(
+                    3,
+                    13,
+                    11,
+                    251,
+                    45,
+                    95,
+                    92,
+                    27,
+                    60,
+                    129,
+                    203,
+                    238931790907274882394682070669516058262,
+                    false
+                )
+            ),
+            91,
+            3858086693,
+            71,
+            91
+        );
+        skip(82761);
+        propertiesMain.randDepositMP(
+            (
+                PropertiesBase.LocalVars_UPTL(
+                    16, 201, 181, 60, 9, 80, 6, 56, 64, 8, 192, 887250, false
+                )
+            ),
+            15,
+            1,
+            144,
+            180,
+            0
+        );
+        skip(6);
+        propertiesMain.integrityOfDepositCapLP();
+        skip(16915);
         propertiesMain.userConfigurationMapIntegrityLiquidityLP();
-        propertiesMain.balanceIntegrityLP((PropertiesBase.LocalVars_UPTL(185, 6, 11, 46, 135, 1, 46, 29, 184, 251, 247, 75556710804409716572161, false)));
+        propertiesMain.balanceIntegrityLP(
+            (
+                PropertiesBase.LocalVars_UPTL(
+                    185, 6, 11, 46, 135, 1, 46, 29, 184, 251, 247, 75556710804409716572161, false
+                )
+            )
+        );
         skip(32685);
-        propertiesMain.randForceFeedAssetLP((PropertiesBase.LocalVars_UPTL(53, 15, 165, 74, 19, 220, 164, 64, 52, 168, 201, 291045601290849776888365864033363810155, true)),40,18458572340154892706633863078468099267,82,187); skip(78727);
-        propertiesMain.randForceFeedAssetLP((PropertiesBase.LocalVars_UPTL(128, 41, 168, 188, 1, 49, 20, 126, 88, 212, 225, 119819126879301059735161532394921931704, true)),8,82369169824484962906607354494543638667,92,132); skip(91);
-        propertiesMain.integrityOfDepositCapLP(); skip(85205);
+        propertiesMain.randForceFeedAssetLP(
+            (
+                PropertiesBase.LocalVars_UPTL(
+                    53,
+                    15,
+                    165,
+                    74,
+                    19,
+                    220,
+                    164,
+                    64,
+                    52,
+                    168,
+                    201,
+                    291045601290849776888365864033363810155,
+                    true
+                )
+            ),
+            40,
+            18458572340154892706633863078468099267,
+            82,
+            187
+        );
+        skip(78727);
+        propertiesMain.randForceFeedAssetLP(
+            (
+                PropertiesBase.LocalVars_UPTL(
+                    128,
+                    41,
+                    168,
+                    188,
+                    1,
+                    49,
+                    20,
+                    126,
+                    88,
+                    212,
+                    225,
+                    119819126879301059735161532394921931704,
+                    true
+                )
+            ),
+            8,
+            82369169824484962906607354494543638667,
+            92,
+            132
+        );
+        skip(91);
+        propertiesMain.integrityOfDepositCapLP();
+        skip(85205);
         propertiesMain.globalSolvencyCheckLP();
         skip(40189);
-        propertiesMain.randApproveLP((PropertiesBase.LocalVars_UPTL(141, 28, 154, 167, 83, 0, 249, 56, 199, 13, 227, 51, false)),225,48,21,68751932859785938268004583684998609738);
-        propertiesMain.randForceFeedAssetLP((PropertiesBase.LocalVars_UPTL(142, 4, 0, 8, 54, 99, 8, 78, 39, 85, 236, 271625398103420286142134083466937840945, false)),243,488,9,247);
-        propertiesMain.randDepositLP((PropertiesBase.LocalVars_UPTL(141, 80, 79, 85, 165, 216, 252, 2, 230, 64, 30, 329571582897035758209760717504638334662, true)),13,123,31,157198260);
-        propertiesMain.randATokenNonRebasingApproveLP((PropertiesBase.LocalVars_UPTL(241, 223, 170, 159, 50, 75, 214, 74, 97, 180, 194, 157198258, false)),49,163,33,197877715965049505315693745167529770231); skip(9161);
+        propertiesMain.randApproveLP(
+            (
+                PropertiesBase.LocalVars_UPTL(
+                    141, 28, 154, 167, 83, 0, 249, 56, 199, 13, 227, 51, false
+                )
+            ),
+            225,
+            48,
+            21,
+            68751932859785938268004583684998609738
+        );
+        propertiesMain.randForceFeedAssetLP(
+            (
+                PropertiesBase.LocalVars_UPTL(
+                    142,
+                    4,
+                    0,
+                    8,
+                    54,
+                    99,
+                    8,
+                    78,
+                    39,
+                    85,
+                    236,
+                    271625398103420286142134083466937840945,
+                    false
+                )
+            ),
+            243,
+            488,
+            9,
+            247
+        );
+        propertiesMain.randDepositLP(
+            (
+                PropertiesBase.LocalVars_UPTL(
+                    141,
+                    80,
+                    79,
+                    85,
+                    165,
+                    216,
+                    252,
+                    2,
+                    230,
+                    64,
+                    30,
+                    329571582897035758209760717504638334662,
+                    true
+                )
+            ),
+            13,
+            123,
+            31,
+            157198260
+        );
+        propertiesMain.randATokenNonRebasingApproveLP(
+            (
+                PropertiesBase.LocalVars_UPTL(
+                    241, 223, 170, 159, 50, 75, 214, 74, 97, 180, 194, 157198258, false
+                )
+            ),
+            49,
+            163,
+            33,
+            197877715965049505315693745167529770231
+        );
+        skip(9161);
         skip(64299);
-        propertiesMain.indexIntegrityLP(); skip(5704);
+        propertiesMain.indexIntegrityLP();
+        skip(5704);
         skip(1999);
-        propertiesMain.randRehypothecationRebalanceLP((PropertiesBase.LocalVars_UPTL(116, 40, 46, 27, 123, 252, 48, 3, 0, 193, 69, 252227022278638450684331346337072140208, true)),32); skip(15160);
-        propertiesMain.indexIntegrityLP(); skip(54948);
-        propertiesMain.randApproveDelegationMP((PropertiesBase.LocalVars_UPTL(3, 94, 91, 60, 82, 19, 92, 119, 15, 32, 84, 835, true)),106,0,30,235635742888447926474780280888600513588);
-        propertiesMain.randApproveDelegation((PropertiesBase.LocalVars_UPTL(184, 96, 87, 11, 53, 44, 101, 32, 117, 16, 7, 295985974735048783988980643814736407156, true)),117,163,174,2708836573); skip(850);
+        propertiesMain.randRehypothecationRebalanceLP(
+            (
+                PropertiesBase.LocalVars_UPTL(
+                    116,
+                    40,
+                    46,
+                    27,
+                    123,
+                    252,
+                    48,
+                    3,
+                    0,
+                    193,
+                    69,
+                    252227022278638450684331346337072140208,
+                    true
+                )
+            ),
+            32
+        );
+        skip(15160);
+        propertiesMain.indexIntegrityLP();
+        skip(54948);
+        propertiesMain.randApproveDelegationMP(
+            (PropertiesBase.LocalVars_UPTL(3, 94, 91, 60, 82, 19, 92, 119, 15, 32, 84, 835, true)),
+            106,
+            0,
+            30,
+            235635742888447926474780280888600513588
+        );
+        propertiesMain.randApproveDelegation(
+            (
+                PropertiesBase.LocalVars_UPTL(
+                    184,
+                    96,
+                    87,
+                    11,
+                    53,
+                    44,
+                    101,
+                    32,
+                    117,
+                    16,
+                    7,
+                    295985974735048783988980643814736407156,
+                    true
+                )
+            ),
+            117,
+            163,
+            174,
+            2708836573
+        );
+        skip(850);
         skip(120324);
-        propertiesMain.randApproveLP((PropertiesBase.LocalVars_UPTL(74, 67, 63, 76, 239, 132, 75, 153, 53, 69, 16, 66560752782118250497272679765059951947, true)),162,4,6,1114277010);
-        propertiesMain.userConfigurationMapIntegrityDebtMP(); skip(75552);
-        propertiesMain.randATokenNonRebasingBalanceOfLP((PropertiesBase.LocalVars_UPTL(31, 42, 39, 201, 19, 251, 254, 43, 147, 161, 16, 184014717096976045814314771371970716273, true)),99,40);
-        propertiesMain.integrityOfDepositCapLP(); skip(5953);
+        propertiesMain.randApproveLP(
+            (
+                PropertiesBase.LocalVars_UPTL(
+                    74,
+                    67,
+                    63,
+                    76,
+                    239,
+                    132,
+                    75,
+                    153,
+                    53,
+                    69,
+                    16,
+                    66560752782118250497272679765059951947,
+                    true
+                )
+            ),
+            162,
+            4,
+            6,
+            1114277010
+        );
+        propertiesMain.userConfigurationMapIntegrityDebtMP();
+        skip(75552);
+        propertiesMain.randATokenNonRebasingBalanceOfLP(
+            (
+                PropertiesBase.LocalVars_UPTL(
+                    31,
+                    42,
+                    39,
+                    201,
+                    19,
+                    251,
+                    254,
+                    43,
+                    147,
+                    161,
+                    16,
+                    184014717096976045814314771371970716273,
+                    true
+                )
+            ),
+            99,
+            40
+        );
+        propertiesMain.integrityOfDepositCapLP();
+        skip(5953);
         propertiesMain.integrityOfDepositCapMP();
-        propertiesMain.randApproveDelegation((PropertiesBase.LocalVars_UPTL(160, 161, 249, 33, 163, 251, 113, 159, 194, 135, 164, 354, true)),208,149,201,271919790060561829533662197766247175458);
-        propertiesMain.balanceIntegrityMP((PropertiesBase.LocalVars_UPTL(156, 172, 16, 152, 16, 123, 28, 49, 14, 37, 127, 1000000000000000001, true))); skip(58367);
-        propertiesMain.randForceFeedAssetLP((PropertiesBase.LocalVars_UPTL(254, 28, 21, 29, 83, 189, 212, 39, 163, 175, 19, 1501, false)),4,340282366920938463463374607431768211452,86,92);
-        propertiesMain.userConfigurationMapIntegrityLiquidityLP(); skip(209);
+        propertiesMain.randApproveDelegation(
+            (
+                PropertiesBase.LocalVars_UPTL(
+                    160, 161, 249, 33, 163, 251, 113, 159, 194, 135, 164, 354, true
+                )
+            ),
+            208,
+            149,
+            201,
+            271919790060561829533662197766247175458
+        );
+        propertiesMain.balanceIntegrityMP(
+            (
+                PropertiesBase.LocalVars_UPTL(
+                    156, 172, 16, 152, 16, 123, 28, 49, 14, 37, 127, 1000000000000000001, true
+                )
+            )
+        );
+        skip(58367);
+        propertiesMain.randForceFeedAssetLP(
+            (
+                PropertiesBase.LocalVars_UPTL(
+                    254, 28, 21, 29, 83, 189, 212, 39, 163, 175, 19, 1501, false
+                )
+            ),
+            4,
+            340282366920938463463374607431768211452,
+            86,
+            92
+        );
+        propertiesMain.userConfigurationMapIntegrityLiquidityLP();
+        skip(209);
         skip(189606);
         propertiesMain.integrityOfDepositCapMP();
         skip(26145);
-        propertiesMain.randFlashloanLP((PropertiesBase.LocalVars_UPTL(2, 138, 88, 4, 193, 164, 243, 182, 214, 200, 2, 153630743671507614184212598433997238774, true)),195,3,3,4431079937450); skip(19558);
-        propertiesMain.randDepositLP((PropertiesBase.LocalVars_UPTL(1, 223, 0, 253, 101, 128, 142, 59, 184, 231, 75, 254579280394622910069216220805634996085, true)),10,10,190,1114277012); skip(49306);
+        propertiesMain.randFlashloanLP(
+            (
+                PropertiesBase.LocalVars_UPTL(
+                    2,
+                    138,
+                    88,
+                    4,
+                    193,
+                    164,
+                    243,
+                    182,
+                    214,
+                    200,
+                    2,
+                    153630743671507614184212598433997238774,
+                    true
+                )
+            ),
+            195,
+            3,
+            3,
+            4431079937450
+        );
+        skip(19558);
+        propertiesMain.randDepositLP(
+            (
+                PropertiesBase.LocalVars_UPTL(
+                    1,
+                    223,
+                    0,
+                    253,
+                    101,
+                    128,
+                    142,
+                    59,
+                    184,
+                    231,
+                    75,
+                    254579280394622910069216220805634996085,
+                    true
+                )
+            ),
+            10,
+            10,
+            190,
+            1114277012
+        );
+        skip(49306);
         skip(19592);
-        propertiesMain.randForceFeedAssetLP((PropertiesBase.LocalVars_UPTL(173, 251, 48, 8, 49, 137, 74, 87, 43, 116, 254, 4107696311, true)),39,576460752303423488,128,254); skip(38711);
+        propertiesMain.randForceFeedAssetLP(
+            (
+                PropertiesBase.LocalVars_UPTL(
+                    173, 251, 48, 8, 49, 137, 74, 87, 43, 116, 254, 4107696311, true
+                )
+            ),
+            39,
+            576460752303423488,
+            128,
+            254
+        );
+        skip(38711);
         propertiesMain.indexIntegrityLP();
         skip(32621);
-        propertiesMain.userConfigurationMapIntegrityDebtLP(); skip(71078);
+        propertiesMain.userConfigurationMapIntegrityDebtLP();
+        skip(71078);
         skip(76487);
-        propertiesMain.integrityOfDepositCapMP(); skip(15915);
+        propertiesMain.integrityOfDepositCapMP();
+        skip(15915);
         propertiesMain.userConfigurationMapIntegrityDebtMP();
-        propertiesMain.randApproveLP((PropertiesBase.LocalVars_UPTL(68, 26, 11, 223, 159, 253, 97, 46, 224, 17, 29, 750000000000000000000000000, true)),159,253,246,123419989818064301742697985092355601085); skip(573);
-        propertiesMain.userConfigurationMapIntegrityDebtLP(); skip(84008);
-        propertiesMain.randSetUseReserveAsCollateralLP((PropertiesBase.LocalVars_UPTL(219, 159, 52, 127, 252, 203, 1, 255, 252, 139, 146, 340282366920938463463374607431768211451, false)),10,118,true); skip(49305);
-        propertiesMain.invariantRehypothecationLP(); skip(69858);
-        propertiesMain.randApproveDelegationMP((PropertiesBase.LocalVars_UPTL(0, 168, 165, 47, 71, 230, 29, 38, 165, 0, 103, 340282366920938463463374607431768211453, false)),77,56,87,3408174302);
-        propertiesMain.randApproveDelegation((PropertiesBase.LocalVars_UPTL(92, 65, 188, 18, 11, 25, 28, 52, 28, 4, 52, 45, true)),73,49,8,576460752303423489); skip(23960);
-        propertiesMain.globalSolvencyCheckLP(); skip(45644);
+        propertiesMain.randApproveLP(
+            (
+                PropertiesBase.LocalVars_UPTL(
+                    68,
+                    26,
+                    11,
+                    223,
+                    159,
+                    253,
+                    97,
+                    46,
+                    224,
+                    17,
+                    29,
+                    750000000000000000000000000,
+                    true
+                )
+            ),
+            159,
+            253,
+            246,
+            123419989818064301742697985092355601085
+        );
+        skip(573);
+        propertiesMain.userConfigurationMapIntegrityDebtLP();
+        skip(84008);
+        propertiesMain.randSetUseReserveAsCollateralLP(
+            (
+                PropertiesBase.LocalVars_UPTL(
+                    219,
+                    159,
+                    52,
+                    127,
+                    252,
+                    203,
+                    1,
+                    255,
+                    252,
+                    139,
+                    146,
+                    340282366920938463463374607431768211451,
+                    false
+                )
+            ),
+            10,
+            118,
+            true
+        );
+        skip(49305);
+        propertiesMain.invariantRehypothecationLP();
+        skip(69858);
+        propertiesMain.randApproveDelegationMP(
+            (
+                PropertiesBase.LocalVars_UPTL(
+                    0,
+                    168,
+                    165,
+                    47,
+                    71,
+                    230,
+                    29,
+                    38,
+                    165,
+                    0,
+                    103,
+                    340282366920938463463374607431768211453,
+                    false
+                )
+            ),
+            77,
+            56,
+            87,
+            3408174302
+        );
+        propertiesMain.randApproveDelegation(
+            (PropertiesBase.LocalVars_UPTL(92, 65, 188, 18, 11, 25, 28, 52, 28, 4, 52, 45, true)),
+            73,
+            49,
+            8,
+            576460752303423489
+        );
+        skip(23960);
+        propertiesMain.globalSolvencyCheckLP();
+        skip(45644);
         skip(84433);
-        propertiesMain.randIncreaseAllowanceLP((PropertiesBase.LocalVars_UPTL(77, 59, 240, 47, 254, 255, 32, 121, 10, 32, 101, 140351526541113110277512083546552590131, true)),26,20,91,180454163386344637906567989645901859889); skip(35077);
-        propertiesMain.randBorrowLP((PropertiesBase.LocalVars_UPTL(0, 111, 177, 178, 64, 62, 19, 251, 79, 88, 89, 110, false)),57,18,92,46); skip(85079);
-        propertiesMain.randApproveDelegationMP((PropertiesBase.LocalVars_UPTL(7, 246, 176, 49, 61, 18, 136, 109, 144, 65, 55, 246468471204924990616671587767928781737, false)),93,70,53,100000000000000000001); skip(32817);
+        propertiesMain.randIncreaseAllowanceLP(
+            (
+                PropertiesBase.LocalVars_UPTL(
+                    77,
+                    59,
+                    240,
+                    47,
+                    254,
+                    255,
+                    32,
+                    121,
+                    10,
+                    32,
+                    101,
+                    140351526541113110277512083546552590131,
+                    true
+                )
+            ),
+            26,
+            20,
+            91,
+            180454163386344637906567989645901859889
+        );
+        skip(35077);
+        propertiesMain.randBorrowLP(
+            (
+                PropertiesBase.LocalVars_UPTL(
+                    0, 111, 177, 178, 64, 62, 19, 251, 79, 88, 89, 110, false
+                )
+            ),
+            57,
+            18,
+            92,
+            46
+        );
+        skip(85079);
+        propertiesMain.randApproveDelegationMP(
+            (
+                PropertiesBase.LocalVars_UPTL(
+                    7,
+                    246,
+                    176,
+                    49,
+                    61,
+                    18,
+                    136,
+                    109,
+                    144,
+                    65,
+                    55,
+                    246468471204924990616671587767928781737,
+                    false
+                )
+            ),
+            93,
+            70,
+            53,
+            100000000000000000001
+        );
+        skip(32817);
         skip(49588);
-        propertiesMain.globalSolvencyCheckMP(); skip(71369);
-        propertiesMain.randATokenNonRebasingBalanceOfLP((PropertiesBase.LocalVars_UPTL(2, 252, 72, 247, 225, 226, 237, 98, 186, 74, 3, 3221960613524969891979574567667250974, false)),223,95); skip(349);
-        propertiesMain.randDepositLP((PropertiesBase.LocalVars_UPTL(84, 76, 188, 194, 12, 13, 253, 254, 253, 61, 48, 4294901760, true)),57,95,182,131997622414548872683757327525933262535);
-        propertiesMain.userConfigurationMapIntegrityLiquidityLP(); skip(63889);
-        propertiesMain.randApproveDelegationMP((PropertiesBase.LocalVars_UPTL(0, 76, 0, 119, 54, 3, 1, 2, 219, 82, 163, 512, false)),0,45,7,299); skip(19970);
+        propertiesMain.globalSolvencyCheckMP();
+        skip(71369);
+        propertiesMain.randATokenNonRebasingBalanceOfLP(
+            (
+                PropertiesBase.LocalVars_UPTL(
+                    2,
+                    252,
+                    72,
+                    247,
+                    225,
+                    226,
+                    237,
+                    98,
+                    186,
+                    74,
+                    3,
+                    3221960613524969891979574567667250974,
+                    false
+                )
+            ),
+            223,
+            95
+        );
+        skip(349);
+        propertiesMain.randDepositLP(
+            (
+                PropertiesBase.LocalVars_UPTL(
+                    84, 76, 188, 194, 12, 13, 253, 254, 253, 61, 48, 4294901760, true
+                )
+            ),
+            57,
+            95,
+            182,
+            131997622414548872683757327525933262535
+        );
+        propertiesMain.userConfigurationMapIntegrityLiquidityLP();
+        skip(63889);
+        propertiesMain.randApproveDelegationMP(
+            (PropertiesBase.LocalVars_UPTL(0, 76, 0, 119, 54, 3, 1, 2, 219, 82, 163, 512, false)),
+            0,
+            45,
+            7,
+            299
+        );
+        skip(19970);
         skip(90667);
         propertiesMain.globalSolvencyCheckLP();
-        propertiesMain.userConfigurationMapIntegrityDebtMP(); skip(4);
-        propertiesMain.randATokenNonRebasingBalanceOfLP((PropertiesBase.LocalVars_UPTL(242, 27, 3, 93, 9, 124, 11, 132, 75, 20, 82, 135141812081878955885471144036403267921, true)),51,40); skip(46879);
-        propertiesMain.randBorrowMP((PropertiesBase.LocalVars_UPTL(129, 251, 197, 58, 8, 6, 133, 11, 122, 250, 4, 143114646512615379775545073300321848420, false)),77,0,225,7,58); skip(11760);
-        propertiesMain.randDepositMP((PropertiesBase.LocalVars_UPTL(204, 243, 93, 96, 9, 163, 253, 206, 250, 19, 8, 291788515084673408841326663126191490462, false)),191,15,6,127,1001);
-        propertiesMain.randDepositLP((PropertiesBase.LocalVars_UPTL(118, 0, 9, 3, 8, 2, 87, 49, 40, 64, 187, 2401290389529339451901949034102605858, false)),64,59,0,4951684599277795185273077760); skip(24499);
+        propertiesMain.userConfigurationMapIntegrityDebtMP();
+        skip(4);
+        propertiesMain.randATokenNonRebasingBalanceOfLP(
+            (
+                PropertiesBase.LocalVars_UPTL(
+                    242,
+                    27,
+                    3,
+                    93,
+                    9,
+                    124,
+                    11,
+                    132,
+                    75,
+                    20,
+                    82,
+                    135141812081878955885471144036403267921,
+                    true
+                )
+            ),
+            51,
+            40
+        );
+        skip(46879);
+        propertiesMain.randBorrowMP(
+            (
+                PropertiesBase.LocalVars_UPTL(
+                    129,
+                    251,
+                    197,
+                    58,
+                    8,
+                    6,
+                    133,
+                    11,
+                    122,
+                    250,
+                    4,
+                    143114646512615379775545073300321848420,
+                    false
+                )
+            ),
+            77,
+            0,
+            225,
+            7,
+            58
+        );
+        skip(11760);
+        propertiesMain.randDepositMP(
+            (
+                PropertiesBase.LocalVars_UPTL(
+                    204,
+                    243,
+                    93,
+                    96,
+                    9,
+                    163,
+                    253,
+                    206,
+                    250,
+                    19,
+                    8,
+                    291788515084673408841326663126191490462,
+                    false
+                )
+            ),
+            191,
+            15,
+            6,
+            127,
+            1001
+        );
+        propertiesMain.randDepositLP(
+            (
+                PropertiesBase.LocalVars_UPTL(
+                    118,
+                    0,
+                    9,
+                    3,
+                    8,
+                    2,
+                    87,
+                    49,
+                    40,
+                    64,
+                    187,
+                    2401290389529339451901949034102605858,
+                    false
+                )
+            ),
+            64,
+            59,
+            0,
+            4951684599277795185273077760
+        );
+        skip(24499);
         skip(44735);
-        propertiesMain.randATokenNonRebasingBalanceOfLP((PropertiesBase.LocalVars_UPTL(157, 206, 89, 110, 131, 62, 91, 224, 134, 147, 160, 126877451405607071731070909597839327116, false)),0,52); skip(2138);
+        propertiesMain.randATokenNonRebasingBalanceOfLP(
+            (
+                PropertiesBase.LocalVars_UPTL(
+                    157,
+                    206,
+                    89,
+                    110,
+                    131,
+                    62,
+                    91,
+                    224,
+                    134,
+                    147,
+                    160,
+                    126877451405607071731070909597839327116,
+                    false
+                )
+            ),
+            0,
+            52
+        );
+        skip(2138);
         skip(28010);
-        propertiesMain.randTransferMP((PropertiesBase.LocalVars_UPTL(20, 2, 128, 208, 45, 150, 112, 52, 54, 100, 68, 283160665589512580646190018509252640758, false)),134,58,16,31,91);
-        propertiesMain.randApproveLP((PropertiesBase.LocalVars_UPTL(8, 128, 32, 32, 12, 118, 224, 190, 154, 39, 49, 337843828452769926444523315244348793489, true)),251,56,3,107865146851078517963580145097409834868); skip(16805);
+        propertiesMain.randTransferMP(
+            (
+                PropertiesBase.LocalVars_UPTL(
+                    20,
+                    2,
+                    128,
+                    208,
+                    45,
+                    150,
+                    112,
+                    52,
+                    54,
+                    100,
+                    68,
+                    283160665589512580646190018509252640758,
+                    false
+                )
+            ),
+            134,
+            58,
+            16,
+            31,
+            91
+        );
+        propertiesMain.randApproveLP(
+            (
+                PropertiesBase.LocalVars_UPTL(
+                    8,
+                    128,
+                    32,
+                    32,
+                    12,
+                    118,
+                    224,
+                    190,
+                    154,
+                    39,
+                    49,
+                    337843828452769926444523315244348793489,
+                    true
+                )
+            ),
+            251,
+            56,
+            3,
+            107865146851078517963580145097409834868
+        );
+        skip(16805);
         skip(230928);
         propertiesMain.indexIntegrityLP();
-        propertiesMain.balanceIntegrityMP((PropertiesBase.LocalVars_UPTL(161, 3, 129, 77, 20, 68, 5, 5, 41, 188, 2, 7175186522283114610507170091668338470, false)));
-        propertiesMain.randDepositMP((PropertiesBase.LocalVars_UPTL(48, 96, 31, 92, 65, 13, 41, 127, 31, 154, 243, 60652837310236860914962435, true)),146,27,0,99,146979856157034242927080596698681190459); skip(75427);
+        propertiesMain.balanceIntegrityMP(
+            (
+                PropertiesBase.LocalVars_UPTL(
+                    161,
+                    3,
+                    129,
+                    77,
+                    20,
+                    68,
+                    5,
+                    5,
+                    41,
+                    188,
+                    2,
+                    7175186522283114610507170091668338470,
+                    false
+                )
+            )
+        );
+        propertiesMain.randDepositMP(
+            (
+                PropertiesBase.LocalVars_UPTL(
+                    48, 96, 31, 92, 65, 13, 41, 127, 31, 154, 243, 60652837310236860914962435, true
+                )
+            ),
+            146,
+            27,
+            0,
+            99,
+            146979856157034242927080596698681190459
+        );
+        skip(75427);
         skip(119277);
         propertiesMain.integrityOfDepositCapLP();
         skip(72212);
-        propertiesMain.integrityOfDepositCapLP(); skip(18822);
-        propertiesMain.randBorrowLP((PropertiesBase.LocalVars_UPTL(8, 1, 129, 20, 76, 164, 76, 17, 221, 15, 35, 35824846279495095579292231009044025755, false)),254,101,96,40858384987371452884788288274900850552); skip(5342);
+        propertiesMain.integrityOfDepositCapLP();
+        skip(18822);
+        propertiesMain.randBorrowLP(
+            (
+                PropertiesBase.LocalVars_UPTL(
+                    8,
+                    1,
+                    129,
+                    20,
+                    76,
+                    164,
+                    76,
+                    17,
+                    221,
+                    15,
+                    35,
+                    35824846279495095579292231009044025755,
+                    false
+                )
+            ),
+            254,
+            101,
+            96,
+            40858384987371452884788288274900850552
+        );
+        skip(5342);
         skip(32750);
-        propertiesMain.randForceFeedATokensLP((PropertiesBase.LocalVars_UPTL(26, 100, 159, 16, 20, 75, 199, 5, 48, 135, 0, 96, false)),71,13,96,16,47);
-        propertiesMain.randApproveDelegationMP((PropertiesBase.LocalVars_UPTL(171, 57, 63, 84, 127, 55, 207, 189, 165, 126, 18, 208116566019760252717660810990951121737, false)),63,143,2,596); skip(32843);
+        propertiesMain.randForceFeedATokensLP(
+            (PropertiesBase.LocalVars_UPTL(26, 100, 159, 16, 20, 75, 199, 5, 48, 135, 0, 96, false)),
+            71,
+            13,
+            96,
+            16,
+            47
+        );
+        propertiesMain.randApproveDelegationMP(
+            (
+                PropertiesBase.LocalVars_UPTL(
+                    171,
+                    57,
+                    63,
+                    84,
+                    127,
+                    55,
+                    207,
+                    189,
+                    165,
+                    126,
+                    18,
+                    208116566019760252717660810990951121737,
+                    false
+                )
+            ),
+            63,
+            143,
+            2,
+            596
+        );
+        skip(32843);
         skip(39412);
-        propertiesMain.randRehypothecationRebalanceLP((PropertiesBase.LocalVars_UPTL(171, 46, 21, 231, 152, 18, 205, 42, 178, 20, 234, 1774647076, false)),2); skip(75574);
+        propertiesMain.randRehypothecationRebalanceLP(
+            (
+                PropertiesBase.LocalVars_UPTL(
+                    171, 46, 21, 231, 152, 18, 205, 42, 178, 20, 234, 1774647076, false
+                )
+            ),
+            2
+        );
+        skip(75574);
         skip(7770);
-        propertiesMain.randApproveDelegationMP((PropertiesBase.LocalVars_UPTL(3, 17, 110, 123, 3, 164, 251, 75, 193, 208, 4, 241037204285652373503373981978858131455, false)),214,112,95,77); skip(48);
-        propertiesMain.randSetUseReserveAsCollateralLP((PropertiesBase.LocalVars_UPTL(42, 92, 75, 191, 60, 18, 240, 253, 0, 63, 58, 54605808392121097416260386929445357307, false)),9,72,true);
+        propertiesMain.randApproveDelegationMP(
+            (
+                PropertiesBase.LocalVars_UPTL(
+                    3,
+                    17,
+                    110,
+                    123,
+                    3,
+                    164,
+                    251,
+                    75,
+                    193,
+                    208,
+                    4,
+                    241037204285652373503373981978858131455,
+                    false
+                )
+            ),
+            214,
+            112,
+            95,
+            77
+        );
+        skip(48);
+        propertiesMain.randSetUseReserveAsCollateralLP(
+            (
+                PropertiesBase.LocalVars_UPTL(
+                    42,
+                    92,
+                    75,
+                    191,
+                    60,
+                    18,
+                    240,
+                    253,
+                    0,
+                    63,
+                    58,
+                    54605808392121097416260386929445357307,
+                    false
+                )
+            ),
+            9,
+            72,
+            true
+        );
         skip(49714);
         propertiesMain.invariantRehypothecationLP();
         skip(89795);
-        propertiesMain.randForceFeedAssetLP((PropertiesBase.LocalVars_UPTL(61, 58, 33, 6, 97, 1, 4, 68, 52, 1, 24, 103157378623281388592650617580111878839, false)),8,69241625809835656171766611834921422742,27,166); skip(18827);
-        propertiesMain.userConfigurationMapIntegrityDebtMP(); skip(76878);
+        propertiesMain.randForceFeedAssetLP(
+            (
+                PropertiesBase.LocalVars_UPTL(
+                    61,
+                    58,
+                    33,
+                    6,
+                    97,
+                    1,
+                    4,
+                    68,
+                    52,
+                    1,
+                    24,
+                    103157378623281388592650617580111878839,
+                    false
+                )
+            ),
+            8,
+            69241625809835656171766611834921422742,
+            27,
+            166
+        );
+        skip(18827);
+        propertiesMain.userConfigurationMapIntegrityDebtMP();
+        skip(76878);
         propertiesMain.integrityOfDepositCapMP();
-        propertiesMain.randTransferLP((PropertiesBase.LocalVars_UPTL(184, 26, 4, 191, 35, 55, 1, 222, 99, 83, 49, 931818774, false)),125,66,64,210985); skip(60879);
+        propertiesMain.randTransferLP(
+            (
+                PropertiesBase.LocalVars_UPTL(
+                    184, 26, 4, 191, 35, 55, 1, 222, 99, 83, 49, 931818774, false
+                )
+            ),
+            125,
+            66,
+            64,
+            210985
+        );
+        skip(60879);
         skip(84477);
-        propertiesMain.randATokenNonRebasingBalanceOfLP((PropertiesBase.LocalVars_UPTL(50, 44, 0, 48, 27, 40, 1, 152, 0, 29, 1, 101, false)),1,46); skip(65417);
-        propertiesMain.randApproveLP((PropertiesBase.LocalVars_UPTL(168, 33, 55, 73, 223, 127, 213, 130, 128, 10, 19, 266042847041937031269239186552564888567, false)),128,17,242,78794710305651000165012508343161764290);
-        propertiesMain.randForceFeedATokensMP((PropertiesBase.LocalVars_UPTL(84, 128, 156, 17, 139, 215, 89, 88, 29, 214, 63, 599290588, false)),113,160,787,115,false); skip(69657);
+        propertiesMain.randATokenNonRebasingBalanceOfLP(
+            (PropertiesBase.LocalVars_UPTL(50, 44, 0, 48, 27, 40, 1, 152, 0, 29, 1, 101, false)),
+            1,
+            46
+        );
+        skip(65417);
+        propertiesMain.randApproveLP(
+            (
+                PropertiesBase.LocalVars_UPTL(
+                    168,
+                    33,
+                    55,
+                    73,
+                    223,
+                    127,
+                    213,
+                    130,
+                    128,
+                    10,
+                    19,
+                    266042847041937031269239186552564888567,
+                    false
+                )
+            ),
+            128,
+            17,
+            242,
+            78794710305651000165012508343161764290
+        );
+        propertiesMain.randForceFeedATokensMP(
+            (
+                PropertiesBase.LocalVars_UPTL(
+                    84, 128, 156, 17, 139, 215, 89, 88, 29, 214, 63, 599290588, false
+                )
+            ),
+            113,
+            160,
+            787,
+            115,
+            false
+        );
+        skip(69657);
         skip(65967);
         propertiesMain.userConfigurationMapIntegrityLiquidityLP();
         skip(56500);
-        propertiesMain.userConfigurationMapIntegrityLiquidityLP(); skip(25075);
+        propertiesMain.userConfigurationMapIntegrityLiquidityLP();
+        skip(25075);
         propertiesMain.globalSolvencyCheckLP();
         skip(64298);
         propertiesMain.userConfigurationMapIntegrityDebtLP();
-        propertiesMain.randApproveLP((PropertiesBase.LocalVars_UPTL(242, 137, 27, 64, 100, 121, 7, 236, 77, 251, 120, 84710925338574993269219466005378663435, false)),255,28,3,13669815174681627934763698293070087337);
-        propertiesMain.randIncreaseAllowanceLP((PropertiesBase.LocalVars_UPTL(64, 92, 246, 41, 132, 179, 200, 228, 65, 11, 126, 191713037830564806505288402921525589570, true)),92,193,100,0);
-        propertiesMain.randApproveLP((PropertiesBase.LocalVars_UPTL(47, 1, 0, 248, 33, 30, 27, 8, 64, 31, 93, 157368914677383252933326724745149902315, false)),95,13,77,295150373645222560861711059987253541013); skip(29236);
-        propertiesMain.integrityOfDepositCapLP(); skip(1580);
-        propertiesMain.randFlashloanLP((PropertiesBase.LocalVars_UPTL(10, 24, 1, 83, 37, 163, 79, 13, 252, 188, 0, 123022487777107032485962239682818000364, false)),10,65,106,172264641438969135377831760329579772917); skip(160);
+        propertiesMain.randApproveLP(
+            (
+                PropertiesBase.LocalVars_UPTL(
+                    242,
+                    137,
+                    27,
+                    64,
+                    100,
+                    121,
+                    7,
+                    236,
+                    77,
+                    251,
+                    120,
+                    84710925338574993269219466005378663435,
+                    false
+                )
+            ),
+            255,
+            28,
+            3,
+            13669815174681627934763698293070087337
+        );
+        propertiesMain.randIncreaseAllowanceLP(
+            (
+                PropertiesBase.LocalVars_UPTL(
+                    64,
+                    92,
+                    246,
+                    41,
+                    132,
+                    179,
+                    200,
+                    228,
+                    65,
+                    11,
+                    126,
+                    191713037830564806505288402921525589570,
+                    true
+                )
+            ),
+            92,
+            193,
+            100,
+            0
+        );
+        propertiesMain.randApproveLP(
+            (
+                PropertiesBase.LocalVars_UPTL(
+                    47,
+                    1,
+                    0,
+                    248,
+                    33,
+                    30,
+                    27,
+                    8,
+                    64,
+                    31,
+                    93,
+                    157368914677383252933326724745149902315,
+                    false
+                )
+            ),
+            95,
+            13,
+            77,
+            295150373645222560861711059987253541013
+        );
+        skip(29236);
+        propertiesMain.integrityOfDepositCapLP();
+        skip(1580);
+        propertiesMain.randFlashloanLP(
+            (
+                PropertiesBase.LocalVars_UPTL(
+                    10,
+                    24,
+                    1,
+                    83,
+                    37,
+                    163,
+                    79,
+                    13,
+                    252,
+                    188,
+                    0,
+                    123022487777107032485962239682818000364,
+                    false
+                )
+            ),
+            10,
+            65,
+            106,
+            172264641438969135377831760329579772917
+        );
+        skip(160);
         skip(52128);
-        propertiesMain.randForceFeedAssetLP((PropertiesBase.LocalVars_UPTL(254, 28, 21, 29, 83, 189, 153, 39, 163, 175, 8, 1501, true)),4,340282366920938463463374607431768211452,86,92); skip(60);
+        propertiesMain.randForceFeedAssetLP(
+            (
+                PropertiesBase.LocalVars_UPTL(
+                    254, 28, 21, 29, 83, 189, 153, 39, 163, 175, 8, 1501, true
+                )
+            ),
+            4,
+            340282366920938463463374607431768211452,
+            86,
+            92
+        );
+        skip(60);
         skip(65418);
-        propertiesMain.invariantRehypothecationLP(); skip(488);
-        propertiesMain.randApproveDelegation((PropertiesBase.LocalVars_UPTL(242, 251, 250, 65, 3, 170, 253, 29, 12, 33, 35, 8999, true)),0,15,63,222233114825225915032981832383615656627); skip(9829);
-        propertiesMain.randATokenNonRebasingApproveLP((PropertiesBase.LocalVars_UPTL(80, 92, 4, 59, 126, 34, 45, 91, 21, 92, 194, 83300465143771164907414099250128231788, false)),4,130,1,218162624956154617799783539614855325736); skip(11094);
-        propertiesMain.randATokenNonRebasingBalanceOfLP((PropertiesBase.LocalVars_UPTL(4, 63, 40, 100, 196, 146, 240, 51, 201, 112, 227, 20, true)),167,130); skip(84009);
-        propertiesMain.randRehypothecationRebalanceLP((PropertiesBase.LocalVars_UPTL(116, 18, 44, 23, 24, 252, 23, 0, 0, 84, 69, 252227022278638450684331346337072140208, false)),28); skip(34);
+        propertiesMain.invariantRehypothecationLP();
+        skip(488);
+        propertiesMain.randApproveDelegation(
+            (
+                PropertiesBase.LocalVars_UPTL(
+                    242, 251, 250, 65, 3, 170, 253, 29, 12, 33, 35, 8999, true
+                )
+            ),
+            0,
+            15,
+            63,
+            222233114825225915032981832383615656627
+        );
+        skip(9829);
+        propertiesMain.randATokenNonRebasingApproveLP(
+            (
+                PropertiesBase.LocalVars_UPTL(
+                    80,
+                    92,
+                    4,
+                    59,
+                    126,
+                    34,
+                    45,
+                    91,
+                    21,
+                    92,
+                    194,
+                    83300465143771164907414099250128231788,
+                    false
+                )
+            ),
+            4,
+            130,
+            1,
+            218162624956154617799783539614855325736
+        );
+        skip(11094);
+        propertiesMain.randATokenNonRebasingBalanceOfLP(
+            (
+                PropertiesBase.LocalVars_UPTL(
+                    4, 63, 40, 100, 196, 146, 240, 51, 201, 112, 227, 20, true
+                )
+            ),
+            167,
+            130
+        );
+        skip(84009);
+        propertiesMain.randRehypothecationRebalanceLP(
+            (
+                PropertiesBase.LocalVars_UPTL(
+                    116,
+                    18,
+                    44,
+                    23,
+                    24,
+                    252,
+                    23,
+                    0,
+                    0,
+                    84,
+                    69,
+                    252227022278638450684331346337072140208,
+                    false
+                )
+            ),
+            28
+        );
+        skip(34);
         skip(4047);
-        propertiesMain.randBorrowLP((PropertiesBase.LocalVars_UPTL(57, 3, 181, 60, 75, 80, 247, 58, 253, 53, 10, 294971605166834130070342548260696444977, true)),253,18,94,130000000000000000001);
-        propertiesMain.randApproveLP((PropertiesBase.LocalVars_UPTL(223, 72, 34, 157, 104, 61, 3, 183, 110, 106, 3, 100973081, false)),92,30,224,340282366920938463463374607431768211453);
-        propertiesMain.randApproveDelegationMP((PropertiesBase.LocalVars_UPTL(0, 154, 118, 197, 27, 47, 41, 207, 7, 227, 1, 66768982348728734609318023435977367506, false)),65,150,11,41528655130593235271182267050246322088);
-        propertiesMain.randATokenNonRebasingBalanceOfLP((PropertiesBase.LocalVars_UPTL(2, 9, 20, 145, 61, 13, 5, 0, 73, 100, 23, 65537, false)),0,47); skip(75387);
+        propertiesMain.randBorrowLP(
+            (
+                PropertiesBase.LocalVars_UPTL(
+                    57,
+                    3,
+                    181,
+                    60,
+                    75,
+                    80,
+                    247,
+                    58,
+                    253,
+                    53,
+                    10,
+                    294971605166834130070342548260696444977,
+                    true
+                )
+            ),
+            253,
+            18,
+            94,
+            130000000000000000001
+        );
+        propertiesMain.randApproveLP(
+            (
+                PropertiesBase.LocalVars_UPTL(
+                    223, 72, 34, 157, 104, 61, 3, 183, 110, 106, 3, 100973081, false
+                )
+            ),
+            92,
+            30,
+            224,
+            340282366920938463463374607431768211453
+        );
+        propertiesMain.randApproveDelegationMP(
+            (
+                PropertiesBase.LocalVars_UPTL(
+                    0,
+                    154,
+                    118,
+                    197,
+                    27,
+                    47,
+                    41,
+                    207,
+                    7,
+                    227,
+                    1,
+                    66768982348728734609318023435977367506,
+                    false
+                )
+            ),
+            65,
+            150,
+            11,
+            41528655130593235271182267050246322088
+        );
+        propertiesMain.randATokenNonRebasingBalanceOfLP(
+            (PropertiesBase.LocalVars_UPTL(2, 9, 20, 145, 61, 13, 5, 0, 73, 100, 23, 65537, false)),
+            0,
+            47
+        );
+        skip(75387);
         skip(46429);
-        propertiesMain.randApproveLP((PropertiesBase.LocalVars_UPTL(129, 29, 81, 21, 19, 189, 199, 8, 107, 235, 158, 327320074062848883566837774587640836028, false)),57,9,26,50779356482709449986751191926300291930); skip(58039);
+        propertiesMain.randApproveLP(
+            (
+                PropertiesBase.LocalVars_UPTL(
+                    129,
+                    29,
+                    81,
+                    21,
+                    19,
+                    189,
+                    199,
+                    8,
+                    107,
+                    235,
+                    158,
+                    327320074062848883566837774587640836028,
+                    false
+                )
+            ),
+            57,
+            9,
+            26,
+            50779356482709449986751191926300291930
+        );
+        skip(58039);
         skip(46870);
-        propertiesMain.randApproveDelegation((PropertiesBase.LocalVars_UPTL(205, 246, 26, 41, 198, 0, 14, 65, 7, 4, 0, 8614182057857816101041533, true)),146,178,77,2130000000000000000000000000); skip(22208);
+        propertiesMain.randApproveDelegation(
+            (
+                PropertiesBase.LocalVars_UPTL(
+                    205, 246, 26, 41, 198, 0, 14, 65, 7, 4, 0, 8614182057857816101041533, true
+                )
+            ),
+            146,
+            178,
+            77,
+            2130000000000000000000000000
+        );
+        skip(22208);
         propertiesMain.userConfigurationMapIntegrityLiquidityLP();
-        propertiesMain.globalSolvencyCheckMP(); skip(72366);
-        propertiesMain.userConfigurationMapIntegrityDebtLP(); skip(56794);
+        propertiesMain.globalSolvencyCheckMP();
+        skip(72366);
+        propertiesMain.userConfigurationMapIntegrityDebtLP();
+        skip(56794);
         skip(102740);
-        propertiesMain.userConfigurationMapIntegrityDebtMP(); skip(30101);
-        propertiesMain.globalSolvencyCheckMP(); skip(22841);
-        propertiesMain.randSetUseReserveAsCollateralLP((PropertiesBase.LocalVars_UPTL(45, 51, 8, 90, 251, 20, 55, 28, 54, 51, 173, 3725587544, false)),183,78,true);
-        propertiesMain.randRehypothecationRebalanceLP((PropertiesBase.LocalVars_UPTL(150, 172, 36, 165, 48, 52, 63, 160, 8, 41, 103, 46848428026353721343655207075299001033, false)),28); skip(11474);
+        propertiesMain.userConfigurationMapIntegrityDebtMP();
+        skip(30101);
+        propertiesMain.globalSolvencyCheckMP();
+        skip(22841);
+        propertiesMain.randSetUseReserveAsCollateralLP(
+            (
+                PropertiesBase.LocalVars_UPTL(
+                    45, 51, 8, 90, 251, 20, 55, 28, 54, 51, 173, 3725587544, false
+                )
+            ),
+            183,
+            78,
+            true
+        );
+        propertiesMain.randRehypothecationRebalanceLP(
+            (
+                PropertiesBase.LocalVars_UPTL(
+                    150,
+                    172,
+                    36,
+                    165,
+                    48,
+                    52,
+                    63,
+                    160,
+                    8,
+                    41,
+                    103,
+                    46848428026353721343655207075299001033,
+                    false
+                )
+            ),
+            28
+        );
+        skip(11474);
         skip(94379);
         propertiesMain.userConfigurationMapIntegrityDebtMP();
         skip(159742);
-        propertiesMain.userConfigurationMapIntegrityDebtMP(); skip(32844);
+        propertiesMain.userConfigurationMapIntegrityDebtMP();
+        skip(32844);
         skip(8500);
-        propertiesMain.userConfigurationMapIntegrityDebtLP(); skip(72304);
-        propertiesMain.randRehypothecationRebalanceLP((PropertiesBase.LocalVars_UPTL(127, 2, 106, 39, 165, 17, 178, 225, 238, 159, 152, 1881529894367062944087496869316008261, false)),99);
+        propertiesMain.userConfigurationMapIntegrityDebtLP();
+        skip(72304);
+        propertiesMain.randRehypothecationRebalanceLP(
+            (
+                PropertiesBase.LocalVars_UPTL(
+                    127,
+                    2,
+                    106,
+                    39,
+                    165,
+                    17,
+                    178,
+                    225,
+                    238,
+                    159,
+                    152,
+                    1881529894367062944087496869316008261,
+                    false
+                )
+            ),
+            99
+        );
         skip(78);
-        propertiesMain.randATokenNonRebasingApproveLP((PropertiesBase.LocalVars_UPTL(4, 43, 1, 127, 63, 176, 19, 224, 35, 248, 252, 95496263443688148784327658421328144098, false)),140,39,246,17); skip(999);
-        propertiesMain.integrityOfDepositCapLP(); skip(60203);
-        propertiesMain.randATokenNonRebasingApproveLP((PropertiesBase.LocalVars_UPTL(44, 95, 170, 251, 31, 92, 101, 107, 10, 4, 84, 6462791151070458911217528970007272397, false)),213,83,118,67421187463599119173071555011534007774);
-        propertiesMain.randApproveLP((PropertiesBase.LocalVars_UPTL(171, 200, 252, 114, 165, 64, 189, 219, 64, 0, 127, 9, false)),6,9,200,15099180599884744612368167322805310343);
+        propertiesMain.randATokenNonRebasingApproveLP(
+            (
+                PropertiesBase.LocalVars_UPTL(
+                    4,
+                    43,
+                    1,
+                    127,
+                    63,
+                    176,
+                    19,
+                    224,
+                    35,
+                    248,
+                    252,
+                    95496263443688148784327658421328144098,
+                    false
+                )
+            ),
+            140,
+            39,
+            246,
+            17
+        );
+        skip(999);
+        propertiesMain.integrityOfDepositCapLP();
+        skip(60203);
+        propertiesMain.randATokenNonRebasingApproveLP(
+            (
+                PropertiesBase.LocalVars_UPTL(
+                    44,
+                    95,
+                    170,
+                    251,
+                    31,
+                    92,
+                    101,
+                    107,
+                    10,
+                    4,
+                    84,
+                    6462791151070458911217528970007272397,
+                    false
+                )
+            ),
+            213,
+            83,
+            118,
+            67421187463599119173071555011534007774
+        );
+        propertiesMain.randApproveLP(
+            (
+                PropertiesBase.LocalVars_UPTL(
+                    171, 200, 252, 114, 165, 64, 189, 219, 64, 0, 127, 9, false
+                )
+            ),
+            6,
+            9,
+            200,
+            15099180599884744612368167322805310343
+        );
         skip(81);
-        propertiesMain.randATokenNonRebasingApproveLP((PropertiesBase.LocalVars_UPTL(40, 0, 9, 142, 14, 46, 142, 11, 38, 9, 188, 155592357, true)),7,78,197,3601147484); skip(84172);
-        propertiesMain.globalSolvencyCheckLP(); skip(53710);
+        propertiesMain.randATokenNonRebasingApproveLP(
+            (
+                PropertiesBase.LocalVars_UPTL(
+                    40, 0, 9, 142, 14, 46, 142, 11, 38, 9, 188, 155592357, true
+                )
+            ),
+            7,
+            78,
+            197,
+            3601147484
+        );
+        skip(84172);
+        propertiesMain.globalSolvencyCheckLP();
+        skip(53710);
         skip(32787);
-        propertiesMain.indexIntegrityLP(); skip(2894);
+        propertiesMain.indexIntegrityLP();
+        skip(2894);
         skip(64345);
-        propertiesMain.globalSolvencyCheckMP(); skip(1);
-        propertiesMain.randWithdrawLP((PropertiesBase.LocalVars_UPTL(143, 7, 230, 112, 51, 176, 253, 32, 76, 178, 63, 75556710804409716572162, false)),61,137,88,239050622879387164020771060559605868535);
+        propertiesMain.globalSolvencyCheckMP();
+        skip(1);
+        propertiesMain.randWithdrawLP(
+            (
+                PropertiesBase.LocalVars_UPTL(
+                    143, 7, 230, 112, 51, 176, 253, 32, 76, 178, 63, 75556710804409716572162, false
+                )
+            ),
+            61,
+            137,
+            88,
+            239050622879387164020771060559605868535
+        );
     }
 }

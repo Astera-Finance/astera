@@ -10,8 +10,8 @@ sender: ["0x10000", "0x20000", "0x30000"]
 coverageFormats: ["txt"]
 shrinkLimit: 2000
 quiet: true
-maxTimeDelay: 86400
-maxBlockDelay: 8640
+maxTimeDelay: 3600 # 1 hour
+maxBlockDelay: 864 
 
 # Ignore helpers
 filterBlacklist: true
