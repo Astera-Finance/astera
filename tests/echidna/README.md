@@ -97,8 +97,8 @@ forge t --mt testCallSequence -vvvv
 214. ✅ Users must not be able to steal funds from flashloans.
 215. ✅ The total value borrowed must always be less than the value of the collaterals.
 216. 🚚
-217. ✅ The `liquidityIndex` should monotonically increase when there's total debt.
-218. ✅ The `variableBorrowIndex` should monotonically increase when there's total debt.
+217. ❌ (fix lastLiquidityIndex and lastBorrowIndex) The `liquidityIndex` should monotonically increase when there's total debt.
+218. ❌ (fix lastLiquidityIndex and lastBorrowIndex) The `variableBorrowIndex` should monotonically increase when there's total debt.
 219. ❌ (L-01) A user with debt should have at least an aToken balance `setUsingAsCollateral`.
 220. ❌ If all debt is repaid, all `aToken` holders should be able to claim their collateral.
 221. ❌ If all users withdraw their liquidity, there must not be aTokens supply left.
@@ -154,23 +154,23 @@ forge t --mt testCallSequence -vvvv
 
 ### MiniPool
 
-500. ✅ Users must always be able to deposit in normal condition.
+500. ❌ Users must always be able to deposit in normal condition.
 501. ✅ `deposit()` must increase the user AToken6909 balance by `amount`.
 502. ✅ `deposit()` must decrease the user asset balance by `amount`.
 503. ✅ `withdraw()` must decrease the user AToken6909 balance by `amount`.
 504. ✅ `withdraw()` must increase the user asset balance by `amount`.
-505. ❌ (L-02) `withdraw()` must not result in a health factor of less than 1.
+505. ❌ (L-01 propably) `withdraw()` must not result in a health factor of less than 1.
 506. ✅ A user must not be able to `borrow()` if they don't own AToken6909.
 507. ✅ `borrow()` must only be possible if the user health factor is greater than 1.
 508. ✅ `borrow()` must not result in a health factor of less than 1.
-509. ✅ `borrow()` must increase the user debtToken balance by `amount`.
+509. ✅ `borrow()` must increase the user debtToken balance by `amount` when flow borrowing is disabled.
 510. ✅ `borrow()` must decrease `borrowAllowance()` by `amount` if `user != onBehalf`.
 511. ❌ (L-05) `repay()` must decrease the onBehalfOf debtToken balance by `amount`.
 512. ✅ `repay()` must decrease the user asset balance by `amount`.
 513. ✅ `healthFactorAfter` must be greater than `healthFactorBefore` as long as liquidations are done in time.
 514. ✅ `setUseReserveAsCollateral` must not reduce the health factor below 1.
 515. ✅ Users must not be able to steal funds from flashloans.
-516. ✅ The total value borrowed must always be less than the value of the collaterals.
+516. ✅ The total value borrowed must always be less than the value of the collateral when flow borrowing is disabled.
 517. ❌ The `liquidityIndex` should monotonically increase when there's total debt.
 518. ❌ The `variableBorrowIndex` should monotonically increase when there's total debt.
 519. ❌ (L-03) A user with debt should have at least an AToken6909 balance `setUsingAsCollateral`.
