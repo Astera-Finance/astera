@@ -133,10 +133,10 @@ forge t --mt testCallSequence -vvvv
 315. ✅ Allowance must be modified correctly via `increaseAllowance()`.
 316. ✅ `decreaseAllowance()` must revert when the user tries to decrease more than currently allowed.
 317. ✅ Allowance must be modified correctly via `decreaseAllowance()`.
-318. 🚧 User nonce must increase by one.
-319. 🚧 Mutation in the signature must make `permit()` revert.
-320. 🚧 Mutation in parameters must make `permit()` revert.
-321. 🚧 User allowance must be equal to `amount` when the sender calls `permit()`.
+318. 🚚
+319. 🚚
+320. 🚚
+321. 🚚
 322. ✅ Force feeding assets in LendingPool, ATokens, debtTokens, MiniPools or AToken6909 must not change the final result.
 323. ✅ Force feeding aToken in LendingPool, ATokens, debtTokens, MiniPools or AToken6909 must not change the final result.
 324. ✅ A user must not hold more than total supply.

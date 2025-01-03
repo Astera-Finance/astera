@@ -238,42 +238,6 @@ contract ATokenProp is PropertiesBase {
         assertEq(allowanceBefore - randAmt, aToken.allowance(address(user), address(sender)), "317");
     }
 
-    // todo
-    // /// @custom:invariant 318 - User nonce must increase by one.
-    // /// @custom:invariant 319 - Mutation in the signature must make `permit()` revert.
-    // /// @custom:invariant 320 - Mutation in parameters must make `permit()` revert.
-    // /// @custom:invariant 321 - User allowance must be equal to `amount` when sender call `permit()`.
-    // function randPermitLP(LocalVars_UPTL memory vul, uint8 seedUser, uint8 seedSender, uint8 seedAToken, uint128 seedAmt, uint48 randDeadline) public {
-    //     randUpdatePriceAndTryLiquidateLP(vul);
-    //     uint randUser = clampBetween(seedUser, 0 ,totalNbUsers);
-    //     uint randSender = clampBetween(seedSender, 0 ,totalNbUsers);
-    //     uint randAToken = clampBetween(seedAToken, 0 ,totalNbTokens);
-    //     uint randAmt = clampBetween(seedAmt, 0, initialMint * 2);
-    //     uint deadline = clampBetween(seedAmt, block.timestamp, block.timestamp * 100);
-
-    //     User user = users[randUser];
-    //     User sender = users[randUser];
-    //     AToken aToken = aTokens[randAToken];
-
-    //     (uint8 r, bytes32 v, bytes32 s) = Hevm.sign();
-
-    //     (bool success, bytes memory data) = sender.proxy(
-    //         address(aToken),
-    //         abi.encodeWithSelector(
-    //             aToken.permit.selector,
-    //             address(user),
-    //             address(sender),
-    //             randAmt,
-    //             deadline,
-    //             v,
-    //             r,
-    //             s
-    //         )
-    //     );
-
-    //     assertEq(aToken.allowance(address(user), address(sender)), randAmt, "321");
-    // }
-
     /// @custom:invariant 322 - Force feeding assets in LendingPool, ATokens, debtTokens, MiniPools or AToken6909 must not change the final result.
     function randForceFeedAssetLP(
         LocalVars_UPTL memory vul,
