@@ -33,4 +33,14 @@ contract MockLendingPool is LendingPool {
 
         return assetAmtAvailable;
     }
+
+    function getDebtInterestRate(address asset, bool reserveType) public view returns (uint256) {
+        DataTypes.ReserveData storage reserve = _reserves[asset][reserveType];
+        return reserve.currentVariableBorrowRate;
+    }
+
+    function getLiquidityInterestRate(address asset, bool reserveType) public view returns (uint256) {
+        DataTypes.ReserveData storage reserve = _reserves[asset][reserveType];
+        return reserve.currentLiquidityRate;
+    }
 }

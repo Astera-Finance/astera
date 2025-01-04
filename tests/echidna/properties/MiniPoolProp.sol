@@ -567,5 +567,33 @@ contract MiniPoolProp is PropertiesBase {
         }
     }
 
+    /// @custom:invariant 525 - If a minipool is flow borrowing, for a given reserve, the Lendingpool liquidity interest rate remain lower than the minipool debt interest rate.
+    /// @custom:invariant 526 - The aToken remainder of each assets with flow borrowing activated should remain greater than ERROR_REMAINDER_MARGIN.
+    function flowBorrowingIntegrityMP() public {
+        for (uint256 j = 0; j < miniPools.length; j++) {
+            MockMiniPool minipool = MockMiniPool(address(miniPools[j]));
+            
+            for (uint256 k = 0; k < totalNbTokens; k++) {
+                address asset = address(assets[k]);
+                uint256 currentFlow = IFlowLimiter(miniPoolProvider.getFlowLimiter()).currentFlow(asset, address(minipool));
+                
+                if (currentFlow != 0) {
+                    uint256 minipoolRate = minipool.getDebtInterestRate(asset);
+                    uint256 lendingPoolRate = pool.getLiquidityInterestRate(asset, true);
+                    
+                    assertLte(lendingPoolRate, minipoolRate, "525");
+                }
+                
+                ATokenERC6909 aToken6909 = aTokens6909[j];
+                (uint256 aTokenId,,) = aToken6909.getIdForUnderlying(asset);
+                uint256 minipoolRemainder = aToken6909.balanceOf(address(minipool), aTokenId);
+
+                uint256 lastRemainder = lastATokenRemainder[address(minipool)][asset];
+                uint256 minRemainder = minipool.ERROR_REMAINDER_MARGIN();
+                lastATokenRemainder[address(minipool)][asset] = minipoolRemainder;
+                assertGte(minipoolRemainder, lastRemainder < minRemainder ? lastRemainder : minRemainder, "526");
+            }
+        }
+    }
     // ---------------------- Helpers ----------------------
 }

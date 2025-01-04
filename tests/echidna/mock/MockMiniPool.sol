@@ -33,4 +33,14 @@ contract MockMiniPool is MiniPool {
 
         return assetAmtAvailable;
     }
+
+    function getDebtInterestRate(address asset) public view returns (uint256) {
+        DataTypes.MiniPoolReserveData storage reserve = _reserves[asset];
+        return reserve.currentVariableBorrowRate;
+    }
+
+    function getLiquidityInterestRate(address asset) public view returns (uint256) {
+        DataTypes.MiniPoolReserveData storage reserve = _reserves[asset];
+        return reserve.currentLiquidityRate;
+    }
 }

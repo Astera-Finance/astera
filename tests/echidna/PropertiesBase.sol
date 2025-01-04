@@ -184,6 +184,7 @@ contract PropertiesBase is PropertiesAsserts, MarketParams {
     mapping(uint256 => MiniPoolPiReserveInterestRateStrategy[]) internal minipoolPiRateStrategies; // [minipoolId][tokenId]
     mapping(uint256 => mapping(address => mapping(address => bool))) internal
         isUseReserveAsCollateralDeactivatedMP; // [minipoolId][user][asset] = isUseReserveAsCollateral
+    mapping(address => mapping(address => uint256)) internal lastATokenRemainder; // [minipool][aToken] = lastATokenRemainder
 
     constructor() {
         /// mocks

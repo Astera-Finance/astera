@@ -39,9 +39,6 @@ forge t --mt testCallSequence -vvvv
 
 # TODO
 
-- Randomly activation flow borrowing on minipools
-- Add Medusa support
-- Add rewarders.
 - fix lastLiquidityIndex and lastBorrowIndex
 - Search fot minipool flow borrow properties
 - Flags
@@ -60,6 +57,8 @@ forge t --mt testCallSequence -vvvv
     othersflags
     - isFlashLoanEnable
     - isBorrowingEnable
+- Add rewarders.
+- Add Medusa support
 
 # Invariant testing
 
@@ -179,10 +178,8 @@ forge t --mt testCallSequence -vvvv
 522. ✅ Integrity of Deposit Cap - aToken supply should never exceed the cap.
 523. ❌ (L-04) `UserConfigurationMap` integrity: If a user has a given aToken then `isUsingAsCollateralOrBorrowing` and `isUsingAsCollateral` should return true.
 524. ✅ `UserConfigurationMap` integrity: If a user has a given debtToken then `isUsingAsCollateralOrBorrowing`, `isBorrowing` and `isBorrowingAny` should return true.
-525. 🚧 If flow reached the maximum, Minipools must not be able to borrow more.
-526. 🚧 Minipool flow borrow integrity: debt from the Lendingpool should never be greater than the collateral owned by Minipools.
-527. 🚧 If a minipool is flow borrowing, for a given reserve, the Lendingpool interest rate must always be lower than the minipool interest rate.
-528. 🚧 The remainder of the flow borrowing should be sent to the Cod3x treasury if all conditions are met.
+525. ❌ (Cergyk finding) If a minipool is flow borrowing, for a given reserve, the Lendingpool liquidity interest rate remain lower than the minipool debt interest rate.
+526. ✅ The aToken remainder of each assets with flow borrowing activated should remain greater than ERROR_REMAINDER_MARGIN.
 
 ### AToken6909
 
