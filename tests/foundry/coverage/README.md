@@ -56,11 +56,11 @@ To see coverage on the side bar:
 - WithdrawLogic - DONE
 
 - AToken.t.sol:
-  - [ ] transferOnLiquidation
+  - [x] transferOnLiquidation (same as aave)
 
 - ATokenErc6909.t.sol:
-  - [ ] transfer/transferFrom underlying token
-  - [ ] handlingAction _afterTokenTransfer (with set incentives controller) (for minting and transfers)
+  - [x] transfer/transferFrom underlying token (covered indirectly)
+  - [x] handlingAction _afterTokenTransfer (with set incentives controller) (for minting and transfers)
 
 - ATokenNonRebasing.t.sol:
   - [ ] Increase/decrease allowance
@@ -86,8 +86,7 @@ Flashloan.t.sol:
 
 MiniPoolBorrowLogic: DONE
 MiniPoolDepositLogic: DONE
-MiniPoolFlashLoanLogic: 
- - [ ] combination to exploit sth (optional)
+MiniPoolFlashLoanLogic: DONE
 MiniPoolGenericLogic:
 - [x] balanceDecreaseAllowed -> Errors.VL_TRANSFER_NOT_ALLOWED - covered
 MiniPoolLiquidationLogic:
@@ -106,36 +105,34 @@ MiniPool:
 MiniPoolConfigurator:
 - [x] configure with liquidation threshold equal 0
 - [x] enable/disable flashloan
-- [ ] setReserveInterestRateStrategyAddress 
-- [ ] updateFlashloanPremiumTotal
+- [x] setReserveInterestRateStrategyAddress 
+- [x] updateFlashloanPremiumTotal
 - [x] setRewarderForReserve (in Rewarder tests)
-- [ ] setPoolAdmin
+- [x] setPoolAdmin
 
 MiniPoolAddressProvider: DONE
 
 FlowLimiter: DONE
 
 Rewarder:
-- [ ] claimRewardsForPool
-- [ ] forwardRewardsForPool
+- [x] claimRewardsForPool
+- [x] forwardRewardsForPool
 - [x] setClaimer
 - [x] claimRewardsOnBehalf
 - [x] claimRewardsToSelf
-- [ ] claimAllRewards
+- [x] claimAllRewards
 - [x] _claimRewards
-- [ ] setDistributionEnd/getDistributionEnd
-- [ ] getAllUserRewards
+- [x] setDistributionEnd/getDistributionEnd
 
 Rewarder6909:
-- [ ] transferRewards
+- [x] transferRewards
 - [x] set/get Claimer
 - [x] claimRewardsOnBehalf
 - [x] claimRewardsToSelf
-- [ ] claimAllRewards
-- [ ] set/getDistributionEnd
-- [ ] getRewardsByAsset
-- [ ] getUserUnclaimedRewardsFromStorage
-- [ ] getAllUserRewardsBalance
+- [x] claimAllRewards
+- [x] set/getDistributionEnd
+- [x] getUserUnclaimedRewardsFromStorage
+- [x] getAllUserRewardsBalance
 - [x] _distributeRewards
 
 Oracle:

@@ -709,4 +709,60 @@ contract MiniPoolConfiguratorTest is MiniPoolDepositBorrowTest {
 
         IMiniPool(mp).flashLoan(flashloanParams, amounts, modes, params);
     }
+
+    function testSetReserveInterestRateStrategyAddress(uint256 offset, address stratAddress)
+        public
+    {
+        // vm.assume(previousStratAddress != stratAddress);
+        offset = bound(offset, 0, 3);
+        address asset = tokens[offset];
+        DataTypes.MiniPoolReserveData memory reserveData = IMiniPool(miniPool).getReserveData(asset);
+        address previousStratAddress = reserveData.interestRateStrategyAddress;
+        console.log("previousStratAddress: ", previousStratAddress);
+
+        vm.prank(miniPoolContracts.miniPoolAddressesProvider.getMainPoolAdmin());
+        miniPoolContracts.miniPoolConfigurator.setReserveInterestRateStrategyAddress(
+            asset, stratAddress, IMiniPool(miniPool)
+        );
+
+        reserveData = IMiniPool(miniPool).getReserveData(asset);
+        console.log("currentStratAddress: ", reserveData.interestRateStrategyAddress);
+        assertEq(reserveData.interestRateStrategyAddress, stratAddress);
+    }
+
+    function testUpdateFlashloanPremiumTotal(uint256 flashloanPremiumTotalToSet) public {
+        flashloanPremiumTotalToSet = bound(flashloanPremiumTotalToSet, 0, 10_000);
+        uint256 flashloanPremium = IMiniPool(miniPool).FLASHLOAN_PREMIUM_TOTAL();
+        console.log("flashloanPremium: ", flashloanPremium);
+
+        vm.prank(miniPoolContracts.miniPoolAddressesProvider.getMainPoolAdmin());
+        miniPoolContracts.miniPoolConfigurator.updateFlashloanPremiumTotal(
+            uint128(flashloanPremiumTotalToSet), IMiniPool(miniPool)
+        );
+
+        flashloanPremium = IMiniPool(miniPool).FLASHLOAN_PREMIUM_TOTAL();
+        console.log("flashloanPremium: ", flashloanPremium);
+        assertEq(flashloanPremium, flashloanPremiumTotalToSet);
+    }
+
+    function testSetMiniPoolAdmin(address newAdmin) public {
+        vm.assume(newAdmin != address(0));
+        address poolAdmin = miniPoolContracts.miniPoolAddressesProvider.getPoolAdmin(0);
+        console.log("poolAdmin: ", poolAdmin);
+
+        vm.startPrank(newAdmin);
+        vm.expectRevert(bytes(Errors.CALLER_NOT_POOL_ADMIN));
+        miniPoolContracts.miniPoolConfigurator.activateReserve(tokens[0], IMiniPool(miniPool));
+        vm.stopPrank();
+
+        vm.prank(miniPoolContracts.miniPoolAddressesProvider.getPoolAdmin(0));
+        miniPoolContracts.miniPoolConfigurator.setPoolAdmin(newAdmin, IMiniPool(miniPool));
+
+        poolAdmin = miniPoolContracts.miniPoolAddressesProvider.getPoolAdmin(0);
+        console.log("poolAdmin: ", poolAdmin);
+        assertEq(poolAdmin, newAdmin);
+
+        vm.startPrank(newAdmin);
+        miniPoolContracts.miniPoolConfigurator.activateReserve(tokens[0], IMiniPool(miniPool));
+    }
 }
