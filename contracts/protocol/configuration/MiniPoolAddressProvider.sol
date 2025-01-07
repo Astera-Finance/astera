@@ -59,6 +59,9 @@ contract MiniPoolAddressesProvider is Ownable, IMiniPoolAddressesProvider {
     /// @dev Mapping of pool IDs to their configurations.
     mapping(uint256 => MiniPoolConfig) private _miniPoolsConfig;
 
+    /// @dev Mapping of mini pool addresses to their IDs.
+    mapping(address => uint256) private _minipoolToId;
+
     /// @dev Counter for the number of mini pools.
     uint256 private _miniPoolCount;
 
@@ -183,12 +186,11 @@ contract MiniPoolAddressesProvider is Ownable, IMiniPoolAddressesProvider {
      * @return The pool ID.
      */
     function _getMiniPoolId(address miniPool) private view returns (uint256) {
-        for (uint256 id = 0; id < _miniPoolCount; id++) {
-            if (_miniPoolsConfig[id].miniPool == miniPool) {
-                return id;
-            }
+        uint256 miniPoolId = _minipoolToId[miniPool];
+        if (_miniPoolsConfig[miniPoolId].miniPool != miniPool) {
+            revert(Errors.PAP_NO_MINI_POOL_ID_FOR_ADDRESS);
         }
-        revert(Errors.PAP_NO_MINI_POOL_ID_FOR_ADDRESS);
+        return miniPoolId;
     }
 
     /**
@@ -314,14 +316,14 @@ contract MiniPoolAddressesProvider is Ownable, IMiniPoolAddressesProvider {
         onlyOwner
         returns (uint256)
     {
-        bytes memory params =
-            abi.encodeWithSignature("initialize(address,uint256)", address(this), _miniPoolCount);
-
-        _initMiniPool(miniPoolImpl, params);
-
-        _initATokenPool(aTokenImpl, params);
-
         uint256 miniPoolId = _miniPoolCount;
+
+        bytes memory params =
+            abi.encodeWithSignature("initialize(address,uint256)", address(this), miniPoolId);
+
+        _initMiniPool(miniPoolImpl, miniPoolId, params);
+
+        _initATokenPool(aTokenImpl, miniPoolId, params);
 
         _miniPoolsConfig[miniPoolId].admin = poolAdmin;
         _miniPoolCount++;
@@ -403,7 +405,9 @@ contract MiniPoolAddressesProvider is Ownable, IMiniPoolAddressesProvider {
         InitializableImmutableAdminUpgradeabilityProxy proxy =
             InitializableImmutableAdminUpgradeabilityProxy(proxyAddress);
         proxy.upgradeToAndCall(miniPoolImpl, params);
+
         _miniPoolsConfig[miniPoolId].miniPool = address(proxy);
+        _minipoolToId[address(proxy)] = miniPoolId;
     }
 
     /**
@@ -429,14 +433,18 @@ contract MiniPoolAddressesProvider is Ownable, IMiniPoolAddressesProvider {
      * @param miniPoolImpl The implementation address.
      * @param params The initialization parameters.
      */
-    function _initMiniPool(address miniPoolImpl, bytes memory params) internal {
+    function _initMiniPool(address miniPoolImpl, uint256 miniPoolCount, bytes memory params)
+        internal
+    {
         InitializableImmutableAdminUpgradeabilityProxy proxy =
             new InitializableImmutableAdminUpgradeabilityProxy(address(this));
 
         proxy.initialize(miniPoolImpl, params);
 
-        _miniPoolsConfig[_miniPoolCount].miniPool = address(proxy);
-        emit ProxyCreated(_miniPoolCount, address(proxy));
+        _miniPoolsConfig[miniPoolCount].miniPool = address(proxy);
+        _minipoolToId[address(proxy)] = miniPoolCount;
+
+        emit ProxyCreated(miniPoolCount, address(proxy));
     }
 
     /**
@@ -444,14 +452,16 @@ contract MiniPoolAddressesProvider is Ownable, IMiniPoolAddressesProvider {
      * @param aTokenImpl The implementation address.
      * @param params The initialization parameters.
      */
-    function _initATokenPool(address aTokenImpl, bytes memory params) internal {
+    function _initATokenPool(address aTokenImpl, uint256 miniPoolCount, bytes memory params)
+        internal
+    {
         InitializableImmutableAdminUpgradeabilityProxy aTokenProxy =
             new InitializableImmutableAdminUpgradeabilityProxy(address(this));
 
         aTokenProxy.initialize(aTokenImpl, params);
 
-        _miniPoolsConfig[_miniPoolCount].aErc6909 = address(aTokenProxy);
-        emit ProxyCreated(_miniPoolCount, address(aTokenProxy));
+        _miniPoolsConfig[miniPoolCount].aErc6909 = address(aTokenProxy);
+        emit ProxyCreated(miniPoolCount, address(aTokenProxy));
     }
 
     /**

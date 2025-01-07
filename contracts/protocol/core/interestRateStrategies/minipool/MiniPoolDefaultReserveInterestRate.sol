@@ -138,17 +138,18 @@ contract MiniPoolDefaultReserveInterestRateStrategy is IMiniPoolReserveInterestR
         CalcInterestRatesLocalVars1 memory vars;
 
         (,, vars.isTranched) = IAERC6909(aToken).getIdForUnderlying(asset);
+
+        vars.availableLiquidity = IERC20(asset).balanceOf(aToken);
+
         if (vars.isTranched) {
             IFlowLimiter flowLimiter = IFlowLimiter(_addressesProvider.getFlowLimiter());
             vars.underlying = IAToken(asset).UNDERLYING_ASSET_ADDRESS();
             address minipool = IAERC6909(aToken).getMinipoolAddress();
             vars.currentFlow = flowLimiter.currentFlow(vars.underlying, minipool);
 
-            vars.availableLiquidity = IERC20(asset).balanceOf(aToken)
-                + IAToken(asset).convertToShares(flowLimiter.getFlowLimit(vars.underlying, minipool))
-                - IAToken(asset).convertToShares(vars.currentFlow);
-        } else {
-            vars.availableLiquidity = IERC20(asset).balanceOf(aToken);
+            vars.availableLiquidity += IAToken(asset).convertToShares(
+                flowLimiter.getFlowLimit(vars.underlying, minipool)
+            ) - IAToken(asset).convertToShares(vars.currentFlow);
         }
 
         if (vars.availableLiquidity + liquidityAdded < liquidityTaken) {

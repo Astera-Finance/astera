@@ -80,7 +80,7 @@ abstract contract IncentivizedERC6909 is ERC6909 /*, IAERC6909 */ {
         returns (uint256 oldTotalSupply)
     {
         oldTotalSupply = _totalSupply[id];
-        _totalSupply[id] = _totalSupply[id] - amt;
+        _totalSupply[id] = oldTotalSupply - amt;
     }
 
     /**
@@ -95,7 +95,7 @@ abstract contract IncentivizedERC6909 is ERC6909 /*, IAERC6909 */ {
         returns (uint256 oldTotalSupply)
     {
         oldTotalSupply = _totalSupply[id];
-        _totalSupply[id] = _totalSupply[id] + amt;
+        _totalSupply[id] = oldTotalSupply + amt;
     }
 
     /**

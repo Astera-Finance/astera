@@ -152,21 +152,23 @@ abstract contract RewardsController is RewardsDistributor, IRewardsController {
      * @notice Updates MiniPool data if new MiniPools have been added.
      */
     function refreshMiniPoolData() internal {
-        if (address(_addressesProvider) != address(0)) {
-            if (_totalTrackedMiniPools != _addressesProvider.getMiniPoolCount()) {
+        IMiniPoolAddressesProvider addressesProvider = _addressesProvider;
+
+        if (address(addressesProvider) != address(0)) {
+            uint256 totalTrackedMiniPools = _totalTrackedMiniPools;
+            if (totalTrackedMiniPools != addressesProvider.getMiniPoolCount()) {
                 for (
-                    uint256 i = _totalTrackedMiniPools;
-                    i < _addressesProvider.getMiniPoolCount();
-                    i++
+                    uint256 i = totalTrackedMiniPools; i < addressesProvider.getMiniPoolCount(); i++
                 ) {
-                    address miniPool = _addressesProvider.getMiniPool(i);
+                    address miniPool = addressesProvider.getMiniPool(i);
                     _isMiniPool[miniPool] = true;
                     setDefaultForwarder(miniPool);
-                    address aToken6909 = _addressesProvider.getMiniPoolToAERC6909(miniPool);
+                    address aToken6909 = addressesProvider.getMiniPoolToAERC6909(miniPool);
                     _isAtokenERC6909[aToken6909] = true;
                     setDefaultForwarder(aToken6909);
-                    _totalTrackedMiniPools++;
+                    totalTrackedMiniPools++;
                 }
+                _totalTrackedMiniPools = totalTrackedMiniPools;
             }
         }
     }
