@@ -177,7 +177,6 @@ contract LendingPoolConfigurator is VersionedInitializable, ILendingPoolConfigur
             input.asset,
             input.incentivesController,
             decimals,
-            input.reserveType,
             input.name,
             input.symbol,
             input.params
@@ -210,7 +209,6 @@ contract LendingPoolConfigurator is VersionedInitializable, ILendingPoolConfigur
             input.asset,
             input.incentivesController,
             decimals,
-            input.reserveType,
             input.name,
             input.symbol,
             input.params
