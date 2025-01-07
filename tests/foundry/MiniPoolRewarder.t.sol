@@ -77,7 +77,7 @@ contract MiniPoolRewarderTest is Common {
         DistributionTypes.Asset6909 memory asset =
             DistributionTypes.Asset6909(aTokensErc6909Addr, assetID);
         console.log("rewardTokenAmount: ", rewardTokenAmount);
-        configs[0] = DistributionTypes.MiniPoolRewardsConfigInput(
+        configs[rewardTokenIndex] = DistributionTypes.MiniPoolRewardsConfigInput(
             emissionsPerSecond, distributionEnd, asset, address(rewardTokens[rewardTokenIndex])
         );
         miniPoolRewarder.configureAssets(configs);
@@ -2119,5 +2119,192 @@ contract MiniPoolRewarderTest is Common {
             miniPoolRewarder.getDistributionEnd(aTokensErc6909Addr, id, address(rewardTokens[0]));
 
         assertEq(distributionEnd, distributionEndToSet);
+    }
+
+    function testMultipleRewards() public {
+        address user1 = makeAddr("user1");
+        address user2 = makeAddr("user2");
+
+        deal(address(erc20Tokens[WETH_OFFSET]), user1, 100 ether);
+        deal(address(erc20Tokens[USDC_OFFSET]), user2, 100 ether);
+
+        TokenParamsExtended memory wethParams = TokenParamsExtended({
+            token: erc20Tokens[WETH_OFFSET],
+            aToken: commonContracts.aTokens[WETH_OFFSET],
+            aTokenWrapper: commonContracts.aTokensWrapper[WETH_OFFSET],
+            vault: new MockVaultUnit(erc20Tokens[WETH_OFFSET]),
+            price: commonContracts.oracle.getAssetPrice(address(tokens[WETH_OFFSET]))
+        });
+        TokenParamsExtended memory usdcParams = TokenParamsExtended({
+            token: erc20Tokens[USDC_OFFSET],
+            aToken: commonContracts.aTokens[USDC_OFFSET],
+            aTokenWrapper: commonContracts.aTokensWrapper[USDC_OFFSET],
+            vault: new MockVaultUnit(erc20Tokens[USDC_OFFSET]),
+            price: commonContracts.oracle.getAssetPrice(address(tokens[USDC_OFFSET]))
+        });
+
+        address[] memory aTokenAddresses = new address[](3);
+        aTokenAddresses[0] = address(wethParams.aToken);
+        aTokenAddresses[1] = address(usdcParams.aToken);
+        aTokenAddresses[2] = address(commonContracts.variableDebtTokens[USDC_OFFSET]);
+
+        DistributionTypes.Asset6909[] memory assets = new DistributionTypes.Asset6909[](4);
+        assets[0] = DistributionTypes.Asset6909(aTokensErc6909Addr, 1000 + USDC_OFFSET);
+        assets[1] = DistributionTypes.Asset6909(aTokensErc6909Addr, 2000 + USDC_OFFSET);
+        assets[2] = DistributionTypes.Asset6909(aTokensErc6909Addr, 1000 + WBTC_OFFSET);
+        assets[3] = DistributionTypes.Asset6909(aTokensErc6909Addr, 2000 + WBTC_OFFSET);
+
+        RewardForwarder forwarder = new RewardForwarder(address(deployedContracts.rewarder));
+        {
+            uint256 wethAmount = (1000 ether / wethParams.price) * 10 ** PRICE_FEED_DECIMALS
+                / (10 ** (18 - wethParams.token.decimals()));
+            console.log("wethAmount: %s for price: %s", wethAmount, wethParams.price);
+
+            uint256 usdcAmount = (1000 ether / usdcParams.price) * 10 ** PRICE_FEED_DECIMALS
+                / (10 ** (18 - usdcParams.token.decimals()));
+
+            console.log("usdcAmount: %s for price: %s", usdcAmount, usdcParams.price);
+
+            DistributionTypes.MiniPoolRewardsConfigInput[] memory configs =
+                new DistributionTypes.MiniPoolRewardsConfigInput[](3 * aTokenIds.length * 4);
+            uint256 configId = 0;
+            for (uint256 rewardsIdx = 0; rewardsIdx < 3; rewardsIdx++) {
+                for (uint256 idx = 0; idx < aTokenIds.length * 4; idx++) {
+                    // uint256[] aTokenIds = [1000, 1001, 1002, 1003];
+                    //uint256[] tokenIds = [1128, 1129, 1130, 1131];
+                    uint256 assetID;
+                    if (idx < aTokenIds.length * 2) {
+                        assetID = aTokenIds[idx % aTokenIds.length];
+                        if (idx >= aTokenIds.length) {
+                            assetID += 1000; // debtToken
+                        }
+                    } else {
+                        assetID = tokenIds[idx % tokenIds.length];
+                        if (idx >= aTokenIds.length * 3) {
+                            assetID += 1000; // debtToken
+                        }
+                    }
+                    console.log("assetID", assetID);
+
+                    DistributionTypes.Asset6909 memory asset =
+                        DistributionTypes.Asset6909(aTokensErc6909Addr, assetID);
+                    configs[configId] = DistributionTypes.MiniPoolRewardsConfigInput(
+                        1 ether,
+                        uint32(block.timestamp + 100),
+                        asset,
+                        address(rewardTokens[rewardsIdx])
+                    );
+                    configId++;
+                }
+            }
+            console.log("CONFIGURING...");
+            miniPoolRewarder.configureAssets(configs);
+
+            fixture_configureMainPoolRewarder(
+                address(deployedContracts.rewarder), // The address of the rewarder contract
+                1, // The index of the reward token
+                300 ether, // The amount of reward tokens
+                1 ether, // The emissions per second of the reward tokens
+                uint32(block.timestamp + 100), // The end timestamp for the distribution of rewards
+                address(miniPoolContracts.miniPoolAddressesProvider) // The address of the mini pool addresses provider
+            );
+
+            fixture_configureMainPoolRewarder(
+                address(deployedContracts.rewarder), // The address of the rewarder contract
+                2, // The index of the reward token
+                300 ether, // The amount of reward tokens
+                1 ether, // The emissions per second of the reward tokens
+                uint32(block.timestamp + 100), // The end timestamp for the distribution of rewards
+                address(miniPoolContracts.miniPoolAddressesProvider) // The address of the mini pool addresses provider
+            );
+
+            {
+                deployedContracts.rewarder.setRewardForwarder(address(forwarder));
+                forwarder.setRewardTokens();
+                forwarder.setRewardedTokens(rewardedTokens);
+                forwarder.setForwarder(aTokensErc6909Addr, 0, address(this));
+                forwarder.setForwarder(miniPool, 0, address(this));
+                forwarder.setForwarder(aTokensErc6909Addr, 1, address(this));
+                forwarder.setForwarder(miniPool, 1, address(this));
+                forwarder.setForwarder(aTokensErc6909Addr, 2, address(this));
+                forwarder.setForwarder(miniPool, 2, address(this));
+                forwarder.registerClaimee(aTokensErc6909Addr);
+                forwarder.registerClaimee(miniPool);
+            }
+            vm.startPrank(user2);
+            console.log("User3 deposits USDC to main pool");
+            usdcParams.token.approve(address(deployedContracts.lendingPool), usdcAmount);
+            deployedContracts.lendingPool.deposit(
+                address(usdcParams.token), true, usdcAmount, user1
+            );
+            vm.stopPrank();
+
+            vm.startPrank(user1);
+            console.log("User1 deposits WETH to main pool");
+            wethParams.token.approve(address(deployedContracts.lendingPool), wethAmount);
+            deployedContracts.lendingPool.deposit(
+                address(wethParams.token), true, wethAmount, user1
+            );
+            wethParams.aTokenWrapper.approve(miniPool, wethAmount);
+            IMiniPool(miniPool).deposit(address(wethParams.aTokenWrapper), false, wethAmount, user1);
+            vm.stopPrank();
+
+            vm.prank(address(miniPoolContracts.miniPoolAddressesProvider.getMainPoolAdmin()));
+            miniPoolContracts.miniPoolConfigurator.setFlowLimit(
+                address(usdcParams.token), miniPool, usdcAmount
+            );
+
+            vm.startPrank(user1);
+            console.log("User1 borrows USDC from mini pool");
+            IMiniPool(miniPool).borrow(
+                address(usdcParams.aTokenWrapper), false, usdcAmount / 2, user1
+            );
+            vm.stopPrank();
+        }
+        console.log("Time travel 1");
+        vm.warp(block.timestamp + 20);
+        vm.roll(block.number + 1);
+
+        assertEq(rewardTokens[0].balanceOf(address(forwarder)), 0);
+        assertEq(rewardTokens[1].balanceOf(address(forwarder)), 0);
+        assertEq(rewardTokens[2].balanceOf(address(forwarder)), 0);
+
+        forwarder.claimRewardsForPool(miniPool);
+        assertEq(rewardTokens[0].balanceOf(address(forwarder)), 20 ether);
+        assertEq(rewardTokens[1].balanceOf(address(forwarder)), 20 ether);
+        assertEq(rewardTokens[2].balanceOf(address(forwarder)), 20 ether);
+
+        forwarder.forwardAllRewardsForPool(miniPool);
+        assertEq(rewardTokens[0].balanceOf(address(forwarder)), 0);
+        assertEq(rewardTokens[1].balanceOf(address(forwarder)), 0);
+        assertEq(rewardTokens[2].balanceOf(address(forwarder)), 0);
+
+        assertEq(rewardTokens[0].balanceOf(address(this)), 20 ether);
+        assertEq(rewardTokens[1].balanceOf(address(this)), 20 ether);
+        assertEq(rewardTokens[2].balanceOf(address(this)), 20 ether);
+
+        console.log("Time travel 2");
+        vm.warp(block.timestamp + 20);
+        vm.roll(block.number + 1);
+
+        forwarder.claimRewardsFor(
+            miniPool, address(commonContracts.variableDebtTokens[USDC_OFFSET])
+        );
+
+        assertEq(rewardTokens[0].balanceOf(address(forwarder)), 20 ether);
+        assertEq(rewardTokens[1].balanceOf(address(forwarder)), 20 ether);
+        assertEq(rewardTokens[2].balanceOf(address(forwarder)), 20 ether);
+
+        forwarder.forwardRewards(
+            miniPool, address(commonContracts.variableDebtTokens[USDC_OFFSET]), 1
+        );
+
+        assertEq(rewardTokens[0].balanceOf(address(forwarder)), 20 ether);
+        assertEq(rewardTokens[1].balanceOf(address(forwarder)), 0);
+        assertEq(rewardTokens[2].balanceOf(address(forwarder)), 20 ether);
+
+        assertEq(rewardTokens[0].balanceOf(address(this)), 20 ether);
+        assertEq(rewardTokens[1].balanceOf(address(this)), 40 ether);
+        assertEq(rewardTokens[2].balanceOf(address(this)), 20 ether);
     }
 }
