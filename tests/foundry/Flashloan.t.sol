@@ -225,7 +225,8 @@ contract FlashloanTest is Common {
 
         for (uint32 idx = 0; idx < tokens.length; idx++) {
             console.log(
-                "Rehypothecation amt 1: %s", IERC20(tokens[idx]).balanceOf(address(commonContracts.aTokens[idx]))
+                "Rehypothecation amt 1: %s",
+                IERC20(tokens[idx]).balanceOf(address(commonContracts.aTokens[idx]))
             );
 
             turnOnRehypothecation(
@@ -239,7 +240,8 @@ contract FlashloanTest is Common {
             );
 
             console.log(
-                "Rehypothecation amt 2: %s", IERC20(tokens[idx]).balanceOf(address(commonContracts.aTokens[idx]))
+                "Rehypothecation amt 2: %s",
+                IERC20(tokens[idx]).balanceOf(address(commonContracts.aTokens[idx]))
             );
 
             uint256 amountToDeposit = IERC20(tokens[idx]).balanceOf(address(this)) / 2;
@@ -249,7 +251,8 @@ contract FlashloanTest is Common {
             );
 
             console.log(
-                "Rehypothecation amt 3: %s", IERC20(tokens[idx]).balanceOf(address(commonContracts.aTokens[idx]))
+                "Rehypothecation amt 3: %s",
+                IERC20(tokens[idx]).balanceOf(address(commonContracts.aTokens[idx]))
             );
 
             reserveTypes[idx] = true;
@@ -260,7 +263,8 @@ contract FlashloanTest is Common {
             balances.balancesBefore[idx] = IERC20(tokens[idx]).balanceOf(address(this));
             balances.aTokenBalancesBefore[idx] =
                 IERC20(tokens[idx]).balanceOf(address(commonContracts.aTokens[idx]));
-            balances.totalManagedAssetsBefore[idx] = AToken(commonContracts.aTokens[idx]).getTotalManagedAssets();
+            balances.totalManagedAssetsBefore[idx] =
+                AToken(commonContracts.aTokens[idx]).getTotalManagedAssets();
         }
 
         ILendingPool.FlashLoanParams memory flashloanParams =
@@ -271,15 +275,19 @@ contract FlashloanTest is Common {
 
         for (uint32 idx = 0; idx < tokens.length; idx++) {
             console.log(
-                "Rehypothecation amt 4: %s", IERC20(tokens[idx]).balanceOf(address(commonContracts.aTokens[idx]))
+                "Rehypothecation amt 4: %s",
+                IERC20(tokens[idx]).balanceOf(address(commonContracts.aTokens[idx]))
             );
-            console.log("Rehypothecation amt 5: %s", commonContracts.aTokens[idx]._underlyingAmount());
+            console.log(
+                "Rehypothecation amt 5: %s", commonContracts.aTokens[idx]._underlyingAmount()
+            );
             console.log("Rehypothecation amt 6: %s", commonContracts.aTokens[idx]._farmingBal());
             console.log("--------------------------------");
 
             assertApproxEqRel(
                 commonContracts.aTokens[idx]._farmingBal(),
-                commonContracts.aTokens[idx]._underlyingAmount() * commonContracts.aTokens[idx]._farmingPct() / 10000,
+                commonContracts.aTokens[idx]._underlyingAmount()
+                    * commonContracts.aTokens[idx]._farmingPct() / 10000,
                 commonContracts.aTokens[idx]._farmingPctDrift() * 1e14
             );
         }

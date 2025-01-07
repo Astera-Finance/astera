@@ -14,6 +14,5 @@ contract FoundryTestSequence is Test {
         propertiesMain = new PropertiesMain();
     }
 
-    function testCallSequence() public {
-    }
+    function testCallSequence() public {}
 }

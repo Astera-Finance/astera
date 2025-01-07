@@ -195,11 +195,15 @@ contract MiniPoolProp is PropertiesBase {
         }
 
         require(success);
-        
+
         // 509 needs to be disabled when flow borrowing is enabled because the debt index is updated in the `borrow()`.
-        // So `balanceOf()` used in `debtTokenBalanceBefore` is not coherent for 509 property with the one used in 
+        // So `balanceOf()` used in `debtTokenBalanceBefore` is not coherent for 509 property with the one used in
         // `debtTokenBalanceAfter`.
-        if (IFlowLimiter(miniPoolProvider.getFlowLimiter()).currentFlow(address(asset), address(minipool)) == 0) {
+        if (
+            IFlowLimiter(miniPoolProvider.getFlowLimiter()).currentFlow(
+                address(asset), address(minipool)
+            ) == 0
+        ) {
             assertEqApprox(
                 aToken6909.balanceOf(address(onBehalfOf), debtTokenID) - debtTokenBalanceBefore,
                 randAmt,
@@ -413,7 +417,11 @@ contract MiniPoolProp is PropertiesBase {
             for (uint256 i = 0; i < totalNbTokens * 2; i++) {
                 address asset = allTokens(i);
 
-                if (IFlowLimiter(miniPoolProvider.getFlowLimiter()).currentFlow(address(asset), address(minipool)) == 0) {
+                if (
+                    IFlowLimiter(miniPoolProvider.getFlowLimiter()).currentFlow(
+                        address(asset), address(minipool)
+                    ) == 0
+                ) {
                     return;
                 }
 
@@ -572,18 +580,20 @@ contract MiniPoolProp is PropertiesBase {
     function flowBorrowingIntegrityMP() public {
         for (uint256 j = 0; j < miniPools.length; j++) {
             MockMiniPool minipool = MockMiniPool(address(miniPools[j]));
-            
+
             for (uint256 k = 0; k < totalNbTokens; k++) {
                 address asset = address(assets[k]);
-                uint256 currentFlow = IFlowLimiter(miniPoolProvider.getFlowLimiter()).currentFlow(asset, address(minipool));
-                
+                uint256 currentFlow = IFlowLimiter(miniPoolProvider.getFlowLimiter()).currentFlow(
+                    asset, address(minipool)
+                );
+
                 if (currentFlow != 0) {
                     uint256 minipoolRate = minipool.getDebtInterestRate(asset);
                     uint256 lendingPoolRate = pool.getLiquidityInterestRate(asset, true);
-                    
+
                     assertLte(lendingPoolRate, minipoolRate, "525");
                 }
-                
+
                 ATokenERC6909 aToken6909 = aTokens6909[j];
                 (uint256 aTokenId,,) = aToken6909.getIdForUnderlying(asset);
                 uint256 minipoolRemainder = aToken6909.balanceOf(address(minipool), aTokenId);
@@ -591,7 +601,11 @@ contract MiniPoolProp is PropertiesBase {
                 uint256 lastRemainder = lastATokenRemainder[address(minipool)][asset];
                 uint256 minRemainder = minipool.ERROR_REMAINDER_MARGIN();
                 lastATokenRemainder[address(minipool)][asset] = minipoolRemainder;
-                assertGte(minipoolRemainder, lastRemainder < minRemainder ? lastRemainder : minRemainder, "526");
+                assertGte(
+                    minipoolRemainder,
+                    lastRemainder < minRemainder ? lastRemainder : minRemainder,
+                    "526"
+                );
             }
         }
     }
