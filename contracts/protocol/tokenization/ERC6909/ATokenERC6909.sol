@@ -335,11 +335,13 @@ contract ATokenERC6909 is IncentivizedERC6909, VersionedInitializable {
 
     /**
      * @notice Approves delegation of borrowing power.
+     * @dev This view function only works for debt tokens id.
      * @param delegatee The address receiving the delegation.
      * @param id The token ID.
      * @param amount The amount of borrowing power to delegate.
      */
     function approveDelegation(address delegatee, uint256 id, uint256 amount) external {
+        require(isDebtToken(id), Errors.AT_INVALID_ATOKEN_ID);
         _borrowAllowances[id][msg.sender][delegatee] = amount;
     }
 
@@ -619,9 +621,15 @@ contract ATokenERC6909 is IncentivizedERC6909, VersionedInitializable {
             return 0;
         }
 
-        return currentSupplyScaled.rayMul(
-            POOL.getReserveNormalizedIncome(_underlyingAssetAddresses[id])
-        );
+        if (isDebtToken(id)) {
+            return currentSupplyScaled.rayMul(
+                POOL.getReserveNormalizedVariableDebt(_underlyingAssetAddresses[id])
+            );
+        } else {
+            return currentSupplyScaled.rayMul(
+                POOL.getReserveNormalizedIncome(_underlyingAssetAddresses[id])
+            );
+        }
     }
 
     /**
@@ -667,6 +675,23 @@ contract ATokenERC6909 is IncentivizedERC6909, VersionedInitializable {
      */
     function isDebtToken(uint256 id) public pure returns (bool) {
         return id >= DEBT_TOKEN_ADDRESSABLE_ID;
+    }
+
+    /**
+     * @notice Returns the borrow allowance of the user.
+     * @dev This view function only works for debt tokens id.
+     * @param id The token ID.
+     * @param fromUser The user giving allowance.
+     * @param toUser The user to give allowance to.
+     * @return The current allowance of `toUser`.
+     */
+    function borrowAllowance(uint256 id, address fromUser, address toUser)
+        external
+        view
+        returns (uint256)
+    {
+        require(isDebtToken(id), Errors.AT_INVALID_ATOKEN_ID);
+        return _borrowAllowances[id][fromUser][toUser];
     }
 
     /**

@@ -386,6 +386,7 @@ contract AToken is
         onlyLendingPool
     {
         _underlyingAmount = _underlyingAmount + amount;
+        _rebalance(0);
     }
 
     /**

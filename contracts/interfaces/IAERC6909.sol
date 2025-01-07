@@ -87,6 +87,11 @@ interface IAERC6909 is IERC6909 {
         view
         returns (uint256 aTokenID, uint256 debtTokenID, bool isTrancheRet);
 
+    function borrowAllowance(uint256 id, address fromUser, address toUser)
+        external
+        view
+        returns (uint256);
+
     function getUnderlyingAsset(uint256 id) external view returns (address);
 
     function getMinipoolAddress() external view returns (address);

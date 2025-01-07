@@ -3,17 +3,18 @@ pragma solidity ^0.8.13;
 
 // import "contracts/interfaces/ILendingPool.sol";
 // import "contracts/interfaces/ILendingPoolAddressesProvider.sol";
-import 'contracts/dependencies/openzeppelin/contracts/ERC20.sol';
-import 'contracts/mocks/dependencies/FlashLoanReceiverBase.sol';
+import "contracts/dependencies/openzeppelin/contracts/ERC20.sol";
+import "contracts/mocks/dependencies/FlashLoanReceiverBase.sol";
 
 contract User is FlashLoanReceiverBase {
-    
-    constructor(ILendingPoolAddressesProvider _addressesProvider) FlashLoanReceiverBase(_addressesProvider) {}
+    constructor(ILendingPoolAddressesProvider _addressesProvider)
+        FlashLoanReceiverBase(_addressesProvider)
+    {}
 
-    function proxy(
-        address target,
-        bytes memory data
-    ) public returns (bool success, bytes memory err) {
+    function proxy(address target, bytes memory data)
+        public
+        returns (bool success, bytes memory err)
+    {
         return target.call(data);
     }
 
@@ -21,24 +22,33 @@ contract User is FlashLoanReceiverBase {
         target.approve(spender, type(uint256).max);
     }
 
-    function execFl(
+    function execFlLP(
         ILendingPool.FlashLoanParams memory flp,
-        uint256[] calldata amounts, 
-        uint256[] calldata modes, 
+        uint256[] calldata amounts,
+        uint256[] calldata modes,
         bytes calldata params
     ) public {
-        LENDING_POOL.flashLoan(
-            flp,
-            amounts,
-            modes,
-            params
-        );
+        LENDING_POOL.flashLoan(flp, amounts, modes, params);
 
         for (uint256 i = 0; i < flp.assets.length; i++) {
             IERC20(flp.assets[i]).approve(address(LENDING_POOL), type(uint256).max);
         }
     }
-    
+
+    function execFlMP(
+        address minipool,
+        IMiniPool.FlashLoanParams memory flp,
+        uint256[] calldata amounts,
+        uint256[] calldata modes,
+        bytes calldata params
+    ) public {
+        IMiniPool(minipool).flashLoan(flp, amounts, modes, params);
+
+        for (uint256 i = 0; i < flp.assets.length; i++) {
+            IERC20(flp.assets[i]).approve(minipool, type(uint256).max);
+        }
+    }
+
     // flashloanable user
     function executeOperation(
         address[] calldata _assets,
@@ -47,7 +57,6 @@ contract User is FlashLoanReceiverBase {
         address _initiator,
         bytes calldata _params
     ) external returns (bool) {
-        
         /// we make sur lending pool can transferFrom more than `_amounts[i] + _premiums[i]`.
         for (uint256 i = 0; i < _assets.length; i++) {
             IERC20(_assets[i]).approve(address(LENDING_POOL), _amounts[i] + _premiums[i]);
