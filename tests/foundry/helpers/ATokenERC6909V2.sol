@@ -58,12 +58,8 @@ contract ATokenERC6909V2 is IncentivizedERC6909, VersionedInitializable {
     /// @notice The MiniPool contract.
     IMiniPool private POOL;
 
-    /// @notice The total number of tokens.
-    uint256 private _totalTokens;
     /// @notice The total number of unique tokens.
     uint256 private _totalUniqueTokens;
-    /// @notice The total number of tranche tokens.
-    uint256 private _totalTrancheTokens;
     /// @notice The addresses provider for the MiniPool.
     IMiniPoolAddressesProvider private _addressesProvider;
     /// @notice The ID of the MiniPool.
@@ -118,7 +114,6 @@ contract ATokenERC6909V2 is IncentivizedERC6909, VersionedInitializable {
         );
         (aTokenID, debtTokenID, isTrancheRet) = getNextIdForUnderlying(underlyingAsset);
         if (isTrancheRet) {
-            _totalTrancheTokens++;
             _isTranche[aTokenID] = true;
             _isTranche[debtTokenID] = true;
 
