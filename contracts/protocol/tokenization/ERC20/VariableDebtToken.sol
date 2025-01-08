@@ -45,7 +45,7 @@ contract VariableDebtToken is
      * @dev Only lending pool can call functions marked by this modifier.
      */
     modifier onlyLendingPool() {
-        require(_msgSender() == address(_getLendingPool()), Errors.CT_CALLER_MUST_BE_LENDING_POOL);
+        require(msg.sender == address(_getLendingPool()), Errors.CT_CALLER_MUST_BE_LENDING_POOL);
         _;
     }
 
@@ -173,8 +173,8 @@ contract VariableDebtToken is
      * @dev Delegation will still respect the liquidation constraints (even if delegated, a delegatee cannot force a delegator HF to go below 1).
      */
     function approveDelegation(address delegatee, uint256 amount) external override {
-        _borrowAllowances[_msgSender()][delegatee] = amount;
-        emit BorrowAllowanceDelegated(_msgSender(), delegatee, _getUnderlyingAssetAddress(), amount);
+        _borrowAllowances[msg.sender][delegatee] = amount;
+        emit BorrowAllowanceDelegated(msg.sender, delegatee, _getUnderlyingAssetAddress(), amount);
     }
 
     /**

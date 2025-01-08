@@ -21,14 +21,14 @@ contract Treasury is Ownable {
     address private multisig;
 
     modifier onlyPoolAdmin() {
-        require(ADDRESSES_PROVIDER.getPoolAdmin() == _msgSender(), Errors.CALLER_NOT_POOL_ADMIN);
+        require(ADDRESSES_PROVIDER.getPoolAdmin() == msg.sender, Errors.CALLER_NOT_POOL_ADMIN);
         _;
     }
 
     constructor(ILendingPoolAddressesProvider provider) Ownable(msg.sender) {
         ADDRESSES_PROVIDER = provider;
         LENDING_POOL = ILendingPool(ADDRESSES_PROVIDER.getLendingPool());
-        multisig = _msgSender();
+        multisig = msg.sender;
     }
 
     function withdrawAllReserves() external returns (bool) {

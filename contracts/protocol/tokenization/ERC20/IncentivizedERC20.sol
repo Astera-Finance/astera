@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: agpl-3.0
 pragma solidity 0.8.23;
 
-import {Context} from "../../../../contracts/dependencies/openzeppelin/contracts/Context.sol";
 import {IERC20} from "../../../../contracts/dependencies/openzeppelin/contracts/IERC20.sol";
 import {IERC20Detailed} from
     "../../../../contracts/dependencies/openzeppelin/contracts/IERC20Detailed.sol";
@@ -13,7 +12,7 @@ import {IRewarder} from "../../../../contracts/interfaces/IRewarder.sol";
  * @author Cod3x
  * @dev This contract extends the basic ERC20 implementation with incentives tracking capabilities.
  */
-abstract contract IncentivizedERC20 is Context, IERC20, IERC20Detailed {
+abstract contract IncentivizedERC20 is IERC20, IERC20Detailed {
     mapping(address => uint256) internal _balances;
     mapping(address => mapping(address => uint256)) private _allowances;
 
@@ -89,8 +88,8 @@ abstract contract IncentivizedERC20 is Context, IERC20, IERC20Detailed {
      * @return A boolean indicating the success of the transfer.
      */
     function transfer(address recipient, uint256 amount) public virtual override returns (bool) {
-        _transfer(_msgSender(), recipient, amount);
-        emit Transfer(_msgSender(), recipient, amount);
+        _transfer(msg.sender, recipient, amount);
+        emit Transfer(msg.sender, recipient, amount);
         return true;
     }
 
@@ -117,7 +116,7 @@ abstract contract IncentivizedERC20 is Context, IERC20, IERC20Detailed {
      * @return A boolean indicating the success of the approval.
      */
     function approve(address spender, uint256 amount) public virtual override returns (bool) {
-        _approve(_msgSender(), spender, amount);
+        _approve(msg.sender, spender, amount);
         return true;
     }
 
@@ -135,9 +134,9 @@ abstract contract IncentivizedERC20 is Context, IERC20, IERC20Detailed {
         returns (bool)
     {
         _transfer(sender, recipient, amount);
-        uint256 oldAllowance = _allowances[sender][_msgSender()];
+        uint256 oldAllowance = _allowances[sender][msg.sender];
         require(oldAllowance >= amount, "ERC20: transfer amount exceeds allowance");
-        _approve(sender, _msgSender(), oldAllowance - amount);
+        _approve(sender, msg.sender, oldAllowance - amount);
         emit Transfer(sender, recipient, amount);
         return true;
     }
@@ -149,7 +148,7 @@ abstract contract IncentivizedERC20 is Context, IERC20, IERC20Detailed {
      * @return A boolean indicating the success of the operation.
      */
     function increaseAllowance(address spender, uint256 addedValue) public virtual returns (bool) {
-        _approve(_msgSender(), spender, _allowances[_msgSender()][spender] + addedValue);
+        _approve(msg.sender, spender, _allowances[msg.sender][spender] + addedValue);
         return true;
     }
 
@@ -164,9 +163,9 @@ abstract contract IncentivizedERC20 is Context, IERC20, IERC20Detailed {
         virtual
         returns (bool)
     {
-        uint256 oldAllowance = _allowances[_msgSender()][spender];
+        uint256 oldAllowance = _allowances[msg.sender][spender];
         require(oldAllowance >= subtractedValue, "ERC20: decreased allowance below zero");
-        _approve(_msgSender(), spender, oldAllowance - subtractedValue);
+        _approve(msg.sender, spender, oldAllowance - subtractedValue);
         return true;
     }
 

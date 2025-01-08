@@ -521,4 +521,13 @@ abstract contract RewardsDistributor is IRewardsDistributor, Ownable {
     function getAssetDecimals(address asset) external view override returns (uint8) {
         return _assets[asset].decimals;
     }
+
+    /**
+     * @notice Gets the status of a reward token.
+     * @param reward The address of the reward token.
+     * @return Status of the reward token.
+     */
+    function getIsRewardEnabled(address reward) external view override returns (bool) {
+        return _isRewardEnabled[reward];
+    }
 }

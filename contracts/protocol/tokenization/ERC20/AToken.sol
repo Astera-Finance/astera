@@ -94,7 +94,7 @@ contract AToken is
      */
 
     modifier onlyLendingPool() {
-        require(_msgSender() == address(_pool), Errors.CT_CALLER_MUST_BE_LENDING_POOL);
+        require(msg.sender == address(_pool), Errors.CT_CALLER_MUST_BE_LENDING_POOL);
         _;
     }
 
