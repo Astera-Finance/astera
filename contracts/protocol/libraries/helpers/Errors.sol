@@ -169,4 +169,6 @@ library Errors {
     string public constant IR_ACCESS_RESTRICTED_TO_LENDING_POOL = "72";
     /// @notice Reserve is not configured.
     string public constant DP_RESERVE_NOT_CONFIGURED = "73";
+    /// @notice Caller is not wrapper.
+    string public constant CALLER_NOT_WRAPPER = "74";
 }

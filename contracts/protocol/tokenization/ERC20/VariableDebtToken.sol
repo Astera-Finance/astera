@@ -196,9 +196,7 @@ contract VariableDebtToken is
      * @notice Being non transferrable, the debt token does not implement any of the standard ERC20 functions for transfer and allowance.
      * @dev This function reverts when called.
      */
-    function transfer(address recipient, uint256 amount) public virtual override returns (bool) {
-        recipient;
-        amount;
+    function transfer(address, uint256) public virtual override returns (bool) {
         revert("TRANSFER_NOT_SUPPORTED");
     }
 
@@ -206,15 +204,7 @@ contract VariableDebtToken is
      * @notice Being non transferrable, the debt token does not implement any of the standard ERC20 functions for transfer and allowance.
      * @dev This function reverts when called.
      */
-    function allowance(address owner, address spender)
-        public
-        view
-        virtual
-        override
-        returns (uint256)
-    {
-        owner;
-        spender;
+    function allowance(address, address) public view virtual override returns (uint256) {
         revert("ALLOWANCE_NOT_SUPPORTED");
     }
 
@@ -222,9 +212,7 @@ contract VariableDebtToken is
      * @notice Being non transferrable, the debt token does not implement any of the standard ERC20 functions for transfer and allowance.
      * @dev This function reverts when called.
      */
-    function approve(address spender, uint256 amount) public virtual override returns (bool) {
-        spender;
-        amount;
+    function approve(address, uint256) public virtual override returns (bool) {
         revert("APPROVAL_NOT_SUPPORTED");
     }
 
@@ -232,15 +220,7 @@ contract VariableDebtToken is
      * @notice Being non transferrable, the debt token does not implement any of the standard ERC20 functions for transfer and allowance.
      * @dev This function reverts when called.
      */
-    function transferFrom(address sender, address recipient, uint256 amount)
-        public
-        virtual
-        override
-        returns (bool)
-    {
-        sender;
-        recipient;
-        amount;
+    function transferFrom(address, address, uint256) public virtual override returns (bool) {
         revert("TRANSFER_NOT_SUPPORTED");
     }
 
@@ -248,14 +228,7 @@ contract VariableDebtToken is
      * @notice Being non transferrable, the debt token does not implement any of the standard ERC20 functions for transfer and allowance.
      * @dev This function reverts when called.
      */
-    function increaseAllowance(address spender, uint256 addedValue)
-        public
-        virtual
-        override
-        returns (bool)
-    {
-        spender;
-        addedValue;
+    function increaseAllowance(address, uint256) public virtual override returns (bool) {
         revert("ALLOWANCE_NOT_SUPPORTED");
     }
 
@@ -263,14 +236,7 @@ contract VariableDebtToken is
      * @notice Being non transferrable, the debt token does not implement any of the standard ERC20 functions for transfer and allowance.
      * @dev This function reverts when called.
      */
-    function decreaseAllowance(address spender, uint256 subtractedValue)
-        public
-        virtual
-        override
-        returns (bool)
-    {
-        spender;
-        subtractedValue;
+    function decreaseAllowance(address, uint256) public virtual override returns (bool) {
         revert("ALLOWANCE_NOT_SUPPORTED");
     }
 

@@ -57,7 +57,7 @@ contract ATokenERC6909 is IncentivizedERC6909, VersionedInitializable {
     // ======================= Storage =======================
 
     /// @notice The incentives controller for rewards distribution.
-    IMiniPoolRewarder private INCENTIVES_CONTROLLER;
+    IMiniPoolRewarder private _incentivesController;
     /// @notice The MiniPool contract.
     IMiniPool private POOL;
 
@@ -128,7 +128,7 @@ contract ATokenERC6909 is IncentivizedERC6909, VersionedInitializable {
             // Ensure reserveType == True. (`assert` because it must never be `false`).
             assert(IAToken(underlyingAsset).RESERVE_TYPE());
 
-            // Ensure the AToken address is the Non Rebasin version.
+            // Ensure the AToken address is the Non Rebasing version.
             require(
                 ATokenNonRebasing(underlyingAsset).ATOKEN_ADDRESS() != address(0),
                 Errors.AT_INVALID_ATOKEN_ADDRESS
@@ -146,7 +146,7 @@ contract ATokenERC6909 is IncentivizedERC6909, VersionedInitializable {
      */
     function setIncentivesController(IMiniPoolRewarder controller) external {
         require(msg.sender == address(POOL), Errors.CT_CALLER_MUST_BE_LENDING_POOL);
-        INCENTIVES_CONTROLLER = controller;
+        _incentivesController = controller;
     }
 
     /**
@@ -172,12 +172,7 @@ contract ATokenERC6909 is IncentivizedERC6909, VersionedInitializable {
             super.transfer(to, id, amount.rayDiv(index));
 
             POOL.finalizeTransfer(
-                _underlyingAssetAddresses[id],
-                msg.sender,
-                to,
-                amount,
-                fromBalanceBefore,
-                toBalanceBefore
+                underlyingAsset, msg.sender, to, amount, fromBalanceBefore, toBalanceBefore
             );
         } else {
             super.transfer(to, id, amount);
@@ -210,7 +205,7 @@ contract ATokenERC6909 is IncentivizedERC6909, VersionedInitializable {
             super.transferFrom(from, to, id, amount.rayDiv(index));
 
             POOL.finalizeTransfer(
-                _underlyingAssetAddresses[id], from, to, amount, fromBalanceBefore, toBalanceBefore
+                underlyingAsset, from, to, amount, fromBalanceBefore, toBalanceBefore
             );
         } else {
             super.transferFrom(from, to, id, amount);
@@ -393,27 +388,27 @@ contract ATokenERC6909 is IncentivizedERC6909, VersionedInitializable {
             oldSupply = _incrementTotalSupply(id, amount);
             oldToBalance = oldToBalance - amount;
             oldFromBalance = 0;
-            if (address(INCENTIVES_CONTROLLER) != address(0)) {
-                INCENTIVES_CONTROLLER.handleAction(id, to, oldSupply, oldToBalance);
+            if (address(_incentivesController) != address(0)) {
+                _incentivesController.handleAction(id, to, oldSupply, oldToBalance);
             }
             //If the token was burned.
         } else if (to == address(0) && from != address(0)) {
             oldSupply = _decrementTotalSupply(id, amount);
             oldFromBalance = oldFromBalance + amount;
             oldToBalance = 0;
-            if (address(INCENTIVES_CONTROLLER) != address(0)) {
-                INCENTIVES_CONTROLLER.handleAction(id, from, oldSupply, oldFromBalance);
+            if (address(_incentivesController) != address(0)) {
+                _incentivesController.handleAction(id, from, oldSupply, oldFromBalance);
             }
         }
         //The token was transferred.
         else {
             oldFromBalance = oldFromBalance + amount;
             oldToBalance = oldToBalance - amount;
-            if (address(INCENTIVES_CONTROLLER) != address(0)) {
-                INCENTIVES_CONTROLLER.handleAction(id, from, oldSupply, oldFromBalance);
+            if (address(_incentivesController) != address(0)) {
+                _incentivesController.handleAction(id, from, oldSupply, oldFromBalance);
 
                 if (from != to) {
-                    INCENTIVES_CONTROLLER.handleAction(id, to, oldSupply, oldToBalance);
+                    _incentivesController.handleAction(id, to, oldSupply, oldToBalance);
                 }
             }
         }
@@ -782,9 +777,9 @@ contract ATokenERC6909 is IncentivizedERC6909, VersionedInitializable {
 
     /**
      * @notice Returns the incentives controller used for rewards distribution.
-     * @return The `INCENTIVES_CONTROLLER` contract interface.
+     * @return The `_incentivesController` contract interface.
      */
     function getIncentivesController() external view returns (IMiniPoolRewarder) {
-        return INCENTIVES_CONTROLLER;
+        return _incentivesController;
     }
 }

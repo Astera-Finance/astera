@@ -282,7 +282,7 @@ contract MiniPoolV2 is VersionedInitializable, IMiniPool, MiniPoolStorage {
         returns (uint256)
     {
         uint256 repayAmount = MiniPoolBorrowLogic.repay(
-            MiniPoolBorrowLogic.repayParams(asset, amount, onBehalfOf, _addressesProvider),
+            MiniPoolBorrowLogic.RepayParams(asset, amount, onBehalfOf, _addressesProvider),
             wrap,
             _reserves,
             _usersConfig

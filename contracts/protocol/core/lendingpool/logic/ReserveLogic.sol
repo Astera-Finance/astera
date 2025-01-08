@@ -138,7 +138,7 @@ library ReserveLogic {
         uint256 totalLiquidity,
         uint256 amount
     ) internal {
-        uint256 amountToLiquidityRatio = amount.wadToRay().rayDiv(totalLiquidity.wadToRay());
+        uint256 amountToLiquidityRatio = amount.rayDiv(totalLiquidity);
 
         uint256 result = amountToLiquidityRatio + WadRayMath.ray();
 
@@ -195,7 +195,7 @@ library ReserveLogic {
 
         // Calculates the total variable debt locally using the scaled total supply instead
         // of totalSupply(), as it's noticeably cheaper. Also, the index has been
-        //updated by the previous updateState() call.
+        // updated by the previous updateState() call.
         vars.totalVariableDebt = IVariableDebtToken(reserve.variableDebtTokenAddress)
             .scaledTotalSupply().rayMul(reserve.variableBorrowIndex);
 
@@ -303,8 +303,6 @@ library ReserveLogic {
             reserve.liquidityIndex = uint128(newLiquidityIndex);
         }
 
-        // As the liquidity rate might come only from stable rate loans, we need to ensure
-        // that there is actual variable debt before accumulating.
         if (scaledVariableDebt != 0) {
             uint256 cumulatedVariableBorrowInterest =
                 MathUtils.calculateCompoundedInterest(reserve.currentVariableBorrowRate, timestamp);

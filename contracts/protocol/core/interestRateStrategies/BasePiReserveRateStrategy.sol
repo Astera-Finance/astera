@@ -119,7 +119,7 @@ abstract contract BasePiReserveRateStrategy is Ownable {
     }
 
     /**
-     * @notice Returns lending pool address for main pool or mini pool.
+     * @notice Returns lending pool address.
      * @return lendingPoolAddress The address of the lending pool.
      */
     function _getLendingPool() internal view virtual returns (address) {}
@@ -249,14 +249,14 @@ abstract contract BasePiReserveRateStrategy is Ownable {
         }
 
         // PID state update
-        int256 err = getNormalizedError(utilizationRate);
+        int256 err = _getNormalizedError(utilizationRate);
         _errI += int256(_ki).rayMulInt(err * int256(block.timestamp - _lastTimestamp));
         if (_errI < _maxErrIAmp) _errI = _maxErrIAmp; // Limit _errI negative accumulation.
         _lastTimestamp = block.timestamp;
-        int256 controllerErr = getControllerError(err);
+        int256 controllerErr = _getControllerError(err);
         uint256 currentVariableBorrowRate = transferFunction(controllerErr);
         uint256 currentLiquidityRate =
-            getLiquidityRate(currentVariableBorrowRate, utilizationRate, reserveFactor);
+            _getLiquidityRate(currentVariableBorrowRate, utilizationRate, reserveFactor);
 
         emit PidLog(
             utilizationRate, currentLiquidityRate, currentVariableBorrowRate, err, controllerErr
@@ -272,7 +272,7 @@ abstract contract BasePiReserveRateStrategy is Ownable {
      * @param utilizationRate The current utilization rate.
      * @return The normalized error value.
      */
-    function getNormalizedError(uint256 utilizationRate) internal view returns (int256) {
+    function _getNormalizedError(uint256 utilizationRate) internal view returns (int256) {
         int256 err = int256(utilizationRate) - int256(_optimalUtilizationRate);
         if (int256(utilizationRate) < int256(_optimalUtilizationRate)) {
             return err.rayDivInt(int256(_optimalUtilizationRate));
@@ -288,7 +288,7 @@ abstract contract BasePiReserveRateStrategy is Ownable {
      * @param reserveFactor The reserve factor.
      * @return The calculated liquidity rate.
      */
-    function getLiquidityRate(
+    function _getLiquidityRate(
         uint256 currentVariableBorrowRate,
         uint256 utilizationRate,
         uint256 reserveFactor
@@ -303,7 +303,7 @@ abstract contract BasePiReserveRateStrategy is Ownable {
      * @param err The normalized error value.
      * @return The processed controller error.
      */
-    function getControllerError(int256 err) internal view returns (int256) {
+    function _getControllerError(int256 err) internal view returns (int256) {
         int256 errP = int256(_kp).rayMulInt(err);
         return errP + _errI;
     }
@@ -332,7 +332,7 @@ abstract contract BasePiReserveRateStrategy is Ownable {
      * @param self The reserve configuration.
      * @return The Cod3x reserve factor.
      */
-    function getCod3xReserveFactor(DataTypes.ReserveConfigurationMap memory self)
+    function _getCod3xReserveFactor(DataTypes.ReserveConfigurationMap memory self)
         internal
         pure
         returns (uint256)
@@ -346,7 +346,7 @@ abstract contract BasePiReserveRateStrategy is Ownable {
      * @param self The reserve configuration.
      * @return The minipool owner reserve factor.
      */
-    function getMinipoolOwnerReserveFactor(DataTypes.ReserveConfigurationMap memory self)
+    function _getMinipoolOwnerReserveFactor(DataTypes.ReserveConfigurationMap memory self)
         internal
         pure
         returns (uint256)

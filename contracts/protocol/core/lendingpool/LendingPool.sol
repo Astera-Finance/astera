@@ -219,7 +219,7 @@ contract LendingPool is VersionedInitializable, ILendingPool, LendingPoolStorage
         returns (uint256)
     {
         return BorrowLogic.repay(
-            BorrowLogic.repayParams(asset, reserveType, amount, onBehalfOf, _addressesProvider),
+            BorrowLogic.RepayParams(asset, reserveType, amount, onBehalfOf, _addressesProvider),
             _reserves,
             _usersConfig
         );
@@ -239,7 +239,7 @@ contract LendingPool is VersionedInitializable, ILendingPool, LendingPoolStorage
         returns (uint256)
     {
         return BorrowLogic.repayWithAtokens(
-            BorrowLogic.repayParams(asset, reserveType, amount, msg.sender, _addressesProvider),
+            BorrowLogic.RepayParams(asset, reserveType, amount, msg.sender, _addressesProvider),
             _reserves,
             _usersConfig
         );

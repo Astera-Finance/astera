@@ -21,10 +21,10 @@ import {IFlowLimiter} from "../../../../contracts/interfaces/base/IFlowLimiter.s
  */
 contract FlowLimiter is IFlowLimiter {
     /// @notice The addresses provider for the mini pool.
-    IMiniPoolAddressesProvider public _miniPoolAddressesProvider;
+    IMiniPoolAddressesProvider public immutable _miniPoolAddressesProvider;
 
     /// @notice The main lending pool contract.
-    ILendingPool public _lendingPool;
+    ILendingPool public immutable _lendingPool;
 
     /// @notice Mapping to track maximum debt limits for each miniPool per asset.
     mapping(address => mapping(address => uint256)) public _miniPoolMaxDebt;
@@ -58,7 +58,7 @@ contract FlowLimiter is IFlowLimiter {
      * @param miniPool The address of the miniPool to check.
      * @return The current flow limit, which is the maximum of current flow and set limit.
      */
-    function getFlowLimit(address asset, address miniPool) external view returns (uint256) {
+    function getFlowLimit(address asset, address miniPool) public view returns (uint256) {
         uint256 currentFlow_ = currentFlow(asset, miniPool);
         uint256 miniPoolMaxDebt_ = _miniPoolMaxDebt[asset][miniPool];
 
@@ -75,6 +75,16 @@ contract FlowLimiter is IFlowLimiter {
         //`reserveType` always true since miniPool internal borrow is basically rehypothecation.
         return IERC20(_lendingPool.getReserveData(asset, true).variableDebtTokenAddress).balanceOf(
             address(miniPool)
+        );
+    }
+
+    function revertIfFlowLimitReached(address asset, address miniPool, uint256 amount)
+        external
+        view
+    {
+        require(
+            currentFlow(asset, miniPool) + amount <= getFlowLimit(asset, miniPool),
+            Errors.VL_BORROW_FLOW_LIMIT_REACHED
         );
     }
 }

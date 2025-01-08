@@ -117,7 +117,10 @@ contract MiniPoolConfigurator is VersionedInitializable, IMiniPoolConfigurator {
             newFlashloanPremiumTotal <= PercentageMath.PERCENTAGE_FACTOR,
             Errors.LPC_FLASHLOAN_PREMIUM_INVALID
         );
+        uint128 oldFlashloanPremiumTotal = uint128(pool.FLASHLOAN_PREMIUM_TOTAL());
+
         pool.updateFlashLoanFee(newFlashloanPremiumTotal);
+        emit FlashloanPremiumTotalUpdated(oldFlashloanPremiumTotal, newFlashloanPremiumTotal);
     }
 
     /**

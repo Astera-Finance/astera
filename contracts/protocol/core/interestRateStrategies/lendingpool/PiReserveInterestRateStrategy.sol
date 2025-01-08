@@ -96,11 +96,13 @@ contract PiReserveInterestRateStrategy is
 
         // borrow rate
         uint256 currentVariableBorrowRate =
-            transferFunction(getControllerError(getNormalizedError(utilizationRate)));
+            transferFunction(_getControllerError(_getNormalizedError(utilizationRate)));
 
         // liquity rate
-        uint256 currentLiquidityRate = getLiquidityRate(
-            currentVariableBorrowRate, utilizationRate, getCod3xReserveFactor(reserve.configuration)
+        uint256 currentLiquidityRate = _getLiquidityRate(
+            currentVariableBorrowRate,
+            utilizationRate,
+            _getCod3xReserveFactor(reserve.configuration)
         );
 
         return (currentLiquidityRate, currentVariableBorrowRate, utilizationRate);

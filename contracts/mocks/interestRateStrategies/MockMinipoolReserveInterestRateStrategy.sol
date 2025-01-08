@@ -135,10 +135,10 @@ contract MockMinipoolReserveInterestRateStrategy {
         DataTypes.ReserveConfigurationMap memory reserve = IMiniPool(
             IMiniPoolAddressesProvider(addressesProvider).getMiniPool(_minipoolId)
         ).getConfiguration(_asset);
-        return getCod3xReserveFactor(reserve);
+        return _getCod3xReserveFactor(reserve);
     }
 
-    function getCod3xReserveFactor(DataTypes.ReserveConfigurationMap memory self)
+    function _getCod3xReserveFactor(DataTypes.ReserveConfigurationMap memory self)
         internal
         pure
         returns (uint256)

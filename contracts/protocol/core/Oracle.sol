@@ -33,13 +33,13 @@ contract Oracle is IOracle, Ownable {
     /// @dev The fallback oracle used when Chainlink data is invalid.
     IOracle private _fallbackOracle;
 
-    /// @dev The base currency address used for price quotes.
+    /**
+     * @dev The base currency address used for price quotes.
+     * @notice If `USD` returns `0x0`, if `ETH` returns `WETH` address.
+     */
     address public immutable BASE_CURRENCY;
 
-    /**
-     * @notice If `USD` returns `0x0`, if `ETH` returns `WETH` address.
-     * @dev The unit of the base currency used for price normalization.
-     */
+    /// @dev The unit of the base currency used for price normalization.
     uint256 public immutable BASE_CURRENCY_UNIT;
 
     /**
@@ -159,7 +159,7 @@ contract Oracle is IOracle, Ownable {
             }
         }
 
-        // If `asset` is an aToken then convert the price from asset to share.
+        // If "asset" is an aToken then convert the price from share to asset.
         if (asset != underlying) {
             return ATokenNonRebasing(asset).convertToAssets(finalPrice);
         } else {
@@ -187,6 +187,15 @@ contract Oracle is IOracle, Ownable {
      */
     function getSourceOfAsset(address asset) external view returns (address) {
         return address(_assetsSources[asset]);
+    }
+
+    /**
+     * @notice Gets the timeout for an asset.
+     * @param asset The address of the asset.
+     * @return uint256 The timeout for the asset.
+     */
+    function getAssetTimeout(address asset) external view returns (uint256) {
+        return _assetToTimeout[asset];
     }
 
     /**

@@ -43,6 +43,8 @@ interface IOracle {
 
     function getSourceOfAsset(address asset) external view returns (address);
 
+    function getAssetTimeout(address asset) external view returns (uint256);
+
     function getFallbackOracle() external view returns (address);
 
     function BASE_CURRENCY() external view returns (address);

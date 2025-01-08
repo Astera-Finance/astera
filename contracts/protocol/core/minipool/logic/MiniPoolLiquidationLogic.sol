@@ -88,7 +88,7 @@ library MiniPoolLiquidationLogic {
         uint256 debtAmountNeeded;
         uint256 healthFactor;
         uint256 liquidatorPreviousATokenBalance;
-        IAERC6909 collateralAtoken;
+        IAERC6909 atoken6909;
         uint256 debtID;
         uint256 aTokenID;
     }
@@ -144,11 +144,12 @@ library MiniPoolLiquidationLogic {
             collateralReserve, debtReserve, userConfig, vars.healthFactor, vars.userVariableDebt
         );
 
-        vars.collateralAtoken = IAERC6909(collateralReserve.aTokenAddress);
+        // Note that collateralReserve.aTokenAddress == debtReserve.aTokenAddress for minipool.
+        vars.atoken6909 = IAERC6909(collateralReserve.aTokenAddress);
         vars.aTokenID = collateralReserve.aTokenID;
         vars.debtID = debtReserve.variableDebtTokenID;
 
-        vars.userCollateralBalance = vars.collateralAtoken.balanceOf(params.user, vars.aTokenID);
+        vars.userCollateralBalance = vars.atoken6909.balanceOf(params.user, vars.aTokenID);
 
         vars.maxLiquidatableDebt =
             vars.userVariableDebt.percentMul(LIQUIDATION_CLOSE_FACTOR_PERCENT);
@@ -180,7 +181,7 @@ library MiniPoolLiquidationLogic {
         // collateral reserve.
         if (!params.receiveAToken) {
             uint256 currentAvailableCollateral =
-                IERC20(params.collateralAsset).balanceOf(address(vars.collateralAtoken));
+                IERC20(params.collateralAsset).balanceOf(address(vars.atoken6909));
             if (currentAvailableCollateral < vars.maxCollateralToLiquidate) {
                 revert(Errors.LPCM_NOT_ENOUGH_LIQUIDITY_TO_LIQUIDATE);
             }
@@ -189,7 +190,7 @@ library MiniPoolLiquidationLogic {
         debtReserve.updateState();
 
         if (vars.userVariableDebt >= vars.actualDebtToLiquidate) {
-            vars.collateralAtoken.burn(
+            vars.atoken6909.burn(
                 params.user,
                 msg.sender,
                 vars.debtID,
@@ -198,7 +199,7 @@ library MiniPoolLiquidationLogic {
                 debtReserve.variableBorrowIndex
             );
         } else {
-            vars.collateralAtoken.burn(
+            vars.atoken6909.burn(
                 params.user,
                 msg.sender,
                 vars.debtID,
@@ -212,8 +213,8 @@ library MiniPoolLiquidationLogic {
 
         if (params.receiveAToken) {
             vars.liquidatorPreviousATokenBalance =
-                vars.collateralAtoken.balanceOf(msg.sender, vars.aTokenID);
-            vars.collateralAtoken.transferOnLiquidation(
+                vars.atoken6909.balanceOf(msg.sender, vars.aTokenID);
+            vars.atoken6909.transferOnLiquidation(
                 params.user, msg.sender, vars.aTokenID, vars.maxCollateralToLiquidate
             );
 
@@ -229,7 +230,7 @@ library MiniPoolLiquidationLogic {
             );
 
             // Burn the equivalent amount of aToken, sending the underlying to the liquidator.
-            vars.collateralAtoken.burn(
+            vars.atoken6909.burn(
                 params.user,
                 msg.sender,
                 vars.aTokenID,
@@ -302,8 +303,8 @@ library MiniPoolLiquidationLogic {
         uint256 debtToCover,
         uint256 userCollateralBalance
     ) internal view returns (uint256, uint256) {
-        uint256 collateralAmount = 0;
-        uint256 debtAmountNeeded = 0;
+        uint256 collateralAmount;
+        uint256 debtAmountNeeded;
         IOracle oracle = IOracle(addressesProvider.getPriceOracle());
 
         AvailableCollateralToLiquidateLocalVars memory vars;

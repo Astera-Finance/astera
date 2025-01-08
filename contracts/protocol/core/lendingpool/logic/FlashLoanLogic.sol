@@ -70,7 +70,6 @@ library FlashLoanLogic {
      * @dev Struct containing parameters for flash loan repayment.
      * @param amount The borrowed amount to be repaid.
      * @param totalPremium The total premium to be paid.
-     * @param liquidityIndex The liquidity index at the time of repayment.
      * @param asset The address of the borrowed asset.
      * @param aToken The address of the corresponding aToken.
      * @param receiverAddress The address of the flash loan receiver.
@@ -78,7 +77,6 @@ library FlashLoanLogic {
     struct FlashLoanRepaymentParams {
         uint256 amount;
         uint256 totalPremium;
-        uint256 liquidityIndex;
         address asset;
         address aToken;
         address receiverAddress;
@@ -172,7 +170,6 @@ library FlashLoanLogic {
                     FlashLoanRepaymentParams({
                         amount: vars.currentAmount,
                         totalPremium: vars.currentPremium,
-                        liquidityIndex: reserves[vars.currentAsset][vars.currentType].liquidityIndex,
                         asset: vars.currentAsset,
                         aToken: vars.currentATokenAddress,
                         receiverAddress: flashLoanParams.receiverAddress

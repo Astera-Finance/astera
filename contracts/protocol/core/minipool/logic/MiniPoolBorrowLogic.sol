@@ -213,7 +213,7 @@ library MiniPoolBorrowLogic {
     /**
      * @dev Parameters for repaying a borrowed position.
      */
-    struct repayParams {
+    struct RepayParams {
         address asset;
         uint256 amount;
         address onBehalfOf;
@@ -240,7 +240,7 @@ library MiniPoolBorrowLogic {
      * @return The amount repaid.
      */
     function repay(
-        repayParams memory params,
+        RepayParams memory params,
         bool wrap,
         mapping(address => DataTypes.MiniPoolReserveData) storage _reserves,
         mapping(address => DataTypes.UserConfigurationMap) storage _usersConfig
@@ -263,7 +263,7 @@ library MiniPoolBorrowLogic {
 
         IAERC6909(reserve.aTokenAddress).burn(
             params.onBehalfOf,
-            params.onBehalfOf, // we dont care about the burn receiver for debtTokens
+            address(0), // we dont care about the burn receiver for debtTokens
             reserve.variableDebtTokenID,
             paybackAmount,
             false,

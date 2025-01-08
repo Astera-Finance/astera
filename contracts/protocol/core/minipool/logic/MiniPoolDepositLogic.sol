@@ -101,7 +101,7 @@ library MiniPoolDepositLogic {
             IERC20(params.asset).safeTransferFrom(msg.sender, aToken, params.amount);
         }
 
-        bool isFirstDeposit = IAERC6909(reserve.aTokenAddress).mint(
+        bool isFirstDeposit = IAERC6909(aToken).mint(
             msg.sender, params.onBehalfOf, reserve.aTokenID, params.amount, reserve.liquidityIndex
         );
 
