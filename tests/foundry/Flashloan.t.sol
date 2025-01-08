@@ -232,7 +232,7 @@ contract FlashloanTest is Common {
             turnOnRehypothecation(
                 deployedContracts.lendingPoolConfigurator,
                 address(commonContracts.aTokens[idx]),
-                address(commonContracts.mockedVaults[idx]),
+                address(commonContracts.mockVaultUnits[idx]),
                 admin,
                 5000,
                 10,

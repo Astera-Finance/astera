@@ -746,7 +746,9 @@ contract MiniPoolConfiguratorTest is MiniPoolDepositBorrowTest {
     }
 
     function testSetMiniPoolAdmin(address newAdmin) public {
-        vm.assume(newAdmin != address(0));
+        vm.assume(
+            newAdmin != address(0) && newAdmin != address(miniPoolContracts.miniPoolConfigurator)
+        );
         address poolAdmin = miniPoolContracts.miniPoolAddressesProvider.getPoolAdmin(0);
         console.log("poolAdmin: ", poolAdmin);
 
