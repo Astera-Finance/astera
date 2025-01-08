@@ -255,14 +255,5 @@ library MiniPoolFlashLoanLogic {
         IAERC6909(params.aToken).handleRepayment(
             params.receiverAddress, params.receiverAddress, id, amountPlusPremium
         );
-
-        emit FlashLoan(
-            params.receiverAddress,
-            msg.sender,
-            params.asset,
-            DataTypes.InterestRateMode(0),
-            params.amount,
-            params.totalPremium
-        );
     }
 }

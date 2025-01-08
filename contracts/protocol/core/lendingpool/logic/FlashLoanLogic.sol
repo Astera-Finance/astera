@@ -266,14 +266,5 @@ library FlashLoanLogic {
         IAToken(params.aToken).handleRepayment(
             params.receiverAddress, params.receiverAddress, amountPlusPremium
         );
-
-        emit FlashLoan(
-            params.receiverAddress,
-            msg.sender,
-            params.asset,
-            DataTypes.InterestRateMode(0),
-            params.amount,
-            params.totalPremium
-        );
     }
 }

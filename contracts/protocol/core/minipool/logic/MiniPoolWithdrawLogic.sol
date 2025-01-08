@@ -222,7 +222,6 @@ library MiniPoolWithdrawLogic {
      * @param usersConfig The users configuration mapping.
      * @param reservesList The addresses of all active reserves.
      * @param addressesProvider The addresses provider instance.
-     * @return The final amount withdrawn.
      */
     function internalWithdraw(
         withdrawParams memory params,
@@ -230,7 +229,7 @@ library MiniPoolWithdrawLogic {
         mapping(address => DataTypes.UserConfigurationMap) storage usersConfig,
         mapping(uint256 => address) storage reservesList,
         IMiniPoolAddressesProvider addressesProvider
-    ) internal returns (uint256) {
+    ) internal {
         DataTypes.MiniPoolReserveData storage reserve = reserves[params.asset];
         withdrawLocalVars memory localVars;
 
@@ -277,7 +276,5 @@ library MiniPoolWithdrawLogic {
         );
 
         emit Withdraw(params.asset, address(this), params.to, localVars.amountToWithdraw);
-
-        return localVars.amountToWithdraw;
     }
 }

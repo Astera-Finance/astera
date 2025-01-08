@@ -1,11 +1,6 @@
 // SPDX-License-Identifier: agpl-3.0
 pragma solidity 0.8.23;
 
-import {UserConfiguration} from
-    "../../../../contracts/protocol/libraries/configuration/UserConfiguration.sol";
-import {ReserveConfiguration} from
-    "../../../../contracts/protocol/libraries/configuration/ReserveConfiguration.sol";
-import {ReserveLogic} from "../../../../contracts/protocol/core/lendingpool/logic/ReserveLogic.sol";
 import {ILendingPoolAddressesProvider} from
     "../../../../contracts/interfaces/ILendingPoolAddressesProvider.sol";
 import {DataTypes} from "../../../../contracts/protocol/libraries/types/DataTypes.sol";
@@ -16,10 +11,6 @@ import {DataTypes} from "../../../../contracts/protocol/libraries/types/DataType
  * @dev Contract containing storage variables for the LendingPool contract.
  */
 contract LendingPoolStorage {
-    using ReserveLogic for DataTypes.ReserveData;
-    using ReserveConfiguration for DataTypes.ReserveConfigurationMap;
-    using UserConfiguration for DataTypes.UserConfigurationMap;
-
     /// @dev The addresses provider contract reference.
     ILendingPoolAddressesProvider internal _addressesProvider;
 

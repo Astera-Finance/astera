@@ -59,7 +59,7 @@ contract LendingPoolAddressesProviderTest is Common {
          * Invariants:
          * 1. LendingPoolAddressProvider must return proper address after setting new implementation and its address
          */
-        bytes32 id = "LENDING_POOL";
+        bytes32 id = keccak256("LENDING_POOL");
         LendingPoolAddressesProvider provider = new LendingPoolAddressesProvider();
         LendingPool lendingPool = new LendingPool();
 
@@ -80,7 +80,7 @@ contract LendingPoolAddressesProviderTest is Common {
          * Invariants:
          * 1. LendingPoolAddressProvider must return proper address after setting new implementation and its address
          */
-        bytes32 id = "LENDING_POOL_CONFIGURATOR";
+        bytes32 id = keccak256("LENDING_POOL_CONFIGURATOR");
         LendingPoolAddressesProvider provider = new LendingPoolAddressesProvider();
         LendingPoolConfigurator lendingPoolConfigurator = new LendingPoolConfigurator();
 

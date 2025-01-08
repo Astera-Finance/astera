@@ -69,10 +69,11 @@ contract MiniPoolAddressesProvider is Ownable, IMiniPoolAddressesProvider {
     address private _cod3xTreasury;
 
     /// @dev Constant identifier for lending pool addresses provider.
-    bytes32 private constant LENDING_POOL_ADDRESSES_PROVIDER = "LENDING_POOL_ADDRESSES_PROVIDER";
+    bytes32 private constant LENDING_POOL_ADDRESSES_PROVIDER =
+        keccak256("LENDING_POOL_ADDRESSES_PROVIDER");
 
     /// @dev Constant identifier for mini pool configurator.
-    bytes32 private constant MINI_POOL_CONFIGURATOR = "MINI_POOL_CONFIGURATOR";
+    bytes32 private constant MINI_POOL_CONFIGURATOR = keccak256("MINI_POOL_CONFIGURATOR");
 
     /**
      * @dev Constructor to initialize the contract.
