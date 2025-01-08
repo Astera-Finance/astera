@@ -674,6 +674,8 @@ contract LendingPool is VersionedInitializable, ILendingPool, LendingPoolStorage
      * @param val `true` to pause the reserve, `false` to un-pause it.
      */
     function setPause(bool val) external override onlyLendingPoolConfigurator {
+        require(val != _paused, Errors.VL_INVALID_INPUT);
+
         _paused = val;
         if (_paused) {
             emit Paused();

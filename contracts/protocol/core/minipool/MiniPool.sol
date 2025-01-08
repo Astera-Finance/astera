@@ -693,6 +693,8 @@ contract MiniPool is VersionedInitializable, IMiniPool, MiniPoolStorage {
      * @param val `true` to pause the reserve, `false` to un-pause it.
      */
     function setPause(bool val) external override onlyMiniPoolConfigurator {
+        require(val != _paused, Errors.VL_INVALID_INPUT);
+
         _paused = val;
         if (_paused) {
             emit Paused();

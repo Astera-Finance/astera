@@ -199,17 +199,13 @@ contract MiniPoolPiReserveInterestRateStrategy is
                 IMiniPoolAddressesProvider(_addressProvider).getLendingPool()
             ).getReserveData(underlying, true);
 
+            uint256 commonTerm =
+                (r.currentLiquidityRate * DELTA_TIME_MARGIN / SECONDS_PER_YEAR) + WadRayMath.ray();
             uint256 minLiquidityRate = (
                 MathUtils.calculateCompoundedInterest(
                     r.currentVariableBorrowRate, uint40(block.timestamp - DELTA_TIME_MARGIN)
-                ) - r.currentLiquidityRate * DELTA_TIME_MARGIN / SECONDS_PER_YEAR - WadRayMath.ray()
-            ).rayDiv(
-                DELTA_TIME_MARGIN
-                    * (
-                        (r.currentLiquidityRate * DELTA_TIME_MARGIN / SECONDS_PER_YEAR)
-                            + WadRayMath.ray()
-                    ) / SECONDS_PER_YEAR
-            );
+                ) - commonTerm
+            ).rayDiv(commonTerm * DELTA_TIME_MARGIN / SECONDS_PER_YEAR);
 
             // `&& utilizationRate != 0` to avoid 0 division. It's safe since the minipool flow is
             // always owed to a user. Since the debt is repaid as soon as possible if

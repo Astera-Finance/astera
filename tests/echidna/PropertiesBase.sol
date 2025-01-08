@@ -341,9 +341,7 @@ contract PropertiesBase is PropertiesAsserts, MarketParams {
 
         lendingPoolProvider.setMiniPoolAddressesProvider(address(miniPoolProvider));
 
-        flowLimiter = new FlowLimiter(
-            IMiniPoolAddressesProvider(address(miniPoolProvider)), ILendingPool(address(pool))
-        );
+        flowLimiter = new FlowLimiter(IMiniPoolAddressesProvider(address(miniPoolProvider)));
         lendingPoolProvider.setFlowLimiter(address(flowLimiter));
         cod3xLendDataProvider.setMiniPoolAddressProvider(address(miniPoolProvider));
 

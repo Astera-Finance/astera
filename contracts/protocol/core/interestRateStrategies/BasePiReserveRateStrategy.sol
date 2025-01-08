@@ -105,7 +105,7 @@ abstract contract BasePiReserveRateStrategy is Ownable {
         _minControllerError = minControllerError;
         _maxErrIAmp = int256(_ki).rayMulInt(-RAY * maxITimeAmp);
 
-        if (transferFunction(type(int256).min) < 0) {
+        if (transferFunctionReturnInt(type(int256).min) < 0) {
             revert(Errors.IR_BASE_BORROW_RATE_CANT_BE_NEGATIVE);
         }
     }
@@ -165,7 +165,7 @@ abstract contract BasePiReserveRateStrategy is Ownable {
      */
     function setMinControllerError(int256 minControllerError) external onlyOwner {
         _minControllerError = minControllerError;
-        if (transferFunction(type(int256).min) < 0) {
+        if (transferFunctionReturnInt(type(int256).min) < 0) {
             revert(Errors.IR_BASE_BORROW_RATE_CANT_BE_NEGATIVE);
         }
     }
@@ -315,8 +315,15 @@ abstract contract BasePiReserveRateStrategy is Ownable {
      * @return The calculated variable borrow rate.
      */
     function transferFunction(int256 controllerError) public view returns (uint256) {
+        return uint256(transferFunctionReturnInt(controllerError));
+    }
+
+    /**
+     * @notice "Returni Int" version of Transfer `transferFunction()`.
+     */
+    function transferFunctionReturnInt(int256 controllerError) internal view returns (int256) {
         int256 ce = controllerError > _minControllerError ? controllerError : _minControllerError;
-        return uint256(M_FACTOR.rayMulInt((ce + RAY).rayDivInt(2 * RAY).rayPowerInt(N_FACTOR)));
+        return int256(M_FACTOR.rayMulInt((ce + RAY).rayDivInt(2 * RAY).rayPowerInt(N_FACTOR)));
     }
 
     /**

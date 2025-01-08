@@ -279,26 +279,14 @@ contract ATokenERC6909 is IncentivizedERC6909, VersionedInitializable {
             return false;
         }
 
-        uint256 previousBalance;
-
-        if (id >= DEBT_TOKEN_ADDRESSABLE_ID) {
-            if (onBehalfOf != user) {
-                require(
-                    _borrowAllowances[id][onBehalfOf][user] >= amount,
-                    Errors.BORROW_ALLOWANCE_NOT_ENOUGH
-                );
-                _decreaseBorrowAllowance(onBehalfOf, user, id, amount);
-            }
-            previousBalance = super.balanceOf(onBehalfOf, id);
-            uint256 amountScaled = amount.rayDiv(index);
-            require(amountScaled != 0, Errors.CT_INVALID_MINT_AMOUNT);
-            _mint(onBehalfOf, id, amountScaled);
-        } else {
-            previousBalance = super.balanceOf(onBehalfOf, id);
-            uint256 amountScaled = amount.rayDiv(index);
-            require(amountScaled != 0, Errors.CT_INVALID_MINT_AMOUNT);
-            _mint(onBehalfOf, id, amountScaled);
+        if (isDebtToken(id) && onBehalfOf != user) {
+            _decreaseBorrowAllowance(onBehalfOf, user, id, amount);
         }
+
+        uint256 previousBalance = super.balanceOf(onBehalfOf, id);
+        uint256 amountScaled = amount.rayDiv(index);
+        require(amountScaled != 0, Errors.CT_INVALID_MINT_AMOUNT);
+        _mint(onBehalfOf, id, amountScaled);
 
         return previousBalance == 0;
     }
@@ -321,14 +309,12 @@ contract ATokenERC6909 is IncentivizedERC6909, VersionedInitializable {
         uint256 index
     ) external {
         require(msg.sender == address(POOL), Errors.CT_CALLER_MUST_BE_LENDING_POOL);
-        if (isDebtToken(id)) {
-            uint256 amountScaled = amount.rayDiv(index);
-            require(amountScaled != 0, Errors.CT_INVALID_BURN_AMOUNT);
-            _burn(user, id, amountScaled);
-        } else {
-            uint256 amountScaled = amount.rayDiv(index);
-            require(amountScaled != 0, Errors.CT_INVALID_BURN_AMOUNT);
-            _burn(user, id, amountScaled);
+
+        uint256 amountScaled = amount.rayDiv(index);
+        require(amountScaled != 0, Errors.CT_INVALID_BURN_AMOUNT);
+        _burn(user, id, amountScaled);
+
+        if (isAToken(id)) {
             transferUnderlyingTo(receiverOfUnderlying, id, amount, unwrap);
         }
     }

@@ -22,6 +22,8 @@ pragma solidity 0.8.23;
  */
 library Errors {
     /// @notice Amount must be greater than 0.
+    string public constant VL_INVALID_INPUT = "0";
+    /// @notice Amount must be greater than 0.
     string public constant VL_INVALID_AMOUNT = "1";
     /// @notice Action requires an active reserve.
     string public constant VL_NO_ACTIVE_RESERVE = "2";

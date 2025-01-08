@@ -32,11 +32,10 @@ contract FlowLimiter is IFlowLimiter {
     /**
      * @dev Constructor to initialize the FlowLimiter contract.
      * @param miniPoolAddressesProvider The address of the MiniPoolAddressesProvider contract.
-     * @param lendingPool The address of the LendingPool contract.
      */
-    constructor(IMiniPoolAddressesProvider miniPoolAddressesProvider, ILendingPool lendingPool) {
-        _lendingPool = lendingPool;
+    constructor(IMiniPoolAddressesProvider miniPoolAddressesProvider) {
         _miniPoolAddressesProvider = miniPoolAddressesProvider;
+        _lendingPool = ILendingPool(miniPoolAddressesProvider.getLendingPool());
     }
 
     /**

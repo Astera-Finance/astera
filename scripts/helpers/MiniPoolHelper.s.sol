@@ -68,9 +68,7 @@ contract MiniPoolHelper {
                 address(contracts.miniPoolImpl), address(contracts.aTokenErc6909Impl), deployer
             );
             contracts.flowLimiter = new FlowLimiter(
-                IMiniPoolAddressesProvider(address(contracts.miniPoolAddressesProvider)),
-                contracts.lendingPool
-            );
+                IMiniPoolAddressesProvider(address(contracts.miniPoolAddressesProvider))            );
             contracts.miniPoolConfigurator = new MiniPoolConfigurator();
             contracts.miniPoolAddressesProvider.setMiniPoolConfigurator(
                 address(contracts.miniPoolConfigurator)
