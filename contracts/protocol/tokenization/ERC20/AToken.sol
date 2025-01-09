@@ -565,7 +565,6 @@ contract AToken is
         if (
             sharesToAssets > currentAllocated
                 && sharesToAssets - currentAllocated >= _claimingThreshold
-                && _profitHandler != address(0)
         ) {
             profit = sharesToAssets - currentAllocated;
         }
