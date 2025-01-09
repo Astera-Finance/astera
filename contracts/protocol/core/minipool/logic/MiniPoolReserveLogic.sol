@@ -325,18 +325,16 @@ library MiniPoolReserveLogic {
             require(newLiquidityIndex <= type(uint128).max, Errors.RL_LIQUIDITY_INDEX_OVERFLOW);
 
             reserve.liquidityIndex = uint128(newLiquidityIndex);
-
-            if (scaledVariableDebt != 0) {
-                uint256 cumulatedVariableBorrowInterest = MathUtils.calculateCompoundedInterest(
-                    reserve.currentVariableBorrowRate, timestamp
-                );
-                newVariableBorrowIndex = cumulatedVariableBorrowInterest.rayMul(variableBorrowIndex);
-                require(
-                    newVariableBorrowIndex <= type(uint128).max,
-                    Errors.RL_VARIABLE_BORROW_INDEX_OVERFLOW
-                );
-                reserve.variableBorrowIndex = uint128(newVariableBorrowIndex);
-            }
+        }
+        if (scaledVariableDebt != 0) {
+            uint256 cumulatedVariableBorrowInterest =
+                MathUtils.calculateCompoundedInterest(reserve.currentVariableBorrowRate, timestamp);
+            newVariableBorrowIndex = cumulatedVariableBorrowInterest.rayMul(variableBorrowIndex);
+            require(
+                newVariableBorrowIndex <= type(uint128).max,
+                Errors.RL_VARIABLE_BORROW_INDEX_OVERFLOW
+            );
+            reserve.variableBorrowIndex = uint128(newVariableBorrowIndex);
         }
 
         reserve.lastUpdateTimestamp = uint40(block.timestamp);

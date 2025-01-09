@@ -15,9 +15,6 @@ contract RewardForwarder is Ownable {
     /// @dev The rewards controller contract interface.
     IRewardsController public rewardsController;
 
-    /// @dev Array of tokens that can be claimed as rewards.
-    address[] public rewardTokens;
-
     /// @dev Array of tokens that can receive rewards (aTokens and variable debt tokens).
     address[] public rewardedPoolTokens;
 
@@ -59,14 +56,6 @@ contract RewardForwarder is Ownable {
     }
 
     /**
-     * @notice Updates the reward tokens array by fetching from the rewards controller.
-     * @dev Only callable by the contract owner.
-     */
-    function setRewardTokens() external onlyOwner {
-        rewardTokens = rewardsController.getRewardTokens();
-    }
-
-    /**
      * @notice Sets the rewarded pool tokens that can receive rewards.
      * @dev Only callable by the contract owner.
      * @param _rewardedTokens Array of aToken and variable debt token addresses.
@@ -100,7 +89,7 @@ contract RewardForwarder is Ownable {
      * @param claimee The address of the mini pool to forward rewards for.
      */
     function forwardAllRewardsForPool(address claimee) public {
-        for (uint256 idx = 0; idx < rewardTokens.length; idx++) {
+        for (uint256 idx = 0; idx < getRewardTokens().length; idx++) {
             forwardRewardForPool(claimee, idx);
         }
     }
@@ -130,7 +119,7 @@ contract RewardForwarder is Ownable {
         assets[0] = token;
         (address[] memory rewardTokens_, uint256[] memory claimedAmounts_) =
             rewardsController.claimAllRewardsOnBehalf(assets, claimee, address(this));
-        require(rewardTokens.length >= rewardTokens_.length, "Too many rewardTokens");
+        require(getRewardTokens().length >= rewardTokens_.length, "Too many rewardTokens");
         for (uint256 i = 0; i < rewardTokens_.length; i++) {
             claimedRewards[claimee][token][i] += claimedAmounts_[i];
         }
@@ -145,7 +134,7 @@ contract RewardForwarder is Ownable {
      * @param rewardTokenIndex The index of the reward token in the `rewardTokens` array.
      */
     function forwardRewards(address claimee, address token, uint256 rewardTokenIndex) public {
-        address rewardToken = rewardTokens[rewardTokenIndex];
+        address rewardToken = getRewardTokens()[rewardTokenIndex];
         uint256 amount = claimedRewards[claimee][token][rewardTokenIndex];
         if (amount == 0) {
             return;
@@ -154,5 +143,14 @@ contract RewardForwarder is Ownable {
         address forwarder = forwarders[claimee][rewardTokenIndex];
         require(forwarder != address(0), "No forwarder set");
         IERC20(rewardToken).transfer(forwarder, amount);
+    }
+
+    /**
+     * @notice Function gets reward tokens from rewardController.
+     * @dev Used where need to read rewardTokens
+     * @return Array of rewardTokens configured in rewardController.
+     */
+    function getRewardTokens() private view returns (address[] memory) {
+        return rewardsController.getRewardTokens();
     }
 }
