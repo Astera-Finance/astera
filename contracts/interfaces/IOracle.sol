@@ -19,7 +19,7 @@ interface IOracle {
      * @param asset The address of the asset
      * @param source The address of the price source
      */
-    event AssetSourceUpdated(address indexed asset, address indexed source);
+    event AssetSourceUpdated(address indexed asset, address indexed source, uint256 timeout);
 
     /**
      * @dev Emitted when the fallback oracle is updated

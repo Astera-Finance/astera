@@ -565,6 +565,7 @@ contract AToken is
         if (
             sharesToAssets > currentAllocated
                 && sharesToAssets - currentAllocated >= _claimingThreshold
+                && _profitHandler != address(0)
         ) {
             profit = sharesToAssets - currentAllocated;
         }
@@ -595,7 +596,7 @@ contract AToken is
             // Profit is ultimately (coll at hand) + (coll allocated to yield generator) - (recorded total coll Amount in pool).
             profit =
                 IERC20(_underlyingAsset).balanceOf(address(this)) + _farmingBal - _underlyingAmount;
-            if (profit != 0) {
+            if (profit != 0 && _profitHandler != address(0)) {
                 // Distribute to profitHandler.
                 IERC20(_underlyingAsset).safeTransfer(_profitHandler, profit);
             }

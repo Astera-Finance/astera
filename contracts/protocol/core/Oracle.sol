@@ -20,6 +20,8 @@ import {Errors} from "../../../contracts/protocol/libraries/helpers/Errors.sol";
  * - If the returned price by a Chainlink aggregator is <= 0, the call is forwarded to a `fallbackOracle`.
  * - Owned by the Cod3x Governance system, allowed to add sources for assets, replace them
  *   and change the `fallbackOracle`.
+ * @dev ATTENTION: All aggregators (main and fallback) are expected to return prices in BASE_CURRENCY with the
+ * same BASE_CURRENCY_UNIT unit.
  */
 contract Oracle is IOracle, Ownable {
     using SafeERC20 for IERC20;
@@ -101,11 +103,16 @@ contract Oracle is IOracle, Ownable {
         address[] memory sources,
         uint256[] memory timeouts
     ) internal {
-        require(assets.length == sources.length, Errors.O_INCONSISTENT_PARAMS_LENGTH);
-        for (uint256 i = 0; i < assets.length; i++) {
-            _assetsSources[assets[i]] = IChainlinkAggregator(sources[i]);
-            _assetToTimeout[assets[i]] = timeouts[i] == 0 ? type(uint256).max : timeouts[i];
-            emit AssetSourceUpdated(assets[i], sources[i]);
+        uint256 assetsLength = assets.length;
+        require(assetsLength == sources.length, Errors.O_INCONSISTENT_PARAMS_LENGTH);
+        require(assetsLength == timeouts.length, Errors.O_INCONSISTENT_PARAMS_LENGTH);
+        for (uint256 i = 0; i < assetsLength; i++) {
+            address asset = assets[i];
+            address source = sources[i];
+            uint256 timeout = timeouts[i];
+            _assetsSources[asset] = IChainlinkAggregator(source);
+            _assetToTimeout[asset] = timeout == 0 ? type(uint256).max : timeout;
+            emit AssetSourceUpdated(asset, source, timeout);
         }
     }
 

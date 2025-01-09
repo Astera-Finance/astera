@@ -210,11 +210,14 @@ contract MiniPoolPiReserveInterestRateStrategy is
             // `&& utilizationRate != 0` to avoid 0 division. It's safe since the minipool flow is
             // always owed to a user. Since the debt is repaid as soon as possible if
             // `utilizationRate != 0` then `currentFlow == 0` by the end of the transaction.
-            if (currentLiquidityRate < minLiquidityRate && utilizationRate != 0) {
+            uint256 reserveFactorComplement = PercentageMath.PERCENTAGE_FACTOR - reserveFactor;
+            if (
+                currentLiquidityRate < minLiquidityRate && utilizationRate != 0
+                    && reserveFactorComplement != 0
+            ) {
                 currentLiquidityRate = minLiquidityRate;
-                currentVariableBorrowRate = currentLiquidityRate.rayDiv(
-                    utilizationRate.percentMul(PercentageMath.PERCENTAGE_FACTOR - reserveFactor)
-                );
+                currentVariableBorrowRate =
+                    currentLiquidityRate.rayDiv(utilizationRate.percentMul(reserveFactorComplement));
             }
         }
     }

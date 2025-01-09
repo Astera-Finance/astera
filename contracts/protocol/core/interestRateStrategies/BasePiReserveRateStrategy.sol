@@ -95,7 +95,8 @@ abstract contract BasePiReserveRateStrategy is Ownable {
         if (optimalUtilizationRate >= uint256(RAY)) {
             revert(Errors.IR_U0_GREATER_THAN_RAY);
         }
-        _optimalUtilizationRate = optimalUtilizationRate;
+
+        _setOptimalUtilizationRate(optimalUtilizationRate);
         _asset = asset;
         _assetReserveType = assetReserveType;
         _addressProvider = provider;
@@ -153,6 +154,14 @@ abstract contract BasePiReserveRateStrategy is Ownable {
      * @param optimalUtilizationRate The new optimal utilization rate.
      */
     function setOptimalUtilizationRate(uint256 optimalUtilizationRate) external onlyOwner {
+        _setOptimalUtilizationRate(optimalUtilizationRate);
+    }
+
+    /**
+     * @notice Internal function to set the optimal utilization rate.
+     * @param optimalUtilizationRate The new optimal utilization rate.
+     */
+    function _setOptimalUtilizationRate(uint256 optimalUtilizationRate) internal {
         if (optimalUtilizationRate >= uint256(RAY)) {
             revert(Errors.IR_U0_GREATER_THAN_RAY);
         }

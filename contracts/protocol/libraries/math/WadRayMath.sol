@@ -188,7 +188,7 @@ library WadRayMath {
      */
     function rayPowerInt(int256 base, uint256 exponent) internal pure returns (int256) {
         if (exponent == 0) {
-            return 1;
+            return RAYint;
         }
         int256 result = base;
         for (uint256 i = 1; i < exponent; i++) {

@@ -231,8 +231,8 @@ contract MiniPool is VersionedInitializable, IMiniPool, MiniPoolStorage {
             );
 
             vars.amountReceived = IERC20(asset).balanceOf(address(this));
+            assert(vars.amountReceived >= amount - vars.availableLiquidity);
 
-            // TODO :: evaluate the risk if the deposit cap is reached.
             MiniPoolDepositLogic.internalDeposit(
                 MiniPoolDepositLogic.DepositParams(asset, vars.amountReceived, address(this)),
                 _reserves,
