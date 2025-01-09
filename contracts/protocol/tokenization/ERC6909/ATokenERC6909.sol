@@ -57,16 +57,12 @@ contract ATokenERC6909 is IncentivizedERC6909, VersionedInitializable {
     // ======================= Storage =======================
 
     /// @notice The incentives controller for rewards distribution.
-    IMiniPoolRewarder private INCENTIVES_CONTROLLER;
+    IMiniPoolRewarder private _incentivesController;
     /// @notice The MiniPool contract.
     IMiniPool private POOL;
 
-    /// @notice The total number of tokens.
-    uint256 private _totalTokens;
     /// @notice The total number of unique tokens.
     uint256 private _totalUniqueTokens;
-    /// @notice The total number of tranche tokens.
-    uint256 private _totalTrancheTokens;
     /// @notice The addresses provider for the MiniPool.
     IMiniPoolAddressesProvider private _addressesProvider;
     /// @notice The ID of the MiniPool.
@@ -121,14 +117,13 @@ contract ATokenERC6909 is IncentivizedERC6909, VersionedInitializable {
         );
         (aTokenID, debtTokenID, isTrancheRet) = getNextIdForUnderlying(underlyingAsset);
         if (isTrancheRet) {
-            _totalTrancheTokens++;
             _isTranche[aTokenID] = true;
             _isTranche[debtTokenID] = true;
 
             // Ensure reserveType == True. (`assert` because it must never be `false`).
             assert(IAToken(underlyingAsset).RESERVE_TYPE());
 
-            // Ensure the AToken address is the Non Rebasin version.
+            // Ensure the AToken address is the Non Rebasing version.
             require(
                 ATokenNonRebasing(underlyingAsset).ATOKEN_ADDRESS() != address(0),
                 Errors.AT_INVALID_ATOKEN_ADDRESS
@@ -146,7 +141,7 @@ contract ATokenERC6909 is IncentivizedERC6909, VersionedInitializable {
      */
     function setIncentivesController(IMiniPoolRewarder controller) external {
         require(msg.sender == address(POOL), Errors.CT_CALLER_MUST_BE_LENDING_POOL);
-        INCENTIVES_CONTROLLER = controller;
+        _incentivesController = controller;
     }
 
     /**
@@ -172,12 +167,7 @@ contract ATokenERC6909 is IncentivizedERC6909, VersionedInitializable {
             super.transfer(to, id, amount.rayDiv(index));
 
             POOL.finalizeTransfer(
-                _underlyingAssetAddresses[id],
-                msg.sender,
-                to,
-                amount,
-                fromBalanceBefore,
-                toBalanceBefore
+                underlyingAsset, msg.sender, to, amount, fromBalanceBefore, toBalanceBefore
             );
         } else {
             super.transfer(to, id, amount);
@@ -210,7 +200,7 @@ contract ATokenERC6909 is IncentivizedERC6909, VersionedInitializable {
             super.transferFrom(from, to, id, amount.rayDiv(index));
 
             POOL.finalizeTransfer(
-                _underlyingAssetAddresses[id], from, to, amount, fromBalanceBefore, toBalanceBefore
+                underlyingAsset, from, to, amount, fromBalanceBefore, toBalanceBefore
             );
         } else {
             super.transferFrom(from, to, id, amount);
@@ -279,26 +269,14 @@ contract ATokenERC6909 is IncentivizedERC6909, VersionedInitializable {
             return false;
         }
 
-        uint256 previousBalance;
-
-        if (id >= DEBT_TOKEN_ADDRESSABLE_ID) {
-            if (onBehalfOf != user) {
-                require(
-                    _borrowAllowances[id][onBehalfOf][user] >= amount,
-                    Errors.BORROW_ALLOWANCE_NOT_ENOUGH
-                );
-                _decreaseBorrowAllowance(onBehalfOf, user, id, amount);
-            }
-            previousBalance = super.balanceOf(onBehalfOf, id);
-            uint256 amountScaled = amount.rayDiv(index);
-            require(amountScaled != 0, Errors.CT_INVALID_MINT_AMOUNT);
-            _mint(onBehalfOf, id, amountScaled);
-        } else {
-            previousBalance = super.balanceOf(onBehalfOf, id);
-            uint256 amountScaled = amount.rayDiv(index);
-            require(amountScaled != 0, Errors.CT_INVALID_MINT_AMOUNT);
-            _mint(onBehalfOf, id, amountScaled);
+        if (isDebtToken(id) && onBehalfOf != user) {
+            _decreaseBorrowAllowance(onBehalfOf, user, id, amount);
         }
+
+        uint256 previousBalance = super.balanceOf(onBehalfOf, id);
+        uint256 amountScaled = amount.rayDiv(index);
+        require(amountScaled != 0, Errors.CT_INVALID_MINT_AMOUNT);
+        _mint(onBehalfOf, id, amountScaled);
 
         return previousBalance == 0;
     }
@@ -321,16 +299,13 @@ contract ATokenERC6909 is IncentivizedERC6909, VersionedInitializable {
         uint256 index
     ) external {
         require(msg.sender == address(POOL), Errors.CT_CALLER_MUST_BE_LENDING_POOL);
-        if (isDebtToken(id)) {
-            uint256 amountScaled = amount.rayDiv(index);
-            require(amountScaled != 0, Errors.CT_INVALID_BURN_AMOUNT);
-            _burn(user, id, amountScaled);
-        } else {
-            uint256 amountScaled = amount.rayDiv(index);
-            require(amountScaled != 0, Errors.CT_INVALID_BURN_AMOUNT);
+
+        uint256 amountScaled = amount.rayDiv(index);
+        require(amountScaled != 0, Errors.CT_INVALID_BURN_AMOUNT);
+        if (isAToken(id)) {
             transferUnderlyingTo(receiverOfUnderlying, id, amount, unwrap);
-            _burn(user, id, amountScaled);
         }
+        _burn(user, id, amountScaled);
     }
 
     /**
@@ -408,26 +383,26 @@ contract ATokenERC6909 is IncentivizedERC6909, VersionedInitializable {
         if (from == address(0) && to != address(0)) {
             oldSupply = _incrementTotalSupply(id, amount);
             oldToBalance = oldToBalance - amount;
-            if (address(INCENTIVES_CONTROLLER) != address(0)) {
-                INCENTIVES_CONTROLLER.handleAction(id, to, oldSupply, oldToBalance);
+            if (address(_incentivesController) != address(0)) {
+                _incentivesController.handleAction(id, to, oldSupply, oldToBalance);
             }
             //If the token was burned.
         } else if (to == address(0) && from != address(0)) {
             oldSupply = _decrementTotalSupply(id, amount);
             oldFromBalance = oldFromBalance + amount;
-            if (address(INCENTIVES_CONTROLLER) != address(0)) {
-                INCENTIVES_CONTROLLER.handleAction(id, from, oldSupply, oldFromBalance);
+            if (address(_incentivesController) != address(0)) {
+                _incentivesController.handleAction(id, from, oldSupply, oldFromBalance);
             }
         }
         //The token was transferred.
         else {
             oldFromBalance = oldFromBalance + amount;
             oldToBalance = oldToBalance - amount;
-            if (address(INCENTIVES_CONTROLLER) != address(0)) {
-                INCENTIVES_CONTROLLER.handleAction(id, from, oldSupply, oldFromBalance);
+            if (address(_incentivesController) != address(0)) {
+                _incentivesController.handleAction(id, from, oldSupply, oldFromBalance);
 
                 if (from != to) {
-                    INCENTIVES_CONTROLLER.handleAction(id, to, oldSupply, oldToBalance);
+                    _incentivesController.handleAction(id, to, oldSupply, oldToBalance);
                 }
             }
         }
@@ -796,9 +771,9 @@ contract ATokenERC6909 is IncentivizedERC6909, VersionedInitializable {
 
     /**
      * @notice Returns the incentives controller used for rewards distribution.
-     * @return The `INCENTIVES_CONTROLLER` contract interface.
+     * @return The `_incentivesController` contract interface.
      */
     function getIncentivesController() external view returns (IMiniPoolRewarder) {
-        return INCENTIVES_CONTROLLER;
+        return _incentivesController;
     }
 }

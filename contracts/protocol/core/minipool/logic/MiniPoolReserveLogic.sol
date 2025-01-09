@@ -137,7 +137,7 @@ library MiniPoolReserveLogic {
         uint256 totalLiquidity,
         uint256 amount
     ) internal {
-        uint256 amountToLiquidityRatio = amount.wadToRay().rayDiv(totalLiquidity.wadToRay());
+        uint256 amountToLiquidityRatio = amount.rayDiv(totalLiquidity);
 
         uint256 result = amountToLiquidityRatio + WadRayMath.ray();
 

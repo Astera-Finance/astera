@@ -22,6 +22,8 @@ pragma solidity 0.8.23;
  */
 library Errors {
     /// @notice Amount must be greater than 0.
+    string public constant VL_INVALID_INPUT = "0";
+    /// @notice Amount must be greater than 0.
     string public constant VL_INVALID_AMOUNT = "1";
     /// @notice Action requires an active reserve.
     string public constant VL_NO_ACTIVE_RESERVE = "2";
@@ -167,4 +169,6 @@ library Errors {
     string public constant IR_ACCESS_RESTRICTED_TO_LENDING_POOL = "72";
     /// @notice Reserve is not configured.
     string public constant DP_RESERVE_NOT_CONFIGURED = "73";
+    /// @notice Caller is not wrapper.
+    string public constant CALLER_NOT_WRAPPER = "74";
 }

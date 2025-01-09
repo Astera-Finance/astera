@@ -70,7 +70,6 @@ library MiniPoolFlashLoanLogic {
     struct FlashLoanRepaymentParams {
         uint256 amount;
         uint256 totalPremium;
-        uint256 liquidityIndex;
         address asset;
         address aToken;
         address receiverAddress;
@@ -154,7 +153,6 @@ library MiniPoolFlashLoanLogic {
                     FlashLoanRepaymentParams({
                         amount: vars.currentAmount,
                         totalPremium: vars.currentPremium,
-                        liquidityIndex: reserve.liquidityIndex,
                         asset: vars.currentAsset,
                         aToken: vars.currentATokenAddress,
                         receiverAddress: flashLoanParams.receiverAddress
@@ -256,15 +254,6 @@ library MiniPoolFlashLoanLogic {
 
         IAERC6909(params.aToken).handleRepayment(
             params.receiverAddress, params.receiverAddress, id, amountPlusPremium
-        );
-
-        emit FlashLoan(
-            params.receiverAddress,
-            msg.sender,
-            params.asset,
-            DataTypes.InterestRateMode(0),
-            params.amount,
-            params.totalPremium
         );
     }
 }

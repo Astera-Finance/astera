@@ -17,13 +17,13 @@ import {ILendingPoolAddressesProvider} from
 contract LendingPoolAddressesProvider is Ownable, ILendingPoolAddressesProvider {
     mapping(bytes32 => address) private _addresses;
 
-    bytes32 private constant LENDING_POOL = "LENDING_POOL";
-    bytes32 private constant LENDING_POOL_CONFIGURATOR = "LENDING_POOL_CONFIGURATOR";
-    bytes32 private constant POOL_ADMIN = "POOL_ADMIN";
-    bytes32 private constant EMERGENCY_ADMIN = "EMERGENCY_ADMIN";
-    bytes32 private constant PRICE_ORACLE = "PRICE_ORACLE";
-    bytes32 private constant MINIPOOL_ADDRESSES_PROVIDER = "MINIPOOL_ADDRESSES_PROVIDER";
-    bytes32 private constant FLOW_LIMITER = "FLOW_LIMITER";
+    bytes32 private constant LENDING_POOL = keccak256("LENDING_POOL");
+    bytes32 private constant LENDING_POOL_CONFIGURATOR = keccak256("LENDING_POOL_CONFIGURATOR");
+    bytes32 private constant POOL_ADMIN = keccak256("POOL_ADMIN");
+    bytes32 private constant EMERGENCY_ADMIN = keccak256("EMERGENCY_ADMIN");
+    bytes32 private constant PRICE_ORACLE = keccak256("PRICE_ORACLE");
+    bytes32 private constant MINIPOOL_ADDRESSES_PROVIDER = keccak256("MINIPOOL_ADDRESSES_PROVIDER");
+    bytes32 private constant FLOW_LIMITER = keccak256("FLOW_LIMITER");
 
     constructor() Ownable(msg.sender) {}
 

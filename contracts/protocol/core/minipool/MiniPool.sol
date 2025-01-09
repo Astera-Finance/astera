@@ -165,7 +165,7 @@ contract MiniPool is VersionedInitializable, IMiniPool, MiniPoolStorage {
      * @return The final amount withdrawn.
      */
     function withdraw(address asset, bool unwrap, uint256 amount, address to)
-        public
+        external
         override
         whenNotPaused
         returns (uint256)
@@ -219,7 +219,7 @@ contract MiniPool is VersionedInitializable, IMiniPool, MiniPoolStorage {
             ILendingPool(vars.LendingPool).miniPoolBorrow(
                 underlying,
                 true,
-                ATokenNonRebasing(asset).convertToAssets(amount - vars.availableLiquidity), // amount + availableLiquidity converted to asset
+                ATokenNonRebasing(asset).convertToAssets(amount - vars.availableLiquidity), // amount - availableLiquidity converted to asset
                 ATokenNonRebasing(asset).ATOKEN_ADDRESS()
             );
 
@@ -281,7 +281,7 @@ contract MiniPool is VersionedInitializable, IMiniPool, MiniPoolStorage {
         returns (uint256)
     {
         uint256 repayAmount = MiniPoolBorrowLogic.repay(
-            MiniPoolBorrowLogic.repayParams(asset, amount, onBehalfOf, _addressesProvider),
+            MiniPoolBorrowLogic.RepayParams(asset, amount, onBehalfOf, _addressesProvider),
             wrap,
             _reserves,
             _usersConfig
@@ -693,6 +693,8 @@ contract MiniPool is VersionedInitializable, IMiniPool, MiniPoolStorage {
      * @param val `true` to pause the reserve, `false` to un-pause it.
      */
     function setPause(bool val) external override onlyMiniPoolConfigurator {
+        require(val != _paused, Errors.VL_INVALID_INPUT);
+
         _paused = val;
         if (_paused) {
             emit Paused();
@@ -728,12 +730,14 @@ contract MiniPool is VersionedInitializable, IMiniPool, MiniPoolStorage {
     function getCurrentLendingPoolDebt(address asset) public view returns (uint256) {
         return IFlowLimiter(_addressesProvider.getFlowLimiter()).currentFlow(asset, address(this));
     }
-
     /**
      * @dev Sets the rewarder contract for a specific reserve.
      * @param asset The address of the underlying asset of the reserve.
      * @param rewarder The address of the rewarder contract to be set.
+     * @notice Multiple reserves share the same aToken6909, so changing
+     * the rewarder for one reserve will change it for all reserves.
      */
+
     function setRewarderForReserve(address asset, address rewarder)
         external
         onlyMiniPoolConfigurator

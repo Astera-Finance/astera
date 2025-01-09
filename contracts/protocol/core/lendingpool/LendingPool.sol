@@ -219,7 +219,7 @@ contract LendingPool is VersionedInitializable, ILendingPool, LendingPoolStorage
         returns (uint256)
     {
         return BorrowLogic.repay(
-            BorrowLogic.repayParams(asset, reserveType, amount, onBehalfOf, _addressesProvider),
+            BorrowLogic.RepayParams(asset, reserveType, amount, onBehalfOf, _addressesProvider),
             _reserves,
             _usersConfig
         );
@@ -239,7 +239,7 @@ contract LendingPool is VersionedInitializable, ILendingPool, LendingPoolStorage
         returns (uint256)
     {
         return BorrowLogic.repayWithAtokens(
-            BorrowLogic.repayParams(asset, reserveType, amount, msg.sender, _addressesProvider),
+            BorrowLogic.RepayParams(asset, reserveType, amount, msg.sender, _addressesProvider),
             _reserves,
             _usersConfig
         );
@@ -674,6 +674,8 @@ contract LendingPool is VersionedInitializable, ILendingPool, LendingPoolStorage
      * @param val `true` to pause the reserve, `false` to un-pause it.
      */
     function setPause(bool val) external override onlyLendingPoolConfigurator {
+        require(val != _paused, Errors.VL_INVALID_INPUT);
+
         _paused = val;
         if (_paused) {
             emit Paused();

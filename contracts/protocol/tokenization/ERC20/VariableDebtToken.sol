@@ -45,7 +45,7 @@ contract VariableDebtToken is
      * @dev Only lending pool can call functions marked by this modifier.
      */
     modifier onlyLendingPool() {
-        require(_msgSender() == address(_getLendingPool()), Errors.CT_CALLER_MUST_BE_LENDING_POOL);
+        require(msg.sender == address(_getLendingPool()), Errors.CT_CALLER_MUST_BE_LENDING_POOL);
         _;
     }
 
@@ -173,8 +173,8 @@ contract VariableDebtToken is
      * @dev Delegation will still respect the liquidation constraints (even if delegated, a delegatee cannot force a delegator HF to go below 1).
      */
     function approveDelegation(address delegatee, uint256 amount) external override {
-        _borrowAllowances[_msgSender()][delegatee] = amount;
-        emit BorrowAllowanceDelegated(_msgSender(), delegatee, _getUnderlyingAssetAddress(), amount);
+        _borrowAllowances[msg.sender][delegatee] = amount;
+        emit BorrowAllowanceDelegated(msg.sender, delegatee, _getUnderlyingAssetAddress(), amount);
     }
 
     /**
@@ -196,9 +196,7 @@ contract VariableDebtToken is
      * @notice Being non transferrable, the debt token does not implement any of the standard ERC20 functions for transfer and allowance.
      * @dev This function reverts when called.
      */
-    function transfer(address recipient, uint256 amount) public virtual override returns (bool) {
-        recipient;
-        amount;
+    function transfer(address, uint256) public virtual override returns (bool) {
         revert("TRANSFER_NOT_SUPPORTED");
     }
 
@@ -206,15 +204,7 @@ contract VariableDebtToken is
      * @notice Being non transferrable, the debt token does not implement any of the standard ERC20 functions for transfer and allowance.
      * @dev This function reverts when called.
      */
-    function allowance(address owner, address spender)
-        public
-        view
-        virtual
-        override
-        returns (uint256)
-    {
-        owner;
-        spender;
+    function allowance(address, address) public view virtual override returns (uint256) {
         revert("ALLOWANCE_NOT_SUPPORTED");
     }
 
@@ -222,9 +212,7 @@ contract VariableDebtToken is
      * @notice Being non transferrable, the debt token does not implement any of the standard ERC20 functions for transfer and allowance.
      * @dev This function reverts when called.
      */
-    function approve(address spender, uint256 amount) public virtual override returns (bool) {
-        spender;
-        amount;
+    function approve(address, uint256) public virtual override returns (bool) {
         revert("APPROVAL_NOT_SUPPORTED");
     }
 
@@ -232,15 +220,7 @@ contract VariableDebtToken is
      * @notice Being non transferrable, the debt token does not implement any of the standard ERC20 functions for transfer and allowance.
      * @dev This function reverts when called.
      */
-    function transferFrom(address sender, address recipient, uint256 amount)
-        public
-        virtual
-        override
-        returns (bool)
-    {
-        sender;
-        recipient;
-        amount;
+    function transferFrom(address, address, uint256) public virtual override returns (bool) {
         revert("TRANSFER_NOT_SUPPORTED");
     }
 
@@ -248,14 +228,7 @@ contract VariableDebtToken is
      * @notice Being non transferrable, the debt token does not implement any of the standard ERC20 functions for transfer and allowance.
      * @dev This function reverts when called.
      */
-    function increaseAllowance(address spender, uint256 addedValue)
-        public
-        virtual
-        override
-        returns (bool)
-    {
-        spender;
-        addedValue;
+    function increaseAllowance(address, uint256) public virtual override returns (bool) {
         revert("ALLOWANCE_NOT_SUPPORTED");
     }
 
@@ -263,14 +236,7 @@ contract VariableDebtToken is
      * @notice Being non transferrable, the debt token does not implement any of the standard ERC20 functions for transfer and allowance.
      * @dev This function reverts when called.
      */
-    function decreaseAllowance(address spender, uint256 subtractedValue)
-        public
-        virtual
-        override
-        returns (bool)
-    {
-        spender;
-        subtractedValue;
+    function decreaseAllowance(address, uint256) public virtual override returns (bool) {
         revert("ALLOWANCE_NOT_SUPPORTED");
     }
 

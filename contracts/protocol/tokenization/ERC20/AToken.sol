@@ -88,13 +88,13 @@ contract AToken is
     uint256 public _farmingPctDrift;
     /// @notice The address that receives claimed profits.
     address public _profitHandler;
+
     /**
      * @notice Modifier to ensure only the lending pool can call certain functions.
      * @dev Reverts if the caller is not the lending pool contract.
      */
-
     modifier onlyLendingPool() {
-        require(_msgSender() == address(_pool), Errors.CT_CALLER_MUST_BE_LENDING_POOL);
+        require(msg.sender == address(_pool), Errors.CT_CALLER_MUST_BE_LENDING_POOL);
         _;
     }
 
@@ -476,7 +476,7 @@ contract AToken is
      * @param shareAmount The share amount getting transferred.
      */
     function transferShare(address from, address to, uint256 shareAmount) external {
-        require(msg.sender == _aTokenWrapper, "CALLER_NOT_WRAPPER");
+        require(msg.sender == _aTokenWrapper, Errors.CALLER_NOT_WRAPPER);
 
         address underlyingAsset = _underlyingAsset;
         ILendingPool pool = _pool;
@@ -505,7 +505,7 @@ contract AToken is
      * @param shareAmount The share amount getting approved.
      */
     function shareApprove(address owner, address spender, uint256 shareAmount) external {
-        require(msg.sender == _aTokenWrapper, "CALLER_NOT_WRAPPER");
+        require(msg.sender == _aTokenWrapper, Errors.CALLER_NOT_WRAPPER);
 
         _shareAllowances[owner][spender] = shareAmount;
     }

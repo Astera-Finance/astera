@@ -125,7 +125,6 @@ library WadRayMath {
     function rayToWad(uint256 a) internal pure returns (uint256) {
         uint256 halfRatio = WAD_RAY_RATIO / 2;
         uint256 result = halfRatio + a;
-        require(result >= halfRatio, Errors.MATH_ADDITION_OVERFLOW);
 
         return result / WAD_RAY_RATIO;
     }
@@ -137,7 +136,6 @@ library WadRayMath {
      */
     function wadToRay(uint256 a) internal pure returns (uint256) {
         uint256 result = a * WAD_RAY_RATIO;
-        require(result / WAD_RAY_RATIO == a, Errors.MATH_MULTIPLICATION_OVERFLOW);
         return result;
     }
 

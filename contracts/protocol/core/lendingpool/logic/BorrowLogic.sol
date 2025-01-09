@@ -102,66 +102,8 @@ library BorrowLogic {
         DataTypes.UserConfigurationMap memory userConfig,
         mapping(uint256 => DataTypes.ReserveReference) storage reservesList
     ) external view returns (uint256, uint256, uint256, uint256, uint256) {
-        CalculateUserAccountDataVolatileLocalVars memory vars;
-
-        if (userConfig.isEmpty()) {
-            return (0, 0, 0, 0, type(uint256).max);
-        }
-
-        for (vars.i = 0; vars.i < params.reservesCount; vars.i++) {
-            if (!userConfig.isUsingAsCollateralOrBorrowing(vars.i)) {
-                continue;
-            }
-
-            vars.currentReserveAddress = reservesList[vars.i].asset;
-            vars.currentReserveType = reservesList[vars.i].reserveType;
-            DataTypes.ReserveData storage currentReserve =
-                reserves[vars.currentReserveAddress][vars.currentReserveType];
-
-            (vars.ltv, vars.liquidationThreshold,, vars.decimals,) =
-                currentReserve.configuration.getParams();
-
-            vars.tokenUnit = 10 ** vars.decimals;
-            vars.reserveUnitPrice = IOracle(params.oracle).getAssetPrice(vars.currentReserveAddress);
-
-            if (vars.liquidationThreshold != 0 && userConfig.isUsingAsCollateral(vars.i)) {
-                vars.compoundedLiquidityBalance =
-                    IERC20(currentReserve.aTokenAddress).balanceOf(params.user);
-
-                uint256 liquidityBalanceETH =
-                    vars.reserveUnitPrice * vars.compoundedLiquidityBalance / vars.tokenUnit;
-
-                vars.totalCollateralInETH = vars.totalCollateralInETH + liquidityBalanceETH;
-
-                vars.avgLtv = vars.avgLtv + (liquidityBalanceETH * vars.ltv);
-                vars.avgLiquidationThreshold =
-                    vars.avgLiquidationThreshold + (liquidityBalanceETH * vars.liquidationThreshold);
-            }
-
-            if (userConfig.isBorrowing(vars.i)) {
-                vars.compoundedBorrowBalance =
-                    IERC20(currentReserve.variableDebtTokenAddress).balanceOf(params.user);
-
-                vars.totalDebtInETH = vars.totalDebtInETH
-                    + (vars.reserveUnitPrice * vars.compoundedBorrowBalance / vars.tokenUnit);
-            }
-        }
-
-        vars.avgLtv = vars.totalCollateralInETH > 0 ? vars.avgLtv / vars.totalCollateralInETH : 0;
-        vars.avgLiquidationThreshold = vars.totalCollateralInETH > 0
-            ? vars.avgLiquidationThreshold / vars.totalCollateralInETH
-            : 0;
-
-        vars.healthFactor = GenericLogic.calculateHealthFactorFromBalances(
-            vars.totalCollateralInETH, vars.totalDebtInETH, vars.avgLiquidationThreshold
-        );
-
-        return (
-            vars.totalCollateralInETH,
-            vars.totalDebtInETH,
-            vars.avgLtv,
-            vars.avgLiquidationThreshold,
-            vars.healthFactor
+        return GenericLogic.calculateUserAccountData(
+            params.user, reserves, userConfig, reservesList, params.reservesCount, params.oracle
         );
     }
 
@@ -279,37 +221,30 @@ library BorrowLogic {
     ) internal {
         IFlowLimiter flowLimiter = IFlowLimiter(params.addressesProvider.getFlowLimiter());
         DataTypes.ReserveData storage reserve = reserves[params.asset][params.reserveType];
+
         require(reserve.configuration.getActive(), Errors.VL_NO_ACTIVE_RESERVE);
+        flowLimiter.revertIfFlowLimitReached(params.asset, params.miniPoolAddress, params.amount);
 
-        if (
-            flowLimiter.currentFlow(params.asset, params.miniPoolAddress) + params.amount
-                > flowLimiter.getFlowLimit(params.asset, params.miniPoolAddress)
-        ) {
-            revert(Errors.VL_BORROW_FLOW_LIMIT_REACHED);
-        } else {
-            reserve.updateState();
+        reserve.updateState();
 
-            IVariableDebtToken(reserve.variableDebtTokenAddress).mint(
-                params.miniPoolAddress,
-                params.miniPoolAddress,
-                params.amount,
-                reserve.variableBorrowIndex
-            );
+        IVariableDebtToken(reserve.variableDebtTokenAddress).mint(
+            params.miniPoolAddress,
+            params.miniPoolAddress,
+            params.amount,
+            reserve.variableBorrowIndex
+        );
 
-            reserve.updateInterestRates(params.asset, params.aTokenAddress, 0, params.amount);
+        reserve.updateInterestRates(params.asset, params.aTokenAddress, 0, params.amount);
 
-            IAToken(params.aTokenAddress).transferUnderlyingTo(
-                params.miniPoolAddress, params.amount
-            );
+        IAToken(params.aTokenAddress).transferUnderlyingTo(params.miniPoolAddress, params.amount);
 
-            emit Borrow(
-                params.asset,
-                params.miniPoolAddress,
-                address(flowLimiter),
-                params.amount,
-                reserve.currentVariableBorrowRate
-            );
-        }
+        emit Borrow(
+            params.asset,
+            params.miniPoolAddress,
+            address(flowLimiter),
+            params.amount,
+            reserve.currentVariableBorrowRate
+        );
     }
 
     /**
@@ -336,7 +271,7 @@ library BorrowLogic {
      * @param onBehalfOf The address of the user who will get their debt reduced.
      * @param addressesProvider The addresses provider instance.
      */
-    struct repayParams {
+    struct RepayParams {
         address asset;
         bool reserveType;
         uint256 amount;
@@ -363,7 +298,7 @@ library BorrowLogic {
      * @return The actual amount repaid.
      */
     function repay(
-        repayParams memory params,
+        RepayParams memory params,
         mapping(address => mapping(bool => DataTypes.ReserveData)) storage _reserves,
         mapping(address => DataTypes.UserConfigurationMap) storage _usersConfig
     ) internal returns (uint256) {
@@ -388,7 +323,7 @@ library BorrowLogic {
      * @return The actual amount repaid.
      */
     function repayWithAtokens(
-        repayParams memory params,
+        RepayParams memory params,
         mapping(address => mapping(bool => DataTypes.ReserveData)) storage _reserves,
         mapping(address => DataTypes.UserConfigurationMap) storage _usersConfig
     ) internal returns (uint256) {
@@ -414,7 +349,7 @@ library BorrowLogic {
      * @return paybackAmount The actual amount repaid.
      */
     function _repay(
-        repayParams memory params,
+        RepayParams memory params,
         DataTypes.ReserveData storage reserve,
         mapping(address => DataTypes.UserConfigurationMap) storage _usersConfig
     ) private returns (address aToken, uint256 paybackAmount) {

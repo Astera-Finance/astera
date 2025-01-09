@@ -129,14 +129,14 @@ abstract contract RewardsController is RewardsDistributor, IRewardsController {
         external
         override
     {
-        refreshMiniPoolData();
+        _refreshMiniPoolData();
         // If user is an ERC6909 aToken, this will only be true for aTokens.
         if (_isAtokenERC6909[user] == true) {
-            (uint256 assetID,,) =
+            (uint256 aTokenID,,) =
                 IAERC6909(user).getIdForUnderlying(IAToken(msg.sender).WRAPPER_ADDRESS());
-            // For trancheATokens we calculate the total supply of the AERC6909 ID for the assetID.
+            // For trancheATokens we calculate the total supply of the AERC6909 ID for the aTokenID.
             // We subtract the current balance.
-            uint256 totalSupplyAsset = IAERC6909(user).totalSupply(assetID);
+            uint256 totalSupplyAsset = IAERC6909(user).totalSupply(aTokenID);
             uint256 diff = totalSupplyAsset - userBalance;
             _totalDiff[msg.sender] =
                 _totalDiff[msg.sender] - lastReportedDiff[msg.sender][user] + diff;
@@ -151,7 +151,7 @@ abstract contract RewardsController is RewardsDistributor, IRewardsController {
     /**
      * @notice Updates MiniPool data if new MiniPools have been added.
      */
-    function refreshMiniPoolData() internal {
+    function _refreshMiniPoolData() internal {
         IMiniPoolAddressesProvider addressesProvider = _addressesProvider;
 
         if (address(addressesProvider) != address(0)) {
