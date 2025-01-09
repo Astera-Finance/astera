@@ -8,6 +8,8 @@ import {DistributionTypes} from
     "../../../../contracts/protocol/libraries/types/DistributionTypes.sol";
 import {Ownable} from "lib/openzeppelin-contracts/contracts/access/Ownable.sol";
 
+import "forge-std/console.sol";
+
 /**
  * @title RewardsDistributor6909
  * @author Cod3x
@@ -336,8 +338,12 @@ abstract contract RewardsDistributor6909 is IMiniPoolRewardsDistributor, Ownable
         uint256 newIndex = _updateAssetStateInternal(
             market6909, assetID, reward, rewardData, totalSupply, assetDecimals
         );
+        console.log("GetRewards user (%s) index :: %s", user, userIndex);
+        console.log("GetRewards new index :: ", newIndex);
         if (userIndex != newIndex) {
             if (userBalance != 0) {
+                userIndex =
+                    userIndex == 0 ? _assets[market6909][assetID].initialIndexes[reward] : userIndex;
                 accruedRewards = _getRewards(userBalance, newIndex, userIndex, assetDecimals);
             }
 
@@ -498,7 +504,11 @@ abstract contract RewardsDistributor6909 is IMiniPoolRewardsDistributor, Ownable
         uint256 reserveIndex,
         uint256 userIndex,
         uint8 decimals
-    ) internal pure returns (uint256) {
+    ) internal view returns (uint256) {
+        console.log("GetRewards user index :: ", userIndex);
+        console.log(
+            "Return :: ", (principalUserBalance * (reserveIndex - userIndex)) / 10 ** decimals
+        );
         return (principalUserBalance * (reserveIndex - userIndex)) / 10 ** decimals;
     }
 
