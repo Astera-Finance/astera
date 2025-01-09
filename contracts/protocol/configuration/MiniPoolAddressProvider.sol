@@ -9,6 +9,10 @@ import {ILendingPoolAddressesProvider} from
 import {IFlowLimiter} from "../../../contracts/interfaces/base/IFlowLimiter.sol";
 import {IMiniPoolAddressesProvider} from
     "../../../contracts/interfaces/IMiniPoolAddressesProvider.sol";
+import {IMiniPoolAddressProviderUpdatable} from
+    "../../../contracts/interfaces/IMiniPoolAddressProviderUpdatable.sol";
+import {IAddressProviderUpdatable} from
+    "../../../contracts/interfaces/IAddressProviderUpdatable.sol";
 import {Errors} from "../libraries/helpers/Errors.sol";
 
 /**
@@ -277,8 +281,9 @@ contract MiniPoolAddressesProvider is Ownable, IMiniPoolAddressesProvider {
      * @param miniPoolId The ID of the mini pool to update.
      */
     function setMiniPoolImpl(address impl, uint256 miniPoolId) external onlyOwner {
-        bytes memory params =
-            abi.encodeWithSignature("initialize(address,uint256)", address(this), miniPoolId);
+        bytes memory params = abi.encodeCall(
+            IMiniPoolAddressProviderUpdatable.initialize, (address(this), miniPoolId)
+        );
         _updateMiniPool(impl, miniPoolId, params);
         emit MiniPoolUpdated(impl);
     }
@@ -289,8 +294,9 @@ contract MiniPoolAddressesProvider is Ownable, IMiniPoolAddressesProvider {
      * @param miniPoolId The ID of the associated mini pool.
      */
     function setAToken6909Impl(address impl, uint256 miniPoolId) external onlyOwner {
-        bytes memory params =
-            abi.encodeWithSignature("initialize(address,uint256)", address(this), miniPoolId);
+        bytes memory params = abi.encodeCall(
+            IMiniPoolAddressProviderUpdatable.initialize, (address(this), miniPoolId)
+        );
         _updateAToken(impl, miniPoolId, params);
         emit ATokenUpdated(impl);
     }
@@ -319,8 +325,9 @@ contract MiniPoolAddressesProvider is Ownable, IMiniPoolAddressesProvider {
     {
         uint256 miniPoolId = _miniPoolCount;
 
-        bytes memory params =
-            abi.encodeWithSignature("initialize(address,uint256)", address(this), miniPoolId);
+        bytes memory params = abi.encodeCall(
+            IMiniPoolAddressProviderUpdatable.initialize, (address(this), miniPoolId)
+        );
 
         _initMiniPool(miniPoolImpl, miniPoolId, params);
 
@@ -475,7 +482,7 @@ contract MiniPoolAddressesProvider is Ownable, IMiniPoolAddressesProvider {
 
         InitializableImmutableAdminUpgradeabilityProxy proxy =
             InitializableImmutableAdminUpgradeabilityProxy(proxyAddress);
-        bytes memory params = abi.encodeWithSignature("initialize(address)", address(this));
+        bytes memory params = abi.encodeCall(IAddressProviderUpdatable.initialize, (address(this)));
         if (proxyAddress == address(0)) {
             proxy = new InitializableImmutableAdminUpgradeabilityProxy(address(this));
             proxy.initialize(newAddress, params);
