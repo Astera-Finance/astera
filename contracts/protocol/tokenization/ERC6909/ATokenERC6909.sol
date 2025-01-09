@@ -170,7 +170,11 @@ contract ATokenERC6909 is IncentivizedERC6909, VersionedInitializable {
                 underlyingAsset, msg.sender, to, amount, fromBalanceBefore, toBalanceBefore
             );
         } else {
-            super.transfer(to, id, amount);
+            // Restricted to `POOL`, see `_beforeTokenTransfer()`. Not used for now.
+            address underlyingAsset = _underlyingAssetAddresses[id];
+            uint256 index = POOL.getReserveNormalizedVariableDebt(underlyingAsset);
+
+            super.transfer(to, id, amount.rayDiv(index));
         }
 
         return true;
@@ -203,7 +207,11 @@ contract ATokenERC6909 is IncentivizedERC6909, VersionedInitializable {
                 underlyingAsset, from, to, amount, fromBalanceBefore, toBalanceBefore
             );
         } else {
-            super.transferFrom(from, to, id, amount);
+            // Restricted to `POOL`, see `_beforeTokenTransfer()`. Not used for now.
+            address underlyingAsset = _underlyingAssetAddresses[id];
+            uint256 index = POOL.getReserveNormalizedVariableDebt(underlyingAsset);
+
+            super.transferFrom(from, to, id, amount.rayDiv(index));
         }
 
         return true;

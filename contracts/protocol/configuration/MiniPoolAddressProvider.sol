@@ -351,6 +351,7 @@ contract MiniPoolAddressesProvider is Ownable, IMiniPoolAddressesProvider {
      */
     function setFlowLimit(address asset, address miniPool, uint256 limit)
         external
+        poolIdCheck(_getMiniPoolId(miniPool))
         onlyMiniPoolConfigurator
     {
         IFlowLimiter(getFlowLimiter()).setFlowLimit(asset, miniPool, limit);
@@ -362,7 +363,11 @@ contract MiniPoolAddressesProvider is Ownable, IMiniPoolAddressesProvider {
      * @param id The pool ID.
      * @param newAdmin The new admin address.
      */
-    function setPoolAdmin(uint256 id, address newAdmin) external onlyMiniPoolConfigurator {
+    function setPoolAdmin(uint256 id, address newAdmin)
+        external
+        poolIdCheck(id)
+        onlyMiniPoolConfigurator
+    {
         require(newAdmin != address(0));
         _miniPoolsConfig[id].admin = newAdmin;
         emit PoolAdminSet(newAdmin);
