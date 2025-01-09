@@ -13,6 +13,8 @@ import "contracts/protocol/tokenization/ERC6909/ATokenERC6909.sol";
 import "forge-std/StdUtils.sol";
 
 contract MiniPoolRewarderTest is Common {
+    using WadRayMath for uint256;
+
     ERC20[] erc20Tokens;
     Rewarder6909 miniPoolRewarder;
     RewardsVault[] miniPoolRewardsVaults;
@@ -2341,17 +2343,32 @@ contract MiniPoolRewarderTest is Common {
         wethParams.token.approve(address(deployedContracts.lendingPool), wethAmount);
         deployedContracts.lendingPool.deposit(address(wethParams.token), true, wethAmount, user1);
 
-        console.log("User1 deposits to mini pools");
+        console.log("User1 deposits to mini pool");
         wethParams.aTokenWrapper.approve(miniPool, wethAmount);
-        IMiniPool(miniPool).deposit(address(wethParams.aTokenWrapper), false, wethAmount, user1);
+        IMiniPool(miniPool).deposit(
+            address(wethParams.aTokenWrapper), false, wethAmount / 3 * 2, user1
+        );
 
-        console.log("User1 borrows from mini pools");
+        console.log("User1 borrows from mini pool");
         IMiniPool(miniPool).borrow(address(wethParams.aTokenWrapper), false, wethAmount / 2, user1);
-        vm.stopPrank();
 
         console.log("Time travel 1");
         vm.warp(block.timestamp + 40);
         vm.roll(block.number + 1);
+
+        console.log("User1 repays from mini pool");
+        uint256 index =
+            IMiniPool(miniPool).getReserveNormalizedVariableDebt(address(wethParams.aTokenWrapper));
+        console.log("Index: ", index);
+        wethParams.aTokenWrapper.approve(miniPool, index.rayMul(wethAmount) / 2);
+        IMiniPool(miniPool).repay(
+            address(wethParams.aTokenWrapper), false, index.rayMul(wethAmount) / 2, user1
+        );
+        console.log("User1 withdraws from mini pool");
+        IMiniPool(miniPool).withdraw(
+            address(wethParams.aTokenWrapper), false, wethAmount / 3 * 2, user1
+        );
+        vm.stopPrank();
 
         console.log(
             "1.aWeth total supply: ", IAERC6909(aTokensErc6909Addr).totalSupply(1000 + WETH_OFFSET)
