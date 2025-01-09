@@ -280,7 +280,7 @@ contract MiniPoolAddressesProvider is Ownable, IMiniPoolAddressesProvider {
         bytes memory params =
             abi.encodeWithSignature("initialize(address,uint256)", address(this), miniPoolId);
         _updateMiniPool(impl, miniPoolId, params);
-        emit MiniPoolUpdated(impl);
+        emit MiniPoolUpdated(impl, miniPoolId);
     }
 
     /**
@@ -292,7 +292,7 @@ contract MiniPoolAddressesProvider is Ownable, IMiniPoolAddressesProvider {
         bytes memory params =
             abi.encodeWithSignature("initialize(address,uint256)", address(this), miniPoolId);
         _updateAToken(impl, miniPoolId, params);
-        emit ATokenUpdated(impl);
+        emit ATokenUpdated(impl, miniPoolId);
     }
 
     /**
@@ -329,6 +329,8 @@ contract MiniPoolAddressesProvider is Ownable, IMiniPoolAddressesProvider {
         _miniPoolsConfig[miniPoolId].admin = poolAdmin;
         _miniPoolCount++;
 
+        emit PoolAdminSet(poolAdmin, miniPoolId);
+
         return miniPoolId;
     }
 
@@ -355,7 +357,7 @@ contract MiniPoolAddressesProvider is Ownable, IMiniPoolAddressesProvider {
         onlyMiniPoolConfigurator
     {
         IFlowLimiter(getFlowLimiter()).setFlowLimit(asset, miniPool, limit);
-        emit FlowLimitUpdated(limit);
+        emit FlowLimitUpdated(asset, miniPool, limit);
     }
 
     /**
@@ -370,7 +372,7 @@ contract MiniPoolAddressesProvider is Ownable, IMiniPoolAddressesProvider {
     {
         require(newAdmin != address(0));
         _miniPoolsConfig[id].admin = newAdmin;
-        emit PoolAdminSet(newAdmin);
+        emit PoolAdminSet(newAdmin, id);
     }
 
     /**

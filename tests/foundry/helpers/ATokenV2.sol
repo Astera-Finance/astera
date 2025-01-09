@@ -156,7 +156,8 @@ contract ATokenV2 is
         emit Initialized(
             underlyingAsset,
             address(pool),
-            treasury,
+            _aTokenWrapper,
+            _treasury,
             address(incentivesController),
             aTokenDecimals,
             reserveType,

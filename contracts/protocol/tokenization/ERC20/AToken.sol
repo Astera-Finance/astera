@@ -158,7 +158,8 @@ contract AToken is
         emit Initialized(
             underlyingAsset,
             address(pool),
-            treasury,
+            _aTokenWrapper,
+            _treasury,
             address(incentivesController),
             aTokenDecimals,
             reserveType,
@@ -612,6 +613,8 @@ contract AToken is
         require(address(_vault) != address(0), Errors.AT_VAULT_NOT_INITIALIZED);
         require(farmingPct <= 10000, Errors.AT_INVALID_AMOUNT);
         _farmingPct = farmingPct;
+
+        emit FarmingPctSet(farmingPct);
     }
 
     /**
@@ -621,6 +624,8 @@ contract AToken is
     function setClaimingThreshold(uint256 claimingThreshold) external override onlyLendingPool {
         require(address(_vault) != address(0), Errors.AT_VAULT_NOT_INITIALIZED);
         _claimingThreshold = claimingThreshold;
+
+        emit ClaimingThresholdSet(claimingThreshold);
     }
 
     /**
@@ -631,6 +636,8 @@ contract AToken is
         require(farmingPctDrift <= 10000, Errors.AT_INVALID_AMOUNT);
         require(address(_vault) != address(0), Errors.AT_VAULT_NOT_INITIALIZED);
         _farmingPctDrift = farmingPctDrift;
+
+        emit FarmingPctDriftSet(farmingPctDrift);
     }
 
     /**
@@ -641,6 +648,8 @@ contract AToken is
         require(profitHandler != address(0), Errors.AT_INVALID_ADDRESS);
         require(address(_vault) != address(0), Errors.AT_VAULT_NOT_INITIALIZED);
         _profitHandler = profitHandler;
+
+        emit ProfitHandlerSet(profitHandler);
     }
 
     /**
@@ -655,6 +664,8 @@ contract AToken is
         require(IERC4626(vault).asset() == _underlyingAsset, Errors.AT_INVALID_ADDRESS);
         _vault = IERC4626(vault);
         IERC20(_underlyingAsset).forceApprove(address(_vault), type(uint256).max);
+
+        emit VaultSet(vault);
     }
 
     /**
@@ -664,6 +675,8 @@ contract AToken is
     function setTreasury(address treasury) external override onlyLendingPool {
         require(treasury != address(0), Errors.AT_INVALID_ADDRESS);
         _treasury = treasury;
+
+        emit TreasurySet(treasury);
     }
 
     /**
@@ -677,6 +690,8 @@ contract AToken is
     {
         require(incentivesController != address(0), Errors.AT_INVALID_ADDRESS);
         _incentivesController = IRewarder(incentivesController);
+
+        emit IncentivesControllerSet(incentivesController);
     }
 
     /**

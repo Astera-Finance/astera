@@ -52,6 +52,7 @@ contract LendingPoolAddressesProvider is Ownable, ILendingPoolAddressesProvider 
      */
     function setAddress(bytes32 id, address newAddress) external override onlyOwner {
         _addresses[id] = newAddress;
+        
         emit AddressSet(id, newAddress, false);
     }
 
@@ -79,6 +80,7 @@ contract LendingPoolAddressesProvider is Ownable, ILendingPoolAddressesProvider 
      */
     function setLendingPoolImpl(address pool) external override onlyOwner {
         _updateImpl(LENDING_POOL, pool);
+
         emit LendingPoolUpdated(pool);
     }
 
@@ -119,6 +121,7 @@ contract LendingPoolAddressesProvider is Ownable, ILendingPoolAddressesProvider 
      */
     function setPoolAdmin(address admin) external override onlyOwner {
         _addresses[POOL_ADMIN] = admin;
+
         emit ConfigurationAdminUpdated(admin);
     }
 
@@ -136,6 +139,7 @@ contract LendingPoolAddressesProvider is Ownable, ILendingPoolAddressesProvider 
      */
     function setEmergencyAdmin(address emergencyAdmin) external override onlyOwner {
         _addresses[EMERGENCY_ADMIN] = emergencyAdmin;
+
         emit EmergencyAdminUpdated(emergencyAdmin);
     }
 
@@ -153,6 +157,7 @@ contract LendingPoolAddressesProvider is Ownable, ILendingPoolAddressesProvider 
      */
     function setPriceOracle(address priceOracle) external override onlyOwner {
         _addresses[PRICE_ORACLE] = priceOracle;
+
         emit PriceOracleUpdated(priceOracle);
     }
 
@@ -196,6 +201,8 @@ contract LendingPoolAddressesProvider is Ownable, ILendingPoolAddressesProvider 
      */
     function setMiniPoolAddressesProvider(address provider) external override onlyOwner {
         _addresses[MINIPOOL_ADDRESSES_PROVIDER] = provider;
+
+        emit MiniPoolAddressesProviderUpdated(provider);
     }
 
     /**
@@ -212,5 +219,7 @@ contract LendingPoolAddressesProvider is Ownable, ILendingPoolAddressesProvider 
      */
     function setFlowLimiter(address flowLimiter) external override onlyOwner {
         _addresses[FLOW_LIMITER] = flowLimiter;
+
+        emit FlowLimiterUpdated(flowLimiter);
     }
 }

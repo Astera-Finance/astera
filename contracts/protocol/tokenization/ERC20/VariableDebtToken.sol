@@ -358,5 +358,7 @@ contract VariableDebtToken is
     function setIncentivesController(address newController) external override onlyLendingPool {
         require(newController != address(0), Errors.AT_INVALID_CONTROLLER);
         _incentivesController = IRewarder(newController);
+
+        emit IncentivesControllerSet(newController);
     }
 }

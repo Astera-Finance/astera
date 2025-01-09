@@ -146,6 +146,12 @@ interface ILendingPool {
         uint256 variableBorrowIndex
     );
 
+    /**
+     * @dev Emitted when the flash loan fee is updated.
+     * @param flashLoanPremiumTotal The new flash loan fee.
+     */
+    event FlashLoanFeeUpdated(uint128 flashLoanPremiumTotal);
+
     function initialize(ILendingPoolAddressesProvider provider) external;
 
     function deposit(address asset, bool reserveType, uint256 amount, address onBehalfOf)

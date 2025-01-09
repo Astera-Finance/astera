@@ -13,6 +13,7 @@ interface IInitializableAToken {
      * @dev Emitted when an aToken is initialized
      * @param underlyingAsset The address of the underlying asset
      * @param pool The address of the associated lending pool
+     * @param aTokenWrapper The address of the aToken wrapper
      * @param treasury The address of the treasury
      * @param rewarder The address of the incentives controller for this aToken
      * @param aTokenDecimals the decimals of the underlying
@@ -25,6 +26,7 @@ interface IInitializableAToken {
     event Initialized(
         address indexed underlyingAsset,
         address indexed pool,
+        address aTokenWrapper,
         address treasury,
         address rewarder,
         uint8 aTokenDecimals,

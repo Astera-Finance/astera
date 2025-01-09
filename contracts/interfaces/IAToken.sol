@@ -45,6 +45,48 @@ interface IAToken is IERC20, IScaledBalanceToken, IInitializableAToken {
      */
     event Rebalance(address indexed vault, uint256 amountToWithdraw, int256 netAssetMovement);
 
+    /**
+     * @dev Emitted when the farming percentage is set.
+     * @param farmingPct The new farming percentage.
+     */
+    event FarmingPctSet(uint256 farmingPct);
+
+    /**
+     * @dev Emitted when the claiming threshold is set.
+     * @param claimingThreshold The new claiming threshold.
+     */
+    event ClaimingThresholdSet(uint256 claimingThreshold);
+
+    /**
+     * @dev Emitted when the farming percentage drift is set.
+     * @param farmingPctDrift The new farming percentage drift.
+     */
+    event FarmingPctDriftSet(uint256 farmingPctDrift);
+
+    /**
+     * @dev Emitted when the profit handler is set.
+     * @param profitHandler The new profit handler address.
+     */
+    event ProfitHandlerSet(address profitHandler);
+
+    /**
+     * @dev Emitted when the vault is set.
+     * @param vault The new vault address.
+     */
+    event VaultSet(address vault);
+
+    /**
+     * @dev Emitted when the treasury is set.
+     * @param treasury The new treasury address.
+     */
+    event TreasurySet(address treasury);
+
+    /**
+     * @dev Emitted when the incentives controller is set.
+     * @param incentivesController The new incentives controller address.
+     */
+    event IncentivesControllerSet(address incentivesController);
+
     function mint(address user, uint256 amount, uint256 index) external returns (bool);
 
     function burn(address user, address receiverOfUnderlying, uint256 amount, uint256 index)

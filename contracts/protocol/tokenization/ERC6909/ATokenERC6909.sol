@@ -45,6 +45,26 @@ contract ATokenERC6909 is IncentivizedERC6909, VersionedInitializable {
         uint256 indexed id, string name, string symbol, uint8 decimals, address underlyingAsset
     );
 
+    /**
+     * @notice Emitted when a token is minted.
+     * @param id The identifier of the token.
+     * @param amount The amount of tokens minted.
+     */
+    event Mint(address indexed treasury, uint256 indexed id, uint256 amount);
+
+    /**
+     * @notice Emitted when a token is burned.
+     * @param id The identifier of the token.
+     * @param amount The amount of tokens burned.
+     */
+    event Burn(address indexed user, uint256 indexed id, uint256 amount);
+
+    /**
+     * @notice Emitted when the incentives controller is set.
+     * @param controller The new incentives controller address.
+     */
+    event IncentivesControllerSet(address controller);
+
     // ======================= Constant =======================
 
     /// @notice The revision number for the AToken implementation.
@@ -142,6 +162,8 @@ contract ATokenERC6909 is IncentivizedERC6909, VersionedInitializable {
     function setIncentivesController(IMiniPoolRewarder controller) external {
         require(msg.sender == address(POOL), Errors.CT_CALLER_MUST_BE_LENDING_POOL);
         _incentivesController = controller;
+
+        emit IncentivesControllerSet(address(controller));
     }
 
     /**
@@ -286,6 +308,8 @@ contract ATokenERC6909 is IncentivizedERC6909, VersionedInitializable {
         require(amountScaled != 0, Errors.CT_INVALID_MINT_AMOUNT);
         _mint(onBehalfOf, id, amountScaled);
 
+        emit Mint(onBehalfOf, id, amountScaled);
+
         return previousBalance == 0;
     }
 
@@ -315,6 +339,8 @@ contract ATokenERC6909 is IncentivizedERC6909, VersionedInitializable {
         if (isAToken(id)) {
             transferUnderlyingTo(receiverOfUnderlying, id, amount, unwrap);
         }
+
+        emit Burn(user, id, amountScaled);
     }
 
     /**
@@ -483,7 +509,10 @@ contract ATokenERC6909 is IncentivizedERC6909, VersionedInitializable {
         // The amount to mint can easily be very small since it is a fraction of the interest accrued.
         // In that case, the treasury will experience a (very small) loss, but it
         // won't cause potentially valid transactions to fail.
-        _mint(treasury, id, amount.rayDiv(index));
+        uint256 amountScaled = amount.rayDiv(index);
+        _mint(treasury, id, amountScaled);
+
+        emit Mint(treasury, id, amountScaled);
     }
 
     /**

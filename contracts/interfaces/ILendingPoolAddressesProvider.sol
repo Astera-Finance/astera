@@ -57,6 +57,18 @@ interface ILendingPoolAddressesProvider {
      */
     event AddressSet(bytes32 id, address indexed newAddress, bool hasProxy);
 
+    /**
+     * @dev Emitted when the MiniPool addresses provider is updated.
+     * @param newAddress The new MiniPool addresses provider address.
+     */
+    event MiniPoolAddressesProviderUpdated(address indexed newAddress);
+
+    /**
+     * @dev Emitted when the flow limiter is updated.
+     * @param newAddress The new flow limiter address.
+     */
+    event FlowLimiterUpdated(address indexed newAddress);
+
     function getMiniPoolAddressesProvider() external view returns (address);
 
     function getLendingPool() external view returns (address);
