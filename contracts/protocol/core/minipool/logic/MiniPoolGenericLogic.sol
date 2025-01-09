@@ -78,7 +78,6 @@ library MiniPoolGenericLogic {
 
         (vars.totalCollateralInETH, vars.totalDebtInETH,, vars.avgLiquidationThreshold,) =
         calculateUserAccountData(user, reserves, userConfig, reservesList, reservesCount, oracle);
-
         if (vars.totalDebtInETH == 0) {
             return true;
         }
@@ -102,7 +101,6 @@ library MiniPoolGenericLogic {
             vars.totalDebtInETH,
             vars.liquidationThresholdAfterDecrease
         );
-
         return healthFactorAfterDecrease >= MiniPoolGenericLogic.HEALTH_FACTOR_LIQUIDATION_THRESHOLD;
     }
 

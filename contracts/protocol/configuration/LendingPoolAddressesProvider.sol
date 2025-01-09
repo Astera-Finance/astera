@@ -6,6 +6,8 @@ import {InitializableImmutableAdminUpgradeabilityProxy} from
     "../../../contracts/protocol/libraries/upgradeability/InitializableImmutableAdminUpgradeabilityProxy.sol";
 import {ILendingPoolAddressesProvider} from
     "../../../contracts/interfaces/ILendingPoolAddressesProvider.sol";
+import {IAddressProviderUpdatable} from
+    "../../../contracts/interfaces/IAddressProviderUpdatable.sol";
 
 /**
  * @title LendingPoolAddressesProvider contract
@@ -170,7 +172,7 @@ contract LendingPoolAddressesProvider is Ownable, ILendingPoolAddressesProvider 
 
         InitializableImmutableAdminUpgradeabilityProxy proxy =
             InitializableImmutableAdminUpgradeabilityProxy(proxyAddress);
-        bytes memory params = abi.encodeWithSignature("initialize(address)", address(this));
+        bytes memory params = abi.encodeCall(IAddressProviderUpdatable.initialize, (address(this)));
 
         if (proxyAddress == address(0)) {
             proxy = new InitializableImmutableAdminUpgradeabilityProxy(address(this));

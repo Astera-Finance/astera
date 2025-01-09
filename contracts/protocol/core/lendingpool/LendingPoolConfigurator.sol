@@ -99,32 +99,36 @@ contract LendingPoolConfigurator is VersionedInitializable, ILendingPoolConfigur
     function _initReserve(ILendingPool pool_, InitReserveInput calldata input) internal {
         address aTokenProxyAddress = _initTokenWithProxy(
             input.aTokenImpl,
-            abi.encodeWithSelector(
-                IInitializableAToken.initialize.selector,
-                pool_,
-                input.treasury,
-                input.underlyingAsset,
-                IRewarder(input.incentivesController),
-                input.underlyingAssetDecimals,
-                input.reserveType,
-                input.aTokenName,
-                input.aTokenSymbol,
-                input.params
+            abi.encodeCall(
+                IInitializableAToken.initialize,
+                (
+                    pool_,
+                    input.treasury,
+                    input.underlyingAsset,
+                    IRewarder(input.incentivesController),
+                    input.underlyingAssetDecimals,
+                    input.reserveType,
+                    input.aTokenName,
+                    input.aTokenSymbol,
+                    input.params
+                )
             )
         );
 
         address variableDebtTokenProxyAddress = _initTokenWithProxy(
             input.variableDebtTokenImpl,
-            abi.encodeWithSelector(
-                IInitializableDebtToken.initialize.selector,
-                pool,
-                input.underlyingAsset,
-                IRewarder(input.incentivesController),
-                input.underlyingAssetDecimals,
-                input.reserveType,
-                input.variableDebtTokenName,
-                input.variableDebtTokenSymbol,
-                input.params
+            abi.encodeCall(
+                IInitializableDebtToken.initialize,
+                (
+                    pool,
+                    input.underlyingAsset,
+                    IRewarder(input.incentivesController),
+                    input.underlyingAssetDecimals,
+                    input.reserveType,
+                    input.variableDebtTokenName,
+                    input.variableDebtTokenSymbol,
+                    input.params
+                )
             )
         );
 
@@ -170,16 +174,19 @@ contract LendingPoolConfigurator is VersionedInitializable, ILendingPoolConfigur
         (,,, uint256 decimals,,,) =
             cachedPool.getConfiguration(input.asset, input.reserveType).getParamsMemory();
 
-        bytes memory encodedCall = abi.encodeWithSelector(
-            IInitializableAToken.initialize.selector,
-            cachedPool,
-            input.treasury,
-            input.asset,
-            IRewarder(input.incentivesController),
-            decimals,
-            input.name,
-            input.symbol,
-            input.params
+        bytes memory encodedCall = abi.encodeCall(
+            IInitializableAToken.initialize,
+            (
+                cachedPool,
+                input.treasury,
+                input.asset,
+                IRewarder(input.incentivesController),
+                uint8(decimals),
+                input.reserveType,
+                input.name,
+                input.symbol,
+                input.params
+            )
         );
 
         _upgradeTokenImplementation(reserveData.aTokenAddress, input.implementation, encodedCall);
@@ -203,15 +210,18 @@ contract LendingPoolConfigurator is VersionedInitializable, ILendingPoolConfigur
         (,,, uint256 decimals,,,) =
             cachedPool.getConfiguration(input.asset, input.reserveType).getParamsMemory();
 
-        bytes memory encodedCall = abi.encodeWithSelector(
-            IInitializableDebtToken.initialize.selector,
-            cachedPool,
-            input.asset,
-            IRewarder(input.incentivesController),
-            decimals,
-            input.name,
-            input.symbol,
-            input.params
+        bytes memory encodedCall = abi.encodeCall(
+            IInitializableDebtToken.initialize,
+            (
+                cachedPool,
+                input.asset,
+                IRewarder(input.incentivesController),
+                uint8(decimals),
+                input.reserveType,
+                input.name,
+                input.symbol,
+                input.params
+            )
         );
 
         _upgradeTokenImplementation(
