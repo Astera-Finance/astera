@@ -336,7 +336,7 @@ contract ATokenERC6909 is IncentivizedERC6909, VersionedInitializable {
 
         uint256 amountScaled = amount.rayDiv(index);
 
-        require(amountScaled != 0, Errors.CT_INVALID_BURN_AMOUNT);
+        require(amountScaled != 0, Errors.AT_INVALID_BURN_AMOUNT);
         if (isAToken(id)) {
             transferUnderlyingTo(receiverOfUnderlying, id, amount, unwrap);
         }
