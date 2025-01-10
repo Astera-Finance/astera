@@ -19,6 +19,7 @@ import {IMiniPool} from "../../../../contracts/interfaces/IMiniPool.sol";
 import {ATokenNonRebasing} from
     "../../../../contracts/protocol/tokenization/ERC20/ATokenNonRebasing.sol";
 import {Strings} from "openzeppelin-contracts/contracts/utils/Strings.sol";
+import {SafeERC20} from "../../../../contracts/dependencies/openzeppelin/contracts/SafeERC20.sol";
 
 /**
  * @title ERC6909-MultiToken
@@ -30,6 +31,7 @@ import {Strings} from "openzeppelin-contracts/contracts/utils/Strings.sol";
 contract ATokenERC6909 is IncentivizedERC6909, VersionedInitializable {
     using WadRayMath for uint256;
     using ReserveLogic for DataTypes.ReserveData;
+    using SafeERC20 for IERC20;
 
     // ======================= Events =======================
 
@@ -255,7 +257,7 @@ contract ATokenERC6909 is IncentivizedERC6909, VersionedInitializable {
                 asset.UNDERLYING_ASSET_ADDRESS(), true, asset.convertToAssets(amount), to
             );
         } else {
-            IERC20(_underlyingAssetAddresses[id]).transfer(to, amount);
+            IERC20(_underlyingAssetAddresses[id]).safeTransfer(to, amount);
         }
     }
 
@@ -333,13 +335,13 @@ contract ATokenERC6909 is IncentivizedERC6909, VersionedInitializable {
         require(msg.sender == address(POOL), Errors.AT_CALLER_MUST_BE_LENDING_POOL);
 
         uint256 amountScaled = amount.rayDiv(index);
-        require(amountScaled != 0, Errors.AT_INVALID_BURN_AMOUNT);
-        _burn(user, id, amountScaled);
 
+        require(amountScaled != 0, Errors.CT_INVALID_BURN_AMOUNT);
         if (isAToken(id)) {
             transferUnderlyingTo(receiverOfUnderlying, id, amount, unwrap);
         }
-
+        _burn(user, id, amountScaled);
+        
         emit Burn(user, id, amountScaled);
     }
 
@@ -402,21 +404,22 @@ contract ATokenERC6909 is IncentivizedERC6909, VersionedInitializable {
      * @param from The address tokens are transferred from.
      * @param to The address tokens are transferred to.
      * @param id The token ID being transferred.
-     * @param amount The amount being transferred.
+     * @param amount The amount being transferred in shares.
      * @dev Updates incentives based on transfer type (mint/burn/transfer).
+     * @dev this hook gets called from solday's `ERC6909` which only deals with shares
      */
     function _afterTokenTransfer(address from, address to, uint256 id, uint256 amount)
         internal
         override
     {
-        uint256 oldSupply = totalSupply(id);
-        uint256 oldFromBalance = balanceOf(from, id);
-        uint256 oldToBalance = balanceOf(to, id);
+        uint256 oldSupply = super.totalSupply(id);
+        uint256 oldFromBalance = super.balanceOf(from, id);
+        uint256 oldToBalance = super.balanceOf(to, id);
+
         //If the token was minted.
         if (from == address(0) && to != address(0)) {
             oldSupply = _incrementTotalSupply(id, amount);
             oldToBalance = oldToBalance - amount;
-            oldFromBalance = 0;
             if (address(_incentivesController) != address(0)) {
                 _incentivesController.handleAction(id, to, oldSupply, oldToBalance);
             }
@@ -424,7 +427,6 @@ contract ATokenERC6909 is IncentivizedERC6909, VersionedInitializable {
         } else if (to == address(0) && from != address(0)) {
             oldSupply = _decrementTotalSupply(id, amount);
             oldFromBalance = oldFromBalance + amount;
-            oldToBalance = 0;
             if (address(_incentivesController) != address(0)) {
                 _incentivesController.handleAction(id, from, oldSupply, oldFromBalance);
             }

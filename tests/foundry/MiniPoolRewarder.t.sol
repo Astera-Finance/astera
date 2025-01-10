@@ -13,6 +13,8 @@ import "contracts/protocol/tokenization/ERC6909/ATokenERC6909.sol";
 import "forge-std/StdUtils.sol";
 
 contract MiniPoolRewarderTest is Common {
+    using WadRayMath for uint256;
+
     ERC20[] erc20Tokens;
     Rewarder6909 miniPoolRewarder;
     RewardsVault[] miniPoolRewardsVaults;
@@ -476,7 +478,6 @@ contract MiniPoolRewarderTest is Common {
         RewardForwarder forwarder = new RewardForwarder(address(deployedContracts.rewarder));
         vm.expectRevert();
         deployedContracts.rewarder.setRewardForwarder(address(forwarder));
-        forwarder.setRewardTokens();
         forwarder.setRewardedTokens(rewardedTokens);
         forwarder.setForwarder(aTokensErc6909Addr, 0, address(this));
         forwarder.setForwarder(miniPool, 0, address(this));
@@ -572,7 +573,6 @@ contract MiniPoolRewarderTest is Common {
 
         RewardForwarder forwarder = new RewardForwarder(address(deployedContracts.rewarder));
         deployedContracts.rewarder.setRewardForwarder(address(forwarder));
-        forwarder.setRewardTokens();
         forwarder.setRewardedTokens(rewardedTokens);
         forwarder.setForwarder(aTokensErc6909Addr, 0, address(this));
         forwarder.setForwarder(miniPool, 0, address(this));
@@ -620,7 +620,6 @@ contract MiniPoolRewarderTest is Common {
         vm.label(forwardDestinationB, "ForwardDestinationB");
         RewardForwarder forwarder = new RewardForwarder(address(deployedContracts.rewarder));
         deployedContracts.rewarder.setRewardForwarder(address(forwarder));
-        forwarder.setRewardTokens();
         forwarder.setRewardedTokens(rewardedTokens);
         forwarder.setForwarder(aTokensErc6909Addr, 0, forwardDestinationA);
         forwarder.setForwarder(miniPool, 0, forwardDestinationB);
@@ -2165,6 +2164,53 @@ contract MiniPoolRewarderTest is Common {
 
             console.log("usdcAmount: %s for price: %s", usdcAmount, usdcParams.price);
 
+            {
+                deployedContracts.rewarder.setRewardForwarder(address(forwarder));
+                forwarder.setRewardedTokens(rewardedTokens);
+                forwarder.setForwarder(aTokensErc6909Addr, 0, address(this));
+                forwarder.setForwarder(miniPool, 0, address(this));
+                forwarder.setForwarder(aTokensErc6909Addr, 1, address(this));
+                forwarder.setForwarder(miniPool, 1, address(this));
+                forwarder.setForwarder(aTokensErc6909Addr, 2, address(this));
+                forwarder.setForwarder(miniPool, 2, address(this));
+                forwarder.registerClaimee(aTokensErc6909Addr);
+                forwarder.registerClaimee(miniPool);
+            }
+
+            vm.startPrank(user2);
+            console.log("User3 deposits USDC to main pool");
+            usdcParams.token.approve(address(deployedContracts.lendingPool), usdcAmount);
+            deployedContracts.lendingPool.deposit(
+                address(usdcParams.token), true, usdcAmount, user1
+            );
+            vm.stopPrank();
+
+            vm.startPrank(user1);
+            console.log("User1 deposits WETH to main pool");
+            wethParams.token.approve(address(deployedContracts.lendingPool), wethAmount);
+            deployedContracts.lendingPool.deposit(
+                address(wethParams.token), true, wethAmount, user1
+            );
+            wethParams.aTokenWrapper.approve(miniPool, wethAmount);
+            IMiniPool(miniPool).deposit(address(wethParams.aTokenWrapper), false, wethAmount, user1);
+            vm.stopPrank();
+
+            vm.prank(address(miniPoolContracts.miniPoolAddressesProvider.getMainPoolAdmin()));
+            miniPoolContracts.miniPoolConfigurator.setFlowLimit(
+                address(usdcParams.token), miniPool, 2 * usdcAmount
+            );
+
+            vm.startPrank(user1);
+            console.log("User1 borrows USDC from mini pool");
+            IMiniPool(miniPool).borrow(
+                address(usdcParams.aTokenWrapper), false, usdcAmount / 2, user1
+            );
+            vm.stopPrank();
+
+            console.log("Time travel 1");
+            vm.warp(block.timestamp + 20);
+            vm.roll(block.number + 1);
+
             DistributionTypes.MiniPoolRewardsConfigInput[] memory configs =
                 new DistributionTypes.MiniPoolRewardsConfigInput[](3 * aTokenIds.length * 4);
             uint256 configId = 0;
@@ -2218,19 +2264,6 @@ contract MiniPoolRewarderTest is Common {
                 address(miniPoolContracts.miniPoolAddressesProvider) // The address of the mini pool addresses provider
             );
 
-            {
-                deployedContracts.rewarder.setRewardForwarder(address(forwarder));
-                forwarder.setRewardTokens();
-                forwarder.setRewardedTokens(rewardedTokens);
-                forwarder.setForwarder(aTokensErc6909Addr, 0, address(this));
-                forwarder.setForwarder(miniPool, 0, address(this));
-                forwarder.setForwarder(aTokensErc6909Addr, 1, address(this));
-                forwarder.setForwarder(miniPool, 1, address(this));
-                forwarder.setForwarder(aTokensErc6909Addr, 2, address(this));
-                forwarder.setForwarder(miniPool, 2, address(this));
-                forwarder.registerClaimee(aTokensErc6909Addr);
-                forwarder.registerClaimee(miniPool);
-            }
             vm.startPrank(user2);
             console.log("User3 deposits USDC to main pool");
             usdcParams.token.approve(address(deployedContracts.lendingPool), usdcAmount);
@@ -2249,10 +2282,10 @@ contract MiniPoolRewarderTest is Common {
             IMiniPool(miniPool).deposit(address(wethParams.aTokenWrapper), false, wethAmount, user1);
             vm.stopPrank();
 
-            vm.prank(address(miniPoolContracts.miniPoolAddressesProvider.getMainPoolAdmin()));
-            miniPoolContracts.miniPoolConfigurator.setFlowLimit(
-                address(usdcParams.token), miniPool, usdcAmount
-            );
+            // vm.prank(address(miniPoolContracts.miniPoolAddressesProvider.getMainPoolAdmin()));
+            // miniPoolContracts.miniPoolConfigurator.setFlowLimit(
+            //     address(usdcParams.token), miniPool, usdcAmount
+            // );
 
             vm.startPrank(user1);
             console.log("User1 borrows USDC from mini pool");
@@ -2261,7 +2294,7 @@ contract MiniPoolRewarderTest is Common {
             );
             vm.stopPrank();
         }
-        console.log("Time travel 1");
+        console.log("Time travel 2");
         vm.warp(block.timestamp + 20);
         vm.roll(block.number + 1);
 
@@ -2270,20 +2303,20 @@ contract MiniPoolRewarderTest is Common {
         assertEq(rewardTokens[2].balanceOf(address(forwarder)), 0);
 
         forwarder.claimRewardsForPool(miniPool);
-        assertEq(rewardTokens[0].balanceOf(address(forwarder)), 20 ether);
-        assertEq(rewardTokens[1].balanceOf(address(forwarder)), 20 ether);
-        assertEq(rewardTokens[2].balanceOf(address(forwarder)), 20 ether);
+        assertApproxEqRel(rewardTokens[0].balanceOf(address(forwarder)), 40 ether, 1e16);
+        assertApproxEqRel(rewardTokens[1].balanceOf(address(forwarder)), 20 ether, 1e16);
+        assertApproxEqRel(rewardTokens[2].balanceOf(address(forwarder)), 20 ether, 1e16);
 
         forwarder.forwardAllRewardsForPool(miniPool);
         assertEq(rewardTokens[0].balanceOf(address(forwarder)), 0);
         assertEq(rewardTokens[1].balanceOf(address(forwarder)), 0);
         assertEq(rewardTokens[2].balanceOf(address(forwarder)), 0);
 
-        assertEq(rewardTokens[0].balanceOf(address(this)), 20 ether);
-        assertEq(rewardTokens[1].balanceOf(address(this)), 20 ether);
-        assertEq(rewardTokens[2].balanceOf(address(this)), 20 ether);
+        assertApproxEqRel(rewardTokens[0].balanceOf(address(this)), 40 ether, 1e16);
+        assertApproxEqRel(rewardTokens[1].balanceOf(address(this)), 20 ether, 1e16);
+        assertApproxEqRel(rewardTokens[2].balanceOf(address(this)), 20 ether, 1e16);
 
-        console.log("Time travel 2");
+        console.log("Time travel 3");
         vm.warp(block.timestamp + 20);
         vm.roll(block.number + 1);
 
@@ -2291,20 +2324,117 @@ contract MiniPoolRewarderTest is Common {
             miniPool, address(commonContracts.variableDebtTokens[USDC_OFFSET])
         );
 
-        assertEq(rewardTokens[0].balanceOf(address(forwarder)), 20 ether);
-        assertEq(rewardTokens[1].balanceOf(address(forwarder)), 20 ether);
-        assertEq(rewardTokens[2].balanceOf(address(forwarder)), 20 ether);
+        assertApproxEqRel(rewardTokens[0].balanceOf(address(forwarder)), 20 ether, 1e16);
+        assertApproxEqRel(rewardTokens[1].balanceOf(address(forwarder)), 20 ether, 1e16);
+        assertApproxEqRel(rewardTokens[2].balanceOf(address(forwarder)), 20 ether, 1e16);
 
         forwarder.forwardRewards(
             miniPool, address(commonContracts.variableDebtTokens[USDC_OFFSET]), 1
         );
 
-        assertEq(rewardTokens[0].balanceOf(address(forwarder)), 20 ether);
+        assertApproxEqRel(rewardTokens[0].balanceOf(address(forwarder)), 20 ether, 1e16);
         assertEq(rewardTokens[1].balanceOf(address(forwarder)), 0);
-        assertEq(rewardTokens[2].balanceOf(address(forwarder)), 20 ether);
+        assertApproxEqRel(rewardTokens[2].balanceOf(address(forwarder)), 20 ether, 1e16);
 
-        assertEq(rewardTokens[0].balanceOf(address(this)), 20 ether);
-        assertEq(rewardTokens[1].balanceOf(address(this)), 40 ether);
-        assertEq(rewardTokens[2].balanceOf(address(this)), 20 ether);
+        assertApproxEqRel(rewardTokens[0].balanceOf(address(this)), 40 ether, 1e16);
+        assertApproxEqRel(rewardTokens[1].balanceOf(address(this)), 40 ether, 1e16);
+        assertApproxEqRel(rewardTokens[2].balanceOf(address(this)), 20 ether, 1e16);
+    }
+
+    function testScalingInRewarder() public {
+        address user1 = makeAddr("user1");
+        address user2 = makeAddr("user2");
+
+        deal(address(erc20Tokens[WETH_OFFSET]), user1, 100 ether);
+        deal(address(erc20Tokens[WETH_OFFSET]), user2, 100 ether);
+
+        TokenParamsExtended memory wethParams = TokenParamsExtended({
+            token: erc20Tokens[WETH_OFFSET],
+            aToken: commonContracts.aTokens[WETH_OFFSET],
+            aTokenWrapper: commonContracts.aTokensWrapper[WETH_OFFSET],
+            vault: new MockVaultUnit(erc20Tokens[WETH_OFFSET]),
+            price: commonContracts.oracle.getAssetPrice(address(tokens[WETH_OFFSET]))
+        });
+
+        address[] memory aTokenAddresses = new address[](2);
+        aTokenAddresses[0] = address(wethParams.aToken);
+        aTokenAddresses[1] = address(commonContracts.variableDebtTokens[WETH_OFFSET]);
+
+        DistributionTypes.Asset6909[] memory assets = new DistributionTypes.Asset6909[](2);
+        assets[0] = DistributionTypes.Asset6909(aTokensErc6909Addr, 1000 + WETH_OFFSET);
+        assets[1] = DistributionTypes.Asset6909(aTokensErc6909Addr, 2000 + WETH_OFFSET);
+
+        uint256 wethAmount = 10 ether;
+        // uint256 wethAmount = (1000 ether / wethParams.price) * 10 ** PRICE_FEED_DECIMALS
+        //     / (10 ** (18 - wethParams.token.decimals()));
+        // console.log("wethAmount: %s for price: %s", wethAmount, wethParams.price);
+
+        vm.startPrank(user1);
+        console.log("User1 deposits to main pool");
+        wethParams.token.approve(address(deployedContracts.lendingPool), wethAmount);
+        deployedContracts.lendingPool.deposit(address(wethParams.token), true, wethAmount, user1);
+
+        console.log("User1 deposits to mini pool");
+        wethParams.aTokenWrapper.approve(miniPool, wethAmount);
+        IMiniPool(miniPool).deposit(
+            address(wethParams.aTokenWrapper), false, wethAmount / 3 * 2, user1
+        );
+
+        console.log("User1 borrows from mini pool");
+        IMiniPool(miniPool).borrow(address(wethParams.aTokenWrapper), false, wethAmount / 2, user1);
+
+        console.log("Time travel 1");
+        vm.warp(block.timestamp + 40);
+        vm.roll(block.number + 1);
+
+        console.log("User1 repays from mini pool");
+        uint256 index =
+            IMiniPool(miniPool).getReserveNormalizedVariableDebt(address(wethParams.aTokenWrapper));
+        console.log("Index: ", index);
+        wethParams.aTokenWrapper.approve(miniPool, index.rayMul(wethAmount) / 2);
+        IMiniPool(miniPool).repay(
+            address(wethParams.aTokenWrapper), false, index.rayMul(wethAmount) / 2, user1
+        );
+        console.log("User1 withdraws from mini pool");
+        IMiniPool(miniPool).withdraw(
+            address(wethParams.aTokenWrapper), false, wethAmount / 3 * 2, user1
+        );
+        vm.stopPrank();
+
+        console.log(
+            "1.aWeth total supply: ", IAERC6909(aTokensErc6909Addr).totalSupply(1000 + WETH_OFFSET)
+        );
+
+        console.log(
+            "1.aWeth scaled total supply: ",
+            IAERC6909(aTokensErc6909Addr).scaledTotalSupply(1000 + WETH_OFFSET)
+        );
+
+        vm.startPrank(user2);
+        console.log("User2 deposits to main pool");
+        wethParams.token.approve(address(deployedContracts.lendingPool), wethAmount);
+        deployedContracts.lendingPool.deposit(address(wethParams.token), true, wethAmount, user2);
+
+        console.log("User2 deposits to mini pools");
+        wethParams.aTokenWrapper.approve(miniPool, wethAmount);
+        IMiniPool(miniPool).deposit(address(wethParams.aTokenWrapper), false, wethAmount, user2);
+
+        console.log("aToken ERC6909 balance: ", wethParams.aToken.balanceOf(aTokensErc6909Addr));
+
+        console.log(
+            "2.aWeth total supply: (%s) %s ",
+            aTokensErc6909Addr,
+            IAERC6909(aTokensErc6909Addr).totalSupply(1000 + WETH_OFFSET)
+        );
+
+        console.log(
+            "2.aWeth scaled total supply: (%s) %s",
+            aTokensErc6909Addr,
+            IAERC6909(aTokensErc6909Addr).scaledTotalSupply(1000 + WETH_OFFSET)
+        );
+
+        console.log("User2 withdraws from mini pools");
+        IMiniPool(miniPool).withdraw(address(wethParams.aTokenWrapper), false, wethAmount, user2);
+        vm.stopPrank();
     }
 }

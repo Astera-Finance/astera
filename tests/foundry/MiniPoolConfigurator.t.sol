@@ -750,7 +750,12 @@ contract MiniPoolConfiguratorTest is MiniPoolDepositBorrowTest {
             newAdmin != address(0) && newAdmin != address(miniPoolContracts.miniPoolConfigurator)
         );
         address poolAdmin = miniPoolContracts.miniPoolAddressesProvider.getPoolAdmin(0);
+        vm.assume(
+            newAdmin != address(0) && newAdmin != poolAdmin
+                && newAdmin != address(miniPoolContracts.miniPoolAddressesProvider)
+        );
         console.log("poolAdmin: ", poolAdmin);
+        console.log("newAdmin: ", newAdmin);
 
         vm.startPrank(newAdmin);
         vm.expectRevert(bytes(Errors.VL_CALLER_NOT_POOL_ADMIN));

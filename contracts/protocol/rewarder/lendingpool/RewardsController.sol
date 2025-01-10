@@ -140,7 +140,7 @@ abstract contract RewardsController is RewardsDistributor, IRewardsController {
                 IAERC6909(user).getIdForUnderlying(IAToken(msg.sender).WRAPPER_ADDRESS());
             // For trancheATokens we calculate the total supply of the AERC6909 ID for the aTokenID.
             // We subtract the current balance.
-            uint256 totalSupplyAsset = IAERC6909(user).scaledTotalSupply(aTokenID);
+            uint256 totalSupplyAsset = IAERC6909(user).totalSupply(aTokenID);
             uint256 diff = totalSupplyAsset - userBalance;
             _totalDiff[msg.sender] =
                 _totalDiff[msg.sender] - lastReportedDiff[msg.sender][user] + diff;

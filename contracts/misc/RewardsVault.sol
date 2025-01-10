@@ -6,12 +6,15 @@ import {ILendingPoolAddressesProvider} from
     "../../contracts/interfaces/ILendingPoolAddressesProvider.sol";
 import {Ownable} from "../../contracts/dependencies/openzeppelin/contracts/Ownable.sol";
 import {Errors} from "../../contracts/protocol/libraries/helpers/Errors.sol";
-
+import {SafeERC20} from "../../contracts/dependencies/openzeppelin/contracts/SafeERC20.sol";
 /**
  * @title RewardsVault
  * @author Cod3x
  */
+
 contract RewardsVault is Ownable {
+    using SafeERC20 for IERC20;
+
     ILendingPoolAddressesProvider public ADDRESSES_PROVIDER;
     address public INCENTIVES_CONTROLLER;
     address public REWARD_TOKEN;
@@ -32,7 +35,7 @@ contract RewardsVault is Ownable {
     }
 
     function approveIncentivesController(uint256 value) external onlyPoolAdmin {
-        IERC20(REWARD_TOKEN).approve(INCENTIVES_CONTROLLER, value);
+        IERC20(REWARD_TOKEN).forceApprove(INCENTIVES_CONTROLLER, value);
     }
 
     function emergencyEtherTransfer(address to, uint256 amount) external onlyOwner {
@@ -41,6 +44,6 @@ contract RewardsVault is Ownable {
     }
 
     function emergencyTokenTransfer(address token, address to, uint256 amount) external onlyOwner {
-        IERC20(token).transfer(to, amount);
+        IERC20(token).safeTransfer(to, amount);
     }
 }
