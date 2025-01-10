@@ -341,7 +341,7 @@ contract ATokenERC6909 is IncentivizedERC6909, VersionedInitializable {
             transferUnderlyingTo(receiverOfUnderlying, id, amount, unwrap);
         }
         _burn(user, id, amountScaled);
-        
+
         emit Burn(user, id, amountScaled);
     }
 

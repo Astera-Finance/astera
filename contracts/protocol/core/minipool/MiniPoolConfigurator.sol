@@ -483,7 +483,11 @@ contract MiniPoolConfigurator is VersionedInitializable, IMiniPoolConfigurator {
     function _checkNoLiquidity(address asset, IMiniPool pool) internal view {
         DataTypes.MiniPoolReserveData memory reserveData = pool.getReserveData(asset);
 
-        uint256 availableLiquidity = IERC20Detailed(asset).balanceOf(reserveData.aTokenAddress);
+        IAERC6909 aToken6909 = IAERC6909(reserveData.aTokenAddress);
+        (uint256 aTokenID, uint256 debtTokenID,) = aToken6909.getIdForUnderlying(asset);
+
+        uint256 availableLiquidity =
+            aToken6909.scaledTotalSupply(aTokenID) + aToken6909.scaledTotalSupply(debtTokenID);
 
         require(
             availableLiquidity == 0 && reserveData.currentLiquidityRate == 0,
