@@ -35,12 +35,6 @@ contract RewardForwarder is Ownable {
     );
 
     /**
-     * @dev Emitted when the reward tokens are set.
-     * @param rewardTokens The array of reward tokens.
-     */
-    event RewardTokensSet(address[] rewardTokens);
-
-    /**
      * @dev Emitted when the rewarded tokens are set.
      * @param rewardedTokens The array of rewarded tokens.
      */
@@ -106,8 +100,6 @@ contract RewardForwarder is Ownable {
      */
     function setRewardTokens() external onlyOwner {
         rewardTokens = rewardsController.getRewardTokens();
-
-        emit RewardTokensSet(rewardTokens);
     }
 
     /**
@@ -178,9 +170,7 @@ contract RewardForwarder is Ownable {
         assets[0] = token;
         (address[] memory rewardTokens_, uint256[] memory claimedAmounts_) =
             rewardsController.claimAllRewardsOnBehalf(assets, claimee, address(this));
-
         require(rewardTokens.length >= rewardTokens_.length, "Too many rewardTokens");
-
         for (uint256 i = 0; i < rewardTokens_.length; i++) {
             claimedRewards[claimee][token][i] += claimedAmounts_[i];
         }
@@ -205,7 +195,5 @@ contract RewardForwarder is Ownable {
         address forwarder = forwarders[claimee][rewardTokenIndex];
         require(forwarder != address(0), "No forwarder set");
         IERC20(rewardToken).transfer(forwarder, amount);
-
-        emit RewardsForwarded(claimee, token, rewardTokenIndex, amount, forwarder);
     }
 }
