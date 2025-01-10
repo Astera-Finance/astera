@@ -11,7 +11,7 @@ echidna tests/echidna/PropertiesMain.sol --contract PropertiesMain --config test
 
 Medusa: to be fixed.
 ```sh
-cd tests/echidna
+forge install
 medusa fuzz --config medusa_config.json
 ```
 
