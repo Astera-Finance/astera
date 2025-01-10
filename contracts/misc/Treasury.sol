@@ -21,7 +21,7 @@ contract Treasury is Ownable {
     address private multisig;
 
     modifier onlyPoolAdmin() {
-        require(ADDRESSES_PROVIDER.getPoolAdmin() == msg.sender, Errors.CALLER_NOT_POOL_ADMIN);
+        require(ADDRESSES_PROVIDER.getPoolAdmin() == msg.sender, Errors.VL_CALLER_NOT_POOL_ADMIN);
         _;
     }
 

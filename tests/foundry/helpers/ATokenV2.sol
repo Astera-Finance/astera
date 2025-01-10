@@ -92,7 +92,7 @@ contract ATokenV2 is
      */
 
     modifier onlyLendingPool() {
-        require(msg.sender == address(_pool), Errors.CT_CALLER_MUST_BE_LENDING_POOL);
+        require(msg.sender == address(_pool), Errors.AT_CALLER_MUST_BE_LENDING_POOL);
         _;
     }
 
@@ -181,7 +181,7 @@ contract ATokenV2 is
         onlyLendingPool
     {
         uint256 amountScaled = amount.rayDiv(index);
-        require(amountScaled != 0, Errors.CT_INVALID_BURN_AMOUNT);
+        require(amountScaled != 0, Errors.AT_INVALID_BURN_AMOUNT);
         _rebalance(amount);
         _underlyingAmount = _underlyingAmount - amount;
         _burn(user, amountScaled);
@@ -209,7 +209,7 @@ contract ATokenV2 is
         uint256 previousBalance = super.balanceOf(user);
 
         uint256 amountScaled = amount.rayDiv(index);
-        require(amountScaled != 0, Errors.CT_INVALID_MINT_AMOUNT);
+        require(amountScaled != 0, Errors.AT_INVALID_MINT_AMOUNT);
         _underlyingAmount = _underlyingAmount + amount;
         _rebalance(0);
         _mint(user, amountScaled);
@@ -474,7 +474,7 @@ contract ATokenV2 is
      * @param shareAmount The share amount getting transferred.
      */
     function transferShare(address from, address to, uint256 shareAmount) external {
-        require(msg.sender == _aTokenWrapper, "CALLER_NOT_WRAPPER");
+        require(msg.sender == _aTokenWrapper, "AT_CALLER_NOT_WRAPPER");
 
         address underlyingAsset = _underlyingAsset;
         ILendingPool pool = _pool;
@@ -503,7 +503,7 @@ contract ATokenV2 is
      * @param shareAmount The share amount getting approved.
      */
     function shareApprove(address owner, address spender, uint256 shareAmount) external {
-        require(msg.sender == _aTokenWrapper, "CALLER_NOT_WRAPPER");
+        require(msg.sender == _aTokenWrapper, "AT_CALLER_NOT_WRAPPER");
 
         _shareAllowances[owner][spender] = shareAmount;
     }

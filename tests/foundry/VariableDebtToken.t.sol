@@ -41,9 +41,9 @@ contract VariableDebtTokenTest is Common {
 
     function testAccessControl() public {
         for (uint32 idx = 0; idx < commonContracts.aTokens.length; idx++) {
-            vm.expectRevert(bytes(Errors.CT_CALLER_MUST_BE_LENDING_POOL));
+            vm.expectRevert(bytes(Errors.AT_CALLER_MUST_BE_LENDING_POOL));
             commonContracts.variableDebtTokens[idx].mint(address(this), address(this), 1, 1);
-            vm.expectRevert(bytes(Errors.CT_CALLER_MUST_BE_LENDING_POOL));
+            vm.expectRevert(bytes(Errors.AT_CALLER_MUST_BE_LENDING_POOL));
             commonContracts.variableDebtTokens[idx].burn(admin, 1, 1);
         }
     }

@@ -172,7 +172,7 @@ contract LendingPoolConfiguratorTest is Common, LendingPoolFixtures {
 
             vm.startPrank(admin);
             /* Shouldn't be able to deactivate when liquidity is not zero */
-            vm.expectRevert(bytes(Errors.LPC_RESERVE_LIQUIDITY_NOT_0));
+            vm.expectRevert(bytes(Errors.VL_RESERVE_LIQUIDITY_NOT_0));
             deployedContracts.lendingPoolConfigurator.deactivateReserve(
                 address(erc20Tokens[idx]), true
             );
@@ -409,33 +409,33 @@ contract LendingPoolConfiguratorTest is Common, LendingPoolFixtures {
         uint256 randomNumber;
         randomNumber = bound(randomNumber, 0, type(uint256).max);
         /* access controls */
-        vm.expectRevert(bytes(Errors.CALLER_NOT_POOL_ADMIN));
+        vm.expectRevert(bytes(Errors.VL_CALLER_NOT_POOL_ADMIN));
         deployedContracts.lendingPoolConfigurator.setFarmingPct(tokenAddress, randomNumber);
-        vm.expectRevert(bytes(Errors.CALLER_NOT_POOL_ADMIN));
+        vm.expectRevert(bytes(Errors.VL_CALLER_NOT_POOL_ADMIN));
         deployedContracts.lendingPoolConfigurator.setClaimingThreshold(tokenAddress, randomNumber);
-        vm.expectRevert(bytes(Errors.CALLER_NOT_POOL_ADMIN));
+        vm.expectRevert(bytes(Errors.VL_CALLER_NOT_POOL_ADMIN));
         deployedContracts.lendingPoolConfigurator.setFarmingPctDrift(tokenAddress, randomNumber);
-        vm.expectRevert(bytes(Errors.CALLER_NOT_POOL_ADMIN));
+        vm.expectRevert(bytes(Errors.VL_CALLER_NOT_POOL_ADMIN));
         deployedContracts.lendingPoolConfigurator.setProfitHandler(tokenAddress, tokenAddress);
-        vm.expectRevert(bytes(Errors.CALLER_NOT_POOL_ADMIN));
+        vm.expectRevert(bytes(Errors.VL_CALLER_NOT_POOL_ADMIN));
         deployedContracts.lendingPoolConfigurator.setVault(tokenAddress, tokenAddress);
 
-        vm.expectRevert(bytes(Errors.LPC_CALLER_NOT_EMERGENCY_ADMIN));
+        vm.expectRevert(bytes(Errors.VL_CALLER_NOT_EMERGENCY_ADMIN));
         deployedContracts.lendingPoolConfigurator.rebalance(tokenAddress);
 
-        vm.expectRevert(bytes(Errors.CALLER_NOT_POOL_ADMIN));
+        vm.expectRevert(bytes(Errors.VL_CALLER_NOT_POOL_ADMIN));
         deployedContracts.lendingPoolConfigurator.setReserveInterestRateStrategyAddress(
             tokenAddress, true, randomAddress
         );
-        vm.expectRevert(bytes(Errors.LPC_CALLER_NOT_EMERGENCY_ADMIN));
+        vm.expectRevert(bytes(Errors.VL_CALLER_NOT_EMERGENCY_ADMIN));
         deployedContracts.lendingPoolConfigurator.setPoolPause(true);
-        vm.expectRevert(bytes(Errors.CALLER_NOT_POOL_ADMIN));
+        vm.expectRevert(bytes(Errors.VL_CALLER_NOT_POOL_ADMIN));
         deployedContracts.lendingPoolConfigurator.updateFlashloanPremiumTotal(uint128(randomNumber));
-        vm.expectRevert(bytes(Errors.CALLER_NOT_POOL_ADMIN));
+        vm.expectRevert(bytes(Errors.VL_CALLER_NOT_POOL_ADMIN));
         deployedContracts.lendingPoolConfigurator.setRewarderForReserve(
             tokenAddress, true, randomAddress
         );
-        vm.expectRevert(bytes(Errors.CALLER_NOT_POOL_ADMIN));
+        vm.expectRevert(bytes(Errors.VL_CALLER_NOT_POOL_ADMIN));
         deployedContracts.lendingPoolConfigurator.setTreasury(tokenAddress, true, randomAddress);
     }
 
@@ -551,7 +551,7 @@ contract LendingPoolConfiguratorTest is Common, LendingPoolFixtures {
     function testUpdateFlashloanPremiumTotalNegative(uint128 flashLoanPremiumTotal) public {
         vm.assume(flashLoanPremiumTotal > 1e4);
         vm.prank(admin);
-        vm.expectRevert(bytes(Errors.LPC_FLASHLOAN_PREMIUM_INVALID));
+        vm.expectRevert(bytes(Errors.VL_FLASHLOAN_PREMIUM_INVALID));
         deployedContracts.lendingPoolConfigurator.updateFlashloanPremiumTotal(flashLoanPremiumTotal);
     }
 

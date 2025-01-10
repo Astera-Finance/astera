@@ -76,19 +76,19 @@ contract ATokenErc6909Test is Common {
     function testAccessControl_NotLiquidityPool() public {
         address addr = makeAddr("RandomAddress");
         for (uint32 idx = 0; idx < commonContracts.aTokens.length; idx++) {
-            vm.expectRevert(bytes(Errors.CT_CALLER_MUST_BE_LENDING_POOL));
+            vm.expectRevert(bytes(Errors.AT_CALLER_MUST_BE_LENDING_POOL));
             aErc6909Token.mint(address(this), address(this), 1, 1, 1);
-            vm.expectRevert(bytes(Errors.CT_CALLER_MUST_BE_LENDING_POOL));
+            vm.expectRevert(bytes(Errors.AT_CALLER_MUST_BE_LENDING_POOL));
             aErc6909Token.mintToCod3xTreasury(1, 1, 1);
-            vm.expectRevert(bytes(Errors.CT_CALLER_MUST_BE_LENDING_POOL));
+            vm.expectRevert(bytes(Errors.AT_CALLER_MUST_BE_LENDING_POOL));
             aErc6909Token.burn(admin, admin, 1, 1, false, 1);
-            vm.expectRevert(bytes(Errors.CT_CALLER_MUST_BE_LENDING_POOL));
+            vm.expectRevert(bytes(Errors.AT_CALLER_MUST_BE_LENDING_POOL));
             aErc6909Token.transferOnLiquidation(admin, addr, 0, 1);
-            vm.expectRevert(bytes(Errors.CT_CALLER_MUST_BE_LENDING_POOL));
+            vm.expectRevert(bytes(Errors.AT_CALLER_MUST_BE_LENDING_POOL));
             aErc6909Token.setIncentivesController(IMiniPoolRewarder(addr));
-            vm.expectRevert(bytes(Errors.CT_CALLER_MUST_BE_LENDING_POOL));
+            vm.expectRevert(bytes(Errors.AT_CALLER_MUST_BE_LENDING_POOL));
             aErc6909Token.transferUnderlyingTo(addr, 11, 1, false);
-            vm.expectRevert(bytes(Errors.CT_CALLER_MUST_BE_LENDING_POOL));
+            vm.expectRevert(bytes(Errors.AT_CALLER_MUST_BE_LENDING_POOL));
             aErc6909Token.mintToCod3xTreasury(1, 11, 1);
         }
     }

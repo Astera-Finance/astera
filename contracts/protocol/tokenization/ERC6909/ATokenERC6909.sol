@@ -160,7 +160,7 @@ contract ATokenERC6909 is IncentivizedERC6909, VersionedInitializable {
      * @param controller The address of the new incentives controller.
      */
     function setIncentivesController(IMiniPoolRewarder controller) external {
-        require(msg.sender == address(POOL), Errors.CT_CALLER_MUST_BE_LENDING_POOL);
+        require(msg.sender == address(POOL), Errors.AT_CALLER_MUST_BE_LENDING_POOL);
         _incentivesController = controller;
 
         emit IncentivesControllerSet(address(controller));
@@ -247,7 +247,7 @@ contract ATokenERC6909 is IncentivizedERC6909, VersionedInitializable {
      * @param unwrap Whether to unwrap the underlying asset.
      */
     function transferUnderlyingTo(address to, uint256 id, uint256 amount, bool unwrap) public {
-        require(msg.sender == address(POOL), Errors.CT_CALLER_MUST_BE_LENDING_POOL);
+        require(msg.sender == address(POOL), Errors.AT_CALLER_MUST_BE_LENDING_POOL);
 
         if (unwrap) {
             ATokenNonRebasing asset = ATokenNonRebasing(_underlyingAssetAddresses[id]);
@@ -294,7 +294,7 @@ contract ATokenERC6909 is IncentivizedERC6909, VersionedInitializable {
         external
         returns (bool)
     {
-        require(msg.sender == address(POOL), Errors.CT_CALLER_MUST_BE_LENDING_POOL);
+        require(msg.sender == address(POOL), Errors.AT_CALLER_MUST_BE_LENDING_POOL);
         if (amount == 0) {
             return false;
         }
@@ -305,7 +305,7 @@ contract ATokenERC6909 is IncentivizedERC6909, VersionedInitializable {
 
         uint256 previousBalance = super.balanceOf(onBehalfOf, id);
         uint256 amountScaled = amount.rayDiv(index);
-        require(amountScaled != 0, Errors.CT_INVALID_MINT_AMOUNT);
+        require(amountScaled != 0, Errors.AT_INVALID_MINT_AMOUNT);
         _mint(onBehalfOf, id, amountScaled);
 
         emit Mint(onBehalfOf, id, amountScaled);
@@ -330,10 +330,10 @@ contract ATokenERC6909 is IncentivizedERC6909, VersionedInitializable {
         bool unwrap,
         uint256 index
     ) external {
-        require(msg.sender == address(POOL), Errors.CT_CALLER_MUST_BE_LENDING_POOL);
+        require(msg.sender == address(POOL), Errors.AT_CALLER_MUST_BE_LENDING_POOL);
 
         uint256 amountScaled = amount.rayDiv(index);
-        require(amountScaled != 0, Errors.CT_INVALID_BURN_AMOUNT);
+        require(amountScaled != 0, Errors.AT_INVALID_BURN_AMOUNT);
         _burn(user, id, amountScaled);
 
         if (isAToken(id)) {
@@ -363,7 +363,7 @@ contract ATokenERC6909 is IncentivizedERC6909, VersionedInitializable {
      * @param amount The amount to transfer.
      */
     function transferOnLiquidation(address from, address to, uint256 id, uint256 amount) external {
-        require(msg.sender == address(POOL), Errors.CT_CALLER_MUST_BE_LENDING_POOL);
+        require(msg.sender == address(POOL), Errors.AT_CALLER_MUST_BE_LENDING_POOL);
         _transferForLiquidation(from, to, id, amount);
     }
 
@@ -371,7 +371,7 @@ contract ATokenERC6909 is IncentivizedERC6909, VersionedInitializable {
      * @notice Handles repayment of debt.
      */
     function handleRepayment(address, address, uint256, uint256) external view {
-        require(msg.sender == address(POOL), Errors.CT_CALLER_MUST_BE_LENDING_POOL);
+        require(msg.sender == address(POOL), Errors.AT_CALLER_MUST_BE_LENDING_POOL);
     }
     // ======================= Internal Function =======================
 
@@ -393,7 +393,7 @@ contract ATokenERC6909 is IncentivizedERC6909, VersionedInitializable {
      */
     function _beforeTokenTransfer(address, address, uint256 id, uint256) internal view override {
         if (isDebtToken(id)) {
-            require(msg.sender == address(POOL), Errors.CT_CALLER_MUST_BE_LENDING_POOL);
+            require(msg.sender == address(POOL), Errors.AT_CALLER_MUST_BE_LENDING_POOL);
         }
     }
 
@@ -500,7 +500,7 @@ contract ATokenERC6909 is IncentivizedERC6909, VersionedInitializable {
     function _mintToTreasury(uint256 id, uint256 amount, uint256 index, address treasury)
         internal
     {
-        require(msg.sender == address(POOL), Errors.CT_CALLER_MUST_BE_LENDING_POOL);
+        require(msg.sender == address(POOL), Errors.AT_CALLER_MUST_BE_LENDING_POOL);
         if (amount == 0) {
             return;
         }
@@ -530,7 +530,7 @@ contract ATokenERC6909 is IncentivizedERC6909, VersionedInitializable {
         uint256 amount
     ) internal {
         uint256 oldAllowance = _borrowAllowances[id][delegator][delegatee];
-        require(oldAllowance >= amount, Errors.BORROW_ALLOWANCE_NOT_ENOUGH);
+        require(oldAllowance >= amount, Errors.AT_BORROW_ALLOWANCE_NOT_ENOUGH);
         uint256 newAllowance = oldAllowance - amount;
         _borrowAllowances[id][delegator][delegatee] = newAllowance;
     }
