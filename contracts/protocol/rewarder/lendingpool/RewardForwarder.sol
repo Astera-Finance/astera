@@ -2,8 +2,9 @@
 pragma solidity 0.8.23;
 
 import {IRewardsController} from "../../../../contracts/interfaces/IRewardsController.sol";
-import {IERC20} from "lib/openzeppelin-contracts/contracts/token/ERC20/IERC20.sol";
+import {IERC20} from "../../../../contracts/dependencies/openzeppelin/contracts/IERC20.sol";
 import {Ownable} from "lib/openzeppelin-contracts/contracts/access/Ownable.sol";
+import {SafeERC20} from "../../../../contracts/dependencies/openzeppelin/contracts/SafeERC20.sol";
 
 /**
  * @title RewardForwarder
@@ -12,7 +13,9 @@ import {Ownable} from "lib/openzeppelin-contracts/contracts/access/Ownable.sol";
  * @dev Inherits from `Ownable` to restrict admin functions.
  */
 contract RewardForwarder is Ownable {
+    using SafeERC20 for IERC20;
     /// @dev The rewards controller contract interface.
+
     IRewardsController public rewardsController;
 
     /// @dev Array of tokens that can receive rewards (aTokens and variable debt tokens).
@@ -142,7 +145,7 @@ contract RewardForwarder is Ownable {
         claimedRewards[claimee][token][rewardTokenIndex] = 0;
         address forwarder = forwarders[claimee][rewardTokenIndex];
         require(forwarder != address(0), "No forwarder set");
-        IERC20(rewardToken).transfer(forwarder, amount);
+        IERC20(rewardToken).safeTransfer(forwarder, amount);
     }
 
     /**

@@ -19,6 +19,7 @@ import {IMiniPool} from "../../../../contracts/interfaces/IMiniPool.sol";
 import {ATokenNonRebasing} from
     "../../../../contracts/protocol/tokenization/ERC20/ATokenNonRebasing.sol";
 import {Strings} from "openzeppelin-contracts/contracts/utils/Strings.sol";
+import {SafeERC20} from "../../../../contracts/dependencies/openzeppelin/contracts/SafeERC20.sol";
 
 /**
  * @title ERC6909-MultiToken
@@ -30,6 +31,7 @@ import {Strings} from "openzeppelin-contracts/contracts/utils/Strings.sol";
 contract ATokenERC6909 is IncentivizedERC6909, VersionedInitializable {
     using WadRayMath for uint256;
     using ReserveLogic for DataTypes.ReserveData;
+    using SafeERC20 for IERC20;
 
     // ======================= Events =======================
 
@@ -225,7 +227,7 @@ contract ATokenERC6909 is IncentivizedERC6909, VersionedInitializable {
                 asset.UNDERLYING_ASSET_ADDRESS(), true, asset.convertToAssets(amount), to
             );
         } else {
-            IERC20(_underlyingAssetAddresses[id]).transfer(to, amount);
+            IERC20(_underlyingAssetAddresses[id]).safeTransfer(to, amount);
         }
     }
 

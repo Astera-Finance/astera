@@ -225,7 +225,7 @@ contract MiniPool is VersionedInitializable, IMiniPool, MiniPoolStorage {
 
             vars.amountReceived = IERC20(underlying).balanceOf(address(this));
 
-            IERC20(underlying).approve(vars.LendingPool, vars.amountReceived);
+            IERC20(underlying).forceApprove(vars.LendingPool, vars.amountReceived);
             ILendingPool(vars.LendingPool).deposit(
                 underlying, true, vars.amountReceived, address(this)
             );
