@@ -25,6 +25,46 @@ contract RewardForwarder is Ownable {
     mapping(address => bool) public isRegisteredClaimee;
 
     /**
+     * @dev Emitted when a forwarder is set for a specific claimee and reward token.
+     * @param claimee The address of the claimee.
+     * @param rewardTokenIndex The index of the reward token in the `rewardTokens` array.
+     * @param forwarder The address that will receive forwarded rewards.
+     */
+    event ForwarderSet(
+        address indexed claimee, uint256 indexed rewardTokenIndex, address indexed forwarder
+    );
+
+    /**
+     * @dev Emitted when the reward tokens are set.
+     * @param rewardTokens The array of reward tokens.
+     */
+    event RewardTokensSet(address[] rewardTokens);
+
+    /**
+     * @dev Emitted when the rewarded tokens are set.
+     * @param rewardedTokens The array of rewarded tokens.
+     */
+    event RewardedTokensSet(address[] rewardedTokens);
+
+    /**
+     * @dev Emitted when a claimee is registered.
+     * @param claimee The address of the claimee.
+     */
+    event ClaimeeRegistered(address claimee);
+
+    /**
+     * @dev Emitted when rewards are forwarded to a forwarder.
+     * @param claimee The address of the claimee.
+     * @param token The address of the token.
+     * @param rewardTokenIndex The index of the reward token in the `rewardTokens` array.
+     * @param amount The amount of rewards.
+     * @param forwarder The address that will receive forwarded rewards.
+     */
+    event RewardsForwarded(
+        address claimee, address token, uint256 rewardTokenIndex, uint256 amount, address forwarder
+    );
+
+    /**
      * @dev Mapping to track claimed rewards per claimee.
      * Maps `claimee` => `rewardedToken` => `rewardTokensIndex` => `amount`.
      */
@@ -56,6 +96,8 @@ contract RewardForwarder is Ownable {
         onlyOwner
     {
         forwarders[claimee][rewardTokenIndex] = forwarder;
+
+        emit ForwarderSet(claimee, rewardTokenIndex, forwarder);
     }
 
     /**
@@ -64,6 +106,8 @@ contract RewardForwarder is Ownable {
      */
     function setRewardTokens() external onlyOwner {
         rewardTokens = rewardsController.getRewardTokens();
+
+        emit RewardTokensSet(rewardTokens);
     }
 
     /**
@@ -73,6 +117,8 @@ contract RewardForwarder is Ownable {
      */
     function setRewardedTokens(address[] memory _rewardedTokens) external onlyOwner {
         rewardedPoolTokens = _rewardedTokens;
+
+        emit RewardedTokensSet(_rewardedTokens);
     }
 
     /**
@@ -82,6 +128,8 @@ contract RewardForwarder is Ownable {
      */
     function registerClaimee(address claimee) external onlyOwner {
         isRegisteredClaimee[claimee] = true;
+
+        emit ClaimeeRegistered(claimee);
     }
 
     /**
@@ -130,10 +178,13 @@ contract RewardForwarder is Ownable {
         assets[0] = token;
         (address[] memory rewardTokens_, uint256[] memory claimedAmounts_) =
             rewardsController.claimAllRewardsOnBehalf(assets, claimee, address(this));
+
         require(rewardTokens.length >= rewardTokens_.length, "Too many rewardTokens");
+
         for (uint256 i = 0; i < rewardTokens_.length; i++) {
             claimedRewards[claimee][token][i] += claimedAmounts_[i];
         }
+
         return claimedAmounts_;
     }
 
@@ -154,5 +205,7 @@ contract RewardForwarder is Ownable {
         address forwarder = forwarders[claimee][rewardTokenIndex];
         require(forwarder != address(0), "No forwarder set");
         IERC20(rewardToken).transfer(forwarder, amount);
+
+        emit RewardsForwarded(claimee, token, rewardTokenIndex, amount, forwarder);
     }
 }

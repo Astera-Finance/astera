@@ -52,7 +52,7 @@ contract LendingPoolAddressesProvider is Ownable, ILendingPoolAddressesProvider 
      */
     function setAddress(bytes32 id, address newAddress) external override onlyOwner {
         _addresses[id] = newAddress;
-        
+
         emit AddressSet(id, newAddress, false);
     }
 

@@ -38,6 +38,18 @@ interface IRewardsController is IRewardsDistributor {
      */
     event RewardsVaultUpdated(address indexed vault);
 
+    /**
+     * @notice Emitted when the mini pool addresses provider is set
+     * @param addressesProvider The address of the new mini pool addresses provider
+     */
+    event MiniPoolAddressesProviderSet(address indexed addressesProvider);
+
+    /**
+     * @notice Emitted when the reward forwarder is set
+     * @param forwarder The address of the new reward forwarder
+     */
+    event RewardForwarderSet(address indexed forwarder);
+
     function setClaimer(address user, address claimer) external;
 
     function getClaimer(address user) external view returns (address);

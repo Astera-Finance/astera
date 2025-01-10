@@ -64,6 +64,8 @@ abstract contract RewardsController is RewardsDistributor, IRewardsController {
      */
     function setMiniPoolAddressesProvider(address addressesProvider) external onlyOwner {
         _addressesProvider = IMiniPoolAddressesProvider(addressesProvider);
+
+        emit MiniPoolAddressesProviderSet(addressesProvider);
     }
 
     /**
@@ -82,6 +84,8 @@ abstract contract RewardsController is RewardsDistributor, IRewardsController {
                 setDefaultForwarder(aToken6909);
             }
         }
+
+        emit RewardForwarderSet(forwarder);
     }
     /**
      * @notice Returns the authorized claimer address for a specific user.
