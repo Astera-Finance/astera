@@ -72,6 +72,26 @@ abstract contract BasePiReserveRateStrategy is Ownable {
     );
 
     /**
+     * @notice Emitted when the optimal utilization rate is set.
+     * @param optimalUtilizationRate The new optimal utilization rate.
+     */
+    event OptimalUtilizationRateSet(uint256 optimalUtilizationRate);
+
+    /**
+     * @notice Emitted when the minimum controller error is set.
+     * @param minControllerError The new minimum controller error.
+     */
+    event MinControllerErrorSet(int256 minControllerError);
+
+    /**
+     * @notice Emitted when the PID values are set.
+     * @param kp The proportional gain coefficient.
+     * @param ki The integral gain coefficient.
+     * @param maxITimeAmp The maximum integral time amplitude.
+     */
+    event PidValuesSet(uint256 kp, uint256 ki, int256 maxITimeAmp);
+
+    /**
      * @notice Initializes the interest rate strategy contract.
      * @param provider Address of the lending pool provider.
      * @param asset Address of the asset this strategy is for.
@@ -93,7 +113,7 @@ abstract contract BasePiReserveRateStrategy is Ownable {
         uint256 ki
     ) Ownable(msg.sender) {
         if (optimalUtilizationRate >= uint256(RAY)) {
-            revert(Errors.IR_U0_GREATER_THAN_RAY);
+            revert(Errors.LP_U0_GREATER_THAN_RAY);
         }
 
         _setOptimalUtilizationRate(optimalUtilizationRate);
@@ -107,14 +127,14 @@ abstract contract BasePiReserveRateStrategy is Ownable {
         _maxErrIAmp = int256(_ki).rayMulInt(-RAY * maxITimeAmp);
 
         if (transferFunctionReturnInt(type(int256).min) < 0) {
-            revert(Errors.IR_BASE_BORROW_RATE_CANT_BE_NEGATIVE);
+            revert(Errors.LP_BASE_BORROW_RATE_CANT_BE_NEGATIVE);
         }
     }
 
     /// @dev Restricts function access to lending pool only.
     modifier onlyLendingPool() {
         if (msg.sender != _getLendingPool()) {
-            revert(Errors.IR_ACCESS_RESTRICTED_TO_LENDING_POOL);
+            revert(Errors.LP_ACCESS_RESTRICTED_TO_LENDING_POOL);
         }
         _;
     }
@@ -163,9 +183,11 @@ abstract contract BasePiReserveRateStrategy is Ownable {
      */
     function _setOptimalUtilizationRate(uint256 optimalUtilizationRate) internal {
         if (optimalUtilizationRate >= uint256(RAY)) {
-            revert(Errors.IR_U0_GREATER_THAN_RAY);
+            revert(Errors.LP_U0_GREATER_THAN_RAY);
         }
         _optimalUtilizationRate = optimalUtilizationRate;
+
+        emit OptimalUtilizationRateSet(optimalUtilizationRate);
     }
 
     /**
@@ -175,8 +197,9 @@ abstract contract BasePiReserveRateStrategy is Ownable {
     function setMinControllerError(int256 minControllerError) external onlyOwner {
         _minControllerError = minControllerError;
         if (transferFunctionReturnInt(type(int256).min) < 0) {
-            revert(Errors.IR_BASE_BORROW_RATE_CANT_BE_NEGATIVE);
+            revert(Errors.LP_BASE_BORROW_RATE_CANT_BE_NEGATIVE);
         }
+        emit MinControllerErrorSet(minControllerError);
     }
 
     /**
@@ -189,6 +212,8 @@ abstract contract BasePiReserveRateStrategy is Ownable {
         _kp = kp;
         _ki = ki;
         _maxErrIAmp = int256(_ki).rayMulInt(-RAY * maxITimeAmp);
+
+        emit PidValuesSet(kp, ki, maxITimeAmp);
     }
 
     /**

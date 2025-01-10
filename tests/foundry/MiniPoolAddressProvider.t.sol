@@ -265,18 +265,14 @@ contract MiniPoolAddressProvider is Common {
             );
             vm.prank(address(miniPoolContracts.miniPoolConfigurator));
             miniPoolContracts.miniPoolAddressesProvider.setFlowLimit(
-                tokens[0], address(miniPoolContracts.miniPoolImpl), flowLimit
+                tokens[0], address(miniPool), flowLimit
             );
             console.log(
                 "2. FlowLimit",
-                miniPoolContracts.flowLimiter.getFlowLimit(
-                    tokens[0], address(miniPoolContracts.miniPoolImpl)
-                )
+                miniPoolContracts.flowLimiter.getFlowLimit(tokens[0], address(miniPool))
             );
             assertEq(
-                miniPoolContracts.flowLimiter.getFlowLimit(
-                    tokens[0], address(miniPoolContracts.miniPoolImpl)
-                ),
+                miniPoolContracts.flowLimiter.getFlowLimit(tokens[0], address(miniPool)),
                 flowLimit,
                 "Wrong limits"
             );

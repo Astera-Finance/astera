@@ -810,6 +810,8 @@ contract LendingPool is VersionedInitializable, ILendingPool, LendingPoolStorage
      */
     function _updateFlashLoanFee(uint128 flashLoanPremiumTotal) internal {
         _flashLoanPremiumTotal = flashLoanPremiumTotal;
+
+        emit FlashLoanFeeUpdated(flashLoanPremiumTotal);
     }
 
     /**

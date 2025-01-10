@@ -38,6 +38,12 @@ interface IVariableDebtToken is IScaledBalanceToken, IInitializableDebtToken {
         address indexed fromUser, address indexed toUser, address asset, uint256 amount
     );
 
+    /**
+     * @dev Emitted when the incentives controller is set.
+     * @param newController The new incentives controller address.
+     */
+    event IncentivesControllerSet(address newController);
+
     function mint(address user, address onBehalfOf, uint256 amount, uint256 index)
         external
         returns (bool);

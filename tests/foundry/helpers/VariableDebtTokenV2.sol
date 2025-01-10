@@ -44,7 +44,7 @@ contract VariableDebtTokenV2 is
      * @dev Only lending pool can call functions marked by this modifier.
      */
     modifier onlyLendingPool() {
-        require(msg.sender == address(_getLendingPool()), Errors.CT_CALLER_MUST_BE_LENDING_POOL);
+        require(msg.sender == address(_getLendingPool()), Errors.AT_CALLER_MUST_BE_LENDING_POOL);
         _;
     }
 
@@ -138,7 +138,7 @@ contract VariableDebtTokenV2 is
 
         uint256 previousBalance = super.balanceOf(onBehalfOf);
         uint256 amountScaled = amount.rayDiv(index);
-        require(amountScaled != 0, Errors.CT_INVALID_MINT_AMOUNT);
+        require(amountScaled != 0, Errors.AT_INVALID_MINT_AMOUNT);
 
         _mint(onBehalfOf, amountScaled);
 
@@ -157,7 +157,7 @@ contract VariableDebtTokenV2 is
      */
     function burn(address user, uint256 amount, uint256 index) external override onlyLendingPool {
         uint256 amountScaled = amount.rayDiv(index);
-        require(amountScaled != 0, Errors.CT_INVALID_BURN_AMOUNT);
+        require(amountScaled != 0, Errors.AT_INVALID_BURN_AMOUNT);
 
         _burn(user, amountScaled);
 
@@ -373,7 +373,7 @@ contract VariableDebtTokenV2 is
         internal
     {
         uint256 oldAllowance = _borrowAllowances[delegator][delegatee];
-        require(oldAllowance >= amount, Errors.BORROW_ALLOWANCE_NOT_ENOUGH);
+        require(oldAllowance >= amount, Errors.AT_BORROW_ALLOWANCE_NOT_ENOUGH);
         uint256 newAllowance = oldAllowance - amount;
 
         _borrowAllowances[delegator][delegatee] = newAllowance;

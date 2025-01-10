@@ -241,7 +241,7 @@ library BorrowLogic {
         emit Borrow(
             params.asset,
             params.miniPoolAddress,
-            address(flowLimiter),
+            params.miniPoolAddress,
             params.amount,
             reserve.currentVariableBorrowRate
         );

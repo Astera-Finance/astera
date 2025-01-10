@@ -285,7 +285,7 @@ contract MiniPoolAddressesProvider is Ownable, IMiniPoolAddressesProvider {
             IMiniPoolAddressProviderUpdatable.initialize, (address(this), miniPoolId)
         );
         _updateMiniPool(impl, miniPoolId, params);
-        emit MiniPoolUpdated(impl);
+        emit MiniPoolUpdated(impl, miniPoolId);
     }
 
     /**
@@ -298,7 +298,7 @@ contract MiniPoolAddressesProvider is Ownable, IMiniPoolAddressesProvider {
             IMiniPoolAddressProviderUpdatable.initialize, (address(this), miniPoolId)
         );
         _updateAToken(impl, miniPoolId, params);
-        emit ATokenUpdated(impl);
+        emit ATokenUpdated(impl, miniPoolId);
     }
 
     /**
@@ -336,6 +336,8 @@ contract MiniPoolAddressesProvider is Ownable, IMiniPoolAddressesProvider {
         _miniPoolsConfig[miniPoolId].admin = poolAdmin;
         _miniPoolCount++;
 
+        emit PoolAdminSet(poolAdmin, miniPoolId);
+
         return miniPoolId;
     }
 
@@ -358,10 +360,11 @@ contract MiniPoolAddressesProvider is Ownable, IMiniPoolAddressesProvider {
      */
     function setFlowLimit(address asset, address miniPool, uint256 limit)
         external
+        poolIdCheck(_getMiniPoolId(miniPool))
         onlyMiniPoolConfigurator
     {
         IFlowLimiter(getFlowLimiter()).setFlowLimit(asset, miniPool, limit);
-        emit FlowLimitUpdated(limit);
+        emit FlowLimitUpdated(asset, miniPool, limit);
     }
 
     /**
@@ -369,10 +372,14 @@ contract MiniPoolAddressesProvider is Ownable, IMiniPoolAddressesProvider {
      * @param id The pool ID.
      * @param newAdmin The new admin address.
      */
-    function setPoolAdmin(uint256 id, address newAdmin) external onlyMiniPoolConfigurator {
+    function setPoolAdmin(uint256 id, address newAdmin)
+        external
+        poolIdCheck(id)
+        onlyMiniPoolConfigurator
+    {
         require(newAdmin != address(0));
         _miniPoolsConfig[id].admin = newAdmin;
-        emit PoolAdminSet(newAdmin);
+        emit PoolAdminSet(newAdmin, id);
     }
 
     /**

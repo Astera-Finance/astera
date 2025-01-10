@@ -46,7 +46,7 @@ contract LendingPoolConfigurator is VersionedInitializable, ILendingPoolConfigur
      * @notice Restricts function access to only the configured pool admin address.
      */
     modifier onlyPoolAdmin() {
-        require(addressesProvider.getPoolAdmin() == msg.sender, Errors.CALLER_NOT_POOL_ADMIN);
+        require(addressesProvider.getPoolAdmin() == msg.sender, Errors.VL_CALLER_NOT_POOL_ADMIN);
         _;
     }
 
@@ -57,7 +57,7 @@ contract LendingPoolConfigurator is VersionedInitializable, ILendingPoolConfigur
     modifier onlyEmergencyAdmin() {
         require(
             addressesProvider.getEmergencyAdmin() == msg.sender,
-            Errors.LPC_CALLER_NOT_EMERGENCY_ADMIN
+            Errors.VL_CALLER_NOT_EMERGENCY_ADMIN
         );
         _;
     }
@@ -294,14 +294,13 @@ contract LendingPoolConfigurator is VersionedInitializable, ILendingPoolConfigur
         // Validation of the parameters: the `ltv` can
         // only be lower or equal than the `liquidationThreshold`
         // (otherwise a loan against the asset would cause instantaneous liquidation).
-        require(ltv <= liquidationThreshold, Errors.LPC_INVALID_CONFIGURATION);
+        require(ltv <= liquidationThreshold, Errors.VL_INVALID_CONFIGURATION);
 
         if (liquidationThreshold != 0) {
             // Liquidation bonus must be bigger than 100.00%, otherwise the liquidator would receive less
             // collateral than needed to cover the debt.
             require(
-                liquidationBonus > PercentageMath.PERCENTAGE_FACTOR,
-                Errors.LPC_INVALID_CONFIGURATION
+                liquidationBonus > PercentageMath.PERCENTAGE_FACTOR, Errors.VL_INVALID_CONFIGURATION
             );
 
             // If `threshold` * `bonus` is less than `PERCENTAGE_FACTOR`, it's guaranteed that at the moment
@@ -309,10 +308,10 @@ contract LendingPoolConfigurator is VersionedInitializable, ILendingPoolConfigur
             require(
                 liquidationThreshold.percentMul(liquidationBonus)
                     <= PercentageMath.PERCENTAGE_FACTOR,
-                Errors.LPC_INVALID_CONFIGURATION
+                Errors.VL_INVALID_CONFIGURATION
             );
         } else {
-            require(liquidationBonus == 0, Errors.LPC_INVALID_CONFIGURATION);
+            require(liquidationBonus == 0, Errors.VL_INVALID_CONFIGURATION);
             // If the `liquidationThreshold` is being set to 0,
             // the reserve is being disabled as collateral. To do so,
             // we need to ensure no liquidity is deposited.
@@ -522,7 +521,7 @@ contract LendingPoolConfigurator is VersionedInitializable, ILendingPoolConfigur
     function updateFlashloanPremiumTotal(uint128 newFlashloanPremiumTotal) external onlyPoolAdmin {
         require(
             newFlashloanPremiumTotal <= PercentageMath.PERCENTAGE_FACTOR,
-            Errors.LPC_FLASHLOAN_PREMIUM_INVALID
+            Errors.VL_FLASHLOAN_PREMIUM_INVALID
         );
         uint128 oldFlashloanPremiumTotal = pool.FLASHLOAN_PREMIUM_TOTAL();
         pool.updateFlashLoanFee(newFlashloanPremiumTotal);
@@ -577,7 +576,7 @@ contract LendingPoolConfigurator is VersionedInitializable, ILendingPoolConfigur
 
         require(
             availableLiquidity == 0 && reserveData.currentLiquidityRate == 0,
-            Errors.LPC_RESERVE_LIQUIDITY_NOT_0
+            Errors.VL_RESERVE_LIQUIDITY_NOT_0
         );
     }
 

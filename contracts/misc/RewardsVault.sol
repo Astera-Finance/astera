@@ -20,7 +20,7 @@ contract RewardsVault is Ownable {
     address public REWARD_TOKEN;
 
     modifier onlyPoolAdmin() {
-        require(ADDRESSES_PROVIDER.getPoolAdmin() == msg.sender, Errors.CALLER_NOT_POOL_ADMIN);
+        require(ADDRESSES_PROVIDER.getPoolAdmin() == msg.sender, Errors.VL_CALLER_NOT_POOL_ADMIN);
         _;
     }
 
