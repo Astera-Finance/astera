@@ -714,12 +714,12 @@ contract MiniPool is VersionedInitializable, IMiniPool, MiniPoolStorage {
 
         bool reserveAlreadyAdded = _reserves[asset].id != 0 || _reservesList[0] == asset;
 
-        if (!reserveAlreadyAdded) {
-            _reserves[asset].id = uint8(reservesCount);
-            _reservesList[reservesCount] = asset;
+        require(!reserveAlreadyAdded, Errors.LP_RESERVE_ALREADY_ADDED);
 
-            _reservesCount = reservesCount + 1;
-        }
+        _reserves[asset].id = uint8(reservesCount);
+        _reservesList[reservesCount] = asset;
+
+        _reservesCount = reservesCount + 1;
     }
 
     /**

@@ -784,12 +784,12 @@ contract LendingPool is VersionedInitializable, ILendingPool, LendingPoolStorage
         bool reserveAlreadyAdded = _reserves[asset][reserveType].id != 0
             || (_reservesList[0].asset == asset && _reservesList[0].reserveType == reserveType);
 
-        if (!reserveAlreadyAdded) {
-            _reserves[asset][reserveType].id = uint8(reservesCount);
-            _reservesList[reservesCount] = DataTypes.ReserveReference(asset, reserveType);
+        require(!reserveAlreadyAdded, Errors.LP_RESERVE_ALREADY_ADDED);
 
-            _reservesCount = reservesCount + 1;
-        }
+        _reserves[asset][reserveType].id = uint8(reservesCount);
+        _reservesList[reservesCount] = DataTypes.ReserveReference(asset, reserveType);
+
+        _reservesCount = reservesCount + 1;
     }
 
     /**
