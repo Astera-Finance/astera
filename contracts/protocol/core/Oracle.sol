@@ -157,7 +157,7 @@ contract Oracle is IOracle, Ownable {
             // Chainlink integrity checks.
             if (
                 roundId == 0 || timestamp == 0 || timestamp > block.timestamp || price <= 0
-                    || startedAt == 0 || block.timestamp - timestamp > _assetToTimeout[asset]
+                    || startedAt == 0 || block.timestamp - timestamp > _assetToTimeout[underlying]
             ) {
                 require(address(_fallbackOracle) != address(0), Errors.O_PRICE_FEED_INCONSISTENCY);
                 finalPrice = _fallbackOracle.getAssetPrice(underlying);
