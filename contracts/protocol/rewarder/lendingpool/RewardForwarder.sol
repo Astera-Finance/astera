@@ -187,6 +187,8 @@ contract RewardForwarder is Ownable {
         address forwarder = forwarders[claimee][rewardTokenIndex];
         require(forwarder != address(0), "No forwarder set");
         IERC20(rewardToken).safeTransfer(forwarder, amount);
+
+        emit RewardsForwarded(claimee, token, rewardTokenIndex, amount, forwarder);
     }
 
     /**
