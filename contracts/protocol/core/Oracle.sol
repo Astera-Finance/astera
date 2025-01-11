@@ -9,6 +9,7 @@ import {SafeERC20} from "../../../contracts/dependencies/openzeppelin/contracts/
 import {ATokenNonRebasing} from
     "../../../contracts/protocol/tokenization/ERC20/ATokenNonRebasing.sol";
 import {Errors} from "../../../contracts/protocol/libraries/helpers/Errors.sol";
+import {ILendingPoolConfigurator} from "../../../contracts/interfaces/ILendingPoolConfigurator.sol";
 
 /**
  * @title Oracle
@@ -35,6 +36,8 @@ contract Oracle is IOracle, Ownable {
     /// @dev The fallback oracle used when Chainlink data is invalid.
     IOracle private _fallbackOracle;
 
+    ILendingPoolConfigurator private _lendingpoolConfigurator;
+
     /**
      * @dev The base currency address used for price quotes.
      * @notice If `USD` returns `0x0`, if `ETH` returns `WETH` address.
@@ -60,12 +63,15 @@ contract Oracle is IOracle, Ownable {
         uint256[] memory timeouts,
         address fallbackOracle,
         address baseCurrency,
-        uint256 baseCurrencyUnit
+        uint256 baseCurrencyUnit,
+        address lendingpoolConfigurator
     ) Ownable(msg.sender) {
         _setFallbackOracle(fallbackOracle);
         _setAssetsSources(assets, sources, timeouts);
         BASE_CURRENCY = baseCurrency;
         BASE_CURRENCY_UNIT = baseCurrencyUnit;
+        _lendingpoolConfigurator = ILendingPoolConfigurator(lendingpoolConfigurator);
+
         emit BaseCurrencySet(baseCurrency, baseCurrencyUnit);
     }
 
@@ -135,12 +141,18 @@ contract Oracle is IOracle, Ownable {
         address underlying;
 
         // Check if `asset` is an aToken.
+        if (_lendingpoolConfigurator.getIsAToken(asset)) {
+            underlying = ATokenNonRebasing(asset).UNDERLYING_ASSET_ADDRESS();
+        } else {
+            underlying = asset;
+        }
+
         try ATokenNonRebasing(asset).UNDERLYING_ASSET_ADDRESS{gas: 8000}() returns (
             address underlying_
         ) {
-            underlying = underlying_;
+            assert(underlying == underlying_);
         } catch {
-            underlying = asset;
+            assert(underlying == asset);
         }
 
         IChainlinkAggregator source = _assetsSources[underlying];
@@ -211,5 +223,13 @@ contract Oracle is IOracle, Ownable {
      */
     function getFallbackOracle() external view returns (address) {
         return address(_fallbackOracle);
+    }
+
+    /**
+     * @notice Gets the address of the lending pool configurator.
+     * @return address The address of the lending pool configurator.
+     */
+    function getLendingpoolConfigurator() external view returns (address) {
+        return address(_lendingpoolConfigurator);
     }
 }

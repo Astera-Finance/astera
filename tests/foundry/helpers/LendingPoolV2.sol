@@ -832,4 +832,13 @@ contract LendingPoolV2 is VersionedInitializable, ILendingPool, LendingPoolStora
     {
         IAToken(_reserves[asset][reserveType].aTokenAddress).setTreasury(treasury);
     }
+
+    /**
+     * @notice Returns the non-rebasing aToken address associated with a aToken.
+     * @param aToken The address of the aToken.
+     * @return The address of the non-rebasing aToken.
+     */
+    function getATokenNonRebasingFromAtoken(address aToken) external view returns (address) {
+        return IAToken(aToken).WRAPPER_ADDRESS();
+    }
 }
