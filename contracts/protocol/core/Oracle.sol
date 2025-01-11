@@ -147,14 +147,6 @@ contract Oracle is IOracle, Ownable {
             underlying = asset;
         }
 
-        try ATokenNonRebasing(asset).UNDERLYING_ASSET_ADDRESS{gas: 8000}() returns (
-            address underlying_
-        ) {
-            assert(underlying == underlying_);
-        } catch {
-            assert(underlying == asset);
-        }
-
         IChainlinkAggregator source = _assetsSources[underlying];
         uint256 finalPrice;
 
