@@ -429,10 +429,11 @@ contract ATokenERC6909V2 is IncentivizedERC6909, VersionedInitializable {
      * @param MLP The MiniLendingPool address to validate against.
      * @return bool True if the address is an AToken, false otherwise.
      */
-    function _determineIfAToken(address underlying, address MLP) internal view returns (bool) {
-        try IAToken(underlying).getPool() returns (address pool) {
-            return pool == MLP;
-        } catch {
+    function _determineIfAToken(address underlying, address MLP) internal returns (bool) {
+        (bool success, bytes memory data) = underlying.call(abi.encodeCall(IAToken.getPool, ()));
+        if (success && data.length != 0) {
+            return abi.decode(data, (address)) == MLP;
+        } else {
             return false;
         }
     }
@@ -445,7 +446,6 @@ contract ATokenERC6909V2 is IncentivizedERC6909, VersionedInitializable {
      */
     function _getNextIdForUnderlying(address underlying)
         internal
-        view
         returns (uint256, uint256, bool)
     {
         ILendingPool pool = ILendingPool(_addressesProvider.getLendingPool());
@@ -694,7 +694,6 @@ contract ATokenERC6909V2 is IncentivizedERC6909, VersionedInitializable {
      */
     function getNextIdForUnderlying(address underlying)
         public
-        view
         returns (uint256 aTokenID, uint256 debtTokenID, bool isTrancheRet)
     {
         (aTokenID, debtTokenID, isTrancheRet) = _getNextIdForUnderlying(underlying);
