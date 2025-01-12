@@ -40,7 +40,6 @@ abstract contract RewardsDistributor is IRewardsDistributor, Ownable {
     struct AssetData {
         // reward => rewardData
         mapping(address => RewardData) rewards;
-        mapping(address => uint256) initialIndexes;
         address[] availableRewards;
         uint8 decimals;
     }
