@@ -453,7 +453,10 @@ contract ATokenERC6909 is IncentivizedERC6909, VersionedInitializable {
      */
     function _determineIfAToken(address underlying, address MLP) internal returns (bool) {
         (bool success, bytes memory data) = underlying.call(abi.encodeCall(IAToken.getPool, ()));
-        if (success && data.length != 0) {
+
+        // Check if call was successful, returned data is 32 bytes (address size + padding), 
+        // and decoded value fits in address space (160 bits)
+        if (success && data.length == 32 && abi.decode(data, (uint256)) <= type(uint160).max) {
             return abi.decode(data, (address)) == MLP;
         } else {
             return false;
