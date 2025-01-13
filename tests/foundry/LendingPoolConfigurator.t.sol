@@ -653,4 +653,101 @@ contract LendingPoolConfiguratorTest is Common, LendingPoolFixtures {
         // deal(address(erc20Tokens[USDC_OFFSET]), address(this), 10 * amount);
         deployedContracts.lendingPool.flashLoan(flashloanParams, amounts, modes, params);
     }
+
+    struct UserAccountData {
+        uint256 totalCollateralETH;
+        uint256 totalDebtETH;
+        uint256 availableBorrowsETH;
+        uint256 currentLiquidationThreshold;
+        uint256 ltv;
+        uint256 healthFactor;
+    }
+
+    function testLpUniqueTokensReinitialization(uint256 offset, uint256 amount) public {
+        offset = bound(offset, 0, 3);
+        TokenParams memory collateralTokenParams = TokenParams(
+            erc20Tokens[offset],
+            commonContracts.aTokensWrapper[offset],
+            commonContracts.oracle.getAssetPrice(address(erc20Tokens[offset]))
+        );
+        amount = bound(
+            amount,
+            10 ** (collateralTokenParams.token.decimals() - 2), // 0,01
+            10 ** (collateralTokenParams.token.decimals() + 3) // 1000
+        );
+        deal(address(collateralTokenParams.token), address(this), amount);
+        console.log("Deposit asset to the mainPool");
+        fixture_deposit(
+            collateralTokenParams.token,
+            collateralTokenParams.aToken,
+            address(this),
+            address(this),
+            amount
+        );
+        UserAccountData memory beforeUserAccountData;
+        (
+            beforeUserAccountData.totalCollateralETH,
+            beforeUserAccountData.totalDebtETH,
+            beforeUserAccountData.availableBorrowsETH,
+            beforeUserAccountData.currentLiquidationThreshold,
+            beforeUserAccountData.ltv,
+            beforeUserAccountData.healthFactor
+        ) = deployedContracts.cod3xLendDataProvider.getLpUserAccountData(address(this));
+
+        {
+            console.log("Reinit the asset");
+            ILendingPoolConfigurator.InitReserveInput[] memory initInputParams =
+                new ILendingPoolConfigurator.InitReserveInput[](1);
+            string memory tmpSymbol = ERC20(tokens[offset]).symbol();
+            string memory tmpName = ERC20(tokens[offset]).name();
+
+            address interestStrategy = isStableStrategy[offset] != false
+                ? configAddresses.stableStrategy
+                : configAddresses.volatileStrategy;
+            initInputParams[0] = ILendingPoolConfigurator.InitReserveInput({
+                aTokenImpl: address(commonContracts.aToken),
+                variableDebtTokenImpl: address(commonContracts.variableDebtToken),
+                underlyingAssetDecimals: ERC20(tokens[offset]).decimals(),
+                interestRateStrategyAddress: interestStrategy,
+                underlyingAsset: tokens[offset],
+                reserveType: reserveTypes[offset],
+                treasury: configAddresses.treasury,
+                incentivesController: configAddresses.rewarder,
+                underlyingAssetName: tmpSymbol,
+                aTokenName: string.concat("Cod3x Lend ", tmpSymbol),
+                aTokenSymbol: string.concat("cl", tmpSymbol),
+                variableDebtTokenName: string.concat("Cod3x Lend variable debt bearing ", tmpSymbol),
+                variableDebtTokenSymbol: string.concat("variableDebt", tmpSymbol),
+                params: "0x10"
+            });
+
+            console.log("BatchInitReserve");
+            vm.startPrank(address(deployedContracts.lendingPoolAddressesProvider.getPoolAdmin()));
+            vm.expectRevert(bytes(Errors.RL_RESERVE_ALREADY_INITIALIZED));
+            deployedContracts.lendingPoolConfigurator.batchInitReserve(initInputParams);
+            vm.stopPrank();
+        }
+
+        UserAccountData memory afterUserAccountData;
+        (
+            afterUserAccountData.totalCollateralETH,
+            afterUserAccountData.totalDebtETH,
+            afterUserAccountData.availableBorrowsETH,
+            afterUserAccountData.currentLiquidationThreshold,
+            afterUserAccountData.ltv,
+            afterUserAccountData.healthFactor
+        ) = deployedContracts.cod3xLendDataProvider.getLpUserAccountData(address(this));
+
+        assertEq(afterUserAccountData.totalCollateralETH, beforeUserAccountData.totalCollateralETH);
+        assertEq(afterUserAccountData.totalDebtETH, beforeUserAccountData.totalDebtETH);
+        assertEq(
+            afterUserAccountData.availableBorrowsETH, beforeUserAccountData.availableBorrowsETH
+        );
+        assertEq(
+            afterUserAccountData.currentLiquidationThreshold,
+            beforeUserAccountData.currentLiquidationThreshold
+        );
+        assertEq(afterUserAccountData.ltv, beforeUserAccountData.ltv);
+        assertEq(afterUserAccountData.healthFactor, beforeUserAccountData.healthFactor);
+    }
 }

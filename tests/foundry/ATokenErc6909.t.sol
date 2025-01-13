@@ -894,7 +894,7 @@ contract ATokenErc6909Test is Common {
     }
 
     function testErc6909Initialize() public {
-        miniPoolContracts.miniPoolAddressesProvider.deployMiniPool(
+        uint256 miniPoolId = miniPoolContracts.miniPoolAddressesProvider.deployMiniPool(
             address(miniPoolContracts.miniPoolImpl),
             address(miniPoolContracts.aToken6909Impl),
             admin
@@ -902,14 +902,17 @@ contract ATokenErc6909Test is Common {
         address[] memory reserves = new address[](1);
         reserves[0] = tokens[0];
 
-        miniPool =
-            fixture_configureMiniPoolReserves(reserves, configAddresses, miniPoolContracts, 0);
+        miniPool = fixture_configureMiniPoolReserves(
+            reserves, configAddresses, miniPoolContracts, miniPoolId
+        );
         vm.label(miniPool, "MiniPool");
 
         IAERC6909 internalAErc6909Token =
             IAERC6909(miniPoolContracts.miniPoolAddressesProvider.getMiniPoolToAERC6909(miniPool));
 
         vm.expectRevert(bytes("Contract instance has already been initialized"));
-        internalAErc6909Token.initialize(address(miniPoolContracts.miniPoolAddressesProvider), 0);
+        internalAErc6909Token.initialize(
+            address(miniPoolContracts.miniPoolAddressesProvider), miniPoolId
+        );
     }
 }
