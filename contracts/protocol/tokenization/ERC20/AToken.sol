@@ -578,11 +578,11 @@ contract AToken is
         if (pctOfFinalBal > _farmingPct && pctOfFinalBal - _farmingPct > _farmingPctDrift) {
             // We will end up overallocated, withdraw some.
             toWithdraw = currentAllocated - finalFarmingAmount;
-            _farmingBal = _farmingBal - toWithdraw;
+            currentAllocated = currentAllocated - toWithdraw;
         } else if (pctOfFinalBal < _farmingPct && _farmingPct - pctOfFinalBal > _farmingPctDrift) {
             // We will end up underallocated, deposit more.
             toDeposit = finalFarmingAmount - currentAllocated;
-            _farmingBal = _farmingBal + toDeposit;
+            currentAllocated = currentAllocated + toDeposit;
         }
         // + means deposit, - means withdraw.
         int256 netAssetMovement = int256(toDeposit) - int256(toWithdraw) - int256(profit);
@@ -594,13 +594,15 @@ contract AToken is
         // If we recorded profit, recalculate it for precision and distribute.
         if (profit != 0) {
             // Profit is ultimately (coll at hand) + (coll allocated to yield generator) - (recorded total coll Amount in pool).
-            profit =
-                IERC20(_underlyingAsset).balanceOf(address(this)) + _farmingBal - _underlyingAmount;
+            profit = IERC20(_underlyingAsset).balanceOf(address(this)) + currentAllocated
+                - _underlyingAmount;
             if (profit != 0 && _profitHandler != address(0)) {
                 // Distribute to profitHandler.
                 IERC20(_underlyingAsset).safeTransfer(_profitHandler, profit);
             }
         }
+
+        _farmingBal = currentAllocated;
 
         emit Rebalance(address(_vault), _amountToWithdraw, netAssetMovement);
     }
