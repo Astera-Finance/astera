@@ -772,4 +772,115 @@ contract MiniPoolConfiguratorTest is MiniPoolDepositBorrowTest {
         vm.startPrank(newAdmin);
         miniPoolContracts.miniPoolConfigurator.activateReserve(tokens[0], IMiniPool(miniPool));
     }
+
+    struct UserAccountData {
+        uint256 totalCollateralETH;
+        uint256 totalDebtETH;
+        uint256 availableBorrowsETH;
+        uint256 currentLiquidationThreshold;
+        uint256 ltv;
+        uint256 healthFactor;
+    }
+
+    function testMpUniqueTokensReinitialization(uint256 offset, uint256 amount) public {
+        offset = bound(offset, 0, 3);
+        address miniPool = miniPoolContracts.miniPoolAddressesProvider.getMiniPool(0);
+        TokenParams memory collateralTokenParams = TokenParams(
+            erc20Tokens[offset],
+            commonContracts.aTokensWrapper[offset],
+            commonContracts.oracle.getAssetPrice(address(erc20Tokens[offset]))
+        );
+        amount = bound(
+            amount,
+            10 ** (collateralTokenParams.token.decimals() - 2),
+            collateralTokenParams.token.balanceOf(address(this)) / 10
+        );
+        console.log("Deposit asset to the mainPool and miniPool");
+        fixture_MiniPoolDeposit(amount, offset, address(this), collateralTokenParams);
+        UserAccountData memory beforeUserAccountData;
+        (
+            beforeUserAccountData.totalCollateralETH,
+            beforeUserAccountData.totalDebtETH,
+            beforeUserAccountData.availableBorrowsETH,
+            beforeUserAccountData.currentLiquidationThreshold,
+            beforeUserAccountData.ltv,
+            beforeUserAccountData.healthFactor
+        ) = deployedContracts.cod3xLendDataProvider.getMpUserAccountData(address(this), miniPool);
+
+        {
+            console.log("Reinit the erc20 asset");
+            IMiniPoolConfigurator.InitReserveInput[] memory initInputParams =
+                new IMiniPoolConfigurator.InitReserveInput[](1);
+            string memory tmpSymbol = ERC20(tokens[offset]).symbol();
+            string memory tmpName = ERC20(tokens[offset]).name();
+
+            address interestStrategy = isStableStrategy[offset] != false
+                ? configAddresses.stableStrategy
+                : configAddresses.volatileStrategy;
+            initInputParams[0] = IMiniPoolConfigurator.InitReserveInput({
+                underlyingAssetDecimals: ERC20(tokens[offset]).decimals(),
+                interestRateStrategyAddress: interestStrategy,
+                underlyingAsset: tokens[offset],
+                underlyingAssetName: tmpName,
+                underlyingAssetSymbol: tmpSymbol
+            });
+
+            vm.startPrank(address(miniPoolContracts.miniPoolAddressesProvider.getMainPoolAdmin()));
+            console.log("1.BatchInitReserve");
+            vm.expectRevert(bytes(Errors.RL_RESERVE_ALREADY_INITIALIZED));
+            miniPoolContracts.miniPoolConfigurator.batchInitReserve(
+                initInputParams, IMiniPool(miniPool)
+            );
+            vm.stopPrank();
+        }
+
+        {
+            console.log("Reinit the aToken asset");
+            IMiniPoolConfigurator.InitReserveInput[] memory initInputParams =
+                new IMiniPoolConfigurator.InitReserveInput[](1);
+            string memory tmpSymbol = (commonContracts.aTokens[offset]).symbol();
+            string memory tmpName = (commonContracts.aTokens[offset]).name();
+
+            address interestStrategy = isStableStrategy[offset] != false
+                ? configAddresses.stableStrategy
+                : configAddresses.volatileStrategy;
+            initInputParams[0] = IMiniPoolConfigurator.InitReserveInput({
+                underlyingAssetDecimals: (commonContracts.aTokens[offset]).decimals(),
+                interestRateStrategyAddress: interestStrategy,
+                underlyingAsset: address(commonContracts.aTokens[offset]),
+                underlyingAssetName: tmpName,
+                underlyingAssetSymbol: tmpSymbol
+            });
+
+            vm.startPrank(address(miniPoolContracts.miniPoolAddressesProvider.getMainPoolAdmin()));
+            console.log("2.BatchInitReserve");
+            vm.expectRevert(bytes(Errors.RL_RESERVE_ALREADY_INITIALIZED));
+            miniPoolContracts.miniPoolConfigurator.batchInitReserve(
+                initInputParams, IMiniPool(miniPool)
+            );
+            vm.stopPrank();
+        }
+
+        UserAccountData memory afterUserAccountData;
+        (
+            afterUserAccountData.totalCollateralETH,
+            afterUserAccountData.totalDebtETH,
+            afterUserAccountData.availableBorrowsETH,
+            afterUserAccountData.currentLiquidationThreshold,
+            afterUserAccountData.ltv,
+            afterUserAccountData.healthFactor
+        ) = deployedContracts.cod3xLendDataProvider.getMpUserAccountData(address(this), miniPool);
+
+        assertEq(afterUserAccountData.totalCollateralETH, beforeUserAccountData.totalCollateralETH);
+        assertEq(afterUserAccountData.totalDebtETH, beforeUserAccountData.totalDebtETH);
+        assertEq(
+            afterUserAccountData.availableBorrowsETH, beforeUserAccountData.availableBorrowsETH
+        );
+        assertEq(
+            afterUserAccountData.currentLiquidationThreshold,
+            beforeUserAccountData.currentLiquidationThreshold
+        );
+        assertEq(afterUserAccountData.ltv, beforeUserAccountData.ltv);
+        assertEq(afterUserAccountData.healthFactor, beforeUserAccountData.healthFactor);
+    }
 }
