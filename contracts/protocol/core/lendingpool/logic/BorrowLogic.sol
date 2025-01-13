@@ -223,6 +223,8 @@ library BorrowLogic {
         DataTypes.ReserveData storage reserve = reserves[params.asset][params.reserveType];
 
         require(reserve.configuration.getActive(), Errors.VL_NO_ACTIVE_RESERVE);
+        require(reserve.configuration.getBorrowingEnabled(), Errors.VL_BORROWING_NOT_ENABLED);
+
         flowLimiter.revertIfFlowLimitReached(params.asset, params.miniPoolAddress, params.amount);
 
         reserve.updateState();
