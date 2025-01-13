@@ -587,9 +587,15 @@ contract AToken is
         // + means deposit, - means withdraw.
         int256 netAssetMovement = int256(toDeposit) - int256(toWithdraw) - int256(profit);
         if (netAssetMovement > 0) {
-            _vault.deposit(uint256(netAssetMovement), address(this));
+            try _vault.deposit(uint256(netAssetMovement), address(this)) {}
+            catch {
+                return;
+            }
         } else if (netAssetMovement < 0) {
-            _vault.withdraw(uint256(-netAssetMovement), address(this), address(this));
+            try _vault.withdraw(uint256(-netAssetMovement), address(this), address(this)) {}
+            catch {
+                return;
+            }
         }
         // If we recorded profit, recalculate it for precision and distribute.
         if (profit != 0) {
