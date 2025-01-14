@@ -510,7 +510,12 @@ contract LendingPoolConfigurator is VersionedInitializable, ILendingPoolConfigur
         bool reserveType,
         address rateStrategyAddress
     ) external onlyPoolAdmin {
+        pool.syncIndexesState(asset, reserveType);
+
         pool.setReserveInterestRateStrategyAddress(asset, reserveType, rateStrategyAddress);
+
+        pool.syncRatesState(asset, reserveType);
+
         emit ReserveInterestRateStrategyChanged(asset, reserveType, rateStrategyAddress);
     }
 

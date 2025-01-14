@@ -440,7 +440,15 @@ contract LendingPoolConfiguratorTest is Common, LendingPoolFixtures {
     }
 
     function testSetReserveInterestRateStrategyAddress() public {
-        address newInterestRateStrategy = makeAddr("newInterestRateStrategy");
+        address newInterestRateStrategy = address(
+            new DefaultReserveInterestRateStrategy(
+                deployedContracts.lendingPoolAddressesProvider,
+                sStrat[0],
+                sStrat[1],
+                sStrat[2],
+                sStrat[3]
+            )
+        );
         for (uint32 idx; idx < erc20Tokens.length; idx++) {
             vm.prank(admin);
             deployedContracts.lendingPoolConfigurator.setReserveInterestRateStrategyAddress(

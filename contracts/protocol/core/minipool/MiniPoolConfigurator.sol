@@ -157,7 +157,12 @@ contract MiniPoolConfigurator is VersionedInitializable, IMiniPoolConfigurator {
         address rateStrategyAddress,
         IMiniPool pool
     ) external onlyMainPoolAdmin {
+        pool.syncIndexesState(asset);
+
         pool.setReserveInterestRateStrategyAddress(asset, rateStrategyAddress);
+
+        pool.syncRatesState(asset);
+
         emit ReserveInterestRateStrategyChanged(asset, rateStrategyAddress);
     }
 
