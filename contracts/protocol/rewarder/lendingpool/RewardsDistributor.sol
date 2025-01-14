@@ -55,6 +55,9 @@ abstract contract RewardsDistributor is IRewardsDistributor, Ownable {
 
     address[] internal _rewardTokens;
 
+    // Percentage in BPS of the total supply that will trigger the accrual of rewards
+    uint256 constant TOTAL_SUPPLY_THRESHOLD_BPS = 10;
+
     /**
      * @dev Constructor that sets the initial owner of the contract.
      * @param initialOwner Address to be set as the contract owner.
@@ -234,6 +237,20 @@ abstract contract RewardsDistributor is IRewardsDistributor, Ownable {
             // Configure emission and distribution end of the reward per asset.
             rewardConfig.emissionPerSecond = rewardsInput[i].emissionPerSecond;
             rewardConfig.distributionEnd = rewardsInput[i].distributionEnd;
+
+            // lastUpdateTimestamp param is {block.timestamp} - {time of distribution} -> it is done in order to obtain max possible delta in _getAssetIndex
+            // distributionEnd param doesn't matter in this case
+            // total balance - lowest possible value for index calculation
+            uint256 maxPossibleIndex = _getAssetIndex(
+                0,
+                rewardsInput[i].emissionPerSecond,
+                uint128(block.timestamp - (rewardsInput[i].distributionEnd - block.timestamp)),
+                rewardsInput[i].distributionEnd,
+                ((10 ** _assets[rewardsInput[i].asset].decimals) * TOTAL_SUPPLY_THRESHOLD_BPS)
+                    / 10_000,
+                _assets[rewardsInput[i].asset].decimals
+            );
+            require(maxPossibleIndex <= type(uint104).max, "Config may lead to overflows");
 
             emit AssetConfigUpdated(
                 rewardsInput[i].asset,
@@ -488,9 +505,12 @@ abstract contract RewardsDistributor is IRewardsDistributor, Ownable {
         uint256 totalBalance,
         uint8 decimals
     ) internal view returns (uint256) {
+        // emissionPerSecond equal 1 leads to 0 accrued rewards due to rounding down
+        // if total balance is too small, do not increase index and accrue the rewards because it may lead to overflows of uint104
         if (
-            emissionPerSecond == 0 || totalBalance == 0 || lastUpdateTimestamp == block.timestamp
+            emissionPerSecond <= 1 || totalBalance == 0 || lastUpdateTimestamp == block.timestamp
                 || lastUpdateTimestamp >= distributionEnd
+                || totalBalance < (((10 ** decimals) * TOTAL_SUPPLY_THRESHOLD_BPS) / 10_000)
         ) {
             return currentIndex;
         }
