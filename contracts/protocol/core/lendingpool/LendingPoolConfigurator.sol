@@ -461,12 +461,16 @@ contract LendingPoolConfigurator is VersionedInitializable, ILendingPoolConfigur
         external
         onlyPoolAdmin
     {
+        pool.syncIndexesState(asset, reserveType);
+
         DataTypes.ReserveConfigurationMap memory currentConfig =
             pool.getConfiguration(asset, reserveType);
 
         currentConfig.setCod3xReserveFactor(reserveFactor);
 
         pool.setConfiguration(asset, reserveType, currentConfig.data);
+
+        pool.syncRatesState(asset, reserveType);
 
         emit ReserveFactorChanged(asset, reserveType, reserveFactor);
     }

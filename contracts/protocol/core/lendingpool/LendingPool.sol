@@ -815,6 +815,40 @@ contract LendingPool is VersionedInitializable, ILendingPool, LendingPoolStorage
     }
 
     /**
+     * @notice Synchronizes the reserve indexes state for a specific asset
+     * @dev Only callable by the LendingPoolConfigurator
+     * @param asset The address of the underlying asset of the reserve
+     * @param reserveType Whether the reserve is boosted by a vault
+     */
+    function syncIndexesState(address asset, bool reserveType)
+        external
+        virtual
+        override
+        onlyLendingPoolConfigurator
+    {
+        DataTypes.ReserveData storage reserve = _reserves[asset][reserveType];
+
+        reserve.updateState();
+    }
+
+    /**
+     * @notice Synchronizes the interest rates state for a specific asset
+     * @dev Only callable by the LendingPoolConfigurator
+     * @param asset The address of the underlying asset of the reserve
+     * @param reserveType Whether the reserve is boosted by a vault
+     */
+    function syncRatesState(address asset, bool reserveType)
+        external
+        virtual
+        override
+        onlyLendingPoolConfigurator
+    {
+        DataTypes.ReserveData storage reserve = _reserves[asset][reserveType];
+
+        reserve.updateInterestRates(asset, reserve.aTokenAddress, 0, 0);
+    }
+
+    /**
      * @notice Sets the rewarder contract for a specific reserve.
      * @param asset The address of the underlying asset of the reserve.
      * @param reserveType Whether the reserve is boosted by a vault.

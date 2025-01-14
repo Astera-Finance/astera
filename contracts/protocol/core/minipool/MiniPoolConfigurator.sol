@@ -171,11 +171,15 @@ contract MiniPoolConfigurator is VersionedInitializable, IMiniPoolConfigurator {
         external
         onlyMainPoolAdmin
     {
+        pool.syncIndexesState(asset);
+
         DataTypes.ReserveConfigurationMap memory currentConfig = pool.getConfiguration(asset);
 
         currentConfig.setCod3xReserveFactor(reserveFactor);
 
         pool.setConfiguration(asset, currentConfig.data);
+
+        pool.syncRatesState(asset);
 
         emit Cod3xReserveFactorChanged(asset, reserveFactor);
     }
@@ -466,11 +470,15 @@ contract MiniPoolConfigurator is VersionedInitializable, IMiniPoolConfigurator {
         external
         onlyPoolAdmin(address(pool))
     {
+        pool.syncIndexesState(asset);
+
         DataTypes.ReserveConfigurationMap memory currentConfig = pool.getConfiguration(asset);
 
         currentConfig.setMinipoolOwnerReserveFactor(reserveFactor);
 
         pool.setConfiguration(asset, currentConfig.data);
+
+        pool.syncRatesState(asset);
 
         emit MinipoolOwnerReserveFactorChanged(asset, reserveFactor);
     }

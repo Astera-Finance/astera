@@ -85,10 +85,16 @@ contract MiniPoolDepositBorrowTest is MiniPoolFixtures {
                 new ATokensAndRatesHelper.ConfigureReserveInput[](1);
 
             string memory tmpSymbol = ERC20(mockToken).symbol();
-            address interestStrategy = isStableStrategy[0] != false
-                ? configAddresses.stableStrategy
-                : configAddresses.volatileStrategy;
-            // console.log("[common] main interestStartegy: ", interestStrategy);
+            address interestStrategy = address(
+                new DefaultReserveInterestRateStrategy(
+                    deployedContracts.lendingPoolAddressesProvider,
+                    sStrat[0],
+                    sStrat[1],
+                    sStrat[2],
+                    sStrat[3]
+                )
+            );
+
             initInputParams[0] = ILendingPoolConfigurator.InitReserveInput({
                 aTokenImpl: address(commonContracts.aToken),
                 variableDebtTokenImpl: address(commonContracts.variableDebtToken),
@@ -105,6 +111,8 @@ contract MiniPoolDepositBorrowTest is MiniPoolFixtures {
                 variableDebtTokenSymbol: string.concat("variableDebt", tmpSymbol),
                 params: "0x10"
             });
+
+            console.log("interestStrategy :::: ", interestStrategy);
 
             vm.prank(admin);
             deployedContracts.lendingPoolConfigurator.batchInitReserve(initInputParams);

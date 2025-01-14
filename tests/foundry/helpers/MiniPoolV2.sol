@@ -759,4 +759,26 @@ contract MiniPoolV2 is VersionedInitializable, IMiniPool, MiniPoolStorage {
     function _updateFlashLoanFee(uint128 flashLoanPremiumTotal) internal {
         _flashLoanPremiumTotal = flashLoanPremiumTotal;
     }
+
+    /**
+     * @notice Synchronizes the reserve indexes state for a specific asset
+     * @dev Only callable by the LendingPoolConfigurator
+     * @param asset The address of the underlying asset of the reserve
+     */
+    function syncIndexesState(address asset) external virtual override onlyMiniPoolConfigurator {
+        DataTypes.MiniPoolReserveData storage reserve = _reserves[asset];
+
+        reserve.updateState();
+    }
+
+    /**
+     * @notice Synchronizes the interest rates state for a specific asset
+     * @dev Only callable by the LendingPoolConfigurator
+     * @param asset The address of the underlying asset of the reserve
+     */
+    function syncRatesState(address asset) external virtual override onlyMiniPoolConfigurator {
+        DataTypes.MiniPoolReserveData storage reserve = _reserves[asset];
+
+        reserve.updateInterestRates(asset, 0, 0);
+    }
 }
