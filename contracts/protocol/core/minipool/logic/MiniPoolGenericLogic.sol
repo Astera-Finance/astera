@@ -203,7 +203,9 @@ library MiniPoolGenericLogic {
                 );
 
                 vars.totalDebtInETH = vars.totalDebtInETH
-                    + (vars.reserveUnitPrice * vars.compoundedBorrowBalance / vars.tokenUnit);
+                    + WadRayMath.divUp(
+                        vars.reserveUnitPrice * vars.compoundedBorrowBalance, vars.tokenUnit
+                    );
             }
         }
 

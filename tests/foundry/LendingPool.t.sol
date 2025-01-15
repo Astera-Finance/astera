@@ -230,7 +230,7 @@ contract LendingPoolTest is LendingPoolFixtures {
         uint8 idx = 1;
         token = erc20Tokens[idx];
 
-        tokenDepositAmount = bound(tokenDepositAmount, 2, 2_000_000);
+        tokenDepositAmount = bound(tokenDepositAmount, 3, 2_000_000);
         // uint256 usdcDepositValue = usdcDepositAmount * usdcPrice / (10 ** PRICE_FEED_DECIMALS);
         StaticData memory staticData =
             deployedContracts.cod3xLendDataProvider.getLpReserveStaticData(address(token), true);
@@ -248,7 +248,7 @@ contract LendingPoolTest is LendingPoolFixtures {
         deployedContracts.lendingPool.setUserUseReserveAsCollateral(address(token), true, false);
         vm.expectRevert(bytes(Errors.VL_COLLATERAL_BALANCE_IS_0));
         deployedContracts.lendingPool.borrow(
-            address(token), true, tokenMaxBorrowAmount, address(this)
+            address(token), true, tokenMaxBorrowAmount - 1, address(this)
         );
 
         staticData =
@@ -257,8 +257,8 @@ contract LendingPoolTest is LendingPoolFixtures {
             address(token),
             address(commonContracts.aTokens[idx]),
             0,
-            tokenMaxBorrowAmount,
-            tokenMaxBorrowAmount,
+            tokenMaxBorrowAmount - 1,
+            tokenMaxBorrowAmount - 1,
             staticData.cod3xReserveFactor
         );
         /* Main user is using now his liquidity as a collateral - borrow shall succeed */
@@ -267,16 +267,21 @@ contract LendingPoolTest is LendingPoolFixtures {
         /* Main user borrows maxPossible amount of usdc */
         vm.expectEmit(true, true, true, true);
         emit Borrow(
-            address(token), address(this), address(this), tokenMaxBorrowAmount, expectedBorrowRate
+            address(token),
+            address(this),
+            address(this),
+            tokenMaxBorrowAmount - 1,
+            expectedBorrowRate
         );
         deployedContracts.lendingPool.borrow(
-            address(token), true, tokenMaxBorrowAmount, address(this)
+            address(token), true, tokenMaxBorrowAmount - 1, address(this)
         );
 
         /* Main user's balance should have: initial amount + borrowed amount */
-        assertEq(usdcBalanceBeforeBorrow + tokenMaxBorrowAmount, token.balanceOf(address(this)));
+        assertEq(usdcBalanceBeforeBorrow + tokenMaxBorrowAmount - 1, token.balanceOf(address(this)));
         assertEq(
-            commonContracts.variableDebtTokens[idx].balanceOf(address(this)), tokenMaxBorrowAmount
+            commonContracts.variableDebtTokens[idx].balanceOf(address(this)),
+            tokenMaxBorrowAmount - 1
         );
     }
 
