@@ -2658,14 +2658,16 @@ contract MiniPoolRewarderTest is Common {
     function testFuzzConfigurationParams(
         uint256 amountOfRewards,
         uint88 emissionPerSecond,
-        uint32 distributionEnd,
-        uint256 usdAmount
+        uint32 distributionTime,
+        uint256 usdAmount,
+        uint8 offset
     ) public {
+        offset = uint8(bound(offset, 0, 3));
         usdAmount = bound(usdAmount, 1e20, 1e27);
         amountOfRewards = bound(amountOfRewards, 1, 1e27); // 1_000_000_000
-        distributionEnd = uint32(bound(distributionEnd, 5 days, 1000 days));
-        vm.assume(distributionEnd < amountOfRewards);
-        emissionPerSecond = uint88(bound(emissionPerSecond, 1, amountOfRewards / distributionEnd));
+        distributionTime = uint32(bound(distributionTime, 1 days, 1000 days));
+        vm.assume(distributionTime < amountOfRewards);
+        emissionPerSecond = uint88(bound(emissionPerSecond, 1, amountOfRewards / distributionTime));
         vm.assume(emissionPerSecond > 1e10);
         console.log("Configuring (timestamp  %s)", block.timestamp);
         fixture_configureMainPoolRewarder(
@@ -2673,42 +2675,42 @@ contract MiniPoolRewarderTest is Common {
             1, // The index of the reward token
             amountOfRewards, // The amount of reward tokens
             emissionPerSecond, // The emissions per second of the reward tokens
-            uint32(block.timestamp + distributionEnd), // The end timestamp for the distribution of rewards
+            uint32(block.timestamp + distributionTime), // The end timestamp for the distribution of rewards
             address(miniPoolContracts.miniPoolAddressesProvider) // The address of the mini pool addresses provider
         );
         address user1 = makeAddr("user1");
 
-        TokenParamsExtended memory wethParams = TokenParamsExtended({
-            token: erc20Tokens[WETH_OFFSET],
-            aToken: commonContracts.aTokens[WETH_OFFSET],
-            aTokenWrapper: commonContracts.aTokensWrapper[WETH_OFFSET],
-            vault: new MockVaultUnit(erc20Tokens[WETH_OFFSET]),
-            price: commonContracts.oracle.getAssetPrice(address(tokens[WETH_OFFSET]))
+        TokenParamsExtended memory tokenParams = TokenParamsExtended({
+            token: erc20Tokens[offset],
+            aToken: commonContracts.aTokens[offset],
+            aTokenWrapper: commonContracts.aTokensWrapper[offset],
+            vault: new MockVaultUnit(erc20Tokens[offset]),
+            price: commonContracts.oracle.getAssetPrice(address(tokens[offset]))
         });
 
         address[] memory aTokenAddresses = new address[](1);
-        aTokenAddresses[0] = address(wethParams.aToken);
+        aTokenAddresses[0] = address(tokenParams.aToken);
 
         DistributionTypes.Asset6909[] memory assets = new DistributionTypes.Asset6909[](1);
-        assets[0] = DistributionTypes.Asset6909(aTokensErc6909Addr, 1000 + WETH_OFFSET);
+        assets[0] = DistributionTypes.Asset6909(aTokensErc6909Addr, 1000 + offset);
 
-        uint256 wethAmount = (1000 ether / wethParams.price) * 10 ** PRICE_FEED_DECIMALS
-            / (10 ** (18 - wethParams.token.decimals()));
-        console.log("wethAmount: %s for price: %s", wethAmount, wethParams.price);
+        uint256 wethAmount = (1000 ether / tokenParams.price) * 10 ** PRICE_FEED_DECIMALS
+            / (10 ** (18 - tokenParams.token.decimals()));
+        console.log("wethAmount: %s for price: %s", wethAmount, tokenParams.price);
         {
-            deal(address(erc20Tokens[WETH_OFFSET]), user1, wethAmount);
+            deal(address(erc20Tokens[offset]), user1, wethAmount);
 
             vm.startPrank(user1);
             console.log("User1 deposits WETH to main pool");
-            wethParams.token.approve(address(deployedContracts.lendingPool), wethAmount);
+            tokenParams.token.approve(address(deployedContracts.lendingPool), wethAmount);
             deployedContracts.lendingPool.deposit(
-                address(wethParams.token), true, wethAmount, user1
+                address(tokenParams.token), true, wethAmount, user1
             );
 
             vm.stopPrank();
 
             console.log("Time travel 1");
-            vm.warp(block.timestamp + distributionEnd);
+            vm.warp(block.timestamp + distributionTime);
             vm.roll(block.number + 1);
 
             console.log("User1 claims his rewards (timestamp %s)", block.timestamp);
@@ -2728,16 +2730,16 @@ contract MiniPoolRewarderTest is Common {
     function testMiniPoolFuzzConfigurationParams(
         uint256 amountOfRewards,
         uint88 emissionPerSecond,
-        uint32 distributionEnd,
-        uint256 usdAmount
+        uint32 distributionTime,
+        uint256 usdAmount,
+        uint8 offset
     ) public {
-        console.log("emissionPerSecond: ", emissionPerSecond);
-        console.log("distributionEnd: ", distributionEnd);
+        offset = uint8(bound(offset, 0, 3));
         usdAmount = bound(usdAmount, 1e20, 1e27);
         amountOfRewards = bound(amountOfRewards, 1, 1e27); // 1_000_000_000
-        distributionEnd = uint32(bound(distributionEnd, 1, 1000 days));
-        vm.assume(distributionEnd < amountOfRewards);
-        emissionPerSecond = uint88(bound(emissionPerSecond, 1, amountOfRewards / distributionEnd));
+        distributionTime = uint32(bound(distributionTime, 1 days, 1000 days));
+        vm.assume(distributionTime < amountOfRewards);
+        emissionPerSecond = uint88(bound(emissionPerSecond, 1, amountOfRewards / distributionTime));
         vm.assume(emissionPerSecond > 1e10);
         console.log("Configuring (timestamp  %s)", block.timestamp);
 
@@ -2767,7 +2769,7 @@ contract MiniPoolRewarderTest is Common {
                     DistributionTypes.Asset6909(aTokensErc6909Addr, assetID);
                 configs[configId] = DistributionTypes.MiniPoolRewardsConfigInput(
                     emissionPerSecond,
-                    uint32(block.timestamp + distributionEnd),
+                    uint32(block.timestamp + distributionTime),
                     asset,
                     address(rewardTokens[rewardsIdx])
                 );
@@ -2777,38 +2779,40 @@ contract MiniPoolRewarderTest is Common {
             miniPoolRewarder.configureAssets(configs);
         }
 
-        TokenParamsExtended memory wethParams = TokenParamsExtended({
-            token: erc20Tokens[WETH_OFFSET],
-            aToken: commonContracts.aTokens[WETH_OFFSET],
-            aTokenWrapper: commonContracts.aTokensWrapper[WETH_OFFSET],
-            vault: new MockVaultUnit(erc20Tokens[WETH_OFFSET]),
-            price: commonContracts.oracle.getAssetPrice(address(tokens[WETH_OFFSET]))
+        TokenParamsExtended memory collateralParams = TokenParamsExtended({
+            token: erc20Tokens[offset],
+            aToken: commonContracts.aTokens[offset],
+            aTokenWrapper: commonContracts.aTokensWrapper[offset],
+            vault: new MockVaultUnit(erc20Tokens[offset]),
+            price: commonContracts.oracle.getAssetPrice(address(tokens[offset]))
         });
 
         address[] memory aTokenAddresses = new address[](1);
-        aTokenAddresses[0] = address(wethParams.aToken);
+        aTokenAddresses[0] = address(collateralParams.aToken);
 
         DistributionTypes.Asset6909[] memory assets = new DistributionTypes.Asset6909[](1);
-        assets[0] = DistributionTypes.Asset6909(aTokensErc6909Addr, 1000 + WETH_OFFSET);
+        assets[0] = DistributionTypes.Asset6909(aTokensErc6909Addr, 1000 + offset);
 
-        uint256 wethAmount = (usdAmount / wethParams.price) * 10 ** PRICE_FEED_DECIMALS
-            / (10 ** (18 - wethParams.token.decimals()));
-        console.log("wethAmount: %s for price: %s", wethAmount, wethParams.price);
+        uint256 wethAmount = (usdAmount / collateralParams.price) * 10 ** PRICE_FEED_DECIMALS
+            / (10 ** (18 - collateralParams.token.decimals()));
+        console.log("wethAmount: %s for price: %s", wethAmount, collateralParams.price);
         {
-            deal(address(erc20Tokens[WETH_OFFSET]), user1, wethAmount);
+            deal(address(erc20Tokens[offset]), user1, wethAmount);
             vm.startPrank(user1);
-            console.log("User1 deposits WETH to main pool");
-            wethParams.token.approve(address(deployedContracts.lendingPool), wethAmount);
+            console.log("User1 deposits collateral to main pool");
+            collateralParams.token.approve(address(deployedContracts.lendingPool), wethAmount);
             deployedContracts.lendingPool.deposit(
-                address(wethParams.token), true, wethAmount, user1
+                address(collateralParams.token), true, wethAmount, user1
             );
             console.log("User1 deposits aWETH to mini pool");
-            wethParams.aTokenWrapper.approve(miniPool, wethAmount);
-            IMiniPool(miniPool).deposit(address(wethParams.aTokenWrapper), false, wethAmount, user1);
+            collateralParams.aTokenWrapper.approve(miniPool, wethAmount);
+            IMiniPool(miniPool).deposit(
+                address(collateralParams.aTokenWrapper), false, wethAmount, user1
+            );
             vm.stopPrank();
 
             console.log("Time travel 2");
-            vm.warp(block.timestamp + distributionEnd);
+            vm.warp(block.timestamp + distributionTime);
             vm.roll(block.number + 1);
 
             console.log("User1 claims his rewards (timestamp %s)", block.timestamp);
