@@ -2658,13 +2658,12 @@ contract MiniPoolRewarderTest is Common {
     function testFuzzConfigurationParams(
         uint256 amountOfRewards,
         uint88 emissionPerSecond,
-        uint32 distributionEnd
+        uint32 distributionEnd,
+        uint256 usdAmount
     ) public {
-        console.log("emissionPerSecond: ", emissionPerSecond);
-        console.log("distributionEnd: ", distributionEnd);
-
+        usdAmount = bound(usdAmount, 1e20, 1e27);
         amountOfRewards = bound(amountOfRewards, 1, 1e27); // 1_000_000_000
-        distributionEnd = uint32(bound(distributionEnd, 1, 1000 days));
+        distributionEnd = uint32(bound(distributionEnd, 5 days, 1000 days));
         vm.assume(distributionEnd < amountOfRewards);
         emissionPerSecond = uint88(bound(emissionPerSecond, 1, amountOfRewards / distributionEnd));
         vm.assume(emissionPerSecond > 1e10);
@@ -2729,11 +2728,12 @@ contract MiniPoolRewarderTest is Common {
     function testMiniPoolFuzzConfigurationParams(
         uint256 amountOfRewards,
         uint88 emissionPerSecond,
-        uint32 distributionEnd
+        uint32 distributionEnd,
+        uint256 usdAmount
     ) public {
         console.log("emissionPerSecond: ", emissionPerSecond);
         console.log("distributionEnd: ", distributionEnd);
-
+        usdAmount = bound(usdAmount, 1e20, 1e27);
         amountOfRewards = bound(amountOfRewards, 1, 1e27); // 1_000_000_000
         distributionEnd = uint32(bound(distributionEnd, 1, 1000 days));
         vm.assume(distributionEnd < amountOfRewards);
@@ -2791,7 +2791,7 @@ contract MiniPoolRewarderTest is Common {
         DistributionTypes.Asset6909[] memory assets = new DistributionTypes.Asset6909[](1);
         assets[0] = DistributionTypes.Asset6909(aTokensErc6909Addr, 1000 + WETH_OFFSET);
 
-        uint256 wethAmount = (1000 ether / wethParams.price) * 10 ** PRICE_FEED_DECIMALS
+        uint256 wethAmount = (usdAmount / wethParams.price) * 10 ** PRICE_FEED_DECIMALS
             / (10 ** (18 - wethParams.token.decimals()));
         console.log("wethAmount: %s for price: %s", wethAmount, wethParams.price);
         {

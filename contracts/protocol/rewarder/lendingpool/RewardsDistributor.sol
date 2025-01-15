@@ -25,7 +25,7 @@ abstract contract RewardsDistributor is IRewardsDistributor, Ownable {
      */
     struct RewardData {
         uint88 emissionPerSecond;
-        uint104 index;
+        uint128 index;
         uint32 lastUpdateTimestamp;
         uint32 distributionEnd;
         mapping(address => uint256) usersIndex;
@@ -55,14 +55,18 @@ abstract contract RewardsDistributor is IRewardsDistributor, Ownable {
 
     address[] internal _rewardTokens;
 
-    // Percentage in BPS of the total supply that will trigger the accrual of rewards
-    uint256 constant TOTAL_SUPPLY_THRESHOLD_BPS = 10;
+    // Mapping decimals of token to total supply threshold that will trigger the accrual of rewards
+    mapping(uint8 => uint256) public _decimalsToTotalSupplyThreshold;
 
     /**
      * @dev Constructor that sets the initial owner of the contract.
      * @param initialOwner Address to be set as the contract owner.
      */
-    constructor(address initialOwner) Ownable(initialOwner) {}
+    constructor(address initialOwner) Ownable(initialOwner) {
+        _setTotalSupplyThreshold(6, 1e6);
+        _setTotalSupplyThreshold(8, 1e2);
+        _setTotalSupplyThreshold(18, 1e16);
+    }
 
     /**
      * @notice Retrieves reward distribution data for a specific asset and reward token.
@@ -200,6 +204,15 @@ abstract contract RewardsDistributor is IRewardsDistributor, Ownable {
         );
     }
 
+    function setTotalSupplyThreshold(uint8 decimals, uint256 threshold) external onlyOwner {
+        _setTotalSupplyThreshold(decimals, threshold);
+    }
+
+    function _setTotalSupplyThreshold(uint8 decimals, uint256 threshold) private {
+        _decimalsToTotalSupplyThreshold[decimals] = threshold;
+        emit TotalSupplyThresholdSet(decimals, threshold);
+    }
+
     /**
      * @notice Configures reward distribution parameters for multiple assets.
      * @param rewardsInput Array of reward configuration parameters.
@@ -246,11 +259,10 @@ abstract contract RewardsDistributor is IRewardsDistributor, Ownable {
                 rewardsInput[i].emissionPerSecond,
                 uint128(block.timestamp - (rewardsInput[i].distributionEnd - block.timestamp)),
                 rewardsInput[i].distributionEnd,
-                ((10 ** _assets[rewardsInput[i].asset].decimals) * TOTAL_SUPPLY_THRESHOLD_BPS)
-                    / 10_000,
+                _decimalsToTotalSupplyThreshold[_assets[rewardsInput[i].asset].decimals],
                 _assets[rewardsInput[i].asset].decimals
             );
-            require(maxPossibleIndex <= type(uint104).max, "Config may lead to overflows");
+            require(maxPossibleIndex <= type(uint128).max, "Config may lead to overflows");
 
             emit AssetConfigUpdated(
                 rewardsInput[i].asset,
@@ -293,9 +305,9 @@ abstract contract RewardsDistributor is IRewardsDistributor, Ownable {
         );
 
         if (newIndex != oldIndex) {
-            require(newIndex <= type(uint104).max, "Index overflow");
+            require(newIndex <= type(uint128).max, "Index overflow");
             //optimization: storing one after another saves one SSTORE
-            rewardConfig.index = uint104(newIndex);
+            rewardConfig.index = uint128(newIndex);
             rewardConfig.lastUpdateTimestamp = uint32(block.timestamp);
             emit AssetIndexUpdated(asset, reward, newIndex);
         } else {
@@ -506,11 +518,11 @@ abstract contract RewardsDistributor is IRewardsDistributor, Ownable {
         uint8 decimals
     ) internal view returns (uint256) {
         // emissionPerSecond equal 1 leads to 0 accrued rewards due to rounding down
-        // if total balance is too small, do not increase index and accrue the rewards because it may lead to overflows of uint104
+        // if total balance is too small, do not increase index and accrue the rewards because it may lead to overflows of uint128
         if (
             emissionPerSecond <= 1 || totalBalance == 0 || lastUpdateTimestamp == block.timestamp
                 || lastUpdateTimestamp >= distributionEnd
-                || totalBalance < (((10 ** decimals) * TOTAL_SUPPLY_THRESHOLD_BPS) / 10_000)
+                || totalBalance < _decimalsToTotalSupplyThreshold[decimals]
         ) {
             return currentIndex;
         }
