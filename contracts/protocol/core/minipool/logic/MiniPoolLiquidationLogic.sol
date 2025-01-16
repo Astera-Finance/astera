@@ -144,8 +144,8 @@ library MiniPoolLiquidationLogic {
             collateralReserve, debtReserve, userConfig, vars.healthFactor, vars.userVariableDebt
         );
 
-        // Note that collateralReserve.aTokenAddress == debtReserve.aTokenAddress for minipool.
-        vars.atoken6909 = IAERC6909(collateralReserve.aTokenAddress);
+        // Note that collateralReserve.aErc6909 == debtReserve.aErc6909 for minipool.
+        vars.atoken6909 = IAERC6909(collateralReserve.aErc6909);
         vars.aTokenID = collateralReserve.aTokenID;
         vars.debtID = debtReserve.variableDebtTokenID;
 
@@ -249,10 +249,10 @@ library MiniPoolLiquidationLogic {
 
         // Transfers the debt asset being repaid to the aToken, where the liquidity is kept.
         IERC20(params.debtAsset).safeTransferFrom(
-            msg.sender, debtReserve.aTokenAddress, vars.actualDebtToLiquidate
+            msg.sender, debtReserve.aErc6909, vars.actualDebtToLiquidate
         );
 
-        IAERC6909(debtReserve.aTokenAddress).handleRepayment(
+        IAERC6909(debtReserve.aErc6909).handleRepayment(
             msg.sender, params.user, debtReserve.aTokenID, vars.actualDebtToLiquidate
         );
 

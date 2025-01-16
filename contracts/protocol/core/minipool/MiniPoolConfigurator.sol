@@ -496,7 +496,7 @@ contract MiniPoolConfigurator is VersionedInitializable, IMiniPoolConfigurator {
     function _checkNoLiquidity(address asset, IMiniPool pool) internal view {
         DataTypes.MiniPoolReserveData memory reserveData = pool.getReserveData(asset);
 
-        IAERC6909 aToken6909 = IAERC6909(reserveData.aTokenAddress);
+        IAERC6909 aToken6909 = IAERC6909(reserveData.aErc6909);
         (uint256 aTokenID, uint256 debtTokenID,) = aToken6909.getIdForUnderlying(asset);
 
         uint256 availableLiquidity =

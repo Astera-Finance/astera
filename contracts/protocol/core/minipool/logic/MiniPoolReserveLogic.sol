@@ -102,7 +102,7 @@ library MiniPoolReserveLogic {
      */
     function updateState(DataTypes.MiniPoolReserveData storage reserve) internal {
         uint256 scaledVariableDebt =
-            IAERC6909(reserve.aTokenAddress).scaledTotalSupply(reserve.variableDebtTokenID);
+            IAERC6909(reserve.aErc6909).scaledTotalSupply(reserve.variableDebtTokenID);
         uint256 previousVariableBorrowIndex = reserve.variableBorrowIndex;
         uint256 previousLiquidityIndex = reserve.liquidityIndex;
         uint40 lastUpdatedTimestamp = reserve.lastUpdateTimestamp;
@@ -151,7 +151,7 @@ library MiniPoolReserveLogic {
      * @dev Initializes a reserve with the provided parameters.
      * @param reserve The reserve object to initialize.
      * @param asset The address of the underlying asset.
-     * @param aTokenAddress The address of the overlying atoken contract.
+     * @param aErc6909 The address of the overlying atoken contract.
      * @param aTokenID The ID of the aToken.
      * @param variableDebtTokenID The ID of the variable debt token.
      * @param interestRateStrategyAddress The address of the interest rate strategy contract.
@@ -159,19 +159,18 @@ library MiniPoolReserveLogic {
     function init(
         DataTypes.MiniPoolReserveData storage reserve,
         address asset,
-        IAERC6909 aTokenAddress,
+        IAERC6909 aErc6909,
         uint256 aTokenID,
         uint256 variableDebtTokenID,
         address interestRateStrategyAddress
     ) internal {
         require(
-            aTokenAddress.getUnderlyingAsset(aTokenID) == asset,
-            Errors.RL_RESERVE_ALREADY_INITIALIZED
+            aErc6909.getUnderlyingAsset(aTokenID) == asset, Errors.RL_RESERVE_ALREADY_INITIALIZED
         );
 
         reserve.liquidityIndex = uint128(WadRayMath.ray());
         reserve.variableBorrowIndex = uint128(WadRayMath.ray());
-        reserve.aTokenAddress = address(aTokenAddress);
+        reserve.aErc6909 = address(aErc6909);
         reserve.aTokenID = aTokenID;
         reserve.variableDebtTokenID = variableDebtTokenID;
         reserve.interestRateStrategyAddress = interestRateStrategyAddress;
@@ -200,7 +199,7 @@ library MiniPoolReserveLogic {
         // Calculates the total variable debt locally using the scaled total supply instead
         // of totalSupply(), as it's noticeably cheaper. Also, the index has been
         // updated by the previous updateState() call.
-        vars.totalVariableDebt = IAERC6909(reserve.aTokenAddress).scaledTotalSupply(
+        vars.totalVariableDebt = IAERC6909(reserve.aErc6909).scaledTotalSupply(
             (reserve.variableDebtTokenID)
         ).rayMul(reserve.variableBorrowIndex);
 
@@ -208,7 +207,7 @@ library MiniPoolReserveLogic {
             reserve.interestRateStrategyAddress
         ).calculateInterestRates(
             reserveAddress,
-            reserve.aTokenAddress,
+            reserve.aErc6909,
             liquidityAdded,
             liquidityTaken,
             vars.totalVariableDebt,
@@ -278,7 +277,7 @@ library MiniPoolReserveLogic {
             vars.amountToMintCod3x = vars.totalDebtAccrued.percentMul(vars.cod3xReserveFactor);
 
             if (vars.amountToMintCod3x != 0) {
-                IAERC6909(reserve.aTokenAddress).mintToCod3xTreasury(
+                IAERC6909(reserve.aErc6909).mintToCod3xTreasury(
                     reserve.aTokenID, vars.amountToMintCod3x, newLiquidityIndex
                 );
             }
@@ -289,7 +288,7 @@ library MiniPoolReserveLogic {
                 vars.totalDebtAccrued.percentMul(vars.minipoolOwnerReserveFactor);
 
             if (vars.amountToMintMinipoolOwner != 0) {
-                IAERC6909(reserve.aTokenAddress).mintToMinipoolOwnerTreasury(
+                IAERC6909(reserve.aErc6909).mintToMinipoolOwnerTreasury(
                     reserve.aTokenID, vars.amountToMintMinipoolOwner, newLiquidityIndex
                 );
             }

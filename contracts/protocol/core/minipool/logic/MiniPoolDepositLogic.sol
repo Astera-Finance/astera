@@ -83,7 +83,7 @@ library MiniPoolDepositLogic {
 
         MiniPoolValidationLogic.validateDeposit(reserve, params.amount);
 
-        address aToken = reserve.aTokenAddress;
+        address aToken = reserve.aErc6909;
 
         reserve.updateState();
         reserve.updateInterestRates(params.asset, params.amount, 0);
@@ -130,14 +130,14 @@ library MiniPoolDepositLogic {
 
         MiniPoolValidationLogic.validateDeposit(reserve, params.amount);
 
-        address aToken = reserve.aTokenAddress;
+        address aToken = reserve.aErc6909;
 
         reserve.updateState();
         reserve.updateInterestRates(params.asset, params.amount, 0);
 
         IERC20(params.asset).safeTransfer(aToken, params.amount);
 
-        IAERC6909(reserve.aTokenAddress).mint(
+        IAERC6909(reserve.aErc6909).mint(
             address(this), address(this), reserve.aTokenID, params.amount, reserve.liquidityIndex
         );
 

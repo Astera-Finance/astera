@@ -117,7 +117,7 @@ library MiniPoolBorrowLogic {
         address user;
         address onBehalfOf;
         uint256 amount;
-        address aTokenAddress;
+        address aErc6909;
         uint256 aTokenID;
         uint256 variableDebtTokenID;
         uint256 index;
@@ -167,12 +167,12 @@ library MiniPoolBorrowLogic {
         {
             bool isFirstBorrowing = false;
             {
-                vars.aTokenAddress = reserve.aTokenAddress;
+                vars.aErc6909 = reserve.aErc6909;
                 vars.aTokenID = reserve.aTokenID;
                 vars.variableDebtTokenID = reserve.variableDebtTokenID;
                 vars.index = reserve.variableBorrowIndex;
             }
-            isFirstBorrowing = IAERC6909(vars.aTokenAddress).mint(
+            isFirstBorrowing = IAERC6909(vars.aErc6909).mint(
                 vars.user, vars.onBehalfOf, vars.variableDebtTokenID, vars.amount, vars.index
             );
 
@@ -184,7 +184,7 @@ library MiniPoolBorrowLogic {
         reserve.updateInterestRates(vars.asset, 0, vars.releaseUnderlying ? vars.amount : 0);
 
         if (vars.releaseUnderlying) {
-            IAERC6909(vars.aTokenAddress).transferUnderlyingTo(
+            IAERC6909(vars.aErc6909).transferUnderlyingTo(
                 vars.user, reserve.aTokenID, vars.amount, unwrap
             );
         }
@@ -261,7 +261,7 @@ library MiniPoolBorrowLogic {
 
         reserve.updateState();
 
-        IAERC6909(reserve.aTokenAddress).burn(
+        IAERC6909(reserve.aErc6909).burn(
             params.onBehalfOf,
             address(0), // we dont care about the burn receiver for debtTokens
             reserve.variableDebtTokenID,
@@ -270,7 +270,7 @@ library MiniPoolBorrowLogic {
             reserve.variableBorrowIndex
         );
 
-        address aToken = reserve.aTokenAddress;
+        address aToken = reserve.aErc6909;
         reserve.updateInterestRates(params.asset, paybackAmount, 0);
 
         if (variableDebt - paybackAmount == 0) {
