@@ -51,6 +51,9 @@ contract AToken is
     /// @notice Flag indicating if the reserve is boosted by a vault.
     bool public RESERVE_TYPE;
 
+    /// @notice Chain ID cached at contract deployment for EIP712 domain separator.
+    uint256 public CACHED_CHAIN_ID;
+
     /// @notice Reference to the `ILendingPool` contract.
     ILendingPool internal _pool;
 
@@ -131,21 +134,13 @@ contract AToken is
         string calldata aTokenSymbol,
         bytes calldata params
     ) external override initializer {
-        DOMAIN_SEPARATOR = keccak256(
-            abi.encode(
-                EIP712_DOMAIN,
-                keccak256(bytes(aTokenName)),
-                keccak256(EIP712_REVISION),
-                block.chainid,
-                address(this)
-            )
-        );
-
-        RESERVE_TYPE = reserveType;
-
         _setName(aTokenName);
         _setSymbol(aTokenSymbol);
         _setDecimals(aTokenDecimals);
+
+        DOMAIN_SEPARATOR = _buildDomainSeparator();
+        CACHED_CHAIN_ID = block.chainid;
+        RESERVE_TYPE = reserveType;
 
         _pool = pool;
         _treasury = treasury;
@@ -410,22 +405,45 @@ contract AToken is
         bytes32 r,
         bytes32 s
     ) external {
-        require(owner != address(0), "INVALID_OWNER");
+        require(owner != address(0), Errors.AT_INVALID_ADDRESS);
 
-        require(block.timestamp <= deadline, "INVALID_EXPIRATION");
+        require(block.timestamp <= deadline, Errors.AT_INVALID_EXPIRATION);
         uint256 currentValidNonce = _nonces[owner];
         bytes32 digest = keccak256(
             abi.encodePacked(
                 "\x19\x01",
-                DOMAIN_SEPARATOR,
+                _domainSeparator(),
                 keccak256(
                     abi.encode(PERMIT_TYPEHASH, owner, spender, value, currentValidNonce, deadline)
                 )
             )
         );
-        require(owner == ecrecover(digest, v, r, s), "INVALID_SIGNATURE");
+        require(owner == ecrecover(digest, v, r, s), Errors.AT_INVALID_SIGNATURE);
         _nonces[owner] = currentValidNonce + 1;
         _approve(owner, spender, value);
+    }
+
+    /**
+     * @dev Returns the domain separator for the current chain.
+     */
+    function _domainSeparator() internal view returns (bytes32) {
+        if (block.chainid == CACHED_CHAIN_ID) {
+            return DOMAIN_SEPARATOR;
+        } else {
+            return _buildDomainSeparator();
+        }
+    }
+
+    function _buildDomainSeparator() private view returns (bytes32) {
+        return keccak256(
+            abi.encode(
+                EIP712_DOMAIN,
+                keccak256(bytes(name())),
+                keccak256(EIP712_REVISION),
+                block.chainid,
+                address(this)
+            )
+        );
     }
 
     /**

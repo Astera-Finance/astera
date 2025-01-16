@@ -49,6 +49,9 @@ contract ATokenV2 is
     /// @notice Flag indicating if the reserve is boosted by a vault.
     bool public RESERVE_TYPE;
 
+    /// @notice Chain ID cached at contract deployment for EIP712 domain separator.
+    uint256 public CACHED_CHAIN_ID;
+
     /// @notice Reference to the `ILendingPool` contract.
     ILendingPool internal _pool;
 
@@ -86,11 +89,11 @@ contract ATokenV2 is
     uint256 public _farmingPctDrift;
     /// @notice The address that receives claimed profits.
     address public _profitHandler;
+
     /**
      * @notice Modifier to ensure only the lending pool can call certain functions.
      * @dev Reverts if the caller is not the lending pool contract.
      */
-
     modifier onlyLendingPool() {
         require(msg.sender == address(_pool), Errors.AT_CALLER_MUST_BE_LENDING_POOL);
         _;
