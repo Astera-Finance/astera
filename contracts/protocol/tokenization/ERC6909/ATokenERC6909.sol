@@ -834,41 +834,4 @@ contract ATokenERC6909 is IncentivizedERC6909, VersionedInitializable {
     function getIncentivesController() external view returns (IMiniPoolRewarder) {
         return _incentivesController;
     }
-
-    /**
-     * @notice Check whether underlying asset is already initialized in erc6909.
-     * @param underlyingAsset Underlying asset for aTokenErc6909 - can be ERC20 or AToken
-     * @return isInitialized Bool info about asset being initialized.
-     */
-    function checkIfUnderlyingIsInitialized(address underlyingAsset)
-        external
-        view
-        returns (bool isInitialized)
-    {
-        ILendingPool pool = ILendingPool(_addressesProvider.getLendingPool());
-        if (_determineIfAToken(underlyingAsset, address(pool))) {
-            address tokenUnderlying = IAToken(underlyingAsset).UNDERLYING_ASSET_ADDRESS();
-            // Ensure LendingPool reserve is initialized.
-            require(
-                pool.getReserveData(tokenUnderlying, true).aTokenAddress != address(0),
-                Errors.RL_RESERVE_NOT_INITIALIZED
-            );
-            // Thanks to the above check, `getReserveData.id` returns the correct value.
-            uint256 tokenID = pool.getReserveData(tokenUnderlying, true).id;
-            // Check if aToken is in underlyingAsset mapping - if it isn't it means aToken is not initialized in the erc6909
-            isInitialized = _underlyingAssetAddresses[tokenID] == address(0) ? false : true;
-        } else {
-            isInitialized = false;
-            // Loop through all ids associated with ERC20 tokens and check if underlying asset occurs
-            for (
-                uint256 id = pool.MAX_NUMBER_RESERVES() + ATOKEN_ADDRESSABLE_ID;
-                id < pool.MAX_NUMBER_RESERVES() + ATOKEN_ADDRESSABLE_ID + _totalUniqueTokens;
-                id++
-            ) {
-                if (_underlyingAssetAddresses[id] == underlyingAsset) {
-                    return true;
-                }
-            }
-        }
-    }
 }
