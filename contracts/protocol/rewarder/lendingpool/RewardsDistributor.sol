@@ -24,8 +24,8 @@ abstract contract RewardsDistributor is IRewardsDistributor, Ownable {
      * @param usersIndex Mapping of user addresses to their reward index.
      */
     struct RewardData {
-        uint88 emissionPerSecond;
-        uint128 index;
+        uint192 emissionPerSecond;
+        uint256 index;
         uint32 lastUpdateTimestamp;
         uint32 distributionEnd;
         mapping(address => uint256) usersIndex;
@@ -251,10 +251,11 @@ abstract contract RewardsDistributor is IRewardsDistributor, Ownable {
             rewardConfig.emissionPerSecond = rewardsInput[i].emissionPerSecond;
             rewardConfig.distributionEnd = rewardsInput[i].distributionEnd;
 
+            // Check if extreme values do not cause overflow
             // lastUpdateTimestamp param is {block.timestamp} - {time of distribution} -> it is done in order to obtain max possible delta in _getAssetIndex
             // distributionEnd param doesn't matter in this case
             // total balance - lowest possible value for index calculation
-            uint256 maxPossibleIndex = _getAssetIndex(
+            _getAssetIndex(
                 0,
                 rewardsInput[i].emissionPerSecond,
                 uint128(block.timestamp - (rewardsInput[i].distributionEnd - block.timestamp)),
@@ -262,7 +263,6 @@ abstract contract RewardsDistributor is IRewardsDistributor, Ownable {
                 _decimalsToTotalSupplyThreshold[_assets[rewardsInput[i].asset].decimals],
                 _assets[rewardsInput[i].asset].decimals
             );
-            require(maxPossibleIndex <= type(uint128).max, "Config may lead to overflows");
 
             emit AssetConfigUpdated(
                 rewardsInput[i].asset,
@@ -305,9 +305,7 @@ abstract contract RewardsDistributor is IRewardsDistributor, Ownable {
         );
 
         if (newIndex != oldIndex) {
-            require(newIndex <= type(uint128).max, "Index overflow");
-            //optimization: storing one after another saves one SSTORE
-            rewardConfig.index = uint128(newIndex);
+            rewardConfig.index = newIndex;
             rewardConfig.lastUpdateTimestamp = uint32(block.timestamp);
             emit AssetIndexUpdated(asset, reward, newIndex);
         } else {
