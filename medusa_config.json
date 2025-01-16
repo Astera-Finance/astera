@@ -8,7 +8,7 @@
 	  "callSequenceLength": 100,
 	  "corpusDirectory": "",
 	  "coverageEnabled": true,
-	  "targetContracts": [],
+	  "targetContracts": ["PropertiesMain"],
 	  "predeployedContracts": {
 		  "BorrowLogic": "0xf01",
 		  "DepositLogic": "0xf03",
@@ -78,7 +78,7 @@
 	"compilation": {
 	  "platform": "crytic-compile",
 	  "platformConfig": {
-		"target": "../../contracts",
+		"target": "tests/echidna/",
 		"solcVersion": "",
 		"exportDirectory": "",
 		"args": [
