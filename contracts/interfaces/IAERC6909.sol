@@ -79,7 +79,6 @@ interface IAERC6909 is IERC6909 {
 
     function getNextIdForUnderlying(address underlying)
         external
-        view
         returns (uint256 aTokenID, uint256 debtTokenID, bool isTrancheRet);
 
     function getIdForUnderlying(address underlying)

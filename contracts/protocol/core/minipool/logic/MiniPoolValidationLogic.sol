@@ -51,7 +51,7 @@ library MiniPoolValidationLogic {
         uint256 depositCap = reserve.configuration.getDepositCap();
         require(
             depositCap == 0
-                || IAERC6909(reserve.aTokenAddress).totalSupply(reserve.aTokenID) + amount
+                || IAERC6909(reserve.aErc6909).totalSupply(reserve.aTokenID) + amount
                     < depositCap * (10 ** reserve.configuration.getDecimals()),
             Errors.VL_DEPOSIT_CAP_REACHED
         );
@@ -206,7 +206,7 @@ library MiniPoolValidationLogic {
 
         // Add the current already borrowed amount to the amount requested to calculate the total collateral needed.
         vars.amountOfCollateralNeededETH =
-            (vars.userBorrowBalanceETH + validateParams.amountInETH).percentDiv(vars.currentLtv); //LTV is calculated in percentage
+            (vars.userBorrowBalanceETH + validateParams.amountInETH).percentDivUp(vars.currentLtv); //LTV is calculated in percentage
 
         require(
             vars.amountOfCollateralNeededETH <= vars.userCollateralBalanceETH,
@@ -268,7 +268,7 @@ library MiniPoolValidationLogic {
         address oracle
     ) internal view {
         uint256 underlyingBalance =
-            IAERC6909(reserve.aTokenAddress).balanceOf(msg.sender, reserve.aTokenID);
+            IAERC6909(reserve.aErc6909).balanceOf(msg.sender, reserve.aTokenID);
 
         require(underlyingBalance > 0, Errors.VL_UNDERLYING_BALANCE_NOT_GREATER_THAN_0);
 
@@ -321,7 +321,7 @@ library MiniPoolValidationLogic {
     function validateFlashloanSimple(DataTypes.MiniPoolReserveData storage reserve) internal view {
         DataTypes.ReserveConfigurationMap storage configuration = reserve.configuration;
         require(
-            !IAERC6909(reserve.aTokenAddress).isTranche(reserve.aTokenID),
+            !IAERC6909(reserve.aErc6909).isTranche(reserve.aTokenID),
             Errors.VL_TRANCHED_ASSET_CANNOT_BE_FLASHLOAN
         );
         require(!configuration.getFrozen(), Errors.VL_RESERVE_FROZEN);

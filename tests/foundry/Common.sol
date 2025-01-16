@@ -329,7 +329,9 @@ contract Common is Test {
         commonContracts.aTokenErc6909 = new ATokenERC6909();
         commonContracts.variableDebtToken = new VariableDebtToken();
         // stableDebtToken = new StableDebtToken();
-        fixture_deployMocks(address(deployedContracts.treasury));
+        fixture_deployMocks(
+            address(deployedContracts.treasury), address(deployedContracts.lendingPoolConfigurator)
+        );
         deployedContracts.lendingPoolAddressesProvider.setPriceOracle(
             address(commonContracts.oracle)
         );
@@ -378,7 +380,7 @@ contract Common is Test {
         return (deployedContracts);
     }
 
-    function fixture_deployMocks(address _treasury) public {
+    function fixture_deployMocks(address _treasury, address _lendingPoolConfigurator) public {
         /* Prices to be changed here */
         ERC20[] memory erc20tokens = fixture_getErc20Tokens(tokens);
         int256[] memory prices = new int256[](4);
@@ -401,7 +403,8 @@ contract Common is Test {
             timeouts,
             FALLBACK_ORACLE,
             BASE_CURRENCY,
-            BASE_CURRENCY_UNIT
+            BASE_CURRENCY_UNIT,
+            _lendingPoolConfigurator
         );
 
         commonContracts.wETHGateway = new WETHGateway(WETH);

@@ -216,7 +216,7 @@ library MiniPoolFlashLoanLogic {
         premiums = new uint256[](assets.length);
         for (uint256 i = 0; i < assets.length; i++) {
             DataTypes.MiniPoolReserveData storage reserve = reserves[assets[i]];
-            aTokenAddresses[i] = reserve.aTokenAddress;
+            aTokenAddresses[i] = reserve.aErc6909;
 
             premiums[i] = DataTypes.InterestRateMode(modes[i]) == DataTypes.InterestRateMode.NONE
                 ? amounts[i] * _flashLoanPremiumTotal / 10000

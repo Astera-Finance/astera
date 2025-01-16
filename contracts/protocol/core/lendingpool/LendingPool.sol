@@ -784,12 +784,12 @@ contract LendingPool is VersionedInitializable, ILendingPool, LendingPoolStorage
         bool reserveAlreadyAdded = _reserves[asset][reserveType].id != 0
             || (_reservesList[0].asset == asset && _reservesList[0].reserveType == reserveType);
 
-        if (!reserveAlreadyAdded) {
-            _reserves[asset][reserveType].id = uint8(reservesCount);
-            _reservesList[reservesCount] = DataTypes.ReserveReference(asset, reserveType);
+        require(!reserveAlreadyAdded, Errors.LP_RESERVE_ALREADY_ADDED);
 
-            _reservesCount = reservesCount + 1;
-        }
+        _reserves[asset][reserveType].id = uint8(reservesCount);
+        _reservesList[reservesCount] = DataTypes.ReserveReference(asset, reserveType);
+
+        _reservesCount = reservesCount + 1;
     }
 
     /**
@@ -812,6 +812,40 @@ contract LendingPool is VersionedInitializable, ILendingPool, LendingPoolStorage
         _flashLoanPremiumTotal = flashLoanPremiumTotal;
 
         emit FlashLoanFeeUpdated(flashLoanPremiumTotal);
+    }
+
+    /**
+     * @notice Synchronizes the reserve indexes state for a specific asset
+     * @dev Only callable by the LendingPoolConfigurator
+     * @param asset The address of the underlying asset of the reserve
+     * @param reserveType Whether the reserve is boosted by a vault
+     */
+    function syncIndexesState(address asset, bool reserveType)
+        external
+        virtual
+        override
+        onlyLendingPoolConfigurator
+    {
+        DataTypes.ReserveData storage reserve = _reserves[asset][reserveType];
+
+        reserve.updateState();
+    }
+
+    /**
+     * @notice Synchronizes the interest rates state for a specific asset
+     * @dev Only callable by the LendingPoolConfigurator
+     * @param asset The address of the underlying asset of the reserve
+     * @param reserveType Whether the reserve is boosted by a vault
+     */
+    function syncRatesState(address asset, bool reserveType)
+        external
+        virtual
+        override
+        onlyLendingPoolConfigurator
+    {
+        DataTypes.ReserveData storage reserve = _reserves[asset][reserveType];
+
+        reserve.updateInterestRates(asset, reserve.aTokenAddress, 0, 0);
     }
 
     /**
@@ -842,5 +876,14 @@ contract LendingPool is VersionedInitializable, ILendingPool, LendingPoolStorage
         onlyLendingPoolConfigurator
     {
         IAToken(_reserves[asset][reserveType].aTokenAddress).setTreasury(treasury);
+    }
+
+    /**
+     * @notice Returns the non-rebasing aToken address associated with a aToken.
+     * @param aToken The address of the aToken.
+     * @return The address of the non-rebasing aToken.
+     */
+    function getATokenNonRebasingFromAtoken(address aToken) external view returns (address) {
+        return IAToken(aToken).WRAPPER_ADDRESS();
     }
 }

@@ -50,7 +50,7 @@ library Helpers {
         view
         returns (uint256)
     {
-        return (IERC6909(reserve.aTokenAddress).balanceOf(user, reserve.variableDebtTokenID));
+        return (IERC6909(reserve.aErc6909).balanceOf(user, reserve.variableDebtTokenID));
     }
 
     /**
@@ -64,6 +64,6 @@ library Helpers {
         view
         returns (uint256)
     {
-        return (IERC6909(reserve.aTokenAddress).balanceOf(user, reserve.variableDebtTokenID));
+        return (IERC6909(reserve.aErc6909).balanceOf(user, reserve.variableDebtTokenID));
     }
 }

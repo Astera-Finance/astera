@@ -710,10 +710,16 @@ contract MiniPoolConfiguratorTest is MiniPoolDepositBorrowTest {
         IMiniPool(mp).flashLoan(flashloanParams, amounts, modes, params);
     }
 
-    function testSetReserveInterestRateStrategyAddress(uint256 offset, address stratAddress)
-        public
-    {
-        // vm.assume(previousStratAddress != stratAddress);
+    function testSetReserveInterestRateStrategyAddress(uint256 offset) public {
+        address stratAddress = address(
+            new MiniPoolDefaultReserveInterestRateStrategy(
+                IMiniPoolAddressesProvider(address(deployedContracts.lendingPoolAddressesProvider)),
+                sStrat[0],
+                sStrat[1],
+                sStrat[2],
+                sStrat[3]
+            )
+        );
         offset = bound(offset, 0, 3);
         address asset = tokens[offset];
         DataTypes.MiniPoolReserveData memory reserveData = IMiniPool(miniPool).getReserveData(asset);

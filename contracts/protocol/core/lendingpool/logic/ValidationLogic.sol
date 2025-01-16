@@ -204,7 +204,7 @@ library ValidationLogic {
 
         // Add the current already borrowed amount to the amount requested to calculate the total collateral needed.
         vars.amountOfCollateralNeededETH =
-            (vars.userBorrowBalanceETH + validateParams.amountInETH).percentDiv(vars.currentLtv); //LTV is calculated in percentage
+            (vars.userBorrowBalanceETH + validateParams.amountInETH).percentDivUp(vars.currentLtv); //LTV is calculated in percentage
 
         require(
             vars.amountOfCollateralNeededETH <= vars.userCollateralBalanceETH,

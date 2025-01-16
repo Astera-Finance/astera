@@ -114,12 +114,13 @@ contract VariableDebtTokenTest is Common {
 
             uint256 amountToBorrowRaw = maxValToDeposit * staticData.ltv / 10_000;
             deployedContracts.lendingPool.borrow(
-                address(erc20Tokens[idx]), true, amountToBorrowRaw, address(this)
+                address(erc20Tokens[idx]), true, amountToBorrowRaw - 1, address(this)
             );
             assertEq(
-                commonContracts.variableDebtTokens[idx].balanceOf(address(this)), amountToBorrowRaw
+                commonContracts.variableDebtTokens[idx].balanceOf(address(this)),
+                amountToBorrowRaw - 1
             );
-            assertEq(commonContracts.variableDebtTokens[idx].totalSupply(), amountToBorrowRaw);
+            assertEq(commonContracts.variableDebtTokens[idx].totalSupply(), amountToBorrowRaw - 1);
         }
     }
 }

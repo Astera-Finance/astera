@@ -157,7 +157,12 @@ contract MiniPoolConfigurator is VersionedInitializable, IMiniPoolConfigurator {
         address rateStrategyAddress,
         IMiniPool pool
     ) external onlyMainPoolAdmin {
+        pool.syncIndexesState(asset);
+
         pool.setReserveInterestRateStrategyAddress(asset, rateStrategyAddress);
+
+        pool.syncRatesState(asset);
+
         emit ReserveInterestRateStrategyChanged(asset, rateStrategyAddress);
     }
 
@@ -171,11 +176,15 @@ contract MiniPoolConfigurator is VersionedInitializable, IMiniPoolConfigurator {
         external
         onlyMainPoolAdmin
     {
+        pool.syncIndexesState(asset);
+
         DataTypes.ReserveConfigurationMap memory currentConfig = pool.getConfiguration(asset);
 
         currentConfig.setCod3xReserveFactor(reserveFactor);
 
         pool.setConfiguration(asset, currentConfig.data);
+
+        pool.syncRatesState(asset);
 
         emit Cod3xReserveFactorChanged(asset, reserveFactor);
     }
@@ -466,11 +475,15 @@ contract MiniPoolConfigurator is VersionedInitializable, IMiniPoolConfigurator {
         external
         onlyPoolAdmin(address(pool))
     {
+        pool.syncIndexesState(asset);
+
         DataTypes.ReserveConfigurationMap memory currentConfig = pool.getConfiguration(asset);
 
         currentConfig.setMinipoolOwnerReserveFactor(reserveFactor);
 
         pool.setConfiguration(asset, currentConfig.data);
+
+        pool.syncRatesState(asset);
 
         emit MinipoolOwnerReserveFactorChanged(asset, reserveFactor);
     }
@@ -483,7 +496,11 @@ contract MiniPoolConfigurator is VersionedInitializable, IMiniPoolConfigurator {
     function _checkNoLiquidity(address asset, IMiniPool pool) internal view {
         DataTypes.MiniPoolReserveData memory reserveData = pool.getReserveData(asset);
 
-        uint256 availableLiquidity = IERC20Detailed(asset).balanceOf(reserveData.aTokenAddress);
+        IAERC6909 aToken6909 = IAERC6909(reserveData.aErc6909);
+        (uint256 aTokenID, uint256 debtTokenID,) = aToken6909.getIdForUnderlying(asset);
+
+        uint256 availableLiquidity =
+            aToken6909.scaledTotalSupply(aTokenID) + aToken6909.scaledTotalSupply(debtTokenID);
 
         require(
             availableLiquidity == 0 && reserveData.currentLiquidityRate == 0,

@@ -297,4 +297,10 @@ interface ILendingPool {
     function setTreasury(address asset, bool reserveType, address treasury) external;
 
     function FLASHLOAN_PREMIUM_TOTAL() external view returns (uint128);
+
+    function getATokenNonRebasingFromAtoken(address aToken) external view returns (address);
+
+    function syncIndexesState(address asset, bool reserveType) external;
+
+    function syncRatesState(address asset, bool reserveType) external;
 }

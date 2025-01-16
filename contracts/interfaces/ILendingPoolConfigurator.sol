@@ -256,4 +256,6 @@ interface ILendingPoolConfigurator {
     function setRewarderForReserve(address asset, bool reserveType, address rewarder) external;
 
     function setTreasury(address asset, bool reserveType, address rewarder) external;
+
+    function getIsAToken(address token) external view returns (bool);
 }

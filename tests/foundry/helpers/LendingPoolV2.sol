@@ -832,4 +832,47 @@ contract LendingPoolV2 is VersionedInitializable, ILendingPool, LendingPoolStora
     {
         IAToken(_reserves[asset][reserveType].aTokenAddress).setTreasury(treasury);
     }
+
+    /**
+     * @notice Returns the non-rebasing aToken address associated with a aToken.
+     * @param aToken The address of the aToken.
+     * @return The address of the non-rebasing aToken.
+     */
+    function getATokenNonRebasingFromAtoken(address aToken) external view returns (address) {
+        return IAToken(aToken).WRAPPER_ADDRESS();
+    }
+
+    /**
+     * @notice Synchronizes the reserve indexes state for a specific asset
+     * @dev Only callable by the LendingPoolConfigurator
+     * @param asset The address of the underlying asset of the reserve
+     * @param reserveType Whether the reserve is boosted by a vault
+     */
+    function syncIndexesState(address asset, bool reserveType)
+        external
+        virtual
+        override
+        onlyLendingPoolConfigurator
+    {
+        DataTypes.ReserveData storage reserve = _reserves[asset][reserveType];
+
+        reserve.updateState();
+    }
+
+    /**
+     * @notice Synchronizes the interest rates state for a specific asset
+     * @dev Only callable by the LendingPoolConfigurator
+     * @param asset The address of the underlying asset of the reserve
+     * @param reserveType Whether the reserve is boosted by a vault
+     */
+    function syncRatesState(address asset, bool reserveType)
+        external
+        virtual
+        override
+        onlyLendingPoolConfigurator
+    {
+        DataTypes.ReserveData storage reserve = _reserves[asset][reserveType];
+
+        reserve.updateInterestRates(asset, reserve.aTokenAddress, 0, 0);
+    }
 }

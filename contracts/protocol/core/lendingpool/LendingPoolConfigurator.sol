@@ -21,6 +21,7 @@ import {IInitializableAToken} from "../../../../contracts/interfaces/base/IIniti
 import {IRewarder} from "../../../../contracts/interfaces/IRewarder.sol";
 import {ILendingPoolConfigurator} from
     "../../../../contracts/interfaces/ILendingPoolConfigurator.sol";
+import {IAToken} from "../../../../contracts/interfaces/IAToken.sol";
 
 /**
  * @title LendingPoolConfigurator contract
@@ -40,6 +41,9 @@ contract LendingPoolConfigurator is VersionedInitializable, ILendingPoolConfigur
 
     /// @dev The main lending pool contract reference.
     ILendingPool internal pool;
+
+    /// @dev Mapping to track if an address is a registered aToken or NonRebasingAToken.
+    mapping(address => bool) internal isAToken;
 
     /**
      * @dev Throws if the caller is not the pool admin.
@@ -150,6 +154,10 @@ contract LendingPoolConfigurator is VersionedInitializable, ILendingPoolConfigur
         currentConfig.setReserveType(input.reserveType);
 
         pool.setConfiguration(input.underlyingAsset, input.reserveType, currentConfig.data);
+
+        isAToken[aTokenProxyAddress] = true;
+        // `getATokenNonRebasingFromAtoken()` because call fallback function from the proxy admin reverts.
+        isAToken[pool.getATokenNonRebasingFromAtoken(aTokenProxyAddress)] = true;
 
         emit ReserveInitialized(
             input.underlyingAsset,
@@ -453,12 +461,16 @@ contract LendingPoolConfigurator is VersionedInitializable, ILendingPoolConfigur
         external
         onlyPoolAdmin
     {
+        pool.syncIndexesState(asset, reserveType);
+
         DataTypes.ReserveConfigurationMap memory currentConfig =
             pool.getConfiguration(asset, reserveType);
 
         currentConfig.setCod3xReserveFactor(reserveFactor);
 
         pool.setConfiguration(asset, reserveType, currentConfig.data);
+
+        pool.syncRatesState(asset, reserveType);
 
         emit ReserveFactorChanged(asset, reserveType, reserveFactor);
     }
@@ -498,7 +510,12 @@ contract LendingPoolConfigurator is VersionedInitializable, ILendingPoolConfigur
         bool reserveType,
         address rateStrategyAddress
     ) external onlyPoolAdmin {
+        pool.syncIndexesState(asset, reserveType);
+
         pool.setReserveInterestRateStrategyAddress(asset, reserveType, rateStrategyAddress);
+
+        pool.syncRatesState(asset, reserveType);
+
         emit ReserveInterestRateStrategyChanged(asset, reserveType, rateStrategyAddress);
     }
 
@@ -683,5 +700,15 @@ contract LendingPoolConfigurator is VersionedInitializable, ILendingPoolConfigur
         onlyPoolAdmin
     {
         pool.setTreasury(asset, reserveType, rewarder);
+    }
+
+    /**
+     * @dev Checks if an address is a registered aToken or nonRebasingAToken.
+     * This function is mainly for the Oracle.
+     * @param token The address to check.
+     * @return bool True if the address is a registered aToken, false otherwise.
+     */
+    function getIsAToken(address token) external view returns (bool) {
+        return isAToken[token];
     }
 }

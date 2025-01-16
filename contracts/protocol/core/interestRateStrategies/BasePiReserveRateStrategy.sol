@@ -113,7 +113,7 @@ abstract contract BasePiReserveRateStrategy is Ownable {
         uint256 ki
     ) Ownable(msg.sender) {
         if (optimalUtilizationRate >= uint256(RAY)) {
-            revert(Errors.LP_U0_GREATER_THAN_RAY);
+            revert(Errors.VL_U0_GREATER_THAN_RAY);
         }
 
         _setOptimalUtilizationRate(optimalUtilizationRate);
@@ -134,7 +134,7 @@ abstract contract BasePiReserveRateStrategy is Ownable {
     /// @dev Restricts function access to lending pool only.
     modifier onlyLendingPool() {
         if (msg.sender != _getLendingPool()) {
-            revert(Errors.LP_ACCESS_RESTRICTED_TO_LENDING_POOL);
+            revert(Errors.VL_ACCESS_RESTRICTED_TO_LENDING_POOL);
         }
         _;
     }
@@ -183,7 +183,7 @@ abstract contract BasePiReserveRateStrategy is Ownable {
      */
     function _setOptimalUtilizationRate(uint256 optimalUtilizationRate) internal {
         if (optimalUtilizationRate >= uint256(RAY)) {
-            revert(Errors.LP_U0_GREATER_THAN_RAY);
+            revert(Errors.VL_U0_GREATER_THAN_RAY);
         }
         _optimalUtilizationRate = optimalUtilizationRate;
 

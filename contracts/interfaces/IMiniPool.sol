@@ -253,4 +253,8 @@ interface IMiniPool {
     function setRewarderForReserve(address asset, address rewarder) external;
 
     function updateFlashLoanFee(uint128 flashLoanPremiumTotal) external;
+
+    function syncIndexesState(address asset) external;
+
+    function syncRatesState(address asset) external;
 }

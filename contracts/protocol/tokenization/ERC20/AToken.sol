@@ -51,6 +51,9 @@ contract AToken is
     /// @notice Flag indicating if the reserve is boosted by a vault.
     bool public RESERVE_TYPE;
 
+    /// @notice Chain ID cached at contract deployment for EIP712 domain separator.
+    uint256 public CACHED_CHAIN_ID;
+
     /// @notice Reference to the `ILendingPool` contract.
     ILendingPool internal _pool;
 
@@ -131,21 +134,13 @@ contract AToken is
         string calldata aTokenSymbol,
         bytes calldata params
     ) external override initializer {
-        DOMAIN_SEPARATOR = keccak256(
-            abi.encode(
-                EIP712_DOMAIN,
-                keccak256(bytes(aTokenName)),
-                keccak256(EIP712_REVISION),
-                block.chainid,
-                address(this)
-            )
-        );
-
-        RESERVE_TYPE = reserveType;
-
         _setName(aTokenName);
         _setSymbol(aTokenSymbol);
         _setDecimals(aTokenDecimals);
+
+        DOMAIN_SEPARATOR = _buildDomainSeparator();
+        CACHED_CHAIN_ID = block.chainid;
+        RESERVE_TYPE = reserveType;
 
         _pool = pool;
         _treasury = treasury;
@@ -410,22 +405,45 @@ contract AToken is
         bytes32 r,
         bytes32 s
     ) external {
-        require(owner != address(0), "INVALID_OWNER");
+        require(owner != address(0), Errors.AT_INVALID_ADDRESS);
 
-        require(block.timestamp <= deadline, "INVALID_EXPIRATION");
+        require(block.timestamp <= deadline, Errors.AT_INVALID_EXPIRATION);
         uint256 currentValidNonce = _nonces[owner];
         bytes32 digest = keccak256(
             abi.encodePacked(
                 "\x19\x01",
-                DOMAIN_SEPARATOR,
+                _domainSeparator(),
                 keccak256(
                     abi.encode(PERMIT_TYPEHASH, owner, spender, value, currentValidNonce, deadline)
                 )
             )
         );
-        require(owner == ecrecover(digest, v, r, s), "INVALID_SIGNATURE");
+        require(owner == ecrecover(digest, v, r, s), Errors.AT_INVALID_SIGNATURE);
         _nonces[owner] = currentValidNonce + 1;
         _approve(owner, spender, value);
+    }
+
+    /**
+     * @dev Returns the domain separator for the current chain.
+     */
+    function _domainSeparator() internal view returns (bytes32) {
+        if (block.chainid == CACHED_CHAIN_ID) {
+            return DOMAIN_SEPARATOR;
+        } else {
+            return _buildDomainSeparator();
+        }
+    }
+
+    function _buildDomainSeparator() private view returns (bytes32) {
+        return keccak256(
+            abi.encode(
+                EIP712_DOMAIN,
+                keccak256(bytes(name())),
+                keccak256(EIP712_REVISION),
+                block.chainid,
+                address(this)
+            )
+        );
     }
 
     /**
@@ -578,29 +596,37 @@ contract AToken is
         if (pctOfFinalBal > _farmingPct && pctOfFinalBal - _farmingPct > _farmingPctDrift) {
             // We will end up overallocated, withdraw some.
             toWithdraw = currentAllocated - finalFarmingAmount;
-            _farmingBal = _farmingBal - toWithdraw;
+            currentAllocated = currentAllocated - toWithdraw;
         } else if (pctOfFinalBal < _farmingPct && _farmingPct - pctOfFinalBal > _farmingPctDrift) {
             // We will end up underallocated, deposit more.
             toDeposit = finalFarmingAmount - currentAllocated;
-            _farmingBal = _farmingBal + toDeposit;
+            currentAllocated = currentAllocated + toDeposit;
         }
         // + means deposit, - means withdraw.
         int256 netAssetMovement = int256(toDeposit) - int256(toWithdraw) - int256(profit);
         if (netAssetMovement > 0) {
-            _vault.deposit(uint256(netAssetMovement), address(this));
+            try _vault.deposit(uint256(netAssetMovement), address(this)) {}
+            catch {
+                return;
+            }
         } else if (netAssetMovement < 0) {
-            _vault.withdraw(uint256(-netAssetMovement), address(this), address(this));
+            try _vault.withdraw(uint256(-netAssetMovement), address(this), address(this)) {}
+            catch {
+                return;
+            }
         }
         // If we recorded profit, recalculate it for precision and distribute.
         if (profit != 0) {
             // Profit is ultimately (coll at hand) + (coll allocated to yield generator) - (recorded total coll Amount in pool).
-            profit =
-                IERC20(_underlyingAsset).balanceOf(address(this)) + _farmingBal - _underlyingAmount;
+            profit = IERC20(_underlyingAsset).balanceOf(address(this)) + currentAllocated
+                - _underlyingAmount;
             if (profit != 0 && _profitHandler != address(0)) {
                 // Distribute to profitHandler.
                 IERC20(_underlyingAsset).safeTransfer(_profitHandler, profit);
             }
         }
+
+        _farmingBal = currentAllocated;
 
         emit Rebalance(address(_vault), _amountToWithdraw, netAssetMovement);
     }
