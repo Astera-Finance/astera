@@ -180,6 +180,7 @@ forge t --mt testCallSequence -vvvv
 524. ✅ `UserConfigurationMap` integrity: If a user has a given debtToken then `isUsingAsCollateralOrBorrowing`, `isBorrowing` and `isBorrowingAny` should return true.
 525. ❌ (Cergyk finding) If a minipool is flow borrowing, for a given reserve, the Lendingpool liquidity interest rate remain lower than the minipool debt interest rate.
 526. ✅ The aToken remainder of each assets with flow borrowing activated should remain greater than ERROR_REMAINDER_MARGIN.
+527. 🚧 If a minipool is flow borrowing then its address must be included in `_minipoolFlowBorrowing`. 
 
 ### AToken6909
 
