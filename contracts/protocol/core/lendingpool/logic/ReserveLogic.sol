@@ -227,7 +227,6 @@ library ReserveLogic {
         // liquidity rate of an asset is always greater than the borrowing rate of minipools.
         for (uint256 i = 0; i < minipoolFlowBorrowing.length(); i++) {
             IMiniPool minipool = IMiniPool(minipoolFlowBorrowing.at(i));
-            // if (vars.newVariableRate > MPLiquidityRate)
             minipool.syncState(IAToken(aTokenAddress).WRAPPER_ADDRESS());
         }
 

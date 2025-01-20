@@ -920,4 +920,8 @@ contract LendingPool is VersionedInitializable, ILendingPool, LendingPoolStorage
     function getATokenNonRebasingFromAtoken(address aToken) external view returns (address) {
         return IAToken(aToken).WRAPPER_ADDRESS();
     }
+
+    function getMinipoolFlowBorrowing() external view returns (address[] memory) {
+        return _minipoolFlowBorrowing.values();
+    }
 }
