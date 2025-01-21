@@ -32,12 +32,12 @@ abstract contract MiniPoolFixtures is LendingPoolFixtures {
             uint256 initialATokenBalance = tokenParams.aToken.balanceOf(user);
             tokenParams.token.approve(address(deployedContracts.lendingPool), amount);
             deployedContracts.lendingPool.deposit(address(tokenParams.token), true, amount, user);
-            console.log("User token balance shall be {initialTokenBalance - amount}");
+            // console.log("User token balance shall be {initialTokenBalance - amount}");
             assertEq(tokenParams.token.balanceOf(user), initialTokenBalance - amount, "01");
             DynamicData memory dynamicData = deployedContracts
                 .cod3xLendDataProvider
                 .getLpReserveDynamicData(address(tokenParams.token), true);
-            console.log("User atoken balance shall be {initialATokenBalance + amount}");
+            // console.log("User atoken balance shall be {initialATokenBalance + amount}");
             assertEq(
                 tokenParams.aToken.balanceOf(user),
                 initialATokenBalance + amount.rayDiv(dynamicData.liquidityIndex),

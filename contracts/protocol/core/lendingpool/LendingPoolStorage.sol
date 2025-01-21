@@ -4,6 +4,8 @@ pragma solidity 0.8.23;
 import {ILendingPoolAddressesProvider} from
     "../../../../contracts/interfaces/ILendingPoolAddressesProvider.sol";
 import {DataTypes} from "../../../../contracts/protocol/libraries/types/DataTypes.sol";
+import {EnumerableSet} from
+    "../../../../lib/openzeppelin-contracts/contracts/utils/structs/EnumerableSet.sol";
 
 /**
  * @title LendingPoolStorage
@@ -11,6 +13,8 @@ import {DataTypes} from "../../../../contracts/protocol/libraries/types/DataType
  * @dev Contract containing storage variables for the LendingPool contract.
  */
 contract LendingPoolStorage {
+    using EnumerableSet for EnumerableSet.AddressSet;
+
     /// @dev The addresses provider contract reference.
     ILendingPoolAddressesProvider internal _addressesProvider;
 
@@ -28,6 +32,9 @@ contract LendingPoolStorage {
      * Used to track the list of all reserves in the protocol.
      */
     mapping(uint256 => DataTypes.ReserveReference) internal _reservesList;
+
+    /// @dev Set of minipools that are currently 'flow borrowing'.
+    EnumerableSet.AddressSet internal _minipoolFlowBorrowing;
 
     /// @dev Counter for the number of initialized reserves.
     uint256 internal _reservesCount;

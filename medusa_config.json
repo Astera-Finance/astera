@@ -3,9 +3,9 @@
 	  "workers": 10,
 	  "workerResetLimit": 50,
 	  "timeout": 0,
-	  "testLimit": 0,
+	  "testLimit": 10000,
 	  "shrinkLimit": 5000,
-	  "callSequenceLength": 100,
+	  "callSequenceLength": 250,
 	  "corpusDirectory": "",
 	  "coverageEnabled": true,
 	  "targetContracts": ["PropertiesMain"],
@@ -31,8 +31,8 @@
 	  "senderAddresses": ["0x10000", "0x20000", "0x30000"],
 	  "blockNumberDelayMax": 60480,
 	  "blockTimestampDelayMax": 604800,
-	  "blockGasLimit": 125000000,
-	  "transactionGasLimit": 12500000,
+	  "blockGasLimit": 250000000,
+	  "transactionGasLimit": 25000000,
 	  "testing": {
 		"stopOnFailedTest": true,
 		"stopOnFailedContractMatching": false,
@@ -78,7 +78,7 @@
 	"compilation": {
 	  "platform": "crytic-compile",
 	  "platformConfig": {
-		"target": "tests/echidna/",
+		"target": ".",
 		"solcVersion": "",
 		"exportDirectory": "",
 		"args": [

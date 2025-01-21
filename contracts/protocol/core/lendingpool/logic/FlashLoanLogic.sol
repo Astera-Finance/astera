@@ -19,6 +19,8 @@ import {UserConfiguration} from
 import {Helpers} from "../../../../../contracts/protocol/libraries/helpers/Helpers.sol";
 import {IFlashLoanReceiver} from "../../../../../contracts/interfaces/IFlashLoanReceiver.sol"; // Add this line
 import {BorrowLogic} from "./BorrowLogic.sol";
+import {EnumerableSet} from
+    "../../../../../lib/openzeppelin-contracts/contracts/utils/structs/EnumerableSet.sol";
 
 /**
  * @title FlashLoanLogic
@@ -34,6 +36,7 @@ library FlashLoanLogic {
     using ValidationLogic for DataTypes.ReserveData;
     using ReserveConfiguration for DataTypes.ReserveConfigurationMap;
     using UserConfiguration for DataTypes.UserConfigurationMap;
+    using EnumerableSet for EnumerableSet.AddressSet;
 
     /**
      * @dev Emitted when a flash loan is executed.
@@ -118,6 +121,7 @@ library FlashLoanLogic {
      */
     function flashLoan(
         FlashLoanParams memory flashLoanParams,
+        EnumerableSet.AddressSet storage minipoolFlowBorrowing,
         mapping(uint256 => DataTypes.ReserveReference) storage reservesList,
         mapping(address => DataTypes.UserConfigurationMap) storage usersConfig,
         mapping(address => mapping(bool => DataTypes.ReserveData)) storage reserves
@@ -167,6 +171,7 @@ library FlashLoanLogic {
             ) {
                 _handleFlashLoanRepayment(
                     reserves[vars.currentAsset][vars.currentType],
+                    minipoolFlowBorrowing,
                     FlashLoanRepaymentParams({
                         amount: vars.currentAmount,
                         totalPremium: vars.currentPremium,
@@ -190,6 +195,7 @@ library FlashLoanLogic {
                         flashLoanParams.addressesProvider,
                         flashLoanParams.reservesCount
                     ),
+                    minipoolFlowBorrowing,
                     reserves,
                     reservesList,
                     usersConfig
@@ -249,6 +255,7 @@ library FlashLoanLogic {
      */
     function _handleFlashLoanRepayment(
         DataTypes.ReserveData storage reserve,
+        EnumerableSet.AddressSet storage minipoolFlowBorrowing,
         FlashLoanRepaymentParams memory params
     ) internal {
         uint256 amountPlusPremium = params.amount + params.totalPremium;
@@ -257,7 +264,9 @@ library FlashLoanLogic {
         reserve.updateState();
         reserve.cumulateToLiquidityIndex(IERC20(params.aToken).totalSupply(), params.totalPremium);
 
-        reserve.updateInterestRates(params.asset, params.aToken, amountPlusPremium, 0);
+        reserve.updateInterestRates(
+            minipoolFlowBorrowing, params.asset, params.aToken, amountPlusPremium, 0
+        );
 
         IERC20(params.asset).safeTransferFrom(
             params.receiverAddress, params.aToken, amountPlusPremium

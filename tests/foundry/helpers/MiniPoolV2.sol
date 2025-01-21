@@ -778,4 +778,11 @@ contract MiniPoolV2 is VersionedInitializable, IMiniPool, MiniPoolStorage {
 
         reserve.updateInterestRates(asset, 0, 0);
     }
+
+    function syncState(address asset) external virtual override {
+        DataTypes.MiniPoolReserveData storage reserve = _reserves[asset];
+
+        reserve.updateState();
+        reserve.updateInterestRates(asset, 0, 0);
+    }
 }

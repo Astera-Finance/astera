@@ -16,6 +16,8 @@ import {ReserveLogic} from "./ReserveLogic.sol";
 import {UserConfiguration} from
     "../../../../../contracts/protocol/libraries/configuration/UserConfiguration.sol";
 import {ValidationLogic} from "./ValidationLogic.sol";
+import {EnumerableSet} from
+    "../../../../../lib/openzeppelin-contracts/contracts/utils/structs/EnumerableSet.sol";
 
 /**
  * @title Withdraw Logic library
@@ -30,6 +32,7 @@ library WithdrawLogic {
     using ReserveLogic for DataTypes.ReserveData;
     using ReserveConfiguration for DataTypes.ReserveConfigurationMap;
     using UserConfiguration for DataTypes.UserConfigurationMap;
+    using EnumerableSet for EnumerableSet.AddressSet;
 
     /**
      * @dev Emitted when a reserve is disabled as collateral for a user.
@@ -95,6 +98,7 @@ library WithdrawLogic {
      */
     function withdraw(
         withdrawParams memory params,
+        EnumerableSet.AddressSet storage minipoolFlowBorrowing,
         mapping(address => mapping(bool => DataTypes.ReserveData)) storage reserves,
         mapping(address => DataTypes.UserConfigurationMap) storage usersConfig,
         mapping(uint256 => DataTypes.ReserveReference) storage reservesList,
@@ -130,7 +134,9 @@ library WithdrawLogic {
 
         reserve.updateState();
 
-        reserve.updateInterestRates(params.asset, localVars.aToken, 0, localVars.amountToWithdraw);
+        reserve.updateInterestRates(
+            minipoolFlowBorrowing, params.asset, localVars.aToken, 0, localVars.amountToWithdraw
+        );
 
         if (localVars.amountToWithdraw == localVars.userBalance) {
             usersConfig[msg.sender].setUsingAsCollateral(reserve.id, false);

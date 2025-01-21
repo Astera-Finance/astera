@@ -257,4 +257,6 @@ interface IMiniPool {
     function syncIndexesState(address asset) external;
 
     function syncRatesState(address asset) external;
+
+    function syncState(address asset) external;
 }
