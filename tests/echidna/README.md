@@ -86,7 +86,7 @@ forge t --mt testCallSequence -vvvv
 204. ✅ `withdraw()` must increase the user asset balance by `amount`.
 205. ✅ A user must not be able to `borrow()` if they don't own aTokens.
 206. ✅ `borrow()` must only be possible if the user health factor is greater than 1.
-207. ❌ (L-01 propably) `borrow()` must not result in a health factor of less than 1.
+207. ⚡️ (L-01) `borrow()` must not result in a health factor of less than 1.
 208. ✅ `borrow()` must increase the user debtToken balance by `amount`.
 209. ✅ `borrow()` must decrease `borrowAllowance()` by `amount` if `user != onBehalf`.
 210. ✅ `repay()` must decrease the onBehalfOf debtToken balance by `amount`.
@@ -98,7 +98,7 @@ forge t --mt testCallSequence -vvvv
 216. 🚚
 217. ❌ (fix lastLiquidityIndex and lastBorrowIndex) The `liquidityIndex` should monotonically increase when there's total debt.
 218. ❌ (fix lastLiquidityIndex and lastBorrowIndex) The `variableBorrowIndex` should monotonically increase when there's total debt.
-219. ❌ (L-01) A user with debt should have at least an aToken balance `setUsingAsCollateral`.
+219. ⚡️ (L-01) A user with debt should have at least an aToken balance `setUsingAsCollateral`.
 220. ❌ If all debt is repaid, all `aToken` holders should be able to claim their collateral.
 221. ❌ If all users withdraw their liquidity, there must not be aTokens supply left.
 222. ✅ Integrity of Deposit Cap - aToken supply should never exceed the cap.
@@ -109,7 +109,7 @@ forge t --mt testCallSequence -vvvv
 227. ❌ Rehypothecation: if the external rehypothecation vault is liquid, users should always be able to withdraw if all other withdrawal conditions are met.
 228. ✅ (M-01) Rehypothecation: farming percentage must be respected (+/- the drift) after a rebalance occured.
 229. ✅ Rehypothecation: The profit handler address must see its balance increase after reaching the claiming threshold.
-230. ❌ (L-01 propably) `withdraw()` must not result in a health factor of less than 1.
+230. ⚡️ (L-01) `withdraw()` must not result in a health factor of less than 1.
 231. ✅ Rehypothecation: farming percentage must be respected (+/- the drift) after any operation.
 
 ### ATokens/ATokenNonRebasing
@@ -158,7 +158,7 @@ forge t --mt testCallSequence -vvvv
 502. ✅ `deposit()` must decrease the user asset balance by `amount`.
 503. ✅ `withdraw()` must decrease the user AToken6909 balance by `amount`.
 504. ✅ `withdraw()` must increase the user asset balance by `amount`.
-505. ❌ (L-01 propably) `withdraw()` must not result in a health factor of less than 1.
+505. ⚡️ (L-01) `withdraw()` must not result in a health factor of less than 1.
 506. ✅ A user must not be able to `borrow()` if they don't own AToken6909.
 507. ✅ `borrow()` must only be possible if the user health factor is greater than 1.
 508. ✅ `borrow()` must not result in a health factor of less than 1.
