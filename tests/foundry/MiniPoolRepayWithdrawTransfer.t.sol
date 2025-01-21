@@ -1897,6 +1897,14 @@ contract MiniPoolRepayWithdrawTransferTest is MiniPoolDepositBorrowTest {
         TokenParams memory tokenParamsWbtc =
             TokenParams(erc20Tokens[WBTC_OFFSET], commonContracts.aTokensWrapper[WBTC_OFFSET], 0);
 
+        MiniPoolDefaultReserveInterestRateStrategy mockMPpoolReserveInterestRateStrategy = new MiniPoolDefaultReserveInterestRateStrategy(
+                miniPoolContracts.miniPoolAddressesProvider,
+                0.45e27,
+                0e27,
+                0.001e27,
+                0.001e27
+            );
+
         uint256 amountUsdc = 100000 * (10 ** tokenParamsUsdc.token.decimals());
         uint256 amountwBtc = 1 * (10 ** tokenParamsWbtc.token.decimals());
 
@@ -1904,6 +1912,16 @@ contract MiniPoolRepayWithdrawTransferTest is MiniPoolDepositBorrowTest {
         miniPoolContracts.miniPoolConfigurator.setFlowLimit(
             address(tokenParamsUsdc.token), miniPool, 10000e6
         );
+
+        vm.startPrank(deployedContracts.lendingPoolAddressesProvider.getPoolAdmin());
+        MiniPoolConfigurator(miniPoolContracts.miniPoolAddressesProvider.getMiniPoolConfigurator())
+            .setReserveInterestRateStrategyAddress(
+            address(tokenParamsUsdc.aToken),
+            address(mockMPpoolReserveInterestRateStrategy),
+            IMiniPool(miniPool)
+        );
+
+        vm.stopPrank();
 
         logMinipoolFlow(address(tokenParamsUsdc.token), user2);
 
@@ -1927,11 +1945,13 @@ contract MiniPoolRepayWithdrawTransferTest is MiniPoolDepositBorrowTest {
 
         // borrow usdc from minipool
         vm.prank(user2);
-        IMiniPool(miniPool).borrow(address(tokenParamsUsdc.aToken), false, 1_000e6, user2);
+        IMiniPool(miniPool).borrow(address(tokenParamsUsdc.aToken), false, 10_000e6, user2);
 
         logInterestRate(address(tokenParamsUsdc.token), address(tokenParamsUsdc.aToken));
         uint256 pastLiquidityRate =
             IMiniPool(miniPool).getReserveData(address(tokenParamsUsdc.aToken)).currentLiquidityRate;
+
+        // skip(1 days);
 
         vm.startPrank(user);
         deployedContracts.lendingPool.withdraw(
@@ -1939,6 +1959,7 @@ contract MiniPoolRepayWithdrawTransferTest is MiniPoolDepositBorrowTest {
         );
         vm.stopPrank();
 
+        logMinipoolFlow(address(tokenParamsUsdc.token), user2);
         logInterestRate(address(tokenParamsUsdc.token), address(tokenParamsUsdc.aToken));
 
         vm.startPrank(user2);
@@ -1952,7 +1973,8 @@ contract MiniPoolRepayWithdrawTransferTest is MiniPoolDepositBorrowTest {
             pastLiquidityRate,
             IMiniPool(miniPool).getReserveData(address(tokenParamsUsdc.aToken)).currentLiquidityRate
         );
-
+        
+        logMinipoolFlow(address(tokenParamsUsdc.token), user2);
         logInterestRate(address(tokenParamsUsdc.token), address(tokenParamsUsdc.aToken));
     }
 
