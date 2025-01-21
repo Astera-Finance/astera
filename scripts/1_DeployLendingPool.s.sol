@@ -120,7 +120,6 @@ contract DeployLendingPool is Script, LendingPoolHelper, Test {
             console.log("PATH: ", path);
             string memory config = vm.readFile(path);
             address[] memory mockedTokens = config.readAddressArray(".mockedTokens");
-            contracts.oracle = Oracle(config.readAddress(".mockedOracle"));
 
             require(
                 mockedTokens.length >= poolReserversConfig.length,
@@ -155,6 +154,7 @@ contract DeployLendingPool is Script, LendingPoolHelper, Test {
                 stableStrategies,
                 piStrategies,
                 poolReserversConfig,
+                oracleConfig,
                 vm.addr(vm.envUint("PRIVATE_KEY")),
                 wethGateway
             );
@@ -168,13 +168,13 @@ contract DeployLendingPool is Script, LendingPoolHelper, Test {
             }
             /* Deploy to the mainnet */
             vm.startBroadcast(vm.envUint("PRIVATE_KEY"));
-            contracts.oracle = _deployOracle(oracleConfig);
             deployLendingPoolInfra(
                 general,
                 volatileStrategies,
                 stableStrategies,
                 piStrategies,
                 poolReserversConfig,
+                oracleConfig,
                 vm.addr(vm.envUint("PRIVATE_KEY")),
                 wethGateway
             );

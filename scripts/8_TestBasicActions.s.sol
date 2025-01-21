@@ -516,7 +516,9 @@ contract TestBasicActions is Script, Test {
         address miniPool = contracts.miniPoolAddressesProvider.getMiniPool(index);
         while (miniPool != address(0)) {
             vm.startBroadcast(admin);
-            contracts.miniPoolConfigurator.setPoolPause(false, IMiniPool(miniPool));
+            if (_contracts.lendingPool.paused()) {
+                contracts.miniPoolConfigurator.setPoolPause(false, IMiniPool(miniPool));
+            }
             vm.stopBroadcast();
             console.log("ITERATION: %s", index);
             IAERC6909 aErc6909Token =
@@ -532,7 +534,9 @@ contract TestBasicActions is Script, Test {
                 );
             }
             vm.startBroadcast(admin);
-            contracts.miniPoolConfigurator.setPoolPause(true, IMiniPool(miniPool));
+            if (!_contracts.lendingPool.paused()) {
+                contracts.miniPoolConfigurator.setPoolPause(true, IMiniPool(miniPool));
+            }
             vm.stopBroadcast();
             index++;
             miniPool = contracts.miniPoolAddressesProvider.getMiniPool(index);
@@ -543,7 +547,9 @@ contract TestBasicActions is Script, Test {
         public
     {
         vm.startBroadcast(admin);
-        contracts.miniPoolConfigurator.setPoolPause(false, IMiniPool(miniPool));
+        if (_contracts.lendingPool.paused()) {
+            contracts.miniPoolConfigurator.setPoolPause(false, IMiniPool(miniPool));
+        }
         vm.stopBroadcast();
         IAERC6909 aErc6909Token =
             IAERC6909(contracts.miniPoolAddressesProvider.getMiniPoolToAERC6909(miniPool));
@@ -568,7 +574,9 @@ contract TestBasicActions is Script, Test {
             }
         }
         vm.startBroadcast(admin);
-        contracts.miniPoolConfigurator.setPoolPause(true, IMiniPool(miniPool));
+        if (!_contracts.lendingPool.paused()) {
+            contracts.miniPoolConfigurator.setPoolPause(true, IMiniPool(miniPool));
+        }
         vm.stopBroadcast();
     }
 
@@ -624,10 +632,13 @@ contract TestBasicActions is Script, Test {
             contracts.miniPoolAddressesProvider.getMiniPool(poolAddressesProviderConfig.poolId);
 
         vm.startBroadcast(users.user1);
-        contracts.lendingPoolConfigurator.setPoolPause(false);
-        contracts.miniPoolConfigurator.setPoolPause(false, IMiniPool(mp));
-        vm.stopBroadcast();
-
+        if (_contracts.lendingPool.paused()) {
+            contracts.lendingPoolConfigurator.setPoolPause(false);
+        }
+        if (IMiniPool(mp).paused()) {
+            contracts.miniPoolConfigurator.setPoolPause(false, IMiniPool(mp));
+            vm.stopBroadcast();
+        }
         console.log("Getting wrapper");
         TokenParams memory usdcParams;
         TokenParams memory wbtcParams;

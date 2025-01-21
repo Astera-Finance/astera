@@ -97,6 +97,7 @@ contract AddAssets is Script, InitAndConfigurationHelper, Test {
             ATokensAndRatesHelper(config.readAddress(".aTokensAndRatesHelper"));
         contracts.cod3xLendDataProvider =
             Cod3xLendDataProvider(config.readAddress(".cod3xLendDataProvider"));
+        contracts.lendingPool = LendingPool(config.readAddress(".lendingPool"));
         // contracts.wethGateway = WETHGateway(payable(config.readAddress(".wethGateway")));
     }
 
@@ -139,7 +140,6 @@ contract AddAssets is Script, InitAndConfigurationHelper, Test {
             console.log("PATH: ", path);
             config = vm.readFile(path);
             address[] memory mockedTokens = config.readAddressArray(".mockedTokens");
-            contracts.oracle = Oracle(config.readAddress(".mockedOracle"));
 
             require(
                 mockedTokens.length >= lendingPoolReserversConfig.length,
@@ -165,9 +165,10 @@ contract AddAssets is Script, InitAndConfigurationHelper, Test {
 
             console.log("Init and configuration");
             vm.startBroadcast(vm.envUint("PRIVATE_KEY"));
-            // contracts.oracle.setAssetSources(
-            //     oracleConfig.assets, oracleConfig.sources, oracleConfig.timeouts
-            // );
+            contracts.oracle = Oracle(contracts.lendingPoolAddressesProvider.getPriceOracle());
+            contracts.oracle.setAssetSources(
+                oracleConfig.assets, oracleConfig.sources, oracleConfig.timeouts
+            );
             _initAndConfigureReserves(contracts, lendingPoolReserversConfig, general);
             vm.stopBroadcast();
 
@@ -211,7 +212,10 @@ contract AddAssets is Script, InitAndConfigurationHelper, Test {
             vm.startBroadcast(vm.envUint("PRIVATE_KEY"));
             console.log("Configuration ");
             _initAndConfigureMiniPoolReserves(
-                contracts, miniPoolReserversConfig, poolAddressesProviderConfig.poolId
+                contracts,
+                miniPoolReserversConfig,
+                poolAddressesProviderConfig.poolId,
+                general.usdBootstrapAmount
             );
             vm.stopBroadcast();
             path = string.concat(root, "/scripts/outputs/testnet/4_AddedAssets.json");
@@ -252,7 +256,10 @@ contract AddAssets is Script, InitAndConfigurationHelper, Test {
             vm.startBroadcast(vm.envUint("PRIVATE_KEY"));
             console.log("Configuration ");
             _initAndConfigureMiniPoolReserves(
-                contracts, miniPoolReserversConfig, poolAddressesProviderConfig.poolId
+                contracts,
+                miniPoolReserversConfig,
+                poolAddressesProviderConfig.poolId,
+                general.usdBootstrapAmount
             );
             vm.stopBroadcast();
             path = string.concat(root, "/scripts/outputs/mainnet/4_AddedAssets.json");

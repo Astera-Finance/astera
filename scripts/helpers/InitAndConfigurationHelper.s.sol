@@ -18,6 +18,7 @@ import "forge-std/console.sol";
 
 contract InitAndConfigurationHelper {
     address constant FOUNDRY_DEFAULT = 0x1804c8AB1F12E6bbf3894d4083f33e07309d1f38;
+    uint256 constant PRICE_FEED_DECIMALS = 8;
     DeployedContracts contracts;
 
     function _initAndConfigureReserves(
@@ -27,9 +28,9 @@ contract InitAndConfigurationHelper {
     ) internal {
         ILendingPoolConfigurator.InitReserveInput[] memory initInputParams =
             new ILendingPoolConfigurator.InitReserveInput[](_reservesConfig.length);
-
-        _contracts.lendingPoolConfigurator.setPoolPause(false);
-
+        if (_contracts.lendingPool.paused()) {
+            _contracts.lendingPoolConfigurator.setPoolPause(false);
+        }
         for (uint8 idx = 0; idx < _reservesConfig.length; idx++) {
             bool assetExist = false;
             PoolReserversConfig memory reserveConfig = _reservesConfig[idx];
@@ -61,53 +62,87 @@ contract InitAndConfigurationHelper {
         console.log("Batch init");
         _contracts.lendingPoolConfigurator.batchInitReserve(initInputParams);
 
-        _configureReserves(_contracts, _reservesConfig);
-
-        _contracts.lendingPoolConfigurator.setPoolPause(true);
+        _configureReserves(_contracts, _reservesConfig, _general.usdBootstrapAmount);
+        if (!_contracts.lendingPool.paused()) {
+            _contracts.lendingPoolConfigurator.setPoolPause(true);
+        }
     }
 
     function _configureReserves(
         DeployedContracts memory _contracts,
-        PoolReserversConfig[] memory _reservesConfig
+        PoolReserversConfig[] memory _reservesConfig,
+        uint256 usdBootstrapAmount
     ) internal {
-        ATokensAndRatesHelper.ConfigureReserveInput[] memory inputConfigParams =
-            new ATokensAndRatesHelper.ConfigureReserveInput[](_reservesConfig.length);
-
         for (uint8 idx = 0; idx < _reservesConfig.length; idx++) {
             PoolReserversConfig memory reserveConfig = _reservesConfig[idx];
-            inputConfigParams[idx] = ATokensAndRatesHelper.ConfigureReserveInput({
-                asset: reserveConfig.tokenAddress,
-                reserveType: reserveConfig.reserveType,
-                baseLTV: reserveConfig.baseLtv,
-                liquidationThreshold: reserveConfig.liquidationThreshold,
-                liquidationBonus: reserveConfig.liquidationBonus,
-                reserveFactor: reserveConfig.reserveFactor,
-                borrowingEnabled: reserveConfig.borrowingEnabled
-            });
+
+            _contracts.lendingPoolConfigurator.configureReserveAsCollateral(
+                reserveConfig.tokenAddress,
+                reserveConfig.reserveType,
+                reserveConfig.baseLtv,
+                reserveConfig.liquidationThreshold,
+                reserveConfig.liquidationBonus
+            );
+
+            if (reserveConfig.borrowingEnabled) {
+                _contracts.lendingPoolConfigurator.enableBorrowingOnReserve(
+                    reserveConfig.tokenAddress, reserveConfig.reserveType
+                );
+            }
+            _contracts.lendingPoolConfigurator.setCod3xReserveFactor(
+                reserveConfig.tokenAddress, reserveConfig.reserveType, reserveConfig.reserveFactor
+            );
+
+            uint256 tokenPrice = _contracts.oracle.getAssetPrice(reserveConfig.tokenAddress);
+            if (usdBootstrapAmount > tokenPrice) {
+                uint256 tokenAmount = (usdBootstrapAmount / tokenPrice) * 10 ** PRICE_FEED_DECIMALS
+                    / (10 ** (18 - IERC20Detailed(reserveConfig.tokenAddress).decimals()));
+                console.log(
+                    "Bootstrap amount: %s %s for price: %s",
+                    tokenAmount,
+                    IERC20Detailed(reserveConfig.tokenAddress).symbol(),
+                    tokenPrice
+                );
+                IERC20Detailed(reserveConfig.tokenAddress).approve(
+                    address(_contracts.lendingPool), tokenAmount
+                );
+                _contracts.lendingPool.deposit(
+                    reserveConfig.tokenAddress,
+                    true,
+                    tokenAmount,
+                    contracts.lendingPoolAddressesProvider.getPoolAdmin()
+                );
+                DataTypes.ReserveData memory reserveData = contracts.lendingPool.getReserveData(
+                    reserveConfig.tokenAddress, reserveConfig.reserveType
+                );
+                require(
+                    IERC20Detailed(reserveData.aTokenAddress).totalSupply() == tokenAmount,
+                    "TotalSupply not equal to deposited amount!"
+                );
+            }
 
             _contracts.lendingPoolConfigurator.enableFlashloan(
                 reserveConfig.tokenAddress, reserveConfig.reserveType
             );
         }
-        address tmpPoolAdmin = _contracts.lendingPoolAddressesProvider.getPoolAdmin();
-        _contracts.lendingPoolAddressesProvider.setPoolAdmin(
-            address(_contracts.aTokensAndRatesHelper)
-        );
-        _contracts.aTokensAndRatesHelper.configureReserves(inputConfigParams);
-        _contracts.lendingPoolAddressesProvider.setPoolAdmin(tmpPoolAdmin);
     }
 
     function _initAndConfigureMiniPoolReserves(
         DeployedContracts memory _contracts,
         PoolReserversConfig[] memory _reservesConfig,
-        uint256 _miniPoolId
+        uint256 _miniPoolId,
+        uint256 _usdBootstrapAmount
     ) internal returns (address aToken, address miniPool) {
         IMiniPoolConfigurator.InitReserveInput[] memory initInputParams =
             new IMiniPoolConfigurator.InitReserveInput[](_reservesConfig.length);
         address mp = _contracts.miniPoolAddressesProvider.getMiniPool(_miniPoolId);
         console.log("MiniPool to configure: ", mp);
-        _contracts.lendingPoolConfigurator.setPoolPause(false);
-        _contracts.miniPoolConfigurator.setPoolPause(false, IMiniPool(mp));
+        if (_contracts.lendingPool.paused()) {
+            _contracts.lendingPoolConfigurator.setPoolPause(false);
+        }
+        if (IMiniPool(mp).paused()) {
+            _contracts.miniPoolConfigurator.setPoolPause(false, IMiniPool(mp));
+        }
         console.log("Getting ERC6909");
         address aTokensErc6909Addr = _contracts.miniPoolAddressesProvider.getMiniPoolToAERC6909(mp);
         console.log("_reservesConfig LENGTH: ", _reservesConfig.length);
@@ -130,16 +165,21 @@ contract InitAndConfigurationHelper {
         console.log("length initInputParams: ", initInputParams.length);
         _contracts.miniPoolConfigurator.batchInitReserve(initInputParams, IMiniPool(mp));
         console.log("Configuring");
-        _configureMiniPoolReserves(_contracts, _reservesConfig, mp);
-        _contracts.lendingPoolConfigurator.setPoolPause(true);
-        _contracts.miniPoolConfigurator.setPoolPause(true, IMiniPool(mp));
+        _configureMiniPoolReserves(_contracts, _reservesConfig, mp, _usdBootstrapAmount);
+        if (_contracts.lendingPool.paused()) {
+            _contracts.lendingPoolConfigurator.setPoolPause(true);
+        }
+        if (IMiniPool(mp).paused()) {
+            _contracts.miniPoolConfigurator.setPoolPause(true, IMiniPool(mp));
+        }
         return (aTokensErc6909Addr, mp);
     }
 
     function _configureMiniPoolReserves(
         DeployedContracts memory _contracts,
         PoolReserversConfig[] memory _reservesConfig,
-        address _mp
+        address _mp,
+        uint256 _usdBootstrapAmount
     ) internal {
         for (uint8 idx = 0; idx < _reservesConfig.length; idx++) {
             PoolReserversConfig memory reserveConfig = _reservesConfig[idx];
@@ -155,17 +195,65 @@ contract InitAndConfigurationHelper {
                 reserveConfig.tokenAddress, IMiniPool(_mp)
             );
 
-            _contracts.miniPoolConfigurator.enableBorrowingOnReserve(
-                reserveConfig.tokenAddress, IMiniPool(_mp)
-            );
-            _contracts.miniPoolConfigurator.enableFlashloan(
-                reserveConfig.tokenAddress, IMiniPool(_mp)
-            );
+            if (reserveConfig.borrowingEnabled) {
+                _contracts.miniPoolConfigurator.enableBorrowingOnReserve(
+                    reserveConfig.tokenAddress, IMiniPool(_mp)
+                );
+            }
+
+            uint256 tokenPrice = _contracts.oracle.getAssetPrice(reserveConfig.tokenAddress);
+            if (_usdBootstrapAmount > tokenPrice) {
+                uint256 tokenAmount = (_usdBootstrapAmount / tokenPrice) * 10 ** PRICE_FEED_DECIMALS
+                    / (10 ** (18 - IERC20Detailed(reserveConfig.tokenAddress).decimals()));
+                console.log(
+                    "MiniPool Bootstrap amount: %s %s for price: %s",
+                    tokenAmount,
+                    IERC20Detailed(reserveConfig.tokenAddress).symbol(),
+                    tokenPrice
+                );
+                console.log(
+                    "Balance of %s: %s",
+                    _contracts.miniPoolAddressesProvider.getPoolAdmin(
+                        _contracts.miniPoolAddressesProvider.getMiniPoolId(_mp)
+                    ),
+                    IERC20Detailed(reserveConfig.tokenAddress).balanceOf(
+                        _contracts.miniPoolAddressesProvider.getPoolAdmin(
+                            _contracts.miniPoolAddressesProvider.getMiniPoolId(_mp)
+                        )
+                    )
+                );
+                console.log("Token address: ", reserveConfig.tokenAddress);
+                // DataTypes.ReserveData memory reserveData = _contracts.lendingPool.getReserveData(
+                //     reserveConfig.tokenAddress, reserveConfig.reserveType
+                // );
+                IERC20Detailed(reserveConfig.tokenAddress).approve(address(_mp), tokenAmount);
+                IMiniPool(_mp).deposit(
+                    reserveConfig.tokenAddress,
+                    false,
+                    tokenAmount,
+                    _contracts.miniPoolAddressesProvider.getPoolAdmin(
+                        _contracts.miniPoolAddressesProvider.getMiniPoolId(_mp)
+                    )
+                );
+                DataTypes.MiniPoolReserveData memory miniPoolReserveData =
+                    IMiniPool(_mp).getReserveData(reserveConfig.tokenAddress);
+                require(
+                    IAERC6909(miniPoolReserveData.aErc6909).totalSupply(
+                        miniPoolReserveData.aTokenID
+                    ) == tokenAmount,
+                    "TotalSupply not equal to deposited amount!"
+                );
+            }
+
             _contracts.miniPoolConfigurator.setCod3xReserveFactor(
                 reserveConfig.tokenAddress, reserveConfig.reserveFactor, IMiniPool(_mp)
             );
             _contracts.miniPoolConfigurator.setMinipoolOwnerReserveFactor(
                 reserveConfig.tokenAddress, reserveConfig.miniPoolOwnerFee, IMiniPool(_mp)
+            );
+
+            _contracts.miniPoolConfigurator.enableFlashloan(
+                reserveConfig.tokenAddress, IMiniPool(_mp)
             );
         }
     }

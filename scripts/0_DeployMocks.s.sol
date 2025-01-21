@@ -26,29 +26,28 @@ contract DeployMocks is Script, MocksHelper, Test {
                 abi.decode(config.parseRaw(".mockedToken"), (MockedToken[]));
 
             address[] memory mockedTokens;
-            Oracle mockedOracle;
             {
                 string[] memory symbols = new string[](mockedTokensSettings.length);
                 uint8[] memory decimals = new uint8[](mockedTokensSettings.length);
-                int256[] memory prices = new int256[](mockedTokensSettings.length);
 
                 for (uint8 idx = 0; idx < mockedTokensSettings.length; idx++) {
                     symbols[idx] = mockedTokensSettings[idx].symbol;
                     decimals[idx] = uint8(mockedTokensSettings[idx].decimals);
-                    prices[idx] = int256(mockedTokensSettings[idx].prices);
                 }
 
                 // Deployment
                 console.log("Broadcasting....");
                 vm.startBroadcast(vm.envUint("PRIVATE_KEY"));
-                (mockedTokens, mockedOracle) = _deployERC20Mocks(symbols, symbols, decimals, prices);
+                mockedTokens = _deployERC20Mocks(symbols, symbols, decimals);
+                for (uint8 idx = 0; idx < mockedTokens.length; idx++) {
+                    IERC20Detailed(mockedTokens[idx]).mint(vm.envUint("PRIVATE_KEY"), 100 ether);
+                }
                 vm.stopBroadcast();
             }
 
             /* Write mocked tokens */
             {
                 string memory out;
-                vm.serializeAddress("mockedContracts", "mockedOracle", address(mockedOracle));
                 out = vm.serializeAddress("mockedContracts", "mockedTokens", mockedTokens);
                 if (!vm.exists(string.concat(root, "/scripts/outputs"))) {
                     vm.createDir(string.concat(root, "/scripts/outputs"), false);

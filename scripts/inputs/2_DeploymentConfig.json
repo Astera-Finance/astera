@@ -6,7 +6,8 @@
     "debtTokenSymbolPrefix": "clDebt",
     "marketReferenceCurrencyAggregator": "0x7e860098F58bBFC8648a4311b374B1D669a2bc6B",
     "networkBaseTokenAggregator": "0x71041dddad3595F9CEd3DcCFBe3D1F4b0a16Bb70",
-    "treasury": "0x3151CfCA393FE5Eec690feD2a2446DA5a073d01B"
+    "treasury": "0x3151CfCA393FE5Eec690feD2a2446DA5a073d01B",
+    "usdBootstrapAmount": 1000000000000000000
   },
   "poolReserversConfig": [
     {
@@ -21,23 +22,8 @@
       "rates": 0.03e27,
       "reserveFactor": 1500,
       "reserveType": true,
-      "symbol": "aWETH",
-      "tokenAddress": "0x5D06644F64cEf0299d8dFF67f08E1eC5e883C1a4"
-    },
-    {
-      "baseLtv": 7000,
-      "borrowingEnabled": true,
-      "interestStrat": "VOLATILE",
-      "interestStratId": 0,
-      "liquidationBonus": 10500,
-      "liquidationThreshold": 7500,
-      "miniPoolOwnerFee": 150,
-      "params": "0x10",
-      "rates": 0.03e27,
-      "reserveFactor": 1500,
-      "reserveType": true,
       "symbol": "aWBTC",
-      "tokenAddress": "0x27914Eb047D7D3d322D3158BB75800FFd09B4489"
+      "tokenAddress": "0x9a35095D30AA511772a0C9a595Be442044377391"
     },
     {
       "baseLtv": 7000,
@@ -52,7 +38,7 @@
       "reserveFactor": 1500,
       "reserveType": true,
       "symbol": "aUSDC",
-      "tokenAddress": "0xF491AF584A573d3accd5B61Ab9677D769CB1c806"
+      "tokenAddress": "0x088607f8f2aAE9Ab9b7EE16C988A5Ca857DB8F15"
     }
   ],
   "usePreviousStrats": true,
@@ -76,20 +62,17 @@
   "piStrategies": [],
   "oracleConfig": {
     "assets": [
-      "0xe43208266aEad29736433aA0b6F035a2Ffc3BB9F",
-      "0xC3E0372C8a5278b11D1454507BCFB9085d3AAD84",
-      "0x2B812E48426C99524B4Ea711AC4A9A7b5B7D0104"
+      "0x2762bCa6B7a421c37515f630b952787E0eD0F50F",
+      "0x088607f8f2aAE9Ab9b7EE16C988A5Ca857DB8F15"
     ],
     "baseCurrency": "0x0000000000000000000000000000000000000000",
     "baseCurrencyUnit": 1e18,
     "fallbackOracle": "0x0000000000000000000000000000000000000000",
     "sources": [
-      "0x71041dddad3595F9CEd3DcCFBe3D1F4b0a16Bb70",
-      "0x7e860098F58bBFC8648a4311b374B1D669a2bc6B",
-      "0xCCADC697c55bbB68dc5bCdf8d3CBe83CdD4E071E"
+      "0x4aDC67696bA383F43DD60A9e78F2C97Fbbfc7cb1",
+      "0xd30e2101a97dcbAeBCBC04F14C3f624E67A35165"
     ],
     "timeouts": [
-      100000,
       100000,
       100000
     ]
