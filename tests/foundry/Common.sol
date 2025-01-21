@@ -298,9 +298,6 @@ contract Common is Test {
         deployedContracts.lendingPoolAddressesProvider.setEmergencyAdmin(admin);
 
         lendingPool = new LendingPool();
-        lendingPool.initialize(
-            ILendingPoolAddressesProvider(deployedContracts.lendingPoolAddressesProvider)
-        );
         deployedContracts.lendingPoolAddressesProvider.setLendingPoolImpl(address(lendingPool));
         lendingPoolProxyAddress =
             address(deployedContracts.lendingPoolAddressesProvider.getLendingPool());

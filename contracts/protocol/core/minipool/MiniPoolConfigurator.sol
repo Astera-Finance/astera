@@ -30,6 +30,10 @@ contract MiniPoolConfigurator is VersionedInitializable, IMiniPoolConfigurator {
     uint256 internal constant CONFIGURATOR_REVISION = 0x1;
     IMiniPoolAddressesProvider public addressesProvider;
 
+    constructor() {
+       blockInitializing();
+    }
+
     /**
      * @dev Only allows pool admin to call the function.
      * @param pool The address of the MiniPool being accessed.

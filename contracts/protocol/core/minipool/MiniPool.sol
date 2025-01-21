@@ -69,6 +69,10 @@ contract MiniPool is VersionedInitializable, IMiniPool, MiniPoolStorage {
      */
     uint256 public constant ERROR_REMAINDER_MARGIN = 100_000;
 
+    constructor() {
+       blockInitializing();
+    }
+
     /**
      * @dev Modifier to verify the protocol is not paused.
      * Reverts if the protocol is in a paused state.

@@ -74,6 +74,12 @@ abstract contract VersionedInitializable {
         return cs == 0;
     }
 
+    function blockInitializing() internal {
+        if(isConstructor()) {
+            lastInitializedRevision = type(uint256).max;
+        }
+    }
+
     /**
      * @dev Reserved storage space to allow for layout changes in the future.
      */

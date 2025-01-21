@@ -97,6 +97,10 @@ contract ATokenERC6909 is IncentivizedERC6909, VersionedInitializable {
     /// @notice Mapping from token `id` to user to delegate to allowance amount. ID -> User -> Delegate -> Allowance.
     mapping(uint256 => mapping(address => mapping(address => uint256))) private _borrowAllowances;
 
+    constructor() {
+       blockInitializing();
+    }
+
     // ======================= External Function =======================
 
     /**
