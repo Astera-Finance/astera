@@ -1929,20 +1929,9 @@ contract MiniPoolRepayWithdrawTransferTest is MiniPoolDepositBorrowTest {
         vm.prank(user2);
         IMiniPool(miniPool).borrow(address(tokenParamsUsdc.aToken), false, 1_000e6, user2);
 
-        logMinipoolFlow(address(tokenParamsUsdc.token), user2);
-
-        // vm.prank(user2);
-        // IMiniPool(miniPool).borrow(address(tokenParamsUsdc.aToken), false, 15_000e6, user2);
-
-        // // logMinipoolFlow(address(tokenParamsUsdc.token), user2);
-
-        // skip(100 days);
-
-        // // logMinipoolFlow(address(tokenParamsUsdc.token), user2);
-
-        // logInterestRate(address(tokenParamsUsdc.token), address(tokenParamsUsdc.aToken));
-
-        // // withdraw from lending pool usdc
+        logInterestRate(address(tokenParamsUsdc.token), address(tokenParamsUsdc.aToken));
+        uint256 pastLiquidityRate =
+            IMiniPool(miniPool).getReserveData(address(tokenParamsUsdc.aToken)).currentLiquidityRate;
 
         vm.startPrank(user);
         deployedContracts.lendingPool.withdraw(
@@ -1950,18 +1939,19 @@ contract MiniPoolRepayWithdrawTransferTest is MiniPoolDepositBorrowTest {
         );
         vm.stopPrank();
 
+        logInterestRate(address(tokenParamsUsdc.token), address(tokenParamsUsdc.aToken));
+
         vm.startPrank(user2);
         deployedContracts.lendingPool.withdraw(
             address(tokenParamsUsdc.token), true, amountUsdc * 9 / 10, user2
         );
         vm.stopPrank();
 
-        // // vm.startPrank(user2);
-        // // uint256 balanceUsdcOwed = aErc6909Token.balanceOf(user2, 2000 + USDC_OFFSET);
-        // // tokenParamsUsdc.aToken.approve(address(miniPool), balanceUsdcOwed);
-        // // IMiniPool(miniPool).repay(address(tokenParamsUsdc.aToken), false, balanceUsdcOwed, user2);
-
-        // // vm.stopPrank();
+        // asset not equal
+        assertNotEq(
+            pastLiquidityRate,
+            IMiniPool(miniPool).getReserveData(address(tokenParamsUsdc.aToken)).currentLiquidityRate
+        );
 
         logInterestRate(address(tokenParamsUsdc.token), address(tokenParamsUsdc.aToken));
     }
