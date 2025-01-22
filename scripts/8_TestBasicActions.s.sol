@@ -516,7 +516,7 @@ contract TestBasicActions is Script, Test {
         address miniPool = contracts.miniPoolAddressesProvider.getMiniPool(index);
         while (miniPool != address(0)) {
             vm.startBroadcast(admin);
-            if (_contracts.lendingPool.paused()) {
+            if (contracts.lendingPool.paused()) {
                 contracts.miniPoolConfigurator.setPoolPause(false, IMiniPool(miniPool));
             }
             vm.stopBroadcast();
@@ -534,7 +534,7 @@ contract TestBasicActions is Script, Test {
                 );
             }
             vm.startBroadcast(admin);
-            if (!_contracts.lendingPool.paused()) {
+            if (!contracts.lendingPool.paused()) {
                 contracts.miniPoolConfigurator.setPoolPause(true, IMiniPool(miniPool));
             }
             vm.stopBroadcast();
@@ -547,7 +547,7 @@ contract TestBasicActions is Script, Test {
         public
     {
         vm.startBroadcast(admin);
-        if (_contracts.lendingPool.paused()) {
+        if (contracts.lendingPool.paused()) {
             contracts.miniPoolConfigurator.setPoolPause(false, IMiniPool(miniPool));
         }
         vm.stopBroadcast();
@@ -574,7 +574,7 @@ contract TestBasicActions is Script, Test {
             }
         }
         vm.startBroadcast(admin);
-        if (!_contracts.lendingPool.paused()) {
+        if (!contracts.lendingPool.paused()) {
             contracts.miniPoolConfigurator.setPoolPause(true, IMiniPool(miniPool));
         }
         vm.stopBroadcast();
@@ -632,13 +632,13 @@ contract TestBasicActions is Script, Test {
             contracts.miniPoolAddressesProvider.getMiniPool(poolAddressesProviderConfig.poolId);
 
         vm.startBroadcast(users.user1);
-        if (_contracts.lendingPool.paused()) {
+        if (contracts.lendingPool.paused()) {
             contracts.lendingPoolConfigurator.setPoolPause(false);
         }
         if (IMiniPool(mp).paused()) {
             contracts.miniPoolConfigurator.setPoolPause(false, IMiniPool(mp));
-            vm.stopBroadcast();
         }
+        vm.stopBroadcast();
         console.log("Getting wrapper");
         TokenParams memory usdcParams;
         TokenParams memory wbtcParams;

@@ -190,7 +190,7 @@ contract InitAndConfigurationHelper {
                 reserveConfig.liquidationBonus,
                 IMiniPool(_mp)
             );
-
+            console.log("Configured");
             _contracts.miniPoolConfigurator.activateReserve(
                 reserveConfig.tokenAddress, IMiniPool(_mp)
             );
@@ -243,6 +243,24 @@ contract InitAndConfigurationHelper {
                     ) == tokenAmount,
                     "TotalSupply not equal to deposited amount!"
                 );
+                console.log("Token ID: ", miniPoolReserveData.aTokenID);
+                console.log("aErc6909: ", miniPoolReserveData.aErc6909);
+                console.log("id: ", miniPoolReserveData.id);
+                console.log("lastUpdateTimestamp: ", miniPoolReserveData.lastUpdateTimestamp);
+                console.log("variableDebtTokenID: ", miniPoolReserveData.variableDebtTokenID);
+            }
+            console.log("Configuration for:", reserveConfig.tokenAddress);
+            DataTypes.MiniPoolReserveData memory miniPoolReserveData =
+                IMiniPool(_mp).getReserveData(reserveConfig.tokenAddress);
+            console.log("Token ID: ", miniPoolReserveData.aTokenID);
+            console.log("aErc6909: ", miniPoolReserveData.aErc6909);
+            console.log("id: ", miniPoolReserveData.id);
+            console.log("lastUpdateTimestamp: ", miniPoolReserveData.lastUpdateTimestamp);
+            console.log("variableDebtTokenID: ", miniPoolReserveData.variableDebtTokenID);
+
+            (address[] memory reserveList,) = IMiniPool(_mp).getReservesList();
+            for (uint8 i = 0; i < reserveList.length; i++) {
+                console.log("Reserve %s: %s", i, reserveList[i]);
             }
 
             _contracts.miniPoolConfigurator.setCod3xReserveFactor(
@@ -286,6 +304,10 @@ contract InitAndConfigurationHelper {
         address interestStrategy;
         if (keccak256(bytes(_reserveConfig.interestStrat)) == keccak256(bytes("PI"))) {
             require(
+                _contracts.miniPoolPiStrategies.length > _reserveConfig.interestStratId,
+                "miniPoolPiStrategies length too short"
+            );
+            require(
                 _contracts.miniPoolPiStrategies[_reserveConfig.interestStratId]._asset()
                     == _reserveConfig.tokenAddress,
                 "Mini pool Pi strat has different asset address than reserve"
@@ -293,10 +315,22 @@ contract InitAndConfigurationHelper {
             interestStrategy =
                 address(_contracts.miniPoolPiStrategies[_reserveConfig.interestStratId]);
         } else {
-            interestStrategy = keccak256(bytes(_reserveConfig.interestStrat))
-                == keccak256(bytes("VOLATILE"))
-                ? address(_contracts.miniPoolVolatileStrategies[_reserveConfig.interestStratId])
-                : address(_contracts.miniPoolStableStrategies[_reserveConfig.interestStratId]);
+            console.log("LINEAR");
+            if (keccak256(bytes(_reserveConfig.interestStrat)) == keccak256(bytes("VOLATILE"))) {
+                require(
+                    _contracts.miniPoolVolatileStrategies.length > _reserveConfig.interestStratId,
+                    "miniPoolVolatileStrategies length too short"
+                );
+                interestStrategy =
+                    address(_contracts.miniPoolVolatileStrategies[_reserveConfig.interestStratId]);
+            } else {
+                require(
+                    _contracts.miniPoolStableStrategies.length > _reserveConfig.interestStratId,
+                    "miniPoolStableStrategies length too short"
+                );
+                interestStrategy =
+                    address(_contracts.miniPoolStableStrategies[_reserveConfig.interestStratId]);
+            }
         }
         return interestStrategy;
     }

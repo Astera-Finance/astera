@@ -89,13 +89,9 @@ contract ChangePeripherialsHelper {
                 address mp = contracts.miniPoolAddressesProvider.getMiniPool(_miniPoolId);
                 DataTypes.MiniPoolReserveData memory data =
                     IMiniPool(mp).getReserveData(rewarder6909[idx].tokenAddress);
-                require(
-                    data.aTokenAddress != address(0), "tokenAddress not available in lendingPool"
-                );
-                if (
-                    address(ATokenERC6909(data.aTokenAddress).getIncentivesController())
-                        == address(0)
-                ) {
+                console.log("Configuration for: ", rewarder6909[idx].tokenAddress);
+                require(data.aErc6909 != address(0), "aErc6909 not available in lendingPool");
+                if (address(ATokenERC6909(data.aErc6909).getIncentivesController()) == address(0)) {
                     if (address(contracts.rewarder6909) == address(0)) {
                         // There is no rewarder -> deploy new one
                         contracts.rewarder6909 = new Rewarder6909();
