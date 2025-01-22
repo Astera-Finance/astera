@@ -63,9 +63,15 @@ abstract contract RewardsController is RewardsDistributor, IRewardsController {
      * @param addressesProvider Address of the MiniPool addresses provider.
      */
     function setMiniPoolAddressesProvider(address addressesProvider) external onlyOwner {
+        require(address(addressesProvider) != address(0), "INVALID_ADDRESS");
+        require(address(_addressesProvider) == address(0), "ALREADY_SET");
         _addressesProvider = IMiniPoolAddressesProvider(addressesProvider);
 
         emit MiniPoolAddressesProviderSet(addressesProvider);
+    }
+
+    function getMiniPoolAddressesProvider() external view returns (address) {
+        return address(_addressesProvider);
     }
 
     /**

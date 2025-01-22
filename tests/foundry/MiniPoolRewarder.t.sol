@@ -147,8 +147,9 @@ contract MiniPoolRewarderTest is Common {
         }
 
         deployedContracts.rewarder.configureAssets(configs);
-
-        deployedContracts.rewarder.setMiniPoolAddressesProvider(miniPoolAddressesProvider);
+        if(address(deployedContracts.rewarder.getMiniPoolAddressesProvider()) == address(0)) {
+            deployedContracts.rewarder.setMiniPoolAddressesProvider(miniPoolAddressesProvider);
+        }
     }
 
     function setUp() public {

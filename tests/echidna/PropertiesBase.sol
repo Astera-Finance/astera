@@ -207,7 +207,6 @@ contract PropertiesBase is PropertiesAsserts, MarketParams {
         profitHandler = address(0xCCCC);
 
         pool = new MockLendingPool();
-        pool.initialize(lendingPoolProvider);
         lendingPoolProvider.setLendingPoolImpl(address(pool));
         pool = MockLendingPool(lendingPoolProvider.getLendingPool());
 
