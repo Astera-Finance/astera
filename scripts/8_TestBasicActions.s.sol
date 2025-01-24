@@ -192,20 +192,23 @@ contract TestBasicActions is Script, Test {
         IAERC6909 aErc6909Token,
         address miniPool
     ) public {
-        console.log("Address: %s vs tokenId: %s", address(collateral), tokenId);
+        console.log("Address: %s vs tokenId: %s, amount: %s", address(collateral), tokenId, amount);
         vm.startBroadcast(user);
         uint256 tokenUserBalance = aErc6909Token.balanceOf(user, tokenId);
         uint256 tokenBalance = collateral.balanceOf(user);
+
         collateral.approve(miniPool, amount);
         IMiniPool(miniPool).deposit(address(collateral), false, amount, user);
-        assertEq(tokenBalance - amount, collateral.balanceOf(user));
-        assertEq(tokenUserBalance + amount, aErc6909Token.balanceOf(user, tokenId));
+        assertEq(tokenBalance - amount, collateral.balanceOf(user), "Wrong token balance");
+        assertEq(
+            tokenUserBalance + amount, aErc6909Token.balanceOf(user, tokenId), "Wrong user balance"
+        );
         vm.stopBroadcast();
     }
 
     function testMultipleUsersBorrowRepayAndWithdraw(
-        TokenParams memory usdcParams,
-        TokenParams memory wbtcParams,
+        TokenParams memory collateralParams,
+        TokenParams memory borrowParams,
         address miniPool,
         Users memory users,
         uint256 depositAmount,
@@ -229,112 +232,126 @@ contract TestBasicActions is Script, Test {
          * 1. All users shall be able to withdraw the greater or equal amount of funds that they deposited
          * 2.
          */
-        uint8 WBTC_OFFSET = 2;
-        uint8 USDC_OFFSET = 1;
-
         /* Fuzz vectors */
         uint256 skipDuration = 100 days;
 
         IAERC6909 aErc6909Token =
             IAERC6909(contracts.miniPoolAddressesProvider.getMiniPoolToAERC6909(miniPool));
+        DataTypes.MiniPoolReserveData memory collateralData =
+            IMiniPool(miniPool).getReserveData(address(collateralParams.aToken));
 
         console.log("----------------USER1 DEPOSIT---------------");
         fixture_depositTokensToMiniPool(
             depositAmount,
-            1128 + USDC_OFFSET,
+            collateralData.aTokenID,
             users.user1,
-            usdcParams.token,
+            ERC20(address(collateralParams.aToken)),
             aErc6909Token,
             miniPool
         );
         console.log("----------------USER2 DEPOSIT---------------");
+        DataTypes.MiniPoolReserveData memory borrowData =
+            IMiniPool(miniPool).getReserveData(address(borrowParams.aToken));
         fixture_depositTokensToMiniPool(
-            borrowAmount, 1128 + WBTC_OFFSET, users.user2, wbtcParams.token, aErc6909Token, miniPool
+            borrowAmount,
+            borrowData.aTokenID,
+            users.user2,
+            ERC20(address(borrowParams.aToken)),
+            aErc6909Token,
+            miniPool
         );
 
         // console.log("----------------USER1 BORROW---------------");
         vm.startBroadcast(users.user1);
-        uint256 balanceBefore = wbtcParams.token.balanceOf(users.user1);
-        IMiniPool(miniPool).borrow(address(wbtcParams.token), false, borrowAmount / 4, users.user1);
-        assertEq(wbtcParams.token.balanceOf(users.user1), balanceBefore + (borrowAmount / 4));
+        uint256 balanceBefore = borrowParams.token.balanceOf(users.user1);
+        IMiniPool(miniPool).borrow(
+            address(borrowParams.aToken), false, borrowAmount / 4, users.user1
+        );
+        assertEq(borrowParams.token.balanceOf(users.user1), balanceBefore + (borrowAmount / 4));
         vm.stopBroadcast();
 
         console.log("----------------USER2 BORROW---------------");
         vm.startBroadcast(users.user2);
-        balanceBefore = usdcParams.token.balanceOf(users.user2);
-        IMiniPool(miniPool).borrow(address(usdcParams.token), false, borrowAmount / 4, users.user2);
-        assertEq(usdcParams.token.balanceOf(users.user2), balanceBefore + borrowAmount / 4);
+        balanceBefore = collateralParams.token.balanceOf(users.user2);
+        IMiniPool(miniPool).borrow(
+            address(collateralParams.aToken), false, borrowAmount / 4, users.user2
+        );
+        assertEq(collateralParams.token.balanceOf(users.user2), balanceBefore + borrowAmount / 4);
         vm.stopBroadcast();
 
         vm.startBroadcast(users.user1);
         console.log("----------------USER1 REPAYS---------------");
-        wbtcParams.token.approve(
-            address(miniPool), aErc6909Token.balanceOf(users.user1, 2128 + WBTC_OFFSET)
+        borrowParams.token.approve(
+            address(miniPool), aErc6909Token.balanceOf(users.user1, borrowData.aTokenID)
         );
         console.log("User1 Repaying...");
         /* Give lacking amount to user 1 */
         IMiniPool(miniPool).repay(
-            address(wbtcParams.token),
+            address(borrowParams.token),
             false,
-            aErc6909Token.balanceOf(users.user1, 2128 + WBTC_OFFSET),
+            aErc6909Token.balanceOf(users.user1, borrowData.aTokenID),
             users.user1
         );
         vm.stopBroadcast();
 
         console.log("----------------USER2 REPAYS---------------");
         vm.startBroadcast(users.user2);
-        usdcParams.token.approve(
-            address(miniPool), aErc6909Token.balanceOf(users.user2, 2128 + USDC_OFFSET)
+        collateralParams.token.approve(
+            address(miniPool),
+            aErc6909Token.balanceOf(users.user2, collateralData.variableDebtTokenID)
         );
         console.log("User2 Repaying...");
         IMiniPool(miniPool).repay(
-            address(usdcParams.token),
+            address(collateralParams.aToken),
             false,
-            aErc6909Token.balanceOf(users.user2, 2128 + USDC_OFFSET),
+            aErc6909Token.balanceOf(users.user2, collateralData.variableDebtTokenID),
             users.user2
         );
         vm.stopBroadcast();
 
         vm.startBroadcast(users.user1);
-        console.log("Balance: ", aErc6909Token.balanceOf(users.user1, 1000 + USDC_OFFSET));
-        console.log("Balance: ", aErc6909Token.balanceOf(users.user1, 1128 + USDC_OFFSET));
-        uint256 availableLiquidity = IERC20(usdcParams.aToken).balanceOf(address(aErc6909Token));
+        console.log("Balance: ", aErc6909Token.balanceOf(users.user1, collateralData.aTokenID));
+        uint256 availableLiquidity =
+            IERC20(collateralParams.aToken).balanceOf(address(aErc6909Token));
         console.log("AvailableLiquidity: ", availableLiquidity);
-        console.log("Withdrawing... %s", aErc6909Token.balanceOf(users.user1, 1128 + USDC_OFFSET));
+        console.log(
+            "Withdrawing... %s", aErc6909Token.balanceOf(users.user1, collateralData.aTokenID)
+        );
         IMiniPool(miniPool).withdraw(
-            address(usdcParams.token),
+            address(collateralParams.aToken),
             false,
-            aErc6909Token.balanceOf(users.user1, 1128 + USDC_OFFSET),
+            aErc6909Token.balanceOf(users.user1, collateralData.aTokenID),
             users.user1
         );
-        console.log("After Balance: ", aErc6909Token.balanceOf(users.user1, 1128 + USDC_OFFSET));
-        availableLiquidity = IERC20(usdcParams.aToken).balanceOf(address(aErc6909Token));
+        console.log(
+            "After Balance: ", aErc6909Token.balanceOf(users.user1, collateralData.aTokenID)
+        );
+        availableLiquidity = IERC20(collateralParams.aToken).balanceOf(address(aErc6909Token));
         console.log("After availableLiquidity: ", availableLiquidity);
         vm.stopBroadcast();
 
         vm.startBroadcast(users.user2);
         console.log("----------------USER2 TRANSFER---------------");
 
-        availableLiquidity = IERC20(wbtcParams.aToken).balanceOf(address(aErc6909Token));
-        console.log("Balance: ", aErc6909Token.balanceOf(users.user2, 1000 + WBTC_OFFSET));
-        console.log("Balance: ", aErc6909Token.balanceOf(users.user2, 1128 + WBTC_OFFSET));
+        availableLiquidity = IERC20(borrowParams.aToken).balanceOf(address(aErc6909Token));
+        console.log("Balance: ", aErc6909Token.balanceOf(users.user2, borrowData.aTokenID));
         console.log("AvailableLiquidity: ", availableLiquidity);
         console.log("Withdrawing...");
         IMiniPool(miniPool).withdraw(
-            address(wbtcParams.token),
+            address(borrowParams.token),
             false,
-            aErc6909Token.balanceOf(users.user2, 1128 + WBTC_OFFSET),
+            aErc6909Token.balanceOf(users.user2, borrowData.aTokenID),
             users.user2
         );
         vm.stopBroadcast();
 
         assertGt(
-            usdcParams.token.balanceOf(users.user1),
+            collateralParams.token.balanceOf(users.user1),
             depositAmount,
             "Balance is not greater for user1"
         );
         assertGt(
-            wbtcParams.token.balanceOf(users.user2),
+            borrowParams.token.balanceOf(users.user2),
             borrowAmount,
             "Balance is not greater for user2"
         );
@@ -624,8 +641,8 @@ contract TestBasicActions is Script, Test {
             // TESTNET
             uint256 depositAmount = testConfigs.readUint(".depositAmount");
             uint256 borrowAmount = testConfigs.readUint(".borrowAmount");
-            (collateral, borrowAsset) =
-                mintMockedTokens(root, 2 * depositAmount, 2 * borrowAmount, "USDC", "WBTC", users);
+            collateral = testConfigs.readAddress(".collateralAddress");
+            borrowAsset = testConfigs.readAddress(".borrowAssetAddress");
         }
 
         address mp =
@@ -640,14 +657,14 @@ contract TestBasicActions is Script, Test {
         }
         vm.stopBroadcast();
         console.log("Getting wrapper");
-        TokenParams memory usdcParams;
-        TokenParams memory wbtcParams;
+        TokenParams memory collateralParams;
+        TokenParams memory borrowParams;
         {
             AToken aToken = fixture_getATokenWrapper(collateral, contracts.cod3xLendDataProvider);
-            usdcParams = TokenParams({token: ERC20(collateral), aToken: aToken});
+            collateralParams = TokenParams({token: ERC20(collateral), aToken: aToken});
 
             aToken = fixture_getATokenWrapper(borrowAsset, contracts.cod3xLendDataProvider);
-            wbtcParams = TokenParams({token: ERC20(borrowAsset), aToken: aToken});
+            borrowParams = TokenParams({token: ERC20(borrowAsset), aToken: aToken});
         }
 
         if (bootstrapMainPool == true && bootstrapMiniPool == true) {
@@ -667,9 +684,13 @@ contract TestBasicActions is Script, Test {
             uint256 depositAmount = testConfigs.readUint(".depositAmount");
             uint256 borrowAmount = testConfigs.readUint(".borrowAmount");
             mp = contracts.miniPoolAddressesProvider.getMiniPool(poolAddressesProviderConfig.poolId);
-            console.log("Testing...");
+            console.log(
+                "Testing collateral: %s borrow: %s",
+                collateralParams.token.symbol(),
+                borrowParams.token.symbol()
+            );
             testMultipleUsersBorrowRepayAndWithdraw(
-                usdcParams, wbtcParams, mp, users, depositAmount, borrowAmount
+                collateralParams, borrowParams, mp, users, depositAmount, borrowAmount
             );
         }
     }

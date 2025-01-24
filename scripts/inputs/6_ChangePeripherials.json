@@ -28,14 +28,14 @@
     },
     "vault": [
         {
-            "configure": true,
+            "configure": false,
             "newAddress": "0x3151CfCA393FE5Eec690feD2a2446DA5a073d01B",
             "reserveType": true,
             "symbol": "USDC",
             "tokenAddress": "0x8c53BF01E052A2aFA06b2d9d87aE49972799E62f"
         },
         {
-            "configure": true,
+            "configure": false,
             "newAddress": "0x3151CfCA393FE5Eec690feD2a2446DA5a073d01B",
             "reserveType": true,
             "symbol": "WETH",
@@ -45,14 +45,14 @@
     "rewarder": [
         {
             "configure": true,
-            "newAddress": "0x3151CfCA393FE5Eec690feD2a2446DA5a073d01B",
+            "newAddress": "0x0000000000000000000000000000000000000000",
             "reserveType": true,
             "symbol": "USDC",
             "tokenAddress": "0x8c53BF01E052A2aFA06b2d9d87aE49972799E62f"
         },
         {
             "configure": true,
-            "newAddress": "0x3151CfCA393FE5Eec690feD2a2446DA5a073d01B",
+            "newAddress": "0x0000000000000000000000000000000000000000",
             "reserveType": true,
             "symbol": "WETH",
             "tokenAddress": "0x434F73Ce7ce4C53355b1DEF2D1D2e38543d236c2"
@@ -61,14 +61,14 @@
     "rewarder6909": [
         {
             "configure": true,
-            "newAddress": "0x3151CfCA393FE5Eec690feD2a2446DA5a073d01B",
+            "newAddress": "0x0000000000000000000000000000000000000000",
             "reserveType": true,
             "symbol": "aUSDC",
             "tokenAddress": "0x088607f8f2aAE9Ab9b7EE16C988A5Ca857DB8F15"
         },
         {
             "configure": true,
-            "newAddress": "0x3151CfCA393FE5Eec690feD2a2446DA5a073d01B",
+            "newAddress": "0x0000000000000000000000000000000000000000",
             "reserveType": true,
             "symbol": "WBTC",
             "tokenAddress": "0xb3e343C39a9e5e739724b3Ed0F3B6150e19B4A90"

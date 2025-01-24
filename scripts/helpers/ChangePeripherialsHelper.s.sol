@@ -65,25 +65,17 @@ contract ChangePeripherialsHelper {
                 require(
                     data.aTokenAddress != address(0), "tokenAddress not available in lendingPool"
                 );
-                if (address(AToken(data.aTokenAddress).getIncentivesController()) == address(0)) {
-                    if (address(contracts.rewarder) == address(0)) {
-                        // There is no rewarder -> deploy new one
-                        contracts.rewarder = new Rewarder(); // @issue: Rewarder NOT SAFE
-                    }
-
-                    contracts.lendingPoolConfigurator.setRewarderForReserve(
-                        rewarder[idx].tokenAddress,
-                        rewarder[idx].reserveType,
-                        address(contracts.rewarder)
-                    );
-                } else {
-                    // Set rewarder defined in config
-                    contracts.lendingPoolConfigurator.setRewarderForReserve(
-                        rewarder[idx].tokenAddress,
-                        rewarder[idx].reserveType,
-                        rewarder[idx].newAddress
-                    );
+                console.log("REWARDER: ", address(contracts.rewarder));
+                if (address(contracts.rewarder) == address(0)) {
+                    // There is no rewarder -> deploy new one
+                    contracts.rewarder = new Rewarder(); // @issue: Rewarder NOT SAFE
                 }
+
+                contracts.lendingPoolConfigurator.setRewarderForReserve(
+                    rewarder[idx].tokenAddress,
+                    rewarder[idx].reserveType,
+                    address(contracts.rewarder)
+                );
             }
             if (rewarder6909[idx].configure == true) {
                 address mp = contracts.miniPoolAddressesProvider.getMiniPool(_miniPoolId);
