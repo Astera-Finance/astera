@@ -98,7 +98,7 @@ contract ATokenERC6909 is IncentivizedERC6909, VersionedInitializable {
     mapping(uint256 => mapping(address => mapping(address => uint256))) private _borrowAllowances;
 
     constructor() {
-       blockInitializing();
+        blockInitializing();
     }
 
     // ======================= External Function =======================
@@ -490,7 +490,7 @@ contract ATokenERC6909 is IncentivizedERC6909, VersionedInitializable {
             uint256 tokenID = pool.getReserveData(tokenUnderlying, true).id;
             // Check if aToken is in underlyingAsset mapping - if it isn't it means aToken is not initialized in the erc6909
             require(
-                _underlyingAssetAddresses[tokenID] == address(0),
+                _underlyingAssetAddresses[tokenID + ATOKEN_ADDRESSABLE_ID] == address(0),
                 Errors.RL_RESERVE_ALREADY_INITIALIZED
             );
 
