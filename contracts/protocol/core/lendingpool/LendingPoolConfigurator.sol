@@ -45,6 +45,10 @@ contract LendingPoolConfigurator is VersionedInitializable, ILendingPoolConfigur
     /// @dev Mapping to track if an address is a registered aToken or NonRebasingAToken.
     mapping(address => bool) internal isAToken;
 
+    constructor() {
+       blockInitializing();
+    }
+
     /**
      * @dev Throws if the caller is not the pool admin.
      * @notice Restricts function access to only the configured pool admin address.

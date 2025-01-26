@@ -113,9 +113,9 @@ contract MiniPoolProp is PropertiesBase {
 
         require(success);
 
-        // if (healthFactorAfter < 1e18) {
-        //     assertWithMsg(!success, "505");
-        // }
+        if (healthFactorAfter < 1e18) {
+            assertWithMsg(!success, "505");
+        }
 
         uint256 aTokenBalanceAfter = aToken6909.balanceOf(address(user), aTokenID);
         uint256 assetBalanceAfter = isAToken

@@ -98,9 +98,9 @@ contract LendingPoolProp is PropertiesBase {
 
         require(success);
 
-        // if (healthFactorAfter < 1e18) {
-        //     assertWithMsg(!success, "230");
-        // }
+        if (healthFactorAfter < 1e18) {
+            assertWithMsg(!success, "230");
+        }
 
         uint256 aTokenBalanceAfter = aToken.balanceOf(address(user));
         uint256 assetBalanceAfter = asset.balanceOf(address(to));
@@ -164,10 +164,10 @@ contract LendingPoolProp is PropertiesBase {
             assertWithMsg(!success, "206");
         }
 
-        // (,,,,, uint256 healthFactorAfter) = pool.getUserAccountData(address(onBehalfOf));
-        // if (healthFactorAfter < 1e18) {
-        //     assertWithMsg(!success, "207");
-        // }
+        (,,,,, uint256 healthFactorAfter) = pool.getUserAccountData(address(onBehalfOf));
+        if (healthFactorAfter < 1e18) {
+            assertWithMsg(!success, "207");
+        }
 
         require(success);
 
@@ -434,15 +434,15 @@ contract LendingPoolProp is PropertiesBase {
     //     }
     // }
 
-    // /// @custom:invariant 219 - A user with debt should have at least an aToken balance `setUsingAsCollateral`.
-    // function userDebtIntegrityLP() public {
-    //     for (uint256 i = 0; i < users.length; i++) {
-    //         User user = users[i];
-    //         if (hasDebt(user)) {
-    //             assertWithMsg(hasATokensStrict(user), "219");
-    //         }
-    //     }
-    // }
+    /// @custom:invariant 219 - A user with debt should have at least an aToken balance `setUsingAsCollateral`.
+    function userDebtIntegrityLP() public {
+        for (uint256 i = 0; i < users.length; i++) {
+            User user = users[i];
+            if (hasDebt(user)) {
+                assertWithMsg(hasATokensStrict(user), "219");
+            }
+        }
+    }
 
     /// @custom:invariant 220 - If all debt is repaid, all `aToken` holder should be able to claim their collateral.
     /// @custom:invariant 221 - If all users withdraw their liquidity, there must not be aTokens supply left.

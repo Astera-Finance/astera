@@ -54,6 +54,8 @@ interface IRewardsController is IRewardsDistributor {
 
     function getClaimer(address user) external view returns (address);
 
+    function getMiniPoolAddressesProvider() external view returns (address);
+
     function configureAssets(DistributionTypes.RewardsConfigInput[] memory config) external;
 
     function handleAction(address asset, uint256 userBalance, uint256 totalSupply) external;

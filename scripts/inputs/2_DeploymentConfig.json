@@ -22,8 +22,8 @@
       "rates": 0.03e27,
       "reserveFactor": 1500,
       "reserveType": true,
-      "symbol": "aWBTC",
-      "tokenAddress": "0x9a35095D30AA511772a0C9a595Be442044377391"
+      "symbol": "aWETH",
+      "tokenAddress": "0x1262fa9c3E5EDbf0AA3b3d97f4Ee6e9afCf8f75B"
     },
     {
       "baseLtv": 7000,
@@ -38,7 +38,7 @@
       "reserveFactor": 1500,
       "reserveType": true,
       "symbol": "aUSDC",
-      "tokenAddress": "0x088607f8f2aAE9Ab9b7EE16C988A5Ca857DB8F15"
+      "tokenAddress": "0xFd56bdA365c7274A91ef42e1A1C1557Be09fEdd3"
     }
   ],
   "usePreviousStrats": true,
@@ -62,8 +62,8 @@
   "piStrategies": [],
   "oracleConfig": {
     "assets": [
-      "0x2762bCa6B7a421c37515f630b952787E0eD0F50F",
-      "0x088607f8f2aAE9Ab9b7EE16C988A5Ca857DB8F15"
+      "0x1262fa9c3E5EDbf0AA3b3d97f4Ee6e9afCf8f75B",
+      "0xFd56bdA365c7274A91ef42e1A1C1557Be09fEdd3"
     ],
     "baseCurrency": "0x0000000000000000000000000000000000000000",
     "baseCurrencyUnit": 1e18,

@@ -69,6 +69,10 @@ contract MiniPool is VersionedInitializable, IMiniPool, MiniPoolStorage {
      */
     uint256 public constant ERROR_REMAINDER_MARGIN = 100_000;
 
+    constructor() {
+       blockInitializing();
+    }
+
     /**
      * @dev Modifier to verify the protocol is not paused.
      * Reverts if the protocol is in a paused state.
@@ -84,6 +88,18 @@ contract MiniPool is VersionedInitializable, IMiniPool, MiniPoolStorage {
      */
     modifier onlyMiniPoolConfigurator() {
         _onlyMiniPoolConfigurator();
+        _;
+    }
+
+    /**
+     * @dev Modifier to verify caller is the LendingPool.
+     * Reverts if caller is not authorized.
+     */
+    modifier onlyLendingPool() {
+        require(
+            _addressesProvider.getLendingPool() == msg.sender,
+            Errors.VL_ACCESS_RESTRICTED_TO_LENDING_POOL
+        );
         _;
     }
 
@@ -771,6 +787,13 @@ contract MiniPool is VersionedInitializable, IMiniPool, MiniPoolStorage {
     function syncRatesState(address asset) external virtual override onlyMiniPoolConfigurator {
         DataTypes.MiniPoolReserveData storage reserve = _reserves[asset];
 
+        reserve.updateInterestRates(asset, 0, 0);
+    }
+
+    function syncState(address asset) external virtual override onlyLendingPool {
+        DataTypes.MiniPoolReserveData storage reserve = _reserves[asset];
+
+        reserve.updateState();
         reserve.updateInterestRates(asset, 0, 0);
     }
 

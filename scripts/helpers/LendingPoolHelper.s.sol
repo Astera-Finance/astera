@@ -61,9 +61,9 @@ contract LendingPoolHelper {
         console.log("provider's owner: ", contracts.lendingPoolAddressesProvider.owner());
 
         contracts.lendingPool = new LendingPool();
-        contracts.lendingPool.initialize(
-            ILendingPoolAddressesProvider(contracts.lendingPoolAddressesProvider)
-        );
+        // contracts.lendingPool.initialize(
+        //     ILendingPoolAddressesProvider(contracts.lendingPoolAddressesProvider)
+        // );
         contracts.lendingPoolAddressesProvider.setLendingPoolImpl(address(contracts.lendingPool));
         address lendingPoolProxy = address(contracts.lendingPoolAddressesProvider.getLendingPool());
         contracts.lendingPool = LendingPool(lendingPoolProxy);

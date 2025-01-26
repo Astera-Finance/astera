@@ -96,18 +96,14 @@ contract MiniPoolPiReserveInterestRateStrategy is
     {
         (,, bool isTranched) = IAERC6909(aToken).getIdForUnderlying(asset);
 
+        availableLiquidity = IERC20(asset).balanceOf(aToken);
+
         if (isTranched) {
             IFlowLimiter flowLimiter =
                 IFlowLimiter(IMiniPoolAddressesProvider(_addressProvider).getFlowLimiter());
             underlying = IAToken(asset).UNDERLYING_ASSET_ADDRESS();
             address minipool = IAERC6909(aToken).getMinipoolAddress();
             currentFlow = flowLimiter.currentFlow(underlying, minipool);
-
-            availableLiquidity = IERC20(asset).balanceOf(aToken)
-                + IAToken(asset).convertToShares(flowLimiter.getFlowLimit(underlying, minipool))
-                - IAToken(asset).convertToShares(currentFlow);
-        } else {
-            availableLiquidity = IERC20(asset).balanceOf(aToken);
         }
     }
 

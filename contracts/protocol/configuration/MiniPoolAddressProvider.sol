@@ -499,4 +499,49 @@ contract MiniPoolAddressesProvider is Ownable, IMiniPoolAddressesProvider {
             proxy.upgradeToAndCall(newAddress, params);
         }
     }
+    
+    function updateAllMiniPools(address oldImpl, address newImpl) external onlyOwner {
+        address payable miniPoolProxyAddress;
+        InitializableImmutableAdminUpgradeabilityProxy proxy;
+        for (uint256 id = 0; id < _miniPoolCount; id++) {
+            miniPoolProxyAddress = payable(_miniPoolsConfig[id].miniPool);
+            proxy = InitializableImmutableAdminUpgradeabilityProxy(miniPoolProxyAddress);
+            if (proxy.implementation() == oldImpl) {
+                proxy.upgradeTo(newImpl);
+            }
+        }
+    }
+
+    function updateAllATokens(address oldImpl, address newImpl) external onlyOwner {
+        address payable aTokenProxyAddress;
+        InitializableImmutableAdminUpgradeabilityProxy proxy;
+        for (uint256 id = 0; id < _miniPoolCount; id++) {
+            aTokenProxyAddress = payable(_miniPoolsConfig[id].aErc6909);
+            proxy = InitializableImmutableAdminUpgradeabilityProxy(aTokenProxyAddress);
+            if (proxy.implementation() == oldImpl) {
+                proxy.upgradeTo(newImpl);
+            }
+        }
+    }
+
+    function updateSomeMiniPools(uint256[] memory ids, address newImpl) external onlyOwner {
+        address payable miniPoolProxyAddress;
+        InitializableImmutableAdminUpgradeabilityProxy proxy;
+        for (uint256 i = 0; i < ids.length; i++) {
+            miniPoolProxyAddress = payable(_miniPoolsConfig[ids[i]].miniPool);
+            proxy = InitializableImmutableAdminUpgradeabilityProxy(miniPoolProxyAddress);
+            proxy.upgradeTo(newImpl);
+        }
+    }
+
+    function updateSomeATokens(uint256[] memory ids, address newImpl) external onlyOwner {
+        address payable aTokenProxyAddress;
+        InitializableImmutableAdminUpgradeabilityProxy proxy;
+        for (uint256 i = 0; i < ids.length; i++) {
+            aTokenProxyAddress = payable(_miniPoolsConfig[ids[i]].aErc6909);
+            proxy = InitializableImmutableAdminUpgradeabilityProxy(aTokenProxyAddress);
+            proxy.upgradeTo(newImpl);
+        }
+    }
+    
 }

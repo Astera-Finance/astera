@@ -41,6 +41,10 @@ contract VariableDebtToken is
     /// @notice Mapping of borrowing allowances between addresses.
     mapping(address => mapping(address => uint256)) internal _borrowAllowances;
 
+    constructor() {
+       blockInitializing();
+    }
+
     /**
      * @dev Only lending pool can call functions marked by this modifier.
      */

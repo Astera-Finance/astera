@@ -92,6 +92,10 @@ contract AToken is
     /// @notice The address that receives claimed profits.
     address public _profitHandler;
 
+    constructor() {
+       blockInitializing();
+    }
+
     /**
      * @notice Modifier to ensure only the lending pool can call certain functions.
      * @dev Reverts if the caller is not the lending pool contract.

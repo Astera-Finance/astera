@@ -147,8 +147,9 @@ contract MiniPoolRewarderTest is Common {
         }
 
         deployedContracts.rewarder.configureAssets(configs);
-
-        deployedContracts.rewarder.setMiniPoolAddressesProvider(miniPoolAddressesProvider);
+        if(address(deployedContracts.rewarder.getMiniPoolAddressesProvider()) == address(0)) {
+            deployedContracts.rewarder.setMiniPoolAddressesProvider(miniPoolAddressesProvider);
+        }
     }
 
     function setUp() public {
@@ -684,13 +685,15 @@ contract MiniPoolRewarderTest is Common {
         uint256 aToken6909ForwardedRewards = deployedContracts.rewarder.getUserRewardsBalance(
             aTokenAddresses, aTokensErc6909Addr, address(rewardTokens[0])
         );
+        address[] memory assetsToClaim = new address[](1);
+        assetsToClaim[0] = rewardedTokens[WETH_OFFSET];
         console.log("miniPoolForwardedRewards", aToken6909ForwardedRewards);
         assertEq(aToken6909ForwardedRewards, 50 ether);
         uint256[] memory aToken6909ForwardedClaims =
-            forwarder.claimRewardsFor(aTokensErc6909Addr, rewardedTokens[WETH_OFFSET]);
+            forwarder.claimRewardsFor(aTokensErc6909Addr, assetsToClaim);
         console.log("aToken6909ForwardedClaims[0]", aToken6909ForwardedClaims[0]);
         assertEq(aToken6909ForwardedClaims[0], 50 ether);
-        forwarder.forwardRewards(aTokensErc6909Addr, rewardedTokens[WETH_OFFSET], 0);
+        forwarder.forwardRewards(aTokensErc6909Addr, 0);
         assertEq(rewardTokens[0].balanceOf(forwardDestinationA), 50 ether);
     }
 
@@ -2320,17 +2323,16 @@ contract MiniPoolRewarderTest is Common {
         vm.warp(block.timestamp + 20);
         vm.roll(block.number + 1);
 
-        forwarder.claimRewardsFor(
-            miniPool, address(commonContracts.variableDebtTokens[USDC_OFFSET])
-        );
+        address[] memory assetsToClaim = new address[](1);
+        assetsToClaim[0] = address(commonContracts.variableDebtTokens[USDC_OFFSET]);
+
+        forwarder.claimRewardsFor(miniPool, assetsToClaim);
 
         assertApproxEqRel(rewardTokens[0].balanceOf(address(forwarder)), 20 ether, 1e16);
         assertApproxEqRel(rewardTokens[1].balanceOf(address(forwarder)), 20 ether, 1e16);
         assertApproxEqRel(rewardTokens[2].balanceOf(address(forwarder)), 20 ether, 1e16);
 
-        forwarder.forwardRewards(
-            miniPool, address(commonContracts.variableDebtTokens[USDC_OFFSET]), 1
-        );
+        forwarder.forwardRewards(miniPool, 1);
 
         assertApproxEqRel(rewardTokens[0].balanceOf(address(forwarder)), 20 ether, 1e16);
         assertEq(rewardTokens[1].balanceOf(address(forwarder)), 0);

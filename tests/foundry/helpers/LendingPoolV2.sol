@@ -123,6 +123,7 @@ contract LendingPoolV2 is VersionedInitializable, ILendingPool, LendingPoolStora
     {
         DepositLogic.deposit(
             DepositLogic.DepositParams(asset, reserveType, amount, onBehalfOf),
+            _minipoolFlowBorrowing,
             _reserves,
             _usersConfig,
             _addressesProvider
@@ -149,6 +150,7 @@ contract LendingPoolV2 is VersionedInitializable, ILendingPool, LendingPoolStora
     {
         return WithdrawLogic.withdraw(
             WithdrawLogic.withdrawParams(asset, reserveType, amount, to, _reservesCount),
+            _minipoolFlowBorrowing,
             _reserves,
             _usersConfig,
             _reservesList,
@@ -186,6 +188,7 @@ contract LendingPoolV2 is VersionedInitializable, ILendingPool, LendingPoolStora
                 _addressesProvider,
                 _reservesCount
             ),
+            _minipoolFlowBorrowing,
             _reserves,
             _reservesList,
             _usersConfig
@@ -213,6 +216,7 @@ contract LendingPoolV2 is VersionedInitializable, ILendingPool, LendingPoolStora
     {
         return BorrowLogic.repay(
             BorrowLogic.RepayParams(asset, reserveType, amount, onBehalfOf, _addressesProvider),
+            _minipoolFlowBorrowing,
             _reserves,
             _usersConfig
         );
@@ -233,6 +237,7 @@ contract LendingPoolV2 is VersionedInitializable, ILendingPool, LendingPoolStora
     {
         return BorrowLogic.repayWithAtokens(
             BorrowLogic.RepayParams(asset, reserveType, amount, msg.sender, _addressesProvider),
+            _minipoolFlowBorrowing,
             _reserves,
             _usersConfig
         );
@@ -299,6 +304,7 @@ contract LendingPoolV2 is VersionedInitializable, ILendingPool, LendingPoolStora
 
         LiquidationLogic.liquidationCall(
             _reserves,
+            _minipoolFlowBorrowing,
             _usersConfig,
             _reservesList,
             LiquidationLogic.liquidationCallParams(
@@ -350,6 +356,7 @@ contract LendingPoolV2 is VersionedInitializable, ILendingPool, LendingPoolStora
                 modes: modes,
                 params: params
             }),
+            _minipoolFlowBorrowing,
             _reservesList,
             _usersConfig,
             _reserves
@@ -381,6 +388,7 @@ contract LendingPoolV2 is VersionedInitializable, ILendingPool, LendingPoolStora
                 _addressesProvider,
                 _reservesCount
             ),
+            _minipoolFlowBorrowing,
             _reserves
         );
     }
@@ -873,6 +881,6 @@ contract LendingPoolV2 is VersionedInitializable, ILendingPool, LendingPoolStora
     {
         DataTypes.ReserveData storage reserve = _reserves[asset][reserveType];
 
-        reserve.updateInterestRates(asset, reserve.aTokenAddress, 0, 0);
+        reserve.updateInterestRates(_minipoolFlowBorrowing, asset, reserve.aTokenAddress, 0, 0);
     }
 }
