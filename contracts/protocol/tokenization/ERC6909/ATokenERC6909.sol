@@ -20,6 +20,8 @@ import {ATokenNonRebasing} from
     "../../../../contracts/protocol/tokenization/ERC20/ATokenNonRebasing.sol";
 import {Strings} from "openzeppelin-contracts/contracts/utils/Strings.sol";
 import {SafeERC20} from "../../../../contracts/dependencies/openzeppelin/contracts/SafeERC20.sol";
+import {IMiniPoolAddressProviderUpdatable} from
+    "../../../../contracts/interfaces/IMiniPoolAddressProviderUpdatable.sol";
 
 /**
  * @title ERC6909-MultiToken
@@ -28,7 +30,11 @@ import {SafeERC20} from "../../../../contracts/dependencies/openzeppelin/contrac
  * @dev Current implementation allows for 128 tranched tokens from the Main Pool and 1000-128 unique tokens
  *      from the MiniPool.
  */
-contract ATokenERC6909 is IncentivizedERC6909, VersionedInitializable {
+contract ATokenERC6909 is
+    IncentivizedERC6909,
+    VersionedInitializable,
+    IMiniPoolAddressProviderUpdatable
+{
     using WadRayMath for uint256;
     using ReserveLogic for DataTypes.ReserveData;
     using SafeERC20 for IERC20;

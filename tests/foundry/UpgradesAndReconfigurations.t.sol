@@ -330,9 +330,7 @@ contract UpgradesAndReconfigurationsTest is MiniPoolFixtures {
                 payable(lendingPoolProxy)
             ).implementation();
 
-            lpv2.initialize(
-                ILendingPoolAddressesProvider(deployedContracts.lendingPoolAddressesProvider)
-            );
+            lpv2.initialize(address(deployedContracts.lendingPoolAddressesProvider));
             deployedContracts.lendingPoolAddressesProvider.setLendingPoolImpl(address(lpv2));
             lendingPoolProxy =
                 address(deployedContracts.lendingPoolAddressesProvider.getLendingPool());

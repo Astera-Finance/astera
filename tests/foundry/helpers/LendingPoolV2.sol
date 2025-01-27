@@ -28,6 +28,7 @@ import {BorrowLogic} from "contracts/protocol/core/lendingpool/logic/BorrowLogic
 import {FlashLoanLogic} from "contracts/protocol/core/lendingpool/logic/FlashLoanLogic.sol";
 import {LiquidationLogic} from "contracts/protocol/core/lendingpool/logic/LiquidationLogic.sol";
 import {IMiniPoolAddressesProvider} from "contracts/interfaces/IMiniPoolAddressesProvider.sol";
+import {IAddressProviderUpdatable} from "contracts/interfaces/IAddressProviderUpdatable.sol";
 
 /**
  * @title LendingPool contract
@@ -41,7 +42,12 @@ import {IMiniPoolAddressesProvider} from "contracts/interfaces/IMiniPoolAddresse
  *   LendingPoolAddressesProvider
  * @author Cod3x
  */
-contract LendingPoolV2 is VersionedInitializable, ILendingPool, LendingPoolStorage {
+contract LendingPoolV2 is
+    VersionedInitializable,
+    ILendingPool,
+    LendingPoolStorage,
+    IAddressProviderUpdatable
+{
     using WadRayMath for uint256;
     using PercentageMath for uint256;
     using SafeERC20 for IERC20;
@@ -100,8 +106,8 @@ contract LendingPoolV2 is VersionedInitializable, ILendingPool, LendingPoolStora
      *   on subsequent operations.
      * @param provider The address of the LendingPoolAddressesProvider
      */
-    function initialize(ILendingPoolAddressesProvider provider) public initializer {
-        _addressesProvider = provider;
+    function initialize(address provider) public initializer {
+        _addressesProvider = ILendingPoolAddressesProvider(provider);
         _updateFlashLoanFee(9);
         _maxNumberOfReserves = 128;
     }

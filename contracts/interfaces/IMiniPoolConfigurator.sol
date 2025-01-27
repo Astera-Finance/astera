@@ -154,8 +154,6 @@ interface IMiniPoolConfigurator {
         uint128 oldFlashloanPremiumTotal, uint128 newFlashloanPremiumTotal
     );
 
-    function initialize(IMiniPoolAddressesProvider provider) external;
-
     function batchInitReserve(InitReserveInput[] calldata input, IMiniPool pool) external;
 
     function setRewarderForReserve(address asset, address rewarder, IMiniPool pool) external;

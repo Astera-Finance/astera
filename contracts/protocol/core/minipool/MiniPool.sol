@@ -33,6 +33,8 @@ import {MiniPoolBorrowLogic} from "./logic/MiniPoolBorrowLogic.sol";
 import {MiniPoolFlashLoanLogic} from "./logic/MiniPoolFlashLoanLogic.sol";
 import {MiniPoolLiquidationLogic} from "./logic/MiniPoolLiquidationLogic.sol";
 import {IMiniPoolRewarder} from "../../../../contracts/interfaces/IMiniPoolRewarder.sol";
+import {IMiniPoolAddressProviderUpdatable} from
+    "../../../../contracts/interfaces/IMiniPoolAddressProviderUpdatable.sol";
 
 /**
  * @title MiniPool contract
@@ -48,7 +50,12 @@ import {IMiniPoolRewarder} from "../../../../contracts/interfaces/IMiniPoolRewar
  *   MiniPoolAddressesProvider.
  * @author Cod3x
  */
-contract MiniPool is VersionedInitializable, IMiniPool, MiniPoolStorage {
+contract MiniPool is
+    VersionedInitializable,
+    IMiniPool,
+    MiniPoolStorage,
+    IMiniPoolAddressProviderUpdatable
+{
     using WadRayMath for uint256;
     using PercentageMath for uint256;
     using SafeERC20 for IERC20;
@@ -133,11 +140,8 @@ contract MiniPool is VersionedInitializable, IMiniPool, MiniPoolStorage {
      *   on subsequent operations.
      * @param provider The address of the LendingPoolAddressesProvider.
      */
-    function initialize(IMiniPoolAddressesProvider provider, uint256 minipoolID)
-        public
-        initializer
-    {
-        _addressesProvider = provider;
+    function initialize(address provider, uint256 minipoolID) public initializer {
+        _addressesProvider = IMiniPoolAddressesProvider(provider);
         _minipoolId = minipoolID;
         _updateFlashLoanFee(9);
         _maxNumberOfReserves = 128;

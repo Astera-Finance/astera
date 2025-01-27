@@ -22,6 +22,8 @@ import {IRewarder} from "../../../../contracts/interfaces/IRewarder.sol";
 import {ILendingPoolConfigurator} from
     "../../../../contracts/interfaces/ILendingPoolConfigurator.sol";
 import {IAToken} from "../../../../contracts/interfaces/IAToken.sol";
+import {IAddressProviderUpdatable} from
+    "../../../../contracts/interfaces/IAddressProviderUpdatable.sol";
 
 /**
  * @title LendingPoolConfigurator contract
@@ -29,7 +31,11 @@ import {IAToken} from "../../../../contracts/interfaces/IAToken.sol";
  * @dev Implements the configuration methods for the Cod3x Lend protocol.
  * @notice This contract handles the configuration of reserves and other protocol parameters.
  */
-contract LendingPoolConfigurator is VersionedInitializable, ILendingPoolConfigurator {
+contract LendingPoolConfigurator is
+    VersionedInitializable,
+    ILendingPoolConfigurator,
+    IAddressProviderUpdatable
+{
     using PercentageMath for uint256;
     using ReserveConfiguration for DataTypes.ReserveConfigurationMap;
 
@@ -82,8 +88,8 @@ contract LendingPoolConfigurator is VersionedInitializable, ILendingPoolConfigur
      * @dev Initializes the lending pool configurator contract.
      * @param provider The address of the `ILendingPoolAddressesProvider` contract.
      */
-    function initialize(ILendingPoolAddressesProvider provider) public initializer {
-        addressesProvider = provider;
+    function initialize(address provider) public initializer {
+        addressesProvider = ILendingPoolAddressesProvider(provider);
         pool = ILendingPool(addressesProvider.getLendingPool());
     }
 

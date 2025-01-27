@@ -16,6 +16,8 @@ import {IMiniPoolAddressesProvider} from
 import {IAERC6909} from "../../../../contracts/interfaces/IAERC6909.sol";
 import {IMiniPoolConfigurator} from "../../../../contracts/interfaces/IMiniPoolConfigurator.sol";
 import {IMiniPool} from "../../../../contracts/interfaces/IMiniPool.sol";
+import {IAddressProviderUpdatable} from
+    "../../../../contracts/interfaces/IAddressProviderUpdatable.sol";
 
 /**
  * @title MiniPoolConfigurator contract.
@@ -23,7 +25,11 @@ import {IMiniPool} from "../../../../contracts/interfaces/IMiniPool.sol";
  * @notice Implements the configuration methods for the Cod3x Lend MiniPool protocol.
  * @dev This contract manages reserve configurations, pool parameters, and access controls.
  */
-contract MiniPoolConfigurator is VersionedInitializable, IMiniPoolConfigurator {
+contract MiniPoolConfigurator is
+    VersionedInitializable,
+    IMiniPoolConfigurator,
+    IAddressProviderUpdatable
+{
     using PercentageMath for uint256;
     using ReserveConfiguration for DataTypes.ReserveConfigurationMap;
 
@@ -75,8 +81,8 @@ contract MiniPoolConfigurator is VersionedInitializable, IMiniPoolConfigurator {
      * @dev Initializes the MiniPoolConfigurator.
      * @param provider The address of the MiniPoolAddressesProvider.
      */
-    function initialize(IMiniPoolAddressesProvider provider) public initializer {
-        addressesProvider = provider;
+    function initialize(address provider) public initializer {
+        addressesProvider = IMiniPoolAddressesProvider(provider);
     }
 
     /*___ Only Main Pool ___*/

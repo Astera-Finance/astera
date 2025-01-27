@@ -38,6 +38,8 @@ import {IMiniPoolAddressesProvider} from
     "../../../../contracts/interfaces/IMiniPoolAddressesProvider.sol";
 import {EnumerableSet} from
     "../../../../lib/openzeppelin-contracts/contracts/utils/structs/EnumerableSet.sol";
+import {IAddressProviderUpdatable} from
+    "../../../../contracts/interfaces/IAddressProviderUpdatable.sol";
 
 /**
  * @title LendingPool contract
@@ -51,7 +53,12 @@ import {EnumerableSet} from
  *   LendingPoolAddressesProvider
  * @author Cod3x
  */
-contract LendingPool is VersionedInitializable, ILendingPool, LendingPoolStorage {
+contract LendingPool is
+    VersionedInitializable,
+    ILendingPool,
+    LendingPoolStorage,
+    IAddressProviderUpdatable
+{
     using WadRayMath for uint256;
     using PercentageMath for uint256;
     using SafeERC20 for IERC20;
@@ -115,8 +122,8 @@ contract LendingPool is VersionedInitializable, ILendingPool, LendingPoolStorage
      *   on subsequent operations.
      * @param provider The address of the LendingPoolAddressesProvider
      */
-    function initialize(ILendingPoolAddressesProvider provider) public initializer {
-        _addressesProvider = provider;
+    function initialize(address provider) public initializer {
+        _addressesProvider = ILendingPoolAddressesProvider(provider);
         _updateFlashLoanFee(9);
         _maxNumberOfReserves = 128;
     }

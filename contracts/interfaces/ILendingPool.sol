@@ -152,8 +152,6 @@ interface ILendingPool {
      */
     event FlashLoanFeeUpdated(uint128 flashLoanPremiumTotal);
 
-    function initialize(ILendingPoolAddressesProvider provider) external;
-
     function deposit(address asset, bool reserveType, uint256 amount, address onBehalfOf)
         external;
 
