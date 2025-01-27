@@ -5,6 +5,7 @@ import "./Common.sol";
 import "contracts/protocol/libraries/helpers/Errors.sol";
 import {WadRayMath} from "contracts/protocol/libraries/math/WadRayMath.sol";
 import {IMiniPoolRewarder} from "contracts/interfaces/IMiniPoolRewarder.sol";
+import {MintableERC20} from "contracts/mocks/tokens/MintableERC20.sol";
 
 contract ATokenErc6909Test is Common {
     using WadRayMath for uint256;
@@ -906,5 +907,45 @@ contract ATokenErc6909Test is Common {
         miniPool =
             fixture_configureMiniPoolReserves(reserves, configAddresses, miniPoolContracts, 0);
         vm.label(miniPool, "MiniPool");
+    }
+
+    function testNextIdForUnderlying() public {
+        address[] memory reserves = new address[](2 * tokens.length);
+        vm.startPrank(address(miniPoolContracts.miniPoolConfigurator));
+        for (uint8 idx = 0; idx < (2 * tokens.length); idx++) {
+            if (idx < tokens.length) {
+                reserves[idx] = tokens[idx];
+            } else {
+                reserves[idx] =
+                    address(commonContracts.aTokens[idx - tokens.length].WRAPPER_ADDRESS());
+            }
+
+            vm.expectRevert(bytes(Errors.RL_RESERVE_ALREADY_INITIALIZED));
+            aErc6909Token.initReserve(reserves[idx], "Test", "TST", 18);
+            vm.expectRevert(bytes(Errors.RL_RESERVE_ALREADY_INITIALIZED));
+            aErc6909Token.getNextIdForUnderlying(reserves[idx]);
+        }
+
+        MintableERC20 newToken = new MintableERC20("TEST", "TST", 18);
+        (uint256 aTokenID, uint256 debtTokenID, bool isTrancheRet) =
+            aErc6909Token.getNextIdForUnderlying(address(newToken));
+        console.log("aTokenID", aTokenID);
+        console.log("debtTokenID", debtTokenID);
+        console.log("isTrancheRet", isTrancheRet);
+
+        aErc6909Token.initReserve(address(newToken), "Test", "TST", 18);
+
+        newToken = new MintableERC20("TEST", "TST", 18);
+
+        (uint256 aTokenID_2, uint256 debtTokenID_2,) =
+            aErc6909Token.getNextIdForUnderlying(address(newToken));
+
+        vm.stopPrank();
+
+        console.log("aTokenID_2", aTokenID_2);
+        console.log("debtTokenID_2", debtTokenID_2);
+
+        assertGt(aTokenID_2, aTokenID, "TokenId not increased");
+        assertGt(debtTokenID_2, debtTokenID, "DebtId not increased");
     }
 }
