@@ -345,7 +345,7 @@ contract MiniPoolRewarderTest is Common {
 
         vm.prank(address(miniPoolContracts.miniPoolAddressesProvider.getMainPoolAdmin()));
         miniPoolContracts.miniPoolConfigurator.setFlowLimit(
-            address(erc20Tokens[WETH_OFFSET]), miniPool, 100 ether
+            address(erc20Tokens[WETH_OFFSET]), 100 ether, IMiniPool(miniPool)
         );
 
         vm.prank(user3);
@@ -440,7 +440,7 @@ contract MiniPoolRewarderTest is Common {
 
         vm.prank(address(miniPoolContracts.miniPoolAddressesProvider.getMainPoolAdmin()));
         miniPoolContracts.miniPoolConfigurator.setFlowLimit(
-            address(erc20Tokens[WBTC_OFFSET]), miniPool, 5e9
+            address(erc20Tokens[WBTC_OFFSET]), 5e9, IMiniPool(miniPool)
         );
 
         vm.prank(user2);
@@ -530,7 +530,7 @@ contract MiniPoolRewarderTest is Common {
 
         vm.prank(address(miniPoolContracts.miniPoolAddressesProvider.getMainPoolAdmin()));
         miniPoolContracts.miniPoolConfigurator.setFlowLimit(
-            address(erc20Tokens[WETH_OFFSET]), miniPool, 100 ether
+            address(erc20Tokens[WETH_OFFSET]), 100 ether, IMiniPool(miniPool)
         );
 
         vm.prank(user3);
@@ -1413,7 +1413,7 @@ contract MiniPoolRewarderTest is Common {
 
             vm.prank(miniPoolContracts.miniPoolAddressesProvider.getMainPoolAdmin());
             miniPoolContracts.miniPoolConfigurator.setFlowLimit(
-                tokens[USDC_OFFSET], miniPool, usdcAmount / 2
+                tokens[USDC_OFFSET], usdcAmount / 2, IMiniPool(miniPool)
             );
 
             vm.startPrank(user1);
@@ -2200,7 +2200,7 @@ contract MiniPoolRewarderTest is Common {
 
             vm.prank(address(miniPoolContracts.miniPoolAddressesProvider.getMainPoolAdmin()));
             miniPoolContracts.miniPoolConfigurator.setFlowLimit(
-                address(usdcParams.token), miniPool, 2 * usdcAmount
+                address(usdcParams.token), 2 * usdcAmount, IMiniPool(miniPool)
             );
 
             vm.startPrank(user1);

@@ -165,7 +165,7 @@ interface IMiniPoolConfigurator {
 
     function setCod3xTreasury(address treasury) external;
 
-    function setFlowLimit(address asset, address miniPool, uint256 limit) external;
+    function setFlowLimit(address asset, uint256 limit, IMiniPool pool) external;
 
     function setReserveInterestRateStrategyAddress(
         address asset,

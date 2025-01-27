@@ -968,7 +968,7 @@ contract MiniPoolRepayWithdrawTransferTest is MiniPoolDepositBorrowTest {
 
         vm.prank(miniPoolContracts.miniPoolAddressesProvider.getMainPoolAdmin());
         miniPoolContracts.miniPoolConfigurator.setFlowLimit(
-            address(tokenParamsUsdc.token), miniPool, 10000e6
+            address(tokenParamsUsdc.token), 10000e6, IMiniPool(miniPool)
         );
 
         IAERC6909 aErc6909Token =
@@ -1018,7 +1018,7 @@ contract MiniPoolRepayWithdrawTransferTest is MiniPoolDepositBorrowTest {
 
         vm.prank(miniPoolContracts.miniPoolAddressesProvider.getMainPoolAdmin());
         miniPoolContracts.miniPoolConfigurator.setFlowLimit(
-            address(tokenParamsUsdc.token), miniPool, 10000e6
+            address(tokenParamsUsdc.token), 10000e6, IMiniPool(miniPool)
         );
 
         logMinipoolFlow(address(tokenParamsUsdc.token), user2);
@@ -1093,7 +1093,7 @@ contract MiniPoolRepayWithdrawTransferTest is MiniPoolDepositBorrowTest {
 
         vm.prank(miniPoolContracts.miniPoolAddressesProvider.getMainPoolAdmin());
         miniPoolContracts.miniPoolConfigurator.setFlowLimit(
-            address(tokenParamsUsdc.token), miniPool, 10000e6
+            address(tokenParamsUsdc.token), 10000e6, IMiniPool(miniPool)
         );
 
         logMinipoolFlow(address(tokenParamsUsdc.token), user2);
@@ -1216,7 +1216,7 @@ contract MiniPoolRepayWithdrawTransferTest is MiniPoolDepositBorrowTest {
 
         vm.prank(miniPoolContracts.miniPoolAddressesProvider.getMainPoolAdmin());
         miniPoolContracts.miniPoolConfigurator.setFlowLimit(
-            address(tokenParamsUsdc.token), miniPool, 10000e6
+            address(tokenParamsUsdc.token), 10000e6, IMiniPool(miniPool)
         );
 
         logMinipoolFlow(address(tokenParamsUsdc.token), address(tokenParamsUsdc.aToken), user2);
@@ -1390,7 +1390,7 @@ contract MiniPoolRepayWithdrawTransferTest is MiniPoolDepositBorrowTest {
 
         vm.prank(miniPoolContracts.miniPoolAddressesProvider.getMainPoolAdmin());
         miniPoolContracts.miniPoolConfigurator.setFlowLimit(
-            address(tokenParamsUsdc.token), miniPool, 10000e6
+            address(tokenParamsUsdc.token), 10000e6, IMiniPool(miniPool)
         );
 
         logMinipoolFlow(address(tokenParamsUsdc.token), address(tokenParamsUsdc.aToken), user2);
@@ -1501,7 +1501,7 @@ contract MiniPoolRepayWithdrawTransferTest is MiniPoolDepositBorrowTest {
 
         vm.prank(miniPoolContracts.miniPoolAddressesProvider.getMainPoolAdmin());
         miniPoolContracts.miniPoolConfigurator.setFlowLimit(
-            address(tokenParamsUsdc.token), miniPool, 10000e6
+            address(tokenParamsUsdc.token), 10000e6, IMiniPool(miniPool)
         );
 
         logMinipoolFlow(address(tokenParamsUsdc.token), address(tokenParamsUsdc.aToken), user2);
@@ -1650,7 +1650,7 @@ contract MiniPoolRepayWithdrawTransferTest is MiniPoolDepositBorrowTest {
 
         vm.prank(miniPoolContracts.miniPoolAddressesProvider.getMainPoolAdmin());
         miniPoolContracts.miniPoolConfigurator.setFlowLimit(
-            address(tokenParamsUsdc.token), miniPool, 10000e6
+            address(tokenParamsUsdc.token), 10000e6, IMiniPool(miniPool)
         );
 
         logMinipoolFlow(address(tokenParamsUsdc.token), address(tokenParamsUsdc.aToken), user2);
@@ -1800,7 +1800,7 @@ contract MiniPoolRepayWithdrawTransferTest is MiniPoolDepositBorrowTest {
 
         vm.prank(miniPoolContracts.miniPoolAddressesProvider.getMainPoolAdmin());
         miniPoolContracts.miniPoolConfigurator.setFlowLimit(
-            address(tokenParamsUsdc.token), miniPool, 10000e6
+            address(tokenParamsUsdc.token), 10000e6, IMiniPool(miniPool)
         );
 
         logMinipoolFlow(address(tokenParamsUsdc.token), address(tokenParamsUsdc.aToken), user2);
@@ -1906,7 +1906,7 @@ contract MiniPoolRepayWithdrawTransferTest is MiniPoolDepositBorrowTest {
 
         vm.prank(miniPoolContracts.miniPoolAddressesProvider.getMainPoolAdmin());
         miniPoolContracts.miniPoolConfigurator.setFlowLimit(
-            address(tokenParamsUsdc.token), miniPool, 10000e6
+            address(tokenParamsUsdc.token), 10000e6, IMiniPool(miniPool)
         );
 
         vm.startPrank(deployedContracts.lendingPoolAddressesProvider.getPoolAdmin());
@@ -2024,7 +2024,7 @@ contract MiniPoolRepayWithdrawTransferTest is MiniPoolDepositBorrowTest {
 
         vm.prank(miniPoolContracts.miniPoolAddressesProvider.getMainPoolAdmin());
         miniPoolContracts.miniPoolConfigurator.setFlowLimit(
-            address(tokenParamsUsdc.token), miniPool, 10000e6
+            address(tokenParamsUsdc.token), 10000e6, IMiniPool(miniPool)
         );
 
         logMinipoolFlow(address(tokenParamsUsdc.token), address(tokenParamsUsdc.aToken), user2);

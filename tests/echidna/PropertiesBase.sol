@@ -551,7 +551,7 @@ contract PropertiesBase is PropertiesAsserts, MarketParams {
             aTokens[randAsset].totalSupply() * 2
         );
 
-        miniPoolConfigurator.setFlowLimit(asset, miniPool, randLimit);
+        miniPoolConfigurator.setFlowLimit(asset, randLimit, IMiniPool(miniPool));
 
         assertWithMsg(
             flowLimiter.getFlowLimit(asset, miniPool) == randLimit

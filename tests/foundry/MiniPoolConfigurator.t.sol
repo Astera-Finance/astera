@@ -71,7 +71,9 @@ contract MiniPoolConfiguratorTest is MiniPoolDepositBorrowTest {
         vm.expectRevert(bytes(Errors.VL_CALLER_NOT_POOL_ADMIN));
         miniPoolContracts.miniPoolConfigurator.setCod3xTreasury(randomAddress);
         vm.expectRevert(bytes(Errors.VL_CALLER_NOT_POOL_ADMIN));
-        miniPoolContracts.miniPoolConfigurator.setFlowLimit(tokenAddress, newMiniPool, randomNumber);
+        miniPoolContracts.miniPoolConfigurator.setFlowLimit(
+            tokenAddress, randomNumber, IMiniPool(newMiniPool)
+        );
         vm.expectRevert(bytes(Errors.VL_CALLER_NOT_POOL_ADMIN));
         miniPoolContracts.miniPoolConfigurator.setReserveInterestRateStrategyAddress(
             tokenAddress, randomAddress, IMiniPool(miniPool)

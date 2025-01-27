@@ -138,16 +138,17 @@ contract MiniPoolConfigurator is VersionedInitializable, IMiniPoolConfigurator {
     /**
      * @dev Sets the flow limit for an asset in a MiniPool.
      * @param asset The address of the asset.
-     * @param miniPool The address of the MiniPool.
      * @param limit The new flow limit value.
+     * @param pool The MiniPool instance to update.
      */
-    function setFlowLimit(address asset, address miniPool, uint256 limit)
-        public
-        onlyMainPoolAdmin
-    {
-        addressesProvider.setFlowLimit(asset, miniPool, limit);
+    function setFlowLimit(address asset, uint256 limit, IMiniPool pool) public onlyMainPoolAdmin {
+        pool.syncIndexesState(asset);
 
-        emit FlowLimitUpdated(asset, miniPool, limit);
+        addressesProvider.setFlowLimit(asset, address(pool), limit);
+
+        pool.syncRatesState(asset);
+
+        emit FlowLimitUpdated(asset, address(pool), limit);
     }
 
     /**
