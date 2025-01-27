@@ -499,7 +499,7 @@ contract MiniPoolAddressesProvider is Ownable, IMiniPoolAddressesProvider {
             proxy.upgradeToAndCall(newAddress, params);
         }
     }
-    
+
     function updateAllMiniPools(address oldImpl, address newImpl) external onlyOwner {
         address payable miniPoolProxyAddress;
         InitializableImmutableAdminUpgradeabilityProxy proxy;
@@ -543,5 +543,4 @@ contract MiniPoolAddressesProvider is Ownable, IMiniPoolAddressesProvider {
             proxy.upgradeTo(newImpl);
         }
     }
-    
 }

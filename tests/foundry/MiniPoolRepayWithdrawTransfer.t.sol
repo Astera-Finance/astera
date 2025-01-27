@@ -1898,12 +1898,8 @@ contract MiniPoolRepayWithdrawTransferTest is MiniPoolDepositBorrowTest {
             TokenParams(erc20Tokens[WBTC_OFFSET], commonContracts.aTokensWrapper[WBTC_OFFSET], 0);
 
         MiniPoolDefaultReserveInterestRateStrategy mockMPpoolReserveInterestRateStrategy = new MiniPoolDefaultReserveInterestRateStrategy(
-                miniPoolContracts.miniPoolAddressesProvider,
-                0.45e27,
-                0e27,
-                0.001e27,
-                0.001e27
-            );
+            miniPoolContracts.miniPoolAddressesProvider, 0.45e27, 0e27, 0.001e27, 0.001e27
+        );
 
         uint256 amountUsdc = 100000 * (10 ** tokenParamsUsdc.token.decimals());
         uint256 amountwBtc = 1 * (10 ** tokenParamsWbtc.token.decimals());
@@ -1973,7 +1969,7 @@ contract MiniPoolRepayWithdrawTransferTest is MiniPoolDepositBorrowTest {
             pastLiquidityRate,
             IMiniPool(miniPool).getReserveData(address(tokenParamsUsdc.aToken)).currentLiquidityRate
         );
-        
+
         logMinipoolFlow(address(tokenParamsUsdc.token), user2);
         logInterestRate(address(tokenParamsUsdc.token), address(tokenParamsUsdc.aToken));
     }

@@ -42,7 +42,7 @@ contract VariableDebtToken is
     mapping(address => mapping(address => uint256)) internal _borrowAllowances;
 
     constructor() {
-       blockInitializing();
+        blockInitializing();
     }
 
     /**

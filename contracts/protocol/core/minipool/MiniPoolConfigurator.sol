@@ -31,7 +31,7 @@ contract MiniPoolConfigurator is VersionedInitializable, IMiniPoolConfigurator {
     IMiniPoolAddressesProvider public addressesProvider;
 
     constructor() {
-       blockInitializing();
+        blockInitializing();
     }
 
     /**
