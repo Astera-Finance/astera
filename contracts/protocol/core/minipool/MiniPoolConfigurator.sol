@@ -503,12 +503,11 @@ contract MiniPoolConfigurator is VersionedInitializable, IMiniPoolConfigurator {
         IAERC6909 aToken6909 = IAERC6909(reserveData.aErc6909);
         (uint256 aTokenID, uint256 debtTokenID,) = aToken6909.getIdForUnderlying(asset);
 
-        uint256 availableLiquidity =
-            aToken6909.scaledTotalSupply(aTokenID) + aToken6909.scaledTotalSupply(debtTokenID);
+        bool hasNoShares = aToken6909.scaledTotalSupply(aTokenID) == 0
+            && aToken6909.scaledTotalSupply(debtTokenID) == 0;
 
         require(
-            availableLiquidity == 0 && reserveData.currentLiquidityRate == 0,
-            Errors.VL_RESERVE_LIQUIDITY_NOT_0
+            hasNoShares && reserveData.currentLiquidityRate == 0, Errors.VL_RESERVE_LIQUIDITY_NOT_0
         );
     }
 }
