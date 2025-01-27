@@ -163,9 +163,7 @@ contract ATokenERC6909 is
         } else {
             _totalUniqueTokens++;
         }
-
-        require(underlyingAsset != address(0), Errors.LP_NOT_CONTRACT);
-
+        
         _initializeATokenID(aTokenID, underlyingAsset, name, symbol, decimals);
         _initializeDebtTokenID(debtTokenID, underlyingAsset, name, symbol, decimals);
     }

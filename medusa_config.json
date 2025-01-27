@@ -1,12 +1,12 @@
 {
 	"fuzzing": {
-	  "workers": 10,
+	  "workers": 30,
 	  "workerResetLimit": 50,
 	  "timeout": 0,
-	  "testLimit": 10000,
+	  "testLimit": 1000000,
 	  "shrinkLimit": 5000,
 	  "callSequenceLength": 250,
-	  "corpusDirectory": "",
+	  "corpusDirectory": "medusa-corpus",
 	  "coverageEnabled": true,
 	  "targetContracts": ["PropertiesMain"],
 	  "predeployedContracts": {
