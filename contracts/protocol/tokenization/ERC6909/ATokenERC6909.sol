@@ -98,7 +98,7 @@ contract ATokenERC6909 is IncentivizedERC6909, VersionedInitializable {
     mapping(uint256 => mapping(address => mapping(address => uint256))) private _borrowAllowances;
 
     constructor() {
-        blockInitializing();
+        _blockInitializing();
     }
 
     // ======================= External Function =======================

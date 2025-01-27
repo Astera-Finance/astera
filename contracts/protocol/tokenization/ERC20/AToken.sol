@@ -93,7 +93,7 @@ contract AToken is
     address public _profitHandler;
 
     constructor() {
-        blockInitializing();
+        _blockInitializing();
     }
 
     /**

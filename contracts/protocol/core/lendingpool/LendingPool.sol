@@ -105,7 +105,7 @@ contract LendingPool is VersionedInitializable, ILendingPool, LendingPoolStorage
     }
 
     constructor() {
-        blockInitializing();
+        _blockInitializing();
     }
 
     /**

@@ -46,7 +46,7 @@ contract LendingPoolConfigurator is VersionedInitializable, ILendingPoolConfigur
     mapping(address => bool) internal isAToken;
 
     constructor() {
-        blockInitializing();
+        _blockInitializing();
     }
 
     /**
