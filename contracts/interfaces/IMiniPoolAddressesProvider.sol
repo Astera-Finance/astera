@@ -96,8 +96,6 @@ interface IMiniPoolAddressesProvider {
     // Functions for MiniPool management
     function getMiniPool(uint256 id) external view returns (address);
 
-    function getAToken6909(uint256 id) external view returns (address);
-
     function getMiniPoolId(address miniPool) external view returns (uint256);
 
     function getMiniPoolToAERC6909(address miniPool) external view returns (address);

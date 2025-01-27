@@ -127,10 +127,12 @@ contract MiniPoolAddressProvider is Common {
             /* Test update */
             console.log("1. Impl: ", aToken6909Impl);
             console.log(
-                "1. aToken6909Impl", miniPoolContracts.miniPoolAddressesProvider.getAToken6909(0)
+                "1. aToken6909Impl",
+                miniPoolContracts.miniPoolAddressesProvider.getMiniPoolToAERC6909(0)
             );
             miniPoolContracts.miniPoolAddressesProvider.setAToken6909Impl(aToken6909Impl, 0);
-            address aToken6909Proxy = miniPoolContracts.miniPoolAddressesProvider.getAToken6909(0);
+            address aToken6909Proxy =
+                miniPoolContracts.miniPoolAddressesProvider.getMiniPoolToAERC6909(0);
             console.log("2. aToken6909Impl", aToken6909Proxy);
             vm.startPrank(address(miniPoolContracts.miniPoolAddressesProvider));
             assertEq(
@@ -162,7 +164,7 @@ contract MiniPoolAddressProvider is Common {
 
             /* Test setting of the same address (shall revert) */
             console.log("Revert 3");
-            aToken6909Impl = miniPoolContracts.miniPoolAddressesProvider.getAToken6909(0);
+            aToken6909Impl = miniPoolContracts.miniPoolAddressesProvider.getMiniPoolToAERC6909(0);
             vm.expectRevert();
             miniPoolContracts.miniPoolAddressesProvider.setAToken6909Impl(aToken6909Impl, 0);
 
@@ -288,7 +290,8 @@ contract MiniPoolAddressProvider is Common {
         address aTokenImpl = address(new ATokenERC6909());
 
         address lastMiniPoolImpl = miniPoolContracts.miniPoolAddressesProvider.getMiniPool(0);
-        address lastAToken6909Impl = miniPoolContracts.miniPoolAddressesProvider.getAToken6909(0);
+        address lastAToken6909Impl =
+            miniPoolContracts.miniPoolAddressesProvider.getMiniPoolToAERC6909(0);
 
         address[] memory miniPoolList =
             miniPoolContracts.miniPoolAddressesProvider.getMiniPoolList();
@@ -300,7 +303,8 @@ contract MiniPoolAddressProvider is Common {
             "LastMiniPoolImpl not updated"
         );
         assertTrue(
-            lastAToken6909Impl != miniPoolContracts.miniPoolAddressesProvider.getAToken6909(1),
+            lastAToken6909Impl
+                != miniPoolContracts.miniPoolAddressesProvider.getMiniPoolToAERC6909(1),
             "LastAToken6909Impl not updated"
         );
         miniPoolList = miniPoolContracts.miniPoolAddressesProvider.getMiniPoolList();
@@ -315,7 +319,7 @@ contract MiniPoolAddressProvider is Common {
 
         assertEq(
             miniPoolContracts.miniPoolAddressesProvider.getMiniPoolToAERC6909(miniPoolList[1]),
-            miniPoolContracts.miniPoolAddressesProvider.getAToken6909(1),
+            miniPoolContracts.miniPoolAddressesProvider.getMiniPoolToAERC6909(1),
             "Wrong AToken implementation after deployment"
         );
 

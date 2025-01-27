@@ -413,7 +413,7 @@ contract UpgradesAndReconfigurationsTest is MiniPoolFixtures {
                 payable(miniPoolContracts.miniPoolAddressesProvider.getMiniPool(0))
             ).implementation();
             address previousAErc6909Impl = InitializableImmutableAdminUpgradeabilityProxy(
-                payable(miniPoolContracts.miniPoolAddressesProvider.getAToken6909(0))
+                payable(miniPoolContracts.miniPoolAddressesProvider.getMiniPoolToAERC6909(0))
             ).implementation();
             vm.stopPrank();
             miniPoolContracts.miniPoolAddressesProvider.setMiniPoolImpl(address(mpv2), 0);
@@ -430,7 +430,7 @@ contract UpgradesAndReconfigurationsTest is MiniPoolFixtures {
             );
             assertNotEq(
                 InitializableImmutableAdminUpgradeabilityProxy(
-                    payable(miniPoolContracts.miniPoolAddressesProvider.getAToken6909(0))
+                    payable(miniPoolContracts.miniPoolAddressesProvider.getMiniPoolToAERC6909(0))
                 ).implementation(),
                 previousAErc6909Impl
             );

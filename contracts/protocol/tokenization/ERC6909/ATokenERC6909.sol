@@ -157,6 +157,9 @@ contract ATokenERC6909 is IncentivizedERC6909, VersionedInitializable {
         } else {
             _totalUniqueTokens++;
         }
+
+        require(underlyingAsset != address(0), Errors.LP_NOT_CONTRACT);
+
         _initializeATokenID(aTokenID, underlyingAsset, name, symbol, decimals);
         _initializeDebtTokenID(debtTokenID, underlyingAsset, name, symbol, decimals);
     }
@@ -376,9 +379,7 @@ contract ATokenERC6909 is IncentivizedERC6909, VersionedInitializable {
     /**
      * @notice Handles repayment of debt.
      */
-    function handleRepayment(address, address, uint256, uint256) external view {
-        require(msg.sender == address(POOL), Errors.AT_CALLER_MUST_BE_LENDING_POOL);
-    }
+    function handleRepayment(address, address, uint256, uint256) external view {}
     // ======================= Internal Function =======================
 
     /**
@@ -576,7 +577,6 @@ contract ATokenERC6909 is IncentivizedERC6909, VersionedInitializable {
         string memory symbol,
         uint8 decimals
     ) internal {
-        require(underlyingAsset != address(0), Errors.LP_NOT_CONTRACT);
         require(bytes(name).length != 0);
         require(bytes(symbol).length != 0);
         require(decimals != 0);
@@ -614,7 +614,6 @@ contract ATokenERC6909 is IncentivizedERC6909, VersionedInitializable {
         string memory symbol,
         uint8 decimals
     ) internal {
-        require(underlyingAsset != address(0), Errors.LP_NOT_CONTRACT);
         require(bytes(name).length != 0);
         require(bytes(symbol).length != 0);
         require(decimals != 0);
@@ -622,6 +621,7 @@ contract ATokenERC6909 is IncentivizedERC6909, VersionedInitializable {
         _setSymbol(id, string.concat("vDebt", symbol));
         _setDecimals(id, decimals);
         _setUnderlyingAsset(id, underlyingAsset);
+
         emit TokenInitialized(id, name, symbol, decimals, underlyingAsset);
     }
 

@@ -68,7 +68,7 @@ contract DeployMiniPool is Script, Test, MiniPoolHelper {
         vm.serializeAddress("miniPoolContracts", "miniPoolProxy", miniPools);
         vm.serializeAddress("miniPoolContracts", "miniPoolImpl", address(contracts.miniPoolImpl));
         for (uint256 idx = 0; idx < nrOfMiniPools; idx++) {
-            aErc6909s[idx] = contracts.miniPoolAddressesProvider.getAToken6909(idx);
+            aErc6909s[idx] = contracts.miniPoolAddressesProvider.getMiniPoolToAERC6909(idx);
         }
         vm.serializeAddress("miniPoolContracts", "aTokenErc6909Proxy", aErc6909s);
         vm.serializeAddress(

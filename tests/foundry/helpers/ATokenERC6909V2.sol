@@ -275,10 +275,6 @@ contract ATokenERC6909V2 is IncentivizedERC6909, VersionedInitializable {
 
         if (id >= DEBT_TOKEN_ADDRESSABLE_ID) {
             if (onBehalfOf != user) {
-                require(
-                    _borrowAllowances[id][onBehalfOf][user] >= amount,
-                    Errors.AT_BORROW_ALLOWANCE_NOT_ENOUGH
-                );
                 _decreaseBorrowAllowance(onBehalfOf, user, id, amount);
             }
             previousBalance = super.balanceOf(onBehalfOf, id);

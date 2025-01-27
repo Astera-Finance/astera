@@ -381,7 +381,8 @@ contract PropertiesBase is PropertiesAsserts, MarketParams {
         for (uint256 i = 0; i < totalNbMinipool; i++) {
             uint256 _minipoolId =
                 miniPoolProvider.deployMiniPool(minipoolImpl, aToken6909Impl, address(this));
-            ATokenERC6909 _aToken6909 = ATokenERC6909(miniPoolProvider.getAToken6909(_minipoolId));
+            ATokenERC6909 _aToken6909 =
+                ATokenERC6909(miniPoolProvider.getMiniPoolToAERC6909(_minipoolId));
             MockMiniPool _miniPool = MockMiniPool(miniPoolProvider.getMiniPool(_minipoolId));
 
             assert(i == _minipoolId);

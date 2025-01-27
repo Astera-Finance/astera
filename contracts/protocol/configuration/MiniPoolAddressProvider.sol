@@ -159,15 +159,6 @@ contract MiniPoolAddressesProvider is Ownable, IMiniPoolAddressesProvider {
     }
 
     /**
-     * @dev Returns the aToken address for a specific pool ID.
-     * @param id The pool ID.
-     * @return The aToken address.
-     */
-    function getAToken6909(uint256 id) external view returns (address) {
-        return _miniPoolsConfig[id].aErc6909;
-    }
-
-    /**
      * @dev Returns the mini pool address for a specific ID.
      * @param id The pool ID.
      * @return The mini pool address.
