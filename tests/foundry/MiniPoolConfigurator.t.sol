@@ -12,9 +12,8 @@ contract MiniPoolConfiguratorTest is MiniPoolDepositBorrowTest {
     using WadRayMath for uint256;
     using ReserveConfiguration for DataTypes.ReserveConfigurationMap;
 
-    uint256 constant MAX_VALID_RESERVE_FACTOR = 5000;
+    uint256 constant MAX_VALID_RESERVE_FACTOR = 4000;
     uint256 constant MAX_VALID_DEPOSIT_CAP = type(uint72).max;
-    uint256 constant MAX_VALID_VOLATILITY_TIER = 4;
     uint256 constant MAX_VALID_LTV = 65535;
 
     event BorrowingDisabledOnReserve(address indexed asset);

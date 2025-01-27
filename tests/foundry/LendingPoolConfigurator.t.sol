@@ -11,7 +11,7 @@ import {LendingPoolFixtures} from "tests/foundry/LendingPoolFixtures.t.sol";
 contract LendingPoolConfiguratorTest is Common, LendingPoolFixtures {
     using ReserveConfiguration for DataTypes.ReserveConfigurationMap;
 
-    uint256 constant MAX_VALID_RESERVE_FACTOR = 5000;
+    uint256 constant MAX_VALID_RESERVE_FACTOR = 4000;
     uint256 constant MAX_VALID_DEPOSIT_CAP = type(uint72).max;
 
     event ReserveInitialized(
