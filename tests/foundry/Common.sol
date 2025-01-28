@@ -871,11 +871,11 @@ contract Common is Test {
         uint256 _drift
     ) public {
         vm.startPrank(admin);
+        _lendingPoolConfigurator.setProfitHandler(_aToken, _profitHandler);
         _lendingPoolConfigurator.setVault(_aToken, _vaultAddr);
         _lendingPoolConfigurator.setFarmingPct(_aToken, _farmingPct);
         _lendingPoolConfigurator.setClaimingThreshold(_aToken, _claimingThreshold);
         _lendingPoolConfigurator.setFarmingPctDrift(_aToken, _drift);
-        _lendingPoolConfigurator.setProfitHandler(_aToken, _profitHandler);
         vm.stopPrank();
     }
 }

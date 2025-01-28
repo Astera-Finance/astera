@@ -108,77 +108,80 @@ library Errors {
     string public constant AT_INVALID_EXPIRATION = "42";
     /// @notice The signature is invalid.
     string public constant AT_INVALID_SIGNATURE = "43";
+    /// @notice Profit handler not set.
+    string public constant AT_PROFIT_HANDLER_SET = "44";
 
     /// @notice There is not enough liquidity available to borrow.
-    string public constant LP_NOT_ENOUGH_LIQUIDITY_TO_BORROW = "44";
+    string public constant LP_NOT_ENOUGH_LIQUIDITY_TO_BORROW = "45";
     /// @notice The caller of the function is not the lending pool configurator.
-    string public constant LP_CALLER_NOT_LENDING_POOL_CONFIGURATOR = "45";
+    string public constant LP_CALLER_NOT_LENDING_POOL_CONFIGURATOR = "46";
     /// @notice Caller must be an aToken.
-    string public constant LP_CALLER_MUST_BE_AN_ATOKEN = "46";
+    string public constant LP_CALLER_MUST_BE_AN_ATOKEN = "47";
     /// @notice Pool is paused.
-    string public constant LP_IS_PAUSED = "47";
+    string public constant LP_IS_PAUSED = "48";
     /// @notice No more reserves allowed.
-    string public constant LP_NO_MORE_RESERVES_ALLOWED = "48";
+    string public constant LP_NO_MORE_RESERVES_ALLOWED = "49";
     /// @notice Invalid flash loan executor return.
-    string public constant LP_INVALID_FLASH_LOAN_EXECUTOR_RETURN = "49";
+    string public constant LP_INVALID_FLASH_LOAN_EXECUTOR_RETURN = "50";
     /// @notice Not a contract.
-    string public constant LP_NOT_CONTRACT = "50";
+    string public constant LP_NOT_CONTRACT = "51";
     /// @notice Caller is not minipool.
-    string public constant LP_CALLER_NOT_MINIPOOL = "51";
+    string public constant LP_CALLER_NOT_MINIPOOL = "52";
     /// @notice Base borrow rate can't be negative.
-    string public constant LP_BASE_BORROW_RATE_CANT_BE_NEGATIVE = "52";
+    string public constant LP_BASE_BORROW_RATE_CANT_BE_NEGATIVE = "53";
     /// @notice Invalid index.
-    string public constant LP_INVALID_INDEX = "53";
+    string public constant LP_INVALID_INDEX = "54";
     /// @notice Reserve has already been added.
-    string public constant LP_RESERVE_ALREADY_ADDED = "54";
+    string public constant LP_RESERVE_ALREADY_ADDED = "55";
 
     /// @notice Reserve has already been initialized.
-    string public constant RL_RESERVE_ALREADY_INITIALIZED = "55";
+    string public constant RL_RESERVE_ALREADY_INITIALIZED = "56";
     /// @notice Reserve is not initialized.
-    string public constant RL_RESERVE_NOT_INITIALIZED = "56";
+    string public constant RL_RESERVE_NOT_INITIALIZED = "57";
     /// @notice Liquidity index overflows uint128.
-    string public constant RL_LIQUIDITY_INDEX_OVERFLOW = "57";
+    string public constant RL_LIQUIDITY_INDEX_OVERFLOW = "58";
     /// @notice Variable borrow index overflows uint128.
-    string public constant RL_VARIABLE_BORROW_INDEX_OVERFLOW = "58";
+    string public constant RL_VARIABLE_BORROW_INDEX_OVERFLOW = "59";
     /// @notice Liquidity rate overflows uint128.
-    string public constant RL_LIQUIDITY_RATE_OVERFLOW = "59";
+    string public constant RL_LIQUIDITY_RATE_OVERFLOW = "60";
     /// @notice Variable borrow rate overflows uint128.
-    string public constant RL_VARIABLE_BORROW_RATE_OVERFLOW = "60";
+    string public constant RL_VARIABLE_BORROW_RATE_OVERFLOW = "61";
 
     /// @notice Health factor is not below the threshold.
-    string public constant LPCM_HEALTH_FACTOR_NOT_BELOW_THRESHOLD = "61";
+    string public constant LPCM_HEALTH_FACTOR_NOT_BELOW_THRESHOLD = "62";
     /// @notice The collateral chosen cannot be liquidated.
-    string public constant LPCM_COLLATERAL_CANNOT_BE_LIQUIDATED = "62";
+    string public constant LPCM_COLLATERAL_CANNOT_BE_LIQUIDATED = "63";
     /// @notice User did not borrow the specified currency.
-    string public constant LPCM_SPECIFIED_CURRENCY_NOT_BORROWED_BY_USER = "63";
+    string public constant LPCM_SPECIFIED_CURRENCY_NOT_BORROWED_BY_USER = "64";
     /// @notice There is not enough liquidity available to liquidate.
-    string public constant LPCM_NOT_ENOUGH_LIQUIDITY_TO_LIQUIDATE = "64";
+    string public constant LPCM_NOT_ENOUGH_LIQUIDITY_TO_LIQUIDATE = "65";
 
     /// @notice Inconsistent parameters length.
-    string public constant O_INCONSISTENT_PARAMS_LENGTH = "65";
+    string public constant O_INCONSISTENT_PARAMS_LENGTH = "66";
     /// @notice Price feed inconsistency.
-    string public constant O_PRICE_FEED_INCONSISTENCY = "66";
+    string public constant O_PRICE_FEED_INCONSISTENCY = "67";
 
     /// @notice No mini pool ID for address.
-    string public constant PAP_NO_MINI_POOL_ID_FOR_ADDRESS = "67";
+    string public constant PAP_NO_MINI_POOL_ID_FOR_ADDRESS = "68";
     /// @notice Pool ID out of range.
-    string public constant PAP_POOL_ID_OUT_OF_RANGE = "68";
+    string public constant PAP_POOL_ID_OUT_OF_RANGE = "69";
 
     /// @notice Invalid LTV.
-    string public constant RC_INVALID_LTV = "69";
+    string public constant RC_INVALID_LTV = "70";
     /// @notice Invalid liquidation threshold.
-    string public constant RC_INVALID_LIQ_THRESHOLD = "70";
+    string public constant RC_INVALID_LIQ_THRESHOLD = "71";
     /// @notice Invalid liquidation bonus.
-    string public constant RC_INVALID_LIQ_BONUS = "71";
+    string public constant RC_INVALID_LIQ_BONUS = "72";
     /// @notice Invalid decimals.
-    string public constant RC_INVALID_DECIMALS = "72";
+    string public constant RC_INVALID_DECIMALS = "73";
     /// @notice Invalid reserve factor.
-    string public constant RC_INVALID_RESERVE_FACTOR = "73";
+    string public constant RC_INVALID_RESERVE_FACTOR = "74";
     /// @notice Invalid deposit cap.
-    string public constant RC_INVALID_DEPOSIT_CAP = "74";
+    string public constant RC_INVALID_DEPOSIT_CAP = "75";
 
     /// @notice LendingPool not set.
-    string public constant DP_LENDINGPOOL_NOT_SET = "75";
+    string public constant DP_LENDINGPOOL_NOT_SET = "76";
     /// @notice Reserve is not configured.
-    string public constant DP_RESERVE_NOT_CONFIGURED = "76";
+    string public constant DP_RESERVE_NOT_CONFIGURED = "77";
 }
+    

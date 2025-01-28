@@ -133,7 +133,10 @@ contract ChangePeripherialsHelper {
                         reserveData.aTokenAddress, rehypothecationSetting.vault
                     );
                 }
-
+                
+                contracts.lendingPoolConfigurator.setProfitHandler(
+                    reserveData.aTokenAddress, rehypothecationSetting.profitHandler
+                );
                 contracts.lendingPoolConfigurator.setFarmingPct(
                     reserveData.aTokenAddress, rehypothecationSetting.farmingPct
                 );
@@ -142,9 +145,6 @@ contract ChangePeripherialsHelper {
                 );
                 contracts.lendingPoolConfigurator.setFarmingPctDrift(
                     reserveData.aTokenAddress, rehypothecationSetting.drift
-                );
-                contracts.lendingPoolConfigurator.setProfitHandler(
-                    reserveData.aTokenAddress, rehypothecationSetting.profitHandler
                 );
             }
         }

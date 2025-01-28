@@ -322,11 +322,11 @@ contract PropertiesBase is PropertiesAsserts, MarketParams {
             mockedVaults.push(new MockVaultUnit(IERC20(address(assets[i]))));
             if (i % 2 == 0) {
                 address _aToken = address(aTokens[i]);
+                poolConfigurator.setProfitHandler(_aToken, profitHandler);
                 poolConfigurator.setVault(_aToken, address(mockedVaults[i]));
                 poolConfigurator.setFarmingPct(_aToken, DEFAULT_FARMING_PCT);
                 poolConfigurator.setClaimingThreshold(_aToken, DEFAULT_CLAIMING_THRESHOLD);
                 poolConfigurator.setFarmingPctDrift(_aToken, DEFAULT_FARMING_PCT_DRIFT);
-                poolConfigurator.setProfitHandler(_aToken, profitHandler);
             }
         }
 

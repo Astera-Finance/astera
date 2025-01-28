@@ -327,6 +327,17 @@ contract LendingPoolConfiguratorTest is Common, LendingPoolFixtures {
         address lendingPoolAddr = address(deployedContracts.lendingPool);
 
         vm.startPrank(admin);
+        /* set profit handler positive */
+        address profitHandler = makeAddr("profitHandler");
+        vm.assume(profitHandler != address(0));
+        vm.expectCall(
+            lendingPoolAddr,
+            abi.encodeCall(
+                deployedContracts.lendingPool.setProfitHandler, (aTokenAddress, profitHandler)
+            )
+        );
+        deployedContracts.lendingPoolConfigurator.setProfitHandler(aTokenAddress, profitHandler);
+
         /* set vault positive */
         vm.expectCall(
             lendingPoolAddr,
@@ -383,17 +394,6 @@ contract LendingPoolConfiguratorTest is Common, LendingPoolFixtures {
         farmingPct = bound(farmingPct, 10001, type(uint256).max);
         vm.expectRevert(bytes(Errors.AT_INVALID_AMOUNT));
         deployedContracts.lendingPoolConfigurator.setFarmingPctDrift(aTokenAddress, farmingPct);
-
-        /* set profit handler positive */
-        address profitHandler = makeAddr("profitHandler");
-        vm.assume(profitHandler != address(0));
-        vm.expectCall(
-            lendingPoolAddr,
-            abi.encodeCall(
-                deployedContracts.lendingPool.setProfitHandler, (aTokenAddress, profitHandler)
-            )
-        );
-        deployedContracts.lendingPoolConfigurator.setProfitHandler(aTokenAddress, profitHandler);
 
         /* set profit handler negative - 83 */
         profitHandler = address(0);

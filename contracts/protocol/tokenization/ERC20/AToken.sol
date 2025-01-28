@@ -641,6 +641,7 @@ contract AToken is
      */
     function setFarmingPct(uint256 farmingPct) external override onlyLendingPool {
         require(address(_vault) != address(0), Errors.AT_VAULT_NOT_INITIALIZED);
+        require(address(_profitHandler) != address(0), Errors.AT_PROFIT_HANDLER_SET);
         require(farmingPct <= 10000, Errors.AT_INVALID_AMOUNT);
         _farmingPct = farmingPct;
 
@@ -653,6 +654,7 @@ contract AToken is
      */
     function setClaimingThreshold(uint256 claimingThreshold) external override onlyLendingPool {
         require(address(_vault) != address(0), Errors.AT_VAULT_NOT_INITIALIZED);
+        require(address(_profitHandler) != address(0), Errors.AT_PROFIT_HANDLER_SET);
         _claimingThreshold = claimingThreshold;
 
         emit ClaimingThresholdSet(claimingThreshold);
@@ -665,6 +667,7 @@ contract AToken is
     function setFarmingPctDrift(uint256 farmingPctDrift) external override onlyLendingPool {
         require(farmingPctDrift <= 10000, Errors.AT_INVALID_AMOUNT);
         require(address(_vault) != address(0), Errors.AT_VAULT_NOT_INITIALIZED);
+        require(address(_profitHandler) != address(0), Errors.AT_PROFIT_HANDLER_SET);
         _farmingPctDrift = farmingPctDrift;
 
         emit FarmingPctDriftSet(farmingPctDrift);
@@ -676,7 +679,6 @@ contract AToken is
      */
     function setProfitHandler(address profitHandler) external override onlyLendingPool {
         require(profitHandler != address(0), Errors.AT_INVALID_ADDRESS);
-        require(address(_vault) != address(0), Errors.AT_VAULT_NOT_INITIALIZED);
         _profitHandler = profitHandler;
 
         emit ProfitHandlerSet(profitHandler);
@@ -688,6 +690,8 @@ contract AToken is
      */
     function setVault(address vault) external override onlyLendingPool {
         require(address(vault) != address(0), Errors.AT_INVALID_ADDRESS);
+        require(address(_profitHandler) != address(0), Errors.AT_PROFIT_HANDLER_SET);
+
         if (address(_vault) != address(0)) {
             require(_farmingBal == 0, Errors.AT_VAULT_NOT_EMPTY);
         }
