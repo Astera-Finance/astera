@@ -79,6 +79,7 @@ struct General {
     address marketReferenceCurrencyAggregator;
     address networkBaseTokenAggregator;
     address treasury;
+    uint256 usdBootstrapAmount;
 }
 
 struct Roles {

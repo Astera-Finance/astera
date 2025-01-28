@@ -125,6 +125,8 @@ contract DeployMiniPool is Script, Test, MiniPoolHelper {
         console.log("PATH: ", path);
         string memory config = vm.readFile(path);
 
+        General memory general = abi.decode(config.parseRaw(".general"), (General));
+
         PoolReserversConfig[] memory poolReserversConfig =
             abi.decode(config.parseRaw(".poolReserversConfig"), (PoolReserversConfig[]));
         LinearStrategy[] memory volatileStrategies =
@@ -149,7 +151,7 @@ contract DeployMiniPool is Script, Test, MiniPoolHelper {
             console.log("PATH: ", path);
             config = vm.readFile(path);
             address[] memory mockedTokens = config.readAddressArray(".mockedTokens");
-            contracts.oracle = Oracle(config.readAddress(".mockedOracle"));
+            console.log("readPreviousContracts: ", readPreviousContracts);
             if (readPreviousContracts) {
                 readPreviousDeployments(
                     string.concat(root, "/scripts/outputs/testnet/2_MiniPoolContracts.json")
@@ -199,8 +201,13 @@ contract DeployMiniPool is Script, Test, MiniPoolHelper {
 
             /* Deploy on testnet */
             vm.startBroadcast(vm.envUint("PRIVATE_KEY"));
-            console.log("Deploying lending pool infra");
+            console.log("Deploying mini pool infra");
+            contracts.oracle = Oracle(contracts.lendingPoolAddressesProvider.getPriceOracle());
+            contracts.oracle.setAssetSources(
+                oracleConfig.assets, oracleConfig.sources, oracleConfig.timeouts
+            );
             deployMiniPoolInfra(
+                general,
                 volatileStrategies,
                 stableStrategies,
                 piStrategies,
@@ -242,6 +249,7 @@ contract DeployMiniPool is Script, Test, MiniPoolHelper {
             );
             console.log("Deploying mini pool infra");
             deployMiniPoolInfra(
+                general,
                 volatileStrategies,
                 stableStrategies,
                 piStrategies,

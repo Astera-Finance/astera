@@ -1,5 +1,5 @@
 {
-    "wethGateway": "0xe43208266aEad29736433aA0b6F035a2Ffc3BB9F",
+    "wethGateway": "0x434F73Ce7ce4C53355b1DEF2D1D2e38543d236c2",
     "general": {
         "aTokenNamePrefix": "Cod3x Lend ",
         "aTokenSymbolPrefix": "cl",
@@ -7,7 +7,8 @@
         "debtTokenSymbolPrefix": "clDebt",
         "marketReferenceCurrencyAggregator": "0x7e860098F58bBFC8648a4311b374B1D669a2bc6B",
         "networkBaseTokenAggregator": "0x71041dddad3595F9CEd3DcCFBe3D1F4b0a16Bb70",
-        "treasury": "0x3151CfCA393FE5Eec690feD2a2446DA5a073d01B"
+        "treasury": "0x3151CfCA393FE5Eec690feD2a2446DA5a073d01B",
+        "usdBootstrapAmount": 2000000000000000000
     },
     "poolReserversConfig": [
         {
@@ -23,7 +24,7 @@
             "reserveFactor": 1500,
             "reserveType": true,
             "symbol": "WETH",
-            "tokenAddress": "0xe43208266aEad29736433aA0b6F035a2Ffc3BB9F"
+            "tokenAddress": "0x434F73Ce7ce4C53355b1DEF2D1D2e38543d236c2"
         },
         {
             "baseLtv": 7000,
@@ -38,7 +39,7 @@
             "reserveFactor": 1500,
             "reserveType": true,
             "symbol": "USDC",
-            "tokenAddress": "0xC3E0372C8a5278b11D1454507BCFB9085d3AAD84"
+            "tokenAddress": "0x8c53BF01E052A2aFA06b2d9d87aE49972799E62f"
         }
     ],
     "volatileStrategies": [
@@ -66,20 +67,20 @@
             "minControllerError": -400e24,
             "optimalUtilizationRate": 45e25,
             "symbol": "USDC",
-            "tokenAddress": "0xC3E0372C8a5278b11D1454507BCFB9085d3AAD84"
+            "tokenAddress": "0x8c53BF01E052A2aFA06b2d9d87aE49972799E62f"
         }
     ],
     "oracleConfig": {
         "assets": [
-            "0xe43208266aEad29736433aA0b6F035a2Ffc3BB9F",
-            "0xC3E0372C8a5278b11D1454507BCFB9085d3AAD84"
+            "0x434F73Ce7ce4C53355b1DEF2D1D2e38543d236c2",
+            "0x8c53BF01E052A2aFA06b2d9d87aE49972799E62f"
         ],
         "baseCurrency": "0x0000000000000000000000000000000000000000",
         "baseCurrencyUnit": 1e18,
         "fallbackOracle": "0x0000000000000000000000000000000000000000",
         "sources": [
-            "0x71041dddad3595F9CEd3DcCFBe3D1F4b0a16Bb70",
-            "0x7e860098F58bBFC8648a4311b374B1D669a2bc6B"
+            "0x4aDC67696bA383F43DD60A9e78F2C97Fbbfc7cb1",
+            "0xd30e2101a97dcbAeBCBC04F14C3f624E67A35165"
         ],
         "timeouts": [
             100000,
