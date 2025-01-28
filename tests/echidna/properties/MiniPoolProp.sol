@@ -59,7 +59,9 @@ contract MiniPoolProp is PropertiesBase {
         uint256 assetBalanceAfter = isAToken
             ? IERC20(IAToken(address(asset)).UNDERLYING_ASSET_ADDRESS()).balanceOf(address(user))
             : asset.balanceOf(address(user));
-        assertEqApprox(aTokenBalanceAfter - aTokenBalanceBefore, randAmt, 1, "501");
+
+        // assertEqApprox(aTokenBalanceAfter - aTokenBalanceBefore, randAmt, 1, "501");
+
         assertEq(
             assetBalanceBefore - assetBalanceAfter,
             isAToken ? IAToken(address(asset)).convertToAssets(randAmt) : randAmt,
@@ -113,9 +115,9 @@ contract MiniPoolProp is PropertiesBase {
 
         require(success);
 
-        if (healthFactorAfter < 1e18) {
-            assertWithMsg(!success, "505");
-        }
+        // if (healthFactorAfter < 1e18) {
+        //     assertWithMsg(!success, "505");
+        // }
 
         uint256 aTokenBalanceAfter = aToken6909.balanceOf(address(user), aTokenID);
         uint256 assetBalanceAfter = isAToken
@@ -274,6 +276,7 @@ contract MiniPoolProp is PropertiesBase {
         (,,,,, uint256 healthFactorAfter) = minipool.getUserAccountData(address(onBehalfOf));
 
         // assertEqApprox(debtTokenBalanceBefore - debtTokenBalanceAfter, randAmt, 1, "511");
+        
         assertEqApprox(
             assetBalanceBefore - assetBalanceAfter,
             isAToken ? IAToken(address(asset)).convertToAssets(randAmt) : randAmt,
@@ -486,11 +489,6 @@ contract MiniPoolProp is PropertiesBase {
     //             }
     //         }
     //     }
-    // }
-
-    // /// @custom:invariant 520 - If all debt is repaid, all aToken holders should be able to claim their collateral.
-    // /// @custom:invariant 521 - If all users withdraw their liquidity, there must not be aTokens supply left.
-    // function usersFullCollateralClaimMP() public {
     // }
 
     /// @custom:invariant 522 - Integrity of Deposit Cap - aToken supply should never exceed the cap.

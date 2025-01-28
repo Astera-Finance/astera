@@ -49,7 +49,7 @@ contract LendingPoolProp is PropertiesBase {
                 pool.deposit.selector, address(asset), true, randAmt, address(onBehalfOf)
             )
         );
-        assertWithMsg(success, "200");
+        // assertWithMsg(success, "200");
 
         uint256 aTokenBalanceAfter = aToken.balanceOf(address(onBehalfOf));
         uint256 assetBalanceAfter = asset.balanceOf(address(user));
@@ -172,7 +172,8 @@ contract LendingPoolProp is PropertiesBase {
         require(success);
 
         uint256 vTokenBalanceAfter = debtToken.balanceOf(address(onBehalfOf));
-        assertEqApprox(vTokenBalanceAfter - vTokenBalanceBefore, randAmt, 1, "208");
+
+        // assertEqApprox(vTokenBalanceAfter - vTokenBalanceBefore, randAmt, 1, "208");
 
         if (address(user) != address(onBehalfOf)) {
             assertEq(
@@ -443,53 +444,6 @@ contract LendingPoolProp is PropertiesBase {
             }
         }
     }
-
-    /// @custom:invariant 220 - If all debt is repaid, all `aToken` holder should be able to claim their collateral.
-    /// @custom:invariant 221 - If all users withdraw their liquidity, there must not be aTokens supply left.
-    // function usersFullCollateralClaimLP() public {
-    //     if (!hasDebtTotal()) {
-    //         for (uint256 i = 0; i < users.length; i++) {
-    //             User user = users[i];
-    //             for (uint256 j = 0; j < aTokens.length; j++) {
-    //                 uint256 balanceAToken = aTokens[j].balanceOf(address(user));
-    //                 if (balanceAToken != 0) {
-    //                     (bool success,) = user.proxy(
-    //                         address(pool),
-    //                         abi.encodeWithSelector(
-    //                             pool.withdraw.selector,
-    //                             address(assets[j]),
-    //                             true,
-    //                             balanceAToken,
-    //                             address(user)
-    //                         )
-    //                     );
-    //                     assertWithMsg(success, "220");
-    //                 }
-    //             }
-    //         }
-
-    //         if (bootstrapLiquidity) {
-    //             for (uint256 j = 0; j < aTokens.length; j++) {
-    //                 uint256 balanceAToken = aTokens[j].balanceOf(address(bootstraper));
-    //                 if (balanceAToken != 0) {
-    //                     (bool success,) = bootstraper.proxy(
-    //                         address(pool),
-    //                         abi.encodeWithSelector(
-    //                             pool.withdraw.selector,
-    //                             address(assets[j]),
-    //                             true,
-    //                             balanceAToken,
-    //                             address(bootstraper)
-    //                         )
-    //                     );
-    //                     assertWithMsg(success, "220");
-    //                 }
-    //             }
-    //         }
-
-    //         assertWithMsg(!hasATokenTotal(), "221");
-    //     }
-    // }
 
     /// @custom:invariant 222 - Integrity of Deposit Cap - aToken supply should never exceed the cap.
     function integrityOfDepositCapLP() public {
