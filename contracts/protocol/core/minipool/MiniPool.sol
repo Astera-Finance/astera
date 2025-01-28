@@ -158,7 +158,7 @@ contract MiniPool is
      *   is a different wallet.
      */
     function deposit(address asset, bool wrap, uint256 amount, address onBehalfOf)
-        public
+        external
         override
         whenNotPaused
     {

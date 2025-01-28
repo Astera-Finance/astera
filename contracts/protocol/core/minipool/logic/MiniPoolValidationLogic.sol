@@ -302,10 +302,14 @@ library MiniPoolValidationLogic {
     function validateFlashloan(
         mapping(address => DataTypes.MiniPoolReserveData) storage reserves,
         address[] memory assets,
-        uint256[] memory amounts
+        uint256[] memory amounts,
+        uint256[] memory modes
     ) internal view {
-        require(assets.length == amounts.length, Errors.VL_INCONSISTENT_FLASHLOAN_PARAMS);
-        for (uint256 i = 0; i < assets.length; i++) {
+        uint256 len = assets.length;
+        require(len == amounts.length, Errors.VL_INCONSISTENT_FLASHLOAN_PARAMS);
+        require(len == modes.length, Errors.VL_INCONSISTENT_FLASHLOAN_PARAMS);
+
+        for (uint256 i = 0; i < len; i++) {
             validateFlashloanSimple(reserves[assets[i]]);
         }
     }

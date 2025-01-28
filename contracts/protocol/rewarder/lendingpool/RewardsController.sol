@@ -392,7 +392,7 @@ abstract contract RewardsController is RewardsDistributor, IRewardsController {
      * @param amount Amount of rewards to transfer.
      */
     function _transferRewards(address to, address reward, uint256 amount) internal {
-        bool success = transferRewards(to, reward, amount);
+        bool success = __transferRewards(to, reward, amount);
         require(success == true, "TRANSFER_ERROR");
     }
 
@@ -403,7 +403,7 @@ abstract contract RewardsController is RewardsDistributor, IRewardsController {
      * @param amount Amount of rewards to transfer.
      * @return success Boolean indicating if transfer was successful.
      */
-    function transferRewards(address to, address reward, uint256 amount)
+    function __transferRewards(address to, address reward, uint256 amount)
         internal
         virtual
         returns (bool);

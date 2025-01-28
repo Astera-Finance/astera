@@ -51,7 +51,7 @@ contract Rewarder is RewardsController {
      * @param amount The amount of rewards to transfer.
      * @return A boolean indicating success of the transfer.
      */
-    function transferRewards(address to, address reward, uint256 amount)
+    function __transferRewards(address to, address reward, uint256 amount)
         internal
         override
         returns (bool)

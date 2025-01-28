@@ -129,7 +129,11 @@ library FlashLoanLogic {
         FlashLoanLocalVars memory vars;
 
         ValidationLogic.validateFlashloan(
-            reserves, flashLoanParams.reserveTypes, flashLoanParams.assets, flashLoanParams.amounts
+            reserves,
+            flashLoanParams.reserveTypes,
+            flashLoanParams.assets,
+            flashLoanParams.amounts,
+            flashLoanParams.modes
         );
 
         address[] memory aTokenAddresses = new address[](flashLoanParams.assets.length);
@@ -239,7 +243,13 @@ library FlashLoanLogic {
         for (uint256 i = 0; i < assets.length; i++) {
             aTokenAddresses[i] = _reserves[assets[i]][reserveTypes[i]].aTokenAddress;
 
-            premiums[i] = DataTypes.InterestRateMode(modes[i]) == DataTypes.InterestRateMode.NONE
+            uint256 mode = modes[i];
+            require(
+                uint256(type(DataTypes.InterestRateMode).max) >= mode,
+                Errors.VL_INVALID_INTEREST_RATE_MODE
+            );
+
+            premiums[i] = DataTypes.InterestRateMode(mode) == DataTypes.InterestRateMode.NONE
                 ? amounts[i] * flashLoanPremiumTotal / 10000
                 : 0;
 

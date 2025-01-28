@@ -276,7 +276,7 @@ contract MiniPoolProp is PropertiesBase {
         (,,,,, uint256 healthFactorAfter) = minipool.getUserAccountData(address(onBehalfOf));
 
         // assertEqApprox(debtTokenBalanceBefore - debtTokenBalanceAfter, randAmt, 1, "511");
-        
+
         assertEqApprox(
             assetBalanceBefore - assetBalanceAfter,
             isAToken ? IAToken(address(asset)).convertToAssets(randAmt) : randAmt,
