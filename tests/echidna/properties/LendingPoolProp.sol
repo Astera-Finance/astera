@@ -49,7 +49,7 @@ contract LendingPoolProp is PropertiesBase {
                 pool.deposit.selector, address(asset), true, randAmt, address(onBehalfOf)
             )
         );
-        // assertWithMsg(success, "200");
+        assertWithMsg(success, "200");
 
         uint256 aTokenBalanceAfter = aToken.balanceOf(address(onBehalfOf));
         uint256 assetBalanceAfter = asset.balanceOf(address(user));
@@ -92,15 +92,15 @@ contract LendingPoolProp is PropertiesBase {
         );
 
         (,,,,, uint256 healthFactorAfter) = pool.getUserAccountData(address(to));
-        // if (healthFactorAfter >= 1e18){
-        //     assertWithMsg(success, "227");
-        // }
-
-        require(success);
+        if (healthFactorAfter >= 1e18) {
+            assertWithMsg(success, "227");
+        }
 
         if (healthFactorAfter < 1e18) {
             assertWithMsg(!success, "230");
         }
+
+        require(success);
 
         uint256 aTokenBalanceAfter = aToken.balanceOf(address(user));
         uint256 assetBalanceAfter = asset.balanceOf(address(to));
@@ -173,7 +173,7 @@ contract LendingPoolProp is PropertiesBase {
 
         uint256 vTokenBalanceAfter = debtToken.balanceOf(address(onBehalfOf));
 
-        // assertEqApprox(vTokenBalanceAfter - vTokenBalanceBefore, randAmt, 1, "208");
+        assertEqApprox(vTokenBalanceAfter - vTokenBalanceBefore, randAmt, 1, "208");
 
         if (address(user) != address(onBehalfOf)) {
             assertEq(

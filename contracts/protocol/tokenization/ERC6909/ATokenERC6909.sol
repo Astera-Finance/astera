@@ -163,7 +163,7 @@ contract ATokenERC6909 is
         } else {
             _totalUniqueTokens++;
         }
-        
+
         _initializeATokenID(aTokenID, underlyingAsset, name, symbol, decimals);
         _initializeDebtTokenID(debtTokenID, underlyingAsset, name, symbol, decimals);
     }

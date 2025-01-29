@@ -53,14 +53,14 @@ contract MiniPoolProp is PropertiesBase {
             )
         );
 
-        // assertWithMsg(success, "500");
+        assertWithMsg(success, "500");
 
         uint256 aTokenBalanceAfter = aToken6909.balanceOf(address(onBehalfOf), aTokenID);
         uint256 assetBalanceAfter = isAToken
             ? IERC20(IAToken(address(asset)).UNDERLYING_ASSET_ADDRESS()).balanceOf(address(user))
             : asset.balanceOf(address(user));
 
-        // assertEqApprox(aTokenBalanceAfter - aTokenBalanceBefore, randAmt, 1, "501");
+        assertEqApprox(aTokenBalanceAfter - aTokenBalanceBefore, randAmt, 1, "501");
 
         assertEq(
             assetBalanceBefore - assetBalanceAfter,
@@ -115,9 +115,9 @@ contract MiniPoolProp is PropertiesBase {
 
         require(success);
 
-        // if (healthFactorAfter < 1e18) {
-        //     assertWithMsg(!success, "505");
-        // }
+        if (healthFactorAfter < 1e18) {
+            assertWithMsg(!success, "505");
+        }
 
         uint256 aTokenBalanceAfter = aToken6909.balanceOf(address(user), aTokenID);
         uint256 assetBalanceAfter = isAToken
@@ -276,7 +276,7 @@ contract MiniPoolProp is PropertiesBase {
         (,,,,, uint256 healthFactorAfter) = minipool.getUserAccountData(address(onBehalfOf));
 
         // assertEqApprox(debtTokenBalanceBefore - debtTokenBalanceAfter, randAmt, 1, "511");
-        
+
         assertEqApprox(
             assetBalanceBefore - assetBalanceAfter,
             isAToken ? IAToken(address(asset)).convertToAssets(randAmt) : randAmt,
@@ -479,17 +479,17 @@ contract MiniPoolProp is PropertiesBase {
     //     }
     // }
 
-    // /// @custom:invariant 519 - A user with debt should have at least an AToken6909 balance `setUsingAsCollateral`.
-    // function userDebtIntegrityMP() public {
-    //     for (uint256 j = 0; j < totalNbMinipool; j++) {
-    //         for (uint256 i = 0; i < users.length; i++) {
-    //             User user = users[i];
-    //             if (hasDebtTokens6909(user, j)) {
-    //                 assertWithMsg(hasATokens6909Strict(user, j), "519");
-    //             }
-    //         }
-    //     }
-    // }
+    /// @custom:invariant 519 - A user with debt should have at least an AToken6909 balance `setUsingAsCollateral`.
+    function userDebtIntegrityMP() public {
+        for (uint256 j = 0; j < totalNbMinipool; j++) {
+            for (uint256 i = 0; i < users.length; i++) {
+                User user = users[i];
+                if (hasDebtTokens6909(user, j)) {
+                    assertWithMsg(hasATokens6909Strict(user, j), "519");
+                }
+            }
+        }
+    }
 
     /// @custom:invariant 522 - Integrity of Deposit Cap - aToken supply should never exceed the cap.
     function integrityOfDepositCapMP() public {
@@ -519,33 +519,33 @@ contract MiniPoolProp is PropertiesBase {
         }
     }
 
-    // /// @custom:invariant 523 - `UserConfigurationMap` integrity: If a user has a given aToken then `isUsingAsCollateralOrBorrowing` and `isUsingAsCollateral` should return true.
-    // function userConfigurationMapIntegrityLiquidityMP() public {
-    //     for (uint256 j = 0; j < miniPools.length; j++) {
-    //         MiniPool minipool = miniPools[j];
-    //         ATokenERC6909 aToken6909 = aTokens6909[j];
+    /// @custom:invariant 523 - `UserConfigurationMap` integrity: If a user has a given aToken then `isUsingAsCollateralOrBorrowing` and `isUsingAsCollateral` should return true.
+    function userConfigurationMapIntegrityLiquidityMP() public {
+        for (uint256 j = 0; j < miniPools.length; j++) {
+            MiniPool minipool = miniPools[j];
+            ATokenERC6909 aToken6909 = aTokens6909[j];
 
-    //         for (uint256 i = 0; i < users.length; i++) {
-    //             User user = users[i];
-    //             for (uint256 k = 0; k < totalNbTokens * 2; k++) {
-    //                 (uint256 aTokenId,,) = aToken6909.getIdForUnderlying(address(allTokens(k)));
-    //                 DataTypes.UserConfigurationMap memory userConfig =
-    //                     minipool.getUserConfiguration(address(user));
-    //                 if (
-    //                     aToken6909.balanceOf(address(user), aTokenId) != 0
-    //                         && !isUseReserveAsCollateralDeactivatedMP[j][address(user)][address(
-    //                             allTokens(k)
-    //                         )]
-    //                 ) {
-    //                     assertWithMsg(
-    //                         UserConfiguration.isUsingAsCollateralOrBorrowing(userConfig, k), "523"
-    //                     );
-    //                     assertWithMsg(UserConfiguration.isUsingAsCollateral(userConfig, k), "523");
-    //                 }
-    //             }
-    //         }
-    //     }
-    // }
+            for (uint256 i = 0; i < users.length; i++) {
+                User user = users[i];
+                for (uint256 k = 0; k < totalNbTokens * 2; k++) {
+                    (uint256 aTokenId,,) = aToken6909.getIdForUnderlying(address(allTokens(k)));
+                    DataTypes.UserConfigurationMap memory userConfig =
+                        minipool.getUserConfiguration(address(user));
+                    if (
+                        aToken6909.balanceOf(address(user), aTokenId) != 0
+                            && !isUseReserveAsCollateralDeactivatedMP[j][address(user)][address(
+                                allTokens(k)
+                            )]
+                    ) {
+                        assertWithMsg(
+                            UserConfiguration.isUsingAsCollateralOrBorrowing(userConfig, k), "523"
+                        );
+                        assertWithMsg(UserConfiguration.isUsingAsCollateral(userConfig, k), "523");
+                    }
+                }
+            }
+        }
+    }
 
     /// @custom:invariant 524 - `UserConfigurationMap` integrity: If a user has a given debtToken then `isUsingAsCollateralOrBorrowing`, `isBorrowing` and `isBorrowingAny` should return true.
     function userConfigurationMapIntegrityDebtMP() public {
