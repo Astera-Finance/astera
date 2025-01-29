@@ -39,13 +39,6 @@ interface IRewardsDistributor {
     );
 
     /**
-     * @notice Emitted when new total supply threshold is set
-     * @param decimals Number of decimals that are the subject of threshold
-     * @param threshold The total supply amount of the threshold
-     */
-    event TotalSupplyThresholdSet(uint8 indexed decimals, uint256 indexed threshold);
-
-    /**
      * @notice Emitted when rewards are accrued for a user
      * @param user The address of the user
      * @param reward The address of the reward token
