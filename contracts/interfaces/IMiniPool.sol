@@ -146,8 +146,6 @@ interface IMiniPool {
         uint256 variableBorrowIndex
     );
 
-    function initialize(IMiniPoolAddressesProvider provider, uint256 minipoolID) external;
-
     function deposit(address asset, bool wrap, uint256 amount, address onBehalfOf) external;
 
     function withdraw(address asset, bool unwrap, uint256 amount, address to)
@@ -253,4 +251,10 @@ interface IMiniPool {
     function setRewarderForReserve(address asset, address rewarder) external;
 
     function updateFlashLoanFee(uint128 flashLoanPremiumTotal) external;
+
+    function syncIndexesState(address asset) external;
+
+    function syncRatesState(address asset) external;
+
+    function syncState(address asset) external;
 }

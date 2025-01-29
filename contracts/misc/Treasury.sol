@@ -9,19 +9,22 @@ import {IAToken} from "../../contracts/interfaces/IAToken.sol";
 import {IERC20} from "../../contracts/dependencies/openzeppelin/contracts/IERC20.sol";
 import {DataTypes} from "../../contracts/protocol/libraries/types/DataTypes.sol";
 import {Ownable} from "../../contracts/dependencies/openzeppelin/contracts/Ownable.sol";
+import {SafeERC20} from "../../contracts/dependencies/openzeppelin/contracts/SafeERC20.sol";
 
 /**
  * @title Treasury
  * @author Cod3x
  */
 contract Treasury is Ownable {
+    using SafeERC20 for IERC20;
+
     ILendingPoolAddressesProvider public ADDRESSES_PROVIDER;
     ILendingPool public LENDING_POOL;
     address private currentTreasury = address(this);
     address private multisig;
 
     modifier onlyPoolAdmin() {
-        require(ADDRESSES_PROVIDER.getPoolAdmin() == msg.sender, Errors.CALLER_NOT_POOL_ADMIN);
+        require(ADDRESSES_PROVIDER.getPoolAdmin() == msg.sender, Errors.VL_CALLER_NOT_POOL_ADMIN);
         _;
     }
 
@@ -55,7 +58,7 @@ contract Treasury is Ownable {
     }
 
     function transferToMultisig(address asset, uint256 value) external onlyOwner {
-        IERC20(asset).transfer(multisig, value);
+        IERC20(asset).safeTransfer(multisig, value);
     }
 
     function setTreasury(address newTreasury) external onlyPoolAdmin {

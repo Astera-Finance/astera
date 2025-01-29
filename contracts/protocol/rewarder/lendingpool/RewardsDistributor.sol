@@ -487,7 +487,6 @@ abstract contract RewardsDistributor is IRewardsDistributor, Ownable {
         uint8 decimals
     ) internal view returns (uint256) {
         // emissionPerSecond equal 1 leads to 0 accrued rewards due to rounding down
-        // if total balance is too small, do not increase index and accrue the rewards because it may lead to overflows of uint128
         if (
             emissionPerSecond <= 1 || totalBalance == 0 || lastUpdateTimestamp == block.timestamp
                 || lastUpdateTimestamp >= distributionEnd

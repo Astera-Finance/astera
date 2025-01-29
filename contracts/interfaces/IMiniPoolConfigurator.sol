@@ -154,8 +154,6 @@ interface IMiniPoolConfigurator {
         uint128 oldFlashloanPremiumTotal, uint128 newFlashloanPremiumTotal
     );
 
-    function initialize(IMiniPoolAddressesProvider provider) external;
-
     function batchInitReserve(InitReserveInput[] calldata input, IMiniPool pool) external;
 
     function setRewarderForReserve(address asset, address rewarder, IMiniPool pool) external;
@@ -165,7 +163,7 @@ interface IMiniPoolConfigurator {
 
     function setCod3xTreasury(address treasury) external;
 
-    function setFlowLimit(address asset, address miniPool, uint256 limit) external;
+    function setFlowLimit(address asset, uint256 limit, IMiniPool pool) external;
 
     function setReserveInterestRateStrategyAddress(
         address asset,

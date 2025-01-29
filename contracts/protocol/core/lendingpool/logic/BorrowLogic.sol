@@ -21,6 +21,8 @@ import {UserConfiguration} from
     "../../../../../contracts/protocol/libraries/configuration/UserConfiguration.sol";
 import {Helpers} from "../../../../../contracts/protocol/libraries/helpers/Helpers.sol";
 import {IFlowLimiter} from "../../../../../contracts/interfaces/base/IFlowLimiter.sol";
+import {EnumerableSet} from
+    "../../../../../lib/openzeppelin-contracts/contracts/utils/structs/EnumerableSet.sol";
 
 /**
  * @title BorrowLogic library
@@ -36,6 +38,7 @@ library BorrowLogic {
     using ReserveConfiguration for DataTypes.ReserveConfigurationMap;
     using UserConfiguration for DataTypes.UserConfigurationMap;
     using ValidationLogic for ValidationLogic.ValidateBorrowParams;
+    using EnumerableSet for EnumerableSet.AddressSet;
 
     /**
      * @dev Emitted when a borrow occurs.
@@ -140,6 +143,7 @@ library BorrowLogic {
      */
     function executeBorrow(
         ExecuteBorrowParams memory vars,
+        EnumerableSet.AddressSet storage minipoolFlowBorrowing,
         mapping(address => mapping(bool => DataTypes.ReserveData)) storage reserves,
         mapping(uint256 => DataTypes.ReserveReference) storage reservesList,
         mapping(address => DataTypes.UserConfigurationMap) storage usersConfig
@@ -178,7 +182,11 @@ library BorrowLogic {
         }
 
         reserve.updateInterestRates(
-            vars.asset, vars.aTokenAddress, 0, vars.releaseUnderlying ? vars.amount : 0
+            minipoolFlowBorrowing,
+            vars.asset,
+            vars.aTokenAddress,
+            0,
+            vars.releaseUnderlying ? vars.amount : 0
         );
 
         if (vars.releaseUnderlying) {
@@ -217,16 +225,22 @@ library BorrowLogic {
      */
     function executeMiniPoolBorrow(
         ExecuteMiniPoolBorrowParams memory params,
+        EnumerableSet.AddressSet storage minipoolFlowBorrowing,
         mapping(address => mapping(bool => DataTypes.ReserveData)) storage reserves
     ) internal {
         IFlowLimiter flowLimiter = IFlowLimiter(params.addressesProvider.getFlowLimiter());
         DataTypes.ReserveData storage reserve = reserves[params.asset][params.reserveType];
 
         require(reserve.configuration.getActive(), Errors.VL_NO_ACTIVE_RESERVE);
+        require(reserve.configuration.getBorrowingEnabled(), Errors.VL_BORROWING_NOT_ENABLED);
+
         flowLimiter.revertIfFlowLimitReached(params.asset, params.miniPoolAddress, params.amount);
 
         reserve.updateState();
 
+        // Note: This mint operation does not update the user configuration to reflect the borrowed asset for the miniPoolAddress.
+        // This means that when querying the user configuration for the miniPoolAddress, no assets will be shown as borrowed.
+        // This design choice ensures that the health factor check will always pass for unbacked borrows by mini pools in the system.
         IVariableDebtToken(reserve.variableDebtTokenAddress).mint(
             params.miniPoolAddress,
             params.miniPoolAddress,
@@ -234,14 +248,16 @@ library BorrowLogic {
             reserve.variableBorrowIndex
         );
 
-        reserve.updateInterestRates(params.asset, params.aTokenAddress, 0, params.amount);
+        reserve.updateInterestRates(
+            minipoolFlowBorrowing, params.asset, params.aTokenAddress, 0, params.amount
+        );
 
         IAToken(params.aTokenAddress).transferUnderlyingTo(params.miniPoolAddress, params.amount);
 
         emit Borrow(
             params.asset,
             params.miniPoolAddress,
-            address(flowLimiter),
+            params.miniPoolAddress,
             params.amount,
             reserve.currentVariableBorrowRate
         );
@@ -299,12 +315,14 @@ library BorrowLogic {
      */
     function repay(
         RepayParams memory params,
+        EnumerableSet.AddressSet storage minipoolFlowBorrowing,
         mapping(address => mapping(bool => DataTypes.ReserveData)) storage _reserves,
         mapping(address => DataTypes.UserConfigurationMap) storage _usersConfig
     ) internal returns (uint256) {
         DataTypes.ReserveData storage reserve = _reserves[params.asset][params.reserveType];
 
-        (address aToken, uint256 paybackAmount) = _repay(params, reserve, _usersConfig);
+        (address aToken, uint256 paybackAmount) =
+            _repay(params, minipoolFlowBorrowing, reserve, _usersConfig);
 
         IERC20(params.asset).safeTransferFrom(msg.sender, aToken, paybackAmount);
 
@@ -324,12 +342,14 @@ library BorrowLogic {
      */
     function repayWithAtokens(
         RepayParams memory params,
+        EnumerableSet.AddressSet storage minipoolFlowBorrowing,
         mapping(address => mapping(bool => DataTypes.ReserveData)) storage _reserves,
         mapping(address => DataTypes.UserConfigurationMap) storage _usersConfig
     ) internal returns (uint256) {
         DataTypes.ReserveData storage reserve = _reserves[params.asset][params.reserveType];
 
-        (address aToken, uint256 paybackAmount) = _repay(params, reserve, _usersConfig);
+        (address aToken, uint256 paybackAmount) =
+            _repay(params, minipoolFlowBorrowing, reserve, _usersConfig);
 
         IAToken(aToken).burn(params.onBehalfOf, aToken, paybackAmount, reserve.liquidityIndex);
 
@@ -350,6 +370,7 @@ library BorrowLogic {
      */
     function _repay(
         RepayParams memory params,
+        EnumerableSet.AddressSet storage minipoolFlowBorrowing,
         DataTypes.ReserveData storage reserve,
         mapping(address => DataTypes.UserConfigurationMap) storage _usersConfig
     ) private returns (address aToken, uint256 paybackAmount) {
@@ -370,7 +391,7 @@ library BorrowLogic {
         );
 
         aToken = reserve.aTokenAddress;
-        reserve.updateInterestRates(params.asset, aToken, paybackAmount, 0);
+        reserve.updateInterestRates(minipoolFlowBorrowing, params.asset, aToken, paybackAmount, 0);
 
         if (variableDebt - paybackAmount == 0) {
             _usersConfig[params.onBehalfOf].setBorrowing(reserve.id, false);

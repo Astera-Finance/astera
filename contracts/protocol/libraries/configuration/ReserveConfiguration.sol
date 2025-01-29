@@ -52,7 +52,7 @@ library ReserveConfiguration {
     uint256 internal constant MAX_VALID_LIQUIDATION_THRESHOLD = type(uint16).max;
     uint256 internal constant MAX_VALID_LIQUIDATION_BONUS = type(uint16).max;
     uint256 internal constant MAX_VALID_DECIMALS = type(uint8).max;
-    uint256 internal constant MAX_VALID_RESERVE_FACTOR = 5000; // 50% // theorical max: type(uint16).max
+    uint256 internal constant MAX_VALID_RESERVE_FACTOR = 4000; // 40% // theorical max: type(uint16).max
     uint256 internal constant MAX_VALID_DEPOSIT_CAP = type(uint72).max; // Enough to represent SHIBA total supply.
 
     /**
@@ -263,6 +263,20 @@ library ReserveConfiguration {
     }
 
     /**
+     * @notice Gets the Cod3x reserve factor from reserve configuration.
+     * @dev This is a redefined version of getCod3xReserveFactor() for memory usage.
+     * @param self The reserve configuration.
+     * @return The Cod3x reserve factor.
+     */
+    function getCod3xReserveFactorMemory(DataTypes.ReserveConfigurationMap memory self)
+        internal
+        pure
+        returns (uint256)
+    {
+        return (self.data & ~COD3X_RESERVE_FACTOR_MASK) >> COD3X_RESERVE_FACTOR_START_BIT_POSITION;
+    }
+
+    /**
      * @dev Sets the minipool owner reserve factor of the reserve.
      * @param self The reserve configuration map.
      * @param reserveFactor The reserve factor value to set.
@@ -285,6 +299,20 @@ library ReserveConfiguration {
     function getMinipoolOwnerReserveFactor(DataTypes.ReserveConfigurationMap storage self)
         internal
         view
+        returns (uint256)
+    {
+        return (self.data & ~MINIPOOL_OWNER_RESERVE_FACTOR_MASK)
+            >> MINIPOOL_OWNER_FACTOR_START_BIT_POSITION;
+    }
+
+    /**
+     * @notice Gets the minipool owner reserve factor from reserve configuration.
+     * @param self The reserve configuration.
+     * @return The minipool owner reserve factor.
+     */
+    function getMinipoolOwnerReserveMemory(DataTypes.ReserveConfigurationMap memory self)
+        internal
+        pure
         returns (uint256)
     {
         return (self.data & ~MINIPOOL_OWNER_RESERVE_FACTOR_MASK)

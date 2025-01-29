@@ -72,6 +72,26 @@ abstract contract BasePiReserveRateStrategy is Ownable {
     );
 
     /**
+     * @notice Emitted when the optimal utilization rate is set.
+     * @param optimalUtilizationRate The new optimal utilization rate.
+     */
+    event OptimalUtilizationRateSet(uint256 optimalUtilizationRate);
+
+    /**
+     * @notice Emitted when the minimum controller error is set.
+     * @param minControllerError The new minimum controller error.
+     */
+    event MinControllerErrorSet(int256 minControllerError);
+
+    /**
+     * @notice Emitted when the PID values are set.
+     * @param kp The proportional gain coefficient.
+     * @param ki The integral gain coefficient.
+     * @param maxITimeAmp The maximum integral time amplitude.
+     */
+    event PidValuesSet(uint256 kp, uint256 ki, int256 maxITimeAmp);
+
+    /**
      * @notice Initializes the interest rate strategy contract.
      * @param provider Address of the lending pool provider.
      * @param asset Address of the asset this strategy is for.
@@ -93,7 +113,7 @@ abstract contract BasePiReserveRateStrategy is Ownable {
         uint256 ki
     ) Ownable(msg.sender) {
         if (optimalUtilizationRate >= uint256(RAY)) {
-            revert(Errors.IR_U0_GREATER_THAN_RAY);
+            revert(Errors.VL_U0_GREATER_THAN_RAY);
         }
 
         _setOptimalUtilizationRate(optimalUtilizationRate);
@@ -107,14 +127,14 @@ abstract contract BasePiReserveRateStrategy is Ownable {
         _maxErrIAmp = int256(_ki).rayMulInt(-RAY * maxITimeAmp);
 
         if (transferFunctionReturnInt(type(int256).min) < 0) {
-            revert(Errors.IR_BASE_BORROW_RATE_CANT_BE_NEGATIVE);
+            revert(Errors.LP_BASE_BORROW_RATE_CANT_BE_NEGATIVE);
         }
     }
 
     /// @dev Restricts function access to lending pool only.
     modifier onlyLendingPool() {
         if (msg.sender != _getLendingPool()) {
-            revert(Errors.IR_ACCESS_RESTRICTED_TO_LENDING_POOL);
+            revert(Errors.VL_ACCESS_RESTRICTED_TO_LENDING_POOL);
         }
         _;
     }
@@ -163,9 +183,11 @@ abstract contract BasePiReserveRateStrategy is Ownable {
      */
     function _setOptimalUtilizationRate(uint256 optimalUtilizationRate) internal {
         if (optimalUtilizationRate >= uint256(RAY)) {
-            revert(Errors.IR_U0_GREATER_THAN_RAY);
+            revert(Errors.VL_U0_GREATER_THAN_RAY);
         }
         _optimalUtilizationRate = optimalUtilizationRate;
+
+        emit OptimalUtilizationRateSet(optimalUtilizationRate);
     }
 
     /**
@@ -175,8 +197,9 @@ abstract contract BasePiReserveRateStrategy is Ownable {
     function setMinControllerError(int256 minControllerError) external onlyOwner {
         _minControllerError = minControllerError;
         if (transferFunctionReturnInt(type(int256).min) < 0) {
-            revert(Errors.IR_BASE_BORROW_RATE_CANT_BE_NEGATIVE);
+            revert(Errors.LP_BASE_BORROW_RATE_CANT_BE_NEGATIVE);
         }
+        emit MinControllerErrorSet(minControllerError);
     }
 
     /**
@@ -189,6 +212,8 @@ abstract contract BasePiReserveRateStrategy is Ownable {
         _kp = kp;
         _ki = ki;
         _maxErrIAmp = int256(_ki).rayMulInt(-RAY * maxITimeAmp);
+
+        emit PidValuesSet(kp, ki, maxITimeAmp);
     }
 
     /**
@@ -333,34 +358,5 @@ abstract contract BasePiReserveRateStrategy is Ownable {
     function transferFunctionReturnInt(int256 controllerError) internal view returns (int256) {
         int256 ce = controllerError > _minControllerError ? controllerError : _minControllerError;
         return int256(M_FACTOR.rayMulInt((ce + RAY).rayDivInt(2 * RAY).rayPowerInt(N_FACTOR)));
-    }
-
-    /**
-     * @notice Gets the Cod3x reserve factor from reserve configuration.
-     * @dev This is a redefined version of ReserveConfiguration.getCod3xReserveFactor() for memory usage.
-     * @param self The reserve configuration.
-     * @return The Cod3x reserve factor.
-     */
-    function _getCod3xReserveFactor(DataTypes.ReserveConfigurationMap memory self)
-        internal
-        pure
-        returns (uint256)
-    {
-        return (self.data & ~ReserveConfiguration.COD3X_RESERVE_FACTOR_MASK)
-            >> ReserveConfiguration.COD3X_RESERVE_FACTOR_START_BIT_POSITION;
-    }
-
-    /**
-     * @notice Gets the minipool owner reserve factor from reserve configuration.
-     * @param self The reserve configuration.
-     * @return The minipool owner reserve factor.
-     */
-    function _getMinipoolOwnerReserveFactor(DataTypes.ReserveConfigurationMap memory self)
-        internal
-        pure
-        returns (uint256)
-    {
-        return (self.data & ~ReserveConfiguration.MINIPOOL_OWNER_RESERVE_FACTOR_MASK)
-            >> ReserveConfiguration.MINIPOOL_OWNER_FACTOR_START_BIT_POSITION;
     }
 }

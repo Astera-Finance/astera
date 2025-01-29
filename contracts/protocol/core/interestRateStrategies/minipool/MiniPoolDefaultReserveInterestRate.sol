@@ -146,10 +146,6 @@ contract MiniPoolDefaultReserveInterestRateStrategy is IMiniPoolReserveInterestR
             vars.underlying = IAToken(asset).UNDERLYING_ASSET_ADDRESS();
             address minipool = IAERC6909(aToken).getMinipoolAddress();
             vars.currentFlow = flowLimiter.currentFlow(vars.underlying, minipool);
-
-            vars.availableLiquidity += IAToken(asset).convertToShares(
-                flowLimiter.getFlowLimit(vars.underlying, minipool)
-            ) - IAToken(asset).convertToShares(vars.currentFlow);
         }
 
         if (vars.availableLiquidity + liquidityAdded < liquidityTaken) {

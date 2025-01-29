@@ -83,10 +83,51 @@ def createFromForgeOut():
 
                 print(f"Data successfully written to {csv_file}")
 
+
+def filter_repeating_values(input_file, output_file):
+    with open(input_file, 'r') as infile:
+        reader = csv.reader(infile)
+        filtered_rows = []
+        seen = set()
+        for row in reader:
+            # Use a set to track seen values
+            print("Row", row)
+            if row[2] not in seen and row[2] != "0x0000000000000000000000000000000000000000" and "0x" in row[2]:
+                print(row[2])
+                seen.add(row[2])
+                filtered_rows.append(row)
+
+
+    with open(output_file, 'w', newline='') as outfile:
+        writer = csv.writer(outfile)
+        writer.writerows(filtered_rows)
+
+def sort_csv_alphabetically(input_file, output_file):
+    with open(input_file, 'r') as infile:
+        reader = csv.reader(infile)
+        # Read the header
+        header = next(reader)
+        # Read the remaining rows
+        rows = list(reader)
+
+        print("ROWS:", rows)
+        # Sort the rows alphabetically based on the first column, excluding the header
+        sorted_rows = sorted(rows, key=lambda x: x[0].lower())  # Using .lower() for case-insensitive sorting
+        print("SORTED ROWS:", sorted_rows)
+
+    # Write the header and sorted rows to the output file
+    with open(output_file, 'w', newline='') as outfile:
+        writer = csv.writer(outfile)
+        writer.writerow(header)  # Write the header
+        writer.writerows(sorted_rows)  # Write the sorted rows
+
 # Write to the CSV file
 with open(csv_file, mode='w', newline='', encoding='utf-8') as file:
     writer = csv.writer(file)
     writer.writerow(["file" ,"contractName", "contractAddress","explorerUrl"])  # Header row
     createFromScriptOut()
+    sort_csv_alphabetically(csv_file, csv_file)
+    filter_repeating_values(csv_file, csv_file)
+
 
 

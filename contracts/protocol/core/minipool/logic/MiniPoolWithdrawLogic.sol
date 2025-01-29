@@ -103,7 +103,7 @@ library MiniPoolWithdrawLogic {
         withdrawLocalVars memory localVars;
 
         {
-            localVars.aToken = reserve.aTokenAddress;
+            localVars.aToken = reserve.aErc6909;
             localVars.id = reserve.aTokenID;
 
             localVars.userBalance = IAERC6909(localVars.aToken).balanceOf(msg.sender, localVars.id);
@@ -185,9 +185,7 @@ library MiniPoolWithdrawLogic {
         mapping(uint256 => address) storage reservesList,
         IMiniPoolAddressesProvider addressesProvider
     ) internal {
-        require(
-            msg.sender == reserves[params.asset].aTokenAddress, Errors.LP_CALLER_MUST_BE_AN_ATOKEN
-        );
+        require(msg.sender == reserves[params.asset].aErc6909, Errors.LP_CALLER_MUST_BE_AN_ATOKEN);
 
         MiniPoolValidationLogic.validateTransfer(
             params.from,
@@ -234,7 +232,7 @@ library MiniPoolWithdrawLogic {
         withdrawLocalVars memory localVars;
 
         {
-            localVars.aToken = reserve.aTokenAddress;
+            localVars.aToken = reserve.aErc6909;
             localVars.id = reserve.aTokenID;
 
             localVars.userBalance =

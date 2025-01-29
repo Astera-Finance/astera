@@ -17,6 +17,8 @@ import {PercentageMath} from "../../../../../contracts/protocol/libraries/math/P
 import {MathUtils} from "../../../../../contracts/protocol/libraries/math/MathUtils.sol";
 import {DataTypes} from "../../../../../contracts/protocol/libraries/types/DataTypes.sol";
 import {ILendingPool} from "../../../../../contracts/interfaces/ILendingPool.sol";
+import {ReserveConfiguration} from
+    "../../../../../contracts/protocol/libraries/configuration/ReserveConfiguration.sol";
 
 /**
  * @title MiniPoolPiReserveInterestRateStrategy contract.
@@ -43,7 +45,7 @@ contract MiniPoolPiReserveInterestRateStrategy is
     uint256 public constant SECONDS_PER_YEAR = 365 days;
 
     /// @dev ID of the minipool this strategy is associated with.
-    uint256 public _minipoolId;
+    uint256 public immutable _minipoolId;
 
     /**
      * @notice Initializes the MiniPoolPiReserveInterestRateStrategy contract.
@@ -96,18 +98,14 @@ contract MiniPoolPiReserveInterestRateStrategy is
     {
         (,, bool isTranched) = IAERC6909(aToken).getIdForUnderlying(asset);
 
+        availableLiquidity = IERC20(asset).balanceOf(aToken);
+
         if (isTranched) {
             IFlowLimiter flowLimiter =
                 IFlowLimiter(IMiniPoolAddressesProvider(_addressProvider).getFlowLimiter());
             underlying = IAToken(asset).UNDERLYING_ASSET_ADDRESS();
             address minipool = IAERC6909(aToken).getMinipoolAddress();
             currentFlow = flowLimiter.currentFlow(underlying, minipool);
-
-            availableLiquidity = IERC20(asset).balanceOf(aToken)
-                + IAToken(asset).convertToShares(flowLimiter.getFlowLimit(underlying, minipool))
-                - IAToken(asset).convertToShares(currentFlow);
-        } else {
-            availableLiquidity = IERC20(asset).balanceOf(aToken);
         }
     }
 
@@ -121,7 +119,7 @@ contract MiniPoolPiReserveInterestRateStrategy is
         );
         DataTypes.MiniPoolReserveData memory reserve =
             IMiniPool(_getLendingPool()).getReserveData(_asset);
-        uint256 availableLiquidity = IERC20(_asset).balanceOf(reserve.aTokenAddress);
+        uint256 availableLiquidity = IERC20(_asset).balanceOf(reserve.aErc6909);
         uint256 totalVariableDebt = aErc6909Token.totalSupply(reserve.variableDebtTokenID);
         uint256 utilizationRate = totalVariableDebt == 0
             ? 0
@@ -135,8 +133,8 @@ contract MiniPoolPiReserveInterestRateStrategy is
         uint256 currentLiquidityRate = _getLiquidityRate(
             currentVariableBorrowRate,
             utilizationRate,
-            _getCod3xReserveFactor(reserve.configuration)
-                + _getMinipoolOwnerReserveFactor(reserve.configuration)
+            ReserveConfiguration.getCod3xReserveFactorMemory(reserve.configuration)
+                + ReserveConfiguration.getMinipoolOwnerReserveMemory(reserve.configuration)
         );
         return (currentLiquidityRate, currentVariableBorrowRate, utilizationRate);
     }
@@ -210,14 +208,11 @@ contract MiniPoolPiReserveInterestRateStrategy is
             // `&& utilizationRate != 0` to avoid 0 division. It's safe since the minipool flow is
             // always owed to a user. Since the debt is repaid as soon as possible if
             // `utilizationRate != 0` then `currentFlow == 0` by the end of the transaction.
-            uint256 reserveFactorComplement = PercentageMath.PERCENTAGE_FACTOR - reserveFactor;
-            if (
-                currentLiquidityRate < minLiquidityRate && utilizationRate != 0
-                    && reserveFactorComplement != 0
-            ) {
+            if (currentLiquidityRate < minLiquidityRate && utilizationRate != 0) {
                 currentLiquidityRate = minLiquidityRate;
-                currentVariableBorrowRate =
-                    currentLiquidityRate.rayDiv(utilizationRate.percentMul(reserveFactorComplement));
+                currentVariableBorrowRate = currentLiquidityRate.rayDiv(
+                    utilizationRate.percentMul(PercentageMath.PERCENTAGE_FACTOR - reserveFactor)
+                );
             }
         }
     }

@@ -9,6 +9,7 @@ import {ILendingPoolAddressesProvider} from
 import {IAToken} from "../../../../contracts/interfaces/IAToken.sol";
 import {IVariableDebtToken} from "../../../../contracts/interfaces/IVariableDebtToken.sol";
 import {ILendingPool} from "../../../../contracts/interfaces/ILendingPool.sol";
+import {IFlowLimiter} from "../../../../contracts/interfaces/base/IFlowLimiter.sol";
 import {VersionedInitializable} from
     "../../../../contracts/protocol/libraries/upgradeability/VersionedInitializable.sol";
 import {Helpers} from "../../../../contracts/protocol/libraries/helpers/Helpers.sol";
@@ -35,6 +36,10 @@ import {LiquidationLogic} from
     "../../../../contracts/protocol/core/lendingpool/logic/LiquidationLogic.sol";
 import {IMiniPoolAddressesProvider} from
     "../../../../contracts/interfaces/IMiniPoolAddressesProvider.sol";
+import {EnumerableSet} from
+    "../../../../lib/openzeppelin-contracts/contracts/utils/structs/EnumerableSet.sol";
+import {IAddressProviderUpdatable} from
+    "../../../../contracts/interfaces/IAddressProviderUpdatable.sol";
 
 /**
  * @title LendingPool contract
@@ -48,13 +53,19 @@ import {IMiniPoolAddressesProvider} from
  *   LendingPoolAddressesProvider
  * @author Cod3x
  */
-contract LendingPool is VersionedInitializable, ILendingPool, LendingPoolStorage {
+contract LendingPool is
+    VersionedInitializable,
+    ILendingPool,
+    LendingPoolStorage,
+    IAddressProviderUpdatable
+{
     using WadRayMath for uint256;
     using PercentageMath for uint256;
     using SafeERC20 for IERC20;
     using ReserveLogic for DataTypes.ReserveData;
     using ReserveConfiguration for DataTypes.ReserveConfigurationMap;
     using UserConfiguration for DataTypes.UserConfigurationMap;
+    using EnumerableSet for EnumerableSet.AddressSet;
 
     uint256 public constant LENDINGPOOL_REVISION = 0x1;
 
@@ -100,6 +111,10 @@ contract LendingPool is VersionedInitializable, ILendingPool, LendingPoolStorage
         return LENDINGPOOL_REVISION;
     }
 
+    constructor() {
+        _blockInitializing();
+    }
+
     /**
      * @dev Function is invoked by the proxy contract when the LendingPool contract is added to the
      * LendingPoolAddressesProvider of the market.
@@ -107,8 +122,8 @@ contract LendingPool is VersionedInitializable, ILendingPool, LendingPoolStorage
      *   on subsequent operations.
      * @param provider The address of the LendingPoolAddressesProvider
      */
-    function initialize(ILendingPoolAddressesProvider provider) public initializer {
-        _addressesProvider = provider;
+    function initialize(address provider) public initializer {
+        _addressesProvider = ILendingPoolAddressesProvider(provider);
         _updateFlashLoanFee(9);
         _maxNumberOfReserves = 128;
     }
@@ -130,6 +145,7 @@ contract LendingPool is VersionedInitializable, ILendingPool, LendingPoolStorage
     {
         DepositLogic.deposit(
             DepositLogic.DepositParams(asset, reserveType, amount, onBehalfOf),
+            _minipoolFlowBorrowing,
             _reserves,
             _usersConfig,
             _addressesProvider
@@ -156,6 +172,7 @@ contract LendingPool is VersionedInitializable, ILendingPool, LendingPoolStorage
     {
         return WithdrawLogic.withdraw(
             WithdrawLogic.withdrawParams(asset, reserveType, amount, to, _reservesCount),
+            _minipoolFlowBorrowing,
             _reserves,
             _usersConfig,
             _reservesList,
@@ -193,6 +210,7 @@ contract LendingPool is VersionedInitializable, ILendingPool, LendingPoolStorage
                 _addressesProvider,
                 _reservesCount
             ),
+            _minipoolFlowBorrowing,
             _reserves,
             _reservesList,
             _usersConfig
@@ -220,6 +238,7 @@ contract LendingPool is VersionedInitializable, ILendingPool, LendingPoolStorage
     {
         return BorrowLogic.repay(
             BorrowLogic.RepayParams(asset, reserveType, amount, onBehalfOf, _addressesProvider),
+            _minipoolFlowBorrowing,
             _reserves,
             _usersConfig
         );
@@ -230,19 +249,39 @@ contract LendingPool is VersionedInitializable, ILendingPool, LendingPoolStorage
      * @param asset The address of the underlying asset of the reserve.
      * @param reserveType Whether the reserve is boosted by a vault.
      * @param amount The amount to repay.
-     * @return The final amount repaid.
+     * @return amountRepaid The final amount repaid.
      */
     function repayWithATokens(address asset, bool reserveType, uint256 amount)
         external
         override
         whenNotPaused
-        returns (uint256)
+        returns (uint256 amountRepaid)
     {
-        return BorrowLogic.repayWithAtokens(
+        amountRepaid = BorrowLogic.repayWithAtokens(
             BorrowLogic.RepayParams(asset, reserveType, amount, msg.sender, _addressesProvider),
+            _minipoolFlowBorrowing,
             _reserves,
             _usersConfig
         );
+
+        // `repayWithATokens()` is used for minipool repayment.
+        if (_isMiniPool(msg.sender) && getCurrentLendingPoolDebt(asset, msg.sender) == 0) {
+            // The Minipool unsubscribes from the LendingPool.
+            _minipoolFlowBorrowing.remove(msg.sender);
+        }
+    }
+
+    /**
+     * @dev Returns the current lending pool debt for a specific asset.
+     * @param asset The address of the asset to check the debt for.
+     * @return The current lending pool debt amount.
+     */
+    function getCurrentLendingPoolDebt(address asset, address minipool)
+        public
+        view
+        returns (uint256)
+    {
+        return IFlowLimiter(_addressesProvider.getFlowLimiter()).currentFlow(asset, minipool);
     }
 
     /**
@@ -306,6 +345,7 @@ contract LendingPool is VersionedInitializable, ILendingPool, LendingPoolStorage
 
         LiquidationLogic.liquidationCall(
             _reserves,
+            _minipoolFlowBorrowing,
             _usersConfig,
             _reservesList,
             LiquidationLogic.liquidationCallParams(
@@ -357,6 +397,7 @@ contract LendingPool is VersionedInitializable, ILendingPool, LendingPoolStorage
                 modes: modes,
                 params: params
             }),
+            _minipoolFlowBorrowing,
             _reservesList,
             _usersConfig,
             _reserves
@@ -388,8 +429,12 @@ contract LendingPool is VersionedInitializable, ILendingPool, LendingPoolStorage
                 _addressesProvider,
                 _reservesCount
             ),
+            _minipoolFlowBorrowing,
             _reserves
         );
+
+        // The Minipool subscribes to the LendingPool.
+        _minipoolFlowBorrowing.add(msg.sender);
     }
 
     /**
@@ -784,12 +829,12 @@ contract LendingPool is VersionedInitializable, ILendingPool, LendingPoolStorage
         bool reserveAlreadyAdded = _reserves[asset][reserveType].id != 0
             || (_reservesList[0].asset == asset && _reservesList[0].reserveType == reserveType);
 
-        if (!reserveAlreadyAdded) {
-            _reserves[asset][reserveType].id = uint8(reservesCount);
-            _reservesList[reservesCount] = DataTypes.ReserveReference(asset, reserveType);
+        require(!reserveAlreadyAdded, Errors.LP_RESERVE_ALREADY_ADDED);
 
-            _reservesCount = reservesCount + 1;
-        }
+        _reserves[asset][reserveType].id = uint8(reservesCount);
+        _reservesList[reservesCount] = DataTypes.ReserveReference(asset, reserveType);
+
+        _reservesCount = reservesCount + 1;
     }
 
     /**
@@ -810,6 +855,42 @@ contract LendingPool is VersionedInitializable, ILendingPool, LendingPoolStorage
      */
     function _updateFlashLoanFee(uint128 flashLoanPremiumTotal) internal {
         _flashLoanPremiumTotal = flashLoanPremiumTotal;
+
+        emit FlashLoanFeeUpdated(flashLoanPremiumTotal);
+    }
+
+    /**
+     * @notice Synchronizes the reserve indexes state for a specific asset
+     * @dev Only callable by the LendingPoolConfigurator
+     * @param asset The address of the underlying asset of the reserve
+     * @param reserveType Whether the reserve is boosted by a vault
+     */
+    function syncIndexesState(address asset, bool reserveType)
+        external
+        virtual
+        override
+        onlyLendingPoolConfigurator
+    {
+        DataTypes.ReserveData storage reserve = _reserves[asset][reserveType];
+
+        reserve.updateState();
+    }
+
+    /**
+     * @notice Synchronizes the interest rates state for a specific asset
+     * @dev Only callable by the LendingPoolConfigurator
+     * @param asset The address of the underlying asset of the reserve
+     * @param reserveType Whether the reserve is boosted by a vault
+     */
+    function syncRatesState(address asset, bool reserveType)
+        external
+        virtual
+        override
+        onlyLendingPoolConfigurator
+    {
+        DataTypes.ReserveData storage reserve = _reserves[asset][reserveType];
+
+        reserve.updateInterestRates(_minipoolFlowBorrowing, asset, reserve.aTokenAddress, 0, 0);
     }
 
     /**
@@ -840,5 +921,18 @@ contract LendingPool is VersionedInitializable, ILendingPool, LendingPoolStorage
         onlyLendingPoolConfigurator
     {
         IAToken(_reserves[asset][reserveType].aTokenAddress).setTreasury(treasury);
+    }
+
+    /**
+     * @notice Returns the non-rebasing aToken address associated with a aToken.
+     * @param aToken The address of the aToken.
+     * @return The address of the non-rebasing aToken.
+     */
+    function getATokenNonRebasingFromAtoken(address aToken) external view returns (address) {
+        return IAToken(aToken).WRAPPER_ADDRESS();
+    }
+
+    function getMinipoolFlowBorrowing() external view returns (address[] memory) {
+        return _minipoolFlowBorrowing.values();
     }
 }

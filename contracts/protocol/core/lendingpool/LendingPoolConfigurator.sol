@@ -21,6 +21,9 @@ import {IInitializableAToken} from "../../../../contracts/interfaces/base/IIniti
 import {IRewarder} from "../../../../contracts/interfaces/IRewarder.sol";
 import {ILendingPoolConfigurator} from
     "../../../../contracts/interfaces/ILendingPoolConfigurator.sol";
+import {IAToken} from "../../../../contracts/interfaces/IAToken.sol";
+import {IAddressProviderUpdatable} from
+    "../../../../contracts/interfaces/IAddressProviderUpdatable.sol";
 
 /**
  * @title LendingPoolConfigurator contract
@@ -28,7 +31,11 @@ import {ILendingPoolConfigurator} from
  * @dev Implements the configuration methods for the Cod3x Lend protocol.
  * @notice This contract handles the configuration of reserves and other protocol parameters.
  */
-contract LendingPoolConfigurator is VersionedInitializable, ILendingPoolConfigurator {
+contract LendingPoolConfigurator is
+    VersionedInitializable,
+    ILendingPoolConfigurator,
+    IAddressProviderUpdatable
+{
     using PercentageMath for uint256;
     using ReserveConfiguration for DataTypes.ReserveConfigurationMap;
 
@@ -41,12 +48,19 @@ contract LendingPoolConfigurator is VersionedInitializable, ILendingPoolConfigur
     /// @dev The main lending pool contract reference.
     ILendingPool internal pool;
 
+    /// @dev Mapping to track if an address is a registered aToken or NonRebasingAToken.
+    mapping(address => bool) internal isAToken;
+
+    constructor() {
+        _blockInitializing();
+    }
+
     /**
      * @dev Throws if the caller is not the pool admin.
      * @notice Restricts function access to only the configured pool admin address.
      */
     modifier onlyPoolAdmin() {
-        require(addressesProvider.getPoolAdmin() == msg.sender, Errors.CALLER_NOT_POOL_ADMIN);
+        require(addressesProvider.getPoolAdmin() == msg.sender, Errors.VL_CALLER_NOT_POOL_ADMIN);
         _;
     }
 
@@ -57,7 +71,7 @@ contract LendingPoolConfigurator is VersionedInitializable, ILendingPoolConfigur
     modifier onlyEmergencyAdmin() {
         require(
             addressesProvider.getEmergencyAdmin() == msg.sender,
-            Errors.LPC_CALLER_NOT_EMERGENCY_ADMIN
+            Errors.VL_CALLER_NOT_EMERGENCY_ADMIN
         );
         _;
     }
@@ -74,8 +88,8 @@ contract LendingPoolConfigurator is VersionedInitializable, ILendingPoolConfigur
      * @dev Initializes the lending pool configurator contract.
      * @param provider The address of the `ILendingPoolAddressesProvider` contract.
      */
-    function initialize(ILendingPoolAddressesProvider provider) public initializer {
-        addressesProvider = provider;
+    function initialize(address provider) public initializer {
+        addressesProvider = ILendingPoolAddressesProvider(provider);
         pool = ILendingPool(addressesProvider.getLendingPool());
     }
 
@@ -150,6 +164,10 @@ contract LendingPoolConfigurator is VersionedInitializable, ILendingPoolConfigur
         currentConfig.setReserveType(input.reserveType);
 
         pool.setConfiguration(input.underlyingAsset, input.reserveType, currentConfig.data);
+
+        isAToken[aTokenProxyAddress] = true;
+        // `getATokenNonRebasingFromAtoken()` because call fallback function from the proxy admin reverts.
+        isAToken[pool.getATokenNonRebasingFromAtoken(aTokenProxyAddress)] = true;
 
         emit ReserveInitialized(
             input.underlyingAsset,
@@ -294,14 +312,13 @@ contract LendingPoolConfigurator is VersionedInitializable, ILendingPoolConfigur
         // Validation of the parameters: the `ltv` can
         // only be lower or equal than the `liquidationThreshold`
         // (otherwise a loan against the asset would cause instantaneous liquidation).
-        require(ltv <= liquidationThreshold, Errors.LPC_INVALID_CONFIGURATION);
+        require(ltv <= liquidationThreshold, Errors.VL_INVALID_CONFIGURATION);
 
         if (liquidationThreshold != 0) {
             // Liquidation bonus must be bigger than 100.00%, otherwise the liquidator would receive less
             // collateral than needed to cover the debt.
             require(
-                liquidationBonus > PercentageMath.PERCENTAGE_FACTOR,
-                Errors.LPC_INVALID_CONFIGURATION
+                liquidationBonus > PercentageMath.PERCENTAGE_FACTOR, Errors.VL_INVALID_CONFIGURATION
             );
 
             // If `threshold` * `bonus` is less than `PERCENTAGE_FACTOR`, it's guaranteed that at the moment
@@ -309,10 +326,10 @@ contract LendingPoolConfigurator is VersionedInitializable, ILendingPoolConfigur
             require(
                 liquidationThreshold.percentMul(liquidationBonus)
                     <= PercentageMath.PERCENTAGE_FACTOR,
-                Errors.LPC_INVALID_CONFIGURATION
+                Errors.VL_INVALID_CONFIGURATION
             );
         } else {
-            require(liquidationBonus == 0, Errors.LPC_INVALID_CONFIGURATION);
+            require(liquidationBonus == 0, Errors.VL_INVALID_CONFIGURATION);
             // If the `liquidationThreshold` is being set to 0,
             // the reserve is being disabled as collateral. To do so,
             // we need to ensure no liquidity is deposited.
@@ -454,12 +471,16 @@ contract LendingPoolConfigurator is VersionedInitializable, ILendingPoolConfigur
         external
         onlyPoolAdmin
     {
+        pool.syncIndexesState(asset, reserveType);
+
         DataTypes.ReserveConfigurationMap memory currentConfig =
             pool.getConfiguration(asset, reserveType);
 
         currentConfig.setCod3xReserveFactor(reserveFactor);
 
         pool.setConfiguration(asset, reserveType, currentConfig.data);
+
+        pool.syncRatesState(asset, reserveType);
 
         emit ReserveFactorChanged(asset, reserveType, reserveFactor);
     }
@@ -499,7 +520,12 @@ contract LendingPoolConfigurator is VersionedInitializable, ILendingPoolConfigur
         bool reserveType,
         address rateStrategyAddress
     ) external onlyPoolAdmin {
+        pool.syncIndexesState(asset, reserveType);
+
         pool.setReserveInterestRateStrategyAddress(asset, reserveType, rateStrategyAddress);
+
+        pool.syncRatesState(asset, reserveType);
+
         emit ReserveInterestRateStrategyChanged(asset, reserveType, rateStrategyAddress);
     }
 
@@ -522,7 +548,7 @@ contract LendingPoolConfigurator is VersionedInitializable, ILendingPoolConfigur
     function updateFlashloanPremiumTotal(uint128 newFlashloanPremiumTotal) external onlyPoolAdmin {
         require(
             newFlashloanPremiumTotal <= PercentageMath.PERCENTAGE_FACTOR,
-            Errors.LPC_FLASHLOAN_PREMIUM_INVALID
+            Errors.VL_FLASHLOAN_PREMIUM_INVALID
         );
         uint128 oldFlashloanPremiumTotal = pool.FLASHLOAN_PREMIUM_TOTAL();
         pool.updateFlashLoanFee(newFlashloanPremiumTotal);
@@ -577,7 +603,7 @@ contract LendingPoolConfigurator is VersionedInitializable, ILendingPoolConfigur
 
         require(
             availableLiquidity == 0 && reserveData.currentLiquidityRate == 0,
-            Errors.LPC_RESERVE_LIQUIDITY_NOT_0
+            Errors.VL_RESERVE_LIQUIDITY_NOT_0
         );
     }
 
@@ -684,5 +710,15 @@ contract LendingPoolConfigurator is VersionedInitializable, ILendingPoolConfigur
         onlyPoolAdmin
     {
         pool.setTreasury(asset, reserveType, rewarder);
+    }
+
+    /**
+     * @dev Checks if an address is a registered aToken or nonRebasingAToken.
+     * This function is mainly for the Oracle.
+     * @param token The address to check.
+     * @return bool True if the address is a registered aToken, false otherwise.
+     */
+    function getIsAToken(address token) external view returns (bool) {
+        return isAToken[token];
     }
 }

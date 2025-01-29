@@ -204,7 +204,7 @@ library ValidationLogic {
 
         // Add the current already borrowed amount to the amount requested to calculate the total collateral needed.
         vars.amountOfCollateralNeededETH =
-            (vars.userBorrowBalanceETH + validateParams.amountInETH).percentDiv(vars.currentLtv); //LTV is calculated in percentage
+            (vars.userBorrowBalanceETH + validateParams.amountInETH).percentDivUp(vars.currentLtv); //LTV is calculated in percentage
 
         require(
             vars.amountOfCollateralNeededETH <= vars.userCollateralBalanceETH,
@@ -301,13 +301,15 @@ library ValidationLogic {
         mapping(address => mapping(bool => DataTypes.ReserveData)) storage reserves,
         bool[] memory reserveType,
         address[] memory assets,
-        uint256[] memory amounts
+        uint256[] memory amounts,
+        uint256[] memory modes
     ) internal view {
         uint256 len = assets.length;
         require(len == amounts.length, Errors.VL_INCONSISTENT_FLASHLOAN_PARAMS);
         require(len == reserveType.length, Errors.VL_INCONSISTENT_FLASHLOAN_PARAMS);
+        require(len == modes.length, Errors.VL_INCONSISTENT_FLASHLOAN_PARAMS);
 
-        for (uint256 i = 0; i < assets.length; i++) {
+        for (uint256 i = 0; i < len; i++) {
             validateFlashloanSimple(reserves[assets[i]][reserveType[i]]);
         }
     }

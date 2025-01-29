@@ -54,7 +54,8 @@ contract OracleTest is Common {
             timeouts,
             address(0),
             address(0),
-            BASE_CURRENCY_UNIT
+            BASE_CURRENCY_UNIT,
+            address(deployedContracts.lendingPoolConfigurator)
         );
 
         commonContracts.oracle.setFallbackOracle(address(fallbackOracle));
@@ -77,7 +78,13 @@ contract OracleTest is Common {
         (, commonContracts.aggregators, timeouts) = fixture_getTokenPriceFeeds(erc20tokens, prices);
 
         Oracle _oracle = new Oracle(
-            tokens, commonContracts.aggregators, timeouts, address(0), usdcAddress, baseCurrency
+            tokens,
+            commonContracts.aggregators,
+            timeouts,
+            address(0),
+            usdcAddress,
+            baseCurrency,
+            address(deployedContracts.lendingPoolConfigurator)
         );
 
         assertEq(_oracle.getAssetPrice(usdcAddress), baseCurrency);

@@ -42,7 +42,7 @@ library DataTypes {
      * @param currentLiquidityRate Current supply interest rate, expressed in ray.
      * @param currentVariableBorrowRate Current variable borrow interest rate, expressed in ray.
      * @param lastUpdateTimestamp Timestamp of the last reserve update.
-     * @param aTokenAddress Address of the ERC6909 token contract for `aTokens`.
+     * @param aErc6909 Address of the ERC6909 token contract for `aTokens`.
      * @param aTokenID ID of the ERC6909 `aToken`.
      * @param variableDebtTokenID ID of the ERC6909 debt token.
      * @param interestRateStrategyAddress Address of the interest rate strategy.
@@ -55,7 +55,7 @@ library DataTypes {
         uint128 currentLiquidityRate;
         uint128 currentVariableBorrowRate;
         uint40 lastUpdateTimestamp;
-        address aTokenAddress;
+        address aErc6909;
         uint256 aTokenID;
         uint256 variableDebtTokenID;
         address interestRateStrategyAddress;

@@ -518,8 +518,9 @@ abstract contract RewardsDistributor6909 is IMiniPoolRewardsDistributor, Ownable
         uint256 totalBalance,
         uint8 decimals
     ) internal view returns (uint256) {
+        // emissionPerSecond equal 1 leads to 0 accrued rewards due to rounding down
         if (
-            emissionPerSecond == 0 || totalBalance == 0 || lastUpdateTimestamp == block.timestamp
+            emissionPerSecond <= 1 || totalBalance == 0 || lastUpdateTimestamp == block.timestamp
                 || lastUpdateTimestamp >= distributionEnd
         ) {
             return currentIndex;

@@ -63,7 +63,15 @@ abstract contract RewardsController is RewardsDistributor, IRewardsController {
      * @param addressesProvider Address of the MiniPool addresses provider.
      */
     function setMiniPoolAddressesProvider(address addressesProvider) external onlyOwner {
+        require(address(addressesProvider) != address(0), "INVALID_ADDRESS");
+        require(address(_addressesProvider) == address(0), "ALREADY_SET");
         _addressesProvider = IMiniPoolAddressesProvider(addressesProvider);
+
+        emit MiniPoolAddressesProviderSet(addressesProvider);
+    }
+
+    function getMiniPoolAddressesProvider() external view returns (address) {
+        return address(_addressesProvider);
     }
 
     /**
@@ -82,6 +90,8 @@ abstract contract RewardsController is RewardsDistributor, IRewardsController {
                 setDefaultForwarder(aToken6909);
             }
         }
+
+        emit RewardForwarderSet(forwarder);
     }
     /**
      * @notice Returns the authorized claimer address for a specific user.
@@ -382,7 +392,7 @@ abstract contract RewardsController is RewardsDistributor, IRewardsController {
      * @param amount Amount of rewards to transfer.
      */
     function _transferRewards(address to, address reward, uint256 amount) internal {
-        bool success = transferRewards(to, reward, amount);
+        bool success = __transferRewards(to, reward, amount);
         require(success == true, "TRANSFER_ERROR");
     }
 
@@ -393,7 +403,7 @@ abstract contract RewardsController is RewardsDistributor, IRewardsController {
      * @param amount Amount of rewards to transfer.
      * @return success Boolean indicating if transfer was successful.
      */
-    function transferRewards(address to, address reward, uint256 amount)
+    function __transferRewards(address to, address reward, uint256 amount)
         internal
         virtual
         returns (bool);

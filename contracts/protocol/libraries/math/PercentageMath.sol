@@ -50,4 +50,21 @@ library PercentageMath {
 
         return (value * PERCENTAGE_FACTOR + halfPercentage) / percentage;
     }
+
+    /**
+     * @dev Executes a percentage division, rounding up.
+     * @param value The value of which the percentage needs to be calculated.
+     * @param percentage The percentage of the value to be calculated.
+     * @return The `value` divided by the `percentage`, rounded up.
+     */
+    function percentDivUp(uint256 value, uint256 percentage) internal pure returns (uint256) {
+        require(percentage != 0, Errors.MATH_DIVISION_BY_ZERO);
+
+        require(
+            value <= (type(uint256).max - percentage) / PERCENTAGE_FACTOR,
+            Errors.MATH_MULTIPLICATION_OVERFLOW
+        );
+
+        return (value * PERCENTAGE_FACTOR + percentage) / percentage;
+    }
 }

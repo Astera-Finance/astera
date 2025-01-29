@@ -207,7 +207,6 @@ contract PropertiesBase is PropertiesAsserts, MarketParams {
         profitHandler = address(0xCCCC);
 
         pool = new MockLendingPool();
-        pool.initialize(lendingPoolProvider);
         lendingPoolProvider.setLendingPoolImpl(address(pool));
         pool = MockLendingPool(lendingPoolProvider.getLendingPool());
 
@@ -227,7 +226,8 @@ contract PropertiesBase is PropertiesAsserts, MarketParams {
             timeouts,
             FALLBACK_ORACLE,
             BASE_CURRENCY,
-            BASE_CURRENCY_UNIT
+            BASE_CURRENCY_UNIT,
+            address(poolConfigurator)
         );
 
         lendingPoolProvider.setPriceOracle(address(oracle));
@@ -322,11 +322,11 @@ contract PropertiesBase is PropertiesAsserts, MarketParams {
             mockedVaults.push(new MockVaultUnit(IERC20(address(assets[i]))));
             if (i % 2 == 0) {
                 address _aToken = address(aTokens[i]);
+                poolConfigurator.setProfitHandler(_aToken, profitHandler);
                 poolConfigurator.setVault(_aToken, address(mockedVaults[i]));
                 poolConfigurator.setFarmingPct(_aToken, DEFAULT_FARMING_PCT);
                 poolConfigurator.setClaimingThreshold(_aToken, DEFAULT_CLAIMING_THRESHOLD);
                 poolConfigurator.setFarmingPctDrift(_aToken, DEFAULT_FARMING_PCT_DRIFT);
-                poolConfigurator.setProfitHandler(_aToken, profitHandler);
             }
         }
 
@@ -381,7 +381,8 @@ contract PropertiesBase is PropertiesAsserts, MarketParams {
         for (uint256 i = 0; i < totalNbMinipool; i++) {
             uint256 _minipoolId =
                 miniPoolProvider.deployMiniPool(minipoolImpl, aToken6909Impl, address(this));
-            ATokenERC6909 _aToken6909 = ATokenERC6909(miniPoolProvider.getAToken6909(_minipoolId));
+            ATokenERC6909 _aToken6909 =
+                ATokenERC6909(miniPoolProvider.getMiniPoolToAERC6909(_minipoolId));
             MockMiniPool _miniPool = MockMiniPool(miniPoolProvider.getMiniPool(_minipoolId));
 
             assert(i == _minipoolId);
@@ -551,7 +552,7 @@ contract PropertiesBase is PropertiesAsserts, MarketParams {
             aTokens[randAsset].totalSupply() * 2
         );
 
-        miniPoolConfigurator.setFlowLimit(asset, miniPool, randLimit);
+        miniPoolConfigurator.setFlowLimit(asset, randLimit, IMiniPool(miniPool));
 
         assertWithMsg(
             flowLimiter.getFlowLimit(asset, miniPool) == randLimit

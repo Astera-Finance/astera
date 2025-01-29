@@ -192,8 +192,6 @@ interface ILendingPoolConfigurator {
         uint128 oldFlashloanPremiumTotal, uint128 newFlashloanPremiumTotal
     );
 
-    function initialize(ILendingPoolAddressesProvider provider) external;
-
     function batchInitReserve(InitReserveInput[] calldata input) external;
 
     function updateAToken(UpdateATokenInput calldata input) external;
@@ -256,4 +254,6 @@ interface ILendingPoolConfigurator {
     function setRewarderForReserve(address asset, bool reserveType, address rewarder) external;
 
     function setTreasury(address asset, bool reserveType, address rewarder) external;
+
+    function getIsAToken(address token) external view returns (bool);
 }

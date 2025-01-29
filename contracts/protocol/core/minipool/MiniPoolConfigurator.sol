@@ -16,6 +16,8 @@ import {IMiniPoolAddressesProvider} from
 import {IAERC6909} from "../../../../contracts/interfaces/IAERC6909.sol";
 import {IMiniPoolConfigurator} from "../../../../contracts/interfaces/IMiniPoolConfigurator.sol";
 import {IMiniPool} from "../../../../contracts/interfaces/IMiniPool.sol";
+import {IAddressProviderUpdatable} from
+    "../../../../contracts/interfaces/IAddressProviderUpdatable.sol";
 
 /**
  * @title MiniPoolConfigurator contract.
@@ -23,12 +25,20 @@ import {IMiniPool} from "../../../../contracts/interfaces/IMiniPool.sol";
  * @notice Implements the configuration methods for the Cod3x Lend MiniPool protocol.
  * @dev This contract manages reserve configurations, pool parameters, and access controls.
  */
-contract MiniPoolConfigurator is VersionedInitializable, IMiniPoolConfigurator {
+contract MiniPoolConfigurator is
+    VersionedInitializable,
+    IMiniPoolConfigurator,
+    IAddressProviderUpdatable
+{
     using PercentageMath for uint256;
     using ReserveConfiguration for DataTypes.ReserveConfigurationMap;
 
     uint256 internal constant CONFIGURATOR_REVISION = 0x1;
     IMiniPoolAddressesProvider public addressesProvider;
+
+    constructor() {
+        _blockInitializing();
+    }
 
     /**
      * @dev Only allows pool admin to call the function.
@@ -36,7 +46,7 @@ contract MiniPoolConfigurator is VersionedInitializable, IMiniPoolConfigurator {
      */
     modifier onlyPoolAdmin(address pool) {
         uint256 id = addressesProvider.getMiniPoolId(pool);
-        require(addressesProvider.getPoolAdmin(id) == msg.sender, Errors.CALLER_NOT_POOL_ADMIN);
+        require(addressesProvider.getPoolAdmin(id) == msg.sender, Errors.VL_CALLER_NOT_POOL_ADMIN);
         _;
     }
 
@@ -44,7 +54,7 @@ contract MiniPoolConfigurator is VersionedInitializable, IMiniPoolConfigurator {
      * @dev Only allows main pool admin to call the function.
      */
     modifier onlyMainPoolAdmin() {
-        require(addressesProvider.getMainPoolAdmin() == msg.sender, Errors.CALLER_NOT_POOL_ADMIN);
+        require(addressesProvider.getMainPoolAdmin() == msg.sender, Errors.VL_CALLER_NOT_POOL_ADMIN);
         _;
     }
 
@@ -54,7 +64,7 @@ contract MiniPoolConfigurator is VersionedInitializable, IMiniPoolConfigurator {
     modifier onlyEmergencyAdmin() {
         require(
             addressesProvider.getEmergencyAdmin() == msg.sender,
-            Errors.LPC_CALLER_NOT_EMERGENCY_ADMIN
+            Errors.VL_CALLER_NOT_EMERGENCY_ADMIN
         );
         _;
     }
@@ -71,8 +81,8 @@ contract MiniPoolConfigurator is VersionedInitializable, IMiniPoolConfigurator {
      * @dev Initializes the MiniPoolConfigurator.
      * @param provider The address of the MiniPoolAddressesProvider.
      */
-    function initialize(IMiniPoolAddressesProvider provider) public initializer {
-        addressesProvider = provider;
+    function initialize(address provider) public initializer {
+        addressesProvider = IMiniPoolAddressesProvider(provider);
     }
 
     /*___ Only Main Pool ___*/
@@ -115,7 +125,7 @@ contract MiniPoolConfigurator is VersionedInitializable, IMiniPoolConfigurator {
     {
         require(
             newFlashloanPremiumTotal <= PercentageMath.PERCENTAGE_FACTOR,
-            Errors.LPC_FLASHLOAN_PREMIUM_INVALID
+            Errors.VL_FLASHLOAN_PREMIUM_INVALID
         );
         uint128 oldFlashloanPremiumTotal = uint128(pool.FLASHLOAN_PREMIUM_TOTAL());
 
@@ -134,16 +144,17 @@ contract MiniPoolConfigurator is VersionedInitializable, IMiniPoolConfigurator {
     /**
      * @dev Sets the flow limit for an asset in a MiniPool.
      * @param asset The address of the asset.
-     * @param miniPool The address of the MiniPool.
      * @param limit The new flow limit value.
+     * @param pool The MiniPool instance to update.
      */
-    function setFlowLimit(address asset, address miniPool, uint256 limit)
-        public
-        onlyMainPoolAdmin
-    {
-        addressesProvider.setFlowLimit(asset, miniPool, limit);
+    function setFlowLimit(address asset, uint256 limit, IMiniPool pool) public onlyMainPoolAdmin {
+        pool.syncIndexesState(asset);
 
-        emit FlowLimitUpdated(asset, miniPool, limit);
+        addressesProvider.setFlowLimit(asset, address(pool), limit);
+
+        pool.syncRatesState(asset);
+
+        emit FlowLimitUpdated(asset, address(pool), limit);
     }
 
     /**
@@ -157,7 +168,12 @@ contract MiniPoolConfigurator is VersionedInitializable, IMiniPoolConfigurator {
         address rateStrategyAddress,
         IMiniPool pool
     ) external onlyMainPoolAdmin {
+        pool.syncIndexesState(asset);
+
         pool.setReserveInterestRateStrategyAddress(asset, rateStrategyAddress);
+
+        pool.syncRatesState(asset);
+
         emit ReserveInterestRateStrategyChanged(asset, rateStrategyAddress);
     }
 
@@ -171,11 +187,15 @@ contract MiniPoolConfigurator is VersionedInitializable, IMiniPoolConfigurator {
         external
         onlyMainPoolAdmin
     {
+        pool.syncIndexesState(asset);
+
         DataTypes.ReserveConfigurationMap memory currentConfig = pool.getConfiguration(asset);
 
         currentConfig.setCod3xReserveFactor(reserveFactor);
 
         pool.setConfiguration(asset, currentConfig.data);
+
+        pool.syncRatesState(asset);
 
         emit Cod3xReserveFactorChanged(asset, reserveFactor);
     }
@@ -302,14 +322,13 @@ contract MiniPoolConfigurator is VersionedInitializable, IMiniPoolConfigurator {
         // Validation of the parameters: The LTV can
         // Only be lower or equal than the liquidation threshold
         // (Otherwise a loan against the asset would cause instantaneous liquidation).
-        require(ltv <= liquidationThreshold, Errors.LPC_INVALID_CONFIGURATION);
+        require(ltv <= liquidationThreshold, Errors.VL_INVALID_CONFIGURATION);
 
         if (liquidationThreshold != 0) {
             // Liquidation bonus must be bigger than 100.00%, otherwise the liquidator would receive less
             // Collateral than needed to cover the debt.
             require(
-                liquidationBonus > PercentageMath.PERCENTAGE_FACTOR,
-                Errors.LPC_INVALID_CONFIGURATION
+                liquidationBonus > PercentageMath.PERCENTAGE_FACTOR, Errors.VL_INVALID_CONFIGURATION
             );
 
             // If threshold * bonus is less than PERCENTAGE_FACTOR, it's guaranteed that at the moment
@@ -317,10 +336,10 @@ contract MiniPoolConfigurator is VersionedInitializable, IMiniPoolConfigurator {
             require(
                 liquidationThreshold.percentMul(liquidationBonus)
                     <= PercentageMath.PERCENTAGE_FACTOR,
-                Errors.LPC_INVALID_CONFIGURATION
+                Errors.VL_INVALID_CONFIGURATION
             );
         } else {
-            require(liquidationBonus == 0, Errors.LPC_INVALID_CONFIGURATION);
+            require(liquidationBonus == 0, Errors.VL_INVALID_CONFIGURATION);
             // If the liquidation threshold is being set to 0,
             // The reserve is being disabled as collateral. To do so,
             // We need to ensure no liquidity is deposited.
@@ -467,11 +486,15 @@ contract MiniPoolConfigurator is VersionedInitializable, IMiniPoolConfigurator {
         external
         onlyPoolAdmin(address(pool))
     {
+        pool.syncIndexesState(asset);
+
         DataTypes.ReserveConfigurationMap memory currentConfig = pool.getConfiguration(asset);
 
         currentConfig.setMinipoolOwnerReserveFactor(reserveFactor);
 
         pool.setConfiguration(asset, currentConfig.data);
+
+        pool.syncRatesState(asset);
 
         emit MinipoolOwnerReserveFactorChanged(asset, reserveFactor);
     }
@@ -484,11 +507,14 @@ contract MiniPoolConfigurator is VersionedInitializable, IMiniPoolConfigurator {
     function _checkNoLiquidity(address asset, IMiniPool pool) internal view {
         DataTypes.MiniPoolReserveData memory reserveData = pool.getReserveData(asset);
 
-        uint256 availableLiquidity = IERC20Detailed(asset).balanceOf(reserveData.aTokenAddress);
+        IAERC6909 aToken6909 = IAERC6909(reserveData.aErc6909);
+        (uint256 aTokenID, uint256 debtTokenID,) = aToken6909.getIdForUnderlying(asset);
+
+        bool hasNoShares = aToken6909.scaledTotalSupply(aTokenID) == 0
+            && aToken6909.scaledTotalSupply(debtTokenID) == 0;
 
         require(
-            availableLiquidity == 0 && reserveData.currentLiquidityRate == 0,
-            Errors.LPC_RESERVE_LIQUIDITY_NOT_0
+            hasNoShares && reserveData.currentLiquidityRate == 0, Errors.VL_RESERVE_LIQUIDITY_NOT_0
         );
     }
 }

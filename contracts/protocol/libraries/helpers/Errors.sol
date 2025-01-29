@@ -8,17 +8,14 @@ pragma solidity 0.8.23;
  * @dev Error messages prefix glossary:
  *  - VL = ValidationLogic
  *  - MATH = Math libraries
- *  - CT = Common errors between tokens
- *  - AT = AToken
- *  - LP = LendingPool
- *  - LPC = LendingPoolConfiguration
+ *  - AT = AToken/AToken6909
+ *  - LP = Pool
  *  - RL = ReserveLogic
  *  - LPCM = Liquidation
- *  - P = Pausable
  *  - DP = DataProvider
  *  - O = Oracle
  *  - PAP = PoolAddressesProvider
- *  - IR = Interest rate strategies
+ *  - RC = Reserve configuration
  */
 library Errors {
     /// @notice Amount must be greater than 0.
@@ -53,122 +50,139 @@ library Errors {
     string public constant VL_UNDERLYING_BALANCE_NOT_GREATER_THAN_0 = "14";
     /// @notice User deposit is already being used as collateral.
     string public constant VL_DEPOSIT_ALREADY_IN_USE = "15";
+    /// @notice Inconsistent flashloan parameters.
+    string public constant VL_INCONSISTENT_FLASHLOAN_PARAMS = "16";
+    /// @notice Deposit cap reached.
+    string public constant VL_DEPOSIT_CAP_REACHED = "17";
+    /// @notice Reserve is inactive.
+    string public constant VL_RESERVE_INACTIVE = "18";
+    /// @notice Flashloan is disabled.
+    string public constant VL_FLASHLOAN_DISABLED = "19";
+    /// @notice Tranched asset cannot be flashloaned.
+    string public constant VL_TRANCHED_ASSET_CANNOT_BE_FLASHLOAN = "20";
     /// @notice The caller must be the pool admin.
-    string public constant CALLER_NOT_POOL_ADMIN = "16";
-    /// @notice User borrows on behalf, but allowance is too small.
-    string public constant BORROW_ALLOWANCE_NOT_ENOUGH = "17";
-    /// @notice There is not enough liquidity available to borrow.
-    string public constant LP_NOT_ENOUGH_LIQUIDITY_TO_BORROW = "18";
-    /// @notice The caller of the function is not the lending pool configurator.
-    string public constant LP_CALLER_NOT_LENDING_POOL_CONFIGURATOR = "19";
-    /// @notice The caller of this function must be a lending pool.
-    string public constant CT_CALLER_MUST_BE_LENDING_POOL = "20";
-    /// @notice Reserve has already been initialized.
-    string public constant RL_RESERVE_ALREADY_INITIALIZED = "21";
-    /// @notice Reserve is not initialized.
-    string public constant RL_RESERVE_NOT_INITIALIZED = "22";
+    string public constant VL_CALLER_NOT_POOL_ADMIN = "21";
+    /// @notice U0 is greater than RAY.
+    string public constant VL_U0_GREATER_THAN_RAY = "22";
+    /// @notice Access restricted to lending pool.
+    string public constant VL_ACCESS_RESTRICTED_TO_LENDING_POOL = "23";
     /// @notice The liquidity of the reserve needs to be 0.
-    string public constant LPC_RESERVE_LIQUIDITY_NOT_0 = "23";
+    string public constant VL_RESERVE_LIQUIDITY_NOT_0 = "24";
     /// @notice Invalid risk parameters for the reserve.
-    string public constant LPC_INVALID_CONFIGURATION = "24";
+    string public constant VL_INVALID_CONFIGURATION = "25";
     /// @notice The caller must be the emergency admin.
-    string public constant LPC_CALLER_NOT_EMERGENCY_ADMIN = "25";
-    /// @notice Health factor is not below the threshold.
-    string public constant LPCM_HEALTH_FACTOR_NOT_BELOW_THRESHOLD = "26";
-    /// @notice The collateral chosen cannot be liquidated.
-    string public constant LPCM_COLLATERAL_CANNOT_BE_LIQUIDATED = "27";
-    /// @notice User did not borrow the specified currency.
-    string public constant LPCM_SPECIFIED_CURRENCY_NOT_BORROWED_BY_USER = "28";
-    /// @notice There is not enough liquidity available to liquidate.
-    string public constant LPCM_NOT_ENOUGH_LIQUIDITY_TO_LIQUIDATE = "29";
+    string public constant VL_CALLER_NOT_EMERGENCY_ADMIN = "26";
+    /// @notice Invalid flashloan premium.
+    string public constant VL_FLASHLOAN_PREMIUM_INVALID = "27";
+    /// @notice Invalid interest rate mode.
+    string public constant VL_INVALID_INTEREST_RATE_MODE = "28";
+
+    /// @notice Division by zero.
+    string public constant MATH_DIVISION_BY_ZERO = "29";
     /// @notice Multiplication overflow.
     string public constant MATH_MULTIPLICATION_OVERFLOW = "30";
-    /// @notice Addition overflow.
-    string public constant MATH_ADDITION_OVERFLOW = "31";
-    /// @notice Division by zero.
-    string public constant MATH_DIVISION_BY_ZERO = "32";
-    /// @notice Liquidity index overflows uint128.
-    string public constant RL_LIQUIDITY_INDEX_OVERFLOW = "33";
-    /// @notice Variable borrow index overflows uint128.
-    string public constant RL_VARIABLE_BORROW_INDEX_OVERFLOW = "34";
-    /// @notice Liquidity rate overflows uint128.
-    string public constant RL_LIQUIDITY_RATE_OVERFLOW = "35";
-    /// @notice Variable borrow rate overflows uint128.
-    string public constant RL_VARIABLE_BORROW_RATE_OVERFLOW = "36";
+
     /// @notice Invalid amount to mint.
-    string public constant CT_INVALID_MINT_AMOUNT = "37";
+    string public constant AT_INVALID_MINT_AMOUNT = "31";
     /// @notice Invalid amount to burn.
-    string public constant CT_INVALID_BURN_AMOUNT = "38";
-    /// @notice Caller must be an aToken.
-    string public constant LP_CALLER_MUST_BE_AN_ATOKEN = "39";
-    /// @notice Pool is paused.
-    string public constant LP_IS_PAUSED = "40";
-    /// @notice No more reserves allowed.
-    string public constant LP_NO_MORE_RESERVES_ALLOWED = "41";
-    /// @notice Invalid flash loan executor return.
-    string public constant LP_INVALID_FLASH_LOAN_EXECUTOR_RETURN = "42";
-    /// @notice Invalid LTV.
-    string public constant RC_INVALID_LTV = "43";
-    /// @notice Invalid liquidation threshold.
-    string public constant RC_INVALID_LIQ_THRESHOLD = "44";
-    /// @notice Invalid liquidation bonus.
-    string public constant RC_INVALID_LIQ_BONUS = "45";
-    /// @notice Invalid decimals.
-    string public constant RC_INVALID_DECIMALS = "46";
-    /// @notice Invalid reserve factor.
-    string public constant RC_INVALID_RESERVE_FACTOR = "47";
-    /// @notice Inconsistent flashloan parameters.
-    string public constant VL_INCONSISTENT_FLASHLOAN_PARAMS = "48";
-    /// @notice Invalid index.
-    string public constant UL_INVALID_INDEX = "49";
-    /// @notice Not a contract.
-    string public constant LP_NOT_CONTRACT = "50";
+    string public constant AT_INVALID_BURN_AMOUNT = "32";
+    /// @notice The caller of this function must be a lending pool.
+    string public constant AT_CALLER_MUST_BE_LENDING_POOL = "33";
     /// @notice Vault not initialized.
-    string public constant AT_VAULT_NOT_INITIALIZED = "51";
-    /// @notice Invalid deposit cap.
-    string public constant RC_INVALID_DEPOSIT_CAP = "52";
-    /// @notice Deposit cap reached.
-    string public constant VL_DEPOSIT_CAP_REACHED = "53";
+    string public constant AT_VAULT_NOT_INITIALIZED = "34";
     /// @notice Invalid address.
-    string public constant AT_INVALID_ADDRESS = "54";
+    string public constant AT_INVALID_ADDRESS = "35";
     /// @notice Invalid amount.
-    string public constant AT_INVALID_AMOUNT = "55";
+    string public constant AT_INVALID_AMOUNT = "36";
     /// @notice Invalid aToken ID.
-    string public constant AT_INVALID_ATOKEN_ID = "56";
-    /// @notice Caller is not minipool.
-    string public constant LP_CALLER_NOT_MINIPOOL = "57";
+    string public constant AT_INVALID_ATOKEN_ID = "37";
     /// @notice Invalid aToken address.
-    string public constant AT_INVALID_ATOKEN_ADDRESS = "58";
-    /// @notice Reserve is inactive.
-    string public constant VL_RESERVE_INACTIVE = "59";
-    /// @notice Flashloan is disabled.
-    string public constant VL_FLASHLOAN_DISABLED = "60";
-    /// @notice Invalid flashloan premium.
-    string public constant LPC_FLASHLOAN_PREMIUM_INVALID = "61";
-    /// @notice Tranched asset cannot be flashloaned.
-    string public constant VL_TRANCHED_ASSET_CANNOT_BE_FLASHLOAN = "62";
-    /// @notice LendingPool not set.
-    string public constant DP_LENDINGPOOL_NOT_SET = "63";
-    /// @notice Inconsistent parameters length.
-    string public constant O_INCONSISTENT_PARAMS_LENGTH = "64";
-    /// @notice Price feed inconsistency.
-    string public constant O_PRICE_FEED_INCONSISTENCY = "65";
-    /// @notice No mini pool ID for address.
-    string public constant PAP_NO_MINI_POOL_ID_FOR_ADDRESS = "66";
-    /// @notice Pool ID out of range.
-    string public constant PAP_POOL_ID_OUT_OF_RANGE = "67";
+    string public constant AT_INVALID_ATOKEN_ADDRESS = "38";
     /// @notice Vault is not empty.
-    string public constant AT_VAULT_NOT_EMPTY = "68";
+    string public constant AT_VAULT_NOT_EMPTY = "39";
     /// @notice Invalid controller address.
-    string public constant AT_INVALID_CONTROLLER = "69";
-    /// @notice U0 is greater than RAY.
-    string public constant IR_U0_GREATER_THAN_RAY = "70";
-    /// @notice Base borrow rate can't be negative.
-    string public constant IR_BASE_BORROW_RATE_CANT_BE_NEGATIVE = "71";
-    /// @notice Access restricted to lending pool.
-    string public constant IR_ACCESS_RESTRICTED_TO_LENDING_POOL = "72";
-    /// @notice Reserve is not configured.
-    string public constant DP_RESERVE_NOT_CONFIGURED = "73";
+    string public constant AT_INVALID_CONTROLLER = "40";
     /// @notice Caller is not wrapper.
-    string public constant CALLER_NOT_WRAPPER = "74";
+    string public constant AT_CALLER_NOT_WRAPPER = "41";
+    /// @notice User borrows on behalf, but allowance is too small.
+    string public constant AT_BORROW_ALLOWANCE_NOT_ENOUGH = "42";
+    /// @notice The permit has expired.
+    string public constant AT_INVALID_EXPIRATION = "43";
+    /// @notice The signature is invalid.
+    string public constant AT_INVALID_SIGNATURE = "44";
+    /// @notice Profit handler not set.
+    string public constant AT_PROFIT_HANDLER_SET = "45";
+
+    /// @notice There is not enough liquidity available to borrow.
+    string public constant LP_NOT_ENOUGH_LIQUIDITY_TO_BORROW = "46";
+    /// @notice The caller of the function is not the lending pool configurator.
+    string public constant LP_CALLER_NOT_LENDING_POOL_CONFIGURATOR = "47";
+    /// @notice Caller must be an aToken.
+    string public constant LP_CALLER_MUST_BE_AN_ATOKEN = "48";
+    /// @notice Pool is paused.
+    string public constant LP_IS_PAUSED = "49";
+    /// @notice No more reserves allowed.
+    string public constant LP_NO_MORE_RESERVES_ALLOWED = "50";
+    /// @notice Invalid flash loan executor return.
+    string public constant LP_INVALID_FLASH_LOAN_EXECUTOR_RETURN = "51";
+    /// @notice Not a contract.
+    string public constant LP_NOT_CONTRACT = "52";
+    /// @notice Caller is not minipool.
+    string public constant LP_CALLER_NOT_MINIPOOL = "53";
+    /// @notice Base borrow rate can't be negative.
+    string public constant LP_BASE_BORROW_RATE_CANT_BE_NEGATIVE = "54";
+    /// @notice Invalid index.
+    string public constant LP_INVALID_INDEX = "55";
+    /// @notice Reserve has already been added.
+    string public constant LP_RESERVE_ALREADY_ADDED = "56";
+
+    /// @notice Reserve has already been initialized.
+    string public constant RL_RESERVE_ALREADY_INITIALIZED = "57";
+    /// @notice Reserve is not initialized.
+    string public constant RL_RESERVE_NOT_INITIALIZED = "58";
+    /// @notice Liquidity index overflows uint128.
+    string public constant RL_LIQUIDITY_INDEX_OVERFLOW = "59";
+    /// @notice Variable borrow index overflows uint128.
+    string public constant RL_VARIABLE_BORROW_INDEX_OVERFLOW = "60";
+    /// @notice Liquidity rate overflows uint128.
+    string public constant RL_LIQUIDITY_RATE_OVERFLOW = "61";
+    /// @notice Variable borrow rate overflows uint128.
+    string public constant RL_VARIABLE_BORROW_RATE_OVERFLOW = "62";
+
+    /// @notice Health factor is not below the threshold.
+    string public constant LPCM_HEALTH_FACTOR_NOT_BELOW_THRESHOLD = "63";
+    /// @notice The collateral chosen cannot be liquidated.
+    string public constant LPCM_COLLATERAL_CANNOT_BE_LIQUIDATED = "64";
+    /// @notice User did not borrow the specified currency.
+    string public constant LPCM_SPECIFIED_CURRENCY_NOT_BORROWED_BY_USER = "65";
+    /// @notice There is not enough liquidity available to liquidate.
+    string public constant LPCM_NOT_ENOUGH_LIQUIDITY_TO_LIQUIDATE = "66";
+
+    /// @notice Inconsistent parameters length.
+    string public constant O_INCONSISTENT_PARAMS_LENGTH = "67";
+    /// @notice Price feed inconsistency.
+    string public constant O_PRICE_FEED_INCONSISTENCY = "68";
+
+    /// @notice No mini pool ID for address.
+    string public constant PAP_NO_MINI_POOL_ID_FOR_ADDRESS = "69";
+    /// @notice Pool ID out of range.
+    string public constant PAP_POOL_ID_OUT_OF_RANGE = "70";
+
+    /// @notice Invalid LTV.
+    string public constant RC_INVALID_LTV = "71";
+    /// @notice Invalid liquidation threshold.
+    string public constant RC_INVALID_LIQ_THRESHOLD = "72";
+    /// @notice Invalid liquidation bonus.
+    string public constant RC_INVALID_LIQ_BONUS = "73";
+    /// @notice Invalid decimals.
+    string public constant RC_INVALID_DECIMALS = "74";
+    /// @notice Invalid reserve factor.
+    string public constant RC_INVALID_RESERVE_FACTOR = "75";
+    /// @notice Invalid deposit cap.
+    string public constant RC_INVALID_DEPOSIT_CAP = "76";
+
+    /// @notice LendingPool not set.
+    string public constant DP_LENDINGPOOL_NOT_SET = "77";
+    /// @notice Reserve is not configured.
+    string public constant DP_RESERVE_NOT_CONFIGURED = "78";
 }

@@ -159,15 +159,6 @@ contract MiniPoolAddressesProvider is Ownable, IMiniPoolAddressesProvider {
     }
 
     /**
-     * @dev Returns the aToken address for a specific pool ID.
-     * @param id The pool ID.
-     * @return The aToken address.
-     */
-    function getAToken6909(uint256 id) external view returns (address) {
-        return _miniPoolsConfig[id].aErc6909;
-    }
-
-    /**
      * @dev Returns the mini pool address for a specific ID.
      * @param id The pool ID.
      * @return The mini pool address.
@@ -285,7 +276,7 @@ contract MiniPoolAddressesProvider is Ownable, IMiniPoolAddressesProvider {
             IMiniPoolAddressProviderUpdatable.initialize, (address(this), miniPoolId)
         );
         _updateMiniPool(impl, miniPoolId, params);
-        emit MiniPoolUpdated(impl);
+        emit MiniPoolUpdated(impl, miniPoolId);
     }
 
     /**
@@ -298,7 +289,7 @@ contract MiniPoolAddressesProvider is Ownable, IMiniPoolAddressesProvider {
             IMiniPoolAddressProviderUpdatable.initialize, (address(this), miniPoolId)
         );
         _updateAToken(impl, miniPoolId, params);
-        emit ATokenUpdated(impl);
+        emit ATokenUpdated(impl, miniPoolId);
     }
 
     /**
@@ -336,6 +327,8 @@ contract MiniPoolAddressesProvider is Ownable, IMiniPoolAddressesProvider {
         _miniPoolsConfig[miniPoolId].admin = poolAdmin;
         _miniPoolCount++;
 
+        emit PoolAdminSet(poolAdmin, miniPoolId);
+
         return miniPoolId;
     }
 
@@ -358,10 +351,11 @@ contract MiniPoolAddressesProvider is Ownable, IMiniPoolAddressesProvider {
      */
     function setFlowLimit(address asset, address miniPool, uint256 limit)
         external
+        poolIdCheck(_getMiniPoolId(miniPool))
         onlyMiniPoolConfigurator
     {
         IFlowLimiter(getFlowLimiter()).setFlowLimit(asset, miniPool, limit);
-        emit FlowLimitUpdated(limit);
+        emit FlowLimitUpdated(asset, miniPool, limit);
     }
 
     /**
@@ -369,10 +363,14 @@ contract MiniPoolAddressesProvider is Ownable, IMiniPoolAddressesProvider {
      * @param id The pool ID.
      * @param newAdmin The new admin address.
      */
-    function setPoolAdmin(uint256 id, address newAdmin) external onlyMiniPoolConfigurator {
+    function setPoolAdmin(uint256 id, address newAdmin)
+        external
+        poolIdCheck(id)
+        onlyMiniPoolConfigurator
+    {
         require(newAdmin != address(0));
         _miniPoolsConfig[id].admin = newAdmin;
-        emit PoolAdminSet(newAdmin);
+        emit PoolAdminSet(newAdmin, id);
     }
 
     /**
@@ -490,6 +488,50 @@ contract MiniPoolAddressesProvider is Ownable, IMiniPoolAddressesProvider {
             emit ProxyCreated(id, address(proxy));
         } else {
             proxy.upgradeToAndCall(newAddress, params);
+        }
+    }
+
+    function updateAllMiniPools(address oldImpl, address newImpl) external onlyOwner {
+        address payable miniPoolProxyAddress;
+        InitializableImmutableAdminUpgradeabilityProxy proxy;
+        for (uint256 id = 0; id < _miniPoolCount; id++) {
+            miniPoolProxyAddress = payable(_miniPoolsConfig[id].miniPool);
+            proxy = InitializableImmutableAdminUpgradeabilityProxy(miniPoolProxyAddress);
+            if (proxy.implementation() == oldImpl) {
+                proxy.upgradeTo(newImpl);
+            }
+        }
+    }
+
+    function updateAllATokens(address oldImpl, address newImpl) external onlyOwner {
+        address payable aTokenProxyAddress;
+        InitializableImmutableAdminUpgradeabilityProxy proxy;
+        for (uint256 id = 0; id < _miniPoolCount; id++) {
+            aTokenProxyAddress = payable(_miniPoolsConfig[id].aErc6909);
+            proxy = InitializableImmutableAdminUpgradeabilityProxy(aTokenProxyAddress);
+            if (proxy.implementation() == oldImpl) {
+                proxy.upgradeTo(newImpl);
+            }
+        }
+    }
+
+    function updateSomeMiniPools(uint256[] memory ids, address newImpl) external onlyOwner {
+        address payable miniPoolProxyAddress;
+        InitializableImmutableAdminUpgradeabilityProxy proxy;
+        for (uint256 i = 0; i < ids.length; i++) {
+            miniPoolProxyAddress = payable(_miniPoolsConfig[ids[i]].miniPool);
+            proxy = InitializableImmutableAdminUpgradeabilityProxy(miniPoolProxyAddress);
+            proxy.upgradeTo(newImpl);
+        }
+    }
+
+    function updateSomeATokens(uint256[] memory ids, address newImpl) external onlyOwner {
+        address payable aTokenProxyAddress;
+        InitializableImmutableAdminUpgradeabilityProxy proxy;
+        for (uint256 i = 0; i < ids.length; i++) {
+            aTokenProxyAddress = payable(_miniPoolsConfig[ids[i]].aErc6909);
+            proxy = InitializableImmutableAdminUpgradeabilityProxy(aTokenProxyAddress);
+            proxy.upgradeTo(newImpl);
         }
     }
 }

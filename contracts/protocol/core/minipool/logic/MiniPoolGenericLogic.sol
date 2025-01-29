@@ -186,7 +186,7 @@ library MiniPoolGenericLogic {
 
             if (vars.liquidationThreshold != 0 && userConfig.isUsingAsCollateral(vars.i)) {
                 vars.compoundedLiquidityBalance =
-                    IAERC6909(currentReserve.aTokenAddress).balanceOf(user, currentReserve.aTokenID);
+                    IAERC6909(currentReserve.aErc6909).balanceOf(user, currentReserve.aTokenID);
                 uint256 liquidityBalanceETH =
                     vars.reserveUnitPrice * vars.compoundedLiquidityBalance / vars.tokenUnit;
 
@@ -198,12 +198,14 @@ library MiniPoolGenericLogic {
             }
 
             if (userConfig.isBorrowing(vars.i)) {
-                vars.compoundedBorrowBalance = IAERC6909(currentReserve.aTokenAddress).balanceOf(
+                vars.compoundedBorrowBalance = IAERC6909(currentReserve.aErc6909).balanceOf(
                     user, currentReserve.variableDebtTokenID
                 );
 
                 vars.totalDebtInETH = vars.totalDebtInETH
-                    + (vars.reserveUnitPrice * vars.compoundedBorrowBalance / vars.tokenUnit);
+                    + WadRayMath.divUp(
+                        vars.reserveUnitPrice * vars.compoundedBorrowBalance, vars.tokenUnit
+                    );
             }
         }
 

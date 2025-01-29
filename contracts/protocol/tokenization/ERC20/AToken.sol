@@ -51,6 +51,9 @@ contract AToken is
     /// @notice Flag indicating if the reserve is boosted by a vault.
     bool public RESERVE_TYPE;
 
+    /// @notice Chain ID cached at contract deployment for EIP712 domain separator.
+    uint256 public CACHED_CHAIN_ID;
+
     /// @notice Reference to the `ILendingPool` contract.
     ILendingPool internal _pool;
 
@@ -89,12 +92,16 @@ contract AToken is
     /// @notice The address that receives claimed profits.
     address public _profitHandler;
 
+    constructor() {
+        _blockInitializing();
+    }
+
     /**
      * @notice Modifier to ensure only the lending pool can call certain functions.
      * @dev Reverts if the caller is not the lending pool contract.
      */
     modifier onlyLendingPool() {
-        require(msg.sender == address(_pool), Errors.CT_CALLER_MUST_BE_LENDING_POOL);
+        require(msg.sender == address(_pool), Errors.AT_CALLER_MUST_BE_LENDING_POOL);
         _;
     }
 
@@ -131,21 +138,13 @@ contract AToken is
         string calldata aTokenSymbol,
         bytes calldata params
     ) external override initializer {
-        DOMAIN_SEPARATOR = keccak256(
-            abi.encode(
-                EIP712_DOMAIN,
-                keccak256(bytes(aTokenName)),
-                keccak256(EIP712_REVISION),
-                block.chainid,
-                address(this)
-            )
-        );
-
-        RESERVE_TYPE = reserveType;
-
         _setName(aTokenName);
         _setSymbol(aTokenSymbol);
         _setDecimals(aTokenDecimals);
+
+        DOMAIN_SEPARATOR = _buildDomainSeparator();
+        CACHED_CHAIN_ID = block.chainid;
+        RESERVE_TYPE = reserveType;
 
         _pool = pool;
         _treasury = treasury;
@@ -158,7 +157,8 @@ contract AToken is
         emit Initialized(
             underlyingAsset,
             address(pool),
-            treasury,
+            _aTokenWrapper,
+            _treasury,
             address(incentivesController),
             aTokenDecimals,
             reserveType,
@@ -182,7 +182,7 @@ contract AToken is
         onlyLendingPool
     {
         uint256 amountScaled = amount.rayDiv(index);
-        require(amountScaled != 0, Errors.CT_INVALID_BURN_AMOUNT);
+        require(amountScaled != 0, Errors.AT_INVALID_BURN_AMOUNT);
         _rebalance(amount);
         _underlyingAmount = _underlyingAmount - amount;
         _burn(user, amountScaled);
@@ -210,7 +210,7 @@ contract AToken is
         uint256 previousBalance = super.balanceOf(user);
 
         uint256 amountScaled = amount.rayDiv(index);
-        require(amountScaled != 0, Errors.CT_INVALID_MINT_AMOUNT);
+        require(amountScaled != 0, Errors.AT_INVALID_MINT_AMOUNT);
         _underlyingAmount = _underlyingAmount + amount;
         _rebalance(0);
         _mint(user, amountScaled);
@@ -409,22 +409,45 @@ contract AToken is
         bytes32 r,
         bytes32 s
     ) external {
-        require(owner != address(0), "INVALID_OWNER");
+        require(owner != address(0), Errors.AT_INVALID_ADDRESS);
 
-        require(block.timestamp <= deadline, "INVALID_EXPIRATION");
+        require(block.timestamp <= deadline, Errors.AT_INVALID_EXPIRATION);
         uint256 currentValidNonce = _nonces[owner];
         bytes32 digest = keccak256(
             abi.encodePacked(
                 "\x19\x01",
-                DOMAIN_SEPARATOR,
+                _domainSeparator(),
                 keccak256(
                     abi.encode(PERMIT_TYPEHASH, owner, spender, value, currentValidNonce, deadline)
                 )
             )
         );
-        require(owner == ecrecover(digest, v, r, s), "INVALID_SIGNATURE");
+        require(owner == ecrecover(digest, v, r, s), Errors.AT_INVALID_SIGNATURE);
         _nonces[owner] = currentValidNonce + 1;
         _approve(owner, spender, value);
+    }
+
+    /**
+     * @dev Returns the domain separator for the current chain.
+     */
+    function _domainSeparator() internal view returns (bytes32) {
+        if (block.chainid == CACHED_CHAIN_ID) {
+            return DOMAIN_SEPARATOR;
+        } else {
+            return _buildDomainSeparator();
+        }
+    }
+
+    function _buildDomainSeparator() private view returns (bytes32) {
+        return keccak256(
+            abi.encode(
+                EIP712_DOMAIN,
+                keccak256(bytes(name())),
+                keccak256(EIP712_REVISION),
+                block.chainid,
+                address(this)
+            )
+        );
     }
 
     /**
@@ -476,7 +499,7 @@ contract AToken is
      * @param shareAmount The share amount getting transferred.
      */
     function transferShare(address from, address to, uint256 shareAmount) external {
-        require(msg.sender == _aTokenWrapper, Errors.CALLER_NOT_WRAPPER);
+        require(msg.sender == _aTokenWrapper, Errors.AT_CALLER_NOT_WRAPPER);
 
         address underlyingAsset = _underlyingAsset;
         ILendingPool pool = _pool;
@@ -505,7 +528,7 @@ contract AToken is
      * @param shareAmount The share amount getting approved.
      */
     function shareApprove(address owner, address spender, uint256 shareAmount) external {
-        require(msg.sender == _aTokenWrapper, Errors.CALLER_NOT_WRAPPER);
+        require(msg.sender == _aTokenWrapper, Errors.AT_CALLER_NOT_WRAPPER);
 
         _shareAllowances[owner][spender] = shareAmount;
     }
@@ -577,29 +600,37 @@ contract AToken is
         if (pctOfFinalBal > _farmingPct && pctOfFinalBal - _farmingPct > _farmingPctDrift) {
             // We will end up overallocated, withdraw some.
             toWithdraw = currentAllocated - finalFarmingAmount;
-            _farmingBal = _farmingBal - toWithdraw;
+            currentAllocated = currentAllocated - toWithdraw;
         } else if (pctOfFinalBal < _farmingPct && _farmingPct - pctOfFinalBal > _farmingPctDrift) {
             // We will end up underallocated, deposit more.
             toDeposit = finalFarmingAmount - currentAllocated;
-            _farmingBal = _farmingBal + toDeposit;
+            currentAllocated = currentAllocated + toDeposit;
         }
         // + means deposit, - means withdraw.
         int256 netAssetMovement = int256(toDeposit) - int256(toWithdraw) - int256(profit);
         if (netAssetMovement > 0) {
-            _vault.deposit(uint256(netAssetMovement), address(this));
+            try _vault.deposit(uint256(netAssetMovement), address(this)) {}
+            catch {
+                return;
+            }
         } else if (netAssetMovement < 0) {
-            _vault.withdraw(uint256(-netAssetMovement), address(this), address(this));
+            try _vault.withdraw(uint256(-netAssetMovement), address(this), address(this)) {}
+            catch {
+                return;
+            }
         }
         // If we recorded profit, recalculate it for precision and distribute.
         if (profit != 0) {
             // Profit is ultimately (coll at hand) + (coll allocated to yield generator) - (recorded total coll Amount in pool).
-            profit =
-                IERC20(_underlyingAsset).balanceOf(address(this)) + _farmingBal - _underlyingAmount;
+            profit = IERC20(_underlyingAsset).balanceOf(address(this)) + currentAllocated
+                - _underlyingAmount;
             if (profit != 0 && _profitHandler != address(0)) {
                 // Distribute to profitHandler.
                 IERC20(_underlyingAsset).safeTransfer(_profitHandler, profit);
             }
         }
+
+        _farmingBal = currentAllocated;
 
         emit Rebalance(address(_vault), _amountToWithdraw, netAssetMovement);
     }
@@ -610,8 +641,11 @@ contract AToken is
      */
     function setFarmingPct(uint256 farmingPct) external override onlyLendingPool {
         require(address(_vault) != address(0), Errors.AT_VAULT_NOT_INITIALIZED);
+        require(address(_profitHandler) != address(0), Errors.AT_PROFIT_HANDLER_SET);
         require(farmingPct <= 10000, Errors.AT_INVALID_AMOUNT);
         _farmingPct = farmingPct;
+
+        emit FarmingPctSet(farmingPct);
     }
 
     /**
@@ -620,7 +654,10 @@ contract AToken is
      */
     function setClaimingThreshold(uint256 claimingThreshold) external override onlyLendingPool {
         require(address(_vault) != address(0), Errors.AT_VAULT_NOT_INITIALIZED);
+        require(address(_profitHandler) != address(0), Errors.AT_PROFIT_HANDLER_SET);
         _claimingThreshold = claimingThreshold;
+
+        emit ClaimingThresholdSet(claimingThreshold);
     }
 
     /**
@@ -630,7 +667,10 @@ contract AToken is
     function setFarmingPctDrift(uint256 farmingPctDrift) external override onlyLendingPool {
         require(farmingPctDrift <= 10000, Errors.AT_INVALID_AMOUNT);
         require(address(_vault) != address(0), Errors.AT_VAULT_NOT_INITIALIZED);
+        require(address(_profitHandler) != address(0), Errors.AT_PROFIT_HANDLER_SET);
         _farmingPctDrift = farmingPctDrift;
+
+        emit FarmingPctDriftSet(farmingPctDrift);
     }
 
     /**
@@ -639,8 +679,9 @@ contract AToken is
      */
     function setProfitHandler(address profitHandler) external override onlyLendingPool {
         require(profitHandler != address(0), Errors.AT_INVALID_ADDRESS);
-        require(address(_vault) != address(0), Errors.AT_VAULT_NOT_INITIALIZED);
         _profitHandler = profitHandler;
+
+        emit ProfitHandlerSet(profitHandler);
     }
 
     /**
@@ -649,12 +690,16 @@ contract AToken is
      */
     function setVault(address vault) external override onlyLendingPool {
         require(address(vault) != address(0), Errors.AT_INVALID_ADDRESS);
+        require(address(_profitHandler) != address(0), Errors.AT_PROFIT_HANDLER_SET);
+
         if (address(_vault) != address(0)) {
             require(_farmingBal == 0, Errors.AT_VAULT_NOT_EMPTY);
         }
         require(IERC4626(vault).asset() == _underlyingAsset, Errors.AT_INVALID_ADDRESS);
         _vault = IERC4626(vault);
         IERC20(_underlyingAsset).forceApprove(address(_vault), type(uint256).max);
+
+        emit VaultSet(vault);
     }
 
     /**
@@ -664,6 +709,8 @@ contract AToken is
     function setTreasury(address treasury) external override onlyLendingPool {
         require(treasury != address(0), Errors.AT_INVALID_ADDRESS);
         _treasury = treasury;
+
+        emit TreasurySet(treasury);
     }
 
     /**
@@ -677,6 +724,8 @@ contract AToken is
     {
         require(incentivesController != address(0), Errors.AT_INVALID_ADDRESS);
         _incentivesController = IRewarder(incentivesController);
+
+        emit IncentivesControllerSet(incentivesController);
     }
 
     /**

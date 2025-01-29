@@ -40,15 +40,15 @@ contract ATokenTest is Common {
     function testAccessControl_NotLiquidityPool() public {
         address addr = makeAddr("RandomAddress");
         for (uint32 idx = 0; idx < commonContracts.aTokens.length; idx++) {
-            vm.expectRevert(bytes(Errors.CT_CALLER_MUST_BE_LENDING_POOL));
+            vm.expectRevert(bytes(Errors.AT_CALLER_MUST_BE_LENDING_POOL));
             commonContracts.aTokens[idx].mint(address(this), 1, 1);
-            vm.expectRevert(bytes(Errors.CT_CALLER_MUST_BE_LENDING_POOL));
+            vm.expectRevert(bytes(Errors.AT_CALLER_MUST_BE_LENDING_POOL));
             commonContracts.aTokens[idx].burn(admin, admin, 1, 1);
-            vm.expectRevert(bytes(Errors.CT_CALLER_MUST_BE_LENDING_POOL));
+            vm.expectRevert(bytes(Errors.AT_CALLER_MUST_BE_LENDING_POOL));
             commonContracts.aTokens[idx].transferOnLiquidation(admin, addr, 1);
-            vm.expectRevert(bytes(Errors.CT_CALLER_MUST_BE_LENDING_POOL));
+            vm.expectRevert(bytes(Errors.AT_CALLER_MUST_BE_LENDING_POOL));
             commonContracts.aTokens[idx].transferUnderlyingTo(address(this), 1);
-            vm.expectRevert(bytes(Errors.CT_CALLER_MUST_BE_LENDING_POOL));
+            vm.expectRevert(bytes(Errors.AT_CALLER_MUST_BE_LENDING_POOL));
             commonContracts.aTokens[idx].setVault(address(commonContracts.mockedVaults[idx]));
         }
     }

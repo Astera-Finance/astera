@@ -330,9 +330,7 @@ contract UpgradesAndReconfigurationsTest is MiniPoolFixtures {
                 payable(lendingPoolProxy)
             ).implementation();
 
-            lpv2.initialize(
-                ILendingPoolAddressesProvider(deployedContracts.lendingPoolAddressesProvider)
-            );
+            lpv2.initialize(address(deployedContracts.lendingPoolAddressesProvider));
             deployedContracts.lendingPoolAddressesProvider.setLendingPoolImpl(address(lpv2));
             lendingPoolProxy =
                 address(deployedContracts.lendingPoolAddressesProvider.getLendingPool());
@@ -413,7 +411,7 @@ contract UpgradesAndReconfigurationsTest is MiniPoolFixtures {
                 payable(miniPoolContracts.miniPoolAddressesProvider.getMiniPool(0))
             ).implementation();
             address previousAErc6909Impl = InitializableImmutableAdminUpgradeabilityProxy(
-                payable(miniPoolContracts.miniPoolAddressesProvider.getAToken6909(0))
+                payable(miniPoolContracts.miniPoolAddressesProvider.getMiniPoolToAERC6909(0))
             ).implementation();
             vm.stopPrank();
             miniPoolContracts.miniPoolAddressesProvider.setMiniPoolImpl(address(mpv2), 0);
@@ -430,7 +428,7 @@ contract UpgradesAndReconfigurationsTest is MiniPoolFixtures {
             );
             assertNotEq(
                 InitializableImmutableAdminUpgradeabilityProxy(
-                    payable(miniPoolContracts.miniPoolAddressesProvider.getAToken6909(0))
+                    payable(miniPoolContracts.miniPoolAddressesProvider.getMiniPoolToAERC6909(0))
                 ).implementation(),
                 previousAErc6909Impl
             );
@@ -611,5 +609,86 @@ contract UpgradesAndReconfigurationsTest is MiniPoolFixtures {
         deal(address(borrowType.token), user, 2 * maxValToBorrow);
 
         fixture_depositAndBorrow(collateralType, borrowType, user, address(this), amount);
+    }
+
+    function testMassUpgradeMiniPools() public {
+        uint256 iterations = 10;
+        MiniPoolAddressesProvider mpap =
+            MiniPoolAddressesProvider(miniPoolContracts.miniPoolAddressesProvider);
+        MiniPoolV2 mpv2 = new MiniPoolV2();
+        ATokenERC6909V2 erc6909v2 = new ATokenERC6909V2();
+        for (uint256 i = 0; i < iterations; i++) {
+            mpap.deployMiniPool(address(mpv2), address(erc6909v2), address(this));
+        }
+        MiniPoolV2 mpv3 = new MiniPoolV2();
+        ATokenERC6909V2 erc6909v3 = new ATokenERC6909V2();
+
+        mpap.updateAllMiniPools(address(mpv2), address(mpv3));
+
+        address payable miniPoolProxyAddress = payable(mpap.getMiniPool(1));
+        InitializableImmutableAdminUpgradeabilityProxy proxy =
+            InitializableImmutableAdminUpgradeabilityProxy(miniPoolProxyAddress);
+        vm.prank(address(mpap));
+        address implementation = proxy.implementation();
+        assertEq(implementation, address(mpv3));
+        mpap.updateAllMiniPools(address(mpv3), address(mpv2));
+        vm.prank(address(mpap));
+        implementation = proxy.implementation();
+        assertEq(implementation, address(mpv2));
+    }
+
+    function testMassUpgradeATokens() public {
+        uint256 iterations = 10;
+        MiniPoolAddressesProvider mpap =
+            MiniPoolAddressesProvider(miniPoolContracts.miniPoolAddressesProvider);
+        MiniPoolV2 mpv2 = new MiniPoolV2();
+        ATokenERC6909V2 erc6909v2 = new ATokenERC6909V2();
+        for (uint256 i = 0; i < iterations; i++) {
+            mpap.deployMiniPool(address(mpv2), address(erc6909v2), address(this));
+        }
+        MiniPoolV2 mpv3 = new MiniPoolV2();
+        ATokenERC6909V2 erc6909v3 = new ATokenERC6909V2();
+
+        mpap.updateAllATokens(address(erc6909v2), address(erc6909v3));
+
+        address payable aTokenProxyAddress = payable(mpap.getMiniPoolToAERC6909(1));
+        InitializableImmutableAdminUpgradeabilityProxy proxy =
+            InitializableImmutableAdminUpgradeabilityProxy(aTokenProxyAddress);
+        vm.prank(address(mpap));
+        address implementation = proxy.implementation();
+        assertEq(implementation, address(erc6909v3));
+        mpap.updateAllATokens(address(erc6909v3), address(erc6909v2));
+        vm.prank(address(mpap));
+        implementation = proxy.implementation();
+        assertEq(implementation, address(erc6909v2));
+    }
+
+    function testSomeMiniPoolsUpgrade() public {
+        uint256[] memory ids = new uint256[](10);
+        uint256 iterations = 10;
+        MiniPoolAddressesProvider mpap =
+            MiniPoolAddressesProvider(miniPoolContracts.miniPoolAddressesProvider);
+        MiniPoolV2 mpv2 = new MiniPoolV2();
+        ATokenERC6909V2 erc6909v2 = new ATokenERC6909V2();
+        for (uint256 i = 0; i < iterations; i++) {
+            mpap.deployMiniPool(address(mpv2), address(erc6909v2), address(this));
+            ids[i] = (i);
+        }
+        MiniPoolV2 mpv3 = new MiniPoolV2();
+        ATokenERC6909V2 erc6909v3 = new ATokenERC6909V2();
+
+        mpap.updateSomeATokens(ids, address(erc6909v3));
+        mpap.updateSomeMiniPools(ids, address(mpv3));
+
+        address payable aTokenProxyAddress = payable(mpap.getMiniPoolToAERC6909(1));
+        InitializableImmutableAdminUpgradeabilityProxy proxy =
+            InitializableImmutableAdminUpgradeabilityProxy(aTokenProxyAddress);
+        vm.prank(address(mpap));
+        address implementation = proxy.implementation();
+        assertEq(implementation, address(erc6909v3));
+        mpap.updateAllATokens(address(erc6909v3), address(erc6909v2));
+        vm.prank(address(mpap));
+        implementation = proxy.implementation();
+        assertEq(implementation, address(erc6909v2));
     }
 }

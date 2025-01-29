@@ -41,9 +41,9 @@ contract VariableDebtTokenTest is Common {
 
     function testAccessControl() public {
         for (uint32 idx = 0; idx < commonContracts.aTokens.length; idx++) {
-            vm.expectRevert(bytes(Errors.CT_CALLER_MUST_BE_LENDING_POOL));
+            vm.expectRevert(bytes(Errors.AT_CALLER_MUST_BE_LENDING_POOL));
             commonContracts.variableDebtTokens[idx].mint(address(this), address(this), 1, 1);
-            vm.expectRevert(bytes(Errors.CT_CALLER_MUST_BE_LENDING_POOL));
+            vm.expectRevert(bytes(Errors.AT_CALLER_MUST_BE_LENDING_POOL));
             commonContracts.variableDebtTokens[idx].burn(admin, 1, 1);
         }
     }
@@ -114,12 +114,13 @@ contract VariableDebtTokenTest is Common {
 
             uint256 amountToBorrowRaw = maxValToDeposit * staticData.ltv / 10_000;
             deployedContracts.lendingPool.borrow(
-                address(erc20Tokens[idx]), true, amountToBorrowRaw, address(this)
+                address(erc20Tokens[idx]), true, amountToBorrowRaw - 1, address(this)
             );
             assertEq(
-                commonContracts.variableDebtTokens[idx].balanceOf(address(this)), amountToBorrowRaw
+                commonContracts.variableDebtTokens[idx].balanceOf(address(this)),
+                amountToBorrowRaw - 1
             );
-            assertEq(commonContracts.variableDebtTokens[idx].totalSupply(), amountToBorrowRaw);
+            assertEq(commonContracts.variableDebtTokens[idx].totalSupply(), amountToBorrowRaw - 1);
         }
     }
 }

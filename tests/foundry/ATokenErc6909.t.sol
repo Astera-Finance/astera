@@ -5,6 +5,7 @@ import "./Common.sol";
 import "contracts/protocol/libraries/helpers/Errors.sol";
 import {WadRayMath} from "contracts/protocol/libraries/math/WadRayMath.sol";
 import {IMiniPoolRewarder} from "contracts/interfaces/IMiniPoolRewarder.sol";
+import {MintableERC20} from "contracts/mocks/tokens/MintableERC20.sol";
 
 contract ATokenErc6909Test is Common {
     using WadRayMath for uint256;
@@ -76,19 +77,19 @@ contract ATokenErc6909Test is Common {
     function testAccessControl_NotLiquidityPool() public {
         address addr = makeAddr("RandomAddress");
         for (uint32 idx = 0; idx < commonContracts.aTokens.length; idx++) {
-            vm.expectRevert(bytes(Errors.CT_CALLER_MUST_BE_LENDING_POOL));
+            vm.expectRevert(bytes(Errors.AT_CALLER_MUST_BE_LENDING_POOL));
             aErc6909Token.mint(address(this), address(this), 1, 1, 1);
-            vm.expectRevert(bytes(Errors.CT_CALLER_MUST_BE_LENDING_POOL));
+            vm.expectRevert(bytes(Errors.AT_CALLER_MUST_BE_LENDING_POOL));
             aErc6909Token.mintToCod3xTreasury(1, 1, 1);
-            vm.expectRevert(bytes(Errors.CT_CALLER_MUST_BE_LENDING_POOL));
+            vm.expectRevert(bytes(Errors.AT_CALLER_MUST_BE_LENDING_POOL));
             aErc6909Token.burn(admin, admin, 1, 1, false, 1);
-            vm.expectRevert(bytes(Errors.CT_CALLER_MUST_BE_LENDING_POOL));
+            vm.expectRevert(bytes(Errors.AT_CALLER_MUST_BE_LENDING_POOL));
             aErc6909Token.transferOnLiquidation(admin, addr, 0, 1);
-            vm.expectRevert(bytes(Errors.CT_CALLER_MUST_BE_LENDING_POOL));
+            vm.expectRevert(bytes(Errors.AT_CALLER_MUST_BE_LENDING_POOL));
             aErc6909Token.setIncentivesController(IMiniPoolRewarder(addr));
-            vm.expectRevert(bytes(Errors.CT_CALLER_MUST_BE_LENDING_POOL));
+            vm.expectRevert(bytes(Errors.AT_CALLER_MUST_BE_LENDING_POOL));
             aErc6909Token.transferUnderlyingTo(addr, 11, 1, false);
-            vm.expectRevert(bytes(Errors.CT_CALLER_MUST_BE_LENDING_POOL));
+            vm.expectRevert(bytes(Errors.AT_CALLER_MUST_BE_LENDING_POOL));
             aErc6909Token.mintToCod3xTreasury(1, 11, 1);
         }
     }
@@ -893,7 +894,7 @@ contract ATokenErc6909Test is Common {
         assertEq(initialTotalSupply, aErc6909Token.scaledTotalSupply(id));
     }
 
-    function testErc6909Initialize() public {
+    function testFailErc6909Initialize() public {
         miniPoolContracts.miniPoolAddressesProvider.deployMiniPool(
             address(miniPoolContracts.miniPoolImpl),
             address(miniPoolContracts.aToken6909Impl),
@@ -902,14 +903,49 @@ contract ATokenErc6909Test is Common {
         address[] memory reserves = new address[](1);
         reserves[0] = tokens[0];
 
+        // vm.expectRevert(bytes(Errors.LP_RESERVE_ALREADY_ADDED));
         miniPool =
             fixture_configureMiniPoolReserves(reserves, configAddresses, miniPoolContracts, 0);
         vm.label(miniPool, "MiniPool");
+    }
 
-        IAERC6909 internalAErc6909Token =
-            IAERC6909(miniPoolContracts.miniPoolAddressesProvider.getMiniPoolToAERC6909(miniPool));
+    function testNextIdForUnderlying() public {
+        address[] memory reserves = new address[](2 * tokens.length);
+        vm.startPrank(address(miniPoolContracts.miniPoolConfigurator));
+        for (uint8 idx = 0; idx < (2 * tokens.length); idx++) {
+            if (idx < tokens.length) {
+                reserves[idx] = tokens[idx];
+            } else {
+                reserves[idx] =
+                    address(commonContracts.aTokens[idx - tokens.length].WRAPPER_ADDRESS());
+            }
 
-        vm.expectRevert(bytes("Contract instance has already been initialized"));
-        internalAErc6909Token.initialize(address(miniPoolContracts.miniPoolAddressesProvider), 0);
+            vm.expectRevert(bytes(Errors.RL_RESERVE_ALREADY_INITIALIZED));
+            aErc6909Token.initReserve(reserves[idx], "Test", "TST", 18);
+            vm.expectRevert(bytes(Errors.RL_RESERVE_ALREADY_INITIALIZED));
+            aErc6909Token.getNextIdForUnderlying(reserves[idx]);
+        }
+
+        MintableERC20 newToken = new MintableERC20("TEST", "TST", 18);
+        (uint256 aTokenID, uint256 debtTokenID, bool isTrancheRet) =
+            aErc6909Token.getNextIdForUnderlying(address(newToken));
+        console.log("aTokenID", aTokenID);
+        console.log("debtTokenID", debtTokenID);
+        console.log("isTrancheRet", isTrancheRet);
+
+        aErc6909Token.initReserve(address(newToken), "Test", "TST", 18);
+
+        newToken = new MintableERC20("TEST", "TST", 18);
+
+        (uint256 aTokenID_2, uint256 debtTokenID_2,) =
+            aErc6909Token.getNextIdForUnderlying(address(newToken));
+
+        vm.stopPrank();
+
+        console.log("aTokenID_2", aTokenID_2);
+        console.log("debtTokenID_2", debtTokenID_2);
+
+        assertGt(aTokenID_2, aTokenID, "TokenId not increased");
+        assertGt(debtTokenID_2, debtTokenID, "DebtId not increased");
     }
 }

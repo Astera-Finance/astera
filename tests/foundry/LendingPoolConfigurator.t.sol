@@ -11,7 +11,7 @@ import {LendingPoolFixtures} from "tests/foundry/LendingPoolFixtures.t.sol";
 contract LendingPoolConfiguratorTest is Common, LendingPoolFixtures {
     using ReserveConfiguration for DataTypes.ReserveConfigurationMap;
 
-    uint256 constant MAX_VALID_RESERVE_FACTOR = 5000;
+    uint256 constant MAX_VALID_RESERVE_FACTOR = 4000;
     uint256 constant MAX_VALID_DEPOSIT_CAP = type(uint72).max;
 
     event ReserveInitialized(
@@ -172,7 +172,7 @@ contract LendingPoolConfiguratorTest is Common, LendingPoolFixtures {
 
             vm.startPrank(admin);
             /* Shouldn't be able to deactivate when liquidity is not zero */
-            vm.expectRevert(bytes(Errors.LPC_RESERVE_LIQUIDITY_NOT_0));
+            vm.expectRevert(bytes(Errors.VL_RESERVE_LIQUIDITY_NOT_0));
             deployedContracts.lendingPoolConfigurator.deactivateReserve(
                 address(erc20Tokens[idx]), true
             );
@@ -327,6 +327,17 @@ contract LendingPoolConfiguratorTest is Common, LendingPoolFixtures {
         address lendingPoolAddr = address(deployedContracts.lendingPool);
 
         vm.startPrank(admin);
+        /* set profit handler positive */
+        address profitHandler = makeAddr("profitHandler");
+        vm.assume(profitHandler != address(0));
+        vm.expectCall(
+            lendingPoolAddr,
+            abi.encodeCall(
+                deployedContracts.lendingPool.setProfitHandler, (aTokenAddress, profitHandler)
+            )
+        );
+        deployedContracts.lendingPoolConfigurator.setProfitHandler(aTokenAddress, profitHandler);
+
         /* set vault positive */
         vm.expectCall(
             lendingPoolAddr,
@@ -384,17 +395,6 @@ contract LendingPoolConfiguratorTest is Common, LendingPoolFixtures {
         vm.expectRevert(bytes(Errors.AT_INVALID_AMOUNT));
         deployedContracts.lendingPoolConfigurator.setFarmingPctDrift(aTokenAddress, farmingPct);
 
-        /* set profit handler positive */
-        address profitHandler = makeAddr("profitHandler");
-        vm.assume(profitHandler != address(0));
-        vm.expectCall(
-            lendingPoolAddr,
-            abi.encodeCall(
-                deployedContracts.lendingPool.setProfitHandler, (aTokenAddress, profitHandler)
-            )
-        );
-        deployedContracts.lendingPoolConfigurator.setProfitHandler(aTokenAddress, profitHandler);
-
         /* set profit handler negative - 83 */
         profitHandler = address(0);
         vm.expectRevert(bytes(Errors.AT_INVALID_ADDRESS));
@@ -409,38 +409,46 @@ contract LendingPoolConfiguratorTest is Common, LendingPoolFixtures {
         uint256 randomNumber;
         randomNumber = bound(randomNumber, 0, type(uint256).max);
         /* access controls */
-        vm.expectRevert(bytes(Errors.CALLER_NOT_POOL_ADMIN));
+        vm.expectRevert(bytes(Errors.VL_CALLER_NOT_POOL_ADMIN));
         deployedContracts.lendingPoolConfigurator.setFarmingPct(tokenAddress, randomNumber);
-        vm.expectRevert(bytes(Errors.CALLER_NOT_POOL_ADMIN));
+        vm.expectRevert(bytes(Errors.VL_CALLER_NOT_POOL_ADMIN));
         deployedContracts.lendingPoolConfigurator.setClaimingThreshold(tokenAddress, randomNumber);
-        vm.expectRevert(bytes(Errors.CALLER_NOT_POOL_ADMIN));
+        vm.expectRevert(bytes(Errors.VL_CALLER_NOT_POOL_ADMIN));
         deployedContracts.lendingPoolConfigurator.setFarmingPctDrift(tokenAddress, randomNumber);
-        vm.expectRevert(bytes(Errors.CALLER_NOT_POOL_ADMIN));
+        vm.expectRevert(bytes(Errors.VL_CALLER_NOT_POOL_ADMIN));
         deployedContracts.lendingPoolConfigurator.setProfitHandler(tokenAddress, tokenAddress);
-        vm.expectRevert(bytes(Errors.CALLER_NOT_POOL_ADMIN));
+        vm.expectRevert(bytes(Errors.VL_CALLER_NOT_POOL_ADMIN));
         deployedContracts.lendingPoolConfigurator.setVault(tokenAddress, tokenAddress);
 
-        vm.expectRevert(bytes(Errors.LPC_CALLER_NOT_EMERGENCY_ADMIN));
+        vm.expectRevert(bytes(Errors.VL_CALLER_NOT_EMERGENCY_ADMIN));
         deployedContracts.lendingPoolConfigurator.rebalance(tokenAddress);
 
-        vm.expectRevert(bytes(Errors.CALLER_NOT_POOL_ADMIN));
+        vm.expectRevert(bytes(Errors.VL_CALLER_NOT_POOL_ADMIN));
         deployedContracts.lendingPoolConfigurator.setReserveInterestRateStrategyAddress(
             tokenAddress, true, randomAddress
         );
-        vm.expectRevert(bytes(Errors.LPC_CALLER_NOT_EMERGENCY_ADMIN));
+        vm.expectRevert(bytes(Errors.VL_CALLER_NOT_EMERGENCY_ADMIN));
         deployedContracts.lendingPoolConfigurator.setPoolPause(true);
-        vm.expectRevert(bytes(Errors.CALLER_NOT_POOL_ADMIN));
+        vm.expectRevert(bytes(Errors.VL_CALLER_NOT_POOL_ADMIN));
         deployedContracts.lendingPoolConfigurator.updateFlashloanPremiumTotal(uint128(randomNumber));
-        vm.expectRevert(bytes(Errors.CALLER_NOT_POOL_ADMIN));
+        vm.expectRevert(bytes(Errors.VL_CALLER_NOT_POOL_ADMIN));
         deployedContracts.lendingPoolConfigurator.setRewarderForReserve(
             tokenAddress, true, randomAddress
         );
-        vm.expectRevert(bytes(Errors.CALLER_NOT_POOL_ADMIN));
+        vm.expectRevert(bytes(Errors.VL_CALLER_NOT_POOL_ADMIN));
         deployedContracts.lendingPoolConfigurator.setTreasury(tokenAddress, true, randomAddress);
     }
 
     function testSetReserveInterestRateStrategyAddress() public {
-        address newInterestRateStrategy = makeAddr("newInterestRateStrategy");
+        address newInterestRateStrategy = address(
+            new DefaultReserveInterestRateStrategy(
+                deployedContracts.lendingPoolAddressesProvider,
+                sStrat[0],
+                sStrat[1],
+                sStrat[2],
+                sStrat[3]
+            )
+        );
         for (uint32 idx; idx < erc20Tokens.length; idx++) {
             vm.prank(admin);
             deployedContracts.lendingPoolConfigurator.setReserveInterestRateStrategyAddress(
@@ -551,7 +559,7 @@ contract LendingPoolConfiguratorTest is Common, LendingPoolFixtures {
     function testUpdateFlashloanPremiumTotalNegative(uint128 flashLoanPremiumTotal) public {
         vm.assume(flashLoanPremiumTotal > 1e4);
         vm.prank(admin);
-        vm.expectRevert(bytes(Errors.LPC_FLASHLOAN_PREMIUM_INVALID));
+        vm.expectRevert(bytes(Errors.VL_FLASHLOAN_PREMIUM_INVALID));
         deployedContracts.lendingPoolConfigurator.updateFlashloanPremiumTotal(flashLoanPremiumTotal);
     }
 
@@ -652,5 +660,102 @@ contract LendingPoolConfiguratorTest is Common, LendingPoolFixtures {
 
         // deal(address(erc20Tokens[USDC_OFFSET]), address(this), 10 * amount);
         deployedContracts.lendingPool.flashLoan(flashloanParams, amounts, modes, params);
+    }
+
+    struct UserAccountData {
+        uint256 totalCollateralETH;
+        uint256 totalDebtETH;
+        uint256 availableBorrowsETH;
+        uint256 currentLiquidationThreshold;
+        uint256 ltv;
+        uint256 healthFactor;
+    }
+
+    function testLpUniqueTokensReinitialization(uint256 offset, uint256 amount) public {
+        offset = bound(offset, 0, 3);
+        TokenParams memory collateralTokenParams = TokenParams(
+            erc20Tokens[offset],
+            commonContracts.aTokensWrapper[offset],
+            commonContracts.oracle.getAssetPrice(address(erc20Tokens[offset]))
+        );
+        amount = bound(
+            amount,
+            10 ** (collateralTokenParams.token.decimals() - 2), // 0,01
+            10 ** (collateralTokenParams.token.decimals() + 3) // 1000
+        );
+        deal(address(collateralTokenParams.token), address(this), amount);
+        console.log("Deposit asset to the mainPool");
+        fixture_deposit(
+            collateralTokenParams.token,
+            collateralTokenParams.aToken,
+            address(this),
+            address(this),
+            amount
+        );
+        UserAccountData memory beforeUserAccountData;
+        (
+            beforeUserAccountData.totalCollateralETH,
+            beforeUserAccountData.totalDebtETH,
+            beforeUserAccountData.availableBorrowsETH,
+            beforeUserAccountData.currentLiquidationThreshold,
+            beforeUserAccountData.ltv,
+            beforeUserAccountData.healthFactor
+        ) = deployedContracts.cod3xLendDataProvider.getLpUserAccountData(address(this));
+
+        {
+            console.log("Reinit the asset");
+            ILendingPoolConfigurator.InitReserveInput[] memory initInputParams =
+                new ILendingPoolConfigurator.InitReserveInput[](1);
+            string memory tmpSymbol = ERC20(tokens[offset]).symbol();
+            string memory tmpName = ERC20(tokens[offset]).name();
+
+            address interestStrategy = isStableStrategy[offset] != false
+                ? configAddresses.stableStrategy
+                : configAddresses.volatileStrategy;
+            initInputParams[0] = ILendingPoolConfigurator.InitReserveInput({
+                aTokenImpl: address(commonContracts.aToken),
+                variableDebtTokenImpl: address(commonContracts.variableDebtToken),
+                underlyingAssetDecimals: ERC20(tokens[offset]).decimals(),
+                interestRateStrategyAddress: interestStrategy,
+                underlyingAsset: tokens[offset],
+                reserveType: reserveTypes[offset],
+                treasury: configAddresses.treasury,
+                incentivesController: configAddresses.rewarder,
+                underlyingAssetName: tmpSymbol,
+                aTokenName: string.concat("Cod3x Lend ", tmpSymbol),
+                aTokenSymbol: string.concat("cl", tmpSymbol),
+                variableDebtTokenName: string.concat("Cod3x Lend variable debt bearing ", tmpSymbol),
+                variableDebtTokenSymbol: string.concat("variableDebt", tmpSymbol),
+                params: "0x10"
+            });
+
+            console.log("BatchInitReserve");
+            vm.startPrank(address(deployedContracts.lendingPoolAddressesProvider.getPoolAdmin()));
+            vm.expectRevert(bytes(Errors.RL_RESERVE_ALREADY_INITIALIZED));
+            deployedContracts.lendingPoolConfigurator.batchInitReserve(initInputParams);
+            vm.stopPrank();
+        }
+
+        UserAccountData memory afterUserAccountData;
+        (
+            afterUserAccountData.totalCollateralETH,
+            afterUserAccountData.totalDebtETH,
+            afterUserAccountData.availableBorrowsETH,
+            afterUserAccountData.currentLiquidationThreshold,
+            afterUserAccountData.ltv,
+            afterUserAccountData.healthFactor
+        ) = deployedContracts.cod3xLendDataProvider.getLpUserAccountData(address(this));
+
+        assertEq(afterUserAccountData.totalCollateralETH, beforeUserAccountData.totalCollateralETH);
+        assertEq(afterUserAccountData.totalDebtETH, beforeUserAccountData.totalDebtETH);
+        assertEq(
+            afterUserAccountData.availableBorrowsETH, beforeUserAccountData.availableBorrowsETH
+        );
+        assertEq(
+            afterUserAccountData.currentLiquidationThreshold,
+            beforeUserAccountData.currentLiquidationThreshold
+        );
+        assertEq(afterUserAccountData.ltv, beforeUserAccountData.ltv);
+        assertEq(afterUserAccountData.healthFactor, beforeUserAccountData.healthFactor);
     }
 }

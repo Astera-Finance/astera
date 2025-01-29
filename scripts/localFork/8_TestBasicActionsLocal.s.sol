@@ -596,8 +596,12 @@ contract TestBasicActions is Script, Test {
             }
 
             vm.startPrank(FOUNDRY_DEFAULT);
-            contracts.lendingPoolConfigurator.setPoolPause(false);
-            contracts.miniPoolConfigurator.setPoolPause(false, IMiniPool(mp));
+            if (_contracts.lendingPool.paused()) {
+                contracts.lendingPoolConfigurator.setPoolPause(false);
+            }
+            if (IMiniPool(mp).paused()) {
+                contracts.miniPoolConfigurator.setPoolPause(false, IMiniPool(mp));
+            }
             vm.stopPrank();
 
             TokenParams memory collateralParams;

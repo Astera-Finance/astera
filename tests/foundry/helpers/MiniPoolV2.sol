@@ -185,7 +185,7 @@ contract MiniPoolV2 is VersionedInitializable, IMiniPool, MiniPoolStorage {
         uint256 availableLiquidity;
         uint256 amountReceived;
         address onBehalfOf;
-        address aTokenAddress;
+        address aErc6909;
         address LendingPool;
     }
     /**
@@ -208,12 +208,12 @@ contract MiniPoolV2 is VersionedInitializable, IMiniPool, MiniPoolStorage {
     {
         DataTypes.MiniPoolReserveData storage reserve = _reserves[asset];
         borrowVarsLocalVars memory vars;
-        vars.aTokenAddress = reserve.aTokenAddress;
-        require(vars.aTokenAddress != address(0), "Reserve not initialized");
-        vars.availableLiquidity = IERC20(asset).balanceOf(vars.aTokenAddress);
+        vars.aErc6909 = reserve.aErc6909;
+        require(vars.aErc6909 != address(0), "Reserve not initialized");
+        vars.availableLiquidity = IERC20(asset).balanceOf(vars.aErc6909);
         if (
             amount > vars.availableLiquidity
-                && IAERC6909(reserve.aTokenAddress).isTranche(reserve.aTokenID)
+                && IAERC6909(reserve.aErc6909).isTranche(reserve.aTokenID)
         ) {
             address underlying = ATokenNonRebasing(asset).UNDERLYING_ASSET_ADDRESS();
             vars.LendingPool = _addressesProvider.getLendingPool();
@@ -248,7 +248,7 @@ contract MiniPoolV2 is VersionedInitializable, IMiniPool, MiniPoolStorage {
                 msg.sender,
                 onBehalfOf,
                 amount,
-                reserve.aTokenAddress,
+                reserve.aErc6909,
                 0,
                 0,
                 0,
@@ -365,10 +365,10 @@ contract MiniPoolV2 is VersionedInitializable, IMiniPool, MiniPoolStorage {
      */
     function _repayLendingPool(address asset) internal {
         DataTypes.MiniPoolReserveData storage reserve = _reserves[asset];
-        address aTokenAddress = reserve.aTokenAddress;
+        address aErc6909 = reserve.aErc6909;
         address underlyingAsset;
 
-        if (IAERC6909(aTokenAddress).isTranche(reserve.aTokenID)) {
+        if (IAERC6909(aErc6909).isTranche(reserve.aTokenID)) {
             underlyingAsset = ATokenNonRebasing(asset).UNDERLYING_ASSET_ADDRESS();
             uint256 underlyingDebt =
                 ATokenNonRebasing(asset).convertToShares(getCurrentLendingPoolDebt(underlyingAsset)); // share
@@ -391,13 +391,12 @@ contract MiniPoolV2 is VersionedInitializable, IMiniPool, MiniPoolStorage {
                 ); // MUST use asset
             }
             uint256 remainingBalance =
-                IAERC6909(aTokenAddress).balanceOf(address(this), reserve.aTokenID);
+                IAERC6909(aErc6909).balanceOf(address(this), reserve.aTokenID);
 
             if (
                 getCurrentLendingPoolDebt(underlyingAsset) == 0
                     && remainingBalance > ERROR_REMAINDER_MARGIN /* We leave ERROR_REMAINDER_MARGIN of aToken wei in the minipool to mitigate rounding errors. */
-                    && IERC20(asset).balanceOf(aTokenAddress)
-                        > remainingBalance - ERROR_REMAINDER_MARGIN /* Check if there is enough liquidity to withdraw. */
+                    && IERC20(asset).balanceOf(aErc6909) > remainingBalance - ERROR_REMAINDER_MARGIN /* Check if there is enough liquidity to withdraw. */
             ) {
                 // Withdraw the remaining AERC6909 to Treasury. This is due to Minipool IR > Lending IR.
                 // `this.` modifies the execution context => msg.sender == address(this).
@@ -641,21 +640,21 @@ contract MiniPoolV2 is VersionedInitializable, IMiniPool, MiniPoolStorage {
      * interest rate strategy.
      * - Only callable by the LendingPoolConfigurator contract.
      * @param asset The address of the underlying asset of the reserve.
-     * @param aTokenAddress Whether the reserve is boosted by a vault.
+     * @param aErc6909 Whether the reserve is boosted by a vault.
      * @param aTokenID The address of the aToken that will be assigned to the reserve.
      * @param variableDebtTokenID The address of the VariableDebtToken that will be assigned to the reserve.
      * @param interestRateStrategyAddress The address of the interest rate strategy contract.
      */
     function initReserve(
         address asset,
-        IAERC6909 aTokenAddress,
+        IAERC6909 aErc6909,
         uint256 aTokenID,
         uint256 variableDebtTokenID,
         address interestRateStrategyAddress
     ) external override onlyMiniPoolConfigurator {
         require(Address.isContract(asset), Errors.LP_NOT_CONTRACT);
         _reserves[asset].init(
-            asset, aTokenAddress, aTokenID, variableDebtTokenID, interestRateStrategyAddress
+            asset, aErc6909, aTokenID, variableDebtTokenID, interestRateStrategyAddress
         );
         _addReserveToList(asset);
     }
@@ -739,9 +738,7 @@ contract MiniPoolV2 is VersionedInitializable, IMiniPool, MiniPoolStorage {
         external
         onlyMiniPoolConfigurator
     {
-        IAERC6909(_reserves[asset].aTokenAddress).setIncentivesController(
-            IMiniPoolRewarder(rewarder)
-        );
+        IAERC6909(_reserves[asset].aErc6909).setIncentivesController(IMiniPoolRewarder(rewarder));
     }
 
     /**
@@ -758,5 +755,34 @@ contract MiniPoolV2 is VersionedInitializable, IMiniPool, MiniPoolStorage {
      */
     function _updateFlashLoanFee(uint128 flashLoanPremiumTotal) internal {
         _flashLoanPremiumTotal = flashLoanPremiumTotal;
+    }
+
+    /**
+     * @notice Synchronizes the reserve indexes state for a specific asset
+     * @dev Only callable by the LendingPoolConfigurator
+     * @param asset The address of the underlying asset of the reserve
+     */
+    function syncIndexesState(address asset) external virtual override onlyMiniPoolConfigurator {
+        DataTypes.MiniPoolReserveData storage reserve = _reserves[asset];
+
+        reserve.updateState();
+    }
+
+    /**
+     * @notice Synchronizes the interest rates state for a specific asset
+     * @dev Only callable by the LendingPoolConfigurator
+     * @param asset The address of the underlying asset of the reserve
+     */
+    function syncRatesState(address asset) external virtual override onlyMiniPoolConfigurator {
+        DataTypes.MiniPoolReserveData storage reserve = _reserves[asset];
+
+        reserve.updateInterestRates(asset, 0, 0);
+    }
+
+    function syncState(address asset) external virtual override {
+        DataTypes.MiniPoolReserveData storage reserve = _reserves[asset];
+
+        reserve.updateState();
+        reserve.updateInterestRates(asset, 0, 0);
     }
 }

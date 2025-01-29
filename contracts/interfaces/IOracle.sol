@@ -47,6 +47,8 @@ interface IOracle {
 
     function getFallbackOracle() external view returns (address);
 
+    function getLendingpoolConfigurator() external view returns (address);
+
     function BASE_CURRENCY() external view returns (address);
 
     function BASE_CURRENCY_UNIT() external view returns (uint256);

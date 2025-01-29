@@ -569,9 +569,9 @@ contract Cod3xLendDataProvider is Ownable, ICod3xLendDataProvider {
         require(isReserveConfigured, Errors.DP_RESERVE_NOT_CONFIGURED);
 
         dynamicData.interestRateStrategyAddress = reserve.interestRateStrategyAddress;
-        dynamicData.availableLiquidity = IERC20Detailed(asset).balanceOf(reserve.aTokenAddress);
+        dynamicData.availableLiquidity = IERC20Detailed(asset).balanceOf(reserve.aErc6909);
         dynamicData.totalVariableDebt =
-            IAERC6909(reserve.aTokenAddress).scaledTotalSupply(reserve.variableDebtTokenID);
+            IAERC6909(reserve.aErc6909).scaledTotalSupply(reserve.variableDebtTokenID);
         dynamicData.liquidityRate = reserve.currentLiquidityRate;
         dynamicData.variableBorrowRate = reserve.currentVariableBorrowRate;
         dynamicData.liquidityIndex = reserve.liquidityIndex;
@@ -648,7 +648,7 @@ contract Cod3xLendDataProvider is Ownable, ICod3xLendDataProvider {
             (bool isReserveConfigured, DataTypes.MiniPoolReserveData memory data) =
                 isMpReserveConfigured(reserves[idx], address(miniPoolContract));
             require(isReserveConfigured, Errors.DP_RESERVE_NOT_CONFIGURED);
-            aErc6909Token[idx] = data.aTokenAddress;
+            aErc6909Token[idx] = data.aErc6909;
             aTokenIds[idx] = data.aTokenID;
             variableDebtTokenIds[idx] = data.variableDebtTokenID;
         }
@@ -747,15 +747,15 @@ contract Cod3xLendDataProvider is Ownable, ICod3xLendDataProvider {
 
         require(isReserveConfigured, Errors.DP_RESERVE_NOT_CONFIGURED);
 
-        userReservesData.aErc6909Token = data.aTokenAddress;
+        userReservesData.aErc6909Token = data.aErc6909;
         userReservesData.aTokenId = data.aTokenID;
         userReservesData.debtTokenId = data.variableDebtTokenID;
         (userReservesData.scaledATokenBalance,) =
-            IAERC6909(data.aTokenAddress).getScaledUserBalanceAndSupply(user, data.aTokenID);
+            IAERC6909(data.aErc6909).getScaledUserBalanceAndSupply(user, data.aTokenID);
         userReservesData.usageAsCollateralEnabledOnUser = userConfig.isUsingAsCollateral(data.id);
         userReservesData.isBorrowing = userConfig.isBorrowing(data.id);
         if (userReservesData.isBorrowing) {
-            (userReservesData.scaledVariableDebt,) = IAERC6909(data.aTokenAddress)
+            (userReservesData.scaledVariableDebt,) = IAERC6909(data.aErc6909)
                 .getScaledUserBalanceAndSupply(user, data.variableDebtTokenID);
         }
     }
@@ -1008,7 +1008,7 @@ contract Cod3xLendDataProvider is Ownable, ICod3xLendDataProvider {
         returns (bool isConfigured, DataTypes.MiniPoolReserveData memory data)
     {
         data = IMiniPool(miniPool).getReserveData(reserve);
-        return ((data.aTokenAddress == address(0) ? false : true), data);
+        return ((data.aErc6909 == address(0) ? false : true), data);
     }
 
     function getBaseCurrencyInfo()

@@ -11,7 +11,7 @@ echidna tests/echidna/PropertiesMain.sol --contract PropertiesMain --config test
 
 Medusa: to be fixed.
 ```sh
-cd tests/echidna
+forge install
 medusa fuzz --config medusa_config.json
 ```
 
@@ -79,15 +79,15 @@ forge t --mt testCallSequence -vvvv
 
 ### LendingPool
 
-200. ✅ Users must always be able to deposit in normal condition.
+200. ❌ Users must always be able to deposit in normal condition.
 201. ✅ `deposit()` must increase the user aToken balance by `amount`.
 202. ✅ `deposit()` must decrease the user asset balance by `amount`.
 203. ✅ `withdraw()` must decrease the user aToken balance by `amount`.
 204. ✅ `withdraw()` must increase the user asset balance by `amount`.
 205. ✅ A user must not be able to `borrow()` if they don't own aTokens.
 206. ✅ `borrow()` must only be possible if the user health factor is greater than 1.
-207. ❌ (L-01 propably) `borrow()` must not result in a health factor of less than 1.
-208. ✅ `borrow()` must increase the user debtToken balance by `amount`.
+207. ❌(L-01) `borrow()` must not result in a health factor of less than 1.
+208. ❌ `borrow()` must increase the user debtToken balance by `amount`.
 209. ✅ `borrow()` must decrease `borrowAllowance()` by `amount` if `user != onBehalf`.
 210. ✅ `repay()` must decrease the onBehalfOf debtToken balance by `amount`.
 211. ✅ `repay()` must decrease the user asset balance by `amount`.
@@ -98,9 +98,9 @@ forge t --mt testCallSequence -vvvv
 216. 🚚
 217. ❌ (fix lastLiquidityIndex and lastBorrowIndex) The `liquidityIndex` should monotonically increase when there's total debt.
 218. ❌ (fix lastLiquidityIndex and lastBorrowIndex) The `variableBorrowIndex` should monotonically increase when there's total debt.
-219. ❌ (L-01) A user with debt should have at least an aToken balance `setUsingAsCollateral`.
-220. ❌ If all debt is repaid, all `aToken` holders should be able to claim their collateral.
-221. ❌ If all users withdraw their liquidity, there must not be aTokens supply left.
+219. ✅(L-01) A user with debt should have at least an aToken balance `setUsingAsCollateral`.
+220. 🚚
+221. 🚚
 222. ✅ Integrity of Deposit Cap - aToken supply should never exceed the cap.
 223. ✅ `UserConfigurationMap` integrity: If a user has a given aToken then `isUsingAsCollateralOrBorrowing` and `isUsingAsCollateral` should return true.
 224. ✅ `UserConfigurationMap` integrity: If a user has a given debtToken then `isUsingAsCollateralOrBorrowing`, `isBorrowing` and `isBorrowingAny` should return true.
@@ -109,7 +109,7 @@ forge t --mt testCallSequence -vvvv
 227. ❌ Rehypothecation: if the external rehypothecation vault is liquid, users should always be able to withdraw if all other withdrawal conditions are met.
 228. ✅ (M-01) Rehypothecation: farming percentage must be respected (+/- the drift) after a rebalance occured.
 229. ✅ Rehypothecation: The profit handler address must see its balance increase after reaching the claiming threshold.
-230. ❌ (L-01 propably) `withdraw()` must not result in a health factor of less than 1.
+230. ❌(L-01) `withdraw()` must not result in a health factor of less than 1.
 231. ✅ Rehypothecation: farming percentage must be respected (+/- the drift) after any operation.
 
 ### ATokens/ATokenNonRebasing
@@ -154,11 +154,11 @@ forge t --mt testCallSequence -vvvv
 ### MiniPool
 
 500. ❌ Users must always be able to deposit in normal condition.
-501. ✅ `deposit()` must increase the user AToken6909 balance by `amount`.
+501. ❌ `deposit()` must increase the user AToken6909 balance by `amount`.
 502. ✅ `deposit()` must decrease the user asset balance by `amount`.
 503. ✅ `withdraw()` must decrease the user AToken6909 balance by `amount`.
 504. ✅ `withdraw()` must increase the user asset balance by `amount`.
-505. ❌ (L-01 propably) `withdraw()` must not result in a health factor of less than 1.
+505. ❌ (L-0X) `withdraw()` must not result in a health factor of less than 1.
 506. ✅ A user must not be able to `borrow()` if they don't own AToken6909.
 507. ✅ `borrow()` must only be possible if the user health factor is greater than 1.
 508. ✅ `borrow()` must not result in a health factor of less than 1.
@@ -173,13 +173,14 @@ forge t --mt testCallSequence -vvvv
 517. ❌ The `liquidityIndex` should monotonically increase when there's total debt.
 518. ❌ The `variableBorrowIndex` should monotonically increase when there's total debt.
 519. ❌ (L-03) A user with debt should have at least an AToken6909 balance `setUsingAsCollateral`.
-520. ❌ If all debt is repaid, all aToken holders should be able to claim their collateral.
-521. ❌ If all users withdraw their liquidity, there must not be aTokens supply left.
+520. 🚚
+521. 🚚
 522. ✅ Integrity of Deposit Cap - aToken supply should never exceed the cap.
 523. ❌ (L-04) `UserConfigurationMap` integrity: If a user has a given aToken then `isUsingAsCollateralOrBorrowing` and `isUsingAsCollateral` should return true.
 524. ✅ `UserConfigurationMap` integrity: If a user has a given debtToken then `isUsingAsCollateralOrBorrowing`, `isBorrowing` and `isBorrowingAny` should return true.
-525. ❌ (Cergyk finding) If a minipool is flow borrowing, for a given reserve, the Lendingpool liquidity interest rate remain lower than the minipool debt interest rate.
+525. ✅ (Cergyk finding) If a minipool is flow borrowing, for a given reserve, the Lendingpool liquidity interest rate remain lower than the minipool debt interest rate.
 526. ✅ The aToken remainder of each assets with flow borrowing activated should remain greater than ERROR_REMAINDER_MARGIN.
+527. 🚧 If a minipool is flow borrowing then its address must be included in `_minipoolFlowBorrowing`. 
 
 ### AToken6909
 

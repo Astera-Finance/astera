@@ -9,5 +9,16 @@
   "piStrategies": [],
   "miniPoolVolatileStrategies": [],
   "miniPoolStableStrategies": [],
-  "miniPoolPiStrategies": []
+  "miniPoolPiStrategies": [
+    {
+      "assetReserveType": true,
+      "ki": 13e19,
+      "kp": 1e27,
+      "maxITimeAmp": 1728000,
+      "minControllerError": -400e24,
+      "optimalUtilizationRate": 45e25,
+      "symbol": "aUSDC",
+      "tokenAddress": "0x088607f8f2aAE9Ab9b7EE16C988A5Ca857DB8F15"
+    }
+  ]
 }
