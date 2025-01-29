@@ -24,8 +24,8 @@ abstract contract RewardsDistributor is IRewardsDistributor, Ownable {
      * @param usersIndex Mapping of user addresses to their reward index.
      */
     struct RewardData {
-        uint192 emissionPerSecond;
-        uint256 index;
+        uint88 emissionPerSecond;
+        uint104 index;
         uint32 lastUpdateTimestamp;
         uint32 distributionEnd;
         mapping(address => uint256) usersIndex;
@@ -55,18 +55,11 @@ abstract contract RewardsDistributor is IRewardsDistributor, Ownable {
 
     address[] internal _rewardTokens;
 
-    // Mapping decimals of token to total supply threshold that will trigger the accrual of rewards
-    mapping(uint8 => uint256) public _decimalsToTotalSupplyThreshold;
-
     /**
      * @dev Constructor that sets the initial owner of the contract.
      * @param initialOwner Address to be set as the contract owner.
      */
-    constructor(address initialOwner) Ownable(initialOwner) {
-        _setTotalSupplyThreshold(6, 1e6);
-        _setTotalSupplyThreshold(8, 1e2);
-        _setTotalSupplyThreshold(18, 1e16);
-    }
+    constructor(address initialOwner) Ownable(initialOwner) {}
 
     /**
      * @notice Retrieves reward distribution data for a specific asset and reward token.
@@ -204,15 +197,6 @@ abstract contract RewardsDistributor is IRewardsDistributor, Ownable {
         );
     }
 
-    function setTotalSupplyThreshold(uint8 decimals, uint256 threshold) external onlyOwner {
-        _setTotalSupplyThreshold(decimals, threshold);
-    }
-
-    function _setTotalSupplyThreshold(uint8 decimals, uint256 threshold) private {
-        _decimalsToTotalSupplyThreshold[decimals] = threshold;
-        emit TotalSupplyThresholdSet(decimals, threshold);
-    }
-
     /**
      * @notice Configures reward distribution parameters for multiple assets.
      * @param rewardsInput Array of reward configuration parameters.
@@ -250,19 +234,6 @@ abstract contract RewardsDistributor is IRewardsDistributor, Ownable {
             // Configure emission and distribution end of the reward per asset.
             rewardConfig.emissionPerSecond = rewardsInput[i].emissionPerSecond;
             rewardConfig.distributionEnd = rewardsInput[i].distributionEnd;
-
-            // Check if extreme values do not cause overflow
-            // lastUpdateTimestamp param is {block.timestamp} - {time of distribution} -> it is done in order to obtain max possible delta in _getAssetIndex
-            // distributionEnd param doesn't matter in this case
-            // total balance - lowest possible value for index calculation
-            _getAssetIndex(
-                0,
-                rewardsInput[i].emissionPerSecond,
-                uint128(block.timestamp - (rewardsInput[i].distributionEnd - block.timestamp)),
-                rewardsInput[i].distributionEnd,
-                _decimalsToTotalSupplyThreshold[_assets[rewardsInput[i].asset].decimals],
-                _assets[rewardsInput[i].asset].decimals
-            );
 
             emit AssetConfigUpdated(
                 rewardsInput[i].asset,
@@ -305,7 +276,9 @@ abstract contract RewardsDistributor is IRewardsDistributor, Ownable {
         );
 
         if (newIndex != oldIndex) {
-            rewardConfig.index = newIndex;
+            require(newIndex <= type(uint104).max, "Index overflow");
+            //optimization: storing one after another saves one SSTORE
+            rewardConfig.index = uint104(newIndex);
             rewardConfig.lastUpdateTimestamp = uint32(block.timestamp);
             emit AssetIndexUpdated(asset, reward, newIndex);
         } else {
@@ -515,12 +488,9 @@ abstract contract RewardsDistributor is IRewardsDistributor, Ownable {
         uint256 totalBalance,
         uint8 decimals
     ) internal view returns (uint256) {
-        // emissionPerSecond equal 1 leads to 0 accrued rewards due to rounding down
-        // if total balance is too small, do not increase index and accrue the rewards because it may lead to overflows of uint128
         if (
-            emissionPerSecond <= 1 || totalBalance == 0 || lastUpdateTimestamp == block.timestamp
+            emissionPerSecond == 0 || totalBalance == 0 || lastUpdateTimestamp == block.timestamp
                 || lastUpdateTimestamp >= distributionEnd
-                || totalBalance < _decimalsToTotalSupplyThreshold[decimals]
         ) {
             return currentIndex;
         }
