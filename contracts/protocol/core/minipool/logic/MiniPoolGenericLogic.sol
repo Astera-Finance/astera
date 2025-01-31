@@ -118,7 +118,7 @@ library MiniPoolGenericLogic {
         uint256 amount,
         uint256 decimals
     ) internal view returns (uint256) {
-        return IOracle(oracle).getAssetPrice(asset) * amount / (10 ** decimals);
+        return WadRayMath.divUp(IOracle(oracle).getAssetPrice(asset) * amount, 10 ** decimals);
     }
 
     /**

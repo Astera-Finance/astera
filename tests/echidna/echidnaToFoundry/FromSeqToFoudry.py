@@ -72,9 +72,8 @@ def transform_text(input_text):
     return "\n".join(output)
 
 # Example usage
-input_text = """    PropertiesMain.randDepositLP((0, 90, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, false),0,3,1,9)
-    PropertiesMain.randBorrowLP((0, 206, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, false),0,3,1,0)
-    PropertiesMain.randWithdrawLP((0, 90, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, false),3,3,1,1)"""
+input_text = """      PropertiesMain.randDepositLP((0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, false),0,0,0,0)
+    PropertiesMain.randWithdrawLP((0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, false),0,0,0,0)"""
 
 string = 'tests/echidna/echidnaToFoundry/FoundryTestSequence.sol'
 with open(string, 'w') as f:

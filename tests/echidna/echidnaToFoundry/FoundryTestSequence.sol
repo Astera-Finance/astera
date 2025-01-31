@@ -16,13 +16,10 @@ contract FoundryTestSequence is Test {
 
     function testCallSequence() public {
         propertiesMain.randDepositLP(
-            (PropertiesBase.LocalVars_UPTL(0, 90, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, false)), 0, 3, 1, 9
-        );
-        propertiesMain.randBorrowLP(
-            (PropertiesBase.LocalVars_UPTL(0, 206, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, false)), 0, 3, 1, 0
+            (PropertiesBase.LocalVars_UPTL(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, false)), 0, 0, 0, 0
         );
         propertiesMain.randWithdrawLP(
-            (PropertiesBase.LocalVars_UPTL(0, 90, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, false)), 3, 3, 1, 1
+            (PropertiesBase.LocalVars_UPTL(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, false)), 0, 0, 0, 0
         );
     }
 }

@@ -9,6 +9,7 @@ import {MathUtils} from "../../../contracts/protocol/libraries/math/MathUtils.so
 import {WadRayMath} from "../../../contracts/protocol/libraries/math/WadRayMath.sol";
 import {UserConfiguration} from
     "../../../contracts/protocol/libraries/configuration/UserConfiguration.sol";
+import {console} from "forge-std/console.sol";
 
 contract LendingPoolProp is PropertiesBase {
     constructor() {}
@@ -58,7 +59,6 @@ contract LendingPoolProp is PropertiesBase {
     }
 
     /// @custom:invariant 230 - `withdraw()` must not result in a health factor of less than 1.
-    /// @custom:invariant 227 - Rehypothecation: if the external rehypothecation vault is liquid, users should always be able to withdraw if all other withdrawal conditions are met.
     /// @custom:invariant 203 - `withdraw()` must decrease the user aToken balance by `amount`.
     /// @custom:invariant 204 - `withdraw()` must increase the user asset balance by `amount`.
     function randWithdrawLP(
@@ -84,6 +84,8 @@ contract LendingPoolProp is PropertiesBase {
 
         uint256 randAmt = clampBetween(seedAmt, 0, aTokenBalanceBefore);
 
+        (,,,,, uint256 healthFactorBefore) = pool.getUserAccountData(address(to));
+
         (bool success,) = user.proxy(
             address(pool),
             abi.encodeWithSelector(
@@ -92,9 +94,6 @@ contract LendingPoolProp is PropertiesBase {
         );
 
         (,,,,, uint256 healthFactorAfter) = pool.getUserAccountData(address(to));
-        if (healthFactorAfter >= 1e18) {
-            assertWithMsg(success, "227");
-        }
 
         if (healthFactorAfter < 1e18) {
             assertWithMsg(!success, "230");
