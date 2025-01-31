@@ -72,8 +72,19 @@ def transform_text(input_text):
     return "\n".join(output)
 
 # Example usage
-input_text = """      PropertiesMain.randDepositLP((0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, false),0,0,0,0)
-    PropertiesMain.randWithdrawLP((0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, false),0,0,0,0)"""
+input_text = """     PropertiesMain.randApproveDelegation((0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, false),0,0,0,0)
+    PropertiesMain.randApproveDelegation((0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, false),0,0,0,0)
+    PropertiesMain.randATokenNonRebasingBalanceOfLP((0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, false),0,0)
+    PropertiesMain.randDepositLP((0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 15989, false),0,0,1,50)
+    PropertiesMain.randFlashloanLP((0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, false),0,0,0,0)
+    PropertiesMain.randApproveMP((0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, false),0,0,0,0,0)
+    PropertiesMain.randForceFeedAssetLP((0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, false),0,0,0,0)
+    PropertiesMain.randATokenNonRebasingBalanceOfLP((0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, false),0,0)
+    PropertiesMain.randATokenNonRebasingBalanceOfLP((0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, false),0,0)
+    PropertiesMain.randApproveDelegation((0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, false),0,0,0,0)
+    PropertiesMain.randFlashloanLP((0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, false),0,0,0,0)
+    PropertiesMain.randBorrowLP((0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, false),0,0,0,3)
+"""
 
 string = 'tests/echidna/echidnaToFoundry/FoundryTestSequence.sol'
 with open(string, 'w') as f:

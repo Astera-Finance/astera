@@ -15,11 +15,50 @@ contract FoundryTestSequence is Test {
     }
 
     function testCallSequence() public {
-        propertiesMain.randDepositLP(
+        propertiesMain.randApproveDelegation(
             (PropertiesBase.LocalVars_UPTL(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, false)), 0, 0, 0, 0
         );
-        propertiesMain.randWithdrawLP(
+        propertiesMain.randApproveDelegation(
             (PropertiesBase.LocalVars_UPTL(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, false)), 0, 0, 0, 0
+        );
+        propertiesMain.randATokenNonRebasingBalanceOfLP(
+            (PropertiesBase.LocalVars_UPTL(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, false)), 0, 0
+        );
+        propertiesMain.randDepositLP(
+            (PropertiesBase.LocalVars_UPTL(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 15989, false)),
+            0,
+            0,
+            1,
+            50
+        );
+        propertiesMain.randFlashloanLP(
+            (PropertiesBase.LocalVars_UPTL(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, false)), 0, 0, 0, 0
+        );
+        propertiesMain.randApproveMP(
+            (PropertiesBase.LocalVars_UPTL(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, false)),
+            0,
+            0,
+            0,
+            0,
+            0
+        );
+        propertiesMain.randForceFeedAssetLP(
+            (PropertiesBase.LocalVars_UPTL(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, false)), 0, 0, 0, 0
+        );
+        propertiesMain.randATokenNonRebasingBalanceOfLP(
+            (PropertiesBase.LocalVars_UPTL(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, false)), 0, 0
+        );
+        propertiesMain.randATokenNonRebasingBalanceOfLP(
+            (PropertiesBase.LocalVars_UPTL(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, false)), 0, 0
+        );
+        propertiesMain.randApproveDelegation(
+            (PropertiesBase.LocalVars_UPTL(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, false)), 0, 0, 0, 0
+        );
+        propertiesMain.randFlashloanLP(
+            (PropertiesBase.LocalVars_UPTL(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, false)), 0, 0, 0, 0
+        );
+        propertiesMain.randBorrowLP(
+            (PropertiesBase.LocalVars_UPTL(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, false)), 0, 0, 0, 3
         );
     }
 }
