@@ -301,4 +301,8 @@ interface ILendingPool {
     function syncIndexesState(address asset, bool reserveType) external;
 
     function syncRatesState(address asset, bool reserveType) external;
+
+    function getMinipoolFlowBorrowing() external view returns (address[] memory);
+
+    function isMinipoolFlowBorrowing(address minipool) external view returns (bool);
 }
