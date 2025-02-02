@@ -19,7 +19,7 @@
 
 ### Overview
 Scripts allow to deploy Cod3x-Lend infrastructure and properly configure it.
-The deployment process involves configuration files `./input/<Nr>_<InputJsonName>.json` and corresponding scripts `(./<Nr>_<ScriptName>.s.sol)`. Typically, the scripts should be executed in numerical order. They generate output json files with deployed contract addresses that can be used by next script without the need to configure manually. Each script file requires at least one configuration file to be available and properly configured (example configurations with all descriptions are available [here](#configuration-files)). The scripts may require also more json files as an inputs generated from previous scripts and available in `./outputs` folder.
+The deployment process involves configuration files `./inputs/<Nr>_<InputJsonName>.json` and corresponding scripts `(./<Nr>_<ScriptName>.s.sol)`. Typically, the scripts should be executed in numerical order. They generate output json files with deployed contract addresses that can be used by next script without the need to configure manually. Each script file requires at least one configuration file to be available and properly configured (example configurations with all descriptions are available [here](#configuration-files)). The scripts may require also more json files as an inputs. Usually they are generated from previous scripts and available in `./outputs` folder.
 
 ![alt text](./imgs/Configuration.png)
 
@@ -31,7 +31,7 @@ The deployment process involves configuration files `./input/<Nr>_<InputJsonName
      - compatible script numbers <Nr> to run (1 - 8)
      - local fork runs also the previous script in order to get all necessary contracts so in this variant the order doesn't matter - it is possible to run script with last number without running scripts with prior numbers
      - configuration with corresponding number shall be filled
-     - run `forge script scripts/<nr>_<scriptName>.s.sol`
+     - run `forge script scripts/localFork/<nr>_<scriptName>.s.sol`
    - **Testnet**: 
       - compatible script numbers `<Nr>` to run (0 - 7)
       - there is need to have executed script 0_DeployMocks.s.sol in order to have ERC20 token mocks
@@ -96,7 +96,8 @@ The deployment process involves configuration files `./input/<Nr>_<InputJsonName
             "debtTokenSymbolPrefix": "clDebt",
             "marketReferenceCurrencyAggregator": "0x7e860098F58bBFC8648a4311b374B1D669a2bc6B",
             "networkBaseTokenAggregator": "0x71041dddad3595F9CEd3DcCFBe3D1F4b0a16Bb70",
-            "treasury": "0x3151CfCA393FE5Eec690feD2a2446DA5a073d01B"
+            "treasury": "0x3151CfCA393FE5Eec690feD2a22222A5a073dAAA",
+            "usdBootstrapAmount": 2000000000000000000 // USD amount in wei that needs to be deposited during deployment to avoid inflation attack
         },
         // List of reserves and their configurations
         "poolReserversConfig": [
@@ -177,7 +178,8 @@ The deployment process involves configuration files `./input/<Nr>_<InputJsonName
             "debtTokenSymbolPrefix": "clDebt",
             "marketReferenceCurrencyAggregator": "0x7e860098F58bBFC8648a4311b374B1D669a2bc6B",
             "networkBaseTokenAggregator": "0x71041dddad3595F9CEd3DcCFBe3D1F4b0a16Bb70",
-            "treasury": "0x3151CfCA393FE5Eec690feD2a2446DA5a073d01B"
+            "treasury": "0x3151CfCA393FE5Eec690feD2a22222A5a073dAAA",
+            "usdBootstrapAmount": 1000000000000000000 // USD amount in wei that needs to be deposited during deployment to avoid inflation attack
         },
         // List of reserves and their configurations
         "poolReserversConfig": [
@@ -383,7 +385,8 @@ The deployment process involves configuration files `./input/<Nr>_<InputJsonName
             "debtTokenSymbolPrefix": "clDebt",
             "marketReferenceCurrencyAggregator": "0x7e860098F58bBFC8648a4311b374B1D669a2bc6B",
             "networkBaseTokenAggregator": "0x71041dddad3595F9CEd3DcCFBe3D1F4b0a16Bb70",
-            "treasury": "0x3151CfCA393FE5Eec690feD2a2446DA5a073d01B"
+            "treasury": "0x3151CfCA393FE5Eec690feD2a22222A5a073dAAA",
+            "usdBootstrapAmount": 2000000000000000000
         },
         "poolAddressesProviderConfig": {
             "marketId": "UV TestNet Market", // Not used in this script
@@ -437,7 +440,7 @@ The deployment process involves configuration files `./input/<Nr>_<InputJsonName
                 "rates": 0.03e27,
                 "reserveFactor": 1500,
                 "reserveType": true,
-                "symbol": "WBTC",
+                "symbol": "aWBTC",
                 "tokenAddress": "0x0555E30da8f98308EdB960aa94C0Db47230d2B9c"
             },
             {
@@ -452,7 +455,7 @@ The deployment process involves configuration files `./input/<Nr>_<InputJsonName
                 "rates": 0.03e27,
                 "reserveFactor": 1500,
                 "reserveType": true,
-                "symbol": "USDT",
+                "symbol": "aUSDT",
                 "tokenAddress": "0xfde4C96c8593536E31F229EA8f37b2ADa2699bb2"
             }
         ],
@@ -536,7 +539,7 @@ The deployment process involves configuration files `./input/<Nr>_<InputJsonName
                 "rates": 0.02e27,
                 "reserveFactor": 1500,
                 "reserveType": true,
-                "symbol": "WBTC",
+                "symbol": "aWBTC",
                 "tokenAddress": "0x0555E30da8f98308EdB960aa94C0Db47230d2B9c"
             },
             {
@@ -551,7 +554,7 @@ The deployment process involves configuration files `./input/<Nr>_<InputJsonName
                 "rates": 0.03e27,
                 "reserveFactor": 1600,
                 "reserveType": true,
-                "symbol": "USDT",
+                "symbol": "aUSDT",
                 "tokenAddress": "0xfde4C96c8593536E31F229EA8f37b2ADa2699bb2"
             }
         ]
@@ -575,14 +578,14 @@ The deployment process involves configuration files `./input/<Nr>_<InputJsonName
         "treasury": [
             {
                 "configure": false, // determine whether treasury needs to be changed for this asset
-                "newAddress": "0x3151CfCA393FE5Eec690feD2a2446DA5a073d01B", // new treasury asset
+                "newAddress": "0x3151CfCA393FE5Eec690feD2a22222A5a073dAAA", // new treasury asset
                 "reserveType": true,
                 "symbol": "USDC",
                 "tokenAddress": "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913"
             },
             {
                 "configure": true, // determine whether treasury needs to be changed for this asset
-                "newAddress": "0x3151CfCA393FE5Eec690feD2a2446DA5a073d01B", // new treasury asset
+                "newAddress": "0x3151CfCA393FE5Eec690feD2a22222A5a073dAAA", // new treasury asset
                 "reserveType": true,
                 "symbol": "WETH",
                 "tokenAddress": "0x4200000000000000000000000000000000000006"
@@ -591,26 +594,21 @@ The deployment process involves configuration files `./input/<Nr>_<InputJsonName
         "miniPoolCod3xTreasury": [
             {
                 "configure": true, // determine whether treasury needs to be changed for this asset
-                "newAddress": "0x3151CfCA393FE5Eec690feD2a2446DA5a073d01B",
-                "owner": "0x3151CfCA393FE5Eec690feD2a2446DA5a073d01B" // pool owner
-            },
-            {
-                "configure": true, // determine whether treasury needs to be changed for this asset
-                "newAddress": "0x3151CfCA393FE5Eec690feD2a2446DA5a073d01B",
-                "owner": "0x3151CfCA393FE5Eec690feD2a2446DA5a073d01B" // pool owner
+                "newAddress": "0x3151CfCA393FE5Eec690feD2a22222A5a073dAAA",
+                "owner": "0x3151CfCA393FE5Eec690feD2a22222A5a073dAAA" // pool owner
             }
         ],
         "vault": [
             {
                 "configure": false, // determine whether vault needs to be changed for this asset
-                "newAddress": "0x3151CfCA393FE5Eec690feD2a2446DA5a073d01B", // new vault asset
+                "newAddress": "0x3151CfCA393FE5Eec690feD2a22222A5a073dAAA", // new vault asset
                 "reserveType": true,
                 "symbol": "USDC",
                 "tokenAddress": "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913"
             },
             {
                 "configure": true, // determine whether vault needs to be changed for this asset
-                "newAddress": "0x3151CfCA393FE5Eec690feD2a2446DA5a073d01B", // new vault asset
+                "newAddress": "0x3151CfCA393FE5Eec690feD2a22222A5a073dAAA", // new vault asset
                 "reserveType": true,
                 "symbol": "WETH",
                 "tokenAddress": "0x4200000000000000000000000000000000000006"
@@ -619,14 +617,14 @@ The deployment process involves configuration files `./input/<Nr>_<InputJsonName
         "rewarder": [
             {
                 "configure": false, // determine whether rewarder needs to be changed for this asset
-                "newAddress": "0x3151CfCA393FE5Eec690feD2a2446DA5a073d01B", // new rewarder asset
+                "newAddress": "0x3151CfCA393FE5Eec690feD2a22222A5a073dAAA", // new rewarder asset. NOTE: Write address(0) to have new deployment !
                 "reserveType": true,
                 "symbol": "USDC",
                 "tokenAddress": "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913"
             },
             {
                 "configure": true, // determine whether rewarder needs to be changed for this asset
-                "newAddress": "0x3151CfCA393FE5Eec690feD2a2446DA5a073d01B", // new rewarder asset
+                "newAddress": "0x3151CfCA393FE5Eec690feD2a22222A5a073dAAA", // new rewarder asset. NOTE: Write address(0) to have new deployment !
                 "reserveType": true,
                 "symbol": "WETH",
                 "tokenAddress": "0x4200000000000000000000000000000000000006"
@@ -635,14 +633,14 @@ The deployment process involves configuration files `./input/<Nr>_<InputJsonName
         "rewarder6909": [
             {
                 "configure": false,
-                "newAddress": "0x3151CfCA393FE5Eec690feD2a2446DA5a073d01B",
+                "newAddress": "0x3151CfCA393FE5Eec690feD2a22222A5a073dAAA", // NOTE: Write address(0) to have new deployment !
                 "reserveType": true,
                 "symbol": "aUSDC",
                 "tokenAddress": "0xF491AF584A573d3accd5B61Ab9677D769CB1c806"
             },
             {
                 "configure": true,
-                "newAddress": "0x3151CfCA393FE5Eec690feD2a2446DA5a073d01B",
+                "newAddress": "0x3151CfCA393FE5Eec690feD2a22222A5a073dAAA", // NOTE: Write address(0) to have new deployment !
                 "reserveType": true,
                 "symbol": "aWETH",
                 "tokenAddress": "0x5D06644F64cEf0299d8dFF67f08E1eC5e883C1a4"
@@ -654,22 +652,22 @@ The deployment process involves configuration files `./input/<Nr>_<InputJsonName
                 "configure": false, // determine whether rehypothecation needs to be changed for this asset
                 "drift": 200,
                 "farmingPct": 2000,
-                "profitHandler": "0x3151CfCA393FE5Eec690feD2a2446DA5a073d01B",
+                "profitHandler": "0x3151CfCA393FE5Eec690feD2a22222A5a073dAAA",
                 "reserveType": true,
                 "symbol": "USDC",
                 "tokenAddress": "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913",
-                "vault": "0x3151CfCA393FE5Eec690feD2a2446DA5a073d01B" // if vault is already set for the asset this param doesn't matter
+                "vault": "0x3151CfCA393FE5Eec690feD2a22222A5a073dAAA" // if vault is already set for the asset this param doesn't matter
             },
             {
                 "claimingThreshold": 1e8,
                 "configure": true, // determine whether rehypothecation needs to be changed for this asset
                 "drift": 200,
                 "farmingPct": 2000,
-                "profitHandler": "0x3151CfCA393FE5Eec690feD2a2446DA5a073d01B",
+                "profitHandler": "0x3151CfCA393FE5Eec690feD2a22222A5a073dAAA",
                 "reserveType": true,
                 "symbol": "WETH",
                 "tokenAddress": "0x4200000000000000000000000000000000000006",
-                "vault": "0x3151CfCA393FE5Eec690feD2a2446DA5a073d01B" // if vault is already set for the asset this param doesn't matter
+                "vault": "0x3151CfCA393FE5Eec690feD2a22222A5a073dAAA" // if vault is already set for the asset this param doesn't matter
             }
         ]
     }
@@ -682,12 +680,13 @@ The deployment process involves configuration files `./input/<Nr>_<InputJsonName
    {
         "transferMiniPoolRole": true, // used to determine which ownership transfer shall happen
        "roles": {
-           "addressesProviderOwner": "0x3151CfCA393FE5Eec690feD2a2446DA5a073d01B",
-           "emergencyAdmin": "0x3151CfCA393FE5Eec690feD2a2446DA5a073d01B",
-           "oracleOwner": "0x3151CfCA393FE5Eec690feD2a2446DA5a073d01B",
-           "piInterestStrategiesOwner": "0x3151CfCA393FE5Eec690feD2a2446DA5a073d01B",
-           "poolAdmin": "0x3151CfCA393FE5Eec690feD2a2446DA5a073d01B",
-           "rewarderOwner": "0x3151CfCA393FE5Eec690feD2a2446DA5a073d01B"
+           "addressesProviderOwner": "0x3151CfCA393FE5Eec690feD2a22222A5a073dAAA",
+           "emergencyAdmin": "0x3151CfCA393FE5Eec690feD2a22222A5a073dAAA",
+           "dataProviderOwner": "0x3151CfCA393FE5Eec690feD2a2446DA5a073d01B",
+           "oracleOwner": "0x3151CfCA393FE5Eec690feD2a22222A5a073dAAA",
+           "piInterestStrategiesOwner": "0x3151CfCA393FE5Eec690feD2a22222A5a073dAAA",
+           "poolAdmin": "0x3151CfCA393FE5Eec690feD2a22222A5a073dAAA",
+           "rewarderOwner": "0x3151CfCA393FE5Eec690feD2a22222A5a073dAAA"
        },
         "miniPoolRole": {
             "miniPoolId": 0,
@@ -705,13 +704,14 @@ The deployment process involves configuration files `./input/<Nr>_<InputJsonName
         // test params
         "collateralAddress": "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913",
         "borrowAssetAddress": "0x0555E30da8f98308EdB960aa94C0Db47230d2B9c",
-        "depositAmount": 5000000000,
-        "borrowAmount": 50000000000000000,
+        "depositAmount": 5000000000, // amount used for depositing (with deposit asset decimals)
+        "borrowAmount": 50000000000000000, // amount used for borrowing (with borrow asset decimals)
         "bootstrapMainPool": true, // if the flag is enabled then script deposit assets to all configured reserves in specific lending pool 
         "bootstrapMiniPool": true, // if the flag is enabled then script deposit assets to all configured reserves in specific mini pool determined by poolId
+        "usdAmountToDeposit": 50000000000000000000, // amount used for bootstrapping
         "poolAddressesProviderConfig": {
             "marketId": "UV TestNet Market",
-            "poolId": 0,
+            "poolId": 0, // id of the mini pool that will be used in a tests
             "poolOwner": "0xf298Db641560E5B733C43181937207482Ff79bc9"
         }
     }
@@ -879,3 +879,6 @@ The deployment process involves configuration files `./input/<Nr>_<InputJsonName
     "rewarder6909": "0xCA3c1FC0d5EdbAC5d8AB7742D4ff6F7053E04280"
     }
   ```
+
+ ##### **contracts.csv**
+  - run prepareContractList.py to get all contracts list in csv format
