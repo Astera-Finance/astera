@@ -525,7 +525,7 @@ contract MiniPoolProp is PropertiesBase {
         }
     }
 
-    /// @custom:invariant 522 - Integrity of Deposit Cap - aToken supply should never exceed the cap.
+    /// @custom:invariant 520 - Integrity of Deposit Cap - aToken supply should never exceed the cap.
     function integrityOfDepositCapMP() public {
         for (uint256 j = 0; j < miniPools.length; j++) {
             MiniPool minipool = miniPools[j];
@@ -546,14 +546,14 @@ contract MiniPoolProp is PropertiesBase {
                                 minipool.getReserveNormalizedIncome(asset),
                                 depositCap * (10 ** decimals)
                             ),
-                        "522"
+                        "520"
                     );
                 }
             }
         }
     }
 
-    /// @custom:invariant 523 - `UserConfigurationMap` integrity: If a user has a given aToken then `isUsingAsCollateralOrBorrowing` and `isUsingAsCollateral` should return true.
+    /// @custom:invariant 521 - `UserConfigurationMap` integrity: If a user has a given aToken then `isUsingAsCollateralOrBorrowing` and `isUsingAsCollateral` should return true.
     function userConfigurationMapIntegrityLiquidityMP() public {
         for (uint256 j = 0; j < miniPools.length; j++) {
             MiniPool minipool = miniPools[j];
@@ -572,16 +572,16 @@ contract MiniPoolProp is PropertiesBase {
                             )]
                     ) {
                         assertWithMsg(
-                            UserConfiguration.isUsingAsCollateralOrBorrowing(userConfig, k), "523"
+                            UserConfiguration.isUsingAsCollateralOrBorrowing(userConfig, k), "521"
                         );
-                        assertWithMsg(UserConfiguration.isUsingAsCollateral(userConfig, k), "523");
+                        assertWithMsg(UserConfiguration.isUsingAsCollateral(userConfig, k), "521");
                     }
                 }
             }
         }
     }
 
-    /// @custom:invariant 524 - `UserConfigurationMap` integrity: If a user has a given debtToken then `isUsingAsCollateralOrBorrowing`, `isBorrowing` and `isBorrowingAny` should return true.
+    /// @custom:invariant 522 - `UserConfigurationMap` integrity: If a user has a given debtToken then `isUsingAsCollateralOrBorrowing`, `isBorrowing` and `isBorrowingAny` should return true.
     function userConfigurationMapIntegrityDebtMP() public {
         for (uint256 j = 0; j < miniPools.length; j++) {
             MiniPool minipool = miniPools[j];
@@ -597,18 +597,18 @@ contract MiniPoolProp is PropertiesBase {
 
                     if (aToken6909.balanceOf(address(user), debtTokenId) != 0) {
                         assertWithMsg(
-                            UserConfiguration.isUsingAsCollateralOrBorrowing(userConfig, k), "524"
+                            UserConfiguration.isUsingAsCollateralOrBorrowing(userConfig, k), "522"
                         );
-                        assertWithMsg(UserConfiguration.isBorrowing(userConfig, k), "524");
-                        assertWithMsg(UserConfiguration.isBorrowingAny(userConfig), "524");
+                        assertWithMsg(UserConfiguration.isBorrowing(userConfig, k), "522");
+                        assertWithMsg(UserConfiguration.isBorrowingAny(userConfig), "522");
                     }
                 }
             }
         }
     }
 
-    /// @custom:invariant 525 - If a minipool is flow borrowing, for a given reserve, the Lendingpool liquidity interest rate remain lower than the minipool debt interest rate.
-    /// @custom:invariant 526 - The aToken remainder of each assets with flow borrowing activated should remain greater than ERROR_REMAINDER_MARGIN.
+    /// @custom:invariant 523 - If a minipool is flow borrowing, for a given reserve, the Lendingpool liquidity interest rate remain lower than the minipool debt interest rate.
+    /// @custom:invariant 524 - The aToken remainder of each assets with flow borrowing activated should remain greater than ERROR_REMAINDER_MARGIN.
     function flowBorrowingIntegrityMP() public {
         for (uint256 j = 0; j < miniPools.length; j++) {
             MockMiniPool minipool = MockMiniPool(address(miniPools[j]));
@@ -623,7 +623,7 @@ contract MiniPoolProp is PropertiesBase {
                     uint256 minipoolRate = minipool.getDebtInterestRate(asset);
                     uint256 lendingPoolRate = pool.getLiquidityInterestRate(asset, true);
 
-                    assertLte(lendingPoolRate, minipoolRate, "525");
+                    assertLte(lendingPoolRate, minipoolRate, "523");
                 }
 
                 ATokenERC6909 aToken6909 = aTokens6909[j];
@@ -636,14 +636,14 @@ contract MiniPoolProp is PropertiesBase {
                 assertGte(
                     minipoolRemainder,
                     lastRemainder < minRemainder ? lastRemainder : minRemainder,
-                    "526"
+                    "524"
                 );
             }
         }
     }
 
-    /// @custom:invariant 527 - If a minipool is flow borrowing then its address must be included in `LendingPool._minipoolFlowBorrowing`.
-    /// @custom:invariant 528 - If a minipool is not flow borrowing then its address must not be included in `LendingPool._minipoolFlowBorrowing`.
+    /// @custom:invariant 525 - If a minipool is flow borrowing then its address must be included in `LendingPool._minipoolFlowBorrowing`.
+    /// @custom:invariant 526 - If a minipool is not flow borrowing then its address must not be included in `LendingPool._minipoolFlowBorrowing`.
     function checkMinipoolFlowBorrowingMP() public {
         for (uint256 j = 0; j < miniPools.length; j++) {
             MockMiniPool minipool = MockMiniPool(address(miniPools[j]));
@@ -655,9 +655,9 @@ contract MiniPoolProp is PropertiesBase {
                 );
 
                 if (currentFlow != 0) {
-                    assertWithMsg(pool.isMinipoolFlowBorrowing(address(minipool)), "527");
+                    assertWithMsg(pool.isMinipoolFlowBorrowing(address(minipool)), "525");
                 } else {
-                    assertWithMsg(!pool.isMinipoolFlowBorrowing(address(minipool)), "528");
+                    assertWithMsg(!pool.isMinipoolFlowBorrowing(address(minipool)), "526");
                 }
             }
         }

@@ -238,7 +238,7 @@ contract ATokenProp is PropertiesBase {
         assertEq(allowanceBefore - randAmt, aToken.allowance(address(user), address(sender)), "317");
     }
 
-    /// @custom:invariant 322 - Force feeding assets in LendingPool, ATokens, debtTokens, MiniPools or AToken6909 must not change the final result.
+    /// @custom:invariant 318 - Force feeding assets in LendingPool, ATokens, debtTokens, MiniPools or AToken6909 must not change the final result.
     function randForceFeedAssetLP(
         LocalVars_UPTL memory vul,
         uint8 seedMinipool,
@@ -271,7 +271,7 @@ contract ATokenProp is PropertiesBase {
         }
     }
 
-    /// @custom:invariant 323 - Force feeding aToken in LendingPool, ATokens, debtTokens, MiniPools or AToken6909 must not change the final result.
+    /// @custom:invariant 319 - Force feeding aToken in LendingPool, ATokens, debtTokens, MiniPools or AToken6909 must not change the final result.
     function randForceFeedATokensLP(
         LocalVars_UPTL memory vul,
         uint8 seedMinipool,
@@ -325,7 +325,7 @@ contract ATokenProp is PropertiesBase {
 
     // --- ATokenNonRebasing Properties ---
 
-    /// @custom:invariant 326 - `ATokenNonRebasing` `balanceOf()` should be equivalent to `ATokens` adjusted to the conversion rate.
+    /// @custom:invariant 322 - `ATokenNonRebasing` `balanceOf()` should be equivalent to `ATokens` adjusted to the conversion rate.
     function randATokenNonRebasingBalanceOfLP(
         LocalVars_UPTL memory vul,
         uint8 seedUser,
@@ -343,13 +343,13 @@ contract ATokenProp is PropertiesBase {
         assertEq(
             aTokenNonRebasing.balanceOf(address(user)),
             aToken.convertToShares(aToken.balanceOf(address(user))),
-            "326"
+            "322"
         );
     }
 
     /// @custom:invariant 303 - Transfers should update accounting correctly.
     /// @custom:invariant 304 - Self transfers should not break accounting.
-    /// @custom:invariant 327 - `ATokenNonRebasing` `transfer()` should be equivalent to `ATokens` adjusted to the conversion rate.
+    /// @custom:invariant 323 - `ATokenNonRebasing` `transfer()` should be equivalent to `ATokens` adjusted to the conversion rate.
     function randATokenNonRebasingTransferLP(
         LocalVars_UPTL memory vul,
         uint8 seedUser,
@@ -429,22 +429,22 @@ contract ATokenProp is PropertiesBase {
             aToken.convertToShares(senderBalanceBefore),
             aTokenNonRebasing.balanceOf(address(user)),
             1,
-            "327"
+            "323"
         );
         assertEqApprox(
             aToken.convertToShares(receiverBalanceBefore),
             aTokenNonRebasing.balanceOf(address(receiver)),
             1,
-            "327"
+            "323"
         );
 
-        assertEqApprox(senderBalanceBefore, aToken.balanceOf(address(user)), 1, "327");
-        assertEqApprox(receiverBalanceBefore, aToken.balanceOf(address(receiver)), 1, "327");
+        assertEqApprox(senderBalanceBefore, aToken.balanceOf(address(user)), 1, "323");
+        assertEqApprox(receiverBalanceBefore, aToken.balanceOf(address(receiver)), 1, "323");
     }
 
     /// @custom:invariant 303 - Transfers should update accounting correctly.
     /// @custom:invariant 304 - Self transfers should not break accounting.
-    /// @custom:invariant 328 - `ATokenNonRebasing` `transferFrom()` should be equivalent to `ATokens` adjusted to the conversion rate.
+    /// @custom:invariant 324 - `ATokenNonRebasing` `transferFrom()` should be equivalent to `ATokens` adjusted to the conversion rate.
     function randATokenNonRebasingTransferFromLP(
         LocalVars_UPTL memory vul,
         uint8 seedOwner,
@@ -491,13 +491,13 @@ contract ATokenProp is PropertiesBase {
                 aToken.convertToShares(ownerBalanceBefore),
                 aTokenNonRebasing.balanceOf(address(owner)) + randAmt,
                 1,
-                "328"
+                "324"
             );
             assertEqApprox(
                 aToken.convertToShares(receiverBalanceBefore),
                 aTokenNonRebasing.balanceOf(address(receiver)) - randAmt,
                 1,
-                "328"
+                "324"
             );
 
             // Test aToken balances
@@ -505,13 +505,13 @@ contract ATokenProp is PropertiesBase {
                 ownerBalanceBefore,
                 aToken.balanceOf(address(owner)) + aToken.convertToAssets(randAmt),
                 1,
-                "328"
+                "324"
             );
             assertEqApprox(
                 receiverBalanceBefore,
                 aToken.balanceOf(address(receiver)) - aToken.convertToAssets(randAmt),
                 1,
-                "328"
+                "324"
             );
         } else {
             // Test aTokenNonRebasing balances
@@ -519,17 +519,17 @@ contract ATokenProp is PropertiesBase {
                 aToken.convertToShares(ownerBalanceBefore),
                 aTokenNonRebasing.balanceOf(address(owner)),
                 1,
-                "328"
+                "324"
             );
 
             // Test aToken balances
-            assertEqApprox(ownerBalanceBefore, aToken.balanceOf(address(owner)), 1, "328");
+            assertEqApprox(ownerBalanceBefore, aToken.balanceOf(address(owner)), 1, "324");
         }
     }
 
     /// @custom:invariant 312 - `approve()` must never revert.
-    /// @custom:invariant 329 - Allowance must be modified correctly via `ATokenNonRebasing.approve()`.
-    /// @custom:invariant 330 - `ATokenNonRebasing.approve()` must not modify `AToken.allowance()`.
+    /// @custom:invariant 325 - Allowance must be modified correctly via `ATokenNonRebasing.approve()`.
+    /// @custom:invariant 326 - `ATokenNonRebasing.approve()` must not modify `AToken.allowance()`.
     function randATokenNonRebasingApproveLP(
         LocalVars_UPTL memory vul,
         uint8 seedUser,
@@ -559,14 +559,14 @@ contract ATokenProp is PropertiesBase {
 
         assertWithMsg(success, "312");
 
-        assertEq(aTokenNonRebasing.allowance(address(user), address(sender)), randAmt, "329");
-        assertEq(aToken.allowance(address(user), address(sender)), aTokenAllowanceBefore, "330");
+        assertEq(aTokenNonRebasing.allowance(address(user), address(sender)), randAmt, "325");
+        assertEq(aToken.allowance(address(user), address(sender)), aTokenAllowanceBefore, "326");
     }
 
     // ---------------------- Invariants ----------------------
 
-    /// @custom:invariant 324 - A user must not hold more than total supply.
-    /// @custom:invariant 325 - Sum of users balance must not exceed total supply.
+    /// @custom:invariant 320 - A user must not hold more than total supply.
+    /// @custom:invariant 321 - Sum of users' balances must not exceed total supply.
     function balanceIntegrityLP(LocalVars_UPTL memory vul) public {
         randUpdatePriceAndTryLiquidateLP(vul);
 
@@ -577,12 +577,12 @@ contract ATokenProp is PropertiesBase {
             for (uint256 i = 0; i < users.length; i++) {
                 uint256 bu = t.balanceOf(address(users[i]));
                 sum += bu;
-                assertLte(bu, ts, "324");
+                assertLte(bu, ts, "320");
             }
             if (bootstrapLiquidity) {
                 sum += t.balanceOf(address(bootstraper));
             }
-            assertEqApprox(sum, ts, 1e10, "325");
+            assertEqApprox(sum, ts, 1e10, "321");
         }
     }
 
