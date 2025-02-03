@@ -889,4 +889,22 @@ contract LendingPoolV2 is
 
         reserve.updateInterestRates(_minipoolFlowBorrowing, asset, reserve.aTokenAddress, 0, 0);
     }
+    /**
+     * @notice Returns the list of mini pools that are currently flow borrowing.
+     * @return The list of mini pool addresses that are flow borrowing.
+     */
+
+    function getMinipoolFlowBorrowing() external view returns (address[] memory) {
+        address[] memory minipoolFlowBorrowing = new address[](1);
+        return minipoolFlowBorrowing;
+    }
+    /**
+     * @notice Checks if a mini pool is currently flow borrowing.
+     * @param minipool The address of the mini pool to check.
+     * @return True if the mini pool is flow borrowing, false otherwise.
+     */
+
+    function isMinipoolFlowBorrowing(address minipool) external view returns (bool) {
+        return true;
+    }
 }

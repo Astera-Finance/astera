@@ -79,8 +79,8 @@ forge t --mt testCallSequence -vvvv
 214. ✅ Users must not be able to steal funds from flashloans.
 215. ✅ The total value borrowed must always be less than the value of the collaterals.
 216. 🚚
-217. 🚧 (fix lastLiquidityIndex and lastBorrowIndex) The `liquidityIndex` should monotonically increase when there's total debt.
-218. 🚧 (fix lastLiquidityIndex and lastBorrowIndex) The `variableBorrowIndex` should monotonically increase when there's total debt.
+217. 🚧 (fix lastLiquidityIndex and lastBorrowIndex) The `liquidityIndex` should monotonically increase when there is collateral.
+218. 🚧 (fix lastLiquidityIndex and lastBorrowIndex) The `variableBorrowIndex` should monotonically increase when there is debt.
 219. ✅ A user with debt should have at least an aToken balance `setUsingAsCollateral`.
 220. 🚚
 221. 🚚
@@ -153,9 +153,9 @@ forge t --mt testCallSequence -vvvv
 514. ✅ `setUseReserveAsCollateral` must not reduce the health factor below 1.
 515. ✅ Users must not be able to steal funds from flashloans.
 516. ✅ The total value borrowed must always be less than the value of the collateral when flow borrowing is disabled.
-517. 🚧 (fix lastLiquidityIndex and lastBorrowIndex) The `liquidityIndex` should monotonically increase when there's total debt.
-518. 🚧 (fix lastLiquidityIndex and lastBorrowIndex) The `variableBorrowIndex` should monotonically increase when there's total debt.
-519. ✅ (L-03) A user with debt should have at least an AToken6909 balance `setUsingAsCollateral`.
+517. 🚧 (fix lastLiquidityIndex and lastBorrowIndex) The `liquidityIndex` should monotonically increase when there is collateral.
+518. 🚧 (fix lastLiquidityIndex and lastBorrowIndex) The `variableBorrowIndex` should monotonically increase when there is debt.
+519. ✅ A user with debt should have at least an AToken6909 balance `setUsingAsCollateral`.
 520. 🚚
 521. 🚚
 522. ✅ Integrity of Deposit Cap - aToken supply should never exceed the cap.
@@ -185,7 +185,7 @@ forge t --mt testCallSequence -vvvv
 614. ✅ Force feeding AToken6909 in MiniPools or AToken6909 must not change the final result.
 615. ✅ `approveDelegation()` must never revert.
 616. ✅ Allowance must be modified correctly via `approve()`.
-617. ✅ (H-01) A user must not hold more than total supply.
+617. ✅ A user must not hold more than total supply.
 618. ✅ Sum of users' balances must not exceed total supply.
   
 ## Admin entry points
