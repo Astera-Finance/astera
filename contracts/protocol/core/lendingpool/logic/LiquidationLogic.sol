@@ -261,7 +261,7 @@ library LiquidationLogic {
 
         // If the collateral being liquidated is equal to the `params.user` balance,
         // we set the currency as not being used as collateral anymore.
-        if (vars.maxCollateralToLiquidate == vars.userCollateralBalance) {
+        if (vars.collateralAtoken.balanceOf(params.user) == 0) {
             userConfig.setUsingAsCollateral(collateralReserve.id, false);
             emit ReserveUsedAsCollateralDisabled(params.collateralAsset, params.user);
         }
