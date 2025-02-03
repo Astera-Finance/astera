@@ -53,6 +53,11 @@ contract MiniPoolProp is PropertiesBase {
             )
         );
 
+        lastLiquidityIndexMP[address(minipool)][address(asset)] =
+            minipool.getReserveData(address(asset)).liquidityIndex;
+        lastVariableBorrowIndexMP[address(minipool)][address(asset)] =
+            minipool.getReserveData(address(asset)).variableBorrowIndex;
+
         assertWithMsg(success, "500");
 
         uint256 aTokenBalanceAfter = aToken6909.balanceOf(address(onBehalfOf), aTokenID);
@@ -114,6 +119,11 @@ contract MiniPoolProp is PropertiesBase {
         (,,,,, uint256 healthFactorAfter) = minipool.getUserAccountData(address(to));
 
         require(success);
+
+        lastLiquidityIndexMP[address(minipool)][address(asset)] =
+            minipool.getReserveData(address(asset)).liquidityIndex;
+        lastVariableBorrowIndexMP[address(minipool)][address(asset)] =
+            minipool.getReserveData(address(asset)).variableBorrowIndex;
 
         if (healthFactorAfter < 1e18) {
             assertWithMsg(!success, "505");
@@ -222,6 +232,11 @@ contract MiniPoolProp is PropertiesBase {
                 "510"
             );
         }
+
+        lastLiquidityIndexMP[address(minipool)][address(asset)] =
+            minipool.getReserveData(address(asset)).liquidityIndex;
+        lastVariableBorrowIndexMP[address(minipool)][address(asset)] =
+            minipool.getReserveData(address(asset)).variableBorrowIndex;
     }
 
     /// @custom:invariant 511 - `repay()` must decrease the onBehalfOf debtToken balance by `amount`.
@@ -268,6 +283,11 @@ contract MiniPoolProp is PropertiesBase {
         );
 
         require(success);
+
+        lastLiquidityIndexMP[address(minipool)][address(asset)] =
+            minipool.getReserveData(address(asset)).liquidityIndex;
+        lastVariableBorrowIndexMP[address(minipool)][address(asset)] =
+            minipool.getReserveData(address(asset)).variableBorrowIndex;
 
         uint256 debtTokenBalanceAfter = aToken6909.balanceOf(address(onBehalfOf), debtTokenID);
         uint256 assetBalanceAfter = isAToken
@@ -327,6 +347,11 @@ contract MiniPoolProp is PropertiesBase {
         if (healthFactorBefore >= 1e18 && healthFactorAfter != healthFactorBefore) {
             assertGte(healthFactorAfter, 1e18, "514");
         }
+
+        lastLiquidityIndexMP[address(minipool)][address(asset)] =
+            minipool.getReserveData(address(asset)).liquidityIndex;
+        lastVariableBorrowIndexMP[address(minipool)][address(asset)] =
+            minipool.getReserveData(address(asset)).variableBorrowIndex;
     }
 
     struct LocalVars_RandFlashloanMP {
@@ -442,42 +467,51 @@ contract MiniPoolProp is PropertiesBase {
         }
     }
 
-    // /// @custom:invariant 517 - The `liquidityIndex` should monotonically increase when there's total debt.
-    // /// @custom:invariant 518 - The `variableBorrowIndex` should monotonically increase when there's total debt.
-    // function indexIntegrityMP() public {
-    //     for (uint256 j = 0; j < totalNbMinipool; j++) {
-    //         MiniPool minipool = miniPools[j];
-    //         for (uint256 i = 0; i < totalNbTokens * 2; i++) {
-    //             address asset = allTokens(i);
+    /// @custom:invariant 517 - The `liquidityIndex` should monotonically increase when there is collateral.
+    /// @custom:invariant 518 - The `variableBorrowIndex` should monotonically increase when there is debt.
+    function indexIntegrityMP() public {
+        for (uint256 j = 0; j < totalNbMinipool; j++) {
+            MiniPool minipool = miniPools[j];
+            ATokenERC6909 aToken6909 = aTokens6909[j];
 
-    //             uint256 currentLiquidityIndex = minipool.getReserveData(asset).liquidityIndex;
-    //             uint256 currentVariableBorrowIndex =
-    //                 minipool.getReserveData(asset).variableBorrowIndex;
+            for (uint256 i = 0; i < totalNbTokens * 2; i++) {
+                address asset = allTokens(i);
 
-    //             if (hasDebtTotal()) {
-    //                 assertGte(
-    //                     currentLiquidityIndex, lastLiquidityIndexMP[address(minipool)][asset], "517"
-    //                 );
-    //                 assertGte(
-    //                     currentVariableBorrowIndex,
-    //                     lastVariableBorrowIndexMP[address(minipool)][asset],
-    //                     "518"
-    //                 );
-    //             } else {
-    //                 assertEq(
-    //                     currentLiquidityIndex, lastLiquidityIndexMP[address(minipool)][asset], "517"
-    //                 );
-    //                 assertEq(
-    //                     currentVariableBorrowIndex,
-    //                     lastVariableBorrowIndexMP[address(minipool)][asset],
-    //                     "518"
-    //                 );
-    //             }
-    //             lastLiquidityIndexMP[address(minipool)][asset] = currentLiquidityIndex;
-    //             lastVariableBorrowIndexMP[address(minipool)][asset] = currentVariableBorrowIndex;
-    //         }
-    //     }
-    // }
+                uint256 currentLiquidityIndex = minipool.getReserveData(asset).liquidityIndex;
+                uint256 currentVariableBorrowIndex =
+                    minipool.getReserveData(asset).variableBorrowIndex;
+
+                (uint256 aTokenID, uint256 debtTokenID,) = aToken6909.getIdForUnderlying(asset);
+
+                if (hasCollateralTokens6909(j, aTokenID)) {
+                    assertGte(
+                        currentLiquidityIndex, lastLiquidityIndexMP[address(minipool)][asset], "517"
+                    );
+                } else {
+                    assertEq(
+                        currentLiquidityIndex, lastLiquidityIndexMP[address(minipool)][asset], "517"
+                    );
+                }
+
+                if (hasDebtTokens6909(j, debtTokenID)) {
+                    assertGte(
+                        currentVariableBorrowIndex,
+                        lastVariableBorrowIndexMP[address(minipool)][asset],
+                        "518"
+                    );
+                } else {
+                    assertEq(
+                        currentVariableBorrowIndex,
+                        lastVariableBorrowIndexMP[address(minipool)][asset],
+                        "518"
+                    );
+                }
+
+                lastLiquidityIndexMP[address(minipool)][asset] = currentLiquidityIndex;
+                lastVariableBorrowIndexMP[address(minipool)][asset] = currentVariableBorrowIndex;
+            }
+        }
+    }
 
     /// @custom:invariant 519 - A user with debt should have at least an AToken6909 balance `setUsingAsCollateral`.
     function userDebtIntegrityMP() public {

@@ -56,6 +56,11 @@ contract LendingPoolProp is PropertiesBase {
         uint256 assetBalanceAfter = asset.balanceOf(address(user));
         assertEqApprox(aTokenBalanceAfter - aTokenBalanceBefore, randAmt, 1, "201");
         assertEq(assetBalanceBefore - assetBalanceAfter, randAmt, "202");
+
+        lastLiquidityIndexLP[address(asset)] =
+            pool.getReserveData(address(asset), true).liquidityIndex;
+        lastVariableBorrowIndexLP[address(asset)] =
+            pool.getReserveData(address(asset), true).variableBorrowIndex;
     }
 
     /// @custom:invariant 230 - `withdraw()` must not result in a health factor of less than 1.
@@ -105,6 +110,11 @@ contract LendingPoolProp is PropertiesBase {
         uint256 assetBalanceAfter = asset.balanceOf(address(to));
         assertEqApprox(aTokenBalanceBefore - aTokenBalanceAfter, randAmt, 1, "203");
         assertEq(assetBalanceAfter - assetBalanceBefore, randAmt, "204");
+
+        lastLiquidityIndexLP[address(asset)] =
+            pool.getReserveData(address(asset), true).liquidityIndex;
+        lastVariableBorrowIndexLP[address(asset)] =
+            pool.getReserveData(address(asset), true).variableBorrowIndex;
     }
 
     /// @custom:invariant 205 - A user must not be able to `borrow()` if he doesn't own aTokens.
@@ -181,6 +191,11 @@ contract LendingPoolProp is PropertiesBase {
                 "209"
             );
         }
+
+        lastLiquidityIndexLP[address(asset)] =
+            pool.getReserveData(address(asset), true).liquidityIndex;
+        lastVariableBorrowIndexLP[address(asset)] =
+            pool.getReserveData(address(asset), true).variableBorrowIndex;
     }
 
     /// @custom:invariant 210 - `repay()` must decrease the onBehalfOf debtToken balance by `amount`.
@@ -227,6 +242,11 @@ contract LendingPoolProp is PropertiesBase {
         assertEqApprox(vTokenBalanceBefore - vTokenBalanceAfter, randAmt, 1, "210");
         assertEqApprox(assetBalanceBefore - assetBalanceAfter, randAmt, 1, "211");
         assertGte(healthFactorAfter, healthFactorBefore, "212");
+
+        lastLiquidityIndexLP[address(asset)] =
+            pool.getReserveData(address(asset), true).liquidityIndex;
+        lastVariableBorrowIndexLP[address(asset)] =
+            pool.getReserveData(address(asset), true).variableBorrowIndex;
     }
 
     /// @custom:invariant 228 - Rehypothecation: farming percentage must be respected (+/- the drift) after a rebalance occured.
@@ -412,27 +432,32 @@ contract LendingPoolProp is PropertiesBase {
         assertGte(valueColl, valueDebt, "215");
     }
 
-    // /// @custom:invariant 217 - The `liquidityIndex` should monotonically increase when there's total debt.
-    // /// @custom:invariant 218 - The `variableBorrowIndex` should monotonically increase when there's total debt.
-    // function indexIntegrityLP() public {
-    //     for (uint256 i = 0; i < assets.length; i++) {
-    //         address asset = address(assets[i]);
+    /// @custom:invariant 217 - The `liquidityIndex` should monotonically increase when there is collateral.
+    /// @custom:invariant 218 - The `variableBorrowIndex` should monotonically increase when there is debt.
+    function indexIntegrityLP() public {
+        for (uint256 i = 0; i < assets.length; i++) {
+            address asset = address(assets[i]);
 
-    //         uint256 currentLiquidityIndex = pool.getReserveData(asset, true).liquidityIndex;
-    //         uint256 currentVariableBorrowIndex =
-    //             pool.getReserveData(asset, true).variableBorrowIndex;
+            uint256 currentLiquidityIndex = pool.getReserveData(asset, true).liquidityIndex;
+            uint256 currentVariableBorrowIndex =
+                pool.getReserveData(asset, true).variableBorrowIndex;
 
-    //         if (hasDebtTotal()) {
-    //             assertGte(currentLiquidityIndex, lastLiquidityIndexLP[asset], "217");
-    //             assertGte(currentVariableBorrowIndex, lastVariableBorrowIndexLP[asset], "218");
-    //         } else {
-    //             assertEq(currentLiquidityIndex, lastLiquidityIndexLP[asset], "217");
-    //             assertEq(currentVariableBorrowIndex, lastVariableBorrowIndexLP[asset], "218");
-    //         }
-    //         lastLiquidityIndexLP[asset] = currentLiquidityIndex;
-    //         lastVariableBorrowIndexLP[asset] = currentVariableBorrowIndex;
-    //     }
-    // }
+            if (hasAToken(address(aTokens[i]))) {
+                assertGte(currentLiquidityIndex, lastLiquidityIndexLP[asset], "217");
+            } else {
+                assertEq(currentLiquidityIndex, lastLiquidityIndexLP[asset], "217");
+            }
+
+            if (hasDebt(address(debtTokens[i]))) {
+                assertGte(currentVariableBorrowIndex, lastVariableBorrowIndexLP[asset], "218");
+            } else {
+                assertEq(currentVariableBorrowIndex, lastVariableBorrowIndexLP[asset], "218");
+            }
+
+            lastLiquidityIndexLP[asset] = currentLiquidityIndex;
+            lastVariableBorrowIndexLP[asset] = currentVariableBorrowIndex;
+        }
+    }
 
     /// @custom:invariant 219 - A user with debt should have at least an aToken balance `setUsingAsCollateral`.
     function userDebtIntegrityLP() public {
@@ -506,16 +531,6 @@ contract LendingPoolProp is PropertiesBase {
             }
         }
     }
-
-    // function reserveConfigurationMapIntegrityLP() public {
-    //     for (uint256 i = 0; i < assets.length; i++) {
-    //         DataTypes.ReserveData memory reserve = pool.getReserveData(address(assets[i]), true);
-
-    //         (bool isActive, bool isFrozen,,,,) = reserve.configuration.getFlags();
-
-    //         if (isActive && !isFrozen) {
-    //     }
-    // }
 
     // ---------------------- Helpers ----------------------
 }

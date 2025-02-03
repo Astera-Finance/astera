@@ -79,8 +79,8 @@ forge t --mt testCallSequence -vvvv
 214. ✅ Users must not be able to steal funds from flashloans.
 215. ✅ The total value borrowed must always be less than the value of the collaterals.
 216. 🚚
-217. 🚧 (fix lastLiquidityIndex and lastBorrowIndex) The `liquidityIndex` should monotonically increase when there is collateral.
-218. 🚧 (fix lastLiquidityIndex and lastBorrowIndex) The `variableBorrowIndex` should monotonically increase when there is debt.
+217. ✅ The `liquidityIndex` should monotonically increase when there is collateral.
+218. ✅ The `variableBorrowIndex` should monotonically increase when there is debt.
 219. ✅ A user with debt should have at least an aToken balance `setUsingAsCollateral`.
 220. 🚚
 221. 🚚
@@ -153,8 +153,8 @@ forge t --mt testCallSequence -vvvv
 514. ✅ `setUseReserveAsCollateral` must not reduce the health factor below 1.
 515. ✅ Users must not be able to steal funds from flashloans.
 516. ✅ The total value borrowed must always be less than the value of the collateral when flow borrowing is disabled.
-517. 🚧 (fix lastLiquidityIndex and lastBorrowIndex) The `liquidityIndex` should monotonically increase when there is collateral.
-518. 🚧 (fix lastLiquidityIndex and lastBorrowIndex) The `variableBorrowIndex` should monotonically increase when there is debt.
+517. ✅ The `liquidityIndex` should monotonically increase when there is collateral.
+518. ✅ The `variableBorrowIndex` should monotonically increase when there is debt.
 519. ✅ A user with debt should have at least an AToken6909 balance `setUsingAsCollateral`.
 520. 🚚
 521. 🚚
