@@ -127,6 +127,8 @@ contract DeployMiniPoolLocal is Script, Test, MiniPoolHelper {
         console.log("PATH: ", path);
         string memory config = vm.readFile(path);
 
+        General memory general = abi.decode(config.parseRaw(".general"), (General));
+
         PoolReserversConfig[] memory poolReserversConfig =
             abi.decode(config.parseRaw(".poolReserversConfig"), (PoolReserversConfig[]));
         LinearStrategy[] memory volatileStrategies =
@@ -161,6 +163,7 @@ contract DeployMiniPoolLocal is Script, Test, MiniPoolHelper {
             oracleConfig.assets, oracleConfig.sources, oracleConfig.timeouts
         );
         deployMiniPoolInfra(
+            general,
             volatileStrategies,
             stableStrategies,
             piStrategies,

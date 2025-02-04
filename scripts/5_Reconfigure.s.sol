@@ -78,7 +78,7 @@ contract Reconfigure is Script, InitAndConfigurationHelper, Test {
             deploymentConfig.parseRaw(".miniPoolReserversConfig"), (PoolReserversConfig[])
         );
 
-        if (vm.envBool("TESTNET")) {
+        if (!vm.envBool("MAINNET")) {
             console.log("Testnet");
             /* *********** Lending pool settings *********** */
             {

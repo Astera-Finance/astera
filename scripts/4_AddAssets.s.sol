@@ -123,7 +123,7 @@ contract AddAssets is Script, InitAndConfigurationHelper, Test {
         OracleConfig memory oracleConfig =
             abi.decode(config.parseRaw(".oracleConfig"), (OracleConfig));
 
-        if (vm.envBool("TESTNET")) {
+        if (!vm.envBool("MAINNET")) {
             console.log("Testnet");
 
             /* Lending pool settings */

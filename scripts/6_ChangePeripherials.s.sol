@@ -61,7 +61,7 @@ contract ChangePeripherials is Script, ChangePeripherialsHelper, Test {
 
         require(treasury.length == rehypothecation.length, "Lengths settings must be the same");
 
-        if (vm.envBool("TESTNET")) {
+        if (!vm.envBool("MAINNET")) {
             console.log("Testnet");
             /* *********** Lending pool settings *********** */
             {

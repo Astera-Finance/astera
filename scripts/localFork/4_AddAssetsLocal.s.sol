@@ -107,7 +107,10 @@ contract AddAssetsLocal is Script, InitAndConfigurationHelper, Test {
         );
         _initAndConfigureReserves(contracts, lendingPoolReserversConfig, general);
         _initAndConfigureMiniPoolReserves(
-            contracts, miniPoolReserversConfig, poolAddressesProviderConfig.poolId
+            contracts,
+            miniPoolReserversConfig,
+            poolAddressesProviderConfig.poolId,
+            general.usdBootstrapAmount
         );
         vm.stopPrank();
 

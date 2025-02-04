@@ -33,7 +33,7 @@ The deployment process involves configuration files `./inputs/<Nr>_<InputJsonNam
      - configuration with corresponding number shall be filled
      - run `forge script scripts/localFork/<nr>_<scriptName>.s.sol`
    - **Testnet**: 
-      - compatible script numbers `<Nr>` to run (0 - 7)
+      - compatible script numbers `<Nr>` to run (0 - 8)
       - there is need to have executed script 0_DeployMocks.s.sol in order to have ERC20 token mocks
       - there is need to have already executed script with previous `<Nr>`
       - import env variables via `source .env`
@@ -41,7 +41,7 @@ The deployment process involves configuration files `./inputs/<Nr>_<InputJsonNam
       - run `forge script scripts/<nr>_<scriptName>.s.sol --chain-id $<RPC_URL> --rpc-url $<RPC_URL> --etherscan-api-key $ETHERSCAN_KEY --broadcast -vvvv --sender <sender address>` if sender is required
       - run `forge script scripts/<nr>_<scriptName>.s.sol --chain-id <chainId> --rpc-url $<RPC_URL> --broadcast -vvvv --private-key $PRIVATE_KEY` if sender is required
    - **Mainnet**:
-      - compatible script numbers <Nr> to run (1 - 7)
+      - compatible script numbers <Nr> to run (0 - 8)
    - **Mainnet/Testnet tests**
      - `forge script scripts/<nr>_<scriptName>.s.sol --chain-id <chainId> --rpc-url $<RPC_URL> --broadcast -vvvv --private-keys $USER1_PRIVATE_KEY --private-keys $USER2_PRIVATE_KEY --private-keys $DIST_PRIVATE_KEY --sender <EoaAddress>`
    - **Verification**

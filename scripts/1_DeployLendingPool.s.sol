@@ -11,6 +11,25 @@ import "lib/forge-std/src/console.sol";
 contract DeployLendingPool is Script, LendingPoolHelper, Test {
     using stdJson for string;
 
+    function checkOwnerships() internal {
+        assertEq(contracts.aTokensAndRatesHelper.owner(), vm.addr(vm.envUint("PRIVATE_KEY")));
+        assertEq(contracts.cod3xLendDataProvider.owner(), vm.addr(vm.envUint("PRIVATE_KEY")));
+        assertEq(contracts.lendingPoolAddressesProvider.owner(), vm.addr(vm.envUint("PRIVATE_KEY")));
+        assertEq(
+            contracts.lendingPoolAddressesProvider.getEmergencyAdmin(),
+            vm.addr(vm.envUint("PRIVATE_KEY"))
+        );
+        assertEq(
+            contracts.lendingPoolAddressesProvider.getPoolAdmin(),
+            vm.addr(vm.envUint("PRIVATE_KEY"))
+        );
+        assertEq(contracts.oracle.owner(), vm.addr(vm.envUint("PRIVATE_KEY")));
+        assertEq(contracts.wethGateway.owner(), vm.addr(vm.envUint("PRIVATE_KEY")));
+        for (uint8 idx = 0; idx < contracts.piStrategies.length; idx++) {
+            assertEq(contracts.piStrategies[idx].owner(), vm.addr(vm.envUint("PRIVATE_KEY")));
+        }
+    }
+
     function writeJsonData(string memory path) internal {
         vm.serializeAddress("lendingPoolContracts", "oracle", address(contracts.oracle));
         {
@@ -110,7 +129,7 @@ contract DeployLendingPool is Script, LendingPoolHelper, Test {
 
         address wethGateway = deploymentConfig.readAddress(".wethGateway");
 
-        if (vm.envBool("TESTNET")) {
+        if (!vm.envBool("MAINNET")) {
             console.log("Testnet Deployment");
             if (!vm.exists(string.concat(root, "/scripts/outputs/testnet"))) {
                 vm.createDir(string.concat(root, "/scripts/outputs/testnet"), true);
@@ -184,6 +203,7 @@ contract DeployLendingPool is Script, LendingPoolHelper, Test {
         } else {
             console.log("No deployment type selected in .env");
         }
+        checkOwnerships();
         /* Write data to json */
         writeJsonData(path);
 

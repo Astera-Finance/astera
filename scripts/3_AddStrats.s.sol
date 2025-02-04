@@ -100,7 +100,7 @@ contract AddStrats is Script, StratsHelper, Test {
         PiStrategy[] memory miniPoolPiStrategies =
             abi.decode(config.parseRaw(".miniPoolPiStrategies"), (PiStrategy[]));
 
-        if (vm.envBool("TESTNET")) {
+        if (!vm.envBool("MAINNET")) {
             /* ****** Lending pool settings */
             {
                 string memory outputPath =

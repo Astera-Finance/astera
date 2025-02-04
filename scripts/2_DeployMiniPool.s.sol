@@ -11,6 +11,23 @@ import "lib/forge-std/src/console.sol";
 contract DeployMiniPool is Script, Test, MiniPoolHelper {
     using stdJson for string;
 
+    function checkOwnerships() internal {
+        assertEq(contracts.miniPoolAddressesProvider.owner(), vm.addr(vm.envUint("PRIVATE_KEY")));
+        assertEq(
+            contracts.miniPoolAddressesProvider.getEmergencyAdmin(),
+            vm.addr(vm.envUint("PRIVATE_KEY"))
+        );
+        assertEq(
+            contracts.miniPoolAddressesProvider.getMainPoolAdmin(),
+            vm.addr(vm.envUint("PRIVATE_KEY"))
+        );
+        for (uint8 idx = 0; idx < contracts.miniPoolPiStrategies.length; idx++) {
+            assertEq(
+                contracts.miniPoolPiStrategies[idx].owner(), vm.addr(vm.envUint("PRIVATE_KEY"))
+            );
+        }
+    }
+
     function readPreviousDeployments(string memory path) internal returns (bool readPrevious) {
         console.log("PREVIOUS DEPLOYMENT PATH: ", path);
         try vm.readFile(path) returns (string memory previousContracts) {
@@ -143,7 +160,7 @@ contract DeployMiniPool is Script, Test, MiniPoolHelper {
         bool usePreviousStrats = config.readBool(".usePreviousStrats");
         bool readPreviousContracts = config.readBool(".readPreviousContracts");
 
-        if (vm.envBool("TESTNET")) {
+        if (!vm.envBool("MAINNET")) {
             console.log("Testnet Deployment");
 
             /* Read all mocks deployed */
@@ -262,6 +279,8 @@ contract DeployMiniPool is Script, Test, MiniPoolHelper {
         } else {
             console.log("No deployment type selected in .env");
         }
+
+        checkOwnerships();
         /* Write important contracts into the file */
         writeJsonData(path);
         return contracts;

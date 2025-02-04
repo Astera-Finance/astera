@@ -668,14 +668,14 @@ contract TestBasicActions is Script, Test {
         }
 
         if (bootstrapMainPool == true && bootstrapMiniPool == true) {
-            if (vm.envBool("TESTNET")) {
+            if (!vm.envBool("MAINNET")) {
                 mintAllMockedTokens(root, 5 ether, users);
             }
             console.log("Bootstrapping main and mini pools...");
             depositToMainPool(1 ether, users.user1);
             depositToMiniPool(1 ether, users.user1, users.user1, mp);
         } else if (bootstrapMiniPool == true) {
-            if (vm.envBool("TESTNET")) {
+            if (!vm.envBool("MAINNET")) {
                 mintAllMockedTokens(root, 5 ether, users);
             }
             console.log("Bootstrapping only mini pool...");

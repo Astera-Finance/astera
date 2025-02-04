@@ -15,54 +15,52 @@ contract DeployMocks is Script, MocksHelper, Test {
 
     function run() external returns (DeployedContracts memory) {
         // Config fetching
-        if (vm.envBool("TESTNET") || vm.envBool("MAINNET")) {
-            console.log("Testnet Deployment");
-            //deploy to testnet
-            string memory root = vm.projectRoot();
-            string memory path = string.concat(root, "/scripts/inputs/0_MockedTokens.json");
-            console.log("PATH: ", path);
-            string memory config = vm.readFile(path);
-            MockedToken[] memory mockedTokensSettings =
-                abi.decode(config.parseRaw(".mockedToken"), (MockedToken[]));
+        console.log("CHAIN ID: ", block.chainid);
 
-            address[] memory mockedTokens;
-            {
-                string[] memory symbols = new string[](mockedTokensSettings.length);
-                uint8[] memory decimals = new uint8[](mockedTokensSettings.length);
+        string memory root = vm.projectRoot();
+        string memory path = string.concat(root, "/scripts/inputs/0_MockedTokens.json");
+        console.log("PATH: ", path);
+        string memory config = vm.readFile(path);
+        MockedToken[] memory mockedTokensSettings =
+            abi.decode(config.parseRaw(".mockedToken"), (MockedToken[]));
 
-                for (uint8 idx = 0; idx < mockedTokensSettings.length; idx++) {
-                    symbols[idx] = mockedTokensSettings[idx].symbol;
-                    decimals[idx] = uint8(mockedTokensSettings[idx].decimals);
-                }
+        address[] memory mockedTokens;
+        {
+            string[] memory symbols = new string[](mockedTokensSettings.length);
+            uint8[] memory decimals = new uint8[](mockedTokensSettings.length);
 
-                // Deployment
-                console.log("Broadcasting....");
-                vm.startBroadcast(vm.envUint("PRIVATE_KEY"));
-                mockedTokens = _deployERC20Mocks(symbols, symbols, decimals);
-                for (uint8 idx = 0; idx < mockedTokens.length; idx++) {
-                    IERC20Detailed(mockedTokens[idx]).mint(vm.envUint("PRIVATE_KEY"), 100 ether);
-                }
-                vm.stopBroadcast();
+            for (uint8 idx = 0; idx < mockedTokensSettings.length; idx++) {
+                symbols[idx] = mockedTokensSettings[idx].symbol;
+                decimals[idx] = uint8(mockedTokensSettings[idx].decimals);
             }
 
-            /* Write mocked tokens */
-            {
-                string memory out;
-                out = vm.serializeAddress("mockedContracts", "mockedTokens", mockedTokens);
-                if (!vm.exists(string.concat(root, "/scripts/outputs"))) {
-                    vm.createDir(string.concat(root, "/scripts/outputs"), false);
+            // Deployment
+            console.log("Broadcasting....");
+            vm.startBroadcast(vm.envUint("PRIVATE_KEY"));
+            mockedTokens = _deployERC20Mocks(symbols, symbols, decimals);
+            for (uint8 idx = 0; idx < mockedTokens.length; idx++) {
+                MintableERC20(mockedTokens[idx]).mint(100 ether);
+            }
+            vm.stopBroadcast();
+        }
+
+        /* Write mocked tokens */
+        {
+            string memory out;
+            out = vm.serializeAddress("mockedContracts", "mockedTokens", mockedTokens);
+            if (!vm.exists(string.concat(root, "/scripts/outputs"))) {
+                vm.createDir(string.concat(root, "/scripts/outputs"), false);
+            }
+            if (!vm.envBool("MAINNET")) {
+                if (!vm.exists(string.concat(root, "/scripts/outputs/testnet"))) {
+                    vm.createDir(string.concat(root, "/scripts/outputs/testnet"), false);
                 }
-                if (vm.envBool("TESTNET")) {
-                    if (!vm.exists(string.concat(root, "/scripts/outputs/testnet"))) {
-                        vm.createDir(string.concat(root, "/scripts/outputs/testnet"), false);
-                    }
-                    vm.writeJson(out, "./scripts/outputs/testnet/0_MockedTokens.json");
-                } else {
-                    if (!vm.exists(string.concat(root, "/scripts/outputs/mainnet"))) {
-                        vm.createDir(string.concat(root, "/scripts/outputs/mainnet"), false);
-                    }
-                    vm.writeJson(out, "./scripts/outputs/mainnet/0_MockedTokens.json");
+                vm.writeJson(out, "./scripts/outputs/testnet/0_MockedTokens.json");
+            } else {
+                if (!vm.exists(string.concat(root, "/scripts/outputs/mainnet"))) {
+                    vm.createDir(string.concat(root, "/scripts/outputs/mainnet"), false);
                 }
+                vm.writeJson(out, "./scripts/outputs/mainnet/0_MockedTokens.json");
             }
         }
     }
