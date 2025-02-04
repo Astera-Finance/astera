@@ -98,7 +98,7 @@ contract LendingPoolProp is PropertiesBase {
             )
         );
 
-        (,,,,, uint256 healthFactorAfter) = pool.getUserAccountData(address(to));
+        (,,,,, uint256 healthFactorAfter) = pool.getUserAccountData(address(user));
 
         if (healthFactorAfter < 1e18) {
             assertWithMsg(!success, "224");

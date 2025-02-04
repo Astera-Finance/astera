@@ -116,7 +116,7 @@ contract MiniPoolProp is PropertiesBase {
             )
         );
 
-        (,,,,, uint256 healthFactorAfter) = minipool.getUserAccountData(address(to));
+        (,,,,, uint256 healthFactorAfter) = minipool.getUserAccountData(address(user));
 
         require(success);
 
