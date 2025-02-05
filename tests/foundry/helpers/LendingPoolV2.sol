@@ -129,7 +129,7 @@ contract LendingPoolV2 is
     {
         DepositLogic.deposit(
             DepositLogic.DepositParams(asset, reserveType, amount, onBehalfOf),
-            _minipoolFlowBorrowing,
+            _assetToMinipoolFlowBorrowing[asset],
             _reserves,
             _usersConfig,
             _addressesProvider
@@ -156,7 +156,7 @@ contract LendingPoolV2 is
     {
         return WithdrawLogic.withdraw(
             WithdrawLogic.withdrawParams(asset, reserveType, amount, to, _reservesCount),
-            _minipoolFlowBorrowing,
+            _assetToMinipoolFlowBorrowing[asset],
             _reserves,
             _usersConfig,
             _reservesList,
@@ -194,7 +194,7 @@ contract LendingPoolV2 is
                 _addressesProvider,
                 _reservesCount
             ),
-            _minipoolFlowBorrowing,
+            _assetToMinipoolFlowBorrowing[asset],
             _reserves,
             _reservesList,
             _usersConfig
@@ -222,7 +222,7 @@ contract LendingPoolV2 is
     {
         return BorrowLogic.repay(
             BorrowLogic.RepayParams(asset, reserveType, amount, onBehalfOf, _addressesProvider),
-            _minipoolFlowBorrowing,
+            _assetToMinipoolFlowBorrowing[asset],
             _reserves,
             _usersConfig
         );
@@ -243,7 +243,7 @@ contract LendingPoolV2 is
     {
         return BorrowLogic.repayWithAtokens(
             BorrowLogic.RepayParams(asset, reserveType, amount, msg.sender, _addressesProvider),
-            _minipoolFlowBorrowing,
+            _assetToMinipoolFlowBorrowing[asset],
             _reserves,
             _usersConfig
         );
@@ -310,7 +310,7 @@ contract LendingPoolV2 is
 
         LiquidationLogic.liquidationCall(
             _reserves,
-            _minipoolFlowBorrowing,
+            _assetToMinipoolFlowBorrowing,
             _usersConfig,
             _reservesList,
             LiquidationLogic.liquidationCallParams(
@@ -362,7 +362,7 @@ contract LendingPoolV2 is
                 modes: modes,
                 params: params
             }),
-            _minipoolFlowBorrowing,
+            _assetToMinipoolFlowBorrowing,
             _reservesList,
             _usersConfig,
             _reserves
@@ -394,7 +394,7 @@ contract LendingPoolV2 is
                 _addressesProvider,
                 _reservesCount
             ),
-            _minipoolFlowBorrowing,
+            _assetToMinipoolFlowBorrowing[asset],
             _reserves
         );
     }
@@ -887,6 +887,18 @@ contract LendingPoolV2 is
     {
         DataTypes.ReserveData storage reserve = _reserves[asset][reserveType];
 
-        reserve.updateInterestRates(_minipoolFlowBorrowing, asset, reserve.aTokenAddress, 0, 0);
+        reserve.updateInterestRates(
+            _assetToMinipoolFlowBorrowing[asset], asset, reserve.aTokenAddress, 0, 0
+        );
+    }
+
+    /**
+     * @notice Returns the list of minipools that are currently flow borrowing from a specific asset.
+     * @param asset The address of the asset.
+     * @return The list of minipool addresses that are flow borrowing from the asset.
+     */
+    function getMinipoolFlowBorrowing(address asset) external view returns (address[] memory) {
+        address[] memory minipools = new address[](1);
+        return minipools;
     }
 }

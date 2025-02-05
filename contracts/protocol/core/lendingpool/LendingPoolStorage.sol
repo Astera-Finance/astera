@@ -33,8 +33,9 @@ contract LendingPoolStorage {
      */
     mapping(uint256 => DataTypes.ReserveReference) internal _reservesList;
 
-    /// @dev Set of minipools that are currently 'flow borrowing'.
-    EnumerableSet.AddressSet internal _minipoolFlowBorrowing;
+    /// @dev Mapping of asset addresses to minipool addresses that are borrowing from them.
+    /// No need to track the `reserveType` because flow borrowing only support for the `true` reserve type.
+    mapping(address => EnumerableSet.AddressSet) internal _assetToMinipoolFlowBorrowing;
 
     /// @dev Counter for the number of initialized reserves.
     uint256 internal _reservesCount;
