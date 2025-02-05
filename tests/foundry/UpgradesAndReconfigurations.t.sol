@@ -413,10 +413,36 @@ contract UpgradesAndReconfigurationsTest is MiniPoolFixtures {
             address previousAErc6909Impl = InitializableImmutableAdminUpgradeabilityProxy(
                 payable(miniPoolContracts.miniPoolAddressesProvider.getMiniPoolToAERC6909(0))
             ).implementation();
+
+            address previousMiniPoolProxy =
+                miniPoolContracts.miniPoolAddressesProvider.getMiniPool(0);
+            uint256 previousId = miniPoolContracts.miniPoolAddressesProvider.getMiniPoolId(
+                address(previousMiniPoolProxy)
+            );
+            address previousAERC6909Proxy =
+                miniPoolContracts.miniPoolAddressesProvider.getMiniPoolToAERC6909(previousId);
+
             vm.stopPrank();
-            miniPoolContracts.miniPoolAddressesProvider.setMiniPoolImpl(address(mpv2), 0);
-            miniPoolContracts.miniPoolAddressesProvider.setAToken6909Impl(address(erc6909v2), 0);
+            miniPoolContracts.miniPoolAddressesProvider.setMiniPoolImpl(address(mpv2), previousId);
+            miniPoolContracts.miniPoolAddressesProvider.setAToken6909Impl(
+                address(erc6909v2), previousId
+            );
             miniPoolContracts.miniPoolImpl = MiniPool(address(mpv2));
+
+            address currentMiniPoolProxy =
+                miniPoolContracts.miniPoolAddressesProvider.getMiniPool(previousId);
+
+            assertEq(previousMiniPoolProxy, currentMiniPoolProxy);
+            assertEq(
+                previousAERC6909Proxy,
+                miniPoolContracts.miniPoolAddressesProvider.getMiniPoolToAERC6909(previousId)
+            );
+            assertEq(
+                previousId,
+                miniPoolContracts.miniPoolAddressesProvider.getMiniPoolId(
+                    address(currentMiniPoolProxy)
+                )
+            );
 
             /* Check if addresses are updated */
             vm.startPrank(address(miniPoolContracts.miniPoolAddressesProvider));

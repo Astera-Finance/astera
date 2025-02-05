@@ -411,9 +411,6 @@ contract MiniPoolAddressesProvider is Ownable, IMiniPoolAddressesProvider {
         InitializableImmutableAdminUpgradeabilityProxy proxy =
             InitializableImmutableAdminUpgradeabilityProxy(proxyAddress);
         proxy.upgradeToAndCall(miniPoolImpl, params);
-
-        _miniPoolsConfig[miniPoolId].miniPool = address(proxy);
-        _minipoolToId[address(proxy)] = miniPoolId;
     }
 
     /**
@@ -430,8 +427,6 @@ contract MiniPoolAddressesProvider is Ownable, IMiniPoolAddressesProvider {
         InitializableImmutableAdminUpgradeabilityProxy proxy =
             InitializableImmutableAdminUpgradeabilityProxy(proxyAddress);
         proxy.upgradeToAndCall(aTokenImpl, params);
-        /* Update new ERC 6909 impl for all specified miniPools Ids */
-        _miniPoolsConfig[miniPoolId].aErc6909 = address(proxy);
     }
 
     /**
