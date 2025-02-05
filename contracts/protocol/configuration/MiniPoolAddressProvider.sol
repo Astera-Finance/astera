@@ -85,8 +85,6 @@ contract MiniPoolAddressesProvider is Ownable, IMiniPoolAddressesProvider {
     /// @dev Constant identifier for mini pool configurator.
     bytes32 private constant MINI_POOL_CONFIGURATOR = keccak256("MINI_POOL_CONFIGURATOR");
 
-    /// @dev Maximum number of reserves with flow borrowing.
-
     /**
      * @dev Constructor to initialize the contract.
      * @param provider The address of the lending pool addresses provider.

@@ -46,7 +46,7 @@ contract FlowLimiter is IFlowLimiter {
      */
     function setFlowLimit(address asset, address miniPool, uint256 limit) external {
         require(msg.sender == address(_miniPoolAddressesProvider), Errors.VL_CALLER_NOT_POOL_ADMIN);
-        require(currentFlow(asset, miniPool) < limit, Errors.VL_INVALID_AMOUNT); // To avoid overflow in interest calculation.
+        require(currentFlow(asset, miniPool) <= limit, Errors.VL_INVALID_AMOUNT); // To avoid overflow in interest calculation.
 
         _miniPoolMaxDebt[asset][miniPool] = limit;
 

@@ -319,9 +319,48 @@ contract MiniPoolAddressProvider is Common {
 
         miniPoolContracts.miniPoolAddressesProvider.setMaxReservesWithFlowBorrowing(2);
 
+        assertEq(
+            miniPoolContracts.miniPoolAddressesProvider.getMaxReservesWithFlowBorrowing(),
+            2,
+            "Wrong max reserves with flow borrowing"
+        );
+
         vm.prank(address(miniPoolContracts.miniPoolConfigurator));
         vm.expectRevert(bytes(Errors.VL_MAX_RESERVES_WITH_FLOW_BORROWING_REACHED));
         miniPoolContracts.miniPoolAddressesProvider.setFlowLimit(tokens[2], address(miniPool), 1000);
+
+        assertEq(
+            miniPoolContracts.miniPoolAddressesProvider.getNumberOfReservesWithFlowBorrowing(),
+            2,
+            "Wrong number of reserves with flow borrowing"
+        );
+
+        vm.prank(address(miniPoolContracts.miniPoolConfigurator));
+        miniPoolContracts.miniPoolAddressesProvider.setFlowLimit(tokens[1], address(miniPool), 0);
+
+        assertEq(
+            miniPoolContracts.miniPoolAddressesProvider.getNumberOfReservesWithFlowBorrowing(),
+            1,
+            "Wrong number of reserves with flow borrowing"
+        );
+
+        vm.prank(address(miniPoolContracts.miniPoolConfigurator));
+        miniPoolContracts.miniPoolAddressesProvider.setFlowLimit(tokens[0], address(miniPool), 0);
+
+        assertEq(
+            miniPoolContracts.miniPoolAddressesProvider.getNumberOfReservesWithFlowBorrowing(),
+            0,
+            "Wrong number of reserves with flow borrowing"
+        );
+
+        // vm.prank(address(miniPoolContracts.miniPoolConfigurator));
+        miniPoolContracts.miniPoolAddressesProvider.setMaxReservesWithFlowBorrowing(0);
+
+        assertEq(
+            miniPoolContracts.miniPoolAddressesProvider.getMaxReservesWithFlowBorrowing(),
+            0,
+            "Wrong max reserves with flow borrowing"
+        );
     }
 
     function testMultipleDeployments() public {
