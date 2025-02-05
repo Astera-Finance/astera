@@ -7,6 +7,7 @@ import {IAERC6909} from "../../../../contracts/interfaces/IAERC6909.sol";
 import {DistributionTypes} from
     "../../../../contracts/protocol/libraries/types/DistributionTypes.sol";
 import {Ownable} from "lib/openzeppelin-contracts/contracts/access/Ownable.sol";
+import {Errors} from "../../../../contracts/protocol/libraries/helpers/Errors.sol";
 
 /**
  * @title RewardsDistributor6909
@@ -363,7 +364,7 @@ abstract contract RewardsDistributor6909 is IMiniPoolRewardsDistributor, Ownable
     ) internal {
         require(
             address(IAERC6909(market6909).getIncentivesController()) != address(0),
-            "Rewarder not set for market6909"
+            Errors.R_REWARDER_NOT_SET
         );
         for (uint256 r = 0; r < _assets[market6909][assetID].availableRewards.length; r++) {
             address reward = _assets[market6909][assetID].availableRewards[r];

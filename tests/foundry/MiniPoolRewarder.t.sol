@@ -484,7 +484,7 @@ contract MiniPoolRewarderTest is Common {
         forwarder.setForwarder(miniPool, 0, address(this));
         forwarder.registerClaimee(aTokensErc6909Addr);
         forwarder.registerClaimee(miniPool);
-        vm.expectRevert(bytes("CLAIMER_UNAUTHORIZED"));
+        vm.expectRevert(bytes(Errors.R_CLAIMER_UNAUTHORIZED));
         forwarder.claimRewardsForPool(miniPool);
         vm.stopPrank();
 
@@ -822,7 +822,7 @@ contract MiniPoolRewarderTest is Common {
         aTokenAddresses[0] = address(commonContracts.aTokens[WETH_OFFSET]);
 
         vm.startPrank(villain);
-        vm.expectRevert(bytes("CLAIMER_UNAUTHORIZED"));
+        vm.expectRevert(bytes(Errors.R_CLAIMER_UNAUTHORIZED));
         deployedContracts.rewarder.claimRewardsOnBehalf(
             aTokenAddresses, 1 ether, user1, villain, address(rewardTokens[0])
         );
@@ -855,7 +855,7 @@ contract MiniPoolRewarderTest is Common {
         assets[0] = DistributionTypes.Asset6909(aTokensErc6909Addr, 1000 + WETH_OFFSET); //Wrapper WETH
 
         vm.startPrank(villain);
-        vm.expectRevert(bytes("CLAIMER_UNAUTHORIZED"));
+        vm.expectRevert(bytes(Errors.R_CLAIMER_UNAUTHORIZED));
         miniPoolRewarder.claimRewardsOnBehalf(
             assets, 1 ether, user1, villain, address(rewardTokens[0])
         );
@@ -912,7 +912,7 @@ contract MiniPoolRewarderTest is Common {
         aTokenAddresses[0] = address(commonContracts.aTokens[WETH_OFFSET]);
 
         vm.startPrank(villain);
-        vm.expectRevert(bytes("CLAIMER_UNAUTHORIZED"));
+        vm.expectRevert(bytes(Errors.R_CLAIMER_UNAUTHORIZED));
         deployedContracts.rewarder.claimAllRewardsOnBehalf(aTokenAddresses, user1, villain);
         vm.stopPrank();
 
@@ -954,7 +954,7 @@ contract MiniPoolRewarderTest is Common {
         assets[0] = DistributionTypes.Asset6909(aTokensErc6909Addr, 1000 + WETH_OFFSET); //Wrapper WETH
 
         vm.startPrank(villain);
-        vm.expectRevert(bytes("CLAIMER_UNAUTHORIZED"));
+        vm.expectRevert(bytes(Errors.R_CLAIMER_UNAUTHORIZED));
         miniPoolRewarder.claimAllRewardsOnBehalf(assets, user1, villain);
         vm.stopPrank();
 
@@ -1637,7 +1637,7 @@ contract MiniPoolRewarderTest is Common {
         vm.roll(block.number + 1);
 
         vm.startPrank(user1);
-        vm.expectRevert(bytes("Rewarder not set for market6909"));
+        vm.expectRevert(bytes(Errors.R_REWARDER_NOT_SET));
         miniPoolRewarder.claimAllRewardsToSelf(assets);
         vm.stopPrank();
 

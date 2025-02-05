@@ -5,6 +5,7 @@ import {IRewardsController} from "../../../../contracts/interfaces/IRewardsContr
 import {IERC20} from "../../../../contracts/dependencies/openzeppelin/contracts/IERC20.sol";
 import {Ownable} from "lib/openzeppelin-contracts/contracts/access/Ownable.sol";
 import {SafeERC20} from "../../../../contracts/dependencies/openzeppelin/contracts/SafeERC20.sol";
+import {Errors} from "../../../../contracts/protocol/libraries/helpers/Errors.sol";
 
 /**
  * @title RewardForwarder
@@ -144,10 +145,13 @@ contract RewardForwarder is Ownable {
         public
         returns (uint256[] memory)
     {
-        require(isRegisteredClaimee[claimee], "Not registered");
+        require(isRegisteredClaimee[claimee], Errors.R_NOT_REGISTERED);
+
         (address[] memory rewardTokens_, uint256[] memory claimedAmounts_) =
             rewardsController.claimAllRewardsOnBehalf(tokens, claimee, address(this));
-        require(getRewardTokens().length >= rewardTokens_.length, "Too many rewardTokens");
+
+        require(getRewardTokens().length >= rewardTokens_.length, Errors.R_TOO_MANY_REWARD_TOKENS);
+
         for (uint256 i = 0; i < rewardTokens_.length; i++) {
             claimedRewards[claimee][i] += claimedAmounts_[i];
         }
@@ -168,7 +172,7 @@ contract RewardForwarder is Ownable {
         }
         claimedRewards[claimee][rewardTokenIndex] = 0;
         address forwarder = forwarders[claimee][rewardTokenIndex];
-        require(forwarder != address(0), "No forwarder set");
+        require(forwarder != address(0), Errors.R_NO_FORWARDER_SET);
         IERC20(rewardToken).safeTransfer(forwarder, amount);
 
         emit RewardsForwarded(claimee, rewardTokenIndex, amount, forwarder);

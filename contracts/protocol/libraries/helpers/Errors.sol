@@ -6,16 +6,17 @@ pragma solidity 0.8.23;
  * @author Cod3x
  * @notice Defines the error messages emitted by the different contracts of the Cod3x Lend protocol
  * @dev Error messages prefix glossary:
- *  - VL = ValidationLogic
- *  - MATH = Math libraries
- *  - AT = AToken/AToken6909
- *  - LP = Pool
- *  - RL = ReserveLogic
- *  - LPCM = Liquidation
- *  - DP = DataProvider
- *  - O = Oracle
- *  - PAP = PoolAddressesProvider
- *  - RC = Reserve configuration
+ *  - VL   :: ValidationLogic
+ *  - MATH :: Math libraries
+ *  - AT   :: AToken/AToken6909
+ *  - LP   :: Pool
+ *  - RL   :: ReserveLogic
+ *  - LPCM :: Liquidation
+ *  - DP   :: DataProvider
+ *  - O    :: Oracle
+ *  - PAP  :: PoolAddressesProvider
+ *  - RC   :: Reserve configuration
+ *  - R    :: Rewarder
  */
 library Errors {
     /// @notice Amount must be greater than 0.
@@ -180,9 +181,25 @@ library Errors {
     string public constant RC_INVALID_RESERVE_FACTOR = "75";
     /// @notice Invalid deposit cap.
     string public constant RC_INVALID_DEPOSIT_CAP = "76";
-
     /// @notice LendingPool not set.
     string public constant DP_LENDINGPOOL_NOT_SET = "77";
     /// @notice Reserve is not configured.
     string public constant DP_RESERVE_NOT_CONFIGURED = "78";
+
+    /// @notice Not registered.
+    string public constant R_NOT_REGISTERED = "79";
+    /// @notice Too many reward tokens.
+    string public constant R_TOO_MANY_REWARD_TOKENS = "80";
+    /// @notice No forwarder set.
+    string public constant R_NO_FORWARDER_SET = "81";
+    /// @notice Claimer unauthorized.
+    string public constant R_CLAIMER_UNAUTHORIZED = "82";
+    /// @notice Invalid address.
+    string public constant R_INVALID_ADDRESS = "83";
+    /// @notice Already set.
+    string public constant R_ALREADY_SET = "84";
+    /// @notice Transfer error.
+    string public constant R_TRANSFER_ERROR = "85";
+    /// @notice Rewarder not set.
+    string public constant R_REWARDER_NOT_SET = "86";
 }

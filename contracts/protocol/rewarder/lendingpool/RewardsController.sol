@@ -10,6 +10,7 @@ import {IAERC6909} from "../../../../contracts/interfaces/IAERC6909.sol";
 import "../../../../contracts/interfaces/IAToken.sol";
 import {IMiniPoolAddressesProvider} from
     "../../../../contracts/interfaces/IMiniPoolAddressesProvider.sol";
+import {Errors} from "../../../../contracts/protocol/libraries/helpers/Errors.sol";
 
 /**
  * @title RewardsController
@@ -48,7 +49,7 @@ abstract contract RewardsController is RewardsDistributor, IRewardsController {
      * @param user Address of the user rewards are being claimed for.
      */
     modifier onlyAuthorizedClaimers(address claimer, address user) {
-        require(_authorizedClaimers[user] == claimer, "CLAIMER_UNAUTHORIZED");
+        require(_authorizedClaimers[user] == claimer, Errors.R_CLAIMER_UNAUTHORIZED);
         _;
     }
 
@@ -63,8 +64,8 @@ abstract contract RewardsController is RewardsDistributor, IRewardsController {
      * @param addressesProvider Address of the MiniPool addresses provider.
      */
     function setMiniPoolAddressesProvider(address addressesProvider) external onlyOwner {
-        require(address(addressesProvider) != address(0), "INVALID_ADDRESS");
-        require(address(_addressesProvider) == address(0), "ALREADY_SET");
+        require(address(addressesProvider) != address(0), Errors.R_INVALID_ADDRESS);
+        require(address(_addressesProvider) == address(0), Errors.R_ALREADY_SET);
         _addressesProvider = IMiniPoolAddressesProvider(addressesProvider);
 
         emit MiniPoolAddressesProviderSet(addressesProvider);
@@ -200,7 +201,7 @@ abstract contract RewardsController is RewardsDistributor, IRewardsController {
         override
         returns (uint256)
     {
-        require(to != address(0), "INVALID_TO_ADDRESS");
+        require(to != address(0), Errors.R_INVALID_ADDRESS);
         return _claimRewards(assets, amount, msg.sender, msg.sender, to, reward);
     }
 
@@ -220,8 +221,8 @@ abstract contract RewardsController is RewardsDistributor, IRewardsController {
         address to,
         address reward
     ) external override onlyAuthorizedClaimers(msg.sender, user) returns (uint256) {
-        require(user != address(0), "INVALID_USER_ADDRESS");
-        require(to != address(0), "INVALID_TO_ADDRESS");
+        require(user != address(0), Errors.R_INVALID_ADDRESS);
+        require(to != address(0), Errors.R_INVALID_ADDRESS);
         return _claimRewards(assets, amount, msg.sender, user, to, reward);
     }
 
@@ -252,7 +253,7 @@ abstract contract RewardsController is RewardsDistributor, IRewardsController {
         override
         returns (address[] memory rewardTokens, uint256[] memory claimedAmounts)
     {
-        require(to != address(0), "INVALID_TO_ADDRESS");
+        require(to != address(0), Errors.R_INVALID_ADDRESS);
         return _claimAllRewards(assets, msg.sender, msg.sender, to);
     }
 
@@ -270,8 +271,8 @@ abstract contract RewardsController is RewardsDistributor, IRewardsController {
         onlyAuthorizedClaimers(msg.sender, user)
         returns (address[] memory rewardTokens, uint256[] memory claimedAmounts)
     {
-        require(user != address(0), "INVALID_USER_ADDRESS");
-        require(to != address(0), "INVALID_TO_ADDRESS");
+        require(user != address(0), Errors.R_INVALID_ADDRESS);
+        require(to != address(0), Errors.R_INVALID_ADDRESS);
         return _claimAllRewards(assets, msg.sender, user, to);
     }
 
@@ -393,7 +394,7 @@ abstract contract RewardsController is RewardsDistributor, IRewardsController {
      */
     function _transferRewards(address to, address reward, uint256 amount) internal {
         bool success = __transferRewards(to, reward, amount);
-        require(success == true, "TRANSFER_ERROR");
+        require(success == true, Errors.R_TRANSFER_ERROR);
     }
 
     /**
