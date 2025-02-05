@@ -72,12 +72,20 @@ contract MiniPoolAddressesProvider is Ownable, IMiniPoolAddressesProvider {
     /// @dev Address of the Cod3x treasury.
     address private _cod3xTreasury;
 
+    /// @dev Counter for the number of reserves with flow borrowing.
+    uint256 private _numberOfReservesWithFlowBorrowing;
+
+    /// @dev Maximum number of reserves with flow borrowing.
+    uint256 private _maxReservesWithFlowBorrowing = 6;
+
     /// @dev Constant identifier for lending pool addresses provider.
     bytes32 private constant LENDING_POOL_ADDRESSES_PROVIDER =
         keccak256("LENDING_POOL_ADDRESSES_PROVIDER");
 
     /// @dev Constant identifier for mini pool configurator.
     bytes32 private constant MINI_POOL_CONFIGURATOR = keccak256("MINI_POOL_CONFIGURATOR");
+
+    /// @dev Maximum number of reserves with flow borrowing.
 
     /**
      * @dev Constructor to initialize the contract.
@@ -174,6 +182,22 @@ contract MiniPoolAddressesProvider is Ownable, IMiniPoolAddressesProvider {
      */
     function getMiniPoolId(address miniPool) external view returns (uint256) {
         return _getMiniPoolId(miniPool);
+    }
+
+    /**
+     * @dev Returns the number of reserves with flow borrowing.
+     * @return The number of reserves with flow borrowing.
+     */
+    function getNumberOfReservesWithFlowBorrowing() external view returns (uint256) {
+        return _numberOfReservesWithFlowBorrowing;
+    }
+    /**
+     * @dev Returns the maximum number of reserves with flow borrowing.
+     * @return The maximum number of reserves with flow borrowing.
+     */
+
+    function getMaxReservesWithFlowBorrowing() external view returns (uint256) {
+        return _maxReservesWithFlowBorrowing;
     }
 
     /**
@@ -354,8 +378,34 @@ contract MiniPoolAddressesProvider is Ownable, IMiniPoolAddressesProvider {
         poolIdCheck(_getMiniPoolId(miniPool))
         onlyMiniPoolConfigurator
     {
+        uint256 miniPoolMaxDebt_ =
+            IFlowLimiter(getFlowLimiter()).getMiniPoolMaxDebt(asset, miniPool);
+
+        if (limit != 0 && miniPoolMaxDebt_ == 0) {
+            _numberOfReservesWithFlowBorrowing++;
+        } else if (limit == 0 && miniPoolMaxDebt_ != 0) {
+            _numberOfReservesWithFlowBorrowing--;
+        }
+
+        require(
+            _numberOfReservesWithFlowBorrowing <= _maxReservesWithFlowBorrowing,
+            Errors.VL_MAX_RESERVES_WITH_FLOW_BORROWING_REACHED
+        );
+
         IFlowLimiter(getFlowLimiter()).setFlowLimit(asset, miniPool, limit);
         emit FlowLimitUpdated(asset, miniPool, limit);
+    }
+
+    /**
+     * @dev Sets the maximum number of reserves that can have flow borrowing enabled.
+     * @param newMax The new maximum number of reserves.
+     */
+    function setMaxReservesWithFlowBorrowing(uint256 newMax) external onlyOwner {
+        require(newMax >= _numberOfReservesWithFlowBorrowing, Errors.VL_INVALID_INPUT);
+
+        _maxReservesWithFlowBorrowing = newMax;
+
+        emit MaxReservesWithFlowBorrowingUpdated(newMax);
     }
 
     /**

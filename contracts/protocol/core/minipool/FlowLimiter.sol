@@ -47,6 +47,7 @@ contract FlowLimiter is IFlowLimiter {
     function setFlowLimit(address asset, address miniPool, uint256 limit) external {
         require(msg.sender == address(_miniPoolAddressesProvider), Errors.VL_CALLER_NOT_POOL_ADMIN);
         require(currentFlow(asset, miniPool) < limit, Errors.VL_INVALID_AMOUNT); // To avoid overflow in interest calculation.
+
         _miniPoolMaxDebt[asset][miniPool] = limit;
 
         emit FlowLimitUpdated(asset, miniPool, limit);
@@ -76,6 +77,10 @@ contract FlowLimiter is IFlowLimiter {
         return IERC20(_lendingPool.getReserveData(asset, true).variableDebtTokenAddress).balanceOf(
             address(miniPool)
         );
+    }
+
+    function getMiniPoolMaxDebt(address asset, address miniPool) external view returns (uint256) {
+        return _miniPoolMaxDebt[asset][miniPool];
     }
 
     function revertIfFlowLimitReached(address asset, address miniPool, uint256 amount)
