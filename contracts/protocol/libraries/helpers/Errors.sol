@@ -135,6 +135,8 @@ library Errors {
     string public constant LP_INVALID_INDEX = "55";
     /// @notice Reserve has already been added.
     string public constant LP_RESERVE_ALREADY_ADDED = "56";
+    /// @notice The amount is too small to borrow.
+    string public constant LP_TOO_SMALL_AMOUNT_FOR_BORROW = "56";
 
     /// @notice Reserve has already been initialized.
     string public constant RL_RESERVE_ALREADY_INITIALIZED = "57";

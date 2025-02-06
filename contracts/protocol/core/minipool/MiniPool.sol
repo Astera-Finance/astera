@@ -3,7 +3,8 @@ pragma solidity 0.8.23;
 
 import {Address} from "../../../../contracts/dependencies/openzeppelin/contracts/Address.sol";
 import {IAERC6909} from "../../../../contracts/interfaces/IAERC6909.sol";
-import {IERC20} from "../../../../contracts/dependencies/openzeppelin/contracts/IERC20.sol";
+import {IERC20Detailed} from
+    "../../../../contracts/dependencies/openzeppelin/contracts/IERC20Detailed.sol";
 import {SafeERC20} from "../../../../contracts/dependencies/openzeppelin/contracts/SafeERC20.sol";
 import {IMiniPoolAddressesProvider} from
     "../../../../contracts/interfaces/IMiniPoolAddressesProvider.sol";
@@ -58,7 +59,7 @@ contract MiniPool is
 {
     using WadRayMath for uint256;
     using PercentageMath for uint256;
-    using SafeERC20 for IERC20;
+    using SafeERC20 for IERC20Detailed;
     using MiniPoolReserveLogic for DataTypes.MiniPoolReserveData;
     using ReserveConfiguration for DataTypes.ReserveConfigurationMap;
     using UserConfiguration for DataTypes.UserConfigurationMap;
@@ -145,6 +146,9 @@ contract MiniPool is
         _minipoolId = minipoolID;
         _updateFlashLoanFee(9);
         _maxNumberOfReserves = 128;
+        _decimalsToBorrowThreshold[6] = 1e3;
+        _decimalsToBorrowThreshold[8] = 1e2;
+        _decimalsToBorrowThreshold[18] = 1e12;
     }
 
     /**
@@ -228,8 +232,12 @@ contract MiniPool is
         DataTypes.MiniPoolReserveData storage reserve = _reserves[asset];
         borrowVarsLocalVars memory vars;
         vars.aErc6909 = reserve.aErc6909;
-        require(vars.aErc6909 != address(0), "Reserve not initialized");
-        vars.availableLiquidity = IERC20(asset).balanceOf(vars.aErc6909);
+        require(vars.aErc6909 != address(0), Errors.RL_RESERVE_NOT_INITIALIZED);
+        require(
+            amount >= _decimalsToBorrowThreshold[IERC20Detailed(asset).decimals()],
+            Errors.LP_TOO_SMALL_AMOUNT_FOR_BORROW
+        );
+        vars.availableLiquidity = IERC20Detailed(asset).balanceOf(vars.aErc6909);
         if (
             amount > vars.availableLiquidity
                 && IAERC6909(reserve.aErc6909).isTranche(reserve.aTokenID)
@@ -243,14 +251,14 @@ contract MiniPool is
                 ATokenNonRebasing(asset).ATOKEN_ADDRESS()
             );
 
-            vars.amountReceived = IERC20(underlying).balanceOf(address(this));
+            vars.amountReceived = IERC20Detailed(underlying).balanceOf(address(this));
 
-            IERC20(underlying).forceApprove(vars.LendingPool, vars.amountReceived);
+            IERC20Detailed(underlying).forceApprove(vars.LendingPool, vars.amountReceived);
             ILendingPool(vars.LendingPool).deposit(
                 underlying, true, vars.amountReceived, address(this)
             );
 
-            vars.amountReceived = IERC20(asset).balanceOf(address(this));
+            vars.amountReceived = IERC20Detailed(asset).balanceOf(address(this));
             assert(vars.amountReceived >= amount - vars.availableLiquidity);
 
             MiniPoolDepositLogic.internalDeposit(
@@ -406,7 +414,9 @@ contract MiniPool is
                 ILendingPool(_addressesProvider.getLendingPool()).repayWithATokens(
                     underlyingAsset,
                     true,
-                    IERC20(ATokenNonRebasing(asset).ATOKEN_ADDRESS()).balanceOf(address(this))
+                    IERC20Detailed(ATokenNonRebasing(asset).ATOKEN_ADDRESS()).balanceOf(
+                        address(this)
+                    )
                 ); // MUST use asset
             }
             uint256 remainingBalance =
@@ -415,7 +425,8 @@ contract MiniPool is
             if (
                 getCurrentLendingPoolDebt(underlyingAsset) == 0
                     && remainingBalance > ERROR_REMAINDER_MARGIN /* We leave ERROR_REMAINDER_MARGIN of aToken wei in the minipool to mitigate rounding errors. */
-                    && IERC20(asset).balanceOf(aErc6909) > remainingBalance - ERROR_REMAINDER_MARGIN /* Check if there is enough liquidity to withdraw. */
+                    && IERC20Detailed(asset).balanceOf(aErc6909)
+                        > remainingBalance - ERROR_REMAINDER_MARGIN /* Check if there is enough liquidity to withdraw. */
             ) {
                 // Withdraw the remaining AERC6909 to Treasury. This is due to Minipool IR > Lending IR.
                 // `this.` modifies the execution context => msg.sender == address(this).
@@ -652,6 +663,18 @@ contract MiniPool is
             _reservesList,
             _addressesProvider
         );
+    }
+
+    /**
+     * @dev Sets borrow threshold for specific decimals
+     * @param decimals Decimals for specific reserve.
+     * @param threshold Minimum borrow threshold value to set.
+     */
+    function setBorrowThreshold(uint8 decimals, uint256 threshold)
+        external
+        onlyMiniPoolConfigurator
+    {
+        _decimalsToBorrowThreshold[decimals] = threshold;
     }
 
     /**

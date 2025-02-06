@@ -500,6 +500,19 @@ contract MiniPoolConfigurator is
     }
 
     /**
+     * @dev Sets borrow threshold for specific decimals
+     * @param decimals Decimals for specific reserve.
+     * @param threshold Minimum borrow threshold value to set.
+     * @param pool MiniPool address
+     */
+    function setBorrowThreshold(uint8 decimals, uint256 threshold, IMiniPool pool)
+        external
+        onlyPoolAdmin(address(pool))
+    {
+        pool.setBorrowThreshold(decimals, threshold);
+    }
+
+    /**
      * @dev Checks if a reserve has zero liquidity.
      * @param asset The address of the underlying asset.
      * @param pool The MiniPool instance to check.

@@ -168,6 +168,8 @@ interface IMiniPool {
         bool receiveAToken
     ) external;
 
+    function setBorrowThreshold(uint8 decimals, uint256 threshold) external;
+
     struct FlashLoanParams {
         address receiverAddress;
         address[] assets;

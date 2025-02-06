@@ -42,4 +42,7 @@ contract MiniPoolStorage {
 
     /// @dev Maximum number of reserves that can be initialized.
     uint256 internal _maxNumberOfReserves;
+
+    /// @dev Mapping decimals of token to minimum borrow threshold
+    mapping(uint8 => uint256) public _decimalsToBorrowThreshold;
 }
