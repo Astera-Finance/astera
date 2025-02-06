@@ -3,8 +3,7 @@ pragma solidity 0.8.23;
 
 import {Address} from "contracts/dependencies/openzeppelin/contracts/Address.sol";
 import {IAERC6909} from "contracts/interfaces/IAERC6909.sol";
-import {IERC20Detailed} from
-    "../../../../contracts/dependencies/openzeppelin/contracts/IERC20Detailed.sol";
+import {IERC20Detailed} from "contracts/dependencies/openzeppelin/contracts/IERC20Detailed.sol";
 import {SafeERC20} from "contracts/dependencies/openzeppelin/contracts/SafeERC20.sol";
 import {IMiniPoolAddressesProvider} from "contracts/interfaces/IMiniPoolAddressesProvider.sol";
 import {IFlowLimiter} from "contracts/interfaces/base/IFlowLimiter.sol";
@@ -36,7 +35,7 @@ import {MiniPoolLiquidationLogic} from
     "contracts/protocol/core/minipool/logic/MiniPoolLiquidationLogic.sol";
 import {IMiniPoolRewarder} from "contracts/interfaces/IMiniPoolRewarder.sol";
 import {IMiniPoolAddressProviderUpdatable} from
-    "../../../../contracts/interfaces/IMiniPoolAddressProviderUpdatable.sol";
+    "contracts/interfaces/IMiniPoolAddressProviderUpdatable.sol";
 
 /**
  * @title MiniPool contract
@@ -52,7 +51,7 @@ import {IMiniPoolAddressProviderUpdatable} from
  *   MiniPoolAddressesProvider.
  * @author Cod3x
  */
-contract MiniPool is
+contract MiniPoolV2 is
     VersionedInitializable,
     IMiniPool,
     MiniPoolStorage,
