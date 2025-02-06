@@ -88,6 +88,7 @@ library MiniPoolFlashLoanLogic {
         uint256[] amounts;
         uint256[] modes;
         bytes params;
+        uint256[] minAmounts;
     }
 
     /**
@@ -172,7 +173,8 @@ library MiniPoolFlashLoanLogic {
                         0,
                         false,
                         flashLoanParams.addressesProvider,
-                        flashLoanParams.reservesCount
+                        flashLoanParams.reservesCount,
+                        flashLoanParams.minAmounts[vars.i]
                     ),
                     false,
                     reserves,

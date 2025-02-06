@@ -233,10 +233,6 @@ contract MiniPool is
         borrowVarsLocalVars memory vars;
         vars.aErc6909 = reserve.aErc6909;
         require(vars.aErc6909 != address(0), Errors.RL_RESERVE_NOT_INITIALIZED);
-        require(
-            amount >= _decimalsToBorrowThreshold[IERC20Detailed(asset).decimals()],
-            Errors.LP_TOO_SMALL_AMOUNT_FOR_BORROW
-        );
         vars.availableLiquidity = IERC20Detailed(asset).balanceOf(vars.aErc6909);
         if (
             amount > vars.availableLiquidity
@@ -281,7 +277,8 @@ contract MiniPool is
                 0,
                 true,
                 _addressesProvider,
-                _reservesCount
+                _reservesCount,
+                _decimalsToBorrowThreshold[IERC20Detailed(asset).decimals()]
             ),
             unwrap,
             _reserves,
@@ -309,7 +306,13 @@ contract MiniPool is
         returns (uint256)
     {
         uint256 repayAmount = MiniPoolBorrowLogic.repay(
-            MiniPoolBorrowLogic.RepayParams(asset, amount, onBehalfOf, _addressesProvider),
+            MiniPoolBorrowLogic.RepayParams(
+                asset,
+                amount,
+                onBehalfOf,
+                _addressesProvider,
+                _decimalsToBorrowThreshold[IERC20Detailed(asset).decimals()]
+            ),
             wrap,
             _reserves,
             _usersConfig
@@ -456,6 +459,11 @@ contract MiniPool is
         uint256[] calldata modes,
         bytes calldata params
     ) external override whenNotPaused {
+        uint256[] memory minAmounts = new uint256[](flashLoanParams.assets.length);
+        for (uint256 idx = 0; idx < flashLoanParams.assets.length; idx++) {
+            minAmounts[idx] =
+                _decimalsToBorrowThreshold[IERC20Detailed(flashLoanParams.assets[idx]).decimals()];
+        }
         MiniPoolFlashLoanLogic.flashLoan(
             MiniPoolFlashLoanLogic.FlashLoanParams(
                 flashLoanParams.receiverAddress,
@@ -466,7 +474,8 @@ contract MiniPool is
                 _flashLoanPremiumTotal,
                 amounts,
                 modes,
-                params
+                params,
+                minAmounts
             ),
             _reservesList,
             _usersConfig,

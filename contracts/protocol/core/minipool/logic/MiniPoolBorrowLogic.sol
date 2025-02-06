@@ -124,6 +124,7 @@ library MiniPoolBorrowLogic {
         bool releaseUnderlying;
         IMiniPoolAddressesProvider addressesProvider;
         uint256 reservesCount;
+        uint256 minAmount;
     }
 
     /**
@@ -157,6 +158,7 @@ library MiniPoolBorrowLogic {
                 amountInETH(vars.asset, vars.amount, reserve.configuration.getDecimals(), oracle);
             validateBorrowParams.reservesCount = vars.reservesCount;
             validateBorrowParams.oracle = oracle;
+            validateBorrowParams.minAmount = vars.minAmount;
             MiniPoolValidationLogic.validateBorrow(
                 validateBorrowParams, reserve, reserves, userConfig, reservesList
             );
@@ -218,6 +220,7 @@ library MiniPoolBorrowLogic {
         uint256 amount;
         address onBehalfOf;
         IMiniPoolAddressesProvider addressesProvider;
+        uint256 minAmount;
     }
 
     /**
@@ -250,7 +253,7 @@ library MiniPoolBorrowLogic {
         (uint256 variableDebt) = Helpers.getUserCurrentDebt(params.onBehalfOf, reserve);
 
         MiniPoolValidationLogic.validateRepay(
-            reserve, params.amount, params.onBehalfOf, variableDebt
+            reserve, params.amount, params.onBehalfOf, variableDebt, params.minAmount
         );
 
         uint256 paybackAmount = variableDebt;
