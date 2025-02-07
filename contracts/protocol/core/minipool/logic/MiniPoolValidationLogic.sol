@@ -190,7 +190,7 @@ library MiniPoolValidationLogic {
         require(
             IAERC6909(reserve.aErc6909).totalSupply(reserve.variableDebtTokenID)
                 + validateParams.amount >= validateParams.minAmount,
-            Errors.LP_TOO_SMALL_AMOUNT_FOR_BORROW
+            Errors.VL_DEBT_TOO_SMALL
         );
 
         (
@@ -253,7 +253,7 @@ library MiniPoolValidationLogic {
         require(
             IAERC6909(reserve.aErc6909).totalSupply(reserve.variableDebtTokenID) - amountSent
                 >= minAmount,
-            Errors.LP_TOO_SMALL_AMOUNT_FOR_BORROW
+            Errors.VL_DEBT_TOO_SMALL
         );
     }
 
