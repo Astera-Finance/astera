@@ -28,6 +28,65 @@ contract DeployMiniPool is Script, Test, MiniPoolHelper {
         }
     }
 
+    function checkContractAddresses(PoolReserversConfig[] memory poolReserversConfig) internal {
+        assertEq(
+            contracts.lendingPoolAddressesProvider.getMiniPoolAddressesProvider(),
+            address(contracts.miniPoolAddressesProvider),
+            "Wrong mini pool address provider"
+        );
+
+        assertEq(
+            contracts.miniPoolAddressesProvider.getLendingPool(),
+            address(contracts.lendingPool),
+            "Wrong lending pool"
+        );
+
+        uint256 miniPoolCount = contracts.miniPoolAddressesProvider.getMiniPoolCount();
+        for (uint256 i = 0; i < miniPoolCount; i++) {
+            address mp = contracts.miniPoolAddressesProvider.getMiniPool(i);
+
+            (address[] memory reserveList,) = IMiniPool(mp).getReservesList();
+            for (uint256 idx = 0; idx < reserveList.length; idx++) {
+                assertEq(
+                    reserveList[idx],
+                    address(poolReserversConfig[idx].tokenAddress),
+                    "Wrong underlying token"
+                );
+                StaticData memory staticData = contracts
+                    .cod3xLendDataProvider
+                    .getMpReserveStaticData(address(poolReserversConfig[idx].tokenAddress), i);
+                assertEq(staticData.ltv, poolReserversConfig[idx].baseLtv, "Wrong Ltv");
+                assertEq(
+                    staticData.liquidationThreshold,
+                    poolReserversConfig[idx].liquidationThreshold,
+                    "Wrong liquidationThreshold"
+                );
+                assertEq(
+                    staticData.liquidationBonus,
+                    poolReserversConfig[idx].liquidationBonus,
+                    "Wrong liquidationBonus"
+                );
+                assertEq(staticData.symbol, poolReserversConfig[idx].symbol, "Wrong Symbol");
+            }
+        }
+
+        assertEq(
+            contracts.miniPoolAddressesProvider.getMiniPoolConfigurator(),
+            address(contracts.miniPoolConfigurator),
+            "wrong pool configurator"
+        );
+        assertEq(
+            contracts.miniPoolAddressesProvider.getPriceOracle(),
+            address(contracts.oracle),
+            "wrong oracle"
+        );
+        assertEq(
+            contracts.miniPoolAddressesProvider.getFlowLimiter(),
+            address(contracts.flowLimiter),
+            "wrong flow limiter"
+        );
+    }
+
     function readPreviousDeployments(string memory path) internal returns (bool readPrevious) {
         console.log("PREVIOUS DEPLOYMENT PATH: ", path);
         try vm.readFile(path) returns (string memory previousContracts) {
@@ -281,6 +340,7 @@ contract DeployMiniPool is Script, Test, MiniPoolHelper {
         }
 
         checkOwnerships();
+        checkContractAddresses(poolReserversConfig);
         /* Write important contracts into the file */
         writeJsonData(path);
         return contracts;

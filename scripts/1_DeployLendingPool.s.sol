@@ -30,6 +30,56 @@ contract DeployLendingPool is Script, LendingPoolHelper, Test {
         }
     }
 
+    function checkContractAddresses(PoolReserversConfig[] memory poolReserversConfig) internal {
+        assertEq(
+            contracts.lendingPoolAddressesProvider.getLendingPool(),
+            address(contracts.lendingPool),
+            "Wrong lending pool"
+        );
+        assertEq(
+            contracts.lendingPoolAddressesProvider.getLendingPoolConfigurator(),
+            address(contracts.lendingPoolConfigurator),
+            "wrong pool configurator"
+        );
+        assertEq(
+            contracts.lendingPoolAddressesProvider.getPriceOracle(),
+            address(contracts.oracle),
+            "wrong oracle"
+        );
+        assertEq(
+            contracts.lendingPoolAddressesProvider.getFlowLimiter(),
+            address(contracts.flowLimiter),
+            "wrong flow limiter"
+        );
+
+        (address[] memory reserveList, bool[] memory reserveTypes) =
+            contracts.lendingPool.getReservesList();
+        for (uint256 idx = 0; idx < reserveList.length; idx++) {
+            DataTypes.ReserveData memory data =
+                contracts.lendingPool.getReserveData(reserveList[idx], reserveTypes[idx]);
+            assertEq(
+                AToken(data.aTokenAddress).UNDERLYING_ASSET_ADDRESS(),
+                address(poolReserversConfig[idx].tokenAddress),
+                "Wrong underlying token"
+            );
+            StaticData memory staticData = contracts.cod3xLendDataProvider.getLpReserveStaticData(
+                address(poolReserversConfig[idx].tokenAddress), reserveTypes[idx]
+            );
+            assertEq(staticData.ltv, poolReserversConfig[idx].baseLtv, "Wrong Ltv");
+            assertEq(
+                staticData.liquidationThreshold,
+                poolReserversConfig[idx].liquidationThreshold,
+                "Wrong liquidationThreshold"
+            );
+            assertEq(
+                staticData.liquidationBonus,
+                poolReserversConfig[idx].liquidationBonus,
+                "Wrong liquidationBonus"
+            );
+            assertEq(staticData.symbol, poolReserversConfig[idx].symbol, "Wrong Symbol");
+        }
+    }
+
     function writeJsonData(string memory path) internal {
         vm.serializeAddress("lendingPoolContracts", "oracle", address(contracts.oracle));
         {
@@ -204,6 +254,7 @@ contract DeployLendingPool is Script, LendingPoolHelper, Test {
             console.log("No deployment type selected in .env");
         }
         checkOwnerships();
+        checkContractAddresses(poolReserversConfig);
         /* Write data to json */
         writeJsonData(path);
 
