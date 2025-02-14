@@ -168,7 +168,7 @@ interface IMiniPool {
         bool receiveAToken
     ) external;
 
-    function setBorrowThreshold(uint8 decimals, uint256 threshold) external;
+    function setMinDebtThreshold(uint256 threshold) external;
 
     struct FlashLoanParams {
         address receiverAddress;
@@ -259,4 +259,6 @@ interface IMiniPool {
     function syncRatesState(address asset) external;
 
     function syncState(address asset) external;
+
+    function minDebtThreshold(uint8 decimals) external view returns (uint256);
 }

@@ -501,15 +501,11 @@ contract MiniPoolConfigurator is
 
     /**
      * @dev Sets borrow threshold for specific decimals
-     * @param decimals Decimals for specific reserve.
      * @param threshold Minimum borrow threshold value to set.
      * @param pool MiniPool address
      */
-    function setBorrowThreshold(uint8 decimals, uint256 threshold, IMiniPool pool)
-        external
-        onlyPoolAdmin(address(pool))
-    {
-        pool.setBorrowThreshold(decimals, threshold);
+    function setMinDebtThreshold(uint256 threshold, IMiniPool pool) external onlyMainPoolAdmin {
+        pool.setMinDebtThreshold(threshold);
     }
 
     /**

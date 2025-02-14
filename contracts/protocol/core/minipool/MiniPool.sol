@@ -146,9 +146,7 @@ contract MiniPool is
         _minipoolId = minipoolID;
         _updateFlashLoanFee(9);
         _maxNumberOfReserves = 128;
-        _decimalsToBorrowThreshold[6] = 1e3;
-        _decimalsToBorrowThreshold[8] = 1e2;
-        _decimalsToBorrowThreshold[18] = 1e12;
+        _minDebtThreshold = 1e3;
     }
 
     /**
@@ -264,7 +262,6 @@ contract MiniPool is
                 _addressesProvider
             );
         }
-
         MiniPoolBorrowLogic.executeBorrow(
             MiniPoolBorrowLogic.ExecuteBorrowParams(
                 asset,
@@ -278,7 +275,7 @@ contract MiniPool is
                 true,
                 _addressesProvider,
                 _reservesCount,
-                _decimalsToBorrowThreshold[IERC20Detailed(asset).decimals()]
+                minDebtThreshold(IERC20Detailed(asset).decimals())
             ),
             unwrap,
             _reserves,
@@ -311,7 +308,7 @@ contract MiniPool is
                 amount,
                 onBehalfOf,
                 _addressesProvider,
-                _decimalsToBorrowThreshold[IERC20Detailed(asset).decimals()]
+                minDebtThreshold(IERC20Detailed(asset).decimals())
             ),
             wrap,
             _reserves,
@@ -462,7 +459,7 @@ contract MiniPool is
         uint256[] memory minAmounts = new uint256[](flashLoanParams.assets.length);
         for (uint256 idx = 0; idx < flashLoanParams.assets.length; idx++) {
             minAmounts[idx] =
-                _decimalsToBorrowThreshold[IERC20Detailed(flashLoanParams.assets[idx]).decimals()];
+                minDebtThreshold(IERC20Detailed(flashLoanParams.assets[idx]).decimals());
         }
         MiniPoolFlashLoanLogic.flashLoan(
             MiniPoolFlashLoanLogic.FlashLoanParams(
@@ -630,6 +627,14 @@ contract MiniPool is
     }
 
     /**
+     * @dev Returns threshold for minimal debt.
+     * @return The `_minDebtThreshold` instance.
+     */
+    function minDebtThreshold(uint8 decimals) public view returns (uint256) {
+        return _minDebtThreshold * (10 ** (decimals - THRESHOLD_SCALING_DECIMALS));
+    }
+
+    /**
      * @dev Returns the total premium percentage charged on flash loans.
      * @return The flash loan premium as a percentage value.
      */
@@ -676,14 +681,10 @@ contract MiniPool is
 
     /**
      * @dev Sets borrow threshold for specific decimals
-     * @param decimals Decimals for specific reserve.
      * @param threshold Minimum borrow threshold value to set.
      */
-    function setBorrowThreshold(uint8 decimals, uint256 threshold)
-        external
-        onlyMiniPoolConfigurator
-    {
-        _decimalsToBorrowThreshold[decimals] = threshold;
+    function setMinDebtThreshold(uint256 threshold) external onlyMiniPoolConfigurator {
+        _minDebtThreshold = threshold;
     }
 
     /**
