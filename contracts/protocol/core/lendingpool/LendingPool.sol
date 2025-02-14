@@ -406,13 +406,12 @@ contract LendingPool is
 
     /**
      * @notice Allows minipools to borrow unbacked amounts of reserve assets.
-     * @dev This function is restricted to minipools only.
+     * @dev This function is restricted to minipools only. `reserveType` is hardcoded to `true`.
      * @param asset The address of the underlying asset to borrow.
-     * @param reserveType Whether the reserve is boosted by a vault.
      * @param amount The amount to borrow.
      * @param aTokenAddress The address of the aToken.
      */
-    function miniPoolBorrow(address asset, bool reserveType, uint256 amount, address aTokenAddress)
+    function miniPoolBorrow(address asset, uint256 amount, address aTokenAddress)
         external
         override
         whenNotPaused
@@ -421,13 +420,7 @@ contract LendingPool is
 
         BorrowLogic.executeMiniPoolBorrow(
             BorrowLogic.ExecuteMiniPoolBorrowParams(
-                asset,
-                reserveType,
-                amount,
-                msg.sender,
-                aTokenAddress,
-                _addressesProvider,
-                _reservesCount
+                asset, true, amount, msg.sender, aTokenAddress, _addressesProvider, _reservesCount
             ),
             _assetToMinipoolFlowBorrowing[asset],
             _reserves
