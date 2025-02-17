@@ -628,6 +628,7 @@ contract MiniPool is
 
     /**
      * @dev Returns threshold for minimal debt.
+     * @param decimals Decimals of the token.
      * @return The `_minDebtThreshold` instance.
      */
     function minDebtThreshold(uint8 decimals) public view returns (uint256) {
@@ -680,8 +681,8 @@ contract MiniPool is
     }
 
     /**
-     * @dev Sets borrow threshold for specific decimals
-     * @param threshold Minimum borrow threshold value to set.
+     * @dev Sets minimal debt threshold for specific decimals
+     * @param threshold Minimal debt threshold value to set.
      */
     function setMinDebtThreshold(uint256 threshold) external onlyMiniPoolConfigurator {
         _minDebtThreshold = threshold;

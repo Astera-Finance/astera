@@ -639,6 +639,10 @@ contract MiniPoolDepositBorrowTest is MiniPoolFixtures {
             amount, offset1, offset2, collateralTokenParams, borrowTokenParams, user
         );
 
+        console.log("Time travel 1");
+        vm.warp(block.timestamp + 1 days);
+        vm.roll(block.number + 1);
+
         /* Assumptions */
         address otherUser = makeAddr("otherUser");
         amount = bound(

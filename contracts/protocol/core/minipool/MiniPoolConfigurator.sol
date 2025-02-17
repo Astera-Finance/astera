@@ -500,8 +500,8 @@ contract MiniPoolConfigurator is
     }
 
     /**
-     * @dev Sets borrow threshold for specific decimals
-     * @param threshold Minimum borrow threshold value to set.
+     * @dev Sets minimal debt threshold for specific decimals
+     * @param threshold Minimal debt threshold value to set.
      * @param pool MiniPool address
      */
     function setMinDebtThreshold(uint256 threshold, IMiniPool pool) external onlyMainPoolAdmin {
