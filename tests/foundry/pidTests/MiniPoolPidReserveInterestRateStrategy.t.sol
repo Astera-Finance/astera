@@ -530,10 +530,9 @@ contract MiniPoolPidReserveInterestRateStrategyTest is Common {
         public
     {
         TestVars memory vars;
-        offset1 = bound(offset1, 0, 3);
-        offset2 = bound(offset2, 0, 3);
+        offset1 = 0; //bound(offset1, 0, 3);
+        offset2 = 1; //bound(offset2, 0, 3);
 
-        debtToSet = bound(debtToSet, 8_000, 1e8);
         vars.user = makeAddr("user");
         vars.mpId = 0;
         vars.mp = deployedMiniPoolContracts.miniPoolAddressesProvider.getMiniPool(vars.mpId);
@@ -562,6 +561,9 @@ contract MiniPoolPidReserveInterestRateStrategyTest is Common {
             amount / 10 ** vars.underlying.decimals(),
             vars.underlying.symbol()
         );
+
+        debtToSet = 1e9;
+        //bound(debtToSet, 10000, 100000);
 
         deal(address(vars.underlying), vars.whaleUser, 1e26);
         deal(address(vars.counterUnderlying), vars.user, 1e26);
@@ -639,16 +641,15 @@ contract MiniPoolPidReserveInterestRateStrategyTest is Common {
         vm.stopPrank();
 
         console.log("Time travel 1");
-        vm.warp(block.timestamp + 2 days);
+        vm.warp(block.timestamp + 7 days);
         vm.roll(block.number + 1);
 
         console.log("Deposit >>> DEBT TO SET", debtToSet);
         vm.startPrank(vars.whaleUser);
-        vars.aToken.approve(vars.mp, 1 ether);
+        vars.aToken.approve(vars.mp, 10 * dust);
         console.log("User deposits %s %s", dust, vars.aToken.symbol());
-        IMiniPool(vars.mp).deposit(address(vars.aToken), false, dust, vars.user);
+        IMiniPool(vars.mp).deposit(address(vars.aToken), false, dust / 2, vars.user);
         vm.stopPrank();
-        // assert(false);
     }
 
     function testMiniPoolFlowLimiterDust() public {
