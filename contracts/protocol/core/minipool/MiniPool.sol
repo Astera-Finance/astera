@@ -632,7 +632,11 @@ contract MiniPool is
      * @return The `_minDebtThreshold` instance.
      */
     function minDebtThreshold(uint8 decimals) public view returns (uint256) {
-        return _minDebtThreshold * (10 ** (decimals - THRESHOLD_SCALING_DECIMALS));
+        if (decimals < THRESHOLD_SCALING_DECIMALS) {
+            return 0;
+        } else {
+            return _minDebtThreshold * (10 ** (decimals - THRESHOLD_SCALING_DECIMALS));
+        }
     }
 
     /**
