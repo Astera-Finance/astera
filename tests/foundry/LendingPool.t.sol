@@ -28,7 +28,7 @@ contract LendingPoolTest is LendingPoolFixtures {
         );
         fixture_configureProtocol(
             address(deployedContracts.lendingPool),
-            address(aToken),
+            address(commonContracts.aToken),
             configAddresses,
             deployedContracts.lendingPoolConfigurator,
             deployedContracts.lendingPoolAddressesProvider
@@ -42,24 +42,27 @@ contract LendingPoolTest is LendingPoolFixtures {
     function testDepositsAndWithdrawals(uint256 amount) public {
         address user = makeAddr("user");
 
-        for (uint32 idx = 0; idx < aTokens.length; idx++) {
+        for (uint32 idx = 0; idx < commonContracts.aTokens.length; idx++) {
             amount = bound(amount, 10_000, erc20Tokens[idx].balanceOf(address(this)));
 
             /* Deposit on behalf of user */
-            uint256 _aTokenBalanceBefore = erc20Tokens[idx].balanceOf(address(aTokens[idx]));
-            fixture_deposit(erc20Tokens[idx], aTokens[idx], address(this), user, amount);
+            uint256 _aTokenBalanceBefore =
+                erc20Tokens[idx].balanceOf(address(commonContracts.aTokens[idx]));
+            fixture_deposit(
+                erc20Tokens[idx], commonContracts.aTokens[idx], address(this), user, amount
+            );
             assertEq(
                 _aTokenBalanceBefore + amount,
-                erc20Tokens[idx].balanceOf(address(aTokens[idx])),
+                erc20Tokens[idx].balanceOf(address(commonContracts.aTokens[idx])),
                 "AToken's token balance is not greater by {amount} after deposit"
             );
 
             /* User shall be able to withdraw underlying tokens */
-            _aTokenBalanceBefore = erc20Tokens[idx].balanceOf(address(aTokens[idx]));
+            _aTokenBalanceBefore = erc20Tokens[idx].balanceOf(address(commonContracts.aTokens[idx]));
             fixture_withdraw(erc20Tokens[idx], user, user, amount);
             assertEq(
                 _aTokenBalanceBefore,
-                erc20Tokens[idx].balanceOf(address(aTokens[idx])) + amount,
+                erc20Tokens[idx].balanceOf(address(commonContracts.aTokens[idx])) + amount,
                 "AToken's token balance is not lower by {amount} after withdrawal"
             );
         }
@@ -70,14 +73,14 @@ contract LendingPoolTest is LendingPoolFixtures {
 
         TokenTypes memory usdcTypes = TokenTypes({
             token: erc20Tokens[0],
-            aToken: aTokens[0],
-            debtToken: variableDebtTokens[0]
+            aToken: commonContracts.aTokens[0],
+            debtToken: commonContracts.variableDebtTokens[0]
         });
 
         TokenTypes memory wbtcTypes = TokenTypes({
             token: erc20Tokens[1],
-            aToken: aTokens[1],
-            debtToken: variableDebtTokens[1]
+            aToken: commonContracts.aTokens[1],
+            debtToken: commonContracts.variableDebtTokens[1]
         });
 
         uint256 usdcDepositAmount = 5e9; /* $5k */ // consider fuzzing here
@@ -126,8 +129,8 @@ contract LendingPoolTest is LendingPoolFixtures {
         ERC20 wbtc = erc20Tokens[1];
         uint256 usdcDepositAmount = 5e9; /* $5k */ // consider fuzzing here
 
-        uint256 wbtcPrice = oracle.getAssetPrice(address(wbtc));
-        uint256 usdcPrice = oracle.getAssetPrice(address(usdc));
+        uint256 wbtcPrice = commonContracts.oracle.getAssetPrice(address(wbtc));
+        uint256 usdcPrice = commonContracts.oracle.getAssetPrice(address(usdc));
         uint256 usdcDepositValue = usdcDepositAmount * usdcPrice / (10 ** PRICE_FEED_DECIMALS);
         console.log(
             "usdcDepositValue %s vs \nusdcDepositAmount %s", usdcDepositValue, usdcDepositAmount
@@ -186,8 +189,8 @@ contract LendingPoolTest is LendingPoolFixtures {
         ERC20 wbtc = erc20Tokens[1];
         uint256 usdcDepositAmount = 5e9; /* $5k */ // consider fuzzing here
 
-        uint256 wbtcPrice = oracle.getAssetPrice(address(wbtc));
-        uint256 usdcPrice = oracle.getAssetPrice(address(usdc));
+        uint256 wbtcPrice = commonContracts.oracle.getAssetPrice(address(wbtc));
+        uint256 usdcPrice = commonContracts.oracle.getAssetPrice(address(usdc));
         uint256 usdcDepositValue = usdcDepositAmount * usdcPrice / (10 ** PRICE_FEED_DECIMALS);
         StaticData memory staticData =
             deployedContracts.cod3xLendDataProvider.getLpReserveStaticData(address(usdc), true);
@@ -227,7 +230,7 @@ contract LendingPoolTest is LendingPoolFixtures {
         uint8 idx = 1;
         token = erc20Tokens[idx];
 
-        tokenDepositAmount = bound(tokenDepositAmount, 2, 2_000_000);
+        tokenDepositAmount = bound(tokenDepositAmount, 3, 2_000_000);
         // uint256 usdcDepositValue = usdcDepositAmount * usdcPrice / (10 ** PRICE_FEED_DECIMALS);
         StaticData memory staticData =
             deployedContracts.cod3xLendDataProvider.getLpReserveStaticData(address(token), true);
@@ -245,17 +248,17 @@ contract LendingPoolTest is LendingPoolFixtures {
         deployedContracts.lendingPool.setUserUseReserveAsCollateral(address(token), true, false);
         vm.expectRevert(bytes(Errors.VL_COLLATERAL_BALANCE_IS_0));
         deployedContracts.lendingPool.borrow(
-            address(token), true, tokenMaxBorrowAmount, address(this)
+            address(token), true, tokenMaxBorrowAmount - 1, address(this)
         );
 
         staticData =
             deployedContracts.cod3xLendDataProvider.getLpReserveStaticData(address(token), true);
         (, uint256 expectedBorrowRate) = deployedContracts.volatileStrategy.calculateInterestRates(
             address(token),
-            address(aTokens[idx]),
+            address(commonContracts.aTokens[idx]),
             0,
-            tokenMaxBorrowAmount,
-            tokenMaxBorrowAmount,
+            tokenMaxBorrowAmount - 1,
+            tokenMaxBorrowAmount - 1,
             staticData.cod3xReserveFactor
         );
         /* Main user is using now his liquidity as a collateral - borrow shall succeed */
@@ -264,14 +267,49 @@ contract LendingPoolTest is LendingPoolFixtures {
         /* Main user borrows maxPossible amount of usdc */
         vm.expectEmit(true, true, true, true);
         emit Borrow(
-            address(token), address(this), address(this), tokenMaxBorrowAmount, expectedBorrowRate
+            address(token),
+            address(this),
+            address(this),
+            tokenMaxBorrowAmount - 1,
+            expectedBorrowRate
         );
         deployedContracts.lendingPool.borrow(
-            address(token), true, tokenMaxBorrowAmount, address(this)
+            address(token), true, tokenMaxBorrowAmount - 1, address(this)
         );
 
         /* Main user's balance should have: initial amount + borrowed amount */
-        assertEq(usdcBalanceBeforeBorrow + tokenMaxBorrowAmount, token.balanceOf(address(this)));
-        assertEq(variableDebtTokens[idx].balanceOf(address(this)), tokenMaxBorrowAmount);
+        assertEq(usdcBalanceBeforeBorrow + tokenMaxBorrowAmount - 1, token.balanceOf(address(this)));
+        assertEq(
+            commonContracts.variableDebtTokens[idx].balanceOf(address(this)),
+            tokenMaxBorrowAmount - 1
+        );
+    }
+
+    function testNormalWithdrawDuringBorrow(uint256 offset) public {
+        offset = 1;
+        TokenTypes memory borrowToken = TokenTypes({
+            token: erc20Tokens[offset],
+            aToken: commonContracts.aTokens[offset],
+            debtToken: commonContracts.variableDebtTokens[offset]
+        });
+        uint256 usdcAmount = 100000 * 10 ** erc20Tokens[USDC_OFFSET].decimals();
+        uint256 borrowAmount = 10 ** borrowToken.token.decimals();
+
+        address provider = makeAddr("provider");
+        deal(address(borrowToken.token), provider, 2 * borrowAmount);
+
+        fixture_deposit(
+            erc20Tokens[USDC_OFFSET],
+            commonContracts.aTokens[USDC_OFFSET],
+            address(this),
+            address(this),
+            usdcAmount
+        );
+        fixture_borrow(borrowToken, provider, address(this), borrowAmount);
+
+        vm.expectRevert(bytes(Errors.VL_TRANSFER_NOT_ALLOWED));
+        deployedContracts.lendingPool.withdraw(
+            address(erc20Tokens[USDC_OFFSET]), true, usdcAmount, address(this)
+        );
     }
 }

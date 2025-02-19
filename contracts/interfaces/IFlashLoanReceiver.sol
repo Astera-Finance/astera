@@ -4,6 +4,7 @@ pragma solidity ^0.8.0;
 import {ILendingPoolAddressesProvider} from
     "../../contracts/interfaces/ILendingPoolAddressesProvider.sol";
 import {ILendingPool} from "../../contracts/interfaces/ILendingPool.sol";
+import {IMiniPoolAddressesProvider} from "../../contracts/interfaces/IMiniPoolAddressesProvider.sol";
 
 /**
  * @title IFlashLoanReceiver interface
@@ -19,7 +20,12 @@ interface IFlashLoanReceiver {
         bytes calldata params
     ) external returns (bool);
 
-    function ADDRESSES_PROVIDER() external view returns (ILendingPoolAddressesProvider);
+    function LENDING_POOL_ADDRESSES_PROVIDER()
+        external
+        view
+        returns (ILendingPoolAddressesProvider);
 
     function LENDING_POOL() external view returns (ILendingPool);
+
+    function MINI_POOL_ADDRESSES_PROVIDER() external view returns (IMiniPoolAddressesProvider);
 }

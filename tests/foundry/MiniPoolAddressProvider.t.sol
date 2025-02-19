@@ -32,19 +32,20 @@ contract MiniPoolAddressProvider is Common {
         );
         fixture_configureProtocol(
             address(deployedContracts.lendingPool),
-            address(aToken),
+            address(commonContracts.aToken),
             configAddresses,
             deployedContracts.lendingPoolConfigurator,
             deployedContracts.lendingPoolAddressesProvider
         );
-        mockedVaults = fixture_deployReaperVaultMocks(tokens, address(deployedContracts.treasury));
+        commonContracts.mockedVaults =
+            fixture_deployReaperVaultMocks(tokens, address(deployedContracts.treasury));
         erc20Tokens = fixture_getErc20Tokens(tokens);
         fixture_transferTokensToTestContract(erc20Tokens, 1_000_000 ether, address(this));
         (miniPoolContracts,) = fixture_deployMiniPoolSetup(
             address(deployedContracts.lendingPoolAddressesProvider),
             address(deployedContracts.lendingPool),
             address(deployedContracts.cod3xLendDataProvider),
-            address(0)
+            miniPoolContracts
         );
 
         address[] memory reserves = new address[](2 * tokens.length);
@@ -52,7 +53,8 @@ contract MiniPoolAddressProvider is Common {
             if (idx < tokens.length) {
                 reserves[idx] = tokens[idx];
             } else {
-                reserves[idx] = address(aTokens[idx - tokens.length].WRAPPER_ADDRESS());
+                reserves[idx] =
+                    address(commonContracts.aTokens[idx - tokens.length].WRAPPER_ADDRESS());
             }
         }
 
@@ -125,10 +127,12 @@ contract MiniPoolAddressProvider is Common {
             /* Test update */
             console.log("1. Impl: ", aToken6909Impl);
             console.log(
-                "1. aToken6909Impl", miniPoolContracts.miniPoolAddressesProvider.getAToken6909(0)
+                "1. aToken6909Impl",
+                miniPoolContracts.miniPoolAddressesProvider.getMiniPoolToAERC6909(0)
             );
             miniPoolContracts.miniPoolAddressesProvider.setAToken6909Impl(aToken6909Impl, 0);
-            address aToken6909Proxy = miniPoolContracts.miniPoolAddressesProvider.getAToken6909(0);
+            address aToken6909Proxy =
+                miniPoolContracts.miniPoolAddressesProvider.getMiniPoolToAERC6909(0);
             console.log("2. aToken6909Impl", aToken6909Proxy);
             vm.startPrank(address(miniPoolContracts.miniPoolAddressesProvider));
             assertEq(
@@ -160,7 +164,7 @@ contract MiniPoolAddressProvider is Common {
 
             /* Test setting of the same address (shall revert) */
             console.log("Revert 3");
-            aToken6909Impl = miniPoolContracts.miniPoolAddressesProvider.getAToken6909(0);
+            aToken6909Impl = miniPoolContracts.miniPoolAddressesProvider.getMiniPoolToAERC6909(0);
             vm.expectRevert();
             miniPoolContracts.miniPoolAddressesProvider.setAToken6909Impl(aToken6909Impl, 0);
 
@@ -263,26 +267,100 @@ contract MiniPoolAddressProvider is Common {
             );
             vm.prank(address(miniPoolContracts.miniPoolConfigurator));
             miniPoolContracts.miniPoolAddressesProvider.setFlowLimit(
-                tokens[0], address(miniPoolContracts.miniPoolImpl), flowLimit
+                tokens[0], address(miniPool), flowLimit
             );
             console.log(
                 "2. FlowLimit",
-                miniPoolContracts.flowLimiter.getFlowLimit(
-                    tokens[0], address(miniPoolContracts.miniPoolImpl)
-                )
+                miniPoolContracts.flowLimiter.getFlowLimit(tokens[0], address(miniPool))
             );
             assertEq(
-                miniPoolContracts.flowLimiter.getFlowLimit(
-                    tokens[0], address(miniPoolContracts.miniPoolImpl)
-                ),
+                miniPoolContracts.flowLimiter.getFlowLimit(tokens[0], address(miniPool)),
                 flowLimit,
                 "Wrong limits"
             );
-            // vm.expectRevert();
-            // miniPoolAddressesProvider.setFlowLimit(
-            //     tokens[0], address(miniPoolContracts.miniPoolImpl), flowLimit
-            // );
         }
+    }
+
+    function testSetFlowLimitMax() public {
+        uint256 numberOfReservesWithFlowBorrowing =
+            miniPoolContracts.miniPoolAddressesProvider.getNumberOfReservesWithFlowBorrowing();
+        uint256 maxReservesWithFlowBorrowing =
+            miniPoolContracts.miniPoolAddressesProvider.getMaxReservesWithFlowBorrowing();
+
+        assertEq(
+            numberOfReservesWithFlowBorrowing, 0, "Wrong number of reserves with flow borrowing"
+        );
+        assertEq(maxReservesWithFlowBorrowing, 6, "Wrong max reserves with flow borrowing");
+
+        vm.prank(address(miniPoolContracts.miniPoolConfigurator));
+        miniPoolContracts.miniPoolAddressesProvider.setFlowLimit(tokens[0], address(miniPool), 1000);
+
+        assertEq(
+            miniPoolContracts.miniPoolAddressesProvider.getNumberOfReservesWithFlowBorrowing(),
+            1,
+            "Wrong number of reserves with flow borrowing"
+        );
+        assertEq(
+            miniPoolContracts.miniPoolAddressesProvider.getMaxReservesWithFlowBorrowing(),
+            6,
+            "Wrong max reserves with flow borrowing"
+        );
+
+        vm.prank(address(miniPoolContracts.miniPoolConfigurator));
+        miniPoolContracts.miniPoolAddressesProvider.setFlowLimit(tokens[1], address(miniPool), 1000);
+
+        assertEq(
+            miniPoolContracts.miniPoolAddressesProvider.getNumberOfReservesWithFlowBorrowing(),
+            2,
+            "Wrong number of reserves with flow borrowing"
+        );
+        vm.expectRevert(bytes(Errors.VL_INVALID_INPUT));
+        miniPoolContracts.miniPoolAddressesProvider.setMaxReservesWithFlowBorrowing(1);
+
+        miniPoolContracts.miniPoolAddressesProvider.setMaxReservesWithFlowBorrowing(2);
+
+        assertEq(
+            miniPoolContracts.miniPoolAddressesProvider.getMaxReservesWithFlowBorrowing(),
+            2,
+            "Wrong max reserves with flow borrowing"
+        );
+
+        vm.prank(address(miniPoolContracts.miniPoolConfigurator));
+        vm.expectRevert(bytes(Errors.VL_MAX_RESERVES_WITH_FLOW_BORROWING_REACHED));
+        miniPoolContracts.miniPoolAddressesProvider.setFlowLimit(tokens[2], address(miniPool), 1000);
+
+        assertEq(
+            miniPoolContracts.miniPoolAddressesProvider.getNumberOfReservesWithFlowBorrowing(),
+            2,
+            "Wrong number of reserves with flow borrowing"
+        );
+
+        vm.prank(address(miniPoolContracts.miniPoolConfigurator));
+        miniPoolContracts.miniPoolAddressesProvider.setFlowLimit(tokens[1], address(miniPool), 0);
+
+        assertEq(
+            miniPoolContracts.miniPoolAddressesProvider.getNumberOfReservesWithFlowBorrowing(),
+            1,
+            "Wrong number of reserves with flow borrowing"
+        );
+
+        vm.prank(address(miniPoolContracts.miniPoolConfigurator));
+        miniPoolContracts.miniPoolAddressesProvider.setFlowLimit(tokens[0], address(miniPool), 0);
+
+        assertEq(
+            miniPoolContracts.miniPoolAddressesProvider.getNumberOfReservesWithFlowBorrowing(),
+            0,
+            "Wrong number of reserves with flow borrowing"
+        );
+
+        // vm.prank(address(miniPoolContracts.miniPoolConfigurator));
+        miniPoolContracts.miniPoolAddressesProvider.setMaxReservesWithFlowBorrowing(0);
+
+        assertEq(
+            miniPoolContracts.miniPoolAddressesProvider.getMaxReservesWithFlowBorrowing(),
+            0,
+            "Wrong max reserves with flow borrowing"
+        );
     }
 
     function testMultipleDeployments() public {
@@ -290,7 +368,8 @@ contract MiniPoolAddressProvider is Common {
         address aTokenImpl = address(new ATokenERC6909());
 
         address lastMiniPoolImpl = miniPoolContracts.miniPoolAddressesProvider.getMiniPool(0);
-        address lastAToken6909Impl = miniPoolContracts.miniPoolAddressesProvider.getAToken6909(0);
+        address lastAToken6909Impl =
+            miniPoolContracts.miniPoolAddressesProvider.getMiniPoolToAERC6909(0);
 
         address[] memory miniPoolList =
             miniPoolContracts.miniPoolAddressesProvider.getMiniPoolList();
@@ -302,7 +381,8 @@ contract MiniPoolAddressProvider is Common {
             "LastMiniPoolImpl not updated"
         );
         assertTrue(
-            lastAToken6909Impl != miniPoolContracts.miniPoolAddressesProvider.getAToken6909(1),
+            lastAToken6909Impl
+                != miniPoolContracts.miniPoolAddressesProvider.getMiniPoolToAERC6909(1),
             "LastAToken6909Impl not updated"
         );
         miniPoolList = miniPoolContracts.miniPoolAddressesProvider.getMiniPoolList();
@@ -317,7 +397,7 @@ contract MiniPoolAddressProvider is Common {
 
         assertEq(
             miniPoolContracts.miniPoolAddressesProvider.getMiniPoolToAERC6909(miniPoolList[1]),
-            miniPoolContracts.miniPoolAddressesProvider.getAToken6909(1),
+            miniPoolContracts.miniPoolAddressesProvider.getMiniPoolToAERC6909(1),
             "Wrong AToken implementation after deployment"
         );
 

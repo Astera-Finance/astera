@@ -146,6 +146,12 @@ interface ILendingPool {
         uint256 variableBorrowIndex
     );
 
+    /**
+     * @dev Emitted when the flash loan fee is updated.
+     * @param flashLoanPremiumTotal The new flash loan fee.
+     */
+    event FlashLoanFeeUpdated(uint128 flashLoanPremiumTotal);
+
     function deposit(address asset, bool reserveType, uint256 amount, address onBehalfOf)
         external;
 
@@ -159,8 +165,7 @@ interface ILendingPool {
         external
         returns (uint256);
 
-    function miniPoolBorrow(address asset, bool reserveType, uint256 amount, address aTokenAddress)
-        external;
+    function miniPoolBorrow(address asset, uint256 amount, address aTokenAddress) external;
 
     function repayWithATokens(address asset, bool reserveType, uint256 amount)
         external
@@ -289,4 +294,12 @@ interface ILendingPool {
     function setTreasury(address asset, bool reserveType, address treasury) external;
 
     function FLASHLOAN_PREMIUM_TOTAL() external view returns (uint128);
+
+    function getATokenNonRebasingFromAtoken(address aToken) external view returns (address);
+
+    function syncIndexesState(address asset, bool reserveType) external;
+
+    function syncRatesState(address asset, bool reserveType) external;
+
+    function getMinipoolFlowBorrowing(address asset) external view returns (address[] memory);
 }

@@ -82,10 +82,10 @@ contract MockLendingpoolReserveInterestRateStrategy {
         DataTypes.ReserveConfigurationMap memory reserve = ILendingPool(
             ILendingPoolAddressesProvider(addressesProvider).getLendingPool()
         ).getConfiguration(_asset, true);
-        return getCod3xReserveFactor(reserve);
+        return _getCod3xReserveFactor(reserve);
     }
 
-    function getCod3xReserveFactor(DataTypes.ReserveConfigurationMap memory self)
+    function _getCod3xReserveFactor(DataTypes.ReserveConfigurationMap memory self)
         internal
         pure
         returns (uint256)

@@ -136,7 +136,7 @@ library GenericLogic {
         uint256 amount,
         uint256 decimals
     ) internal view returns (uint256) {
-        return IOracle(oracle).getAssetPrice(asset) * amount / (10 ** decimals);
+        return WadRayMath.divUp(IOracle(oracle).getAssetPrice(asset) * amount, 10 ** decimals);
     }
 
     /**
@@ -238,7 +238,9 @@ library GenericLogic {
                     IERC20(currentReserve.variableDebtTokenAddress).balanceOf(user);
 
                 vars.totalDebtInETH = vars.totalDebtInETH
-                    + (vars.reserveUnitPrice * vars.compoundedBorrowBalance / vars.tokenUnit);
+                    + WadRayMath.divUp(
+                        vars.reserveUnitPrice * vars.compoundedBorrowBalance, vars.tokenUnit
+                    );
             }
         }
 

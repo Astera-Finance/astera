@@ -3,10 +3,11 @@ pragma solidity 0.8.23;
 
 import {IMiniPoolRewardsDistributor} from
     "../../../../contracts/interfaces/IMiniPoolRewardsDistributor.sol";
-import {IERC6909} from "../../../../contracts/interfaces/base/IERC6909.sol";
+import {IAERC6909} from "../../../../contracts/interfaces/IAERC6909.sol";
 import {DistributionTypes} from
     "../../../../contracts/protocol/libraries/types/DistributionTypes.sol";
 import {Ownable} from "lib/openzeppelin-contracts/contracts/access/Ownable.sol";
+import {Errors} from "../../../../contracts/protocol/libraries/helpers/Errors.sol";
 
 /**
  * @title RewardsDistributor6909
@@ -24,8 +25,8 @@ abstract contract RewardsDistributor6909 is IMiniPoolRewardsDistributor, Ownable
      * @param usersIndex Mapping of user addresses to their reward index.
      */
     struct RewardData {
-        uint88 emissionPerSecond;
-        uint104 index;
+        uint192 emissionPerSecond;
+        uint256 index;
         uint32 lastUpdateTimestamp;
         uint32 distributionEnd;
         mapping(address => uint256) usersIndex;
@@ -220,7 +221,7 @@ abstract contract RewardsDistributor6909 is IMiniPoolRewardsDistributor, Ownable
     {
         for (uint256 i = 0; i < rewardsInput.length; i++) {
             _assets[rewardsInput[i].asset.market6909][rewardsInput[i].asset.assetID].decimals =
-                IERC6909(rewardsInput[i].asset.market6909).decimals(rewardsInput[i].asset.assetID);
+                IAERC6909(rewardsInput[i].asset.market6909).decimals(rewardsInput[i].asset.assetID);
 
             RewardData storage rewardConfig = _assets[rewardsInput[i].asset.market6909][rewardsInput[i]
                 .asset
@@ -245,7 +246,9 @@ abstract contract RewardsDistributor6909 is IMiniPoolRewardsDistributor, Ownable
                 rewardsInput[i].asset.assetID,
                 rewardsInput[i].reward,
                 rewardConfig,
-                rewardsInput[i].totalSupply,
+                IAERC6909(rewardsInput[i].asset.market6909).scaledTotalSupply(
+                    rewardsInput[i].asset.assetID
+                ),
                 _assets[rewardsInput[i].asset.market6909][rewardsInput[i].asset.assetID].decimals
             );
 
@@ -286,7 +289,6 @@ abstract contract RewardsDistributor6909 is IMiniPoolRewardsDistributor, Ownable
         if (block.timestamp == rewardConfig.lastUpdateTimestamp) {
             return oldIndex;
         }
-
         uint256 newIndex = _getAssetIndex(
             oldIndex,
             rewardConfig.emissionPerSecond,
@@ -297,9 +299,7 @@ abstract contract RewardsDistributor6909 is IMiniPoolRewardsDistributor, Ownable
         );
 
         if (newIndex != oldIndex) {
-            require(newIndex <= type(uint104).max, "Index overflow");
-            //optimization: storing one after another saves one SSTORE.
-            rewardConfig.index = uint104(newIndex);
+            rewardConfig.index = newIndex;
             rewardConfig.lastUpdateTimestamp = uint32(block.timestamp);
             emit AssetIndexUpdated(market6909, assetID, reward, newIndex);
         } else {
@@ -335,7 +335,6 @@ abstract contract RewardsDistributor6909 is IMiniPoolRewardsDistributor, Ownable
         uint256 newIndex = _updateAssetStateInternal(
             market6909, assetID, reward, rewardData, totalSupply, assetDecimals
         );
-
         if (userIndex != newIndex) {
             if (userBalance != 0) {
                 accruedRewards = _getRewards(userBalance, newIndex, userIndex, assetDecimals);
@@ -363,6 +362,10 @@ abstract contract RewardsDistributor6909 is IMiniPoolRewardsDistributor, Ownable
         uint256 userBalance,
         uint256 totalSupply
     ) internal {
+        require(
+            address(IAERC6909(market6909).getIncentivesController()) != address(0),
+            Errors.R_REWARDER_NOT_SET
+        );
         for (uint256 r = 0; r < _assets[market6909][assetID].availableRewards.length; r++) {
             address reward = _assets[market6909][assetID].availableRewards[r];
             uint256 accruedRewards = _updateUserRewardsInternal(
@@ -516,8 +519,9 @@ abstract contract RewardsDistributor6909 is IMiniPoolRewardsDistributor, Ownable
         uint256 totalBalance,
         uint8 decimals
     ) internal view returns (uint256) {
+        // emissionPerSecond equal 1 leads to 0 accrued rewards due to rounding down
         if (
-            emissionPerSecond == 0 || totalBalance == 0 || lastUpdateTimestamp == block.timestamp
+            emissionPerSecond <= 1 || totalBalance == 0 || lastUpdateTimestamp == block.timestamp
                 || lastUpdateTimestamp >= distributionEnd
         ) {
             return currentIndex;

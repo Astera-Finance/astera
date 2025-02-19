@@ -14,6 +14,12 @@ import {WadRayMath} from "../../../../../contracts/protocol/libraries/math/WadRa
 import {PercentageMath} from "../../../../../contracts/protocol/libraries/math/PercentageMath.sol";
 import {Errors} from "../../../../../contracts/protocol/libraries/helpers/Errors.sol";
 import {DataTypes} from "../../../../../contracts/protocol/libraries/types/DataTypes.sol";
+import {IMiniPool} from "../../../../../contracts/interfaces/IMiniPool.sol";
+import {ILendingPoolAddressesProvider} from
+    "../../../../../contracts/interfaces/ILendingPoolAddressesProvider.sol";
+import {IFlowLimiter} from "../../../../../contracts/interfaces/base/IFlowLimiter.sol";
+import {EnumerableSet} from
+    "../../../../../lib/openzeppelin-contracts/contracts/utils/structs/EnumerableSet.sol";
 
 /**
  * @title ReserveLogic library
@@ -25,6 +31,7 @@ library ReserveLogic {
     using WadRayMath for uint256;
     using PercentageMath for uint256;
     using SafeERC20 for IERC20;
+    using EnumerableSet for EnumerableSet.AddressSet;
 
     /**
      * @dev Emitted when the state of a reserve is updated.
@@ -138,7 +145,7 @@ library ReserveLogic {
         uint256 totalLiquidity,
         uint256 amount
     ) internal {
-        uint256 amountToLiquidityRatio = amount.wadToRay().rayDiv(totalLiquidity.wadToRay());
+        uint256 amountToLiquidityRatio = amount.rayDiv(totalLiquidity);
 
         uint256 result = amountToLiquidityRatio + WadRayMath.ray();
 
@@ -186,6 +193,7 @@ library ReserveLogic {
      */
     function updateInterestRates(
         DataTypes.ReserveData storage reserve,
+        EnumerableSet.AddressSet storage minipoolFlowBorrowing,
         address reserveAddress,
         address aTokenAddress,
         uint256 liquidityAdded,
@@ -195,7 +203,7 @@ library ReserveLogic {
 
         // Calculates the total variable debt locally using the scaled total supply instead
         // of totalSupply(), as it's noticeably cheaper. Also, the index has been
-        //updated by the previous updateState() call.
+        // updated by the previous updateState() call.
         vars.totalVariableDebt = IVariableDebtToken(reserve.variableDebtTokenAddress)
             .scaledTotalSupply().rayMul(reserve.variableBorrowIndex);
 
@@ -214,6 +222,17 @@ library ReserveLogic {
 
         reserve.currentLiquidityRate = uint128(vars.newLiquidityRate);
         reserve.currentVariableBorrowRate = uint128(vars.newVariableRate);
+
+        // Sync minipools state that has "flow borrowing" to ensure that the LendingPool
+        // liquidity rate of an asset is always greater than the borrowing rate of minipools.
+        // Only `syncState()` if `reserveType` is `true`.
+        IAToken aToken = IAToken(aTokenAddress);
+        if (aToken.RESERVE_TYPE()) {
+            for (uint256 i = 0; i < minipoolFlowBorrowing.length(); i++) {
+                IMiniPool minipool = IMiniPool(minipoolFlowBorrowing.at(i));
+                minipool.syncState(aToken.WRAPPER_ADDRESS());
+            }
+        }
 
         emit ReserveDataUpdated(
             reserveAddress,
@@ -303,8 +322,6 @@ library ReserveLogic {
             reserve.liquidityIndex = uint128(newLiquidityIndex);
         }
 
-        // As the liquidity rate might come only from stable rate loans, we need to ensure
-        // that there is actual variable debt before accumulating.
         if (scaledVariableDebt != 0) {
             uint256 cumulatedVariableBorrowInterest =
                 MathUtils.calculateCompoundedInterest(reserve.currentVariableBorrowRate, timestamp);

@@ -371,19 +371,20 @@ contract MiniPoolFlashloanTest is Common {
         );
         fixture_configureProtocol(
             address(deployedContracts.lendingPool),
-            address(aToken),
+            address(commonContracts.aToken),
             configAddresses,
             deployedContracts.lendingPoolConfigurator,
             deployedContracts.lendingPoolAddressesProvider
         );
-        mockedVaults = fixture_deployReaperVaultMocks(tokens, address(deployedContracts.treasury));
+        commonContracts.mockedVaults =
+            fixture_deployReaperVaultMocks(tokens, address(deployedContracts.treasury));
         erc20Tokens = fixture_getErc20Tokens(tokens);
         fixture_transferTokensToTestContract(erc20Tokens, 1_000_000 ether, address(this));
         (miniPoolContracts,) = fixture_deployMiniPoolSetup(
             address(deployedContracts.lendingPoolAddressesProvider),
             address(deployedContracts.lendingPool),
             address(deployedContracts.cod3xLendDataProvider),
-            address(0)
+            miniPoolContracts
         );
 
         address[] memory reserves = new address[](2 * tokens.length);
@@ -392,7 +393,8 @@ contract MiniPoolFlashloanTest is Common {
             if (idx < tokens.length) {
                 reserves[idx] = tokens[idx];
             } else {
-                reserves[idx] = address(aTokens[idx - tokens.length].WRAPPER_ADDRESS());
+                reserves[idx] =
+                    address(commonContracts.aTokens[idx - tokens.length].WRAPPER_ADDRESS());
             }
         }
         configAddresses.cod3xLendDataProvider = address(miniPoolContracts.miniPoolAddressesProvider);
@@ -407,8 +409,10 @@ contract MiniPoolFlashloanTest is Common {
         address user = makeAddr("user");
         address user2 = makeAddr("user2");
 
-        TokenParams memory tokenParamsUsdc = TokenParams(erc20Tokens[0], aTokensWrapper[0], 0);
-        TokenParams memory tokenParamsWbtc = TokenParams(erc20Tokens[1], aTokensWrapper[1], 0);
+        TokenParams memory tokenParamsUsdc =
+            TokenParams(erc20Tokens[0], commonContracts.aTokensWrapper[0], 0);
+        TokenParams memory tokenParamsWbtc =
+            TokenParams(erc20Tokens[1], commonContracts.aTokensWrapper[1], 0);
 
         uint256 amountUsdc = 1000 * (10 ** tokenParamsUsdc.token.decimals());
         uint256 amountwBtc = 1 * (10 ** tokenParamsWbtc.token.decimals());

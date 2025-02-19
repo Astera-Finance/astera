@@ -8,23 +8,8 @@
         {
             "baseLtv": 7000,
             "borrowingEnabled": true,
-            "interestStrat": "PI",
-            "interestStratId": 1,
-            "liquidationBonus": 10400,
-            "liquidationThreshold": 7400,
-            "miniPoolOwnerFee": 230,
-            "params": "0x10",
-            "rates": 0.04e27,
-            "reserveFactor": 1500,
-            "reserveType": true,
-            "symbol": "WBTC",
-            "tokenAddress": "0x0555E30da8f98308EdB960aa94C0Db47230d2B9c"
-        },
-        {
-            "baseLtv": 7000,
-            "borrowingEnabled": true,
-            "interestStrat": "PI",
-            "interestStratId": 2,
+            "interestStrat": "STABLE",
+            "interestStratId": 0,
             "liquidationBonus": 10500,
             "liquidationThreshold": 7400,
             "miniPoolOwnerFee": 230,
@@ -33,7 +18,7 @@
             "reserveFactor": 1500,
             "reserveType": true,
             "symbol": "USDC",
-            "tokenAddress": "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913"
+            "tokenAddress": "0x8c53BF01E052A2aFA06b2d9d87aE49972799E62f"
         }
     ],
     "miniPoolReserversConfig": [
@@ -41,31 +26,31 @@
             "baseLtv": 7000,
             "borrowingEnabled": true,
             "interestStrat": "PI",
-            "interestStratId": 2,
+            "interestStratId": 0,
             "liquidationBonus": 10500,
-            "liquidationThreshold": 7700,
-            "miniPoolOwnerFee": 250,
+            "liquidationThreshold": 7400,
+            "miniPoolOwnerFee": 230,
             "params": "0x10",
-            "rates": 0.02e27,
+            "rates": 0.03e27,
             "reserveFactor": 1500,
             "reserveType": true,
-            "symbol": "WBTC",
-            "tokenAddress": "0x0555E30da8f98308EdB960aa94C0Db47230d2B9c"
+            "symbol": "aUSDC",
+            "tokenAddress": "0x088607f8f2aAE9Ab9b7EE16C988A5Ca857DB8F15"
         },
         {
             "baseLtv": 7000,
             "borrowingEnabled": true,
-            "interestStrat": "PI",
-            "interestStratId": 3,
+            "interestStrat": "VOLATILE",
+            "interestStratId": 0,
             "liquidationBonus": 10500,
-            "liquidationThreshold": 7100,
-            "miniPoolOwnerFee": 233,
+            "liquidationThreshold": 7500,
+            "miniPoolOwnerFee": 0,
             "params": "0x10",
             "rates": 0.03e27,
-            "reserveFactor": 1400,
+            "reserveFactor": 1500,
             "reserveType": true,
-            "symbol": "USDT",
-            "tokenAddress": "0xfde4C96c8593536E31F229EA8f37b2ADa2699bb2"
+            "symbol": "WBTC",
+            "tokenAddress": "0xb3e343C39a9e5e739724b3Ed0F3B6150e19B4A90"
         }
     ]
 }

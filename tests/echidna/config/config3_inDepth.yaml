@@ -1,19 +1,22 @@
 seqLen: 300
-testLimit: 600000
+testLimit: 2500000
 
-workers: 10
+workers: 20
 coverage: true
-corpusDir: "corpus"
+corpusDir: "echidna-corpus"
 testMode: assertion
 deployer: "0x10000"
 sender: ["0x10000", "0x20000", "0x30000"]
 coverageFormats: ["txt"]
 shrinkLimit: 6000
+quiet: true
+maxTimeDelay: 3600 # 1 hour
+maxBlockDelay: 864 
 
 # Ignore helpers
 filterBlacklist: true
 filterFunctions: []
-codeSize: 0xf000
+codeSize: 0xffffffff
 
 # Library linking
 cryticArgs: [

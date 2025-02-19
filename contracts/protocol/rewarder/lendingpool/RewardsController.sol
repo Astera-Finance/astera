@@ -10,6 +10,7 @@ import {IAERC6909} from "../../../../contracts/interfaces/IAERC6909.sol";
 import "../../../../contracts/interfaces/IAToken.sol";
 import {IMiniPoolAddressesProvider} from
     "../../../../contracts/interfaces/IMiniPoolAddressesProvider.sol";
+import {Errors} from "../../../../contracts/protocol/libraries/helpers/Errors.sol";
 
 /**
  * @title RewardsController
@@ -48,7 +49,7 @@ abstract contract RewardsController is RewardsDistributor, IRewardsController {
      * @param user Address of the user rewards are being claimed for.
      */
     modifier onlyAuthorizedClaimers(address claimer, address user) {
-        require(_authorizedClaimers[user] == claimer, "CLAIMER_UNAUTHORIZED");
+        require(_authorizedClaimers[user] == claimer, Errors.R_CLAIMER_UNAUTHORIZED);
         _;
     }
 
@@ -63,7 +64,15 @@ abstract contract RewardsController is RewardsDistributor, IRewardsController {
      * @param addressesProvider Address of the MiniPool addresses provider.
      */
     function setMiniPoolAddressesProvider(address addressesProvider) external onlyOwner {
+        require(address(addressesProvider) != address(0), Errors.R_INVALID_ADDRESS);
+        require(address(_addressesProvider) == address(0), Errors.R_ALREADY_SET);
         _addressesProvider = IMiniPoolAddressesProvider(addressesProvider);
+
+        emit MiniPoolAddressesProviderSet(addressesProvider);
+    }
+
+    function getMiniPoolAddressesProvider() external view returns (address) {
+        return address(_addressesProvider);
     }
 
     /**
@@ -82,6 +91,8 @@ abstract contract RewardsController is RewardsDistributor, IRewardsController {
                 setDefaultForwarder(aToken6909);
             }
         }
+
+        emit RewardForwarderSet(forwarder);
     }
     /**
      * @notice Returns the authorized claimer address for a specific user.
@@ -129,14 +140,14 @@ abstract contract RewardsController is RewardsDistributor, IRewardsController {
         external
         override
     {
-        refreshMiniPoolData();
+        _refreshMiniPoolData();
         // If user is an ERC6909 aToken, this will only be true for aTokens.
         if (_isAtokenERC6909[user] == true) {
-            (uint256 assetID,,) =
+            (uint256 aTokenID,,) =
                 IAERC6909(user).getIdForUnderlying(IAToken(msg.sender).WRAPPER_ADDRESS());
-            // For trancheATokens we calculate the total supply of the AERC6909 ID for the assetID.
+            // For trancheATokens we calculate the total supply of the AERC6909 ID for the aTokenID.
             // We subtract the current balance.
-            uint256 totalSupplyAsset = IAERC6909(user).scaledTotalSupply(assetID);
+            uint256 totalSupplyAsset = IAERC6909(user).totalSupply(aTokenID);
             uint256 diff = totalSupplyAsset - userBalance;
             _totalDiff[msg.sender] =
                 _totalDiff[msg.sender] - lastReportedDiff[msg.sender][user] + diff;
@@ -151,22 +162,24 @@ abstract contract RewardsController is RewardsDistributor, IRewardsController {
     /**
      * @notice Updates MiniPool data if new MiniPools have been added.
      */
-    function refreshMiniPoolData() internal {
-        if (address(_addressesProvider) != address(0)) {
-            if (_totalTrackedMiniPools != _addressesProvider.getMiniPoolCount()) {
+    function _refreshMiniPoolData() internal {
+        IMiniPoolAddressesProvider addressesProvider = _addressesProvider;
+
+        if (address(addressesProvider) != address(0)) {
+            uint256 totalTrackedMiniPools = _totalTrackedMiniPools;
+            if (totalTrackedMiniPools != addressesProvider.getMiniPoolCount()) {
                 for (
-                    uint256 i = _totalTrackedMiniPools;
-                    i < _addressesProvider.getMiniPoolCount();
-                    i++
+                    uint256 i = totalTrackedMiniPools; i < addressesProvider.getMiniPoolCount(); i++
                 ) {
-                    address miniPool = _addressesProvider.getMiniPool(i);
+                    address miniPool = addressesProvider.getMiniPool(i);
                     _isMiniPool[miniPool] = true;
                     setDefaultForwarder(miniPool);
-                    address aToken6909 = _addressesProvider.getMiniPoolToAERC6909(miniPool);
+                    address aToken6909 = addressesProvider.getMiniPoolToAERC6909(miniPool);
                     _isAtokenERC6909[aToken6909] = true;
                     setDefaultForwarder(aToken6909);
-                    _totalTrackedMiniPools++;
+                    totalTrackedMiniPools++;
                 }
+                _totalTrackedMiniPools = totalTrackedMiniPools;
             }
         }
     }
@@ -188,7 +201,7 @@ abstract contract RewardsController is RewardsDistributor, IRewardsController {
         override
         returns (uint256)
     {
-        require(to != address(0), "INVALID_TO_ADDRESS");
+        require(to != address(0), Errors.R_INVALID_ADDRESS);
         return _claimRewards(assets, amount, msg.sender, msg.sender, to, reward);
     }
 
@@ -208,8 +221,8 @@ abstract contract RewardsController is RewardsDistributor, IRewardsController {
         address to,
         address reward
     ) external override onlyAuthorizedClaimers(msg.sender, user) returns (uint256) {
-        require(user != address(0), "INVALID_USER_ADDRESS");
-        require(to != address(0), "INVALID_TO_ADDRESS");
+        require(user != address(0), Errors.R_INVALID_ADDRESS);
+        require(to != address(0), Errors.R_INVALID_ADDRESS);
         return _claimRewards(assets, amount, msg.sender, user, to, reward);
     }
 
@@ -240,7 +253,7 @@ abstract contract RewardsController is RewardsDistributor, IRewardsController {
         override
         returns (address[] memory rewardTokens, uint256[] memory claimedAmounts)
     {
-        require(to != address(0), "INVALID_TO_ADDRESS");
+        require(to != address(0), Errors.R_INVALID_ADDRESS);
         return _claimAllRewards(assets, msg.sender, msg.sender, to);
     }
 
@@ -258,8 +271,8 @@ abstract contract RewardsController is RewardsDistributor, IRewardsController {
         onlyAuthorizedClaimers(msg.sender, user)
         returns (address[] memory rewardTokens, uint256[] memory claimedAmounts)
     {
-        require(user != address(0), "INVALID_USER_ADDRESS");
-        require(to != address(0), "INVALID_TO_ADDRESS");
+        require(user != address(0), Errors.R_INVALID_ADDRESS);
+        require(to != address(0), Errors.R_INVALID_ADDRESS);
         return _claimAllRewards(assets, msg.sender, user, to);
     }
 
@@ -380,8 +393,8 @@ abstract contract RewardsController is RewardsDistributor, IRewardsController {
      * @param amount Amount of rewards to transfer.
      */
     function _transferRewards(address to, address reward, uint256 amount) internal {
-        bool success = transferRewards(to, reward, amount);
-        require(success == true, "TRANSFER_ERROR");
+        bool success = __transferRewards(to, reward, amount);
+        require(success == true, Errors.R_TRANSFER_ERROR);
     }
 
     /**
@@ -391,7 +404,7 @@ abstract contract RewardsController is RewardsDistributor, IRewardsController {
      * @param amount Amount of rewards to transfer.
      * @return success Boolean indicating if transfer was successful.
      */
-    function transferRewards(address to, address reward, uint256 amount)
+    function __transferRewards(address to, address reward, uint256 amount)
         internal
         virtual
         returns (bool);

@@ -1,10 +1,18 @@
-# Echidna
+# Fuzzing tests with Echidna/Medusa
 
 Echidna is a program designed for fuzzing/property-based testing of Ethereum smart contracts. Please refer to the doc for [installation](https://github.com/crytic/echidna#installation).
+
+### Fuzzing
 
 ```sh
 forge install
 echidna tests/echidna/PropertiesMain.sol --contract PropertiesMain --config tests/echidna/config/config1_fast.yaml
+```
+
+Medusa: to be fixed.
+```sh
+forge install
+medusa fuzz --config medusa_config.json
 ```
 
 You can fine in `/echidna` 3 config files to run the fuzzer:
@@ -15,15 +23,33 @@ You can fine in `/echidna` 3 config files to run the fuzzer:
 
 ![inheritance graph](./images/inheritance_graph.png)
 
+### Testing Echidna's failed sequences
+
+Copy/Paste the Echidna's failed sequence in the `FromSeqToFoudry.py` `input_text` variable.
+
+```sh
+python3 tests/echidna/echidnaToFoundry/FromSeqToFoudry.py
+```
+
+This script will automatically generate `echidnaToFoundry.sol`. So you just have to run the Forge test.
+
+```sh
+forge t --mt testCallSequence -vvvv
+```
+
 # TODO
 
-- Improve the bootstraping with users setup with coherante positions.
-- Implemente all "To implement" invariants.
-- Fix all todos in the echidna/codebase.
+- fix lastLiquidityIndex and lastBorrowIndex
+- Add rewarders
+
 
 # Invariant testing
 
-### General
+✅ : Passing
+❌ : Failing
+🚧 : To be implemented
+
+### General (same for the LendingPool and MiniPools)
 
 100. ✅ To be liquidated on a given collateral asset, the target user must own the associated `aTokenColl`.
 101. ✅ To be liquidated on a given token, the target user must own the associated `vTokenDebt`.
@@ -31,9 +57,11 @@ You can fine in `/echidna` 3 config files to run the fuzzer:
 103. ✅ `liquidationCall()` must decrease the target `vTokenDebt` balance by `amount`.
 104. ✅ `liquidationCall()` must increase the liquidator `aTokenColl` (or `collAsset`) balance.
 105. ✅ `liquidationCall()` must decrease the liquidator debt asset balance if `randReceiveAToken` is true or `collAsset` is not equal to `debtAsset`.
+106. ✅ `setFlowLimit()` must correctly decrease the flow. 
 
 ### LendingPool
 
+200. ✅ Users must always be able to deposit in normal condition.
 201. ✅ `deposit()` must increase the user aToken balance by `amount`.
 202. ✅ `deposit()` must decrease the user asset balance by `amount`.
 203. ✅ `withdraw()` must decrease the user aToken balance by `amount`.
@@ -45,21 +73,20 @@ You can fine in `/echidna` 3 config files to run the fuzzer:
 209. ✅ `borrow()` must decrease `borrowAllowance()` by `amount` if `user != onBehalf`.
 210. ✅ `repay()` must decrease the onBehalfOf debtToken balance by `amount`.
 211. ✅ `repay()` must decrease the user asset balance by `amount`.
-212. ✅ `healthFactorAfter` must be greater than `healthFactorBefore` as long as liquidations are done in time..
+212. ✅ `healthFactorAfter` must be greater than `healthFactorBefore` as long as liquidations are done in time.
 213. ✅ `setUseReserveAsCollateral` must not reduce the health factor below 1.
 214. ✅ Users must not be able to steal funds from flashloans.
 215. ✅ The total value borrowed must always be less than the value of the collaterals.
-216. ✅ Each user postions must remain solvent.
-217. ✅ The `liquidityIndex` should monotonically increase when there's total debt.
-218. ✅ The `variableBorrowIndex` should monotonically increase when there's total debt.
-219. ✅ A user with debt should have at least an aToken balance `setUsingAsCollateral`.
-220. ❌ If all debt is repaid, all `aToken` holder should be able to claim their collateral.
-221. ❌ If all users withdraw their liquidity, there must not be aTokens supply left.
-222. 🚧 Integrity of Supply Cap - aToken supply shall never exceed the cap.
-223. 🚧 `UserConfigurationMap` integrity: If a user has a given aToken then `isUsingAsCollateralOrBorrowing` and `isUsingAsCollateral` should return true.
-224. 🚧 `UserConfigurationMap` integrity: If a user has a given debtToken then `isUsingAsCollateralOrBorrowing`, `isBorrowing` and `isBorrowingAny` should return true.
-225. 🚧 `ReserveConfigurationMap` integrity: If reserve is active and not frozen then user can interact with the lending market.
-226. 🚧 Repaying or Liquidate a position must result in the same final state.
+216. ✅ The `liquidityIndex` should monotonically increase when there is collateral.
+217. ✅ The `variableBorrowIndex` should monotonically increase when there is debt.
+218. ✅ A user with debt should have at least an aToken balance `setUsingAsCollateral`.
+219. ✅ Integrity of Deposit Cap - aToken supply should never exceed the cap.
+220. ✅ `UserConfigurationMap` integrity: If a user has a given aToken then `isUsingAsCollateralOrBorrowing` and `isUsingAsCollateral` should return true.
+221. ✅ `UserConfigurationMap` integrity: If a user has a given debtToken then `isUsingAsCollateralOrBorrowing`, `isBorrowing` and `isBorrowingAny` should return true.
+222. ✅ Rehypothecation: farming percentage must be respected (+/- the drift) after a rebalance occured.
+223. ✅ Rehypothecation: The profit handler address must see its balance increase after reaching the claiming threshold.
+224. ✅ `withdraw()` must not result in a health factor of less than 1.
+225. ✅ Rehypothecation: farming percentage must be respected (+/- the drift) after any operation.
 
 ### ATokens/ATokenNonRebasing
 
@@ -81,15 +108,15 @@ You can fine in `/echidna` 3 config files to run the fuzzer:
 315. ✅ Allowance must be modified correctly via `increaseAllowance()`.
 316. ✅ `decreaseAllowance()` must revert when the user tries to decrease more than currently allowed.
 317. ✅ Allowance must be modified correctly via `decreaseAllowance()`.
-318. 🚧 User nonce must increase by one.
-319. 🚧 Mutation in the signature must make `permit()` revert.
-320. 🚧 Mutation in parameters must make `permit()` revert.
-321. 🚧 User allowance must be equal to `amount` when the sender calls `permit()`.
-322. ✅ Force feeding assets in LendingPool, ATokens, or debtTokens must not change the final result.
-323. ✅ Force feeding aToken in LendingPool, ATokens, or debtTokens must not change the final result.
-324. ❌ A user must not hold more than total supply.
-325. ❌ Sum of users' balance must not exceed total supply.
-326. 🚧 All `ATokenNonRebasing` operations should be equivalent to `ATokens`.
+318. ✅ Force feeding assets in LendingPool, ATokens, debtTokens, MiniPools or AToken6909 must not change the final result.
+319. ✅ Force feeding aToken in LendingPool, ATokens, debtTokens, MiniPools or AToken6909 must not change the final result.
+320. ✅ A user must not hold more than total supply.
+321. ✅ Sum of users' balances must not exceed total supply.
+322. ✅ `ATokenNonRebasing` `balanceOf()` should be equivalent to `ATokens` adjusted to the conversion rate.
+323. ✅ `ATokenNonRebasing` `transfer()` should be equivalent to `ATokens` adjusted to the conversion rate.
+324. ✅ `ATokenNonRebasing` `transferFrom()` should be equivalent to `ATokens` adjusted to the conversion rate.
+325. ✅ Allowance must be modified correctly via `ATokenNonRebasing.approve()`.
+326. ✅ `ATokenNonRebasing.approve()` must not modify `AToken.allowance()`.
 
 ### DebtTokens
 
@@ -98,60 +125,56 @@ You can fine in `/echidna` 3 config files to run the fuzzer:
 
 ### MiniPool
 
-501. 🚧 `deposit()` must increase the user AToken6909 balance by `amount`.
-502. 🚧 `deposit()` must decrease the user asset balance by `amount`.
-503. 🚧 `withdraw()` must decrease the user AToken6909 balance by `amount`.
-504. 🚧 `withdraw()` must increase the user asset balance by `amount`.
-505. 🚧 A user must not be able to `borrow()` if they don't own AToken6909.
-506. 🚧 `borrow()` must only be possible if the user health factor is greater than 1.
-507. 🚧 `borrow()` must not result in a health factor of less than 1.
-508. 🚧 `borrow()` must increase the user debtToken balance by `amount`.
-509. 🚧 `borrow()` must decrease `borrowAllowance()` by `amount` if `user != onBehalf`.
-510. 🚧 `repay()` must decrease the onBehalfOf debtToken balance by `amount`.
-511. 🚧 `repay()` must decrease the user asset balance by `amount`.
-512. 🚧 `healthFactorAfter` must be greater than `healthFactorBefore` as long as liquidations are done in time.
-513. 🚧 `setUseReserveAsCollateral` must not reduce the health factor below 1.
-514. 🚧 Users must not be able to steal funds from flashloans.
-515. 🚧 The total value borrowed must always be less than the value of the collaterals.
-516. 🚧 Each user postions must remain solvent.
-517. 🚧 The `liquidityIndex` should monotonically increase when there's total debt.
-518. 🚧 The `variableBorrowIndex` should monotonically increase when there's total debt.
-519. 🚧 A user with debt should have at least an AToken6909 balance `setUsingAsCollateral`.
-520. 🚧 If all debt is repaid, all aToken holder should be able to claim their collateral.
-521. 🚧 If all users withdraw their liquidity, there must not be aTokens supply left.
-522. 🚧 Integrity of Supply Cap - aToken supply shall never exceed the cap.
-523. 🚧 `UserConfigurationMap` integrity: If a user has a given aToken then `isUsingAsCollateralOrBorrowing` and `isUsingAsCollateral` should return true.
-524. 🚧 `UserConfigurationMap` integrity: If a user has a given debtToken then `isUsingAsCollateralOrBorrowing`, `isBorrowing` and `isBorrowingAny` should return true.
-525. 🚧 `ReserveConfigurationMap` integrity: If reserve is active and not frozen then user can interact with the lending market.
-526. 🚧 If flow reached the maximum, Minipools must not be able to borrow more.
-527. 🚧 Minipool flow borrow integrity: debt from the Lendingpool should never be greater than the collateral owned by Minipools.
-528. 🚧 Repaying or Liquidate a position must result in the same final state.
-
-(ADD MINIPOOL BORROWFLOW INVARIANTS)
+500. ✅ Users must always be able to deposit in normal condition.
+501. ✅ `deposit()` must increase the user AToken6909 balance by `amount`.
+502. ✅ `deposit()` must decrease the user asset balance by `amount`.
+503. ✅ `withdraw()` must decrease the user AToken6909 balance by `amount`.
+504. ✅ `withdraw()` must increase the user asset balance by `amount`.
+505. ✅ `withdraw()` must not result in a health factor of less than 1.
+506. ✅ A user must not be able to `borrow()` if they don't own AToken6909.
+507. ✅ `borrow()` must only be possible if the user health factor is greater than 1.
+508. ✅ `borrow()` must not result in a health factor of less than 1.
+509. ✅ `borrow()` must increase the user debtToken balance by `amount` when flow borrowing is disabled.
+510. ✅ `borrow()` must decrease `borrowAllowance()` by `amount` if `user != onBehalf`.
+511. ✅ `repay()` must decrease the onBehalfOf debtToken balance by `amount`.
+512. ✅ `repay()` must decrease the user asset balance by `amount`.
+513. ✅ `healthFactorAfter` must be greater than `healthFactorBefore` as long as liquidations are done in time.
+514. ✅ `setUseReserveAsCollateral` must not reduce the health factor below 1.
+515. ✅ Users must not be able to steal funds from flashloans.
+516. ✅ The total value borrowed must always be less than the value of the collateral when flow borrowing is disabled.
+517. ✅ The `liquidityIndex` should monotonically increase when there is collateral.
+518. ✅ The `variableBorrowIndex` should monotonically increase when there is debt.
+519. ✅ A user with debt should have at least an AToken6909 balance `setUsingAsCollateral`.
+520. ✅ Integrity of Deposit Cap - aToken supply should never exceed the cap.
+521. ✅ `UserConfigurationMap` integrity: If a user has a given aToken then `isUsingAsCollateralOrBorrowing` and `isUsingAsCollateral` should return true.
+522. ✅ `UserConfigurationMap` integrity: If a user has a given debtToken then `isUsingAsCollateralOrBorrowing`, `isBorrowing` and `isBorrowingAny` should return true.
+523. ✅ If a minipool is flow borrowing, for a given reserve, the Lendingpool liquidity interest rate remain lower than the minipool debt interest rate.
+524. ✅ The aToken remainder of each assets with flow borrowing activated should remain greater than ERROR_REMAINDER_MARGIN.
+525. ✅ If a minipool is flow borrowing then its address must be included in `LendingPool._minipoolFlowBorrowing`. 
+526. ✅ If a minipool is not flow borrowing then its address must not be included in `LendingPool._minipoolFlowBorrowing`. 
 
 ### AToken6909
 
-600. 🚧 Zero amount transfers should not break accounting.
-601. 🚧 Once a user has a debt, they must not be able to transfer aTokens if this results in a health factor less than 1.
-602. 🚧 Transfers for more than available balance should not be allowed.
-603. 🚧 Transfers should update accounting correctly.
-604. 🚧 Self transfers should not break accounting.
-605. 🚧 Zero amount transfers must not break accounting.
-606. 🚧 Once a user has a debt, they must not be able to transfer AToken6909s if this results in a health factor less than 1.
-607. 🚧 Transfers for more than available balance must not be allowed.
-608. 🚧 `transferFrom()` must only transfer if the sender has enough allowance from the `from` address.
-609. 🚧 Transfers must update accounting correctly.
-610. 🚧 Self transfers must not break accounting.
-611. 🚧 `transferFrom()` must decrease allowance.
-612. 🚧 `approve()` must never revert.
-613. 🚧 Allowance must be modified correctly via `approve()`.
-614. 🚧 Force feeding assets in MiniPools or AToken6909 must not change the final result.
-615. 🚧 Force feeding aToken or AToken6909 in MiniPools or AToken6909 must not change the final result.
-616. 🚧 A user must not hold more than total supply.
-617. 🚧 Sum of users' balance must not exceed total supply.
-618. 🚧 `approveDelegation()` must never revert.
-619. 🚧 Allowance must be modified correctly via `approve()`.
-
+600. ✅ Zero amount transfers should not break accounting.
+601. ✅ Once a user has a debt, they must not be able to transfer aTokens if this results in a health factor less than 1.
+602. ✅ Transfers for more than available balance should not be allowed.
+603. ✅ Transfers should update accounting correctly.
+604. ✅ Self transfers should not break accounting.
+605. ✅ Zero amount transfers must not break accounting.
+606. ✅ Once a user has a debt, they must not be able to transfer AToken6909s if this results in a health factor less than 1.
+607. ✅ Transfers for more than available balance must not be allowed.
+608. ✅ `transferFrom()` must only transfer if the sender has enough allowance from the `from` address.
+609. ✅ Transfers must update accounting correctly.
+610. ✅ Self transfers must not break accounting.
+611. ✅ `transferFrom()` must decrease allowance.
+612. ✅ `approve()` must never revert.
+613. ✅ Allowance must be modified correctly via `approve()`.
+614. ✅ Force feeding AToken6909 in MiniPools or AToken6909 must not change the final result.
+615. ✅ `approveDelegation()` must never revert.
+616. ✅ Allowance must be modified correctly via `approve()`.
+617. ✅ A user must not hold more than total supply.
+618. ✅ Sum of users' balances must not exceed total supply.
+  
 ## Admin entry points
 
 ### LendingPoolAddressesProvider
@@ -273,10 +296,10 @@ You can fine in `/echidna` 3 config files to run the fuzzer:
 
 ### Minipool
 
-- `deposit(address asset, uint256 amount, address onBehalfOf)`
-- `withdraw(address asset, uint256 amount, address to)`
-- `borrow(address asset, uint256 amount, address onBehalfOf)`
-- `repay(address asset, uint256 amount, address onBehalfOf)`
+- `deposit(address asset, bool wrap, uint256 amount, address onBehalfOf)`
+- `withdraw(address asset, bool unwrap, uint256 amount, address to)`
+- `borrow(address asset, bool unwrap, uint256 amount, address onBehalfOf)`
+- `repay(address asset,  bool wrap, uint256 amount, address onBehalfOf)`
 - `setUserUseReserveAsCollateral(address asset, bool useAsCollateral)`
 - `liquidationCall(address collateralAsset, address debtAsset, address user, uint256 debtToCover, bool receiveAToken)`
 - `flashLoan(FlashLoanParams memory flashLoanParams, uint256[] calldata amounts, uint256[] calldata modes, bytes calldata params)`

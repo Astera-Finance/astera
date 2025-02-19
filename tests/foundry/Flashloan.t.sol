@@ -39,13 +39,14 @@ contract FlashloanTest is Common {
 
         fixture_configureProtocol(
             address(deployedContracts.lendingPool),
-            address(aToken),
+            address(commonContracts.aToken),
             configAddresses,
             deployedContracts.lendingPoolConfigurator,
             deployedContracts.lendingPoolAddressesProvider
         );
 
-        mockedVaults = fixture_deployReaperVaultMocks(tokens, address(deployedContracts.treasury));
+        commonContracts.mockedVaults =
+            fixture_deployReaperVaultMocks(tokens, address(deployedContracts.treasury));
         erc20Tokens = fixture_getErc20Tokens(tokens);
         fixture_transferTokensToTestContract(erc20Tokens, 100_000 ether, address(this));
     }
@@ -114,8 +115,9 @@ contract FlashloanTest is Common {
             modes[idx] = 0;
             balances.balancesBefore[idx] = IERC20(tokens[idx]).balanceOf(address(this));
             balances.aTokenBalancesBefore[idx] =
-                IERC20(tokens[idx]).balanceOf(address(aTokens[idx]));
-            balances.totalManagedAssetsBefore[idx] = AToken(aTokens[idx]).getTotalManagedAssets();
+                IERC20(tokens[idx]).balanceOf(address(commonContracts.aTokens[idx]));
+            balances.totalManagedAssetsBefore[idx] =
+                AToken(commonContracts.aTokens[idx]).getTotalManagedAssets();
         }
 
         ILendingPool.FlashLoanParams memory flashloanParams =
@@ -138,20 +140,21 @@ contract FlashloanTest is Common {
         for (uint32 idx = 0; idx < tokens.length; idx++) {
             console.log(
                 "Balance now: %s vs Balance before: %s",
-                IERC20(tokens[idx]).balanceOf(address(aTokens[idx])),
+                IERC20(tokens[idx]).balanceOf(address(commonContracts.aTokens[idx])),
                 balances.aTokenBalancesBefore[idx]
             );
             assertGe(
-                IERC20(tokens[idx]).balanceOf(address(aTokens[idx])),
+                IERC20(tokens[idx]).balanceOf(address(commonContracts.aTokens[idx])),
                 balances.aTokenBalancesBefore[idx]
             );
             console.log(
                 "Managed assets now: %s vs Managed assets before: %s",
-                AToken(aTokens[idx]).getTotalManagedAssets(),
+                AToken(commonContracts.aTokens[idx]).getTotalManagedAssets(),
                 balances.totalManagedAssetsBefore[idx]
             );
             assertGe(
-                AToken(aTokens[idx]).getTotalManagedAssets(), balances.totalManagedAssetsBefore[idx]
+                AToken(commonContracts.aTokens[idx]).getTotalManagedAssets(),
+                balances.totalManagedAssetsBefore[idx]
             );
         }
     }
@@ -207,6 +210,121 @@ contract FlashloanTest is Common {
             ILendingPool.FlashLoanParams(address(this), tokenAddresses, reserveTypes, address(this));
         bytes memory params = abi.encode(balancesBefore, notApproved);
         vm.expectRevert(bytes("ERC20: transfer amount exceeds allowance"));
+        deployedContracts.lendingPool.flashLoan(flashloanParams, amounts, modes, params);
+    }
+
+    function testFlashloanRehypothecation() public {
+        bool[] memory reserveTypes = new bool[](tokens.length);
+        address[] memory tokenAddresses = new address[](tokens.length);
+        uint256[] memory amounts = new uint256[](tokens.length);
+        uint256[] memory modes = new uint256[](tokens.length);
+        Balances memory balances;
+        balances.balancesBefore = new uint256[](tokens.length);
+        balances.aTokenBalancesBefore = new uint256[](tokens.length);
+        balances.totalManagedAssetsBefore = new uint256[](tokens.length);
+
+        for (uint32 idx = 0; idx < tokens.length; idx++) {
+            console.log(
+                "Rehypothecation amt 1: %s",
+                IERC20(tokens[idx]).balanceOf(address(commonContracts.aTokens[idx]))
+            );
+
+            turnOnRehypothecation(
+                deployedContracts.lendingPoolConfigurator,
+                address(commonContracts.aTokens[idx]),
+                address(commonContracts.mockVaultUnits[idx]),
+                admin,
+                5000,
+                10,
+                200
+            );
+
+            console.log(
+                "Rehypothecation amt 2: %s",
+                IERC20(tokens[idx]).balanceOf(address(commonContracts.aTokens[idx]))
+            );
+
+            uint256 amountToDeposit = IERC20(tokens[idx]).balanceOf(address(this)) / 2;
+            erc20Tokens[idx].approve(address(deployedContracts.lendingPool), amountToDeposit);
+            deployedContracts.lendingPool.deposit(
+                address(erc20Tokens[idx]), true, amountToDeposit, address(this)
+            );
+
+            console.log(
+                "Rehypothecation amt 3: %s",
+                IERC20(tokens[idx]).balanceOf(address(commonContracts.aTokens[idx]))
+            );
+
+            reserveTypes[idx] = true;
+            tokenAddresses[idx] = address(erc20Tokens[idx]);
+            amounts[idx] = IERC20(tokens[idx]).balanceOf(address(this)) / 2;
+            modes[idx] = 0;
+
+            balances.balancesBefore[idx] = IERC20(tokens[idx]).balanceOf(address(this));
+            balances.aTokenBalancesBefore[idx] =
+                IERC20(tokens[idx]).balanceOf(address(commonContracts.aTokens[idx]));
+            balances.totalManagedAssetsBefore[idx] =
+                AToken(commonContracts.aTokens[idx]).getTotalManagedAssets();
+        }
+
+        ILendingPool.FlashLoanParams memory flashloanParams =
+            ILendingPool.FlashLoanParams(address(this), tokenAddresses, reserveTypes, address(this));
+        bytes memory params = abi.encode(balances.balancesBefore, address(this));
+
+        deployedContracts.lendingPool.flashLoan(flashloanParams, amounts, modes, params);
+
+        for (uint32 idx = 0; idx < tokens.length; idx++) {
+            console.log(
+                "Rehypothecation amt 4: %s",
+                IERC20(tokens[idx]).balanceOf(address(commonContracts.aTokens[idx]))
+            );
+            console.log(
+                "Rehypothecation amt 5: %s", commonContracts.aTokens[idx]._underlyingAmount()
+            );
+            console.log("Rehypothecation amt 6: %s", commonContracts.aTokens[idx]._farmingBal());
+            console.log("--------------------------------");
+
+            assertApproxEqRel(
+                commonContracts.aTokens[idx]._farmingBal(),
+                commonContracts.aTokens[idx]._underlyingAmount()
+                    * commonContracts.aTokens[idx]._farmingPct() / 10000,
+                commonContracts.aTokens[idx]._farmingPctDrift() * 1e14
+            );
+        }
+    }
+
+    function testFlashloan_INVALID_INTEREST_RATE_MODE() public {
+        bool[] memory reserveTypes = new bool[](1);
+        address[] memory tokenAddresses = new address[](1);
+        uint256[] memory amounts = new uint256[](1);
+        uint256[] memory modes = new uint256[](1);
+        Balances memory balances;
+        balances.balancesBefore = new uint256[](1);
+        balances.aTokenBalancesBefore = new uint256[](1);
+        balances.totalManagedAssetsBefore = new uint256[](1);
+
+        for (uint32 idx = 0; idx < 1; idx++) {
+            uint256 amountToDeposit = IERC20(tokens[idx]).balanceOf(address(this)) / 2;
+            erc20Tokens[idx].approve(address(deployedContracts.lendingPool), amountToDeposit);
+            deployedContracts.lendingPool.deposit(
+                address(erc20Tokens[idx]), true, amountToDeposit, address(this)
+            );
+            reserveTypes[idx] = true;
+            tokenAddresses[idx] = address(erc20Tokens[idx]);
+            amounts[idx] = IERC20(tokens[idx]).balanceOf(address(this)) / 2;
+            modes[idx] = 2;
+            balances.balancesBefore[idx] = IERC20(tokens[idx]).balanceOf(address(this));
+            balances.aTokenBalancesBefore[idx] =
+                IERC20(tokens[idx]).balanceOf(address(commonContracts.aTokens[idx]));
+            balances.totalManagedAssetsBefore[idx] =
+                AToken(commonContracts.aTokens[idx]).getTotalManagedAssets();
+        }
+
+        ILendingPool.FlashLoanParams memory flashloanParams =
+            ILendingPool.FlashLoanParams(address(this), tokenAddresses, reserveTypes, address(this));
+        bytes memory params = abi.encode(balances.balancesBefore, address(this));
+
+        vm.expectRevert(bytes(Errors.VL_INVALID_INTEREST_RATE_MODE));
         deployedContracts.lendingPool.flashLoan(flashloanParams, amounts, modes, params);
     }
 }

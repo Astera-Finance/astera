@@ -19,6 +19,8 @@ import {UserConfiguration} from
 import {Helpers} from "../../../../../contracts/protocol/libraries/helpers/Helpers.sol";
 import {IFlashLoanReceiver} from "../../../../../contracts/interfaces/IFlashLoanReceiver.sol"; // Add this line
 import {BorrowLogic} from "./BorrowLogic.sol";
+import {EnumerableSet} from
+    "../../../../../lib/openzeppelin-contracts/contracts/utils/structs/EnumerableSet.sol";
 
 /**
  * @title FlashLoanLogic
@@ -34,6 +36,7 @@ library FlashLoanLogic {
     using ValidationLogic for DataTypes.ReserveData;
     using ReserveConfiguration for DataTypes.ReserveConfigurationMap;
     using UserConfiguration for DataTypes.UserConfigurationMap;
+    using EnumerableSet for EnumerableSet.AddressSet;
 
     /**
      * @dev Emitted when a flash loan is executed.
@@ -70,7 +73,6 @@ library FlashLoanLogic {
      * @dev Struct containing parameters for flash loan repayment.
      * @param amount The borrowed amount to be repaid.
      * @param totalPremium The total premium to be paid.
-     * @param liquidityIndex The liquidity index at the time of repayment.
      * @param asset The address of the borrowed asset.
      * @param aToken The address of the corresponding aToken.
      * @param receiverAddress The address of the flash loan receiver.
@@ -78,7 +80,6 @@ library FlashLoanLogic {
     struct FlashLoanRepaymentParams {
         uint256 amount;
         uint256 totalPremium;
-        uint256 liquidityIndex;
         address asset;
         address aToken;
         address receiverAddress;
@@ -120,6 +121,7 @@ library FlashLoanLogic {
      */
     function flashLoan(
         FlashLoanParams memory flashLoanParams,
+        mapping(address => EnumerableSet.AddressSet) storage assetToMinipoolFlowBorrowing,
         mapping(uint256 => DataTypes.ReserveReference) storage reservesList,
         mapping(address => DataTypes.UserConfigurationMap) storage usersConfig,
         mapping(address => mapping(bool => DataTypes.ReserveData)) storage reserves
@@ -127,7 +129,11 @@ library FlashLoanLogic {
         FlashLoanLocalVars memory vars;
 
         ValidationLogic.validateFlashloan(
-            reserves, flashLoanParams.reserveTypes, flashLoanParams.assets, flashLoanParams.amounts
+            reserves,
+            flashLoanParams.reserveTypes,
+            flashLoanParams.assets,
+            flashLoanParams.amounts,
+            flashLoanParams.modes
         );
 
         address[] memory aTokenAddresses = new address[](flashLoanParams.assets.length);
@@ -169,10 +175,10 @@ library FlashLoanLogic {
             ) {
                 _handleFlashLoanRepayment(
                     reserves[vars.currentAsset][vars.currentType],
+                    assetToMinipoolFlowBorrowing[vars.currentAsset],
                     FlashLoanRepaymentParams({
                         amount: vars.currentAmount,
                         totalPremium: vars.currentPremium,
-                        liquidityIndex: reserves[vars.currentAsset][vars.currentType].liquidityIndex,
                         asset: vars.currentAsset,
                         aToken: vars.currentATokenAddress,
                         receiverAddress: flashLoanParams.receiverAddress
@@ -193,6 +199,7 @@ library FlashLoanLogic {
                         flashLoanParams.addressesProvider,
                         flashLoanParams.reservesCount
                     ),
+                    assetToMinipoolFlowBorrowing[vars.currentAsset],
                     reserves,
                     reservesList,
                     usersConfig
@@ -236,7 +243,13 @@ library FlashLoanLogic {
         for (uint256 i = 0; i < assets.length; i++) {
             aTokenAddresses[i] = _reserves[assets[i]][reserveTypes[i]].aTokenAddress;
 
-            premiums[i] = DataTypes.InterestRateMode(modes[i]) == DataTypes.InterestRateMode.NONE
+            uint256 mode = modes[i];
+            require(
+                uint256(type(DataTypes.InterestRateMode).max) >= mode,
+                Errors.VL_INVALID_INTEREST_RATE_MODE
+            );
+
+            premiums[i] = DataTypes.InterestRateMode(mode) == DataTypes.InterestRateMode.NONE
                 ? amounts[i] * flashLoanPremiumTotal / 10000
                 : 0;
 
@@ -252,6 +265,7 @@ library FlashLoanLogic {
      */
     function _handleFlashLoanRepayment(
         DataTypes.ReserveData storage reserve,
+        EnumerableSet.AddressSet storage minipoolFlowBorrowing,
         FlashLoanRepaymentParams memory params
     ) internal {
         uint256 amountPlusPremium = params.amount + params.totalPremium;
@@ -260,7 +274,9 @@ library FlashLoanLogic {
         reserve.updateState();
         reserve.cumulateToLiquidityIndex(IERC20(params.aToken).totalSupply(), params.totalPremium);
 
-        reserve.updateInterestRates(params.asset, params.aToken, amountPlusPremium, 0);
+        reserve.updateInterestRates(
+            minipoolFlowBorrowing, params.asset, params.aToken, amountPlusPremium, 0
+        );
 
         IERC20(params.asset).safeTransferFrom(
             params.receiverAddress, params.aToken, amountPlusPremium
@@ -268,15 +284,6 @@ library FlashLoanLogic {
 
         IAToken(params.aToken).handleRepayment(
             params.receiverAddress, params.receiverAddress, amountPlusPremium
-        );
-
-        emit FlashLoan(
-            params.receiverAddress,
-            msg.sender,
-            params.asset,
-            DataTypes.InterestRateMode(0),
-            params.amount,
-            params.totalPremium
         );
     }
 }

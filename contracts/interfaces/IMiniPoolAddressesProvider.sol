@@ -9,20 +9,24 @@ interface IMiniPoolAddressesProvider {
     /**
      * @dev Emitted when the mini pool implementation is updated.
      * @param newAddress The address of the new MiniPool implementation.
+     * @param miniPoolId The ID of the mini pool.
      */
-    event MiniPoolUpdated(address indexed newAddress);
+    event MiniPoolUpdated(address indexed newAddress, uint256 indexed miniPoolId);
 
     /**
      * @dev Emitted when the aToken implementation is updated.
      * @param newAddress The address of the new aToken implementation.
+     * @param miniPoolId The ID of the mini pool.
      */
-    event ATokenUpdated(address indexed newAddress);
+    event ATokenUpdated(address indexed newAddress, uint256 indexed miniPoolId);
 
     /**
      * @dev Emitted when a flow limit is updated.
+     * @param asset The asset address.
+     * @param miniPool The mini pool address.
      * @param limit The new flow limit value.
      */
-    event FlowLimitUpdated(uint256 indexed limit);
+    event FlowLimitUpdated(address indexed asset, address indexed miniPool, uint256 indexed limit);
 
     /**
      * @dev Emitted when a new mini pool proxy is created.
@@ -55,8 +59,9 @@ interface IMiniPoolAddressesProvider {
     /**
      * @dev Emitted when a pool admin is set.
      * @param newAdmin The address of the new pool admin.
+     * @param miniPoolId The ID of the mini pool.
      */
-    event PoolAdminSet(address newAdmin);
+    event PoolAdminSet(address newAdmin, uint256 miniPoolId);
 
     /**
      * @dev Emitted when a Cod3x treasury is set for all mini pools.
@@ -70,6 +75,12 @@ interface IMiniPoolAddressesProvider {
      * @param miniPoolId The ID of the mini pool.
      */
     event MinipoolOwnerTreasurySet(address indexed treasury, uint256 miniPoolId);
+
+    /**
+     * @dev Emitted when the maximum number of reserves with flow borrowing is updated.
+     * @param newMax The new maximum number of reserves with flow borrowing.
+     */
+    event MaxReservesWithFlowBorrowingUpdated(uint256 newMax);
 
     // Functions related to getting various addresses
     function getMiniPoolCount() external view returns (uint256);
@@ -88,10 +99,12 @@ interface IMiniPoolAddressesProvider {
 
     function getFlowLimiter() external view returns (address);
 
+    function getNumberOfReservesWithFlowBorrowing() external view returns (uint256);
+
+    function getMaxReservesWithFlowBorrowing() external view returns (uint256);
+
     // Functions for MiniPool management
     function getMiniPool(uint256 id) external view returns (address);
-
-    function getAToken6909(uint256 id) external view returns (address);
 
     function getMiniPoolId(address miniPool) external view returns (uint256);
 
@@ -125,4 +138,6 @@ interface IMiniPoolAddressesProvider {
     function setMinipoolOwnerTreasuryToMiniPool(uint256 id, address treasury) external;
 
     function setMiniPoolConfigurator(address configuratorImpl) external;
+
+    function setMaxReservesWithFlowBorrowing(uint256 newMax) external;
 }

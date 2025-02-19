@@ -16,8 +16,8 @@ abstract contract MiniPoolFixtures is LendingPoolFixtures {
     address aTokensErc6909Addr;
     address miniPool;
 
-    uint256[] grainTokenIds = [1000, 1001, 1002, 1003];
-    uint256[] tokenIds = [1128, 1129, 1130, 1131];
+    // uint256[] grainTokenIds = [1000, 1001, 1002, 1003];
+    // uint256[] tokenIds = [1128, 1129, 1130, 1131];
 
     function fixture_depositTokensToMainPool(
         uint256 amount,
@@ -32,10 +32,17 @@ abstract contract MiniPoolFixtures is LendingPoolFixtures {
             uint256 initialATokenBalance = tokenParams.aToken.balanceOf(user);
             tokenParams.token.approve(address(deployedContracts.lendingPool), amount);
             deployedContracts.lendingPool.deposit(address(tokenParams.token), true, amount, user);
-            console.log("User token balance shall be {initialTokenBalance - amount}");
+            // console.log("User token balance shall be {initialTokenBalance - amount}");
             assertEq(tokenParams.token.balanceOf(user), initialTokenBalance - amount, "01");
-            console.log("User atoken balance shall be {initialATokenBalance + amount}");
-            assertEq(tokenParams.aToken.balanceOf(user), initialATokenBalance + amount, "02");
+            DynamicData memory dynamicData = deployedContracts
+                .cod3xLendDataProvider
+                .getLpReserveDynamicData(address(tokenParams.token), true);
+            // console.log("User atoken balance shall be {initialATokenBalance + amount}");
+            assertEq(
+                tokenParams.aToken.balanceOf(user),
+                initialATokenBalance + amount.rayDiv(dynamicData.liquidityIndex),
+                "Wrong user's atoken balance"
+            );
         }
         vm.stopPrank();
     }
@@ -62,9 +69,12 @@ abstract contract MiniPoolFixtures is LendingPoolFixtures {
             IMiniPool(miniPool).getReserveNormalizedIncome(address(tokenParams.aToken))
         );
         console.log("User atoken 6909 balance shall be initial balance + scaled amount");
-        console.log("aTokenUserBalance: ", aErc6909Token.balanceOf(user, aTokenId));
-        console.log("amount: ", amount);
-        console.log("BalanceOf: ", aErc6909Token.balanceOf(user, aTokenId));
+        console.log(
+            "User's aTokenUserBalance (tranched): ", aErc6909Token.balanceOf(user, aTokenId)
+        );
+        console.log("User's aTokenUserBalance : ", aErc6909Token.balanceOf(user, aTokenId + 128));
+        console.log("ScaledAmount: ", scaledAmount);
+        console.log("Users's main aToken: ", tokenParams.aToken.balanceOf(user));
         assertEq(
             aToken6909Balance + scaledAmount,
             aErc6909Token.scaledTotalSupply(aTokenId),
@@ -185,9 +195,10 @@ abstract contract MiniPoolFixtures is LendingPoolFixtures {
             /* Sb deposits tokens which will be borrowed */
             address liquidityProvider = makeAddr("liquidityProvider");
             console.log(
-                "Deposit borrowTokens: %s with balance: %s",
+                "Deposit borrowTokens: %s with balance: %s %s",
                 2 * amount,
-                borrowTokenParams.token.balanceOf(user)
+                borrowTokenParams.token.balanceOf(user),
+                borrowTokenParams.token.symbol()
             );
             fixture_MiniPoolDeposit(amount, borrowOffset, liquidityProvider, borrowTokenParams);
 
@@ -195,9 +206,10 @@ abstract contract MiniPoolFixtures is LendingPoolFixtures {
             uint256 tokenId = 1128 + collateralOffset;
             uint256 aTokenId = 1000 + collateralOffset;
             console.log(
-                "Deposit collateral: %s with balance: %s",
+                "Deposit collateral: %s with balance: %s %s",
                 minNrOfTokens,
-                collateralTokenParams.token.balanceOf(address(this))
+                collateralTokenParams.token.balanceOf(address(this)),
+                collateralTokenParams.token.symbol()
             );
             fixture_MiniPoolDeposit(minNrOfTokens, collateralOffset, user, collateralTokenParams);
             require(aErc6909Token.balanceOf(user, tokenId) > 0, "No token balance");

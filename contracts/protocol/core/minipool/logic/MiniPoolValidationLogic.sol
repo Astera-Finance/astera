@@ -51,7 +51,7 @@ library MiniPoolValidationLogic {
         uint256 depositCap = reserve.configuration.getDepositCap();
         require(
             depositCap == 0
-                || IAERC6909(reserve.aTokenAddress).totalSupply(reserve.aTokenID) + amount
+                || IAERC6909(reserve.aErc6909).totalSupply(reserve.aTokenID) + amount
                     < depositCap * (10 ** reserve.configuration.getDecimals()),
             Errors.VL_DEPOSIT_CAP_REACHED
         );
@@ -136,6 +136,7 @@ library MiniPoolValidationLogic {
         uint256 amountInETH;
         uint256 reservesCount;
         address oracle;
+        uint256 minAmount;
     }
 
     /**
@@ -186,6 +187,11 @@ library MiniPoolValidationLogic {
         require(!vars.isFrozen, Errors.VL_RESERVE_FROZEN);
         require(validateParams.amount != 0, Errors.VL_INVALID_AMOUNT);
         require(vars.borrowingEnabled, Errors.VL_BORROWING_NOT_ENABLED);
+        require(
+            IAERC6909(reserve.aErc6909).totalSupply(reserve.variableDebtTokenID)
+                + validateParams.amount >= validateParams.minAmount,
+            Errors.VL_DEBT_TOO_SMALL
+        );
 
         (
             vars.userCollateralBalanceETH,
@@ -200,16 +206,16 @@ library MiniPoolValidationLogic {
         require(vars.userCollateralBalanceETH > 0, Errors.VL_COLLATERAL_BALANCE_IS_0);
 
         require(
-            vars.healthFactor > MiniPoolGenericLogic.HEALTH_FACTOR_LIQUIDATION_THRESHOLD,
+            vars.healthFactor >= MiniPoolGenericLogic.HEALTH_FACTOR_LIQUIDATION_THRESHOLD,
             Errors.VL_HEALTH_FACTOR_LOWER_THAN_LIQUIDATION_THRESHOLD
         );
 
         // Add the current already borrowed amount to the amount requested to calculate the total collateral needed.
         vars.amountOfCollateralNeededETH =
-            (vars.userBorrowBalanceETH + validateParams.amountInETH).percentDiv(vars.currentLtv); //LTV is calculated in percentage
+            (vars.userBorrowBalanceETH + validateParams.amountInETH).percentDivUp(vars.currentLtv); //LTV is calculated in percentage
 
         require(
-            vars.amountOfCollateralNeededETH <= vars.userCollateralBalanceETH,
+            vars.amountOfCollateralNeededETH < vars.userCollateralBalanceETH,
             Errors.VL_COLLATERAL_CANNOT_COVER_NEW_BORROW
         );
     }
@@ -229,7 +235,8 @@ library MiniPoolValidationLogic {
         DataTypes.MiniPoolReserveData storage reserve,
         uint256 amountSent,
         address onBehalfOf,
-        uint256 variableDebt
+        uint256 variableDebt,
+        uint256 minAmount
     ) internal view {
         bool isActive = reserve.configuration.getActive();
 
@@ -242,6 +249,11 @@ library MiniPoolValidationLogic {
         require(
             amountSent != type(uint256).max || msg.sender == onBehalfOf,
             Errors.VL_NO_EXPLICIT_AMOUNT_TO_REPAY_ON_BEHALF
+        );
+        require(
+            IAERC6909(reserve.aErc6909).totalSupply(reserve.variableDebtTokenID) - amountSent
+                >= minAmount,
+            Errors.VL_DEBT_TOO_SMALL
         );
     }
 
@@ -268,7 +280,7 @@ library MiniPoolValidationLogic {
         address oracle
     ) internal view {
         uint256 underlyingBalance =
-            IAERC6909(reserve.aTokenAddress).balanceOf(msg.sender, reserve.aTokenID);
+            IAERC6909(reserve.aErc6909).balanceOf(msg.sender, reserve.aTokenID);
 
         require(underlyingBalance > 0, Errors.VL_UNDERLYING_BALANCE_NOT_GREATER_THAN_0);
 
@@ -302,10 +314,14 @@ library MiniPoolValidationLogic {
     function validateFlashloan(
         mapping(address => DataTypes.MiniPoolReserveData) storage reserves,
         address[] memory assets,
-        uint256[] memory amounts
+        uint256[] memory amounts,
+        uint256[] memory modes
     ) internal view {
-        require(assets.length == amounts.length, Errors.VL_INCONSISTENT_FLASHLOAN_PARAMS);
-        for (uint256 i = 0; i < assets.length; i++) {
+        uint256 len = assets.length;
+        require(len == amounts.length, Errors.VL_INCONSISTENT_FLASHLOAN_PARAMS);
+        require(len == modes.length, Errors.VL_INCONSISTENT_FLASHLOAN_PARAMS);
+
+        for (uint256 i = 0; i < len; i++) {
             validateFlashloanSimple(reserves[assets[i]]);
         }
     }
@@ -321,7 +337,7 @@ library MiniPoolValidationLogic {
     function validateFlashloanSimple(DataTypes.MiniPoolReserveData storage reserve) internal view {
         DataTypes.ReserveConfigurationMap storage configuration = reserve.configuration;
         require(
-            !IAERC6909(reserve.aTokenAddress).isTranche(reserve.aTokenID),
+            !IAERC6909(reserve.aErc6909).isTranche(reserve.aTokenID),
             Errors.VL_TRANCHED_ASSET_CANNOT_BE_FLASHLOAN
         );
         require(!configuration.getFrozen(), Errors.VL_RESERVE_FROZEN);

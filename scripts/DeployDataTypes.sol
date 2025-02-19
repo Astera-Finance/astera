@@ -31,6 +31,7 @@ import {VariableDebtToken} from "contracts/protocol/tokenization/ERC20/VariableD
 import {Oracle} from "contracts/protocol/core/Oracle.sol";
 import {IStrategy} from "contracts/mocks/dependencies/IStrategy.sol";
 import {WadRayMath} from "contracts/protocol/libraries/math/WadRayMath.sol";
+import {WETHGateway} from "contracts/misc/WETHGateway.sol";
 
 // Structures
 struct DeployedContracts {
@@ -39,6 +40,7 @@ struct DeployedContracts {
     LendingPoolAddressesProvider lendingPoolAddressesProvider;
     LendingPool lendingPool;
     Treasury treasury;
+    WETHGateway wethGateway;
     LendingPoolConfigurator lendingPoolConfigurator;
     DefaultReserveInterestRateStrategy[] stableStrategies;
     DefaultReserveInterestRateStrategy[] volatileStrategies;
@@ -50,8 +52,10 @@ struct DeployedContracts {
     ATokensAndRatesHelper aTokensAndRatesHelper;
     AToken aToken;
     VariableDebtToken variableDebtToken;
-    ATokenERC6909[] aTokenErc6909;
-    MiniPool[] miniPoolImpl;
+    ATokenERC6909 aTokenErc6909Impl;
+    MiniPool miniPoolImpl;
+    ATokenERC6909[] aTokenErc6909Proxy;
+    MiniPool[] miniPoolImplProxy;
     MiniPoolAddressesProvider miniPoolAddressesProvider;
     MiniPoolConfigurator miniPoolConfigurator;
     FlowLimiter flowLimiter;
@@ -72,7 +76,10 @@ struct General {
     string aTokenSymbolPrefix;
     string debtTokenNamePrefix;
     string debtTokenSymbolPrefix;
+    address marketReferenceCurrencyAggregator;
+    address networkBaseTokenAggregator;
     address treasury;
+    uint256 usdBootstrapAmount;
 }
 
 struct Roles {
@@ -171,4 +178,10 @@ struct Rehypothecation {
     string symbol;
     address tokenAddress;
     address vault;
+}
+
+struct DataProvider {
+    bool deploy;
+    address marketReferenceCurrencyAggregator;
+    address networkBaseTokenAggregator;
 }

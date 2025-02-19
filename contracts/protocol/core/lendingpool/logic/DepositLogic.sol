@@ -15,6 +15,8 @@ import {ReserveLogic} from "./ReserveLogic.sol";
 import {UserConfiguration} from
     "../../../../../contracts/protocol/libraries/configuration/UserConfiguration.sol";
 import {ValidationLogic} from "./ValidationLogic.sol";
+import {EnumerableSet} from
+    "../../../../../lib/openzeppelin-contracts/contracts/utils/structs/EnumerableSet.sol";
 
 /**
  * @title DepositLogic library
@@ -29,6 +31,7 @@ library DepositLogic {
     using ReserveLogic for DataTypes.ReserveData;
     using ReserveConfiguration for DataTypes.ReserveConfigurationMap;
     using UserConfiguration for DataTypes.UserConfigurationMap;
+    using EnumerableSet for EnumerableSet.AddressSet;
 
     /**
      * @dev Emitted when a deposit is made to a reserve.
@@ -71,6 +74,7 @@ library DepositLogic {
      */
     function deposit(
         DepositParams memory params,
+        EnumerableSet.AddressSet storage minipoolFlowBorrowing,
         mapping(address => mapping(bool => DataTypes.ReserveData)) storage _reserves,
         mapping(address => DataTypes.UserConfigurationMap) storage _usersConfig,
         ILendingPoolAddressesProvider
@@ -82,7 +86,7 @@ library DepositLogic {
         address aToken = reserve.aTokenAddress;
 
         reserve.updateState();
-        reserve.updateInterestRates(params.asset, aToken, params.amount, 0);
+        reserve.updateInterestRates(minipoolFlowBorrowing, params.asset, aToken, params.amount, 0);
 
         IERC20(params.asset).safeTransferFrom(msg.sender, aToken, params.amount);
 

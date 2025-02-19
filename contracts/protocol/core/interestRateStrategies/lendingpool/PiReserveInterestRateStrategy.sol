@@ -13,6 +13,8 @@ import {BasePiReserveRateStrategy} from
 import {WadRayMath} from "../../../../../contracts/protocol/libraries/math/WadRayMath.sol";
 import {PercentageMath} from "../../../../../contracts/protocol/libraries/math/PercentageMath.sol";
 import {DataTypes} from "../../../../../contracts/protocol/libraries/types/DataTypes.sol";
+import {ReserveConfiguration} from
+    "../../../../../contracts/protocol/libraries/configuration/ReserveConfiguration.sol";
 
 /**
  * @title PiReserveInterestRateStrategy contract.
@@ -96,11 +98,13 @@ contract PiReserveInterestRateStrategy is
 
         // borrow rate
         uint256 currentVariableBorrowRate =
-            transferFunction(getControllerError(getNormalizedError(utilizationRate)));
+            transferFunction(_getControllerError(_getNormalizedError(utilizationRate)));
 
         // liquity rate
-        uint256 currentLiquidityRate = getLiquidityRate(
-            currentVariableBorrowRate, utilizationRate, getCod3xReserveFactor(reserve.configuration)
+        uint256 currentLiquidityRate = _getLiquidityRate(
+            currentVariableBorrowRate,
+            utilizationRate,
+            ReserveConfiguration.getCod3xReserveFactorMemory(reserve.configuration)
         );
 
         return (currentLiquidityRate, currentVariableBorrowRate, utilizationRate);

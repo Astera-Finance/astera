@@ -1,11 +1,11 @@
 {
-    "collateralAddress": "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913",
-    "borrowAssetAddress": "0x0555E30da8f98308EdB960aa94C0Db47230d2B9c",
-    "depositAmount": 5000000000,
-    "borrowAmount": 20000,
-    "bootstrapMainPool": true,
-    "bootstrapMiniPool": true,
-    "usdAmountToDeposit": 1000000000000000000000,
+    "collateralAddress": "0x434F73Ce7ce4C53355b1DEF2D1D2e38543d236c2",
+    "borrowAssetAddress": "0x8c53BF01E052A2aFA06b2d9d87aE49972799E62f",
+    "depositAmount": 1000000000,
+    "borrowAmount": 5000000,
+    "bootstrapMainPool": false,
+    "bootstrapMiniPool": false,
+    "usdAmountToDeposit": 50000000000000000000,
     "poolAddressesProviderConfig": {
         "marketId": "UV TestNet Market",
         "poolId": 0,

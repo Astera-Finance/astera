@@ -28,6 +28,7 @@ import {BorrowLogic} from "contracts/protocol/core/lendingpool/logic/BorrowLogic
 import {FlashLoanLogic} from "contracts/protocol/core/lendingpool/logic/FlashLoanLogic.sol";
 import {LiquidationLogic} from "contracts/protocol/core/lendingpool/logic/LiquidationLogic.sol";
 import {IMiniPoolAddressesProvider} from "contracts/interfaces/IMiniPoolAddressesProvider.sol";
+import {IAddressProviderUpdatable} from "contracts/interfaces/IAddressProviderUpdatable.sol";
 
 /**
  * @title LendingPool contract
@@ -41,7 +42,12 @@ import {IMiniPoolAddressesProvider} from "contracts/interfaces/IMiniPoolAddresse
  *   LendingPoolAddressesProvider
  * @author Cod3x
  */
-contract LendingPoolV2 is VersionedInitializable, ILendingPool, LendingPoolStorage {
+contract LendingPoolV2 is
+    VersionedInitializable,
+    ILendingPool,
+    LendingPoolStorage,
+    IAddressProviderUpdatable
+{
     using WadRayMath for uint256;
     using PercentageMath for uint256;
     using SafeERC20 for IERC20;
@@ -100,8 +106,8 @@ contract LendingPoolV2 is VersionedInitializable, ILendingPool, LendingPoolStora
      *   on subsequent operations.
      * @param provider The address of the LendingPoolAddressesProvider
      */
-    function initialize(ILendingPoolAddressesProvider provider) public initializer {
-        _addressesProvider = provider;
+    function initialize(address provider) public initializer {
+        _addressesProvider = ILendingPoolAddressesProvider(provider);
         _updateFlashLoanFee(9);
         _maxNumberOfReserves = 128;
     }
@@ -123,6 +129,7 @@ contract LendingPoolV2 is VersionedInitializable, ILendingPool, LendingPoolStora
     {
         DepositLogic.deposit(
             DepositLogic.DepositParams(asset, reserveType, amount, onBehalfOf),
+            _assetToMinipoolFlowBorrowing[asset],
             _reserves,
             _usersConfig,
             _addressesProvider
@@ -149,6 +156,7 @@ contract LendingPoolV2 is VersionedInitializable, ILendingPool, LendingPoolStora
     {
         return WithdrawLogic.withdraw(
             WithdrawLogic.withdrawParams(asset, reserveType, amount, to, _reservesCount),
+            _assetToMinipoolFlowBorrowing[asset],
             _reserves,
             _usersConfig,
             _reservesList,
@@ -186,6 +194,7 @@ contract LendingPoolV2 is VersionedInitializable, ILendingPool, LendingPoolStora
                 _addressesProvider,
                 _reservesCount
             ),
+            _assetToMinipoolFlowBorrowing[asset],
             _reserves,
             _reservesList,
             _usersConfig
@@ -212,7 +221,8 @@ contract LendingPoolV2 is VersionedInitializable, ILendingPool, LendingPoolStora
         returns (uint256)
     {
         return BorrowLogic.repay(
-            BorrowLogic.repayParams(asset, reserveType, amount, onBehalfOf, _addressesProvider),
+            BorrowLogic.RepayParams(asset, reserveType, amount, onBehalfOf, _addressesProvider),
+            _assetToMinipoolFlowBorrowing[asset],
             _reserves,
             _usersConfig
         );
@@ -232,7 +242,8 @@ contract LendingPoolV2 is VersionedInitializable, ILendingPool, LendingPoolStora
         returns (uint256)
     {
         return BorrowLogic.repayWithAtokens(
-            BorrowLogic.repayParams(asset, reserveType, amount, msg.sender, _addressesProvider),
+            BorrowLogic.RepayParams(asset, reserveType, amount, msg.sender, _addressesProvider),
+            _assetToMinipoolFlowBorrowing[asset],
             _reserves,
             _usersConfig
         );
@@ -299,6 +310,7 @@ contract LendingPoolV2 is VersionedInitializable, ILendingPool, LendingPoolStora
 
         LiquidationLogic.liquidationCall(
             _reserves,
+            _assetToMinipoolFlowBorrowing,
             _usersConfig,
             _reservesList,
             LiquidationLogic.liquidationCallParams(
@@ -350,6 +362,7 @@ contract LendingPoolV2 is VersionedInitializable, ILendingPool, LendingPoolStora
                 modes: modes,
                 params: params
             }),
+            _assetToMinipoolFlowBorrowing,
             _reservesList,
             _usersConfig,
             _reserves
@@ -360,11 +373,10 @@ contract LendingPoolV2 is VersionedInitializable, ILendingPool, LendingPoolStora
      * @notice Allows minipools to borrow unbacked amounts of reserve assets.
      * @dev This function is restricted to minipools only.
      * @param asset The address of the underlying asset to borrow.
-     * @param reserveType Whether the reserve is boosted by a vault.
      * @param amount The amount to borrow.
      * @param aTokenAddress The address of the aToken.
      */
-    function miniPoolBorrow(address asset, bool reserveType, uint256 amount, address aTokenAddress)
+    function miniPoolBorrow(address asset, uint256 amount, address aTokenAddress)
         external
         override
         whenNotPaused
@@ -373,14 +385,9 @@ contract LendingPoolV2 is VersionedInitializable, ILendingPool, LendingPoolStora
 
         BorrowLogic.executeMiniPoolBorrow(
             BorrowLogic.ExecuteMiniPoolBorrowParams(
-                asset,
-                reserveType,
-                amount,
-                msg.sender,
-                aTokenAddress,
-                _addressesProvider,
-                _reservesCount
+                asset, true, amount, msg.sender, aTokenAddress, _addressesProvider, _reservesCount
             ),
+            _assetToMinipoolFlowBorrowing[asset],
             _reserves
         );
     }
@@ -831,5 +838,78 @@ contract LendingPoolV2 is VersionedInitializable, ILendingPool, LendingPoolStora
         onlyLendingPoolConfigurator
     {
         IAToken(_reserves[asset][reserveType].aTokenAddress).setTreasury(treasury);
+    }
+
+    /**
+     * @notice Returns the non-rebasing aToken address associated with a aToken.
+     * @param aToken The address of the aToken.
+     * @return The address of the non-rebasing aToken.
+     */
+    function getATokenNonRebasingFromAtoken(address aToken) external view returns (address) {
+        return IAToken(aToken).WRAPPER_ADDRESS();
+    }
+
+    /**
+     * @notice Synchronizes the reserve indexes state for a specific asset
+     * @dev Only callable by the LendingPoolConfigurator
+     * @param asset The address of the underlying asset of the reserve
+     * @param reserveType Whether the reserve is boosted by a vault
+     */
+    function syncIndexesState(address asset, bool reserveType)
+        external
+        virtual
+        override
+        onlyLendingPoolConfigurator
+    {
+        DataTypes.ReserveData storage reserve = _reserves[asset][reserveType];
+
+        reserve.updateState();
+    }
+
+    /**
+     * @notice Synchronizes the interest rates state for a specific asset
+     * @dev Only callable by the LendingPoolConfigurator
+     * @param asset The address of the underlying asset of the reserve
+     * @param reserveType Whether the reserve is boosted by a vault
+     */
+    function syncRatesState(address asset, bool reserveType)
+        external
+        virtual
+        override
+        onlyLendingPoolConfigurator
+    {
+        DataTypes.ReserveData storage reserve = _reserves[asset][reserveType];
+
+        reserve.updateInterestRates(
+            _assetToMinipoolFlowBorrowing[asset], asset, reserve.aTokenAddress, 0, 0
+        );
+    }
+
+    /**
+     * @notice Returns the list of minipools that are currently flow borrowing from a specific asset.
+     * @param asset The address of the asset.
+     * @return The list of minipool addresses that are flow borrowing from the asset.
+     */
+    function getMinipoolFlowBorrowing(address asset) external view returns (address[] memory) {
+        address[] memory minipools = new address[](1);
+        return minipools;
+    }
+    /**
+     * @notice Returns the list of mini pools that are currently flow borrowing.
+     * @return The list of mini pool addresses that are flow borrowing.
+     */
+
+    function getMinipoolFlowBorrowing() external view returns (address[] memory) {
+        address[] memory minipoolFlowBorrowing = new address[](1);
+        return minipoolFlowBorrowing;
+    }
+    /**
+     * @notice Checks if a mini pool is currently flow borrowing.
+     * @param minipool The address of the mini pool to check.
+     * @return True if the mini pool is flow borrowing, false otherwise.
+     */
+
+    function isMinipoolFlowBorrowing(address minipool) external view returns (bool) {
+        return true;
     }
 }

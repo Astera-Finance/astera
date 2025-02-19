@@ -63,13 +63,13 @@ contract MiniPoolLiquidationTest is MiniPoolDepositBorrowTest {
         address user = makeAddr("user");
         TokenParams memory collateralParams = TokenParams(
             erc20Tokens[collateralOffset],
-            aTokensWrapper[collateralOffset],
-            oracle.getAssetPrice(address(erc20Tokens[collateralOffset]))
+            commonContracts.aTokensWrapper[collateralOffset],
+            commonContracts.oracle.getAssetPrice(address(erc20Tokens[collateralOffset]))
         );
         TokenParams memory borrowParams = TokenParams(
             erc20Tokens[borrowOffset],
-            aTokensWrapper[borrowOffset],
-            oracle.getAssetPrice(address(erc20Tokens[borrowOffset]))
+            commonContracts.aTokensWrapper[borrowOffset],
+            commonContracts.oracle.getAssetPrice(address(erc20Tokens[borrowOffset]))
         );
         IAERC6909 aErc6909Token =
             IAERC6909(miniPoolContracts.miniPoolAddressesProvider.getMiniPoolToAERC6909(miniPool));
@@ -337,13 +337,13 @@ contract MiniPoolLiquidationTest is MiniPoolDepositBorrowTest {
 
         TokenParams memory collateralParams = TokenParams(
             erc20Tokens[collateralOffset],
-            aTokensWrapper[collateralOffset],
-            oracle.getAssetPrice(address(erc20Tokens[collateralOffset]))
+            commonContracts.aTokensWrapper[collateralOffset],
+            commonContracts.oracle.getAssetPrice(address(erc20Tokens[collateralOffset]))
         );
         TokenParams memory borrowParams = TokenParams(
             erc20Tokens[borrowOffset],
-            aTokensWrapper[borrowOffset],
-            oracle.getAssetPrice(address(erc20Tokens[borrowOffset]))
+            commonContracts.aTokensWrapper[borrowOffset],
+            commonContracts.oracle.getAssetPrice(address(erc20Tokens[borrowOffset]))
         );
         address user = makeAddr("user");
         amount = bound(

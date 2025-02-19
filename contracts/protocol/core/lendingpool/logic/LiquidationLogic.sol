@@ -25,6 +25,8 @@ import {ReserveConfiguration} from
 import {ReserveLogic} from
     "../../../../../contracts/protocol/core/lendingpool/logic/ReserveLogic.sol";
 import {DataTypes} from "../../../../../contracts/protocol/libraries/types/DataTypes.sol";
+import {EnumerableSet} from
+    "../../../../../lib/openzeppelin-contracts/contracts/utils/structs/EnumerableSet.sol";
 
 /**
  * @title LiquidationLogic library
@@ -39,6 +41,7 @@ library LiquidationLogic {
     using ReserveLogic for DataTypes.ReserveData;
     using ReserveConfiguration for DataTypes.ReserveConfigurationMap;
     using UserConfiguration for DataTypes.UserConfigurationMap;
+    using EnumerableSet for EnumerableSet.AddressSet;
 
     /// @dev The close factor percentage for liquidations (50%).
     uint256 internal constant LIQUIDATION_CLOSE_FACTOR_PERCENT = 5000;
@@ -136,6 +139,7 @@ library LiquidationLogic {
      */
     function liquidationCall(
         mapping(address => mapping(bool => DataTypes.ReserveData)) storage reserves,
+        mapping(address => EnumerableSet.AddressSet) storage assetToMinipoolFlowBorrowing,
         mapping(address => DataTypes.UserConfigurationMap) storage usersConfig,
         mapping(uint256 => DataTypes.ReserveReference) storage reservesList,
         liquidationCallParams memory params
@@ -217,7 +221,11 @@ library LiquidationLogic {
         }
 
         debtReserve.updateInterestRates(
-            params.debtAsset, debtReserve.aTokenAddress, vars.actualDebtToLiquidate, 0
+            assetToMinipoolFlowBorrowing[params.debtAsset],
+            params.debtAsset,
+            debtReserve.aTokenAddress,
+            vars.actualDebtToLiquidate,
+            0
         );
 
         if (params.receiveAToken) {
@@ -235,6 +243,7 @@ library LiquidationLogic {
         } else {
             collateralReserve.updateState();
             collateralReserve.updateInterestRates(
+                assetToMinipoolFlowBorrowing[params.collateralAsset],
                 params.collateralAsset,
                 address(vars.collateralAtoken),
                 0,
@@ -252,7 +261,7 @@ library LiquidationLogic {
 
         // If the collateral being liquidated is equal to the `params.user` balance,
         // we set the currency as not being used as collateral anymore.
-        if (vars.maxCollateralToLiquidate == vars.userCollateralBalance) {
+        if (vars.collateralAtoken.balanceOf(params.user) == 0) {
             userConfig.setUsingAsCollateral(collateralReserve.id, false);
             emit ReserveUsedAsCollateralDisabled(params.collateralAsset, params.user);
         }

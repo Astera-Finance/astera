@@ -1,98 +1,80 @@
 {
-    "general": {
-        "aTokenNamePrefix": "Cod3x Lend ",
-        "aTokenSymbolPrefix": "cl",
-        "debtTokenNamePrefix": "Cod3x Lend variable debt bearing ",
-        "debtTokenSymbolPrefix": "clDebt",
-        "treasury": "0x3151CfCA393FE5Eec690feD2a2446DA5a073d01B"
+  "general": {
+    "aTokenNamePrefix": "Cod3x Lend ",
+    "aTokenSymbolPrefix": "cl",
+    "debtTokenNamePrefix": "Cod3x Lend variable debt bearing ",
+    "debtTokenSymbolPrefix": "clDebt",
+    "marketReferenceCurrencyAggregator": "0x7e860098F58bBFC8648a4311b374B1D669a2bc6B",
+    "networkBaseTokenAggregator": "0x71041dddad3595F9CEd3DcCFBe3D1F4b0a16Bb70",
+    "treasury": "0x3151CfCA393FE5Eec690feD2a2446DA5a073d01B",
+    "usdBootstrapAmount": 1000000000000000000
+  },
+  "poolReserversConfig": [
+    {
+      "baseLtv": 7000,
+      "borrowingEnabled": true,
+      "interestStrat": "VOLATILE",
+      "interestStratId": 0,
+      "liquidationBonus": 10500,
+      "liquidationThreshold": 7500,
+      "miniPoolOwnerFee": 150,
+      "params": "0x10",
+      "rates": 0.03e27,
+      "reserveFactor": 1500,
+      "reserveType": true,
+      "symbol": "aWETH",
+      "tokenAddress": "0x1262fa9c3E5EDbf0AA3b3d97f4Ee6e9afCf8f75B"
     },
-    "poolReserversConfig": [
-        {
-            "baseLtv": 7000,
-            "borrowingEnabled": true,
-            "interestStrat": "VOLATILE",
-            "interestStratId": 0,
-            "liquidationBonus": 10500,
-            "liquidationThreshold": 7500,
-            "miniPoolOwnerFee": 150,
-            "params": "0x10",
-            "rates": 0.03e27,
-            "reserveFactor": 1500,
-            "reserveType": true,
-            "symbol": "WETH",
-            "tokenAddress": "0x4200000000000000000000000000000000000006"
-        },
-        {
-            "baseLtv": 7000,
-            "borrowingEnabled": true,
-            "interestStrat": "STABLE",
-            "interestStratId": 0,
-            "liquidationBonus": 10500,
-            "liquidationThreshold": 7500,
-            "miniPoolOwnerFee": 150,
-            "params": "0x10",
-            "rates": 0.03e27,
-            "reserveFactor": 1500,
-            "reserveType": true,
-            "symbol": "USDC",
-            "tokenAddress": "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913"
-        }
-    ],
-    "usePreviousStrats": true,
-    "readPreviousContracts": true,
-    "volatileStrategies": [
-        {
-            "baseVariableBorrowRate": 0e27,
-            "optimalUtilizationRate": 0.45e27,
-            "variableRateSlope1": 0.07e27,
-            "variableRateSlope2": 3e27
-        }
-    ],
-    "stableStrategies": [
-        {
-            "baseVariableBorrowRate": 0e27,
-            "optimalUtilizationRate": 0.75e27,
-            "variableRateSlope1": 0.01e27,
-            "variableRateSlope2": 0.1e27
-        }
-    ],
-    "piStrategies": [
-        {
-            "assetReserveType": true,
-            "ki": 13e19,
-            "kp": 1e27,
-            "maxITimeAmp": 1728000,
-            "minControllerError": -400e24,
-            "optimalUtilizationRate": 45e25,
-            "symbol": "WETH",
-            "tokenAddress": "0x4200000000000000000000000000000000000006"
-        },
-        {
-            "assetReserveType": true,
-            "ki": 13e19,
-            "kp": 1e27,
-            "maxITimeAmp": 1728000,
-            "minControllerError": -400e24,
-            "optimalUtilizationRate": 45e25,
-            "symbol": "USDC",
-            "tokenAddress": "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913"
-        }
-    ],
-    "oracleConfig": {
-        "assets": [
-            "0x4200000000000000000000000000000000000006",
-            "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913"
-        ],
-        "baseCurrency": "0x0000000000000000000000000000000000000000",
-        "baseCurrencyUnit": 1e18,
-        "fallbackOracle": "0x0000000000000000000000000000000000000000",
-        "sources": [
-            "0x639Fe6ab55C921f74e7fac1ee960C0B6293ba612",
-            "0x50834F3163758fcC1Df9973b6e91f0F0F0434aD3"
-        ],
-        "timeouts": [
-            100000,
-            100000
-        ]
+    {
+      "baseLtv": 7000,
+      "borrowingEnabled": true,
+      "interestStrat": "STABLE",
+      "interestStratId": 0,
+      "liquidationBonus": 10500,
+      "liquidationThreshold": 7500,
+      "miniPoolOwnerFee": 150,
+      "params": "0x10",
+      "rates": 0.03e27,
+      "reserveFactor": 1500,
+      "reserveType": true,
+      "symbol": "aUSDC",
+      "tokenAddress": "0xFd56bdA365c7274A91ef42e1A1C1557Be09fEdd3"
     }
+  ],
+  "usePreviousStrats": true,
+  "readPreviousContracts": true,
+  "volatileStrategies": [
+    {
+      "baseVariableBorrowRate": 0e27,
+      "optimalUtilizationRate": 0.45e27,
+      "variableRateSlope1": 0.07e27,
+      "variableRateSlope2": 3e27
+    }
+  ],
+  "stableStrategies": [
+    {
+      "baseVariableBorrowRate": 0e27,
+      "optimalUtilizationRate": 0.75e27,
+      "variableRateSlope1": 0.01e27,
+      "variableRateSlope2": 0.1e27
+    }
+  ],
+  "piStrategies": [],
+  "oracleConfig": {
+    "assets": [
+      "0x1262fa9c3E5EDbf0AA3b3d97f4Ee6e9afCf8f75B",
+      "0xFd56bdA365c7274A91ef42e1A1C1557Be09fEdd3"
+    ],
+    "baseCurrency": "0x0000000000000000000000000000000000000000",
+    "baseCurrencyUnit": 1e18,
+    "fallbackOracle": "0x0000000000000000000000000000000000000000",
+    "sources": [
+      "0x4aDC67696bA383F43DD60A9e78F2C97Fbbfc7cb1",
+      "0xd30e2101a97dcbAeBCBC04F14C3f624E67A35165"
+    ],
+    "timeouts": [
+      100000,
+      100000
+    ]
+  }
 }

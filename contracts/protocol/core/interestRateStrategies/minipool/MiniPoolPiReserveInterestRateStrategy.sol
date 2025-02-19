@@ -17,6 +17,8 @@ import {PercentageMath} from "../../../../../contracts/protocol/libraries/math/P
 import {MathUtils} from "../../../../../contracts/protocol/libraries/math/MathUtils.sol";
 import {DataTypes} from "../../../../../contracts/protocol/libraries/types/DataTypes.sol";
 import {ILendingPool} from "../../../../../contracts/interfaces/ILendingPool.sol";
+import {ReserveConfiguration} from
+    "../../../../../contracts/protocol/libraries/configuration/ReserveConfiguration.sol";
 
 /**
  * @title MiniPoolPiReserveInterestRateStrategy contract.
@@ -43,7 +45,7 @@ contract MiniPoolPiReserveInterestRateStrategy is
     uint256 public constant SECONDS_PER_YEAR = 365 days;
 
     /// @dev ID of the minipool this strategy is associated with.
-    uint256 public _minipoolId;
+    uint256 public immutable _minipoolId;
 
     /**
      * @notice Initializes the MiniPoolPiReserveInterestRateStrategy contract.
@@ -96,18 +98,14 @@ contract MiniPoolPiReserveInterestRateStrategy is
     {
         (,, bool isTranched) = IAERC6909(aToken).getIdForUnderlying(asset);
 
+        availableLiquidity = IERC20(asset).balanceOf(aToken);
+
         if (isTranched) {
             IFlowLimiter flowLimiter =
                 IFlowLimiter(IMiniPoolAddressesProvider(_addressProvider).getFlowLimiter());
             underlying = IAToken(asset).UNDERLYING_ASSET_ADDRESS();
             address minipool = IAERC6909(aToken).getMinipoolAddress();
             currentFlow = flowLimiter.currentFlow(underlying, minipool);
-
-            availableLiquidity = IERC20(asset).balanceOf(aToken)
-                + IAToken(asset).convertToShares(flowLimiter.getFlowLimit(underlying, minipool))
-                - IAToken(asset).convertToShares(currentFlow);
-        } else {
-            availableLiquidity = IERC20(asset).balanceOf(aToken);
         }
     }
 
@@ -121,7 +119,7 @@ contract MiniPoolPiReserveInterestRateStrategy is
         );
         DataTypes.MiniPoolReserveData memory reserve =
             IMiniPool(_getLendingPool()).getReserveData(_asset);
-        uint256 availableLiquidity = IERC20(_asset).balanceOf(reserve.aTokenAddress);
+        uint256 availableLiquidity = IERC20(_asset).balanceOf(reserve.aErc6909);
         uint256 totalVariableDebt = aErc6909Token.totalSupply(reserve.variableDebtTokenID);
         uint256 utilizationRate = totalVariableDebt == 0
             ? 0
@@ -129,14 +127,14 @@ contract MiniPoolPiReserveInterestRateStrategy is
 
         // borrow rate
         uint256 currentVariableBorrowRate =
-            transferFunction(getControllerError(getNormalizedError(utilizationRate)));
+            transferFunction(_getControllerError(_getNormalizedError(utilizationRate)));
 
         // liquity rate
-        uint256 currentLiquidityRate = getLiquidityRate(
+        uint256 currentLiquidityRate = _getLiquidityRate(
             currentVariableBorrowRate,
             utilizationRate,
-            getCod3xReserveFactor(reserve.configuration)
-                + getMinipoolOwnerReserveFactor(reserve.configuration)
+            ReserveConfiguration.getCod3xReserveFactorMemory(reserve.configuration)
+                + ReserveConfiguration.getMinipoolOwnerReserveMemory(reserve.configuration)
         );
         return (currentLiquidityRate, currentVariableBorrowRate, utilizationRate);
     }
@@ -199,17 +197,13 @@ contract MiniPoolPiReserveInterestRateStrategy is
                 IMiniPoolAddressesProvider(_addressProvider).getLendingPool()
             ).getReserveData(underlying, true);
 
+            uint256 commonTerm =
+                (r.currentLiquidityRate * DELTA_TIME_MARGIN / SECONDS_PER_YEAR) + WadRayMath.ray();
             uint256 minLiquidityRate = (
                 MathUtils.calculateCompoundedInterest(
                     r.currentVariableBorrowRate, uint40(block.timestamp - DELTA_TIME_MARGIN)
-                ) - r.currentLiquidityRate * DELTA_TIME_MARGIN / SECONDS_PER_YEAR - WadRayMath.ray()
-            ).rayDiv(
-                DELTA_TIME_MARGIN
-                    * (
-                        (r.currentLiquidityRate * DELTA_TIME_MARGIN / SECONDS_PER_YEAR)
-                            + WadRayMath.ray()
-                    ) / SECONDS_PER_YEAR
-            );
+                ) - commonTerm
+            ).rayDiv(commonTerm * DELTA_TIME_MARGIN / SECONDS_PER_YEAR);
 
             // `&& utilizationRate != 0` to avoid 0 division. It's safe since the minipool flow is
             // always owed to a user. Since the debt is repaid as soon as possible if

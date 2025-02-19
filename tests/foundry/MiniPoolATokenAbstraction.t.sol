@@ -31,19 +31,20 @@ contract MiniPoolATokenAbstractionTest is MiniPoolFixtures {
         );
         fixture_configureProtocol(
             address(deployedContracts.lendingPool),
-            address(aToken),
+            address(commonContracts.aToken),
             configLpAddresses,
             deployedContracts.lendingPoolConfigurator,
             deployedContracts.lendingPoolAddressesProvider
         );
-        mockedVaults = fixture_deployReaperVaultMocks(tokens, address(deployedContracts.treasury));
+        commonContracts.mockedVaults =
+            fixture_deployReaperVaultMocks(tokens, address(deployedContracts.treasury));
         erc20Tokens = fixture_getErc20Tokens(tokens);
         fixture_transferTokensToTestContract(erc20Tokens, 1_000_000 ether, address(this));
         (miniPoolContracts,) = fixture_deployMiniPoolSetup(
             address(deployedContracts.lendingPoolAddressesProvider),
             address(deployedContracts.lendingPool),
             address(deployedContracts.cod3xLendDataProvider),
-            address(0)
+            miniPoolContracts
         );
 
         address[] memory reserves = new address[](2 * tokens.length);
@@ -52,7 +53,8 @@ contract MiniPoolATokenAbstractionTest is MiniPoolFixtures {
             if (idx < tokens.length) {
                 reserves[idx] = tokens[idx];
             } else {
-                reserves[idx] = address(aTokens[idx - tokens.length].WRAPPER_ADDRESS());
+                reserves[idx] =
+                    address(commonContracts.aTokens[idx - tokens.length].WRAPPER_ADDRESS());
             }
         }
         configLpAddresses.cod3xLendDataProvider =
@@ -61,6 +63,8 @@ contract MiniPoolATokenAbstractionTest is MiniPoolFixtures {
         configLpAddresses.volatileStrategy = address(miniPoolContracts.volatileStrategy);
         miniPool =
             fixture_configureMiniPoolReserves(reserves, configLpAddresses, miniPoolContracts, 0);
+        vm.prank(miniPoolContracts.miniPoolAddressesProvider.getMainPoolAdmin());
+        miniPoolContracts.miniPoolConfigurator.setMinDebtThreshold(0, IMiniPool(miniPool));
         vm.label(miniPool, "MiniPool");
     }
 
@@ -71,8 +75,10 @@ contract MiniPoolATokenAbstractionTest is MiniPoolFixtures {
         /* Fuzz vector creation */
         address user = makeAddr("user");
 
-        TokenParams memory tokenParams = TokenParams(erc20Tokens[offset], aTokensWrapper[offset], 0);
-        TokenParams memory tokenParamsUSDC = TokenParams(erc20Tokens[0], aTokensWrapper[0], 0); // USDC
+        TokenParams memory tokenParams =
+            TokenParams(erc20Tokens[offset], commonContracts.aTokensWrapper[offset], 0);
+        TokenParams memory tokenParamsUSDC =
+            TokenParams(erc20Tokens[0], commonContracts.aTokensWrapper[0], 0); // USDC
 
         /* Deposit tests */
         uint256 tokenId = 1128 + offset;
@@ -162,8 +168,10 @@ contract MiniPoolATokenAbstractionTest is MiniPoolFixtures {
         /* Fuzz vector creation */
         address user = makeAddr("user");
 
-        TokenParams memory tokenParams = TokenParams(erc20Tokens[offset], aTokensWrapper[offset], 0);
-        TokenParams memory tokenParamsUSDC = TokenParams(erc20Tokens[0], aTokensWrapper[0], 0); // USDC
+        TokenParams memory tokenParams =
+            TokenParams(erc20Tokens[offset], commonContracts.aTokensWrapper[offset], 0);
+        TokenParams memory tokenParamsUSDC =
+            TokenParams(erc20Tokens[0], commonContracts.aTokensWrapper[0], 0); // USDC
 
         /* Deposit tests */
         uint256 tokenId = 1128 + offset;
@@ -224,8 +232,10 @@ contract MiniPoolATokenAbstractionTest is MiniPoolFixtures {
         /* Fuzz vector creation */
         address user = makeAddr("user");
 
-        TokenParams memory tokenParams = TokenParams(erc20Tokens[offset], aTokensWrapper[offset], 0);
-        TokenParams memory tokenParamsUSDC = TokenParams(erc20Tokens[0], aTokensWrapper[0], 0); // USDC
+        TokenParams memory tokenParams =
+            TokenParams(erc20Tokens[offset], commonContracts.aTokensWrapper[offset], 0);
+        TokenParams memory tokenParamsUSDC =
+            TokenParams(erc20Tokens[0], commonContracts.aTokensWrapper[0], 0); // USDC
 
         /* Deposit tests */
         uint256 tokenId = 1128 + offset;
@@ -278,8 +288,10 @@ contract MiniPoolATokenAbstractionTest is MiniPoolFixtures {
         /* Fuzz vector creation */
         address user = makeAddr("user");
 
-        TokenParams memory tokenParams = TokenParams(erc20Tokens[offset], aTokensWrapper[offset], 0);
-        TokenParams memory tokenParamsUSDC = TokenParams(erc20Tokens[0], aTokensWrapper[0], 0); // USDC
+        TokenParams memory tokenParams =
+            TokenParams(erc20Tokens[offset], commonContracts.aTokensWrapper[offset], 0);
+        TokenParams memory tokenParamsUSDC =
+            TokenParams(erc20Tokens[0], commonContracts.aTokensWrapper[0], 0); // USDC
 
         /* Deposit tests */
         uint256 tokenId = 1128 + offset;

@@ -9,6 +9,7 @@ import {SafeERC20} from "../../../contracts/dependencies/openzeppelin/contracts/
 import {ATokenNonRebasing} from
     "../../../contracts/protocol/tokenization/ERC20/ATokenNonRebasing.sol";
 import {Errors} from "../../../contracts/protocol/libraries/helpers/Errors.sol";
+import {ILendingPoolConfigurator} from "../../../contracts/interfaces/ILendingPoolConfigurator.sol";
 
 /**
  * @title Oracle
@@ -20,6 +21,8 @@ import {Errors} from "../../../contracts/protocol/libraries/helpers/Errors.sol";
  * - If the returned price by a Chainlink aggregator is <= 0, the call is forwarded to a `fallbackOracle`.
  * - Owned by the Cod3x Governance system, allowed to add sources for assets, replace them
  *   and change the `fallbackOracle`.
+ * @dev ATTENTION: All aggregators (main and fallback) are expected to return prices in BASE_CURRENCY with the
+ * same BASE_CURRENCY_UNIT unit.
  */
 contract Oracle is IOracle, Ownable {
     using SafeERC20 for IERC20;
@@ -33,13 +36,15 @@ contract Oracle is IOracle, Ownable {
     /// @dev The fallback oracle used when Chainlink data is invalid.
     IOracle private _fallbackOracle;
 
-    /// @dev The base currency address used for price quotes.
-    address public immutable BASE_CURRENCY;
+    ILendingPoolConfigurator private _lendingpoolConfigurator;
 
     /**
+     * @dev The base currency address used for price quotes.
      * @notice If `USD` returns `0x0`, if `ETH` returns `WETH` address.
-     * @dev The unit of the base currency used for price normalization.
      */
+    address public immutable BASE_CURRENCY;
+
+    /// @dev The unit of the base currency used for price normalization.
     uint256 public immutable BASE_CURRENCY_UNIT;
 
     /**
@@ -58,12 +63,15 @@ contract Oracle is IOracle, Ownable {
         uint256[] memory timeouts,
         address fallbackOracle,
         address baseCurrency,
-        uint256 baseCurrencyUnit
+        uint256 baseCurrencyUnit,
+        address lendingpoolConfigurator
     ) Ownable(msg.sender) {
         _setFallbackOracle(fallbackOracle);
         _setAssetsSources(assets, sources, timeouts);
         BASE_CURRENCY = baseCurrency;
         BASE_CURRENCY_UNIT = baseCurrencyUnit;
+        _lendingpoolConfigurator = ILendingPoolConfigurator(lendingpoolConfigurator);
+
         emit BaseCurrencySet(baseCurrency, baseCurrencyUnit);
     }
 
@@ -101,11 +109,16 @@ contract Oracle is IOracle, Ownable {
         address[] memory sources,
         uint256[] memory timeouts
     ) internal {
-        require(assets.length == sources.length, Errors.O_INCONSISTENT_PARAMS_LENGTH);
-        for (uint256 i = 0; i < assets.length; i++) {
-            _assetsSources[assets[i]] = IChainlinkAggregator(sources[i]);
-            _assetToTimeout[assets[i]] = timeouts[i] == 0 ? type(uint256).max : timeouts[i];
-            emit AssetSourceUpdated(assets[i], sources[i]);
+        uint256 assetsLength = assets.length;
+        require(assetsLength == sources.length, Errors.O_INCONSISTENT_PARAMS_LENGTH);
+        require(assetsLength == timeouts.length, Errors.O_INCONSISTENT_PARAMS_LENGTH);
+        for (uint256 i = 0; i < assetsLength; i++) {
+            address asset = assets[i];
+            address source = sources[i];
+            uint256 timeout = timeouts[i];
+            _assetsSources[asset] = IChainlinkAggregator(source);
+            _assetToTimeout[asset] = timeout == 0 ? type(uint256).max : timeout;
+            emit AssetSourceUpdated(asset, source, timeout);
         }
     }
 
@@ -128,11 +141,9 @@ contract Oracle is IOracle, Ownable {
         address underlying;
 
         // Check if `asset` is an aToken.
-        try ATokenNonRebasing(asset).UNDERLYING_ASSET_ADDRESS{gas: 4000}() returns (
-            address underlying_
-        ) {
-            underlying = underlying_;
-        } catch {
+        if (_lendingpoolConfigurator.getIsAToken(asset)) {
+            underlying = ATokenNonRebasing(asset).UNDERLYING_ASSET_ADDRESS();
+        } else {
             underlying = asset;
         }
 
@@ -150,7 +161,7 @@ contract Oracle is IOracle, Ownable {
             // Chainlink integrity checks.
             if (
                 roundId == 0 || timestamp == 0 || timestamp > block.timestamp || price <= 0
-                    || startedAt == 0 || block.timestamp - timestamp > _assetToTimeout[asset]
+                    || startedAt == 0 || block.timestamp - timestamp > _assetToTimeout[underlying]
             ) {
                 require(address(_fallbackOracle) != address(0), Errors.O_PRICE_FEED_INCONSISTENCY);
                 finalPrice = _fallbackOracle.getAssetPrice(underlying);
@@ -159,7 +170,7 @@ contract Oracle is IOracle, Ownable {
             }
         }
 
-        // If `asset` is an aToken then convert the price from asset to share.
+        // If "asset" is an aToken then convert the price from share to asset.
         if (asset != underlying) {
             return ATokenNonRebasing(asset).convertToAssets(finalPrice);
         } else {
@@ -190,10 +201,27 @@ contract Oracle is IOracle, Ownable {
     }
 
     /**
+     * @notice Gets the timeout for an asset.
+     * @param asset The address of the asset.
+     * @return uint256 The timeout for the asset.
+     */
+    function getAssetTimeout(address asset) external view returns (uint256) {
+        return _assetToTimeout[asset];
+    }
+
+    /**
      * @notice Gets the address of the fallback oracle.
      * @return address The address of the fallback oracle.
      */
     function getFallbackOracle() external view returns (address) {
         return address(_fallbackOracle);
+    }
+
+    /**
+     * @notice Gets the address of the lending pool configurator.
+     * @return address The address of the lending pool configurator.
+     */
+    function getLendingpoolConfigurator() external view returns (address) {
+        return address(_lendingpoolConfigurator);
     }
 }

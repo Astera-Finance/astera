@@ -80,4 +80,6 @@ interface IRewardsDistributor {
         returns (address[] memory, uint256[] memory);
 
     function getAssetDecimals(address asset) external view returns (uint8);
+
+    function getIsRewardEnabled(address reward) external view returns (bool);
 }

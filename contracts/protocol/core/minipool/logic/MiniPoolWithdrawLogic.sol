@@ -103,7 +103,7 @@ library MiniPoolWithdrawLogic {
         withdrawLocalVars memory localVars;
 
         {
-            localVars.aToken = reserve.aTokenAddress;
+            localVars.aToken = reserve.aErc6909;
             localVars.id = reserve.aTokenID;
 
             localVars.userBalance = IAERC6909(localVars.aToken).balanceOf(msg.sender, localVars.id);
@@ -185,9 +185,7 @@ library MiniPoolWithdrawLogic {
         mapping(uint256 => address) storage reservesList,
         IMiniPoolAddressesProvider addressesProvider
     ) internal {
-        require(
-            msg.sender == reserves[params.asset].aTokenAddress, Errors.LP_CALLER_MUST_BE_AN_ATOKEN
-        );
+        require(msg.sender == reserves[params.asset].aErc6909, Errors.LP_CALLER_MUST_BE_AN_ATOKEN);
 
         MiniPoolValidationLogic.validateTransfer(
             params.from,
@@ -222,7 +220,6 @@ library MiniPoolWithdrawLogic {
      * @param usersConfig The users configuration mapping.
      * @param reservesList The addresses of all active reserves.
      * @param addressesProvider The addresses provider instance.
-     * @return The final amount withdrawn.
      */
     function internalWithdraw(
         withdrawParams memory params,
@@ -230,12 +227,12 @@ library MiniPoolWithdrawLogic {
         mapping(address => DataTypes.UserConfigurationMap) storage usersConfig,
         mapping(uint256 => address) storage reservesList,
         IMiniPoolAddressesProvider addressesProvider
-    ) internal returns (uint256) {
+    ) internal {
         DataTypes.MiniPoolReserveData storage reserve = reserves[params.asset];
         withdrawLocalVars memory localVars;
 
         {
-            localVars.aToken = reserve.aTokenAddress;
+            localVars.aToken = reserve.aErc6909;
             localVars.id = reserve.aTokenID;
 
             localVars.userBalance =
@@ -277,7 +274,5 @@ library MiniPoolWithdrawLogic {
         );
 
         emit Withdraw(params.asset, address(this), params.to, localVars.amountToWithdraw);
-
-        return localVars.amountToWithdraw;
     }
 }

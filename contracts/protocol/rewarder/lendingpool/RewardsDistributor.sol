@@ -24,8 +24,8 @@ abstract contract RewardsDistributor is IRewardsDistributor, Ownable {
      * @param usersIndex Mapping of user addresses to their reward index.
      */
     struct RewardData {
-        uint88 emissionPerSecond;
-        uint104 index;
+        uint192 emissionPerSecond;
+        uint256 index;
         uint32 lastUpdateTimestamp;
         uint32 distributionEnd;
         mapping(address => uint256) usersIndex;
@@ -276,9 +276,7 @@ abstract contract RewardsDistributor is IRewardsDistributor, Ownable {
         );
 
         if (newIndex != oldIndex) {
-            require(newIndex <= type(uint104).max, "Index overflow");
-            //optimization: storing one after another saves one SSTORE
-            rewardConfig.index = uint104(newIndex);
+            rewardConfig.index = newIndex;
             rewardConfig.lastUpdateTimestamp = uint32(block.timestamp);
             emit AssetIndexUpdated(asset, reward, newIndex);
         } else {
@@ -488,8 +486,9 @@ abstract contract RewardsDistributor is IRewardsDistributor, Ownable {
         uint256 totalBalance,
         uint8 decimals
     ) internal view returns (uint256) {
+        // emissionPerSecond equal 1 leads to 0 accrued rewards due to rounding down
         if (
-            emissionPerSecond == 0 || totalBalance == 0 || lastUpdateTimestamp == block.timestamp
+            emissionPerSecond <= 1 || totalBalance == 0 || lastUpdateTimestamp == block.timestamp
                 || lastUpdateTimestamp >= distributionEnd
         ) {
             return currentIndex;
@@ -520,5 +519,14 @@ abstract contract RewardsDistributor is IRewardsDistributor, Ownable {
      */
     function getAssetDecimals(address asset) external view override returns (uint8) {
         return _assets[asset].decimals;
+    }
+
+    /**
+     * @notice Gets the status of a reward token.
+     * @param reward The address of the reward token.
+     * @return Status of the reward token.
+     */
+    function getIsRewardEnabled(address reward) external view override returns (bool) {
+        return _isRewardEnabled[reward];
     }
 }

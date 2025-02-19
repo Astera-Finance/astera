@@ -78,7 +78,6 @@ library MiniPoolGenericLogic {
 
         (vars.totalCollateralInETH, vars.totalDebtInETH,, vars.avgLiquidationThreshold,) =
         calculateUserAccountData(user, reserves, userConfig, reservesList, reservesCount, oracle);
-
         if (vars.totalDebtInETH == 0) {
             return true;
         }
@@ -102,7 +101,6 @@ library MiniPoolGenericLogic {
             vars.totalDebtInETH,
             vars.liquidationThresholdAfterDecrease
         );
-
         return healthFactorAfterDecrease >= MiniPoolGenericLogic.HEALTH_FACTOR_LIQUIDATION_THRESHOLD;
     }
 
@@ -120,7 +118,7 @@ library MiniPoolGenericLogic {
         uint256 amount,
         uint256 decimals
     ) internal view returns (uint256) {
-        return IOracle(oracle).getAssetPrice(asset) * amount / (10 ** decimals);
+        return WadRayMath.divUp(IOracle(oracle).getAssetPrice(asset) * amount, 10 ** decimals);
     }
 
     /**
@@ -188,7 +186,7 @@ library MiniPoolGenericLogic {
 
             if (vars.liquidationThreshold != 0 && userConfig.isUsingAsCollateral(vars.i)) {
                 vars.compoundedLiquidityBalance =
-                    IAERC6909(currentReserve.aTokenAddress).balanceOf(user, currentReserve.aTokenID);
+                    IAERC6909(currentReserve.aErc6909).balanceOf(user, currentReserve.aTokenID);
                 uint256 liquidityBalanceETH =
                     vars.reserveUnitPrice * vars.compoundedLiquidityBalance / vars.tokenUnit;
 
@@ -200,12 +198,14 @@ library MiniPoolGenericLogic {
             }
 
             if (userConfig.isBorrowing(vars.i)) {
-                vars.compoundedBorrowBalance = IAERC6909(currentReserve.aTokenAddress).balanceOf(
+                vars.compoundedBorrowBalance = IAERC6909(currentReserve.aErc6909).balanceOf(
                     user, currentReserve.variableDebtTokenID
                 );
 
                 vars.totalDebtInETH = vars.totalDebtInETH
-                    + (vars.reserveUnitPrice * vars.compoundedBorrowBalance / vars.tokenUnit);
+                    + WadRayMath.divUp(
+                        vars.reserveUnitPrice * vars.compoundedBorrowBalance, vars.tokenUnit
+                    );
             }
         }
 

@@ -58,12 +58,8 @@ contract ATokenERC6909V2 is IncentivizedERC6909, VersionedInitializable {
     /// @notice The MiniPool contract.
     IMiniPool private POOL;
 
-    /// @notice The total number of tokens.
-    uint256 private _totalTokens;
     /// @notice The total number of unique tokens.
     uint256 private _totalUniqueTokens;
-    /// @notice The total number of tranche tokens.
-    uint256 private _totalTrancheTokens;
     /// @notice The addresses provider for the MiniPool.
     IMiniPoolAddressesProvider private _addressesProvider;
     /// @notice The ID of the MiniPool.
@@ -118,7 +114,6 @@ contract ATokenERC6909V2 is IncentivizedERC6909, VersionedInitializable {
         );
         (aTokenID, debtTokenID, isTrancheRet) = getNextIdForUnderlying(underlyingAsset);
         if (isTrancheRet) {
-            _totalTrancheTokens++;
             _isTranche[aTokenID] = true;
             _isTranche[debtTokenID] = true;
 
@@ -142,7 +137,7 @@ contract ATokenERC6909V2 is IncentivizedERC6909, VersionedInitializable {
      * @param controller The address of the new incentives controller.
      */
     function setIncentivesController(IMiniPoolRewarder controller) external {
-        require(msg.sender == address(POOL), Errors.CT_CALLER_MUST_BE_LENDING_POOL);
+        require(msg.sender == address(POOL), Errors.AT_CALLER_MUST_BE_LENDING_POOL);
         INCENTIVES_CONTROLLER = controller;
     }
 
@@ -224,7 +219,7 @@ contract ATokenERC6909V2 is IncentivizedERC6909, VersionedInitializable {
      * @param unwrap Whether to unwrap the underlying asset.
      */
     function transferUnderlyingTo(address to, uint256 id, uint256 amount, bool unwrap) public {
-        require(msg.sender == address(POOL), Errors.CT_CALLER_MUST_BE_LENDING_POOL);
+        require(msg.sender == address(POOL), Errors.AT_CALLER_MUST_BE_LENDING_POOL);
 
         if (unwrap) {
             ATokenNonRebasing asset = ATokenNonRebasing(_underlyingAssetAddresses[id]);
@@ -271,7 +266,7 @@ contract ATokenERC6909V2 is IncentivizedERC6909, VersionedInitializable {
         external
         returns (bool)
     {
-        require(msg.sender == address(POOL), Errors.CT_CALLER_MUST_BE_LENDING_POOL);
+        require(msg.sender == address(POOL), Errors.AT_CALLER_MUST_BE_LENDING_POOL);
         if (amount == 0) {
             return false;
         }
@@ -280,20 +275,16 @@ contract ATokenERC6909V2 is IncentivizedERC6909, VersionedInitializable {
 
         if (id >= DEBT_TOKEN_ADDRESSABLE_ID) {
             if (onBehalfOf != user) {
-                require(
-                    _borrowAllowances[id][onBehalfOf][user] >= amount,
-                    Errors.BORROW_ALLOWANCE_NOT_ENOUGH
-                );
                 _decreaseBorrowAllowance(onBehalfOf, user, id, amount);
             }
             previousBalance = super.balanceOf(onBehalfOf, id);
             uint256 amountScaled = amount.rayDiv(index);
-            require(amountScaled != 0, Errors.CT_INVALID_MINT_AMOUNT);
+            require(amountScaled != 0, Errors.AT_INVALID_MINT_AMOUNT);
             _mint(onBehalfOf, id, amountScaled);
         } else {
             previousBalance = super.balanceOf(onBehalfOf, id);
             uint256 amountScaled = amount.rayDiv(index);
-            require(amountScaled != 0, Errors.CT_INVALID_MINT_AMOUNT);
+            require(amountScaled != 0, Errors.AT_INVALID_MINT_AMOUNT);
             _mint(onBehalfOf, id, amountScaled);
         }
 
@@ -317,14 +308,14 @@ contract ATokenERC6909V2 is IncentivizedERC6909, VersionedInitializable {
         bool unwrap,
         uint256 index
     ) external {
-        require(msg.sender == address(POOL), Errors.CT_CALLER_MUST_BE_LENDING_POOL);
+        require(msg.sender == address(POOL), Errors.AT_CALLER_MUST_BE_LENDING_POOL);
         if (isDebtToken(id)) {
             uint256 amountScaled = amount.rayDiv(index);
-            require(amountScaled != 0, Errors.CT_INVALID_BURN_AMOUNT);
+            require(amountScaled != 0, Errors.AT_INVALID_BURN_AMOUNT);
             _burn(user, id, amountScaled);
         } else {
             uint256 amountScaled = amount.rayDiv(index);
-            require(amountScaled != 0, Errors.CT_INVALID_BURN_AMOUNT);
+            require(amountScaled != 0, Errors.AT_INVALID_BURN_AMOUNT);
             _burn(user, id, amountScaled);
             transferUnderlyingTo(receiverOfUnderlying, id, amount, unwrap);
         }
@@ -348,7 +339,7 @@ contract ATokenERC6909V2 is IncentivizedERC6909, VersionedInitializable {
      * @param amount The amount to transfer.
      */
     function transferOnLiquidation(address from, address to, uint256 id, uint256 amount) external {
-        require(msg.sender == address(POOL), Errors.CT_CALLER_MUST_BE_LENDING_POOL);
+        require(msg.sender == address(POOL), Errors.AT_CALLER_MUST_BE_LENDING_POOL);
         _transferForLiquidation(from, to, id, amount);
     }
 
@@ -356,7 +347,7 @@ contract ATokenERC6909V2 is IncentivizedERC6909, VersionedInitializable {
      * @notice Handles repayment of debt.
      */
     function handleRepayment(address, address, uint256, uint256) external view {
-        require(msg.sender == address(POOL), Errors.CT_CALLER_MUST_BE_LENDING_POOL);
+        require(msg.sender == address(POOL), Errors.AT_CALLER_MUST_BE_LENDING_POOL);
     }
     // ======================= Internal Function =======================
 
@@ -378,7 +369,7 @@ contract ATokenERC6909V2 is IncentivizedERC6909, VersionedInitializable {
      */
     function _beforeTokenTransfer(address, address, uint256 id, uint256) internal view override {
         if (isDebtToken(id)) {
-            require(msg.sender == address(POOL), Errors.CT_CALLER_MUST_BE_LENDING_POOL);
+            require(msg.sender == address(POOL), Errors.AT_CALLER_MUST_BE_LENDING_POOL);
         }
     }
 
@@ -434,10 +425,11 @@ contract ATokenERC6909V2 is IncentivizedERC6909, VersionedInitializable {
      * @param MLP The MiniLendingPool address to validate against.
      * @return bool True if the address is an AToken, false otherwise.
      */
-    function _determineIfAToken(address underlying, address MLP) internal view returns (bool) {
-        try IAToken(underlying).getPool() returns (address pool) {
-            return pool == MLP;
-        } catch {
+    function _determineIfAToken(address underlying, address MLP) internal returns (bool) {
+        (bool success, bytes memory data) = underlying.call(abi.encodeCall(IAToken.getPool, ()));
+        if (success && data.length != 0) {
+            return abi.decode(data, (address)) == MLP;
+        } else {
             return false;
         }
     }
@@ -450,7 +442,6 @@ contract ATokenERC6909V2 is IncentivizedERC6909, VersionedInitializable {
      */
     function _getNextIdForUnderlying(address underlying)
         internal
-        view
         returns (uint256, uint256, bool)
     {
         ILendingPool pool = ILendingPool(_addressesProvider.getLendingPool());
@@ -485,7 +476,7 @@ contract ATokenERC6909V2 is IncentivizedERC6909, VersionedInitializable {
     function _mintToTreasury(uint256 id, uint256 amount, uint256 index, address treasury)
         internal
     {
-        require(msg.sender == address(POOL), Errors.CT_CALLER_MUST_BE_LENDING_POOL);
+        require(msg.sender == address(POOL), Errors.AT_CALLER_MUST_BE_LENDING_POOL);
         if (amount == 0) {
             return;
         }
@@ -512,7 +503,7 @@ contract ATokenERC6909V2 is IncentivizedERC6909, VersionedInitializable {
         uint256 amount
     ) internal {
         uint256 oldAllowance = _borrowAllowances[id][delegator][delegatee];
-        require(oldAllowance >= amount, Errors.BORROW_ALLOWANCE_NOT_ENOUGH);
+        require(oldAllowance >= amount, Errors.AT_BORROW_ALLOWANCE_NOT_ENOUGH);
         uint256 newAllowance = oldAllowance - amount;
         _borrowAllowances[id][delegator][delegatee] = newAllowance;
     }
@@ -699,7 +690,6 @@ contract ATokenERC6909V2 is IncentivizedERC6909, VersionedInitializable {
      */
     function getNextIdForUnderlying(address underlying)
         public
-        view
         returns (uint256 aTokenID, uint256 debtTokenID, bool isTrancheRet)
     {
         (aTokenID, debtTokenID, isTrancheRet) = _getNextIdForUnderlying(underlying);

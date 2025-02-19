@@ -19,7 +19,7 @@
 
 ### Overview
 Scripts allow to deploy Cod3x-Lend infrastructure and properly configure it.
-The deployment process involves configuration files `./input/<Nr>_<InputJsonName>.json` and corresponding scripts `(./<Nr>_<ScriptName>.s.sol)`. Typically, the scripts should be executed in numerical order. They generate output json files with deployed contract addresses that can be used by next script without the need to configure manually. Each script file requires at least one configuration file to be available and properly configured (example configurations with all descriptions are available [here](#configuration-files)). The scripts may require also more json files as an inputs generated from previous scripts and available in `./outputs` folder.
+The deployment process involves configuration files `./inputs/<Nr>_<InputJsonName>.json` and corresponding scripts `(./<Nr>_<ScriptName>.s.sol)`. Typically, the scripts should be executed in numerical order. They generate output json files with deployed contract addresses that can be used by next script without the need to configure manually. Each script file requires at least one configuration file to be available and properly configured (example configurations with all descriptions are available [here](#configuration-files)). The scripts may require also more json files as an inputs. Usually they are generated from previous scripts and available in `./outputs` folder.
 
 ![alt text](./imgs/Configuration.png)
 
@@ -31,9 +31,9 @@ The deployment process involves configuration files `./input/<Nr>_<InputJsonName
      - compatible script numbers <Nr> to run (1 - 8)
      - local fork runs also the previous script in order to get all necessary contracts so in this variant the order doesn't matter - it is possible to run script with last number without running scripts with prior numbers
      - configuration with corresponding number shall be filled
-     - run `forge script scripts/<nr>_<scriptName>.s.sol`
+     - run `forge script scripts/localFork/<nr>_<scriptName>.s.sol`
    - **Testnet**: 
-      - compatible script numbers `<Nr>` to run (0 - 7)
+      - compatible script numbers `<Nr>` to run (0 - 8)
       - there is need to have executed script 0_DeployMocks.s.sol in order to have ERC20 token mocks
       - there is need to have already executed script with previous `<Nr>`
       - import env variables via `source .env`
@@ -41,7 +41,7 @@ The deployment process involves configuration files `./input/<Nr>_<InputJsonName
       - run `forge script scripts/<nr>_<scriptName>.s.sol --chain-id $<RPC_URL> --rpc-url $<RPC_URL> --etherscan-api-key $ETHERSCAN_KEY --broadcast -vvvv --sender <sender address>` if sender is required
       - run `forge script scripts/<nr>_<scriptName>.s.sol --chain-id <chainId> --rpc-url $<RPC_URL> --broadcast -vvvv --private-key $PRIVATE_KEY` if sender is required
    - **Mainnet**:
-      - compatible script numbers <Nr> to run (1 - 7)
+      - compatible script numbers <Nr> to run (0 - 8)
    - **Mainnet/Testnet tests**
      - `forge script scripts/<nr>_<scriptName>.s.sol --chain-id <chainId> --rpc-url $<RPC_URL> --broadcast -vvvv --private-keys $USER1_PRIVATE_KEY --private-keys $USER2_PRIVATE_KEY --private-keys $DIST_PRIVATE_KEY --sender <EoaAddress>`
    - **Verification**
@@ -88,12 +88,16 @@ The deployment process involves configuration files `./input/<Nr>_<InputJsonName
   - Example:
     ```json
     {
+        "wethGateway": "0xe43208266aEad29736433aA0b6F035a2Ffc3BB9F",
         "general": {
             "aTokenNamePrefix": "Cod3x Lend ",
             "aTokenSymbolPrefix": "cl",
             "debtTokenNamePrefix": "Cod3x Lend variable debt bearing ",
-            "debtTokenSymbolPrefix": "variableDebt",
-            "treasury": "0x3151CfCA393FE5Eec690feD2a2446DA5a073d01B"
+            "debtTokenSymbolPrefix": "clDebt",
+            "marketReferenceCurrencyAggregator": "0x7e860098F58bBFC8648a4311b374B1D669a2bc6B",
+            "networkBaseTokenAggregator": "0x71041dddad3595F9CEd3DcCFBe3D1F4b0a16Bb70",
+            "treasury": "0x3151CfCA393FE5Eec690feD2a22222A5a073dAAA",
+            "usdBootstrapAmount": 2000000000000000000 // USD amount in wei that needs to be deposited during deployment to avoid inflation attack
         },
         // List of reserves and their configurations
         "poolReserversConfig": [
@@ -104,6 +108,7 @@ The deployment process involves configuration files `./input/<Nr>_<InputJsonName
                 "interestStratId": 0, // Id of strategy choosen from all available strategies deployed or listed in configuration
                 "liquidationBonus": 10500,
                 "liquidationThreshold": 7500,
+                "miniPoolOwnerFee": 0,
                 "params": "0x10",
                 "rates": 0.03e27,
                 "reserveFactor": 1500,
@@ -153,6 +158,10 @@ The deployment process involves configuration files `./input/<Nr>_<InputJsonName
             "fallbackOracle": "0x0000000000000000000000000000000000000000",
             "sources": [
                 "0x639Fe6ab55C921f74e7fac1ee960C0B6293ba612"
+            ],
+            "timeouts": [
+                100000,
+                100000
             ]
         }
     }
@@ -166,9 +175,11 @@ The deployment process involves configuration files `./input/<Nr>_<InputJsonName
             "aTokenNamePrefix": "Cod3x Lend ",
             "aTokenSymbolPrefix": "cl",
             "debtTokenNamePrefix": "Cod3x Lend variable debt bearing ",
-            "debtTokenSymbolPrefix": "variableDebt",
-            "treasury": "0x3151CfCA393FE5Eec690feD2a2446DA5a073d01B"
-            
+            "debtTokenSymbolPrefix": "clDebt",
+            "marketReferenceCurrencyAggregator": "0x7e860098F58bBFC8648a4311b374B1D669a2bc6B",
+            "networkBaseTokenAggregator": "0x71041dddad3595F9CEd3DcCFBe3D1F4b0a16Bb70",
+            "treasury": "0x3151CfCA393FE5Eec690feD2a22222A5a073dAAA",
+            "usdBootstrapAmount": 1000000000000000000 // USD amount in wei that needs to be deposited during deployment to avoid inflation attack
         },
         // List of reserves and their configurations
         "poolReserversConfig": [
@@ -179,6 +190,7 @@ The deployment process involves configuration files `./input/<Nr>_<InputJsonName
                 "interestStratId": 0, // Id of strategy choosen from all available strategies deployed or listed in configuration
                 "liquidationBonus": 10500,
                 "liquidationThreshold": 7500,
+                "miniPoolOwnerFee": 150,
                 "params": "0x10",
                 "rates": 0.03e27,
                 "reserveFactor": 1500,
@@ -193,6 +205,7 @@ The deployment process involves configuration files `./input/<Nr>_<InputJsonName
                 "interestStratId": 0,
                 "liquidationBonus": 10500,
                 "liquidationThreshold": 7500,
+                "miniPoolOwnerFee": 150,
                 "params": "0x10",
                 "rates": 0.03e27,
                 "reserveFactor": 1500,
@@ -256,6 +269,10 @@ The deployment process involves configuration files `./input/<Nr>_<InputJsonName
             "sources": [
                 "0x639Fe6ab55C921f74e7fac1ee960C0B6293ba612",
                 "0x50834F3163758fcC1Df9973b6e91f0F0F0434aD3"
+            ],
+            "timeouts": [
+                100000,
+                100000
             ]
         }
     }
@@ -365,8 +382,11 @@ The deployment process involves configuration files `./input/<Nr>_<InputJsonName
             "aTokenNamePrefix": "Cod3x Lend ",
             "aTokenSymbolPrefix": "cl",
             "debtTokenNamePrefix": "Cod3x Lend variable debt bearing ",
-            "debtTokenSymbolPrefix": "variableDebt",
-            "treasury": "0x3151CfCA393FE5Eec690feD2a2446DA5a073d01B"
+            "debtTokenSymbolPrefix": "clDebt",
+            "marketReferenceCurrencyAggregator": "0x7e860098F58bBFC8648a4311b374B1D669a2bc6B",
+            "networkBaseTokenAggregator": "0x71041dddad3595F9CEd3DcCFBe3D1F4b0a16Bb70",
+            "treasury": "0x3151CfCA393FE5Eec690feD2a22222A5a073dAAA",
+            "usdBootstrapAmount": 2000000000000000000
         },
         "poolAddressesProviderConfig": {
             "marketId": "UV TestNet Market", // Not used in this script
@@ -382,6 +402,7 @@ The deployment process involves configuration files `./input/<Nr>_<InputJsonName
                 "interestStratId": 0, // Id of strategy choosen from all available strategies deployed or listed in configuration. In this case all strats are listed in ./outputs/DeployedStrategies.json
                 "liquidationBonus": 10500,
                 "liquidationThreshold": 7500,
+                "miniPoolOwnerFee": 0,
                 "params": "0x10",
                 "rates": 0.03e27,
                 "reserveFactor": 1500,
@@ -396,6 +417,7 @@ The deployment process involves configuration files `./input/<Nr>_<InputJsonName
                 "interestStratId": 2,
                 "liquidationBonus": 10500,
                 "liquidationThreshold": 7500,
+                "miniPoolOwnerFee": 0,
                 "params": "0x10",
                 "rates": 0.03e27,
                 "reserveFactor": 1500,
@@ -413,11 +435,12 @@ The deployment process involves configuration files `./input/<Nr>_<InputJsonName
                 "interestStratId": 0, // Id of strategy choosen from all available strategies deployed or listed in configuration. In this case all strats are listed in ./outputs/DeployedStrategies.json
                 "liquidationBonus": 10500,
                 "liquidationThreshold": 7500,
+                "miniPoolOwnerFee": 150,
                 "params": "0x10",
                 "rates": 0.03e27,
                 "reserveFactor": 1500,
                 "reserveType": true,
-                "symbol": "WBTC",
+                "symbol": "aWBTC",
                 "tokenAddress": "0x0555E30da8f98308EdB960aa94C0Db47230d2B9c"
             },
             {
@@ -427,11 +450,12 @@ The deployment process involves configuration files `./input/<Nr>_<InputJsonName
                 "interestStratId": 0, // Id of strategy choosen from all available strategies deployed or listed in configuration. In this case all strats are listed in ./outputs/DeployedStrategies.json
                 "liquidationBonus": 10500,
                 "liquidationThreshold": 7500,
+                "miniPoolOwnerFee": 150,
                 "params": "0x10",
                 "rates": 0.03e27,
                 "reserveFactor": 1500,
                 "reserveType": true,
-                "symbol": "USDT",
+                "symbol": "aUSDT",
                 "tokenAddress": "0xfde4C96c8593536E31F229EA8f37b2ADa2699bb2"
             }
         ],
@@ -451,6 +475,9 @@ The deployment process involves configuration files `./input/<Nr>_<InputJsonName
                 "0x50834F3163758fcC1Df9973b6e91f0F0F0434aD3",
                 "0xd0C7101eACbB49F3deCcCc166d238410D6D46d57",
                 "0x3f3f5dF88dC9F13eac63DF89EC16ef6e7E25DdE7"
+            ],
+            "timeouts": [
+                100000
             ]
         }
     }
@@ -474,6 +501,7 @@ The deployment process involves configuration files `./input/<Nr>_<InputJsonName
                 "interestStratId": 1, // Id of strategy choosen from all available strategies deployed or listed in configuration. In this case all strats are listed in ./outputs/DeployedStrategies.json
                 "liquidationBonus": 10400,
                 "liquidationThreshold": 7400,
+                "miniPoolOwnerFee": 233,
                 "params": "0x10",
                 "rates": 0.04e27,
                 "reserveFactor": 1500,
@@ -488,6 +516,7 @@ The deployment process involves configuration files `./input/<Nr>_<InputJsonName
                 "interestStratId": 1, // Id of strategy choosen from all available strategies deployed or listed in configuration. In this case all strats are listed in ./outputs/DeployedStrategies.json
                 "liquidationBonus": 10500,
                 "liquidationThreshold": 7400,
+                "miniPoolOwnerFee": 233,
                 "params": "0x10",
                 "rates": 0.03e27,
                 "reserveFactor": 1500,
@@ -505,11 +534,12 @@ The deployment process involves configuration files `./input/<Nr>_<InputJsonName
                 "interestStratId": 1, // Id of strategy choosen from all available strategies deployed or listed in configuration. In this case all strats are listed in ./outputs/DeployedStrategies.json
                 "liquidationBonus": 10500,
                 "liquidationThreshold": 7700,
+                "miniPoolOwnerFee": 233,
                 "params": "0x10",
                 "rates": 0.02e27,
                 "reserveFactor": 1500,
                 "reserveType": true,
-                "symbol": "WBTC",
+                "symbol": "aWBTC",
                 "tokenAddress": "0x0555E30da8f98308EdB960aa94C0Db47230d2B9c"
             },
             {
@@ -519,11 +549,12 @@ The deployment process involves configuration files `./input/<Nr>_<InputJsonName
                 "interestStratId": 3, // Id of strategy choosen from all available strategies deployed or listed in configuration. In this case all strats are listed in ./outputs/DeployedStrategies.json
                 "liquidationBonus": 10500,
                 "liquidationThreshold": 7100,
+                "miniPoolOwnerFee": 233,
                 "params": "0x10",
                 "rates": 0.03e27,
                 "reserveFactor": 1600,
                 "reserveType": true,
-                "symbol": "USDT",
+                "symbol": "aUSDT",
                 "tokenAddress": "0xfde4C96c8593536E31F229EA8f37b2ADa2699bb2"
             }
         ]
@@ -538,19 +569,23 @@ The deployment process involves configuration files `./input/<Nr>_<InputJsonName
     ```json
     {
         "miniPoolId": 0, //Id of mini pool to configure
-        "deployCod3xLendDataProvider": true, //flag used for deployment new cod3x data provider
+        "cod3xLendDataProvider": {
+            "deploy": false,
+            "marketReferenceCurrencyAggregator": "0x7e860098F58bBFC8648a4311b374B1D669a2bc6B",
+            "networkBaseTokenAggregator": "0x71041dddad3595F9CEd3DcCFBe3D1F4b0a16Bb70"
+        }, //flag used for deployment new cod3x data provider
         // List of configuration for treasury change
         "treasury": [
             {
                 "configure": false, // determine whether treasury needs to be changed for this asset
-                "newAddress": "0x3151CfCA393FE5Eec690feD2a2446DA5a073d01B", // new treasury asset
+                "newAddress": "0x3151CfCA393FE5Eec690feD2a22222A5a073dAAA", // new treasury asset
                 "reserveType": true,
                 "symbol": "USDC",
                 "tokenAddress": "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913"
             },
             {
                 "configure": true, // determine whether treasury needs to be changed for this asset
-                "newAddress": "0x3151CfCA393FE5Eec690feD2a2446DA5a073d01B", // new treasury asset
+                "newAddress": "0x3151CfCA393FE5Eec690feD2a22222A5a073dAAA", // new treasury asset
                 "reserveType": true,
                 "symbol": "WETH",
                 "tokenAddress": "0x4200000000000000000000000000000000000006"
@@ -559,26 +594,21 @@ The deployment process involves configuration files `./input/<Nr>_<InputJsonName
         "miniPoolCod3xTreasury": [
             {
                 "configure": true, // determine whether treasury needs to be changed for this asset
-                "newAddress": "0x3151CfCA393FE5Eec690feD2a2446DA5a073d01B",
-                "owner": "0x3151CfCA393FE5Eec690feD2a2446DA5a073d01B" // pool owner
-            },
-            {
-                "configure": true, // determine whether treasury needs to be changed for this asset
-                "newAddress": "0x3151CfCA393FE5Eec690feD2a2446DA5a073d01B",
-                "owner": "0x3151CfCA393FE5Eec690feD2a2446DA5a073d01B" // pool owner
+                "newAddress": "0x3151CfCA393FE5Eec690feD2a22222A5a073dAAA",
+                "owner": "0x3151CfCA393FE5Eec690feD2a22222A5a073dAAA" // pool owner
             }
         ],
         "vault": [
             {
                 "configure": false, // determine whether vault needs to be changed for this asset
-                "newAddress": "0x3151CfCA393FE5Eec690feD2a2446DA5a073d01B", // new vault asset
+                "newAddress": "0x3151CfCA393FE5Eec690feD2a22222A5a073dAAA", // new vault asset
                 "reserveType": true,
                 "symbol": "USDC",
                 "tokenAddress": "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913"
             },
             {
                 "configure": true, // determine whether vault needs to be changed for this asset
-                "newAddress": "0x3151CfCA393FE5Eec690feD2a2446DA5a073d01B", // new vault asset
+                "newAddress": "0x3151CfCA393FE5Eec690feD2a22222A5a073dAAA", // new vault asset
                 "reserveType": true,
                 "symbol": "WETH",
                 "tokenAddress": "0x4200000000000000000000000000000000000006"
@@ -587,17 +617,33 @@ The deployment process involves configuration files `./input/<Nr>_<InputJsonName
         "rewarder": [
             {
                 "configure": false, // determine whether rewarder needs to be changed for this asset
-                "newAddress": "0x3151CfCA393FE5Eec690feD2a2446DA5a073d01B", // new rewarder asset
+                "newAddress": "0x3151CfCA393FE5Eec690feD2a22222A5a073dAAA", // new rewarder asset. NOTE: Write address(0) to have new deployment !
                 "reserveType": true,
                 "symbol": "USDC",
                 "tokenAddress": "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913"
             },
             {
                 "configure": true, // determine whether rewarder needs to be changed for this asset
-                "newAddress": "0x3151CfCA393FE5Eec690feD2a2446DA5a073d01B", // new rewarder asset
+                "newAddress": "0x3151CfCA393FE5Eec690feD2a22222A5a073dAAA", // new rewarder asset. NOTE: Write address(0) to have new deployment !
                 "reserveType": true,
                 "symbol": "WETH",
                 "tokenAddress": "0x4200000000000000000000000000000000000006"
+            }
+        ],
+        "rewarder6909": [
+            {
+                "configure": false,
+                "newAddress": "0x3151CfCA393FE5Eec690feD2a22222A5a073dAAA", // NOTE: Write address(0) to have new deployment !
+                "reserveType": true,
+                "symbol": "aUSDC",
+                "tokenAddress": "0xF491AF584A573d3accd5B61Ab9677D769CB1c806"
+            },
+            {
+                "configure": true,
+                "newAddress": "0x3151CfCA393FE5Eec690feD2a22222A5a073dAAA", // NOTE: Write address(0) to have new deployment !
+                "reserveType": true,
+                "symbol": "aWETH",
+                "tokenAddress": "0x5D06644F64cEf0299d8dFF67f08E1eC5e883C1a4"
             }
         ],
         "rehypothecation": [
@@ -606,22 +652,22 @@ The deployment process involves configuration files `./input/<Nr>_<InputJsonName
                 "configure": false, // determine whether rehypothecation needs to be changed for this asset
                 "drift": 200,
                 "farmingPct": 2000,
-                "profitHandler": "0x3151CfCA393FE5Eec690feD2a2446DA5a073d01B",
+                "profitHandler": "0x3151CfCA393FE5Eec690feD2a22222A5a073dAAA",
                 "reserveType": true,
                 "symbol": "USDC",
                 "tokenAddress": "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913",
-                "vault": "0x3151CfCA393FE5Eec690feD2a2446DA5a073d01B" // if vault is already set for the asset this param doesn't matter
+                "vault": "0x3151CfCA393FE5Eec690feD2a22222A5a073dAAA" // if vault is already set for the asset this param doesn't matter
             },
             {
                 "claimingThreshold": 1e8,
                 "configure": true, // determine whether rehypothecation needs to be changed for this asset
                 "drift": 200,
                 "farmingPct": 2000,
-                "profitHandler": "0x3151CfCA393FE5Eec690feD2a2446DA5a073d01B",
+                "profitHandler": "0x3151CfCA393FE5Eec690feD2a22222A5a073dAAA",
                 "reserveType": true,
                 "symbol": "WETH",
                 "tokenAddress": "0x4200000000000000000000000000000000000006",
-                "vault": "0x3151CfCA393FE5Eec690feD2a2446DA5a073d01B" // if vault is already set for the asset this param doesn't matter
+                "vault": "0x3151CfCA393FE5Eec690feD2a22222A5a073dAAA" // if vault is already set for the asset this param doesn't matter
             }
         ]
     }
@@ -634,12 +680,13 @@ The deployment process involves configuration files `./input/<Nr>_<InputJsonName
    {
         "transferMiniPoolRole": true, // used to determine which ownership transfer shall happen
        "roles": {
-           "addressesProviderOwner": "0x3151CfCA393FE5Eec690feD2a2446DA5a073d01B",
-           "emergencyAdmin": "0x3151CfCA393FE5Eec690feD2a2446DA5a073d01B",
-           "oracleOwner": "0x3151CfCA393FE5Eec690feD2a2446DA5a073d01B",
-           "piInterestStrategiesOwner": "0x3151CfCA393FE5Eec690feD2a2446DA5a073d01B",
-           "poolAdmin": "0x3151CfCA393FE5Eec690feD2a2446DA5a073d01B",
-           "rewarderOwner": "0x3151CfCA393FE5Eec690feD2a2446DA5a073d01B"
+           "addressesProviderOwner": "0x3151CfCA393FE5Eec690feD2a22222A5a073dAAA",
+           "emergencyAdmin": "0x3151CfCA393FE5Eec690feD2a22222A5a073dAAA",
+           "dataProviderOwner": "0x3151CfCA393FE5Eec690feD2a2446DA5a073d01B",
+           "oracleOwner": "0x3151CfCA393FE5Eec690feD2a22222A5a073dAAA",
+           "piInterestStrategiesOwner": "0x3151CfCA393FE5Eec690feD2a22222A5a073dAAA",
+           "poolAdmin": "0x3151CfCA393FE5Eec690feD2a22222A5a073dAAA",
+           "rewarderOwner": "0x3151CfCA393FE5Eec690feD2a22222A5a073dAAA"
        },
         "miniPoolRole": {
             "miniPoolId": 0,
@@ -657,12 +704,14 @@ The deployment process involves configuration files `./input/<Nr>_<InputJsonName
         // test params
         "collateralAddress": "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913",
         "borrowAssetAddress": "0x0555E30da8f98308EdB960aa94C0Db47230d2B9c",
-        "depositAmount": 5000000000,
+        "depositAmount": 5000000000, // amount used for depositing (with deposit asset decimals)
+        "borrowAmount": 50000000000000000, // amount used for borrowing (with borrow asset decimals)
         "bootstrapMainPool": true, // if the flag is enabled then script deposit assets to all configured reserves in specific lending pool 
         "bootstrapMiniPool": true, // if the flag is enabled then script deposit assets to all configured reserves in specific mini pool determined by poolId
+        "usdAmountToDeposit": 50000000000000000000, // amount used for bootstrapping
         "poolAddressesProviderConfig": {
             "marketId": "UV TestNet Market",
-            "poolId": 0,
+            "poolId": 0, // id of the mini pool that will be used in a tests
             "poolOwner": "0xf298Db641560E5B733C43181937207482Ff79bc9"
         }
     }
@@ -687,22 +736,35 @@ The deployment process involves configuration files `./input/<Nr>_<InputJsonName
   - Example:
   ```json
     {
-        "aToken": "0x12e721c390F5728200a26BBEf206A5F4F7E991f3",
-        "aTokensAndRatesHelper": "0x6FeA640c163c624a88bb7000391EB4763A02935f",
-        "cod3xLendDataProvider": "0x77443101F739bf8b771B96a7DD92E89088379D1F",
-        "lendingPool": "0x131D479073FE25CC991A0297d3f46bE6A5d67fFC",
-        "lendingPoolAddressesProvider": "0xA51e039acaeF798a3d42583ec3110baBe8B8666F",
-        "lendingPoolConfigurator": "0xA6fdc363B4E7181857e4a4C4A135a44442741853",
-        "oracle": "0x778325e0498c93078e7c75f0F03D753d714548EB",
+        "aTokenImpl": "0xFdDf7715602291C815ff4406E9E1A09678b5AA9a",
+        "aTokens": [
+            "0x89eD3c85B5C1EAe681552747a341E0C4Ca32A622",
+            "0x72135819B751FF166472dd2f3022D7950bcd1A32"
+        ],
+        "aTokensAndRatesHelper": "0x15EBF0a32e3be1d291aab080962bb77E51573438",
+        "cod3xLendDataProvider": "0x9f0F725568eBf6EDF1995816546B961A86Db5Dd9",
+        "debtTokens": [
+            "0x771Cfa5a7615FA3584Df29fc2df5c9B9b25977D0",
+            "0x83a850e2b49360798E77209fAd8F349B799744e6"
+        ],
+        "lendingPool": "0x8eb2bB8934c6dd46Ac9d310914eeDF8fe2444Cf0",
+        "lendingPoolAddressesProvider": "0x50A8caB71f058fA5fAFc3738d6156bc0818BF1F2",
+        "lendingPoolConfigurator": "0xe390c0c899B3E1d66162099ba69c7228FAd5E32b",
+        "oracle": "0xA6A20B9Ac4E981Ce50860DE3e10Babbb31efD5bc",
         "piStrategies": [
-            "0x431d5c499025B53468873BeA38EdB4f6Cbf5a57D"
+            "0x073573440a2875E479cbE12F4F8CcA86277c6de2"
         ],
         "stableStrategies": [
-            "0xa82B2097D4A748Ad3d446F9576A74899E3d94Ee3"
+            "0x0e23B3dE27Eba4447f10E73e62344cEa92Dfb29d"
         ],
-        "variableDebtToken": "0xEBD7CAF7d48a1B20283E70B0DFdE7d058584FE22",
+        "variableDebtTokenImpl": "0x80AA00918E246c76A3508eD282dEa9fB9d5B85Fc",
         "volatileStrategies": [
-            "0xFAf3a763Ea80A7FEaFF58fB1e10B97Ef94ADcfEa"
+            "0xB07c69E2789D15Fc51182a8776037b772186b035"
+        ],
+        "wethGateway": "0x7399A8b3aCb222DD203153dBB1C8247112C933AD",
+        "wrappedTokens": [
+            "0x5D06644F64cEf0299d8dFF67f08E1eC5e883C1a4",
+            "0xF491AF584A573d3accd5B61Ab9677D769CB1c806"
         ]
     }
   ```
@@ -712,24 +774,27 @@ The deployment process involves configuration files `./input/<Nr>_<InputJsonName
   - Example:
   ```json
     {
-        "aTokenErc6909": [
-            "0x0B426A98488443Cb85E6Cb1Fb885C651255aCD31"
+        "aTokenErc6909Impl": "0x110866e2dDb354052f8e82c9b5e6f70657f697b3",
+        "aTokenErc6909Proxy": [
+            "0xdF000a2F2531a31FD42FDdAF450b55262030D1B3",
+            "0xb02bD4A5592A150b17Ff3Ac07f6a2A7b2D39D9e6",
+            "0x5B79D13bB27A37d082469E9520f3193934d574e2"
         ],
-        "flowLimiter": "0x09a3eBe3B08c3751E17b8d77cb1c11389ba9F6DA",
-        "miniPoolAddressesProvider": "0x91752891a019Fb365Df0F99Fa468Bf19F91C2Ac0",
-        "miniPoolConfigurator": "0x7C8f56746de6D271f51d27A73e7266A27597806e",
-        "miniPoolImpl": [
-            "0x2abb7CBB720020ee3C9ecf3915D14B6d1886A577"
-        ],
-        "miniPoolPiStrategies": [
-            "0xcE8C32b1493DB37767fAF988dEC9E80089f4f33c",
-            "0x6A3F8435F343f27A6200ad4098476565d91101Ed"
+        "flowLimiter": "0xa62646006A0f6cBf2bc0d8F714109c5CA9c212BE",
+        "miniPoolAddressesProvider": "0x0fD39f9EA3c31988f252C4A9d7a7E6974C16CFf2",
+        "miniPoolConfigurator": "0x6122b0306E7169B8CDbEF3df3264C4C86f60BE77",
+        "miniPoolImpl": "0xF848b8086a70Ed315027ECB0e62c6893dd952642",
+        "miniPoolPiStrategies": [],
+        "miniPoolProxy": [
+            "0x714624aE78095Db0E6c574FCdfa1F1f6c2c656f4",
+            "0xB6f97fA7F4DAdb780b5927Df892962099A32827c",
+            "0x25ac4B5c5fd57Ae3629469133743fD611caE2468"
         ],
         "miniPoolStableStrategies": [
-            "0x46FE90E3f70B2d156e6D3489b8A2382d5b707830"
+            "0x380D4cfaDcF186e82c1d340e2F9428621444d452"
         ],
         "miniPoolVolatileStrategies": [
-            "0x0FA02c93f2efa05849f3ee4aeBc030731d0076Ad"
+            "0x5e1698f3281E42101A93098A5201240502ea7cF1"
         ]
     }
   ```
@@ -740,44 +805,68 @@ The deployment process involves configuration files `./input/<Nr>_<InputJsonName
   - Example:
   ```json
     {
-    "miniPoolPiStrategies": [
-        "0x486056653845AE60d9cEAd581B27A6433fbee660",
-        "0x86e4B254Cf1FEdF27EA73eDd51e96e7c5cD24604",
-        "0xb452eeB187df21592DaDb67E8B0590584415d28D",
-        "0x37aD96F513FF0b60f4240734625f40501487D6D0"
-    ],
-    "miniPoolPiStrategiesSymbols": [
-        "WETH",
-        "USDC",
-        "WBTC",
-        "USDT"
-    ],
-    "miniPoolStableStrategies": [
-        "0xe8D27ce05F3700906162Df7881002f4706d12b0d",
-        "0x5658eEAF14a785C523Cc838406Fe32e7DaEdf6cb"
-    ],
-    "miniPoolVolatileStrategies": [
-        "0xDBE218eaDD164E9380F5819F6cf40095Df16Ee94",
-        "0x7647F3C5f235c7B71a3771F064aC0d608E368707"
-    ],
-    "piStrategies": [
-        "0xdb026094f6b5b3A6aEEEBea25c60E5cfE9eB8E49",
-        "0xdF55c0A5e4171b8e9238E01Ebc9725ebd25E1d09",
-        "0xF0049934cdCf0d5011aE6c9B6dA4c4F0D082330b"
-    ],
-    "piStrategiesSymbols": [
-        "WETH",
-        "WBTC",
-        "USDC"
-    ],
-    "stableStrategies": [
-        "0xb798354d5731A9EA700a7B3bC3f7bfE30c562003",
-        "0xF86CD7286898138FEAc919097DcD4458Da4a488b"
-    ],
-    "volatileStrategies": [
-        "0x5343da84067fD87179C92a8A86D79662CF3cC505",
-        "0xC0d324d5af75BBDf062f2f0DE026a48163875C87"
-    ]
+        "miniPoolPiStrategies": [
+            "0x486056653845AE60d9cEAd581B27A6433fbee660",
+            "0x86e4B254Cf1FEdF27EA73eDd51e96e7c5cD24604",
+            "0xb452eeB187df21592DaDb67E8B0590584415d28D",
+            "0x37aD96F513FF0b60f4240734625f40501487D6D0"
+        ],
+        "miniPoolPiStrategiesSymbols": [
+            "WETH",
+            "USDC",
+            "WBTC",
+            "USDT"
+        ],
+        "miniPoolStableStrategies": [
+            "0xe8D27ce05F3700906162Df7881002f4706d12b0d",
+            "0x5658eEAF14a785C523Cc838406Fe32e7DaEdf6cb"
+        ],
+        "miniPoolVolatileStrategies": [
+            "0xDBE218eaDD164E9380F5819F6cf40095Df16Ee94",
+            "0x7647F3C5f235c7B71a3771F064aC0d608E368707"
+        ],
+        "piStrategies": [
+            "0xdb026094f6b5b3A6aEEEBea25c60E5cfE9eB8E49",
+            "0xdF55c0A5e4171b8e9238E01Ebc9725ebd25E1d09",
+            "0xF0049934cdCf0d5011aE6c9B6dA4c4F0D082330b"
+        ],
+        "piStrategiesSymbols": [
+            "WETH",
+            "WBTC",
+            "USDC"
+        ],
+        "stableStrategies": [
+            "0xb798354d5731A9EA700a7B3bC3f7bfE30c562003",
+            "0xF86CD7286898138FEAc919097DcD4458Da4a488b"
+        ],
+        "volatileStrategies": [
+            "0x5343da84067fD87179C92a8A86D79662CF3cC505",
+            "0xC0d324d5af75BBDf062f2f0DE026a48163875C87"
+        ]
+    }
+  ```
+  ##### **4_AddedAssets**
+  - List of all yield bearing tokens in all pool after addition
+  - Example:
+  ```json
+    {
+        "aTokenImpl": "0xFdDf7715602291C815ff4406E9E1A09678b5AA9a",
+        "aTokens": [
+            "0x89eD3c85B5C1EAe681552747a341E0C4Ca32A622",
+            "0x72135819B751FF166472dd2f3022D7950bcd1A32",
+            "0xfF5D2E6d289C7c9a2cf38B2d9EEBE1A20Fa69381"
+        ],
+        "debtTokens": [
+            "0x771Cfa5a7615FA3584Df29fc2df5c9B9b25977D0",
+            "0x83a850e2b49360798E77209fAd8F349B799744e6",
+            "0x273F86fb4c50A2b9063fac5dc8c47e4CDbFF7843"
+        ],
+        "variableDebtTokenImpl": "0x80AA00918E246c76A3508eD282dEa9fB9d5B85Fc",
+        "wrappedTokens": [
+            "0x5D06644F64cEf0299d8dFF67f08E1eC5e883C1a4",
+            "0xF491AF584A573d3accd5B61Ab9677D769CB1c806",
+            "0x27914Eb047D7D3d322D3158BB75800FFd09B4489"
+        ]
     }
   ```
   ##### **6_DeployedPeripherials**
@@ -790,3 +879,6 @@ The deployment process involves configuration files `./input/<Nr>_<InputJsonName
     "rewarder6909": "0xCA3c1FC0d5EdbAC5d8AB7742D4ff6F7053E04280"
     }
   ```
+
+ ##### **contracts.csv**
+  - run prepareContractList.py to get all contracts list in csv format

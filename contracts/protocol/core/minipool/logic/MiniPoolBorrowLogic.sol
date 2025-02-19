@@ -104,68 +104,8 @@ library MiniPoolBorrowLogic {
         DataTypes.UserConfigurationMap memory userConfig,
         mapping(uint256 => address) storage reservesList
     ) external view returns (uint256, uint256, uint256, uint256, uint256) {
-        CalculateUserAccountDataVolatileLocalVars memory vars;
-
-        if (userConfig.isEmpty()) {
-            return (0, 0, 0, 0, type(uint256).max);
-        }
-
-        for (vars.i = 0; vars.i < params.reservesCount; vars.i++) {
-            if (!userConfig.isUsingAsCollateralOrBorrowing(vars.i)) {
-                continue;
-            }
-
-            vars.currentReserveAddress = reservesList[vars.i];
-            DataTypes.MiniPoolReserveData storage currentReserve =
-                reserves[vars.currentReserveAddress];
-
-            (vars.ltv, vars.liquidationThreshold,, vars.decimals,) =
-                currentReserve.configuration.getParams();
-
-            vars.tokenUnit = 10 ** vars.decimals;
-
-            vars.reserveUnitPrice = IOracle(params.oracle).getAssetPrice(vars.currentReserveAddress);
-
-            if (vars.liquidationThreshold != 0 && userConfig.isUsingAsCollateral(vars.i)) {
-                vars.compoundedLiquidityBalance = IAERC6909(currentReserve.aTokenAddress).balanceOf(
-                    params.user, currentReserve.aTokenID
-                );
-
-                uint256 liquidityBalanceETH =
-                    vars.reserveUnitPrice * vars.compoundedLiquidityBalance / vars.tokenUnit;
-
-                vars.totalCollateralInETH = vars.totalCollateralInETH + liquidityBalanceETH;
-
-                vars.avgLtv = vars.avgLtv + (liquidityBalanceETH * vars.ltv);
-                vars.avgLiquidationThreshold =
-                    vars.avgLiquidationThreshold + (liquidityBalanceETH * vars.liquidationThreshold);
-            }
-
-            if (userConfig.isBorrowing(vars.i)) {
-                vars.compoundedBorrowBalance = IAERC6909(currentReserve.aTokenAddress).balanceOf(
-                    params.user, currentReserve.variableDebtTokenID
-                );
-
-                vars.totalDebtInETH = vars.totalDebtInETH
-                    + (vars.reserveUnitPrice * vars.compoundedBorrowBalance / vars.tokenUnit);
-            }
-        }
-
-        vars.avgLtv = vars.totalCollateralInETH > 0 ? vars.avgLtv / vars.totalCollateralInETH : 0;
-        vars.avgLiquidationThreshold = vars.totalCollateralInETH > 0
-            ? vars.avgLiquidationThreshold / vars.totalCollateralInETH
-            : 0;
-
-        vars.healthFactor = MiniPoolGenericLogic.calculateHealthFactorFromBalances(
-            vars.totalCollateralInETH, vars.totalDebtInETH, vars.avgLiquidationThreshold
-        );
-
-        return (
-            vars.totalCollateralInETH,
-            vars.totalDebtInETH,
-            vars.avgLtv,
-            vars.avgLiquidationThreshold,
-            vars.healthFactor
+        return MiniPoolGenericLogic.calculateUserAccountData(
+            params.user, reserves, userConfig, reservesList, params.reservesCount, params.oracle
         );
     }
 
@@ -177,13 +117,14 @@ library MiniPoolBorrowLogic {
         address user;
         address onBehalfOf;
         uint256 amount;
-        address aTokenAddress;
+        address aErc6909;
         uint256 aTokenID;
         uint256 variableDebtTokenID;
         uint256 index;
         bool releaseUnderlying;
         IMiniPoolAddressesProvider addressesProvider;
         uint256 reservesCount;
+        uint256 minAmount;
     }
 
     /**
@@ -217,6 +158,7 @@ library MiniPoolBorrowLogic {
                 amountInETH(vars.asset, vars.amount, reserve.configuration.getDecimals(), oracle);
             validateBorrowParams.reservesCount = vars.reservesCount;
             validateBorrowParams.oracle = oracle;
+            validateBorrowParams.minAmount = vars.minAmount;
             MiniPoolValidationLogic.validateBorrow(
                 validateBorrowParams, reserve, reserves, userConfig, reservesList
             );
@@ -227,12 +169,12 @@ library MiniPoolBorrowLogic {
         {
             bool isFirstBorrowing = false;
             {
-                vars.aTokenAddress = reserve.aTokenAddress;
+                vars.aErc6909 = reserve.aErc6909;
                 vars.aTokenID = reserve.aTokenID;
                 vars.variableDebtTokenID = reserve.variableDebtTokenID;
                 vars.index = reserve.variableBorrowIndex;
             }
-            isFirstBorrowing = IAERC6909(vars.aTokenAddress).mint(
+            isFirstBorrowing = IAERC6909(vars.aErc6909).mint(
                 vars.user, vars.onBehalfOf, vars.variableDebtTokenID, vars.amount, vars.index
             );
 
@@ -244,7 +186,7 @@ library MiniPoolBorrowLogic {
         reserve.updateInterestRates(vars.asset, 0, vars.releaseUnderlying ? vars.amount : 0);
 
         if (vars.releaseUnderlying) {
-            IAERC6909(vars.aTokenAddress).transferUnderlyingTo(
+            IAERC6909(vars.aErc6909).transferUnderlyingTo(
                 vars.user, reserve.aTokenID, vars.amount, unwrap
             );
         }
@@ -273,11 +215,12 @@ library MiniPoolBorrowLogic {
     /**
      * @dev Parameters for repaying a borrowed position.
      */
-    struct repayParams {
+    struct RepayParams {
         address asset;
         uint256 amount;
         address onBehalfOf;
         IMiniPoolAddressesProvider addressesProvider;
+        uint256 minAmount;
     }
 
     /**
@@ -300,7 +243,7 @@ library MiniPoolBorrowLogic {
      * @return The amount repaid.
      */
     function repay(
-        repayParams memory params,
+        RepayParams memory params,
         bool wrap,
         mapping(address => DataTypes.MiniPoolReserveData) storage _reserves,
         mapping(address => DataTypes.UserConfigurationMap) storage _usersConfig
@@ -310,7 +253,7 @@ library MiniPoolBorrowLogic {
         (uint256 variableDebt) = Helpers.getUserCurrentDebt(params.onBehalfOf, reserve);
 
         MiniPoolValidationLogic.validateRepay(
-            reserve, params.amount, params.onBehalfOf, variableDebt
+            reserve, params.amount, params.onBehalfOf, variableDebt, params.minAmount
         );
 
         uint256 paybackAmount = variableDebt;
@@ -321,16 +264,16 @@ library MiniPoolBorrowLogic {
 
         reserve.updateState();
 
-        IAERC6909(reserve.aTokenAddress).burn(
+        IAERC6909(reserve.aErc6909).burn(
             params.onBehalfOf,
-            params.onBehalfOf, // we dont care about the burn receiver for debtTokens
+            address(0), // we dont care about the burn receiver for debtTokens
             reserve.variableDebtTokenID,
             paybackAmount,
             false,
             reserve.variableBorrowIndex
         );
 
-        address aToken = reserve.aTokenAddress;
+        address aToken = reserve.aErc6909;
         reserve.updateInterestRates(params.asset, paybackAmount, 0);
 
         if (variableDebt - paybackAmount == 0) {

@@ -4,19 +4,19 @@ pragma solidity ^0.8.23;
 
 // import "./DeployArbTestNet.s.sol";
 // import "./localDeployConfig.s.sol";
-import "./DeployDataTypes.s.sol";
-import "./DeploymentUtils.s.sol";
+import "./DeployDataTypes.sol";
+import "./helpers/ChangePeripherialsHelper.s.sol";
 import "lib/forge-std/src/Test.sol";
 import "lib/forge-std/src/Script.sol";
 import "lib/forge-std/src/console.sol";
-import {AddAssets} from "./4_AddAssets.s.sol";
+
 import {DataTypes} from "../contracts/protocol/libraries/types/DataTypes.sol";
 import {ERC4626Mock} from "lib/openzeppelin-contracts/contracts/mocks/token/ERC4626Mock.sol";
 
-contract ChangePeripherials is Script, DeploymentUtils, Test {
+contract ChangePeripherials is Script, ChangePeripherialsHelper, Test {
     using stdJson for string;
 
-    function writeJsonData(string memory root, string memory path) internal {
+    function writeJsonData(string memory path) internal {
         /* Write important contracts into the file */
         vm.serializeAddress(
             "peripherials", "cod3xLendDataProvider", address(contracts.cod3xLendDataProvider)
@@ -26,9 +26,8 @@ contract ChangePeripherials is Script, DeploymentUtils, Test {
         string memory output =
             vm.serializeAddress("peripherials", "rewarder6909", address(contracts.rewarder6909));
 
-        vm.writeJson(output, "./scripts/outputs/6_DeployedPeripherials.json");
+        vm.writeJson(output, path);
 
-        path = string.concat(root, "/scripts/outputs/6_DeployedPeripherials.json");
         console.log("PROTOCOL DEPLOYED (check out addresses on %s)", path);
     }
 
@@ -37,22 +36,11 @@ contract ChangePeripherials is Script, DeploymentUtils, Test {
         // Config fetching
         // Providers
         string memory root = vm.projectRoot();
-        string memory path = string.concat(root, "/scripts/outputs/1_LendingPoolContracts.json");
-        console.log("PATH: ", path);
-        string memory config = vm.readFile(path);
-
-        address lendingPoolAddressesProvider = config.readAddress(".lendingPoolAddressesProvider");
-
-        path = string.concat(root, "/scripts/outputs/2_MiniPoolContracts.json");
-        console.log("PATH: ", path);
-        config = vm.readFile(path);
-
-        address miniPoolAddressesProvider = config.readAddress(".miniPoolAddressesProvider");
 
         // Inputs from Peripherials
-        path = string.concat(root, "/scripts/inputs/6_ChangePeripherials.json");
+        string memory path = string.concat(root, "/scripts/inputs/6_ChangePeripherials.json");
         console.log("PATH: ", path);
-        config = vm.readFile(path);
+        string memory config = vm.readFile(path);
 
         NewPeripherial[] memory vault = abi.decode(config.parseRaw(".vault"), (NewPeripherial[]));
         NewPeripherial[] memory treasury =
@@ -68,46 +56,19 @@ contract ChangePeripherials is Script, DeploymentUtils, Test {
             abi.decode(config.parseRaw(".rehypothecation"), (Rehypothecation[]));
 
         uint256 miniPoolId = config.readUint(".miniPoolId");
-        bool deployCod3xLendDataProvider = config.readBool(".deployCod3xLendDataProvider");
+        DataProvider memory cod3xLendDataProvider =
+            abi.decode(config.parseRaw(".cod3xLendDataProvider"), (DataProvider));
+
+        address profitHandler = config.readAddress(".profitHandler");
 
         require(treasury.length == rehypothecation.length, "Lengths settings must be the same");
 
-        if (vm.envBool("LOCAL_FORK")) {
-            /* Fork Identifier */
-            string memory RPC = vm.envString("BASE_RPC_URL");
-            uint256 FORK_BLOCK = 21838058;
-            uint256 fork;
-            fork = vm.createSelectFork(RPC, FORK_BLOCK);
-
-            /* Config fetching */
-            AddAssets addAssets = new AddAssets();
-            contracts = addAssets.run();
-
-            vm.startPrank(FOUNDRY_DEFAULT);
-            for (uint8 idx = 0; idx < vault.length; idx++) {
-                vault[idx].newAddress = address(new ERC4626Mock(vault[idx].tokenAddress));
-            }
-            console.log("Changing peripherials");
-            _changePeripherials(
-                treasury, miniPoolCod3xTreasury, vault, rewarder, rewarder6909, miniPoolId
-            );
-            _turnOnRehypothecation(rehypothecation);
-            if (deployCod3xLendDataProvider) {
-                contracts.cod3xLendDataProvider = new Cod3xLendDataProvider();
-                contracts.cod3xLendDataProvider.setLendingPoolAddressProvider(
-                    lendingPoolAddressesProvider
-                );
-                contracts.cod3xLendDataProvider.setMiniPoolAddressProvider(
-                    miniPoolAddressesProvider
-                );
-            }
-            vm.stopPrank();
-        } else if (vm.envBool("TESTNET")) {
+        if (!vm.envBool("MAINNET")) {
             console.log("Testnet");
             /* *********** Lending pool settings *********** */
             {
                 string memory outputPath =
-                    string.concat(root, "/scripts/outputs/1_LendingPoolContracts.json");
+                    string.concat(root, "/scripts/outputs/testnet/1_LendingPoolContracts.json");
                 console.log("PATH: ", outputPath);
                 config = vm.readFile(outputPath);
             }
@@ -115,10 +76,12 @@ contract ChangePeripherials is Script, DeploymentUtils, Test {
             contracts.lendingPool = LendingPool(config.readAddress(".lendingPool"));
             contracts.lendingPoolConfigurator =
                 LendingPoolConfigurator(config.readAddress(".lendingPoolConfigurator"));
+            contracts.lendingPoolAddressesProvider =
+                LendingPoolAddressesProvider(config.readAddress(".lendingPoolAddressesProvider"));
 
             {
                 string memory outputPath =
-                    string.concat(root, "/scripts/outputs/2_MiniPoolContracts.json");
+                    string.concat(root, "/scripts/outputs/testnet/2_MiniPoolContracts.json");
                 config = vm.readFile(outputPath);
             }
 
@@ -128,7 +91,7 @@ contract ChangePeripherials is Script, DeploymentUtils, Test {
                 MiniPoolConfigurator(config.readAddress(".miniPoolConfigurator"));
 
             /* Read all mocks deployed */
-            path = string.concat(root, "/scripts/outputs/0_MockedTokens.json");
+            path = string.concat(root, "/scripts/outputs/testnet/0_MockedTokens.json");
             console.log("PATH: ", path);
             config = vm.readFile(path);
             address[] memory mockedTokens = config.readAddressArray(".mockedTokens");
@@ -138,35 +101,35 @@ contract ChangePeripherials is Script, DeploymentUtils, Test {
                 "There are not enough mocked tokens. Deploy mocks.. "
             );
             {
-                for (uint8 idx = 0; idx < vault.length; idx++) {
-                    for (uint8 i = 0; i < mockedTokens.length; i++) {
-                        if (
-                            keccak256(abi.encodePacked(ERC20(mockedTokens[i]).symbol()))
-                                == keccak256(abi.encodePacked(vault[idx].symbol))
-                        ) {
-                            console.log(
-                                "Assigning %s instead of %s",
-                                address(mockedTokens[i]),
-                                vault[idx].tokenAddress
-                            );
-                            vault[idx].tokenAddress = address(mockedTokens[i]);
-                            rehypothecation[idx].tokenAddress = address(mockedTokens[i]);
-                            treasury[idx].tokenAddress = address(mockedTokens[i]);
-                            rewarder[idx].tokenAddress = address(mockedTokens[i]);
-                            rewarder6909[idx].tokenAddress = address(mockedTokens[i]);
-                            break;
-                        }
-                    }
-                    require(vault[idx].tokenAddress != address(0), "Mocked token not assigned");
-                    require(
-                        rehypothecation[idx].tokenAddress != address(0), "Mocked token not assigned"
-                    );
-                    require(treasury[idx].tokenAddress != address(0), "Mocked token not assigned");
-                    require(rewarder[idx].tokenAddress != address(0), "Mocked token not assigned");
-                    require(
-                        rewarder6909[idx].tokenAddress != address(0), "Mocked token not assigned"
-                    );
-                }
+                // for (uint8 idx = 0; idx < vault.length; idx++) {
+                //     for (uint8 i = 0; i < mockedTokens.length; i++) {
+                //         if (
+                //             keccak256(abi.encodePacked(ERC20(mockedTokens[i]).symbol()))
+                //                 == keccak256(abi.encodePacked(vault[idx].symbol))
+                //         ) {
+                //             console.log(
+                //                 "Assigning %s instead of %s",
+                //                 address(mockedTokens[i]),
+                //                 vault[idx].tokenAddress
+                //             );
+                //             vault[idx].tokenAddress = address(mockedTokens[i]);
+                //             rehypothecation[idx].tokenAddress = address(mockedTokens[i]);
+                //             treasury[idx].tokenAddress = address(mockedTokens[i]);
+                //             rewarder[idx].tokenAddress = address(mockedTokens[i]);
+                //             rewarder6909[idx].tokenAddress = address(mockedTokens[i]);
+                //             break;
+                //         }
+                //     }
+                //     require(vault[idx].tokenAddress != address(0), "Mocked token not assigned");
+                //     require(
+                //         rehypothecation[idx].tokenAddress != address(0), "Mocked token not assigned"
+                //     );
+                //     require(treasury[idx].tokenAddress != address(0), "Mocked token not assigned");
+                //     require(rewarder[idx].tokenAddress != address(0), "Mocked token not assigned");
+                //     require(
+                //         rewarder6909[idx].tokenAddress != address(0), "Mocked token not assigned"
+                //     );
+                // }
             }
 
             /* Change peripherials */
@@ -175,25 +138,36 @@ contract ChangePeripherials is Script, DeploymentUtils, Test {
                 vault[idx].newAddress = address(new ERC4626Mock(vault[idx].tokenAddress));
             }
             _changePeripherials(
-                treasury, miniPoolCod3xTreasury, vault, rewarder, rewarder6909, miniPoolId
+                treasury,
+                miniPoolCod3xTreasury,
+                vault,
+                rewarder,
+                rewarder6909,
+                miniPoolId,
+                profitHandler
             );
             _turnOnRehypothecation(rehypothecation);
-            if (deployCod3xLendDataProvider) {
-                contracts.cod3xLendDataProvider = new Cod3xLendDataProvider();
+            /* Data Provider */
+            if (cod3xLendDataProvider.deploy) {
+                contracts.cod3xLendDataProvider = new Cod3xLendDataProvider(
+                    cod3xLendDataProvider.networkBaseTokenAggregator,
+                    cod3xLendDataProvider.marketReferenceCurrencyAggregator
+                );
                 contracts.cod3xLendDataProvider.setLendingPoolAddressProvider(
-                    lendingPoolAddressesProvider
+                    address(contracts.lendingPoolAddressesProvider)
                 );
                 contracts.cod3xLendDataProvider.setMiniPoolAddressProvider(
-                    miniPoolAddressesProvider
+                    address(contracts.miniPoolAddressesProvider)
                 );
             }
             vm.stopBroadcast();
+            path = string.concat(root, "/scripts/outputs/testnet/6_ChangePeripherials.json");
         } else if (vm.envBool("MAINNET")) {
             console.log("Mainnet");
             /* *********** Lending pool settings *********** */
             {
                 string memory outputPath =
-                    string.concat(root, "/scripts/outputs/1_LendingPoolContracts.json");
+                    string.concat(root, "/scripts/outputs/mainnet/1_LendingPoolContracts.json");
                 console.log("PATH: ", outputPath);
                 config = vm.readFile(outputPath);
             }
@@ -204,7 +178,7 @@ contract ChangePeripherials is Script, DeploymentUtils, Test {
 
             {
                 string memory outputPath =
-                    string.concat(root, "/scripts/outputs/2_MiniPoolContracts.json");
+                    string.concat(root, "/scripts/outputs/mainnet/2_MiniPoolContracts.json");
                 config = vm.readFile(outputPath);
             }
 
@@ -216,23 +190,34 @@ contract ChangePeripherials is Script, DeploymentUtils, Test {
             /* Change peripherials */
             vm.startBroadcast(vm.envUint("PRIVATE_KEY"));
             _changePeripherials(
-                treasury, miniPoolCod3xTreasury, vault, rewarder, rewarder6909, miniPoolId
+                treasury,
+                miniPoolCod3xTreasury,
+                vault,
+                rewarder,
+                rewarder6909,
+                miniPoolId,
+                profitHandler
             );
             _turnOnRehypothecation(rehypothecation);
-            if (deployCod3xLendDataProvider) {
-                contracts.cod3xLendDataProvider = new Cod3xLendDataProvider();
+            /* Data Provider */
+            if (cod3xLendDataProvider.deploy) {
+                contracts.cod3xLendDataProvider = new Cod3xLendDataProvider(
+                    cod3xLendDataProvider.networkBaseTokenAggregator,
+                    cod3xLendDataProvider.marketReferenceCurrencyAggregator
+                );
                 contracts.cod3xLendDataProvider.setLendingPoolAddressProvider(
-                    lendingPoolAddressesProvider
+                    address(contracts.lendingPoolAddressesProvider)
                 );
                 contracts.cod3xLendDataProvider.setMiniPoolAddressProvider(
-                    miniPoolAddressesProvider
+                    address(contracts.miniPoolAddressesProvider)
                 );
             }
             vm.stopBroadcast();
+            path = string.concat(root, "/scripts/outputs/mainnet/6_ChangePeripherials.json");
         } else {
             console.log("No deployment type selected in .env");
         }
-        writeJsonData(root, path);
+        writeJsonData(path);
         return contracts;
     }
 }

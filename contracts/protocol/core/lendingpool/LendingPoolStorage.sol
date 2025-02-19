@@ -1,14 +1,11 @@
 // SPDX-License-Identifier: agpl-3.0
 pragma solidity 0.8.23;
 
-import {UserConfiguration} from
-    "../../../../contracts/protocol/libraries/configuration/UserConfiguration.sol";
-import {ReserveConfiguration} from
-    "../../../../contracts/protocol/libraries/configuration/ReserveConfiguration.sol";
-import {ReserveLogic} from "../../../../contracts/protocol/core/lendingpool/logic/ReserveLogic.sol";
 import {ILendingPoolAddressesProvider} from
     "../../../../contracts/interfaces/ILendingPoolAddressesProvider.sol";
 import {DataTypes} from "../../../../contracts/protocol/libraries/types/DataTypes.sol";
+import {EnumerableSet} from
+    "../../../../lib/openzeppelin-contracts/contracts/utils/structs/EnumerableSet.sol";
 
 /**
  * @title LendingPoolStorage
@@ -16,9 +13,7 @@ import {DataTypes} from "../../../../contracts/protocol/libraries/types/DataType
  * @dev Contract containing storage variables for the LendingPool contract.
  */
 contract LendingPoolStorage {
-    using ReserveLogic for DataTypes.ReserveData;
-    using ReserveConfiguration for DataTypes.ReserveConfigurationMap;
-    using UserConfiguration for DataTypes.UserConfigurationMap;
+    using EnumerableSet for EnumerableSet.AddressSet;
 
     /// @dev The addresses provider contract reference.
     ILendingPoolAddressesProvider internal _addressesProvider;
@@ -37,6 +32,10 @@ contract LendingPoolStorage {
      * Used to track the list of all reserves in the protocol.
      */
     mapping(uint256 => DataTypes.ReserveReference) internal _reservesList;
+
+    /// @dev Mapping of asset addresses to minipool addresses that are borrowing from them.
+    /// No need to track the `reserveType` because flow borrowing only support for the `true` reserve type.
+    mapping(address => EnumerableSet.AddressSet) internal _assetToMinipoolFlowBorrowing;
 
     /// @dev Counter for the number of initialized reserves.
     uint256 internal _reservesCount;

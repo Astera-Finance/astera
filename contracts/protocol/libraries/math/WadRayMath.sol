@@ -2,13 +2,13 @@
 pragma solidity 0.8.23;
 
 import {Errors} from "../../../../contracts/protocol/libraries/helpers/Errors.sol";
-
 /**
  * @title WadRayMath library
  * @author Cod3x
  * @notice Provides multiplication and division functions for wads (decimal numbers with 18 digits precision) and rays (decimals with 27 digits precision).
  * @dev Core math library for precise decimal calculations using wad (1e18) and ray (1e27) units.
  */
+
 library WadRayMath {
     uint256 internal constant WAD = 1e18;
     uint256 internal constant halfWAD = WAD / 2;
@@ -42,6 +42,62 @@ library WadRayMath {
     }
 
     /**
+     * @notice Converts ray number down to wad precision.
+     * @param a Ray number to convert.
+     * @return The input `a` converted to wad, rounded half up to the nearest wad.
+     */
+    function rayToWad(uint256 a) internal pure returns (uint256) {
+        uint256 halfRatio = WAD_RAY_RATIO / 2;
+        uint256 result = halfRatio + a;
+
+        return result / WAD_RAY_RATIO;
+    }
+
+    /**
+     * @notice Converts wad number up to ray precision.
+     * @param a Wad number to convert.
+     * @return The input `a` converted to ray precision.
+     */
+    function wadToRay(uint256 a) internal pure returns (uint256) {
+        uint256 result = a * WAD_RAY_RATIO;
+        return result;
+    }
+
+    // ----------- Classic operations -----------
+
+    /**
+     * @notice Divides two numbers, rounding up to the nearest uint.
+     * @dev Inspired from https://github.com/OpenZeppelin/openzeppelin-contracts/blob/master/contracts/utils/math/Math.sol.
+     * @param a Number to divide (numerator).
+     * @param b Number to divide by (denominator).
+     * @return The result of `a/b`, rounded up to the nearest uint.
+     */
+    function divUp(uint256 a, uint256 b) internal pure returns (uint256) {
+        require(b != 0, Errors.MATH_DIVISION_BY_ZERO);
+
+        // The following calculation ensures accurate ceiling division without overflow.
+        // Since a is non-zero, (a - 1) / b will not overflow.
+        // The largest possible result occurs when (a - 1) / b is type(uint256).max,
+        // but the largest value we can obtain is type(uint256).max - 1, which happens
+        // when a = type(uint256).max and b = 1.
+        unchecked {
+            return _toUint(a > 0) * ((a - 1) / b + 1);
+        }
+    }
+
+    /**
+     * @notice Cast a boolean (false or true) to a uint256 (0 or 1) with no jump.
+     * @dev Inspired from https://github.com/OpenZeppelin/openzeppelin-contracts/blob/master/contracts/utils/math/SafeCast.sol.
+     */
+    function _toUint(bool b) internal pure returns (uint256 u) {
+        assembly ("memory-safe") {
+            u := iszero(iszero(b))
+        }
+    }
+
+    // ----------- WAD operations -----------
+
+    /**
      * @notice Multiplies two wad numbers, rounding half up to the nearest wad.
      * @param a First wad number to multiply.
      * @param b Second wad number to multiply.
@@ -73,18 +129,20 @@ library WadRayMath {
     }
 
     /**
-     * @notice Divides two wad numbers, rounding half down to the nearest wad.
+     * @notice Divides two wad numbers, rounding up to the nearest wad.
      * @param a Wad number to divide (numerator).
      * @param b Wad number to divide by (denominator).
      * @return The result of `a/b`, in wad precision.
      */
-    function wadDivDown(uint256 a, uint256 b) internal pure returns (uint256) {
+    function wadDivUp(uint256 a, uint256 b) internal pure returns (uint256) {
         require(b != 0, Errors.MATH_DIVISION_BY_ZERO);
 
-        require(a <= (type(uint256).max) / WAD, Errors.MATH_MULTIPLICATION_OVERFLOW);
+        require(a <= (type(uint256).max - b) / WAD, Errors.MATH_MULTIPLICATION_OVERFLOW);
 
-        return ((a * WAD) / b);
+        return (a * WAD + b) / b;
     }
+
+    // ----------- RAY operations -----------
 
     /**
      * @notice Multiplies two ray numbers, rounding half up to the nearest ray.
@@ -118,30 +176,20 @@ library WadRayMath {
     }
 
     /**
-     * @notice Converts ray number down to wad precision.
-     * @param a Ray number to convert.
-     * @return The input `a` converted to wad, rounded half up to the nearest wad.
+     * @notice Divides two ray numbers, rounding up to the nearest ray.
+     * @param a Ray number to divide (numerator).
+     * @param b Ray number to divide by (denominator).
+     * @return The result of `a/b`, in ray precision.
      */
-    function rayToWad(uint256 a) internal pure returns (uint256) {
-        uint256 halfRatio = WAD_RAY_RATIO / 2;
-        uint256 result = halfRatio + a;
-        require(result >= halfRatio, Errors.MATH_ADDITION_OVERFLOW);
+    function rayDivUp(uint256 a, uint256 b) internal pure returns (uint256) {
+        require(b != 0, Errors.MATH_DIVISION_BY_ZERO);
 
-        return result / WAD_RAY_RATIO;
+        require(a <= (type(uint256).max - b) / RAY, Errors.MATH_MULTIPLICATION_OVERFLOW);
+
+        return (a * RAY + b) / b;
     }
 
-    /**
-     * @notice Converts wad number up to ray precision.
-     * @param a Wad number to convert.
-     * @return The input `a` converted to ray precision.
-     */
-    function wadToRay(uint256 a) internal pure returns (uint256) {
-        uint256 result = a * WAD_RAY_RATIO;
-        require(result / WAD_RAY_RATIO == a, Errors.MATH_MULTIPLICATION_OVERFLOW);
-        return result;
-    }
-
-    // ------- int -------
+    // ----------- RAY Int operations -----------
 
     /**
      * @notice Multiplies two ray integers, rounding half up to the nearest ray.
@@ -190,7 +238,7 @@ library WadRayMath {
      */
     function rayPowerInt(int256 base, uint256 exponent) internal pure returns (int256) {
         if (exponent == 0) {
-            return 1;
+            return RAYint;
         }
         int256 result = base;
         for (uint256 i = 1; i < exponent; i++) {

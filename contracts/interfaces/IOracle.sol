@@ -19,7 +19,7 @@ interface IOracle {
      * @param asset The address of the asset
      * @param source The address of the price source
      */
-    event AssetSourceUpdated(address indexed asset, address indexed source);
+    event AssetSourceUpdated(address indexed asset, address indexed source, uint256 timeout);
 
     /**
      * @dev Emitted when the fallback oracle is updated
@@ -43,7 +43,11 @@ interface IOracle {
 
     function getSourceOfAsset(address asset) external view returns (address);
 
+    function getAssetTimeout(address asset) external view returns (uint256);
+
     function getFallbackOracle() external view returns (address);
+
+    function getLendingpoolConfigurator() external view returns (address);
 
     function BASE_CURRENCY() external view returns (address);
 

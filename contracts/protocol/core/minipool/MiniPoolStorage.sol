@@ -1,11 +1,6 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity 0.8.23;
 
-import {UserConfiguration} from
-    "../../../../contracts/protocol/libraries/configuration/UserConfiguration.sol";
-import {ReserveConfiguration} from
-    "../../../../contracts/protocol/libraries/configuration/ReserveConfiguration.sol";
-import {ReserveLogic} from "../../../../contracts/protocol/core/lendingpool/logic/ReserveLogic.sol";
 import {IMiniPoolAddressesProvider} from
     "../../../../contracts/interfaces/IMiniPoolAddressesProvider.sol";
 import {ILendingPool} from "../../../../contracts/interfaces/ILendingPool.sol";
@@ -18,10 +13,6 @@ import {DataTypes} from "../../../../contracts/protocol/libraries/types/DataType
  * @author Cod3x
  */
 contract MiniPoolStorage {
-    using ReserveLogic for DataTypes.ReserveData;
-    using ReserveConfiguration for DataTypes.ReserveConfigurationMap;
-    using UserConfiguration for DataTypes.UserConfigurationMap;
-
     /// @dev The addresses provider contract managing this MiniPool's addresses.
     IMiniPoolAddressesProvider internal _addressesProvider;
 
@@ -51,4 +42,10 @@ contract MiniPoolStorage {
 
     /// @dev Maximum number of reserves that can be initialized.
     uint256 internal _maxNumberOfReserves;
+
+    /// @dev Minimal possible debt threshold
+    uint256 internal _minDebtThreshold;
+
+    /// @dev Minimal decimals amount
+    uint256 internal constant THRESHOLD_SCALING_DECIMALS = 6;
 }

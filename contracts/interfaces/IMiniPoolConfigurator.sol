@@ -145,7 +145,14 @@ interface IMiniPoolConfigurator {
      */
     event FlowLimitUpdated(address indexed asset, address indexed miniPool, uint256 limit);
 
-    function initialize(IMiniPoolAddressesProvider provider) external;
+    /**
+     * @dev Emitted when the total premium on flashloans is updated.
+     * @param oldFlashloanPremiumTotal The old premium, expressed in bps
+     * @param newFlashloanPremiumTotal The new premium, expressed in bps
+     */
+    event FlashloanPremiumTotalUpdated(
+        uint128 oldFlashloanPremiumTotal, uint128 newFlashloanPremiumTotal
+    );
 
     function batchInitReserve(InitReserveInput[] calldata input, IMiniPool pool) external;
 
@@ -156,7 +163,7 @@ interface IMiniPoolConfigurator {
 
     function setCod3xTreasury(address treasury) external;
 
-    function setFlowLimit(address asset, address miniPool, uint256 limit) external;
+    function setFlowLimit(address asset, uint256 limit, IMiniPool pool) external;
 
     function setReserveInterestRateStrategyAddress(
         address asset,

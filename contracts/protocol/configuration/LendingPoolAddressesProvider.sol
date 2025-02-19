@@ -6,6 +6,8 @@ import {InitializableImmutableAdminUpgradeabilityProxy} from
     "../../../contracts/protocol/libraries/upgradeability/InitializableImmutableAdminUpgradeabilityProxy.sol";
 import {ILendingPoolAddressesProvider} from
     "../../../contracts/interfaces/ILendingPoolAddressesProvider.sol";
+import {IAddressProviderUpdatable} from
+    "../../../contracts/interfaces/IAddressProviderUpdatable.sol";
 
 /**
  * @title LendingPoolAddressesProvider contract
@@ -17,13 +19,13 @@ import {ILendingPoolAddressesProvider} from
 contract LendingPoolAddressesProvider is Ownable, ILendingPoolAddressesProvider {
     mapping(bytes32 => address) private _addresses;
 
-    bytes32 private constant LENDING_POOL = "LENDING_POOL";
-    bytes32 private constant LENDING_POOL_CONFIGURATOR = "LENDING_POOL_CONFIGURATOR";
-    bytes32 private constant POOL_ADMIN = "POOL_ADMIN";
-    bytes32 private constant EMERGENCY_ADMIN = "EMERGENCY_ADMIN";
-    bytes32 private constant PRICE_ORACLE = "PRICE_ORACLE";
-    bytes32 private constant MINIPOOL_ADDRESSES_PROVIDER = "MINIPOOL_ADDRESSES_PROVIDER";
-    bytes32 private constant FLOW_LIMITER = "FLOW_LIMITER";
+    bytes32 private constant LENDING_POOL = keccak256("LENDING_POOL");
+    bytes32 private constant LENDING_POOL_CONFIGURATOR = keccak256("LENDING_POOL_CONFIGURATOR");
+    bytes32 private constant POOL_ADMIN = keccak256("POOL_ADMIN");
+    bytes32 private constant EMERGENCY_ADMIN = keccak256("EMERGENCY_ADMIN");
+    bytes32 private constant PRICE_ORACLE = keccak256("PRICE_ORACLE");
+    bytes32 private constant MINIPOOL_ADDRESSES_PROVIDER = keccak256("MINIPOOL_ADDRESSES_PROVIDER");
+    bytes32 private constant FLOW_LIMITER = keccak256("FLOW_LIMITER");
 
     constructor() Ownable(msg.sender) {}
 
@@ -52,6 +54,7 @@ contract LendingPoolAddressesProvider is Ownable, ILendingPoolAddressesProvider 
      */
     function setAddress(bytes32 id, address newAddress) external override onlyOwner {
         _addresses[id] = newAddress;
+
         emit AddressSet(id, newAddress, false);
     }
 
@@ -79,6 +82,7 @@ contract LendingPoolAddressesProvider is Ownable, ILendingPoolAddressesProvider 
      */
     function setLendingPoolImpl(address pool) external override onlyOwner {
         _updateImpl(LENDING_POOL, pool);
+
         emit LendingPoolUpdated(pool);
     }
 
@@ -119,6 +123,7 @@ contract LendingPoolAddressesProvider is Ownable, ILendingPoolAddressesProvider 
      */
     function setPoolAdmin(address admin) external override onlyOwner {
         _addresses[POOL_ADMIN] = admin;
+
         emit ConfigurationAdminUpdated(admin);
     }
 
@@ -136,6 +141,7 @@ contract LendingPoolAddressesProvider is Ownable, ILendingPoolAddressesProvider 
      */
     function setEmergencyAdmin(address emergencyAdmin) external override onlyOwner {
         _addresses[EMERGENCY_ADMIN] = emergencyAdmin;
+
         emit EmergencyAdminUpdated(emergencyAdmin);
     }
 
@@ -153,6 +159,7 @@ contract LendingPoolAddressesProvider is Ownable, ILendingPoolAddressesProvider 
      */
     function setPriceOracle(address priceOracle) external override onlyOwner {
         _addresses[PRICE_ORACLE] = priceOracle;
+
         emit PriceOracleUpdated(priceOracle);
     }
 
@@ -170,7 +177,7 @@ contract LendingPoolAddressesProvider is Ownable, ILendingPoolAddressesProvider 
 
         InitializableImmutableAdminUpgradeabilityProxy proxy =
             InitializableImmutableAdminUpgradeabilityProxy(proxyAddress);
-        bytes memory params = abi.encodeWithSignature("initialize(address)", address(this));
+        bytes memory params = abi.encodeCall(IAddressProviderUpdatable.initialize, (address(this)));
 
         if (proxyAddress == address(0)) {
             proxy = new InitializableImmutableAdminUpgradeabilityProxy(address(this));
@@ -196,6 +203,8 @@ contract LendingPoolAddressesProvider is Ownable, ILendingPoolAddressesProvider 
      */
     function setMiniPoolAddressesProvider(address provider) external override onlyOwner {
         _addresses[MINIPOOL_ADDRESSES_PROVIDER] = provider;
+
+        emit MiniPoolAddressesProviderUpdated(provider);
     }
 
     /**
@@ -212,5 +221,7 @@ contract LendingPoolAddressesProvider is Ownable, ILendingPoolAddressesProvider 
      */
     function setFlowLimiter(address flowLimiter) external override onlyOwner {
         _addresses[FLOW_LIMITER] = flowLimiter;
+
+        emit FlowLimiterUpdated(flowLimiter);
     }
 }
