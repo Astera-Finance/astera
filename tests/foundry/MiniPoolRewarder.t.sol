@@ -91,6 +91,7 @@ contract MiniPoolRewarderTest is Common {
             address(miniPoolRewarder),
             _miniPool
         );
+        miniPoolContracts.miniPoolConfigurator.setMinDebtThreshold(0, IMiniPool(miniPool));
         vm.stopPrank();
     }
 

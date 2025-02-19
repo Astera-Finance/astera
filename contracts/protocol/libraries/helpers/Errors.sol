@@ -77,6 +77,8 @@ library Errors {
     string public constant VL_FLASHLOAN_PREMIUM_INVALID = "27";
     /// @notice Invalid interest rate mode.
     string public constant VL_INVALID_INTEREST_RATE_MODE = "28";
+    /// @notice The debt is too small to borrow and repay.
+    string public constant VL_DEBT_TOO_SMALL = "79";
 
     /// @notice Division by zero.
     string public constant MATH_DIVISION_BY_ZERO = "29";

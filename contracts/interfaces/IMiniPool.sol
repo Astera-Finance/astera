@@ -146,6 +146,13 @@ interface IMiniPool {
         uint256 variableBorrowIndex
     );
 
+    /**
+     * @dev Emitted when set new minimal debt threshold
+     * @param threshold - minimal debt threshold value to set
+     *
+     */
+    event MinDebtThresholdSet(uint256 indexed threshold);
+
     function deposit(address asset, bool wrap, uint256 amount, address onBehalfOf) external;
 
     function withdraw(address asset, bool unwrap, uint256 amount, address to)
@@ -167,6 +174,8 @@ interface IMiniPool {
         uint256 debtToCover,
         bool receiveAToken
     ) external;
+
+    function setMinDebtThreshold(uint256 threshold) external;
 
     struct FlashLoanParams {
         address receiverAddress;
@@ -257,4 +266,6 @@ interface IMiniPool {
     function syncRatesState(address asset) external;
 
     function syncState(address asset) external;
+
+    function minDebtThreshold(uint8 decimals) external view returns (uint256);
 }

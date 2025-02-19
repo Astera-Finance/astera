@@ -214,6 +214,8 @@ contract UpgradesAndReconfigurationsTest is MiniPoolFixtures {
         configLpAddresses.volatileStrategy = address(miniPoolContracts.volatileStrategy);
         miniPool =
             fixture_configureMiniPoolReserves(reserves, configLpAddresses, miniPoolContracts, 0);
+        vm.prank(miniPoolContracts.miniPoolAddressesProvider.getMainPoolAdmin());
+        miniPoolContracts.miniPoolConfigurator.setMinDebtThreshold(0, IMiniPool(miniPool));
         vm.label(miniPool, "MiniPool");
 
         /* --- --- General Settings --- ---*/
@@ -418,6 +420,12 @@ contract UpgradesAndReconfigurationsTest is MiniPoolFixtures {
             miniPoolContracts.miniPoolAddressesProvider.setAToken6909Impl(address(erc6909v2), 0);
             miniPoolContracts.miniPoolImpl = MiniPool(address(mpv2));
 
+            vm.startPrank(miniPoolContracts.miniPoolAddressesProvider.getMainPoolAdmin());
+            miniPoolContracts.miniPoolConfigurator.setMinDebtThreshold(
+                0, IMiniPool(miniPoolContracts.miniPoolAddressesProvider.getMiniPool(0))
+            );
+            vm.stopPrank();
+
             /* Check if addresses are updated */
             vm.startPrank(address(miniPoolContracts.miniPoolAddressesProvider));
             assertNotEq(
@@ -448,6 +456,7 @@ contract UpgradesAndReconfigurationsTest is MiniPoolFixtures {
         deal(address(collateralParams.token), user, 10 ** collateralParams.token.decimals() * 1_000);
 
         /* Deposit tests */
+        console.log("Deposit tests");
         fixture_miniPoolBorrow(amount, 0, 1, collateralParams, borrowParams, user);
     }
 

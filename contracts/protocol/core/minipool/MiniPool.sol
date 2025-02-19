@@ -3,7 +3,8 @@ pragma solidity 0.8.23;
 
 import {Address} from "../../../../contracts/dependencies/openzeppelin/contracts/Address.sol";
 import {IAERC6909} from "../../../../contracts/interfaces/IAERC6909.sol";
-import {IERC20} from "../../../../contracts/dependencies/openzeppelin/contracts/IERC20.sol";
+import {IERC20Detailed} from
+    "../../../../contracts/dependencies/openzeppelin/contracts/IERC20Detailed.sol";
 import {SafeERC20} from "../../../../contracts/dependencies/openzeppelin/contracts/SafeERC20.sol";
 import {IMiniPoolAddressesProvider} from
     "../../../../contracts/interfaces/IMiniPoolAddressesProvider.sol";
@@ -58,7 +59,7 @@ contract MiniPool is
 {
     using WadRayMath for uint256;
     using PercentageMath for uint256;
-    using SafeERC20 for IERC20;
+    using SafeERC20 for IERC20Detailed;
     using MiniPoolReserveLogic for DataTypes.MiniPoolReserveData;
     using ReserveConfiguration for DataTypes.ReserveConfigurationMap;
     using UserConfiguration for DataTypes.UserConfigurationMap;
@@ -145,6 +146,7 @@ contract MiniPool is
         _minipoolId = minipoolID;
         _updateFlashLoanFee(9);
         _maxNumberOfReserves = 128;
+        _minDebtThreshold = 1e3;
     }
 
     /**
@@ -228,8 +230,8 @@ contract MiniPool is
         DataTypes.MiniPoolReserveData storage reserve = _reserves[asset];
         borrowVarsLocalVars memory vars;
         vars.aErc6909 = reserve.aErc6909;
-        require(vars.aErc6909 != address(0), "Reserve not initialized");
-        vars.availableLiquidity = IERC20(asset).balanceOf(vars.aErc6909);
+        require(vars.aErc6909 != address(0), Errors.RL_RESERVE_NOT_INITIALIZED);
+        vars.availableLiquidity = IERC20Detailed(asset).balanceOf(vars.aErc6909);
         if (
             amount > vars.availableLiquidity
                 && IAERC6909(reserve.aErc6909).isTranche(reserve.aTokenID)
@@ -243,14 +245,14 @@ contract MiniPool is
                 ATokenNonRebasing(asset).ATOKEN_ADDRESS()
             );
 
-            vars.amountReceived = IERC20(underlying).balanceOf(address(this));
+            vars.amountReceived = IERC20Detailed(underlying).balanceOf(address(this));
 
-            IERC20(underlying).forceApprove(vars.LendingPool, vars.amountReceived);
+            IERC20Detailed(underlying).forceApprove(vars.LendingPool, vars.amountReceived);
             ILendingPool(vars.LendingPool).deposit(
                 underlying, true, vars.amountReceived, address(this)
             );
 
-            vars.amountReceived = IERC20(asset).balanceOf(address(this));
+            vars.amountReceived = IERC20Detailed(asset).balanceOf(address(this));
             assert(vars.amountReceived >= amount - vars.availableLiquidity);
 
             MiniPoolDepositLogic.internalDeposit(
@@ -260,7 +262,6 @@ contract MiniPool is
                 _addressesProvider
             );
         }
-
         MiniPoolBorrowLogic.executeBorrow(
             MiniPoolBorrowLogic.ExecuteBorrowParams(
                 asset,
@@ -273,7 +274,8 @@ contract MiniPool is
                 0,
                 true,
                 _addressesProvider,
-                _reservesCount
+                _reservesCount,
+                minDebtThreshold(IERC20Detailed(asset).decimals())
             ),
             unwrap,
             _reserves,
@@ -301,7 +303,13 @@ contract MiniPool is
         returns (uint256)
     {
         uint256 repayAmount = MiniPoolBorrowLogic.repay(
-            MiniPoolBorrowLogic.RepayParams(asset, amount, onBehalfOf, _addressesProvider),
+            MiniPoolBorrowLogic.RepayParams(
+                asset,
+                amount,
+                onBehalfOf,
+                _addressesProvider,
+                minDebtThreshold(IERC20Detailed(asset).decimals())
+            ),
             wrap,
             _reserves,
             _usersConfig
@@ -406,7 +414,9 @@ contract MiniPool is
                 ILendingPool(_addressesProvider.getLendingPool()).repayWithATokens(
                     underlyingAsset,
                     true,
-                    IERC20(ATokenNonRebasing(asset).ATOKEN_ADDRESS()).balanceOf(address(this))
+                    IERC20Detailed(ATokenNonRebasing(asset).ATOKEN_ADDRESS()).balanceOf(
+                        address(this)
+                    )
                 ); // MUST use asset
             }
             uint256 remainingBalance =
@@ -415,7 +425,8 @@ contract MiniPool is
             if (
                 getCurrentLendingPoolDebt(underlyingAsset) == 0
                     && remainingBalance > ERROR_REMAINDER_MARGIN /* We leave ERROR_REMAINDER_MARGIN of aToken wei in the minipool to mitigate rounding errors. */
-                    && IERC20(asset).balanceOf(aErc6909) > remainingBalance - ERROR_REMAINDER_MARGIN /* Check if there is enough liquidity to withdraw. */
+                    && IERC20Detailed(asset).balanceOf(aErc6909)
+                        > remainingBalance - ERROR_REMAINDER_MARGIN /* Check if there is enough liquidity to withdraw. */
             ) {
                 // Withdraw the remaining AERC6909 to Treasury. This is due to Minipool IR > Lending IR.
                 // `this.` modifies the execution context => msg.sender == address(this).
@@ -445,6 +456,11 @@ contract MiniPool is
         uint256[] calldata modes,
         bytes calldata params
     ) external override whenNotPaused {
+        uint256[] memory minAmounts = new uint256[](flashLoanParams.assets.length);
+        for (uint256 idx = 0; idx < flashLoanParams.assets.length; idx++) {
+            minAmounts[idx] =
+                minDebtThreshold(IERC20Detailed(flashLoanParams.assets[idx]).decimals());
+        }
         MiniPoolFlashLoanLogic.flashLoan(
             MiniPoolFlashLoanLogic.FlashLoanParams(
                 flashLoanParams.receiverAddress,
@@ -455,7 +471,8 @@ contract MiniPool is
                 _flashLoanPremiumTotal,
                 amounts,
                 modes,
-                params
+                params,
+                minAmounts
             ),
             _reservesList,
             _usersConfig,
@@ -610,6 +627,19 @@ contract MiniPool is
     }
 
     /**
+     * @dev Returns threshold for minimal debt.
+     * @param decimals Decimals of the token.
+     * @return The `_minDebtThreshold` scaled with decimals.
+     */
+    function minDebtThreshold(uint8 decimals) public view returns (uint256) {
+        if (decimals < THRESHOLD_SCALING_DECIMALS) {
+            return 0;
+        } else {
+            return _minDebtThreshold * (10 ** (decimals - THRESHOLD_SCALING_DECIMALS));
+        }
+    }
+
+    /**
      * @dev Returns the total premium percentage charged on flash loans.
      * @return The flash loan premium as a percentage value.
      */
@@ -652,6 +682,15 @@ contract MiniPool is
             _reservesList,
             _addressesProvider
         );
+    }
+
+    /**
+     * @dev Sets minimal debt threshold for specific decimals
+     * @param threshold Minimal debt threshold value to set.
+     */
+    function setMinDebtThreshold(uint256 threshold) external onlyMiniPoolConfigurator {
+        _minDebtThreshold = threshold;
+        emit MinDebtThresholdSet(threshold);
     }
 
     /**
