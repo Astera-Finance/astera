@@ -22,7 +22,8 @@ contract ChangePeripherialsHelper {
         NewPeripherial[] memory vault,
         NewPeripherial[] memory rewarder,
         NewPeripherial[] memory rewarder6909,
-        uint256 _miniPoolId
+        uint256 _miniPoolId,
+        address profitHandler
     ) internal {
         require(treasury.length == vault.length, "Lengths of settings must be the same");
         require(treasury.length == rewarder.length, "Lengths settings must be the same");
@@ -53,6 +54,9 @@ contract ChangePeripherialsHelper {
                 );
                 require(
                     data.aTokenAddress != address(0), "tokenAddress not available in lendingPool"
+                );
+                contracts.lendingPoolConfigurator.setProfitHandler(
+                    data.aTokenAddress, profitHandler
                 );
                 contracts.lendingPoolConfigurator.setVault(
                     data.aTokenAddress, vault[idx].newAddress
@@ -116,15 +120,15 @@ contract ChangePeripherialsHelper {
                     reserveData.aTokenAddress != address(0),
                     "aTokenAddress not available in lendingPool"
                 );
+                contracts.lendingPoolConfigurator.setProfitHandler(
+                    reserveData.aTokenAddress, rehypothecationSetting.profitHandler
+                );
                 if (address(AToken(reserveData.aTokenAddress)._vault()) == address(0)) {
                     contracts.lendingPoolConfigurator.setVault(
                         reserveData.aTokenAddress, rehypothecationSetting.vault
                     );
                 }
-                
-                contracts.lendingPoolConfigurator.setProfitHandler(
-                    reserveData.aTokenAddress, rehypothecationSetting.profitHandler
-                );
+
                 contracts.lendingPoolConfigurator.setFarmingPct(
                     reserveData.aTokenAddress, rehypothecationSetting.farmingPct
                 );

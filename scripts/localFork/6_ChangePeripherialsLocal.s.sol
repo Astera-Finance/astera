@@ -70,6 +70,8 @@ contract ChangePeripherialsLocal is Script, ChangePeripherialsHelper, Test {
         DataProvider memory cod3xLendDataProvider =
             abi.decode(config.parseRaw(".cod3xLendDataProvider"), (DataProvider));
 
+        address profitHandler = config.readAddress(".profitHandler");
+
         require(treasury.length == rehypothecation.length, "Lengths settings must be the same");
 
         /* Fork Identifier */
@@ -89,7 +91,13 @@ contract ChangePeripherialsLocal is Script, ChangePeripherialsHelper, Test {
         }
         console.log("Changing peripherials");
         _changePeripherials(
-            treasury, miniPoolCod3xTreasury, vault, rewarder, rewarder6909, miniPoolId
+            treasury,
+            miniPoolCod3xTreasury,
+            vault,
+            rewarder,
+            rewarder6909,
+            miniPoolId,
+            profitHandler
         );
         _turnOnRehypothecation(rehypothecation);
         /* Data Provider */

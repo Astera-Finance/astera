@@ -2252,7 +2252,9 @@ contract MiniPoolRepayWithdrawTransferTest is MiniPoolDepositBorrowTest {
         balances.debtToken = aErc6909Token.balanceOf(user, 2128 + borrowOffset);
         balances.token = borrowParams.token.balanceOf(user);
         borrowParams.token.approve(address(miniPool), amount);
+        console.log("Repay 1");
         IMiniPool(miniPool).repay(address(borrowParams.token), false, amount, user);
+        console.log("Repay 2");
         vm.expectRevert(bytes(Errors.VL_NO_DEBT_OF_SELECTED_TYPE));
         IMiniPool(miniPool).repay(address(borrowParams.token), false, amount, user);
     }

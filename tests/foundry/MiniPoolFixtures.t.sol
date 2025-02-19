@@ -195,9 +195,10 @@ abstract contract MiniPoolFixtures is LendingPoolFixtures {
             /* Sb deposits tokens which will be borrowed */
             address liquidityProvider = makeAddr("liquidityProvider");
             console.log(
-                "Deposit borrowTokens: %s with balance: %s",
+                "Deposit borrowTokens: %s with balance: %s %s",
                 2 * amount,
-                borrowTokenParams.token.balanceOf(user)
+                borrowTokenParams.token.balanceOf(user),
+                borrowTokenParams.token.symbol()
             );
             fixture_MiniPoolDeposit(amount, borrowOffset, liquidityProvider, borrowTokenParams);
 
@@ -205,9 +206,10 @@ abstract contract MiniPoolFixtures is LendingPoolFixtures {
             uint256 tokenId = 1128 + collateralOffset;
             uint256 aTokenId = 1000 + collateralOffset;
             console.log(
-                "Deposit collateral: %s with balance: %s",
+                "Deposit collateral: %s with balance: %s %s",
                 minNrOfTokens,
-                collateralTokenParams.token.balanceOf(address(this))
+                collateralTokenParams.token.balanceOf(address(this)),
+                collateralTokenParams.token.symbol()
             );
             fixture_MiniPoolDeposit(minNrOfTokens, collateralOffset, user, collateralTokenParams);
             require(aErc6909Token.balanceOf(user, tokenId) > 0, "No token balance");

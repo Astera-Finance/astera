@@ -59,6 +59,8 @@ contract ChangePeripherials is Script, ChangePeripherialsHelper, Test {
         DataProvider memory cod3xLendDataProvider =
             abi.decode(config.parseRaw(".cod3xLendDataProvider"), (DataProvider));
 
+        address profitHandler = config.readAddress(".profitHandler");
+
         require(treasury.length == rehypothecation.length, "Lengths settings must be the same");
 
         if (!vm.envBool("MAINNET")) {
@@ -136,7 +138,13 @@ contract ChangePeripherials is Script, ChangePeripherialsHelper, Test {
                 vault[idx].newAddress = address(new ERC4626Mock(vault[idx].tokenAddress));
             }
             _changePeripherials(
-                treasury, miniPoolCod3xTreasury, vault, rewarder, rewarder6909, miniPoolId
+                treasury,
+                miniPoolCod3xTreasury,
+                vault,
+                rewarder,
+                rewarder6909,
+                miniPoolId,
+                profitHandler
             );
             _turnOnRehypothecation(rehypothecation);
             /* Data Provider */
@@ -182,7 +190,13 @@ contract ChangePeripherials is Script, ChangePeripherialsHelper, Test {
             /* Change peripherials */
             vm.startBroadcast(vm.envUint("PRIVATE_KEY"));
             _changePeripherials(
-                treasury, miniPoolCod3xTreasury, vault, rewarder, rewarder6909, miniPoolId
+                treasury,
+                miniPoolCod3xTreasury,
+                vault,
+                rewarder,
+                rewarder6909,
+                miniPoolId,
+                profitHandler
             );
             _turnOnRehypothecation(rehypothecation);
             /* Data Provider */

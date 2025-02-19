@@ -12,6 +12,7 @@ import "contracts/protocol/core/minipool/MiniPoolConfigurator.sol";
 import "contracts/deployments/ATokensAndRatesHelper.sol";
 import "contracts/protocol/tokenization/ERC20/AToken.sol";
 import "contracts/protocol/tokenization/ERC20/VariableDebtToken.sol";
+import "contracts/misc/Cod3xLendDataProvider.sol";
 import "../DeployDataTypes.sol";
 
 import "forge-std/console.sol";
