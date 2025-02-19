@@ -655,9 +655,9 @@ contract MiniPoolProp is PropertiesBase {
                 );
 
                 if (currentFlow != 0) {
-                    assertWithMsg(pool.isMinipoolFlowBorrowing(address(minipool)), "525");
+                    assertWithMsg(pool.isMinipoolFlowBorrowing(asset, address(minipool)), "525");
                 } else {
-                    assertWithMsg(!pool.isMinipoolFlowBorrowing(address(minipool)), "526");
+                    assertWithMsg(!pool.isMinipoolFlowBorrowing(asset, address(minipool)), "526");
                 }
             }
         }

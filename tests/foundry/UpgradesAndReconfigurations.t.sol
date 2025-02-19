@@ -431,7 +431,6 @@ contract UpgradesAndReconfigurationsTest is MiniPoolFixtures {
             );
             miniPoolContracts.miniPoolImpl = MiniPool(address(mpv2));
 
-
             address currentMiniPoolProxy =
                 miniPoolContracts.miniPoolAddressesProvider.getMiniPool(previousId);
 

@@ -938,10 +938,15 @@ contract LendingPool is
 
     /**
      * @notice Checks if a mini pool is currently flow borrowing.
+     * @param asset The address of the asset.
      * @param minipool The address of the mini pool to check.
      * @return True if the mini pool is flow borrowing, false otherwise.
      */
-    function isMinipoolFlowBorrowing(address minipool) external view returns (bool) {
-        return _minipoolFlowBorrowing.contains(minipool);
+    function isMinipoolFlowBorrowing(address asset, address minipool)
+        external
+        view
+        returns (bool)
+    {
+        return _assetToMinipoolFlowBorrowing[asset].contains(minipool);
     }
 }
