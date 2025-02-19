@@ -11,6 +11,82 @@ import "lib/forge-std/src/console.sol";
 contract DeployMiniPool is Script, Test, MiniPoolHelper {
     using stdJson for string;
 
+    function checkOwnerships() internal {
+        assertEq(contracts.miniPoolAddressesProvider.owner(), vm.addr(vm.envUint("PRIVATE_KEY")));
+        assertEq(
+            contracts.miniPoolAddressesProvider.getEmergencyAdmin(),
+            vm.addr(vm.envUint("PRIVATE_KEY"))
+        );
+        assertEq(
+            contracts.miniPoolAddressesProvider.getMainPoolAdmin(),
+            vm.addr(vm.envUint("PRIVATE_KEY"))
+        );
+        for (uint8 idx = 0; idx < contracts.miniPoolPiStrategies.length; idx++) {
+            assertEq(
+                contracts.miniPoolPiStrategies[idx].owner(), vm.addr(vm.envUint("PRIVATE_KEY"))
+            );
+        }
+    }
+
+    function checkContractAddresses(PoolReserversConfig[] memory poolReserversConfig) internal {
+        assertEq(
+            contracts.lendingPoolAddressesProvider.getMiniPoolAddressesProvider(),
+            address(contracts.miniPoolAddressesProvider),
+            "Wrong mini pool address provider"
+        );
+
+        assertEq(
+            contracts.miniPoolAddressesProvider.getLendingPool(),
+            address(contracts.lendingPool),
+            "Wrong lending pool"
+        );
+
+        uint256 miniPoolCount = contracts.miniPoolAddressesProvider.getMiniPoolCount();
+        for (uint256 i = 0; i < miniPoolCount; i++) {
+            address mp = contracts.miniPoolAddressesProvider.getMiniPool(i);
+
+            (address[] memory reserveList,) = IMiniPool(mp).getReservesList();
+            for (uint256 idx = 0; idx < reserveList.length; idx++) {
+                assertEq(
+                    reserveList[idx],
+                    address(poolReserversConfig[idx].tokenAddress),
+                    "Wrong underlying token"
+                );
+                StaticData memory staticData = contracts
+                    .cod3xLendDataProvider
+                    .getMpReserveStaticData(address(poolReserversConfig[idx].tokenAddress), i);
+                assertEq(staticData.ltv, poolReserversConfig[idx].baseLtv, "Wrong Ltv");
+                assertEq(
+                    staticData.liquidationThreshold,
+                    poolReserversConfig[idx].liquidationThreshold,
+                    "Wrong liquidationThreshold"
+                );
+                assertEq(
+                    staticData.liquidationBonus,
+                    poolReserversConfig[idx].liquidationBonus,
+                    "Wrong liquidationBonus"
+                );
+                assertEq(staticData.symbol, poolReserversConfig[idx].symbol, "Wrong Symbol");
+            }
+        }
+
+        assertEq(
+            contracts.miniPoolAddressesProvider.getMiniPoolConfigurator(),
+            address(contracts.miniPoolConfigurator),
+            "wrong pool configurator"
+        );
+        assertEq(
+            contracts.miniPoolAddressesProvider.getPriceOracle(),
+            address(contracts.oracle),
+            "wrong oracle"
+        );
+        assertEq(
+            contracts.miniPoolAddressesProvider.getFlowLimiter(),
+            address(contracts.flowLimiter),
+            "wrong flow limiter"
+        );
+    }
+
     function readPreviousDeployments(string memory path) internal returns (bool readPrevious) {
         console.log("PREVIOUS DEPLOYMENT PATH: ", path);
         try vm.readFile(path) returns (string memory previousContracts) {
@@ -125,6 +201,8 @@ contract DeployMiniPool is Script, Test, MiniPoolHelper {
         console.log("PATH: ", path);
         string memory config = vm.readFile(path);
 
+        General memory general = abi.decode(config.parseRaw(".general"), (General));
+
         PoolReserversConfig[] memory poolReserversConfig =
             abi.decode(config.parseRaw(".poolReserversConfig"), (PoolReserversConfig[]));
         LinearStrategy[] memory volatileStrategies =
@@ -141,7 +219,7 @@ contract DeployMiniPool is Script, Test, MiniPoolHelper {
         bool usePreviousStrats = config.readBool(".usePreviousStrats");
         bool readPreviousContracts = config.readBool(".readPreviousContracts");
 
-        if (vm.envBool("TESTNET")) {
+        if (!vm.envBool("MAINNET")) {
             console.log("Testnet Deployment");
 
             /* Read all mocks deployed */
@@ -149,7 +227,7 @@ contract DeployMiniPool is Script, Test, MiniPoolHelper {
             console.log("PATH: ", path);
             config = vm.readFile(path);
             address[] memory mockedTokens = config.readAddressArray(".mockedTokens");
-            contracts.oracle = Oracle(config.readAddress(".mockedOracle"));
+            console.log("readPreviousContracts: ", readPreviousContracts);
             if (readPreviousContracts) {
                 readPreviousDeployments(
                     string.concat(root, "/scripts/outputs/testnet/2_MiniPoolContracts.json")
@@ -199,8 +277,13 @@ contract DeployMiniPool is Script, Test, MiniPoolHelper {
 
             /* Deploy on testnet */
             vm.startBroadcast(vm.envUint("PRIVATE_KEY"));
-            console.log("Deploying lending pool infra");
+            console.log("Deploying mini pool infra");
+            contracts.oracle = Oracle(contracts.lendingPoolAddressesProvider.getPriceOracle());
+            contracts.oracle.setAssetSources(
+                oracleConfig.assets, oracleConfig.sources, oracleConfig.timeouts
+            );
             deployMiniPoolInfra(
+                general,
                 volatileStrategies,
                 stableStrategies,
                 piStrategies,
@@ -242,6 +325,7 @@ contract DeployMiniPool is Script, Test, MiniPoolHelper {
             );
             console.log("Deploying mini pool infra");
             deployMiniPoolInfra(
+                general,
                 volatileStrategies,
                 stableStrategies,
                 piStrategies,
@@ -254,6 +338,9 @@ contract DeployMiniPool is Script, Test, MiniPoolHelper {
         } else {
             console.log("No deployment type selected in .env");
         }
+
+        checkOwnerships();
+        checkContractAddresses(poolReserversConfig);
         /* Write important contracts into the file */
         writeJsonData(path);
         return contracts;

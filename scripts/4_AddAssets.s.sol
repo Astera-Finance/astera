@@ -13,6 +13,61 @@ contract AddAssets is Script, InitAndConfigurationHelper, Test {
 
     DeployedContracts contractsWithStrats;
 
+    function checkContracts(
+        PoolReserversConfig[] memory lendingPoolReserversConfig,
+        PoolReserversConfig[] memory miniPoolReserversConfig
+    ) public {
+        console.log("Lending pool");
+        for (uint256 idx = 0; idx < lendingPoolReserversConfig.length; idx++) {
+            // DataTypes.ReserveData memory data =
+            //     contracts.lendingPool.getReserveData(reserveList[idx], reserveTypes[idx]);
+            // assertEq(
+            //     AToken(data.aTokenAddress).UNDERLYING_ASSET_ADDRESS(),
+            //     address(lendingPoolReserversConfig[idx].tokenAddress),
+            //     "Wrong underlying token"
+            // );
+            StaticData memory staticData = contracts.cod3xLendDataProvider.getLpReserveStaticData(
+                address(lendingPoolReserversConfig[idx].tokenAddress), true
+            );
+            assertEq(staticData.ltv, lendingPoolReserversConfig[idx].baseLtv, "Wrong Ltv");
+            assertEq(
+                staticData.liquidationThreshold,
+                lendingPoolReserversConfig[idx].liquidationThreshold,
+                "Wrong liquidationThreshold"
+            );
+            assertEq(
+                staticData.liquidationBonus,
+                lendingPoolReserversConfig[idx].liquidationBonus,
+                "Wrong liquidationBonus"
+            );
+            assertEq(staticData.symbol, lendingPoolReserversConfig[idx].symbol, "Wrong Symbol");
+        }
+
+        console.log("Mini pool");
+        uint256 miniPoolCount = contracts.miniPoolAddressesProvider.getMiniPoolCount();
+        for (uint256 i = 0; i < miniPoolCount; i++) {
+            address mp = contracts.miniPoolAddressesProvider.getMiniPool(i);
+
+            for (uint256 idx = 0; idx < miniPoolReserversConfig.length; idx++) {
+                StaticData memory staticData = contracts
+                    .cod3xLendDataProvider
+                    .getMpReserveStaticData(address(miniPoolReserversConfig[idx].tokenAddress), i);
+                assertEq(staticData.ltv, miniPoolReserversConfig[idx].baseLtv, "Wrong Ltv");
+                assertEq(
+                    staticData.liquidationThreshold,
+                    miniPoolReserversConfig[idx].liquidationThreshold,
+                    "Wrong liquidationThreshold"
+                );
+                assertEq(
+                    staticData.liquidationBonus,
+                    miniPoolReserversConfig[idx].liquidationBonus,
+                    "Wrong liquidationBonus"
+                );
+                assertEq(staticData.symbol, miniPoolReserversConfig[idx].symbol, "Wrong Symbol");
+            }
+        }
+    }
+
     function writeJsonData(string memory path) internal {
         (,, address[] memory aTokens, address[] memory debtTokens) =
             contracts.cod3xLendDataProvider.getAllLpTokens();
@@ -97,7 +152,7 @@ contract AddAssets is Script, InitAndConfigurationHelper, Test {
             ATokensAndRatesHelper(config.readAddress(".aTokensAndRatesHelper"));
         contracts.cod3xLendDataProvider =
             Cod3xLendDataProvider(config.readAddress(".cod3xLendDataProvider"));
-        // contracts.wethGateway = WETHGateway(payable(config.readAddress(".wethGateway")));
+        contracts.lendingPool = LendingPool(config.readAddress(".lendingPool"));
     }
 
     function run() external returns (DeployedContracts memory) {
@@ -122,7 +177,7 @@ contract AddAssets is Script, InitAndConfigurationHelper, Test {
         OracleConfig memory oracleConfig =
             abi.decode(config.parseRaw(".oracleConfig"), (OracleConfig));
 
-        if (vm.envBool("TESTNET")) {
+        if (!vm.envBool("MAINNET")) {
             console.log("Testnet");
 
             /* Lending pool settings */
@@ -139,7 +194,6 @@ contract AddAssets is Script, InitAndConfigurationHelper, Test {
             console.log("PATH: ", path);
             config = vm.readFile(path);
             address[] memory mockedTokens = config.readAddressArray(".mockedTokens");
-            contracts.oracle = Oracle(config.readAddress(".mockedOracle"));
 
             require(
                 mockedTokens.length >= lendingPoolReserversConfig.length,
@@ -165,9 +219,10 @@ contract AddAssets is Script, InitAndConfigurationHelper, Test {
 
             console.log("Init and configuration");
             vm.startBroadcast(vm.envUint("PRIVATE_KEY"));
-            // contracts.oracle.setAssetSources(
-            //     oracleConfig.assets, oracleConfig.sources, oracleConfig.timeouts
-            // );
+            contracts.oracle = Oracle(contracts.lendingPoolAddressesProvider.getPriceOracle());
+            contracts.oracle.setAssetSources(
+                oracleConfig.assets, oracleConfig.sources, oracleConfig.timeouts
+            );
             _initAndConfigureReserves(contracts, lendingPoolReserversConfig, general);
             vm.stopBroadcast();
 
@@ -211,7 +266,10 @@ contract AddAssets is Script, InitAndConfigurationHelper, Test {
             vm.startBroadcast(vm.envUint("PRIVATE_KEY"));
             console.log("Configuration ");
             _initAndConfigureMiniPoolReserves(
-                contracts, miniPoolReserversConfig, poolAddressesProviderConfig.poolId
+                contracts,
+                miniPoolReserversConfig,
+                poolAddressesProviderConfig.poolId,
+                general.usdBootstrapAmount
             );
             vm.stopBroadcast();
             path = string.concat(root, "/scripts/outputs/testnet/4_AddedAssets.json");
@@ -252,13 +310,17 @@ contract AddAssets is Script, InitAndConfigurationHelper, Test {
             vm.startBroadcast(vm.envUint("PRIVATE_KEY"));
             console.log("Configuration ");
             _initAndConfigureMiniPoolReserves(
-                contracts, miniPoolReserversConfig, poolAddressesProviderConfig.poolId
+                contracts,
+                miniPoolReserversConfig,
+                poolAddressesProviderConfig.poolId,
+                general.usdBootstrapAmount
             );
             vm.stopBroadcast();
             path = string.concat(root, "/scripts/outputs/mainnet/4_AddedAssets.json");
         } else {
             console.log("No deployment type selected in .env");
         }
+        checkContracts(lendingPoolReserversConfig, miniPoolReserversConfig);
         writeJsonData(path);
         return contracts;
     }

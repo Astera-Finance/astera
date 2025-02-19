@@ -139,7 +139,7 @@ library LiquidationLogic {
      */
     function liquidationCall(
         mapping(address => mapping(bool => DataTypes.ReserveData)) storage reserves,
-        EnumerableSet.AddressSet storage minipoolFlowBorrowing,
+        mapping(address => EnumerableSet.AddressSet) storage assetToMinipoolFlowBorrowing,
         mapping(address => DataTypes.UserConfigurationMap) storage usersConfig,
         mapping(uint256 => DataTypes.ReserveReference) storage reservesList,
         liquidationCallParams memory params
@@ -221,7 +221,7 @@ library LiquidationLogic {
         }
 
         debtReserve.updateInterestRates(
-            minipoolFlowBorrowing,
+            assetToMinipoolFlowBorrowing[params.debtAsset],
             params.debtAsset,
             debtReserve.aTokenAddress,
             vars.actualDebtToLiquidate,
@@ -243,7 +243,7 @@ library LiquidationLogic {
         } else {
             collateralReserve.updateState();
             collateralReserve.updateInterestRates(
-                minipoolFlowBorrowing,
+                assetToMinipoolFlowBorrowing[params.collateralAsset],
                 params.collateralAsset,
                 address(vars.collateralAtoken),
                 0,

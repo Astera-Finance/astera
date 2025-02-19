@@ -26,7 +26,7 @@ contract TransferOwnerships is Script, TransferOwnershipHelper, Test {
         MiniPoolRole memory miniPoolRole =
             abi.decode(deploymentConfig.parseRaw(".miniPoolRole"), (MiniPoolRole));
 
-        if (vm.envBool("TESTNET")) {
+        if (!vm.envBool("MAINNET")) {
             console.log("Testnet");
             /* *********** Lending pool settings *********** */
             {

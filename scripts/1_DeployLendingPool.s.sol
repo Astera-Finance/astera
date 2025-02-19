@@ -11,6 +11,75 @@ import "lib/forge-std/src/console.sol";
 contract DeployLendingPool is Script, LendingPoolHelper, Test {
     using stdJson for string;
 
+    function checkOwnerships() internal {
+        assertEq(contracts.aTokensAndRatesHelper.owner(), vm.addr(vm.envUint("PRIVATE_KEY")));
+        assertEq(contracts.cod3xLendDataProvider.owner(), vm.addr(vm.envUint("PRIVATE_KEY")));
+        assertEq(contracts.lendingPoolAddressesProvider.owner(), vm.addr(vm.envUint("PRIVATE_KEY")));
+        assertEq(
+            contracts.lendingPoolAddressesProvider.getEmergencyAdmin(),
+            vm.addr(vm.envUint("PRIVATE_KEY"))
+        );
+        assertEq(
+            contracts.lendingPoolAddressesProvider.getPoolAdmin(),
+            vm.addr(vm.envUint("PRIVATE_KEY"))
+        );
+        assertEq(contracts.oracle.owner(), vm.addr(vm.envUint("PRIVATE_KEY")));
+        assertEq(contracts.wethGateway.owner(), vm.addr(vm.envUint("PRIVATE_KEY")));
+        for (uint8 idx = 0; idx < contracts.piStrategies.length; idx++) {
+            assertEq(contracts.piStrategies[idx].owner(), vm.addr(vm.envUint("PRIVATE_KEY")));
+        }
+    }
+
+    function checkContractAddresses(PoolReserversConfig[] memory poolReserversConfig) internal {
+        assertEq(
+            contracts.lendingPoolAddressesProvider.getLendingPool(),
+            address(contracts.lendingPool),
+            "Wrong lending pool"
+        );
+        assertEq(
+            contracts.lendingPoolAddressesProvider.getLendingPoolConfigurator(),
+            address(contracts.lendingPoolConfigurator),
+            "wrong pool configurator"
+        );
+        assertEq(
+            contracts.lendingPoolAddressesProvider.getPriceOracle(),
+            address(contracts.oracle),
+            "wrong oracle"
+        );
+        assertEq(
+            contracts.lendingPoolAddressesProvider.getFlowLimiter(),
+            address(contracts.flowLimiter),
+            "wrong flow limiter"
+        );
+
+        (address[] memory reserveList, bool[] memory reserveTypes) =
+            contracts.lendingPool.getReservesList();
+        for (uint256 idx = 0; idx < reserveList.length; idx++) {
+            DataTypes.ReserveData memory data =
+                contracts.lendingPool.getReserveData(reserveList[idx], reserveTypes[idx]);
+            assertEq(
+                AToken(data.aTokenAddress).UNDERLYING_ASSET_ADDRESS(),
+                address(poolReserversConfig[idx].tokenAddress),
+                "Wrong underlying token"
+            );
+            StaticData memory staticData = contracts.cod3xLendDataProvider.getLpReserveStaticData(
+                address(poolReserversConfig[idx].tokenAddress), reserveTypes[idx]
+            );
+            assertEq(staticData.ltv, poolReserversConfig[idx].baseLtv, "Wrong Ltv");
+            assertEq(
+                staticData.liquidationThreshold,
+                poolReserversConfig[idx].liquidationThreshold,
+                "Wrong liquidationThreshold"
+            );
+            assertEq(
+                staticData.liquidationBonus,
+                poolReserversConfig[idx].liquidationBonus,
+                "Wrong liquidationBonus"
+            );
+            assertEq(staticData.symbol, poolReserversConfig[idx].symbol, "Wrong Symbol");
+        }
+    }
+
     function writeJsonData(string memory path) internal {
         vm.serializeAddress("lendingPoolContracts", "oracle", address(contracts.oracle));
         {
@@ -110,7 +179,7 @@ contract DeployLendingPool is Script, LendingPoolHelper, Test {
 
         address wethGateway = deploymentConfig.readAddress(".wethGateway");
 
-        if (vm.envBool("TESTNET")) {
+        if (!vm.envBool("MAINNET")) {
             console.log("Testnet Deployment");
             if (!vm.exists(string.concat(root, "/scripts/outputs/testnet"))) {
                 vm.createDir(string.concat(root, "/scripts/outputs/testnet"), true);
@@ -120,7 +189,6 @@ contract DeployLendingPool is Script, LendingPoolHelper, Test {
             console.log("PATH: ", path);
             string memory config = vm.readFile(path);
             address[] memory mockedTokens = config.readAddressArray(".mockedTokens");
-            contracts.oracle = Oracle(config.readAddress(".mockedOracle"));
 
             require(
                 mockedTokens.length >= poolReserversConfig.length,
@@ -155,6 +223,7 @@ contract DeployLendingPool is Script, LendingPoolHelper, Test {
                 stableStrategies,
                 piStrategies,
                 poolReserversConfig,
+                oracleConfig,
                 vm.addr(vm.envUint("PRIVATE_KEY")),
                 wethGateway
             );
@@ -168,13 +237,13 @@ contract DeployLendingPool is Script, LendingPoolHelper, Test {
             }
             /* Deploy to the mainnet */
             vm.startBroadcast(vm.envUint("PRIVATE_KEY"));
-            contracts.oracle = _deployOracle(oracleConfig);
             deployLendingPoolInfra(
                 general,
                 volatileStrategies,
                 stableStrategies,
                 piStrategies,
                 poolReserversConfig,
+                oracleConfig,
                 vm.addr(vm.envUint("PRIVATE_KEY")),
                 wethGateway
             );
@@ -184,6 +253,8 @@ contract DeployLendingPool is Script, LendingPoolHelper, Test {
         } else {
             console.log("No deployment type selected in .env");
         }
+        checkOwnerships();
+        checkContractAddresses(poolReserversConfig);
         /* Write data to json */
         writeJsonData(path);
 

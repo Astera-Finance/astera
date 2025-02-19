@@ -92,7 +92,7 @@ contract ReconfigureLocal is Script, InitAndConfigurationHelper, Test {
         contracts = addAssets.run();
 
         vm.startPrank(FOUNDRY_DEFAULT);
-        _configureReserves(contracts, lendingPoolReserversConfig);
+        _configureReserves(contracts, lendingPoolReserversConfig, 0);
         _changeStrategies(contracts, lendingPoolReserversConfig);
 
         address mp =

@@ -68,6 +68,8 @@ contract MiniPoolDepositBorrowTest is MiniPoolFixtures {
         configLpAddresses.volatileStrategy = address(miniPoolContracts.volatileStrategy);
         miniPool =
             fixture_configureMiniPoolReserves(reserves, configLpAddresses, miniPoolContracts, 0);
+        vm.prank(miniPoolContracts.miniPoolAddressesProvider.getMainPoolAdmin());
+        miniPoolContracts.miniPoolConfigurator.setMinDebtThreshold(0, IMiniPool(miniPool));
         vm.label(miniPool, "MiniPool");
     }
 
@@ -572,6 +574,86 @@ contract MiniPoolDepositBorrowTest is MiniPoolFixtures {
                 ).rayDiv(dynamicData.liquidityIndex),
             aErc6909Token.scaledTotalSupply(1128 + testParams.borrowOffset),
             1
+        );
+    }
+
+    function testMiniPoolNormalBorrowWithDebtThreshold(
+        uint256 amountInUsd,
+        uint256 offset1,
+        uint256 offset2
+    ) public {
+        /**
+         * Preconditions:
+         * 1. Reserves in MiniPool must be configured
+         * 2. Debt threshold is set to non zero values
+         * Test Scenario:
+         * 1. User adds token as collateral into the miniPool
+         * 2. User borrows token
+         * Invariants:
+         * 1. Balance of debtToken for user in IERC6909 standard increased
+         * 2. Total supply of debtToken shall increase
+         * 3. Health of user's position shall decrease
+         * 4. User shall have borrowed assets
+         */
+        amountInUsd = bound(amountInUsd, 1 ether, 200_000 ether); // $1 - $200k
+        offset1 = bound(offset1, 0, tokens.length - 1);
+        offset2 = bound(offset2, 0, tokens.length - 1);
+
+        /* Test vars */
+        address user = makeAddr("user");
+        TokenParams memory collateralTokenParams = TokenParams(
+            erc20Tokens[offset1],
+            commonContracts.aTokensWrapper[offset1],
+            commonContracts.oracle.getAssetPrice(address(erc20Tokens[offset1]))
+        );
+        TokenParams memory borrowTokenParams = TokenParams(
+            erc20Tokens[offset2],
+            commonContracts.aTokensWrapper[offset2],
+            commonContracts.oracle.getAssetPrice(address(erc20Tokens[offset2]))
+        );
+
+        /* Fuzz vectors */
+        uint256 amount = ((amountInUsd / borrowTokenParams.price) * 10 ** PRICE_FEED_DECIMALS)
+            / 10 ** (18 - borrowTokenParams.token.decimals());
+        console.log("Calculated debt threshold: %s %s", amount, borrowTokenParams.token.symbol());
+
+        uint256 debtThreshold = amount / (10 ** (borrowTokenParams.token.decimals() - 6));
+
+        vm.prank(miniPoolContracts.miniPoolAddressesProvider.getMainPoolAdmin());
+        miniPoolContracts.miniPoolConfigurator.setMinDebtThreshold(
+            debtThreshold, IMiniPool(miniPool)
+        );
+
+        /* Assumptions */
+        // amount = IMiniPool(miniPool).minDebtThreshold(borrowTokenParams.token.decimals());
+        deal(
+            address(borrowTokenParams.token), user, borrowTokenParams.token.balanceOf(address(this))
+        );
+        deal(
+            address(collateralTokenParams.token),
+            user,
+            collateralTokenParams.token.balanceOf(address(this))
+        );
+        console.log(">>> Bootstraping minDebt %s for %s", amount, borrowTokenParams.token.symbol());
+        fixture_miniPoolBorrow(
+            amount, offset1, offset2, collateralTokenParams, borrowTokenParams, user
+        );
+
+        console.log("Time travel 1");
+        vm.warp(block.timestamp + 1 days);
+        vm.roll(block.number + 1);
+
+        /* Assumptions */
+        address otherUser = makeAddr("otherUser");
+        amount = bound(
+            amount,
+            10 ** (borrowTokenParams.token.decimals() - 2),
+            borrowTokenParams.token.balanceOf(address(this)) / 10
+        );
+        deal(address(collateralTokenParams.token), otherUser, 1e26);
+        console.log(">>> Real borrow", amount);
+        fixture_miniPoolBorrow(
+            amount, offset1, offset2, collateralTokenParams, borrowTokenParams, otherUser
         );
     }
 }

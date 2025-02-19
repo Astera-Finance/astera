@@ -249,10 +249,10 @@ library MiniPoolLiquidationLogic {
 
         // Transfers the debt asset being repaid to the aToken, where the liquidity is kept.
         IERC20(params.debtAsset).safeTransferFrom(
-            msg.sender, debtReserve.aErc6909, vars.actualDebtToLiquidate
+            msg.sender, address(vars.atoken6909), vars.actualDebtToLiquidate
         );
 
-        IAERC6909(debtReserve.aErc6909).handleRepayment(
+        vars.atoken6909.handleRepayment(
             msg.sender, params.user, debtReserve.aTokenID, vars.actualDebtToLiquidate
         );
 

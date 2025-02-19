@@ -214,6 +214,8 @@ contract UpgradesAndReconfigurationsTest is MiniPoolFixtures {
         configLpAddresses.volatileStrategy = address(miniPoolContracts.volatileStrategy);
         miniPool =
             fixture_configureMiniPoolReserves(reserves, configLpAddresses, miniPoolContracts, 0);
+        vm.prank(miniPoolContracts.miniPoolAddressesProvider.getMainPoolAdmin());
+        miniPoolContracts.miniPoolConfigurator.setMinDebtThreshold(0, IMiniPool(miniPool));
         vm.label(miniPool, "MiniPool");
 
         /* --- --- General Settings --- ---*/
@@ -413,10 +415,43 @@ contract UpgradesAndReconfigurationsTest is MiniPoolFixtures {
             address previousAErc6909Impl = InitializableImmutableAdminUpgradeabilityProxy(
                 payable(miniPoolContracts.miniPoolAddressesProvider.getMiniPoolToAERC6909(0))
             ).implementation();
+
+            address previousMiniPoolProxy =
+                miniPoolContracts.miniPoolAddressesProvider.getMiniPool(0);
+            uint256 previousId = miniPoolContracts.miniPoolAddressesProvider.getMiniPoolId(
+                address(previousMiniPoolProxy)
+            );
+            address previousAERC6909Proxy =
+                miniPoolContracts.miniPoolAddressesProvider.getMiniPoolToAERC6909(previousId);
+
             vm.stopPrank();
-            miniPoolContracts.miniPoolAddressesProvider.setMiniPoolImpl(address(mpv2), 0);
-            miniPoolContracts.miniPoolAddressesProvider.setAToken6909Impl(address(erc6909v2), 0);
+            miniPoolContracts.miniPoolAddressesProvider.setMiniPoolImpl(address(mpv2), previousId);
+            miniPoolContracts.miniPoolAddressesProvider.setAToken6909Impl(
+                address(erc6909v2), previousId
+            );
             miniPoolContracts.miniPoolImpl = MiniPool(address(mpv2));
+
+
+            address currentMiniPoolProxy =
+                miniPoolContracts.miniPoolAddressesProvider.getMiniPool(previousId);
+
+            assertEq(previousMiniPoolProxy, currentMiniPoolProxy);
+            assertEq(
+                previousAERC6909Proxy,
+                miniPoolContracts.miniPoolAddressesProvider.getMiniPoolToAERC6909(previousId)
+            );
+            assertEq(
+                previousId,
+                miniPoolContracts.miniPoolAddressesProvider.getMiniPoolId(
+                    address(currentMiniPoolProxy)
+                )
+            );
+
+            vm.startPrank(miniPoolContracts.miniPoolAddressesProvider.getMainPoolAdmin());
+            miniPoolContracts.miniPoolConfigurator.setMinDebtThreshold(
+                0, IMiniPool(miniPoolContracts.miniPoolAddressesProvider.getMiniPool(0))
+            );
+            vm.stopPrank();
 
             /* Check if addresses are updated */
             vm.startPrank(address(miniPoolContracts.miniPoolAddressesProvider));
@@ -448,6 +483,7 @@ contract UpgradesAndReconfigurationsTest is MiniPoolFixtures {
         deal(address(collateralParams.token), user, 10 ** collateralParams.token.decimals() * 1_000);
 
         /* Deposit tests */
+        console.log("Deposit tests");
         fixture_miniPoolBorrow(amount, 0, 1, collateralParams, borrowParams, user);
     }
 

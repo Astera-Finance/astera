@@ -17,6 +17,8 @@ import {PercentageMath} from "../../../../../contracts/protocol/libraries/math/P
 import {MathUtils} from "../../../../../contracts/protocol/libraries/math/MathUtils.sol";
 import {DataTypes} from "../../../../../contracts/protocol/libraries/types/DataTypes.sol";
 import {ILendingPool} from "../../../../../contracts/interfaces/ILendingPool.sol";
+import {ReserveConfiguration} from
+    "../../../../../contracts/protocol/libraries/configuration/ReserveConfiguration.sol";
 
 /**
  * @title MiniPoolPiReserveInterestRateStrategy contract.
@@ -43,7 +45,7 @@ contract MiniPoolPiReserveInterestRateStrategy is
     uint256 public constant SECONDS_PER_YEAR = 365 days;
 
     /// @dev ID of the minipool this strategy is associated with.
-    uint256 public _minipoolId;
+    uint256 public immutable _minipoolId;
 
     /**
      * @notice Initializes the MiniPoolPiReserveInterestRateStrategy contract.
@@ -131,8 +133,8 @@ contract MiniPoolPiReserveInterestRateStrategy is
         uint256 currentLiquidityRate = _getLiquidityRate(
             currentVariableBorrowRate,
             utilizationRate,
-            _getCod3xReserveFactor(reserve.configuration)
-                + _getMinipoolOwnerReserveFactor(reserve.configuration)
+            ReserveConfiguration.getCod3xReserveFactorMemory(reserve.configuration)
+                + ReserveConfiguration.getMinipoolOwnerReserveMemory(reserve.configuration)
         );
         return (currentLiquidityRate, currentVariableBorrowRate, utilizationRate);
     }

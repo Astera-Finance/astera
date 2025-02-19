@@ -359,33 +359,4 @@ abstract contract BasePiReserveRateStrategy is Ownable {
         int256 ce = controllerError > _minControllerError ? controllerError : _minControllerError;
         return int256(M_FACTOR.rayMulInt((ce + RAY).rayDivInt(2 * RAY).rayPowerInt(N_FACTOR)));
     }
-
-    /**
-     * @notice Gets the Cod3x reserve factor from reserve configuration.
-     * @dev This is a redefined version of ReserveConfiguration.getCod3xReserveFactor() for memory usage.
-     * @param self The reserve configuration.
-     * @return The Cod3x reserve factor.
-     */
-    function _getCod3xReserveFactor(DataTypes.ReserveConfigurationMap memory self)
-        internal
-        pure
-        returns (uint256)
-    {
-        return (self.data & ~ReserveConfiguration.COD3X_RESERVE_FACTOR_MASK)
-            >> ReserveConfiguration.COD3X_RESERVE_FACTOR_START_BIT_POSITION;
-    }
-
-    /**
-     * @notice Gets the minipool owner reserve factor from reserve configuration.
-     * @param self The reserve configuration.
-     * @return The minipool owner reserve factor.
-     */
-    function _getMinipoolOwnerReserveFactor(DataTypes.ReserveConfigurationMap memory self)
-        internal
-        pure
-        returns (uint256)
-    {
-        return (self.data & ~ReserveConfiguration.MINIPOOL_OWNER_RESERVE_FACTOR_MASK)
-            >> ReserveConfiguration.MINIPOOL_OWNER_FACTOR_START_BIT_POSITION;
-    }
 }

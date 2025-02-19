@@ -22,7 +22,8 @@ contract ChangePeripherialsHelper {
         NewPeripherial[] memory vault,
         NewPeripherial[] memory rewarder,
         NewPeripherial[] memory rewarder6909,
-        uint256 _miniPoolId
+        uint256 _miniPoolId,
+        address profitHandler
     ) internal {
         require(treasury.length == vault.length, "Lengths of settings must be the same");
         require(treasury.length == rewarder.length, "Lengths settings must be the same");
@@ -54,6 +55,9 @@ contract ChangePeripherialsHelper {
                 require(
                     data.aTokenAddress != address(0), "tokenAddress not available in lendingPool"
                 );
+                contracts.lendingPoolConfigurator.setProfitHandler(
+                    data.aTokenAddress, profitHandler
+                );
                 contracts.lendingPoolConfigurator.setVault(
                     data.aTokenAddress, vault[idx].newAddress
                 );
@@ -65,37 +69,25 @@ contract ChangePeripherialsHelper {
                 require(
                     data.aTokenAddress != address(0), "tokenAddress not available in lendingPool"
                 );
-                if (address(AToken(data.aTokenAddress).getIncentivesController()) == address(0)) {
-                    if (address(contracts.rewarder) == address(0)) {
-                        // There is no rewarder -> deploy new one
-                        contracts.rewarder = new Rewarder(); // @issue: Rewarder NOT SAFE
-                    }
-
-                    contracts.lendingPoolConfigurator.setRewarderForReserve(
-                        rewarder[idx].tokenAddress,
-                        rewarder[idx].reserveType,
-                        address(contracts.rewarder)
-                    );
-                } else {
-                    // Set rewarder defined in config
-                    contracts.lendingPoolConfigurator.setRewarderForReserve(
-                        rewarder[idx].tokenAddress,
-                        rewarder[idx].reserveType,
-                        rewarder[idx].newAddress
-                    );
+                console.log("REWARDER: ", address(contracts.rewarder));
+                if (address(contracts.rewarder) == address(0)) {
+                    // There is no rewarder -> deploy new one
+                    contracts.rewarder = new Rewarder(); // @issue: Rewarder NOT SAFE
                 }
+
+                contracts.lendingPoolConfigurator.setRewarderForReserve(
+                    rewarder[idx].tokenAddress,
+                    rewarder[idx].reserveType,
+                    address(contracts.rewarder)
+                );
             }
             if (rewarder6909[idx].configure == true) {
                 address mp = contracts.miniPoolAddressesProvider.getMiniPool(_miniPoolId);
                 DataTypes.MiniPoolReserveData memory data =
                     IMiniPool(mp).getReserveData(rewarder6909[idx].tokenAddress);
-                require(
-                    data.aTokenAddress != address(0), "tokenAddress not available in lendingPool"
-                );
-                if (
-                    address(ATokenERC6909(data.aTokenAddress).getIncentivesController())
-                        == address(0)
-                ) {
+                console.log("Configuration for: ", rewarder6909[idx].tokenAddress);
+                require(data.aErc6909 != address(0), "aErc6909 not available in lendingPool");
+                if (address(ATokenERC6909(data.aErc6909).getIncentivesController()) == address(0)) {
                     if (address(contracts.rewarder6909) == address(0)) {
                         // There is no rewarder -> deploy new one
                         contracts.rewarder6909 = new Rewarder6909();
@@ -128,6 +120,9 @@ contract ChangePeripherialsHelper {
                     reserveData.aTokenAddress != address(0),
                     "aTokenAddress not available in lendingPool"
                 );
+                contracts.lendingPoolConfigurator.setProfitHandler(
+                    reserveData.aTokenAddress, rehypothecationSetting.profitHandler
+                );
                 if (address(AToken(reserveData.aTokenAddress)._vault()) == address(0)) {
                     contracts.lendingPoolConfigurator.setVault(
                         reserveData.aTokenAddress, rehypothecationSetting.vault
@@ -142,9 +137,6 @@ contract ChangePeripherialsHelper {
                 );
                 contracts.lendingPoolConfigurator.setFarmingPctDrift(
                     reserveData.aTokenAddress, rehypothecationSetting.drift
-                );
-                contracts.lendingPoolConfigurator.setProfitHandler(
-                    reserveData.aTokenAddress, rehypothecationSetting.profitHandler
                 );
             }
         }

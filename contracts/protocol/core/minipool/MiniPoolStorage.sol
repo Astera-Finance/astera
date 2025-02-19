@@ -42,4 +42,10 @@ contract MiniPoolStorage {
 
     /// @dev Maximum number of reserves that can be initialized.
     uint256 internal _maxNumberOfReserves;
+
+    /// @dev Minimal possible debt threshold
+    uint256 internal _minDebtThreshold;
+
+    /// @dev Minimal decimals amount
+    uint256 internal constant THRESHOLD_SCALING_DECIMALS = 6;
 }

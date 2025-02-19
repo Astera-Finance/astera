@@ -136,6 +136,7 @@ library MiniPoolValidationLogic {
         uint256 amountInETH;
         uint256 reservesCount;
         address oracle;
+        uint256 minAmount;
     }
 
     /**
@@ -186,6 +187,11 @@ library MiniPoolValidationLogic {
         require(!vars.isFrozen, Errors.VL_RESERVE_FROZEN);
         require(validateParams.amount != 0, Errors.VL_INVALID_AMOUNT);
         require(vars.borrowingEnabled, Errors.VL_BORROWING_NOT_ENABLED);
+        require(
+            IAERC6909(reserve.aErc6909).totalSupply(reserve.variableDebtTokenID)
+                + validateParams.amount >= validateParams.minAmount,
+            Errors.VL_DEBT_TOO_SMALL
+        );
 
         (
             vars.userCollateralBalanceETH,
@@ -229,7 +235,8 @@ library MiniPoolValidationLogic {
         DataTypes.MiniPoolReserveData storage reserve,
         uint256 amountSent,
         address onBehalfOf,
-        uint256 variableDebt
+        uint256 variableDebt,
+        uint256 minAmount
     ) internal view {
         bool isActive = reserve.configuration.getActive();
 
@@ -242,6 +249,11 @@ library MiniPoolValidationLogic {
         require(
             amountSent != type(uint256).max || msg.sender == onBehalfOf,
             Errors.VL_NO_EXPLICIT_AMOUNT_TO_REPAY_ON_BEHALF
+        );
+        require(
+            IAERC6909(reserve.aErc6909).totalSupply(reserve.variableDebtTokenID) - amountSent
+                >= minAmount,
+            Errors.VL_DEBT_TOO_SMALL
         );
     }
 
@@ -302,10 +314,14 @@ library MiniPoolValidationLogic {
     function validateFlashloan(
         mapping(address => DataTypes.MiniPoolReserveData) storage reserves,
         address[] memory assets,
-        uint256[] memory amounts
+        uint256[] memory amounts,
+        uint256[] memory modes
     ) internal view {
-        require(assets.length == amounts.length, Errors.VL_INCONSISTENT_FLASHLOAN_PARAMS);
-        for (uint256 i = 0; i < assets.length; i++) {
+        uint256 len = assets.length;
+        require(len == amounts.length, Errors.VL_INCONSISTENT_FLASHLOAN_PARAMS);
+        require(len == modes.length, Errors.VL_INCONSISTENT_FLASHLOAN_PARAMS);
+
+        for (uint256 i = 0; i < len; i++) {
             validateFlashloanSimple(reserves[assets[i]]);
         }
     }

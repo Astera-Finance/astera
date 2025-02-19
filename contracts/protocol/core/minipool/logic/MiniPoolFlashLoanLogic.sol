@@ -88,6 +88,7 @@ library MiniPoolFlashLoanLogic {
         uint256[] amounts;
         uint256[] modes;
         bytes params;
+        uint256[] minAmounts;
     }
 
     /**
@@ -109,7 +110,7 @@ library MiniPoolFlashLoanLogic {
         FlashLoanLocalVars memory vars;
 
         MiniPoolValidationLogic.validateFlashloan(
-            reserves, flashLoanParams.assets, flashLoanParams.amounts
+            reserves, flashLoanParams.assets, flashLoanParams.amounts, flashLoanParams.modes
         );
 
         address[] memory aTokenAddresses = new address[](flashLoanParams.assets.length);
@@ -143,13 +144,12 @@ library MiniPoolFlashLoanLogic {
             vars.currentPremium = premiums[vars.i];
             vars.currentATokenAddress = aTokenAddresses[vars.i];
 
-            DataTypes.MiniPoolReserveData storage reserve = reserves[vars.currentAsset];
             if (
                 DataTypes.InterestRateMode(flashLoanParams.modes[vars.i])
                     == DataTypes.InterestRateMode.NONE
             ) {
                 _handleFlashLoanRepayment(
-                    reserve,
+                    reserves[vars.currentAsset],
                     FlashLoanRepaymentParams({
                         amount: vars.currentAmount,
                         totalPremium: vars.currentPremium,
@@ -173,7 +173,8 @@ library MiniPoolFlashLoanLogic {
                         0,
                         false,
                         flashLoanParams.addressesProvider,
-                        flashLoanParams.reservesCount
+                        flashLoanParams.reservesCount,
+                        flashLoanParams.minAmounts[vars.i]
                     ),
                     false,
                     reserves,

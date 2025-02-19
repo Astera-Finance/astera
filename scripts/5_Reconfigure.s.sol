@@ -78,7 +78,7 @@ contract Reconfigure is Script, InitAndConfigurationHelper, Test {
             deploymentConfig.parseRaw(".miniPoolReserversConfig"), (PoolReserversConfig[])
         );
 
-        if (vm.envBool("TESTNET")) {
+        if (!vm.envBool("MAINNET")) {
             console.log("Testnet");
             /* *********** Lending pool settings *********** */
             {
@@ -95,6 +95,7 @@ contract Reconfigure is Script, InitAndConfigurationHelper, Test {
                 LendingPoolConfigurator(deploymentConfig.readAddress(".lendingPoolConfigurator"));
             contracts.aTokensAndRatesHelper =
                 ATokensAndRatesHelper(deploymentConfig.readAddress(".aTokensAndRatesHelper"));
+            contracts.oracle = Oracle(deploymentConfig.readAddress(".oracle"));
 
             readAddressesToContracts(
                 string.concat(root, "/scripts/outputs/testnet/3_DeployedStrategies.json")
@@ -110,28 +111,28 @@ contract Reconfigure is Script, InitAndConfigurationHelper, Test {
                 mockedTokens.length >= lendingPoolReserversConfig.length,
                 "There are not enough mocked tokens. Deploy mocks.. "
             );
-            {
-                for (uint8 idx = 0; idx < lendingPoolReserversConfig.length; idx++) {
-                    for (uint8 i = 0; i < mockedTokens.length; i++) {
-                        if (
-                            keccak256(abi.encodePacked(ERC20(mockedTokens[i]).symbol()))
-                                == keccak256(abi.encodePacked(lendingPoolReserversConfig[idx].symbol))
-                        ) {
-                            lendingPoolReserversConfig[idx].tokenAddress = address(mockedTokens[i]);
-                            break;
-                        }
-                    }
-                    require(
-                        lendingPoolReserversConfig[idx].tokenAddress != address(0),
-                        "Mocked token not assigned"
-                    );
-                }
-            }
+            // {
+            //     for (uint8 idx = 0; idx < lendingPoolReserversConfig.length; idx++) {
+            //         for (uint8 i = 0; i < mockedTokens.length; i++) {
+            //             if (
+            //                 keccak256(abi.encodePacked(ERC20(mockedTokens[i]).symbol()))
+            //                     == keccak256(abi.encodePacked(lendingPoolReserversConfig[idx].symbol))
+            //             ) {
+            //                 lendingPoolReserversConfig[idx].tokenAddress = address(mockedTokens[i]);
+            //                 break;
+            //             }
+            //         }
+            //         require(
+            //             lendingPoolReserversConfig[idx].tokenAddress != address(0),
+            //             "Mocked token not assigned"
+            //         );
+            //     }
+            // }
 
             /* Reconfigure */
             vm.startBroadcast(vm.envUint("PRIVATE_KEY"));
-            console.log("Reconfiguring..");
-            _configureReserves(contracts, lendingPoolReserversConfig);
+            console.log("Reconfiguring lending pool..");
+            _configureReserves(contracts, lendingPoolReserversConfig, 0);
             _changeStrategies(contracts, lendingPoolReserversConfig);
             vm.stopBroadcast();
 
@@ -149,34 +150,37 @@ contract Reconfigure is Script, InitAndConfigurationHelper, Test {
             contracts.miniPoolConfigurator =
                 MiniPoolConfigurator(deploymentConfig.readAddress(".miniPoolConfigurator"));
 
-            /* Mini pool mocks assignment */
-            require(
-                mockedTokens.length >= miniPoolReserversConfig.length,
-                "There are not enough mocked tokens. Deploy mocks.. "
-            );
-            {
-                for (uint8 idx = 0; idx < miniPoolReserversConfig.length; idx++) {
-                    for (uint8 i = 0; i < mockedTokens.length; i++) {
-                        if (
-                            keccak256(abi.encodePacked(ERC20(mockedTokens[i]).symbol()))
-                                == keccak256(abi.encodePacked(miniPoolReserversConfig[idx].symbol))
-                        ) {
-                            miniPoolReserversConfig[idx].tokenAddress = address(mockedTokens[i]);
-                            break;
-                        }
-                    }
-                    require(
-                        miniPoolReserversConfig[idx].tokenAddress != address(0),
-                        "Mocked token not assigned"
-                    );
-                }
+            address[] memory addrs = deploymentConfig.readAddressArray(".aTokenErc6909Proxy");
+            for (uint8 idx = 0; idx < addrs.length; idx++) {
+                contracts.aTokenErc6909Proxy.push(ATokenERC6909(addrs[idx]));
+                console.log("Setting addr:", addrs[idx]);
             }
+
+            /* Mini pool mocks assignment */
+            // {
+            //     for (uint8 idx = 0; idx < miniPoolReserversConfig.length; idx++) {
+            //         for (uint8 i = 0; i < mockedTokens.length; i++) {
+            //             if (
+            //                 keccak256(abi.encodePacked(ERC20(mockedTokens[i]).symbol()))
+            //                     == keccak256(abi.encodePacked(miniPoolReserversConfig[idx].symbol))
+            //             ) {
+            //                 miniPoolReserversConfig[idx].tokenAddress = address(mockedTokens[i]);
+            //                 break;
+            //             }
+            //         }
+            //         require(
+            //             miniPoolReserversConfig[idx].tokenAddress != address(0),
+            //             "Mocked token not assigned"
+            //         );
+            //     }
+            // }
 
             /* Reconfigure */
             vm.startBroadcast(vm.envUint("PRIVATE_KEY"));
+            console.log("Reconfigure mini pool...");
             address mp =
                 contracts.miniPoolAddressesProvider.getMiniPool(poolAddressesProviderConfig.poolId);
-            _configureMiniPoolReserves(contracts, miniPoolReserversConfig, mp);
+            _configureMiniPoolReserves(contracts, miniPoolReserversConfig, mp, 0);
             _changeMiniPoolStrategies(contracts, miniPoolReserversConfig, mp);
             vm.stopBroadcast();
         } else if (vm.envBool("MAINNET")) {
@@ -197,6 +201,7 @@ contract Reconfigure is Script, InitAndConfigurationHelper, Test {
                 LendingPoolConfigurator(deploymentConfig.readAddress(".lendingPoolConfigurator"));
             contracts.aTokensAndRatesHelper =
                 ATokensAndRatesHelper(deploymentConfig.readAddress(".aTokensAndRatesHelper"));
+            contracts.oracle = Oracle(deploymentConfig.readAddress(".oracle"));
 
             readAddressesToContracts(
                 string.concat(root, "/scripts/outputs/mainnet/3_DeployedStrategies.json")
@@ -204,7 +209,7 @@ contract Reconfigure is Script, InitAndConfigurationHelper, Test {
 
             /* Reconfigure */
             vm.startBroadcast(vm.envUint("PRIVATE_KEY"));
-            _configureReserves(contracts, lendingPoolReserversConfig);
+            _configureReserves(contracts, lendingPoolReserversConfig, 0);
             _changeStrategies(contracts, lendingPoolReserversConfig);
             vm.stopBroadcast();
 
@@ -223,11 +228,16 @@ contract Reconfigure is Script, InitAndConfigurationHelper, Test {
             contracts.miniPoolConfigurator =
                 MiniPoolConfigurator(deploymentConfig.readAddress(".miniPoolConfigurator"));
 
+            address[] memory addrs = deploymentConfig.readAddressArray(".aTokenErc6909Proxy");
+            for (uint8 idx = 0; idx < addrs.length; idx++) {
+                contracts.aTokenErc6909Proxy.push(ATokenERC6909(addrs[idx]));
+                console.log("Setting addr:", addrs[idx]);
+            }
             /* Reconfigure */
             vm.startBroadcast(vm.envUint("PRIVATE_KEY"));
             address mp =
                 contracts.miniPoolAddressesProvider.getMiniPool(poolAddressesProviderConfig.poolId);
-            _configureMiniPoolReserves(contracts, miniPoolReserversConfig, mp);
+            _configureMiniPoolReserves(contracts, miniPoolReserversConfig, mp, 0);
             _changeMiniPoolStrategies(contracts, miniPoolReserversConfig, mp);
             vm.stopBroadcast();
         } else {

@@ -238,6 +238,9 @@ library BorrowLogic {
 
         reserve.updateState();
 
+        // Note: This mint operation does not update the user configuration to reflect the borrowed asset for the miniPoolAddress.
+        // This means that when querying the user configuration for the miniPoolAddress, no assets will be shown as borrowed.
+        // This design choice ensures that the health factor check will always pass for unbacked borrows by mini pools in the system.
         IVariableDebtToken(reserve.variableDebtTokenAddress).mint(
             params.miniPoolAddress,
             params.miniPoolAddress,

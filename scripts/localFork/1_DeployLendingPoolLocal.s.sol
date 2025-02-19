@@ -34,6 +34,28 @@ contract DeployLendingPoolLocal is Script, LendingPoolHelper, Test {
             }
             vm.serializeAddress("lendingPoolContracts", "piStrategies", piAddresses);
         }
+
+        (,, address[] memory aTokens, address[] memory debtTokens) =
+            contracts.cod3xLendDataProvider.getAllLpTokens();
+
+        vm.serializeAddress("lendingPoolContracts", "aTokens", aTokens);
+
+        {
+            address[] memory wrappedTokens = new address[](aTokens.length);
+            for (uint256 idx = 0; idx < aTokens.length; idx++) {
+                wrappedTokens[idx] = AToken(aTokens[idx]).WRAPPER_ADDRESS();
+            }
+            vm.serializeAddress("lendingPoolContracts", "wrappedTokens", wrappedTokens);
+        }
+
+        // vm.serializeAddress("lendingPoolContracts", "aTokensWrappers", AToken(aTokens))
+        vm.serializeAddress("lendingPoolContracts", "wethGateway", address(contracts.wethGateway));
+        vm.serializeAddress("lendingPoolContracts", "debtTokens", debtTokens);
+        vm.serializeAddress("lendingPoolContracts", "aTokenImpl", address(contracts.aToken));
+        vm.serializeAddress(
+            "lendingPoolContracts", "variableDebtTokenImpl", address(contracts.variableDebtToken)
+        );
+
         vm.serializeAddress(
             "lendingPoolContracts",
             "cod3xLendDataProvider",
@@ -44,12 +66,11 @@ contract DeployLendingPoolLocal is Script, LendingPoolHelper, Test {
             "aTokensAndRatesHelper",
             address(contracts.aTokensAndRatesHelper)
         );
-        vm.serializeAddress("lendingPoolContracts", "aToken", address(contracts.aToken));
         vm.serializeAddress(
-            "lendingPoolContracts", "variableDebtToken", address(contracts.variableDebtToken)
+            "lendingPoolContracts",
+            "lendingPool",
+            contracts.lendingPoolAddressesProvider.getLendingPool()
         );
-
-        vm.serializeAddress("lendingPoolContracts", "lendingPool", address(contracts.lendingPool));
         vm.serializeAddress(
             "lendingPoolContracts",
             "lendingPoolAddressesProvider",
@@ -98,6 +119,10 @@ contract DeployLendingPoolLocal is Script, LendingPoolHelper, Test {
 
         // Deployment
         vm.startPrank(FOUNDRY_DEFAULT);
+        for (uint8 idx = 0; idx < poolReserversConfig.length; idx++) {
+            deal(poolReserversConfig[idx].tokenAddress, FOUNDRY_DEFAULT, 100 ether);
+        }
+
         contracts.oracle = _deployOracle(oracleConfig);
         deployLendingPoolInfra(
             general,
@@ -105,6 +130,7 @@ contract DeployLendingPoolLocal is Script, LendingPoolHelper, Test {
             stableStrategies,
             piStrategies,
             poolReserversConfig,
+            oracleConfig,
             FOUNDRY_DEFAULT,
             wethGateway
         );

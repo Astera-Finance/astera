@@ -121,7 +121,7 @@ library FlashLoanLogic {
      */
     function flashLoan(
         FlashLoanParams memory flashLoanParams,
-        EnumerableSet.AddressSet storage minipoolFlowBorrowing,
+        mapping(address => EnumerableSet.AddressSet) storage assetToMinipoolFlowBorrowing,
         mapping(uint256 => DataTypes.ReserveReference) storage reservesList,
         mapping(address => DataTypes.UserConfigurationMap) storage usersConfig,
         mapping(address => mapping(bool => DataTypes.ReserveData)) storage reserves
@@ -129,7 +129,11 @@ library FlashLoanLogic {
         FlashLoanLocalVars memory vars;
 
         ValidationLogic.validateFlashloan(
-            reserves, flashLoanParams.reserveTypes, flashLoanParams.assets, flashLoanParams.amounts
+            reserves,
+            flashLoanParams.reserveTypes,
+            flashLoanParams.assets,
+            flashLoanParams.amounts,
+            flashLoanParams.modes
         );
 
         address[] memory aTokenAddresses = new address[](flashLoanParams.assets.length);
@@ -171,7 +175,7 @@ library FlashLoanLogic {
             ) {
                 _handleFlashLoanRepayment(
                     reserves[vars.currentAsset][vars.currentType],
-                    minipoolFlowBorrowing,
+                    assetToMinipoolFlowBorrowing[vars.currentAsset],
                     FlashLoanRepaymentParams({
                         amount: vars.currentAmount,
                         totalPremium: vars.currentPremium,
@@ -195,7 +199,7 @@ library FlashLoanLogic {
                         flashLoanParams.addressesProvider,
                         flashLoanParams.reservesCount
                     ),
-                    minipoolFlowBorrowing,
+                    assetToMinipoolFlowBorrowing[vars.currentAsset],
                     reserves,
                     reservesList,
                     usersConfig
@@ -239,7 +243,13 @@ library FlashLoanLogic {
         for (uint256 i = 0; i < assets.length; i++) {
             aTokenAddresses[i] = _reserves[assets[i]][reserveTypes[i]].aTokenAddress;
 
-            premiums[i] = DataTypes.InterestRateMode(modes[i]) == DataTypes.InterestRateMode.NONE
+            uint256 mode = modes[i];
+            require(
+                uint256(type(DataTypes.InterestRateMode).max) >= mode,
+                Errors.VL_INVALID_INTEREST_RATE_MODE
+            );
+
+            premiums[i] = DataTypes.InterestRateMode(mode) == DataTypes.InterestRateMode.NONE
                 ? amounts[i] * flashLoanPremiumTotal / 10000
                 : 0;
 

@@ -100,7 +100,7 @@ contract AddStrats is Script, StratsHelper, Test {
         PiStrategy[] memory miniPoolPiStrategies =
             abi.decode(config.parseRaw(".miniPoolPiStrategies"), (PiStrategy[]));
 
-        if (vm.envBool("TESTNET")) {
+        if (!vm.envBool("MAINNET")) {
             /* ****** Lending pool settings */
             {
                 string memory outputPath =
@@ -137,32 +137,32 @@ contract AddStrats is Script, StratsHelper, Test {
             contracts.lendingPoolAddressesProvider =
                 LendingPoolAddressesProvider(config.readAddress(".lendingPoolAddressesProvider"));
 
-            /* Read all mocks deployed */
-            path = string.concat(root, "/scripts/outputs/testnet/0_MockedTokens.json");
-            console.log("PATH: ", path);
-            config = vm.readFile(path);
-            address[] memory mockedTokens = config.readAddressArray(".mockedTokens");
+            // /* Read all mocks deployed */
+            // path = string.concat(root, "/scripts/outputs/testnet/0_MockedTokens.json");
+            // console.log("PATH: ", path);
+            // config = vm.readFile(path);
+            // address[] memory mockedTokens = config.readAddressArray(".mockedTokens");
 
-            require(
-                mockedTokens.length >= piStrategies.length,
-                "There are not enough mocked tokens. Deploy mocks.. "
-            );
-            {
-                for (uint8 idx = 0; idx < piStrategies.length; idx++) {
-                    for (uint8 i = 0; i < mockedTokens.length; i++) {
-                        if (
-                            keccak256(abi.encodePacked(ERC20(mockedTokens[i]).symbol()))
-                                == keccak256(abi.encodePacked(piStrategies[idx].symbol))
-                        ) {
-                            piStrategies[idx].tokenAddress = address(mockedTokens[i]);
-                            break;
-                        }
-                    }
-                    require(
-                        piStrategies[idx].tokenAddress != address(0), "Mocked token not assigned"
-                    );
-                }
-            }
+            // require(
+            //     mockedTokens.length >= piStrategies.length,
+            //     "There are not enough mocked tokens. Deploy mocks.. "
+            // );
+            // {
+            //     for (uint8 idx = 0; idx < piStrategies.length; idx++) {
+            //         for (uint8 i = 0; i < mockedTokens.length; i++) {
+            //             if (
+            //                 keccak256(abi.encodePacked(ERC20(mockedTokens[i]).symbol()))
+            //                     == keccak256(abi.encodePacked(piStrategies[idx].symbol))
+            //             ) {
+            //                 piStrategies[idx].tokenAddress = address(mockedTokens[i]);
+            //                 break;
+            //             }
+            //         }
+            //         require(
+            //             piStrategies[idx].tokenAddress != address(0), "Mocked token not assigned"
+            //         );
+            //     }
+            // }
 
             /* ******* Mini pool settings */
             {
@@ -204,28 +204,28 @@ contract AddStrats is Script, StratsHelper, Test {
             contracts.miniPoolAddressesProvider =
                 MiniPoolAddressesProvider(config.readAddress(".miniPoolAddressesProvider"));
 
-            /* Assigned mocked tokens to the mini pool Pi strats */
-            require(
-                mockedTokens.length >= miniPoolPiStrategies.length,
-                "There are not enough mocked tokens. Deploy mocks.. "
-            );
-            {
-                for (uint8 idx = 0; idx < miniPoolPiStrategies.length; idx++) {
-                    for (uint8 i = 0; i < mockedTokens.length; i++) {
-                        if (
-                            keccak256(abi.encodePacked(ERC20(mockedTokens[i]).symbol()))
-                                == keccak256(abi.encodePacked(miniPoolPiStrategies[idx].symbol))
-                        ) {
-                            miniPoolPiStrategies[idx].tokenAddress = address(mockedTokens[i]);
-                            break;
-                        }
-                    }
-                    require(
-                        miniPoolPiStrategies[idx].tokenAddress != address(0),
-                        "Mocked token not assigned"
-                    );
-                }
-            }
+            // /* Assigned mocked tokens to the mini pool Pi strats */
+            // require(
+            //     mockedTokens.length >= miniPoolPiStrategies.length,
+            //     "There are not enough mocked tokens. Deploy mocks.. "
+            // );
+            // {
+            //     for (uint8 idx = 0; idx < miniPoolPiStrategies.length; idx++) {
+            //         for (uint8 i = 0; i < mockedTokens.length; i++) {
+            //             if (
+            //                 keccak256(abi.encodePacked(ERC20(mockedTokens[i]).symbol()))
+            //                     == keccak256(abi.encodePacked(miniPoolPiStrategies[idx].symbol))
+            //             ) {
+            //                 miniPoolPiStrategies[idx].tokenAddress = address(mockedTokens[i]);
+            //                 break;
+            //             }
+            //         }
+            //         require(
+            //             miniPoolPiStrategies[idx].tokenAddress != address(0),
+            //             "Mocked token not assigned"
+            //         );
+            //     }
+            // }
 
             /* Deploy on the testnet */
             vm.startBroadcast(vm.envUint("PRIVATE_KEY"));
