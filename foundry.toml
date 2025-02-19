@@ -6,7 +6,7 @@ test = 'tests'
 cache_path = 'cache_forge'
 ignored_warnings_from = ["tests/"]
 optimizer = true
-optimizer_runs = 800
+optimizer_runs = 500
 solc_version = '0.8.23'
 show_progress = true
 fs_permissions = [{ access = "read-write", path = "./"}]
