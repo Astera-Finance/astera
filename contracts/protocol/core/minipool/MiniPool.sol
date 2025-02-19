@@ -690,6 +690,7 @@ contract MiniPool is
      */
     function setMinDebtThreshold(uint256 threshold) external onlyMiniPoolConfigurator {
         _minDebtThreshold = threshold;
+        emit MinDebtThresholdSet(threshold);
     }
 
     /**

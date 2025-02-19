@@ -146,6 +146,13 @@ interface IMiniPool {
         uint256 variableBorrowIndex
     );
 
+    /**
+     * @dev Emitted when set new minimal debt threshold
+     * @param threshold - minimal debt threshold value to set
+     *
+     */
+    event MinDebtThresholdSet(uint256 indexed threshold);
+
     function deposit(address asset, bool wrap, uint256 amount, address onBehalfOf) external;
 
     function withdraw(address asset, bool unwrap, uint256 amount, address to)
