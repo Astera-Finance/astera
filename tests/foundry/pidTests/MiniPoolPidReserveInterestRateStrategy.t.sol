@@ -7,6 +7,7 @@ import {WadRayMath} from "contracts/protocol/libraries/math/WadRayMath.sol";
 import
     "contracts/protocol/core/interestRateStrategies/minipool/MiniPoolPiReserveInterestRateStrategy.sol";
 import "openzeppelin-contracts/contracts/utils/Strings.sol";
+import "contracts/mocks/tokens/MintableERC20.sol";
 
 contract MiniPoolPidReserveInterestRateStrategyTest is Common {
     using WadRayMath for uint256;
@@ -25,6 +26,8 @@ contract MiniPoolPidReserveInterestRateStrategyTest is Common {
     uint256 nbUsers = 4;
     uint256 initialAmt = 1e12 ether;
     uint256 DEFAULT_TIME_BEFORE_OP = 6 hours;
+
+    MintableERC20 testToken;
 
     function setUp() public {
         opFork = vm.createSelectFork(RPC, FORK_BLOCK);
@@ -71,6 +74,22 @@ contract MiniPoolPidReserveInterestRateStrategyTest is Common {
             address(deployedContracts.rewarder),
             address(deployedContracts.aTokensAndRatesHelper)
         );
+
+        testToken = new MintableERC20("Test", "TEST", 1);
+        console.log("Pushing");
+        address[] memory assets = new address[](1);
+        assets[0] = address(testToken);
+        ERC20[] memory erc20tokens = fixture_getErc20Tokens(assets);
+        int256[] memory prices = new int256[](1);
+        prices[0] = int256(8 * 10 ** (PRICE_FEED_DECIMALS - 1));
+        (, address[] memory _aggregators, uint256[] memory _timeouts) =
+            fixture_getTokenPriceFeeds(erc20tokens, prices);
+        commonContracts.oracle.setAssetSources(assets, _aggregators, _timeouts);
+        tokens.push(address(testToken));
+        reserveTypes.push(true);
+        isStableStrategy.push(false);
+
+        console.log("fixture_configureProtocol");
         fixture_configureProtocol(
             address(deployedContracts.lendingPool),
             address(commonContracts.aToken),
@@ -530,8 +549,8 @@ contract MiniPoolPidReserveInterestRateStrategyTest is Common {
         public
     {
         TestVars memory vars;
-        offset1 = 0; //bound(offset1, 0, 3);
-        offset2 = 1; //bound(offset2, 0, 3);
+        offset1 = bound(offset1, 0, 3);
+        offset2 = bound(offset2, 0, 3);
 
         vars.user = makeAddr("user");
         vars.mpId = 0;
@@ -547,7 +566,7 @@ contract MiniPoolPidReserveInterestRateStrategyTest is Common {
         vars.underlying = erc20Tokens[offset1];
         vars.aToken = commonContracts.aTokensWrapper[offset1];
         vars.debtToken = commonContracts.variableDebtTokens[offset1];
-        vars.amountInUsd = 500_000 ether;
+        vars.amountInUsd = 100_000 ether;
         vars.counterUnderlying = erc20Tokens[offset2];
         vars.underlyingPrice = commonContracts.oracle.getAssetPrice(address(vars.underlying));
         vars.counterUnderlyingPrice =
@@ -562,8 +581,7 @@ contract MiniPoolPidReserveInterestRateStrategyTest is Common {
             vars.underlying.symbol()
         );
 
-        debtToSet = 1e9;
-        //bound(debtToSet, 10000, 100000);
+        debtToSet = 1e3;
 
         deal(address(vars.underlying), vars.whaleUser, 1e26);
         deal(address(vars.counterUnderlying), vars.user, 1e26);
@@ -641,7 +659,7 @@ contract MiniPoolPidReserveInterestRateStrategyTest is Common {
         vm.stopPrank();
 
         console.log("Time travel 1");
-        vm.warp(block.timestamp + 7 days);
+        vm.warp(block.timestamp + 2 days); // Max is DELTA_TIME_MARGIN (5 days)
         vm.roll(block.number + 1);
 
         console.log("Deposit >>> DEBT TO SET", debtToSet);
@@ -664,13 +682,16 @@ contract MiniPoolPidReserveInterestRateStrategyTest is Common {
         vm.label(address(vars.aErc6909Token), "aErc6909Token");
 
         vars.whaleUser = makeAddr("whaleUser");
+        console.log("testMiniPoolFlowLimiterDust -> getting LpTokens");
+        (address _aTokenAddress, address _variableDebtToken) =
+            deployedContracts.cod3xLendDataProvider.getLpTokens(address(testToken), true);
 
-        vars.underlying = erc20Tokens[0]; // usdc
-        vars.aToken = commonContracts.aTokensWrapper[0]; // aUsdc
-        vars.debtToken = commonContracts.variableDebtTokens[0];
+        vars.underlying = testToken;
+        vars.aToken = AToken(address(AToken(_aTokenAddress).WRAPPER_ADDRESS()));
+        vars.debtToken = VariableDebtToken(_variableDebtToken);
         vars.amountInUsd = 5 ether; //bound(amount, 1E6, 1E13); /* $500 */ // consider fuzzing here
         vars.counterUnderlying = erc20Tokens[3]; // dai
-        vars.underlyingPrice = commonContracts.oracle.getAssetPrice(address(vars.underlying));
+        vars.underlyingPrice = 8 * 10 ** (PRICE_FEED_DECIMALS - 1);
         vars.counterUnderlyingPrice =
             commonContracts.oracle.getAssetPrice(address(vars.counterUnderlying));
 
@@ -689,10 +710,10 @@ contract MiniPoolPidReserveInterestRateStrategyTest is Common {
         vm.stopPrank();
 
         vm.startPrank(vars.user);
-        vars.counterUnderlying.approve(address(vars.mp), amount * 1e14);
+        vars.counterUnderlying.approve(address(vars.mp), amount * 1e17);
         console.log("User balance: ", vars.counterUnderlying.balanceOf(vars.user));
-        console.log("User depositAmount: ", amount * 1e14);
-        IMiniPool(vars.mp).deposit(address(vars.counterUnderlying), false, amount * 1e14, vars.user);
+        console.log("User depositAmount: ", amount * 1e17);
+        IMiniPool(vars.mp).deposit(address(vars.counterUnderlying), false, amount * 1e17, vars.user);
         vm.stopPrank();
 
         vars.flowLimiter = address(deployedMiniPoolContracts.flowLimiter);
@@ -700,11 +721,11 @@ contract MiniPoolPidReserveInterestRateStrategyTest is Common {
         vm.prank(address(deployedMiniPoolContracts.miniPoolAddressesProvider));
         deployedMiniPoolContracts.flowLimiter.setFlowLimit(
             address(vars.underlying), vars.mp, amount * 100
-        ); // 50000 USDC
+        );
 
         //@audit borrow dust from empty minipool
         vm.startPrank(vars.user);
-        uint256 DUST = 10;
+        uint256 DUST = 1;
         console.log("User borrows %s %s", DUST, vars.aToken.symbol());
         IMiniPool(vars.mp).borrow(address(vars.aToken), false, DUST, vars.user); // Utilization becomes 1000000000000000000000000000 (RAY)
         assertEq(vars.debtToken.balanceOf(vars.mp), DUST);

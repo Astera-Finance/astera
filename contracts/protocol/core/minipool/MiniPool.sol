@@ -629,7 +629,7 @@ contract MiniPool is
     /**
      * @dev Returns threshold for minimal debt.
      * @param decimals Decimals of the token.
-     * @return The `_minDebtThreshold` instance.
+     * @return The `_minDebtThreshold` scaled with decimals.
      */
     function minDebtThreshold(uint8 decimals) public view returns (uint256) {
         if (decimals < THRESHOLD_SCALING_DECIMALS) {
