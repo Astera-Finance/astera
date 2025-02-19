@@ -145,7 +145,7 @@ contract LendingPool is
     {
         DepositLogic.deposit(
             DepositLogic.DepositParams(asset, reserveType, amount, onBehalfOf),
-            _minipoolFlowBorrowing,
+            _assetToMinipoolFlowBorrowing[asset],
             _reserves,
             _usersConfig,
             _addressesProvider
@@ -172,7 +172,7 @@ contract LendingPool is
     {
         return WithdrawLogic.withdraw(
             WithdrawLogic.withdrawParams(asset, reserveType, amount, to, _reservesCount),
-            _minipoolFlowBorrowing,
+            _assetToMinipoolFlowBorrowing[asset],
             _reserves,
             _usersConfig,
             _reservesList,
@@ -210,7 +210,7 @@ contract LendingPool is
                 _addressesProvider,
                 _reservesCount
             ),
-            _minipoolFlowBorrowing,
+            _assetToMinipoolFlowBorrowing[asset],
             _reserves,
             _reservesList,
             _usersConfig
@@ -238,7 +238,7 @@ contract LendingPool is
     {
         return BorrowLogic.repay(
             BorrowLogic.RepayParams(asset, reserveType, amount, onBehalfOf, _addressesProvider),
-            _minipoolFlowBorrowing,
+            _assetToMinipoolFlowBorrowing[asset],
             _reserves,
             _usersConfig
         );
@@ -259,7 +259,7 @@ contract LendingPool is
     {
         amountRepaid = BorrowLogic.repayWithAtokens(
             BorrowLogic.RepayParams(asset, reserveType, amount, msg.sender, _addressesProvider),
-            _minipoolFlowBorrowing,
+            _assetToMinipoolFlowBorrowing[asset],
             _reserves,
             _usersConfig
         );
@@ -267,7 +267,7 @@ contract LendingPool is
         // `repayWithATokens()` is used for minipool repayment.
         if (_isMiniPool(msg.sender) && getCurrentLendingPoolDebt(asset, msg.sender) == 0) {
             // The Minipool unsubscribes from the LendingPool.
-            _minipoolFlowBorrowing.remove(msg.sender);
+            _assetToMinipoolFlowBorrowing[asset].remove(msg.sender);
         }
     }
 
@@ -345,7 +345,7 @@ contract LendingPool is
 
         LiquidationLogic.liquidationCall(
             _reserves,
-            _minipoolFlowBorrowing,
+            _assetToMinipoolFlowBorrowing,
             _usersConfig,
             _reservesList,
             LiquidationLogic.liquidationCallParams(
@@ -397,7 +397,7 @@ contract LendingPool is
                 modes: modes,
                 params: params
             }),
-            _minipoolFlowBorrowing,
+            _assetToMinipoolFlowBorrowing,
             _reservesList,
             _usersConfig,
             _reserves
@@ -406,13 +406,12 @@ contract LendingPool is
 
     /**
      * @notice Allows minipools to borrow unbacked amounts of reserve assets.
-     * @dev This function is restricted to minipools only.
+     * @dev This function is restricted to minipools only. `reserveType` is hardcoded to `true`.
      * @param asset The address of the underlying asset to borrow.
-     * @param reserveType Whether the reserve is boosted by a vault.
      * @param amount The amount to borrow.
      * @param aTokenAddress The address of the aToken.
      */
-    function miniPoolBorrow(address asset, bool reserveType, uint256 amount, address aTokenAddress)
+    function miniPoolBorrow(address asset, uint256 amount, address aTokenAddress)
         external
         override
         whenNotPaused
@@ -421,20 +420,14 @@ contract LendingPool is
 
         BorrowLogic.executeMiniPoolBorrow(
             BorrowLogic.ExecuteMiniPoolBorrowParams(
-                asset,
-                reserveType,
-                amount,
-                msg.sender,
-                aTokenAddress,
-                _addressesProvider,
-                _reservesCount
+                asset, true, amount, msg.sender, aTokenAddress, _addressesProvider, _reservesCount
             ),
-            _minipoolFlowBorrowing,
+            _assetToMinipoolFlowBorrowing[asset],
             _reserves
         );
 
         // The Minipool subscribes to the LendingPool.
-        _minipoolFlowBorrowing.add(msg.sender);
+        _assetToMinipoolFlowBorrowing[asset].add(msg.sender);
     }
 
     /**
@@ -890,7 +883,9 @@ contract LendingPool is
     {
         DataTypes.ReserveData storage reserve = _reserves[asset][reserveType];
 
-        reserve.updateInterestRates(_minipoolFlowBorrowing, asset, reserve.aTokenAddress, 0, 0);
+        reserve.updateInterestRates(
+            _assetToMinipoolFlowBorrowing[asset], asset, reserve.aTokenAddress, 0, 0
+        );
     }
 
     /**
@@ -932,7 +927,12 @@ contract LendingPool is
         return IAToken(aToken).WRAPPER_ADDRESS();
     }
 
-    function getMinipoolFlowBorrowing() external view returns (address[] memory) {
-        return _minipoolFlowBorrowing.values();
+    /**
+     * @notice Returns the list of minipools that are currently flow borrowing from a specific asset.
+     * @param asset The address of the asset.
+     * @return The list of minipool addresses that are flow borrowing from the asset.
+     */
+    function getMinipoolFlowBorrowing(address asset) external view returns (address[] memory) {
+        return _assetToMinipoolFlowBorrowing[asset].values();
     }
 }

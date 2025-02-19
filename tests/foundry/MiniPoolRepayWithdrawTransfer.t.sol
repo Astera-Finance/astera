@@ -2050,7 +2050,7 @@ contract MiniPoolRepayWithdrawTransferTest is MiniPoolDepositBorrowTest {
         );
 
         address[] memory flowBorrowedMinipools =
-            deployedContracts.lendingPool.getMinipoolFlowBorrowing();
+            deployedContracts.lendingPool.getMinipoolFlowBorrowing(address(tokenParamsUsdc.token));
         console.log("minipools ::: ");
         assertEq(flowBorrowedMinipools.length, 0);
 
@@ -2099,7 +2099,8 @@ contract MiniPoolRepayWithdrawTransferTest is MiniPoolDepositBorrowTest {
 
         logMinipoolFlow(address(tokenParamsUsdc.token), address(tokenParamsUsdc.aToken), user2);
 
-        flowBorrowedMinipools = deployedContracts.lendingPool.getMinipoolFlowBorrowing();
+        flowBorrowedMinipools =
+            deployedContracts.lendingPool.getMinipoolFlowBorrowing(address(tokenParamsUsdc.token));
         console.log("minipools ::: ");
         assertEq(flowBorrowedMinipools[0], address(miniPool));
         assertEq(flowBorrowedMinipools.length, 1);
@@ -2110,7 +2111,8 @@ contract MiniPoolRepayWithdrawTransferTest is MiniPoolDepositBorrowTest {
 
         logMinipoolFlow(address(tokenParamsUsdc.token), address(tokenParamsUsdc.aToken), user2);
 
-        flowBorrowedMinipools = deployedContracts.lendingPool.getMinipoolFlowBorrowing();
+        flowBorrowedMinipools =
+            deployedContracts.lendingPool.getMinipoolFlowBorrowing(address(tokenParamsUsdc.token));
         console.log("minipools ::: ");
         assertEq(flowBorrowedMinipools.length, 0);
     }

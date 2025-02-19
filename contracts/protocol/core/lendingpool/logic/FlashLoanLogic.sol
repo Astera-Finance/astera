@@ -121,7 +121,7 @@ library FlashLoanLogic {
      */
     function flashLoan(
         FlashLoanParams memory flashLoanParams,
-        EnumerableSet.AddressSet storage minipoolFlowBorrowing,
+        mapping(address => EnumerableSet.AddressSet) storage assetToMinipoolFlowBorrowing,
         mapping(uint256 => DataTypes.ReserveReference) storage reservesList,
         mapping(address => DataTypes.UserConfigurationMap) storage usersConfig,
         mapping(address => mapping(bool => DataTypes.ReserveData)) storage reserves
@@ -175,7 +175,7 @@ library FlashLoanLogic {
             ) {
                 _handleFlashLoanRepayment(
                     reserves[vars.currentAsset][vars.currentType],
-                    minipoolFlowBorrowing,
+                    assetToMinipoolFlowBorrowing[vars.currentAsset],
                     FlashLoanRepaymentParams({
                         amount: vars.currentAmount,
                         totalPremium: vars.currentPremium,
@@ -199,7 +199,7 @@ library FlashLoanLogic {
                         flashLoanParams.addressesProvider,
                         flashLoanParams.reservesCount
                     ),
-                    minipoolFlowBorrowing,
+                    assetToMinipoolFlowBorrowing[vars.currentAsset],
                     reserves,
                     reservesList,
                     usersConfig

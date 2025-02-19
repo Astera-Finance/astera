@@ -225,9 +225,13 @@ library ReserveLogic {
 
         // Sync minipools state that has "flow borrowing" to ensure that the LendingPool
         // liquidity rate of an asset is always greater than the borrowing rate of minipools.
-        for (uint256 i = 0; i < minipoolFlowBorrowing.length(); i++) {
-            IMiniPool minipool = IMiniPool(minipoolFlowBorrowing.at(i));
-            minipool.syncState(IAToken(aTokenAddress).WRAPPER_ADDRESS());
+        // Only `syncState()` if `reserveType` is `true`.
+        IAToken aToken = IAToken(aTokenAddress);
+        if (aToken.RESERVE_TYPE()) {
+            for (uint256 i = 0; i < minipoolFlowBorrowing.length(); i++) {
+                IMiniPool minipool = IMiniPool(minipoolFlowBorrowing.at(i));
+                minipool.syncState(aToken.WRAPPER_ADDRESS());
+            }
         }
 
         emit ReserveDataUpdated(

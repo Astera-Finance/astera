@@ -240,8 +240,7 @@ contract MiniPoolV2 is
             vars.LendingPool = _addressesProvider.getLendingPool();
             ILendingPool(vars.LendingPool).miniPoolBorrow(
                 underlying,
-                true,
-                ATokenNonRebasing(asset).convertToAssets(amount - vars.availableLiquidity), // amount - availableLiquidity converted to asset
+                ATokenNonRebasing(asset).convertToAssets(amount - vars.availableLiquidity), // amount + availableLiquidity converted to asset
                 ATokenNonRebasing(asset).ATOKEN_ADDRESS()
             );
 

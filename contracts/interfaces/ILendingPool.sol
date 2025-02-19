@@ -165,8 +165,7 @@ interface ILendingPool {
         external
         returns (uint256);
 
-    function miniPoolBorrow(address asset, bool reserveType, uint256 amount, address aTokenAddress)
-        external;
+    function miniPoolBorrow(address asset, uint256 amount, address aTokenAddress) external;
 
     function repayWithATokens(address asset, bool reserveType, uint256 amount)
         external
@@ -301,4 +300,6 @@ interface ILendingPool {
     function syncIndexesState(address asset, bool reserveType) external;
 
     function syncRatesState(address asset, bool reserveType) external;
+
+    function getMinipoolFlowBorrowing(address asset) external view returns (address[] memory);
 }

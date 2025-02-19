@@ -76,6 +76,12 @@ interface IMiniPoolAddressesProvider {
      */
     event MinipoolOwnerTreasurySet(address indexed treasury, uint256 miniPoolId);
 
+    /**
+     * @dev Emitted when the maximum number of reserves with flow borrowing is updated.
+     * @param newMax The new maximum number of reserves with flow borrowing.
+     */
+    event MaxReservesWithFlowBorrowingUpdated(uint256 newMax);
+
     // Functions related to getting various addresses
     function getMiniPoolCount() external view returns (uint256);
 
@@ -92,6 +98,10 @@ interface IMiniPoolAddressesProvider {
     function getPriceOracle() external view returns (address);
 
     function getFlowLimiter() external view returns (address);
+
+    function getNumberOfReservesWithFlowBorrowing() external view returns (uint256);
+
+    function getMaxReservesWithFlowBorrowing() external view returns (uint256);
 
     // Functions for MiniPool management
     function getMiniPool(uint256 id) external view returns (address);
@@ -128,4 +138,6 @@ interface IMiniPoolAddressesProvider {
     function setMinipoolOwnerTreasuryToMiniPool(uint256 id, address treasury) external;
 
     function setMiniPoolConfigurator(address configuratorImpl) external;
+
+    function setMaxReservesWithFlowBorrowing(uint256 newMax) external;
 }
