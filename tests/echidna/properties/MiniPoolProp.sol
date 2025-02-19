@@ -53,14 +53,19 @@ contract MiniPoolProp is PropertiesBase {
             )
         );
 
-        // assertWithMsg(success, "500");
+        lastLiquidityIndexMP[address(minipool)][address(asset)] =
+            minipool.getReserveData(address(asset)).liquidityIndex;
+        lastVariableBorrowIndexMP[address(minipool)][address(asset)] =
+            minipool.getReserveData(address(asset)).variableBorrowIndex;
+
+        assertWithMsg(success, "500");
 
         uint256 aTokenBalanceAfter = aToken6909.balanceOf(address(onBehalfOf), aTokenID);
         uint256 assetBalanceAfter = isAToken
             ? IERC20(IAToken(address(asset)).UNDERLYING_ASSET_ADDRESS()).balanceOf(address(user))
             : asset.balanceOf(address(user));
 
-        // assertEqApprox(aTokenBalanceAfter - aTokenBalanceBefore, randAmt, 1, "501");
+        assertEqApprox(aTokenBalanceAfter - aTokenBalanceBefore, randAmt, 1, "501");
 
         assertEq(
             assetBalanceBefore - assetBalanceAfter,
@@ -111,13 +116,18 @@ contract MiniPoolProp is PropertiesBase {
             )
         );
 
-        (,,,,, uint256 healthFactorAfter) = minipool.getUserAccountData(address(to));
+        (,,,,, uint256 healthFactorAfter) = minipool.getUserAccountData(address(user));
 
         require(success);
 
-        // if (healthFactorAfter < 1e18) {
-        //     assertWithMsg(!success, "505");
-        // }
+        lastLiquidityIndexMP[address(minipool)][address(asset)] =
+            minipool.getReserveData(address(asset)).liquidityIndex;
+        lastVariableBorrowIndexMP[address(minipool)][address(asset)] =
+            minipool.getReserveData(address(asset)).variableBorrowIndex;
+
+        if (healthFactorAfter < 1e18) {
+            assertWithMsg(!success, "505");
+        }
 
         uint256 aTokenBalanceAfter = aToken6909.balanceOf(address(user), aTokenID);
         uint256 assetBalanceAfter = isAToken
@@ -222,6 +232,11 @@ contract MiniPoolProp is PropertiesBase {
                 "510"
             );
         }
+
+        lastLiquidityIndexMP[address(minipool)][address(asset)] =
+            minipool.getReserveData(address(asset)).liquidityIndex;
+        lastVariableBorrowIndexMP[address(minipool)][address(asset)] =
+            minipool.getReserveData(address(asset)).variableBorrowIndex;
     }
 
     /// @custom:invariant 511 - `repay()` must decrease the onBehalfOf debtToken balance by `amount`.
@@ -268,6 +283,11 @@ contract MiniPoolProp is PropertiesBase {
         );
 
         require(success);
+
+        lastLiquidityIndexMP[address(minipool)][address(asset)] =
+            minipool.getReserveData(address(asset)).liquidityIndex;
+        lastVariableBorrowIndexMP[address(minipool)][address(asset)] =
+            minipool.getReserveData(address(asset)).variableBorrowIndex;
 
         uint256 debtTokenBalanceAfter = aToken6909.balanceOf(address(onBehalfOf), debtTokenID);
         uint256 assetBalanceAfter = isAToken
@@ -327,6 +347,11 @@ contract MiniPoolProp is PropertiesBase {
         if (healthFactorBefore >= 1e18 && healthFactorAfter != healthFactorBefore) {
             assertGte(healthFactorAfter, 1e18, "514");
         }
+
+        lastLiquidityIndexMP[address(minipool)][address(asset)] =
+            minipool.getReserveData(address(asset)).liquidityIndex;
+        lastVariableBorrowIndexMP[address(minipool)][address(asset)] =
+            minipool.getReserveData(address(asset)).variableBorrowIndex;
     }
 
     struct LocalVars_RandFlashloanMP {
@@ -442,56 +467,65 @@ contract MiniPoolProp is PropertiesBase {
         }
     }
 
-    // /// @custom:invariant 517 - The `liquidityIndex` should monotonically increase when there's total debt.
-    // /// @custom:invariant 518 - The `variableBorrowIndex` should monotonically increase when there's total debt.
-    // function indexIntegrityMP() public {
-    //     for (uint256 j = 0; j < totalNbMinipool; j++) {
-    //         MiniPool minipool = miniPools[j];
-    //         for (uint256 i = 0; i < totalNbTokens * 2; i++) {
-    //             address asset = allTokens(i);
+    /// @custom:invariant 517 - The `liquidityIndex` should monotonically increase when there is collateral.
+    /// @custom:invariant 518 - The `variableBorrowIndex` should monotonically increase when there is debt.
+    function indexIntegrityMP() public {
+        for (uint256 j = 0; j < totalNbMinipool; j++) {
+            MiniPool minipool = miniPools[j];
+            ATokenERC6909 aToken6909 = aTokens6909[j];
 
-    //             uint256 currentLiquidityIndex = minipool.getReserveData(asset).liquidityIndex;
-    //             uint256 currentVariableBorrowIndex =
-    //                 minipool.getReserveData(asset).variableBorrowIndex;
+            for (uint256 i = 0; i < totalNbTokens * 2; i++) {
+                address asset = allTokens(i);
 
-    //             if (hasDebtTotal()) {
-    //                 assertGte(
-    //                     currentLiquidityIndex, lastLiquidityIndexMP[address(minipool)][asset], "517"
-    //                 );
-    //                 assertGte(
-    //                     currentVariableBorrowIndex,
-    //                     lastVariableBorrowIndexMP[address(minipool)][asset],
-    //                     "518"
-    //                 );
-    //             } else {
-    //                 assertEq(
-    //                     currentLiquidityIndex, lastLiquidityIndexMP[address(minipool)][asset], "517"
-    //                 );
-    //                 assertEq(
-    //                     currentVariableBorrowIndex,
-    //                     lastVariableBorrowIndexMP[address(minipool)][asset],
-    //                     "518"
-    //                 );
-    //             }
-    //             lastLiquidityIndexMP[address(minipool)][asset] = currentLiquidityIndex;
-    //             lastVariableBorrowIndexMP[address(minipool)][asset] = currentVariableBorrowIndex;
-    //         }
-    //     }
-    // }
+                uint256 currentLiquidityIndex = minipool.getReserveData(asset).liquidityIndex;
+                uint256 currentVariableBorrowIndex =
+                    minipool.getReserveData(asset).variableBorrowIndex;
 
-    // /// @custom:invariant 519 - A user with debt should have at least an AToken6909 balance `setUsingAsCollateral`.
-    // function userDebtIntegrityMP() public {
-    //     for (uint256 j = 0; j < totalNbMinipool; j++) {
-    //         for (uint256 i = 0; i < users.length; i++) {
-    //             User user = users[i];
-    //             if (hasDebtTokens6909(user, j)) {
-    //                 assertWithMsg(hasATokens6909Strict(user, j), "519");
-    //             }
-    //         }
-    //     }
-    // }
+                (uint256 aTokenID, uint256 debtTokenID,) = aToken6909.getIdForUnderlying(asset);
 
-    /// @custom:invariant 522 - Integrity of Deposit Cap - aToken supply should never exceed the cap.
+                if (hasCollateralTokens6909(j, aTokenID)) {
+                    assertGte(
+                        currentLiquidityIndex, lastLiquidityIndexMP[address(minipool)][asset], "517"
+                    );
+                } else {
+                    assertEq(
+                        currentLiquidityIndex, lastLiquidityIndexMP[address(minipool)][asset], "517"
+                    );
+                }
+
+                if (hasDebtTokens6909(j, debtTokenID)) {
+                    assertGte(
+                        currentVariableBorrowIndex,
+                        lastVariableBorrowIndexMP[address(minipool)][asset],
+                        "518"
+                    );
+                } else {
+                    assertEq(
+                        currentVariableBorrowIndex,
+                        lastVariableBorrowIndexMP[address(minipool)][asset],
+                        "518"
+                    );
+                }
+
+                lastLiquidityIndexMP[address(minipool)][asset] = currentLiquidityIndex;
+                lastVariableBorrowIndexMP[address(minipool)][asset] = currentVariableBorrowIndex;
+            }
+        }
+    }
+
+    /// @custom:invariant 519 - A user with debt should have at least an AToken6909 balance `setUsingAsCollateral`.
+    function userDebtIntegrityMP() public {
+        for (uint256 j = 0; j < totalNbMinipool; j++) {
+            for (uint256 i = 0; i < users.length; i++) {
+                User user = users[i];
+                if (hasDebtTokens6909(user, j)) {
+                    assertWithMsg(hasATokens6909Strict(user, j), "519");
+                }
+            }
+        }
+    }
+
+    /// @custom:invariant 520 - Integrity of Deposit Cap - aToken supply should never exceed the cap.
     function integrityOfDepositCapMP() public {
         for (uint256 j = 0; j < miniPools.length; j++) {
             MiniPool minipool = miniPools[j];
@@ -512,42 +546,42 @@ contract MiniPoolProp is PropertiesBase {
                                 minipool.getReserveNormalizedIncome(asset),
                                 depositCap * (10 ** decimals)
                             ),
-                        "522"
+                        "520"
                     );
                 }
             }
         }
     }
 
-    // /// @custom:invariant 523 - `UserConfigurationMap` integrity: If a user has a given aToken then `isUsingAsCollateralOrBorrowing` and `isUsingAsCollateral` should return true.
-    // function userConfigurationMapIntegrityLiquidityMP() public {
-    //     for (uint256 j = 0; j < miniPools.length; j++) {
-    //         MiniPool minipool = miniPools[j];
-    //         ATokenERC6909 aToken6909 = aTokens6909[j];
+    /// @custom:invariant 521 - `UserConfigurationMap` integrity: If a user has a given aToken then `isUsingAsCollateralOrBorrowing` and `isUsingAsCollateral` should return true.
+    function userConfigurationMapIntegrityLiquidityMP() public {
+        for (uint256 j = 0; j < miniPools.length; j++) {
+            MiniPool minipool = miniPools[j];
+            ATokenERC6909 aToken6909 = aTokens6909[j];
 
-    //         for (uint256 i = 0; i < users.length; i++) {
-    //             User user = users[i];
-    //             for (uint256 k = 0; k < totalNbTokens * 2; k++) {
-    //                 (uint256 aTokenId,,) = aToken6909.getIdForUnderlying(address(allTokens(k)));
-    //                 DataTypes.UserConfigurationMap memory userConfig =
-    //                     minipool.getUserConfiguration(address(user));
-    //                 if (
-    //                     aToken6909.balanceOf(address(user), aTokenId) != 0
-    //                         && !isUseReserveAsCollateralDeactivatedMP[j][address(user)][address(
-    //                             allTokens(k)
-    //                         )]
-    //                 ) {
-    //                     assertWithMsg(
-    //                         UserConfiguration.isUsingAsCollateralOrBorrowing(userConfig, k), "523"
-    //                     );
-    //                     assertWithMsg(UserConfiguration.isUsingAsCollateral(userConfig, k), "523");
-    //                 }
-    //             }
-    //         }
-    //     }
-    // }
+            for (uint256 i = 0; i < users.length; i++) {
+                User user = users[i];
+                for (uint256 k = 0; k < totalNbTokens * 2; k++) {
+                    (uint256 aTokenId,,) = aToken6909.getIdForUnderlying(address(allTokens(k)));
+                    DataTypes.UserConfigurationMap memory userConfig =
+                        minipool.getUserConfiguration(address(user));
+                    if (
+                        aToken6909.balanceOf(address(user), aTokenId) != 0
+                            && !isUseReserveAsCollateralDeactivatedMP[j][address(user)][address(
+                                allTokens(k)
+                            )]
+                    ) {
+                        assertWithMsg(
+                            UserConfiguration.isUsingAsCollateralOrBorrowing(userConfig, k), "521"
+                        );
+                        assertWithMsg(UserConfiguration.isUsingAsCollateral(userConfig, k), "521");
+                    }
+                }
+            }
+        }
+    }
 
-    /// @custom:invariant 524 - `UserConfigurationMap` integrity: If a user has a given debtToken then `isUsingAsCollateralOrBorrowing`, `isBorrowing` and `isBorrowingAny` should return true.
+    /// @custom:invariant 522 - `UserConfigurationMap` integrity: If a user has a given debtToken then `isUsingAsCollateralOrBorrowing`, `isBorrowing` and `isBorrowingAny` should return true.
     function userConfigurationMapIntegrityDebtMP() public {
         for (uint256 j = 0; j < miniPools.length; j++) {
             MiniPool minipool = miniPools[j];
@@ -563,18 +597,18 @@ contract MiniPoolProp is PropertiesBase {
 
                     if (aToken6909.balanceOf(address(user), debtTokenId) != 0) {
                         assertWithMsg(
-                            UserConfiguration.isUsingAsCollateralOrBorrowing(userConfig, k), "524"
+                            UserConfiguration.isUsingAsCollateralOrBorrowing(userConfig, k), "522"
                         );
-                        assertWithMsg(UserConfiguration.isBorrowing(userConfig, k), "524");
-                        assertWithMsg(UserConfiguration.isBorrowingAny(userConfig), "524");
+                        assertWithMsg(UserConfiguration.isBorrowing(userConfig, k), "522");
+                        assertWithMsg(UserConfiguration.isBorrowingAny(userConfig), "522");
                     }
                 }
             }
         }
     }
 
-    /// @custom:invariant 525 - If a minipool is flow borrowing, for a given reserve, the Lendingpool liquidity interest rate remain lower than the minipool debt interest rate.
-    /// @custom:invariant 526 - The aToken remainder of each assets with flow borrowing activated should remain greater than ERROR_REMAINDER_MARGIN.
+    /// @custom:invariant 523 - If a minipool is flow borrowing, for a given reserve, the Lendingpool liquidity interest rate remain lower than the minipool debt interest rate.
+    /// @custom:invariant 524 - The aToken remainder of each assets with flow borrowing activated should remain greater than ERROR_REMAINDER_MARGIN.
     function flowBorrowingIntegrityMP() public {
         for (uint256 j = 0; j < miniPools.length; j++) {
             MockMiniPool minipool = MockMiniPool(address(miniPools[j]));
@@ -589,7 +623,7 @@ contract MiniPoolProp is PropertiesBase {
                     uint256 minipoolRate = minipool.getDebtInterestRate(asset);
                     uint256 lendingPoolRate = pool.getLiquidityInterestRate(asset, true);
 
-                    assertLte(lendingPoolRate, minipoolRate, "525");
+                    assertLte(lendingPoolRate, minipoolRate, "523");
                 }
 
                 ATokenERC6909 aToken6909 = aTokens6909[j];
@@ -602,10 +636,32 @@ contract MiniPoolProp is PropertiesBase {
                 assertGte(
                     minipoolRemainder,
                     lastRemainder < minRemainder ? lastRemainder : minRemainder,
-                    "526"
+                    "524"
                 );
             }
         }
     }
+
+    /// @custom:invariant 525 - If a minipool is flow borrowing then its address must be included in `LendingPool._minipoolFlowBorrowing`.
+    /// @custom:invariant 526 - If a minipool is not flow borrowing then its address must not be included in `LendingPool._minipoolFlowBorrowing`.
+    function checkMinipoolFlowBorrowingMP() public {
+        for (uint256 j = 0; j < miniPools.length; j++) {
+            MockMiniPool minipool = MockMiniPool(address(miniPools[j]));
+
+            for (uint256 k = 0; k < totalNbTokens; k++) {
+                address asset = address(assets[k]);
+                uint256 currentFlow = IFlowLimiter(miniPoolProvider.getFlowLimiter()).currentFlow(
+                    asset, address(minipool)
+                );
+
+                if (currentFlow != 0) {
+                    assertWithMsg(pool.isMinipoolFlowBorrowing(address(minipool)), "525");
+                } else {
+                    assertWithMsg(!pool.isMinipoolFlowBorrowing(address(minipool)), "526");
+                }
+            }
+        }
+    }
+
     // ---------------------- Helpers ----------------------
 }

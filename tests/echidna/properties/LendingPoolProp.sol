@@ -9,6 +9,7 @@ import {MathUtils} from "../../../contracts/protocol/libraries/math/MathUtils.so
 import {WadRayMath} from "../../../contracts/protocol/libraries/math/WadRayMath.sol";
 import {UserConfiguration} from
     "../../../contracts/protocol/libraries/configuration/UserConfiguration.sol";
+import {console} from "forge-std/console.sol";
 
 contract LendingPoolProp is PropertiesBase {
     constructor() {}
@@ -49,16 +50,20 @@ contract LendingPoolProp is PropertiesBase {
                 pool.deposit.selector, address(asset), true, randAmt, address(onBehalfOf)
             )
         );
-        // assertWithMsg(success, "200");
+        assertWithMsg(success, "200");
 
         uint256 aTokenBalanceAfter = aToken.balanceOf(address(onBehalfOf));
         uint256 assetBalanceAfter = asset.balanceOf(address(user));
         assertEqApprox(aTokenBalanceAfter - aTokenBalanceBefore, randAmt, 1, "201");
         assertEq(assetBalanceBefore - assetBalanceAfter, randAmt, "202");
+
+        lastLiquidityIndexLP[address(asset)] =
+            pool.getReserveData(address(asset), true).liquidityIndex;
+        lastVariableBorrowIndexLP[address(asset)] =
+            pool.getReserveData(address(asset), true).variableBorrowIndex;
     }
 
-    /// @custom:invariant 230 - `withdraw()` must not result in a health factor of less than 1.
-    /// @custom:invariant 227 - Rehypothecation: if the external rehypothecation vault is liquid, users should always be able to withdraw if all other withdrawal conditions are met.
+    /// @custom:invariant 224 - `withdraw()` must not result in a health factor of less than 1.
     /// @custom:invariant 203 - `withdraw()` must decrease the user aToken balance by `amount`.
     /// @custom:invariant 204 - `withdraw()` must increase the user asset balance by `amount`.
     function randWithdrawLP(
@@ -84,6 +89,8 @@ contract LendingPoolProp is PropertiesBase {
 
         uint256 randAmt = clampBetween(seedAmt, 0, aTokenBalanceBefore);
 
+        (,,,,, uint256 healthFactorBefore) = pool.getUserAccountData(address(to));
+
         (bool success,) = user.proxy(
             address(pool),
             abi.encodeWithSelector(
@@ -91,21 +98,23 @@ contract LendingPoolProp is PropertiesBase {
             )
         );
 
-        (,,,,, uint256 healthFactorAfter) = pool.getUserAccountData(address(to));
-        // if (healthFactorAfter >= 1e18){
-        //     assertWithMsg(success, "227");
-        // }
-
-        require(success);
+        (,,,,, uint256 healthFactorAfter) = pool.getUserAccountData(address(user));
 
         if (healthFactorAfter < 1e18) {
-            assertWithMsg(!success, "230");
+            assertWithMsg(!success, "224");
         }
+
+        require(success);
 
         uint256 aTokenBalanceAfter = aToken.balanceOf(address(user));
         uint256 assetBalanceAfter = asset.balanceOf(address(to));
         assertEqApprox(aTokenBalanceBefore - aTokenBalanceAfter, randAmt, 1, "203");
         assertEq(assetBalanceAfter - assetBalanceBefore, randAmt, "204");
+
+        lastLiquidityIndexLP[address(asset)] =
+            pool.getReserveData(address(asset), true).liquidityIndex;
+        lastVariableBorrowIndexLP[address(asset)] =
+            pool.getReserveData(address(asset), true).variableBorrowIndex;
     }
 
     /// @custom:invariant 205 - A user must not be able to `borrow()` if he doesn't own aTokens.
@@ -173,7 +182,7 @@ contract LendingPoolProp is PropertiesBase {
 
         uint256 vTokenBalanceAfter = debtToken.balanceOf(address(onBehalfOf));
 
-        // assertEqApprox(vTokenBalanceAfter - vTokenBalanceBefore, randAmt, 1, "208");
+        assertEqApprox(vTokenBalanceAfter - vTokenBalanceBefore, randAmt, 1, "208");
 
         if (address(user) != address(onBehalfOf)) {
             assertEq(
@@ -182,6 +191,11 @@ contract LendingPoolProp is PropertiesBase {
                 "209"
             );
         }
+
+        lastLiquidityIndexLP[address(asset)] =
+            pool.getReserveData(address(asset), true).liquidityIndex;
+        lastVariableBorrowIndexLP[address(asset)] =
+            pool.getReserveData(address(asset), true).variableBorrowIndex;
     }
 
     /// @custom:invariant 210 - `repay()` must decrease the onBehalfOf debtToken balance by `amount`.
@@ -228,10 +242,15 @@ contract LendingPoolProp is PropertiesBase {
         assertEqApprox(vTokenBalanceBefore - vTokenBalanceAfter, randAmt, 1, "210");
         assertEqApprox(assetBalanceBefore - assetBalanceAfter, randAmt, 1, "211");
         assertGte(healthFactorAfter, healthFactorBefore, "212");
+
+        lastLiquidityIndexLP[address(asset)] =
+            pool.getReserveData(address(asset), true).liquidityIndex;
+        lastVariableBorrowIndexLP[address(asset)] =
+            pool.getReserveData(address(asset), true).variableBorrowIndex;
     }
 
-    /// @custom:invariant 228 - Rehypothecation: farming percentage must be respected (+/- the drift) after a rebalance occured.
-    /// @custom:invariant 229 - Rehypothecation: The profit handler address must see its balance increase after reaching the claiming threshold.
+    /// @custom:invariant 222 - Rehypothecation: farming percentage must be respected (+/- the drift) after a rebalance occured.
+    /// @custom:invariant 223 - Rehypothecation: The profit handler address must see its balance increase after reaching the claiming threshold.
     function randRehypothecationRebalanceLP(LocalVars_UPTL memory vul, uint8 seedAToken) public {
         randUpdatePriceAndTryLiquidateLP(vul);
 
@@ -251,7 +270,7 @@ contract LendingPoolProp is PropertiesBase {
                 aToken._farmingBal(),
                 aToken._underlyingAmount() * aToken._farmingPct() / BPS,
                 aToken._farmingPctDrift() * 15000 / BPS, // +10% margin
-                "228"
+                "222"
             );
 
             uint256 vaultBalance = ERC20(address(aToken._vault())).balanceOf(address(aToken));
@@ -260,7 +279,7 @@ contract LendingPoolProp is PropertiesBase {
                 assertGt(
                     balanceProfitHandlerBefore,
                     balanceProfitHandlerAfter - balanceProfitHandlerBefore,
-                    "229"
+                    "223"
                 );
             }
         }
@@ -380,7 +399,7 @@ contract LendingPoolProp is PropertiesBase {
 
     // ---------------------- Invariants ----------------------
 
-    /// @custom:invariant 228 - Rehypothecation: farming percentage must be respected (+/- the drift) after a rebalance occured.
+    /// @custom:invariant 225 - Rehypothecation: farming percentage must be respected (+/- the drift) after any operation.
     function invariantRehypothecationLP() public {
         for (uint256 i = 0; i < aTokens.length; i++) {
             AToken aToken = aTokens[i];
@@ -389,7 +408,7 @@ contract LendingPoolProp is PropertiesBase {
                     aToken._farmingBal(),
                     aToken._underlyingAmount() * aToken._farmingPct() / BPS,
                     aToken._farmingPctDrift() * 15000 / BPS, // +50% margin
-                    "228"
+                    "225"
                 );
             }
         }
@@ -413,39 +432,44 @@ contract LendingPoolProp is PropertiesBase {
         assertGte(valueColl, valueDebt, "215");
     }
 
-    // /// @custom:invariant 217 - The `liquidityIndex` should monotonically increase when there's total debt.
-    // /// @custom:invariant 218 - The `variableBorrowIndex` should monotonically increase when there's total debt.
-    // function indexIntegrityLP() public {
-    //     for (uint256 i = 0; i < assets.length; i++) {
-    //         address asset = address(assets[i]);
+    /// @custom:invariant 216 - The `liquidityIndex` should monotonically increase when there is collateral.
+    /// @custom:invariant 217 - The `variableBorrowIndex` should monotonically increase when there is debt.
+    function indexIntegrityLP() public {
+        for (uint256 i = 0; i < assets.length; i++) {
+            address asset = address(assets[i]);
 
-    //         uint256 currentLiquidityIndex = pool.getReserveData(asset, true).liquidityIndex;
-    //         uint256 currentVariableBorrowIndex =
-    //             pool.getReserveData(asset, true).variableBorrowIndex;
+            uint256 currentLiquidityIndex = pool.getReserveData(asset, true).liquidityIndex;
+            uint256 currentVariableBorrowIndex =
+                pool.getReserveData(asset, true).variableBorrowIndex;
 
-    //         if (hasDebtTotal()) {
-    //             assertGte(currentLiquidityIndex, lastLiquidityIndexLP[asset], "217");
-    //             assertGte(currentVariableBorrowIndex, lastVariableBorrowIndexLP[asset], "218");
-    //         } else {
-    //             assertEq(currentLiquidityIndex, lastLiquidityIndexLP[asset], "217");
-    //             assertEq(currentVariableBorrowIndex, lastVariableBorrowIndexLP[asset], "218");
-    //         }
-    //         lastLiquidityIndexLP[asset] = currentLiquidityIndex;
-    //         lastVariableBorrowIndexLP[asset] = currentVariableBorrowIndex;
-    //     }
-    // }
+            if (hasAToken(address(aTokens[i]))) {
+                assertGte(currentLiquidityIndex, lastLiquidityIndexLP[asset], "216");
+            } else {
+                assertEq(currentLiquidityIndex, lastLiquidityIndexLP[asset], "216");
+            }
 
-    /// @custom:invariant 219 - A user with debt should have at least an aToken balance `setUsingAsCollateral`.
+            if (hasDebt(address(debtTokens[i]))) {
+                assertGte(currentVariableBorrowIndex, lastVariableBorrowIndexLP[asset], "217");
+            } else {
+                assertEq(currentVariableBorrowIndex, lastVariableBorrowIndexLP[asset], "217");
+            }
+
+            lastLiquidityIndexLP[asset] = currentLiquidityIndex;
+            lastVariableBorrowIndexLP[asset] = currentVariableBorrowIndex;
+        }
+    }
+
+    /// @custom:invariant 218 - A user with debt should have at least an aToken balance `setUsingAsCollateral`.
     function userDebtIntegrityLP() public {
         for (uint256 i = 0; i < users.length; i++) {
             User user = users[i];
             if (hasDebt(user)) {
-                assertWithMsg(hasATokensStrict(user), "219");
+                assertWithMsg(hasATokensStrict(user), "218");
             }
         }
     }
 
-    /// @custom:invariant 222 - Integrity of Deposit Cap - aToken supply should never exceed the cap.
+    /// @custom:invariant 219 - Integrity of Deposit Cap - aToken supply should never exceed the cap.
     function integrityOfDepositCapLP() public {
         for (uint256 j = 0; j < aTokens.length; j++) {
             IERC20 aToken = aTokens[j];
@@ -463,13 +487,13 @@ contract LendingPoolProp is PropertiesBase {
                             pool.getReserveNormalizedIncome(address(asset), true),
                             depositCap * (10 ** decimals)
                         ),
-                    "222"
+                    "219"
                 );
             }
         }
     }
 
-    /// @custom:invariant 223 - `UserConfigurationMap` integrity: If a user has a given aToken then `isUsingAsCollateralOrBorrowing` and `isUsingAsCollateral` should return true.
+    /// @custom:invariant 220 - `UserConfigurationMap` integrity: If a user has a given aToken then `isUsingAsCollateralOrBorrowing` and `isUsingAsCollateral` should return true.
     function userConfigurationMapIntegrityLiquidityLP() public {
         for (uint256 i = 0; i < users.length; i++) {
             User user = users[i];
@@ -482,15 +506,15 @@ contract LendingPoolProp is PropertiesBase {
                         && !isUseReserveAsCollateralDeactivatedLP[address(user)][address(assets[j])]
                 ) {
                     assertWithMsg(
-                        UserConfiguration.isUsingAsCollateralOrBorrowing(userConfig, j), "223"
+                        UserConfiguration.isUsingAsCollateralOrBorrowing(userConfig, j), "220"
                     );
-                    assertWithMsg(UserConfiguration.isUsingAsCollateral(userConfig, j), "223");
+                    assertWithMsg(UserConfiguration.isUsingAsCollateral(userConfig, j), "220");
                 }
             }
         }
     }
 
-    /// @custom:invariant 224 - `UserConfigurationMap` integrity: If a user has a given debtToken then `isUsingAsCollateralOrBorrowing`, `isBorrowing` and `isBorrowingAny` should return true.
+    /// @custom:invariant 221 - `UserConfigurationMap` integrity: If a user has a given debtToken then `isUsingAsCollateralOrBorrowing`, `isBorrowing` and `isBorrowingAny` should return true.
     function userConfigurationMapIntegrityDebtLP() public {
         for (uint256 i = 0; i < users.length; i++) {
             User user = users[i];
@@ -499,24 +523,14 @@ contract LendingPoolProp is PropertiesBase {
                     pool.getUserConfiguration(address(user));
                 if (debtTokens[j].balanceOf(address(user)) != 0) {
                     assertWithMsg(
-                        UserConfiguration.isUsingAsCollateralOrBorrowing(userConfig, j), "224"
+                        UserConfiguration.isUsingAsCollateralOrBorrowing(userConfig, j), "221"
                     );
-                    assertWithMsg(UserConfiguration.isBorrowing(userConfig, j), "224");
-                    assertWithMsg(UserConfiguration.isBorrowingAny(userConfig), "224");
+                    assertWithMsg(UserConfiguration.isBorrowing(userConfig, j), "221");
+                    assertWithMsg(UserConfiguration.isBorrowingAny(userConfig), "221");
                 }
             }
         }
     }
-
-    // function reserveConfigurationMapIntegrityLP() public {
-    //     for (uint256 i = 0; i < assets.length; i++) {
-    //         DataTypes.ReserveData memory reserve = pool.getReserveData(address(assets[i]), true);
-
-    //         (bool isActive, bool isFrozen,,,,) = reserve.configuration.getFlags();
-
-    //         if (isActive && !isFrozen) {
-    //     }
-    // }
 
     // ---------------------- Helpers ----------------------
 }

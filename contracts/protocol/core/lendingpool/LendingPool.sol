@@ -935,4 +935,13 @@ contract LendingPool is
     function getMinipoolFlowBorrowing(address asset) external view returns (address[] memory) {
         return _assetToMinipoolFlowBorrowing[asset].values();
     }
+
+    /**
+     * @notice Checks if a mini pool is currently flow borrowing.
+     * @param minipool The address of the mini pool to check.
+     * @return True if the mini pool is flow borrowing, false otherwise.
+     */
+    function isMinipoolFlowBorrowing(address minipool) external view returns (bool) {
+        return _minipoolFlowBorrowing.contains(minipool);
+    }
 }

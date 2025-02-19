@@ -215,7 +215,7 @@ library MiniPoolValidationLogic {
             (vars.userBorrowBalanceETH + validateParams.amountInETH).percentDivUp(vars.currentLtv); //LTV is calculated in percentage
 
         require(
-            vars.amountOfCollateralNeededETH <= vars.userCollateralBalanceETH,
+            vars.amountOfCollateralNeededETH < vars.userCollateralBalanceETH,
             Errors.VL_COLLATERAL_CANNOT_COVER_NEW_BORROW
         );
     }

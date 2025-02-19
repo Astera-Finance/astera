@@ -486,8 +486,8 @@ contract PropertiesBase is PropertiesAsserts, MarketParams {
         }
 
         /// update liquidity index
-        for (uint256 i = 0; i < assets.length; i++) {
-            address asset = address(assets[i]);
+        for (uint256 i = 0; i < assets.length * 2; i++) {
+            address asset = allTokens(i);
 
             lastLiquidityIndexLP[asset] = pool.getReserveData(asset, true).liquidityIndex;
             lastVariableBorrowIndexLP[asset] = pool.getReserveData(asset, true).variableBorrowIndex;
@@ -559,6 +559,14 @@ contract PropertiesBase is PropertiesAsserts, MarketParams {
                 || flowLimiter.getFlowLimit(asset, miniPool) == flowLimiter.currentFlow(asset, miniPool),
             "106"
         );
+
+        lastLiquidityIndexLP[asset] = pool.getReserveData(asset, true).liquidityIndex;
+        lastVariableBorrowIndexLP[asset] = pool.getReserveData(asset, true).variableBorrowIndex;
+
+        lastLiquidityIndexMP[address(miniPool)][asset] =
+            IMiniPool(miniPool).getReserveData(asset).liquidityIndex;
+        lastVariableBorrowIndexMP[address(miniPool)][asset] =
+            IMiniPool(miniPool).getReserveData(asset).variableBorrowIndex;
     }
 
     struct LocalVars_UPTL {
@@ -731,6 +739,16 @@ contract PropertiesBase is PropertiesAsserts, MarketParams {
                 if (randReceiveAToken || address(v.collAsset) != address(v.debtAsset)) {
                     assertGt(v.liquidatorDebtAssetBefore, v.liquidatorDebtAssetAfter, "105");
                 }
+
+                lastLiquidityIndexLP[address(v.collAsset)] =
+                    pool.getReserveData(address(v.collAsset), true).liquidityIndex;
+                lastVariableBorrowIndexLP[address(v.collAsset)] =
+                    pool.getReserveData(address(v.collAsset), true).variableBorrowIndex;
+
+                lastLiquidityIndexLP[address(v.debtAsset)] =
+                    pool.getReserveData(address(v.debtAsset), true).liquidityIndex;
+                lastVariableBorrowIndexLP[address(v.debtAsset)] =
+                    pool.getReserveData(address(v.debtAsset), true).variableBorrowIndex;
             }
         }
     }
@@ -830,6 +848,26 @@ contract PropertiesBase is PropertiesAsserts, MarketParams {
                     if (randReceiveAToken || address(v.collAsset) != address(v.debtAsset)) {
                         assertGt(v.liquidatorDebtAssetBefore, v.liquidatorDebtAssetAfter, "105");
                     }
+
+                    lastLiquidityIndexLP[address(v.collAsset)] =
+                        pool.getReserveData(address(v.collAsset), true).liquidityIndex;
+                    lastVariableBorrowIndexLP[address(v.collAsset)] =
+                        pool.getReserveData(address(v.collAsset), true).variableBorrowIndex;
+
+                    lastLiquidityIndexLP[address(v.debtAsset)] =
+                        pool.getReserveData(address(v.debtAsset), true).liquidityIndex;
+                    lastVariableBorrowIndexLP[address(v.debtAsset)] =
+                        pool.getReserveData(address(v.debtAsset), true).variableBorrowIndex;
+
+                    lastLiquidityIndexMP[address(pool_)][address(v.collAsset)] =
+                        pool_.getReserveData(address(v.collAsset)).liquidityIndex;
+                    lastVariableBorrowIndexMP[address(pool_)][address(v.collAsset)] =
+                        pool_.getReserveData(address(v.collAsset)).variableBorrowIndex;
+
+                    lastLiquidityIndexMP[address(pool_)][address(v.debtAsset)] =
+                        pool_.getReserveData(address(v.debtAsset)).liquidityIndex;
+                    lastVariableBorrowIndexMP[address(pool_)][address(v.debtAsset)] =
+                        pool_.getReserveData(address(v.debtAsset)).variableBorrowIndex;
                 }
             }
         }
@@ -870,6 +908,20 @@ contract PropertiesBase is PropertiesAsserts, MarketParams {
         for (uint256 i = 0; i < _m.length; i++) {
             ret[i] = address(_m[i]);
         }
+    }
+
+    function hasAToken(address _aToken) internal view returns (bool) {
+        for (uint256 i = 0; i < users.length; i++) {
+            User user = users[i];
+            if (IAToken(_aToken).balanceOf(address(user)) != 0) {
+                // && UserConfiguration.isUsingAsCollateral(
+                //     pool.getUserConfiguration(address(user)), i
+                // )
+
+                return true;
+            }
+        }
+        return false;
     }
 
     function hasATokens(User user) internal view returns (bool) {
@@ -922,9 +974,47 @@ contract PropertiesBase is PropertiesAsserts, MarketParams {
         return false;
     }
 
+    function hasDebt(address _debtToken) internal view returns (bool) {
+        for (uint256 i = 0; i < users.length; i++) {
+            User user = users[i];
+            if (ERC20(_debtToken).balanceOf(address(user)) != 0) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     function hasDebt(User user) internal view returns (bool) {
         for (uint256 i = 0; i < debtTokens.length; i++) {
             if (debtTokens[i].balanceOf(address(user)) != 0) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    function hasCollateralTokens6909(uint256 minipoolId, uint256 aTokenID)
+        internal
+        view
+        returns (bool)
+    {
+        ATokenERC6909 aToken6909 = aTokens6909[minipoolId];
+        for (uint256 i = 0; i < users.length; i++) {
+            if (aToken6909.balanceOf(address(users[i]), aTokenID) != 0) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    function hasDebtTokens6909(uint256 minipoolId, uint256 debtTokenID)
+        internal
+        view
+        returns (bool)
+    {
+        ATokenERC6909 aToken6909 = aTokens6909[minipoolId];
+        for (uint256 i = 0; i < users.length; i++) {
+            if (aToken6909.balanceOf(address(users[i]), debtTokenID) != 0) {
                 return true;
             }
         }

@@ -242,7 +242,7 @@ library MiniPoolLiquidationLogic {
 
         // If the collateral being liquidated is equal to the user balance,
         // we set the currency as not being used as collateral anymore.
-        if (vars.maxCollateralToLiquidate == vars.userCollateralBalance) {
+        if (vars.atoken6909.balanceOf(params.user, vars.aTokenID) == 0) {
             userConfig.setUsingAsCollateral(collateralReserve.id, false);
             emit ReserveUsedAsCollateralDisabled(params.collateralAsset, params.user);
         }

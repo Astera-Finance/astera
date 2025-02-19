@@ -1,7 +1,7 @@
 seqLen: 300
-testLimit: 2000000
+testLimit: 2500000
 
-workers: 10
+workers: 20
 coverage: true
 corpusDir: "echidna-corpus"
 testMode: assertion
