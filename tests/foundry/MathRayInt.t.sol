@@ -6,6 +6,7 @@ import "forge-std/console.sol";
 import "./Common.sol";
 import "contracts/protocol/libraries/helpers/Errors.sol";
 import {WadRayMath} from "contracts/protocol/libraries/math/WadRayMath.sol";
+import "forge-std/console.sol";
 
 contract RayMathTest is Common {
     uint256 internal constant RAY = 1e27;
@@ -35,7 +36,7 @@ contract RayMathTest is Common {
         }
     }
 
-    function testFailRayMulInt(int256 a, int256 b, bool signA, bool signB) public pure {
+    function test_FailRayMulInt(int256 a, int256 b, bool signA, bool signB) public pure {
         // 2.4061596916800453e38 = sqrt(type(int256).max)
         int256 min = int256(2.4161596916800453e38 - halfRAYint);
         a = bound(a, min, type(int256).max);

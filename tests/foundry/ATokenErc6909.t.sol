@@ -897,7 +897,7 @@ contract ATokenErc6909Test is Common {
         assertEq(initialTotalSupply, aErc6909Token.scaledTotalSupply(id));
     }
 
-    function testFailErc6909Initialize() public {
+    function test_RevertErc6909Initialize() public {
         miniPoolContracts.miniPoolAddressesProvider.deployMiniPool(
             address(miniPoolContracts.miniPoolImpl),
             address(miniPoolContracts.aToken6909Impl),
@@ -906,10 +906,32 @@ contract ATokenErc6909Test is Common {
         address[] memory reserves = new address[](1);
         reserves[0] = tokens[0];
 
-        // vm.expectRevert(bytes(Errors.LP_RESERVE_ALREADY_ADDED));
-        miniPool =
-            fixture_configureMiniPoolReserves(reserves, configAddresses, miniPoolContracts, 0);
-        vm.label(miniPool, "MiniPool");
+        IMiniPoolConfigurator.InitReserveInput[] memory initInputParams =
+            new IMiniPoolConfigurator.InitReserveInput[](reserves.length);
+        console.log("Getting Mini pool: ");
+        address mp = miniPoolContracts.miniPoolAddressesProvider.getMiniPool(0);
+
+        console.log("Length:", reserves.length);
+        for (uint8 idx = 0; idx < reserves.length; idx++) {
+            string memory tmpSymbol = ERC20(reserves[idx]).symbol();
+            string memory tmpName = ERC20(reserves[idx]).name();
+
+            address interestStrategy = isStableStrategy[idx % tokens.length] != false
+                ? configAddresses.stableStrategy
+                : configAddresses.volatileStrategy;
+            // console.log("[common]interestStartegy: ", interestStrategy);
+            initInputParams[idx] = IMiniPoolConfigurator.InitReserveInput({
+                underlyingAssetDecimals: ERC20(reserves[idx]).decimals(),
+                interestRateStrategyAddress: interestStrategy,
+                underlyingAsset: reserves[idx],
+                underlyingAssetName: tmpName,
+                underlyingAssetSymbol: tmpSymbol
+            });
+        }
+        vm.prank(address(miniPoolContracts.miniPoolAddressesProvider.getMainPoolAdmin()));
+        vm.expectRevert(bytes(Errors.RL_RESERVE_ALREADY_INITIALIZED));
+        miniPoolContracts.miniPoolConfigurator.batchInitReserve(initInputParams, IMiniPool(mp));
+        vm.label(mp, "MiniPool");
     }
 
     function testNextIdForUnderlying() public {
