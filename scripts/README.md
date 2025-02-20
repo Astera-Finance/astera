@@ -110,7 +110,7 @@ The deployment process involves configuration files `./inputs/<Nr>_<InputJsonNam
                 "liquidationThreshold": 7500,
                 "miniPoolOwnerFee": 0,
                 "params": "0x10",
-                "rates": 0.03e27,
+                
                 "reserveFactor": 1500,
                 "reserveType": true,
                 "symbol": "WETH",
@@ -192,7 +192,7 @@ The deployment process involves configuration files `./inputs/<Nr>_<InputJsonNam
                 "liquidationThreshold": 7500,
                 "miniPoolOwnerFee": 150,
                 "params": "0x10",
-                "rates": 0.03e27,
+                
                 "reserveFactor": 1500,
                 "reserveType": true,
                 "symbol": "WETH",
@@ -207,7 +207,7 @@ The deployment process involves configuration files `./inputs/<Nr>_<InputJsonNam
                 "liquidationThreshold": 7500,
                 "miniPoolOwnerFee": 150,
                 "params": "0x10",
-                "rates": 0.03e27,
+                
                 "reserveFactor": 1500,
                 "reserveType": true,
                 "symbol": "USDC",
@@ -404,7 +404,7 @@ The deployment process involves configuration files `./inputs/<Nr>_<InputJsonNam
                 "liquidationThreshold": 7500,
                 "miniPoolOwnerFee": 0,
                 "params": "0x10",
-                "rates": 0.03e27,
+                
                 "reserveFactor": 1500,
                 "reserveType": true,
                 "symbol": "WBTC",
@@ -419,7 +419,7 @@ The deployment process involves configuration files `./inputs/<Nr>_<InputJsonNam
                 "liquidationThreshold": 7500,
                 "miniPoolOwnerFee": 0,
                 "params": "0x10",
-                "rates": 0.03e27,
+                
                 "reserveFactor": 1500,
                 "reserveType": true,
                 "symbol": "USDC",
@@ -437,7 +437,7 @@ The deployment process involves configuration files `./inputs/<Nr>_<InputJsonNam
                 "liquidationThreshold": 7500,
                 "miniPoolOwnerFee": 150,
                 "params": "0x10",
-                "rates": 0.03e27,
+                
                 "reserveFactor": 1500,
                 "reserveType": true,
                 "symbol": "aWBTC",
@@ -452,7 +452,7 @@ The deployment process involves configuration files `./inputs/<Nr>_<InputJsonNam
                 "liquidationThreshold": 7500,
                 "miniPoolOwnerFee": 150,
                 "params": "0x10",
-                "rates": 0.03e27,
+                
                 "reserveFactor": 1500,
                 "reserveType": true,
                 "symbol": "aUSDT",
@@ -518,7 +518,7 @@ The deployment process involves configuration files `./inputs/<Nr>_<InputJsonNam
                 "liquidationThreshold": 7400,
                 "miniPoolOwnerFee": 233,
                 "params": "0x10",
-                "rates": 0.03e27,
+                
                 "reserveFactor": 1500,
                 "reserveType": true,
                 "symbol": "USDC",
@@ -551,7 +551,7 @@ The deployment process involves configuration files `./inputs/<Nr>_<InputJsonNam
                 "liquidationThreshold": 7100,
                 "miniPoolOwnerFee": 233,
                 "params": "0x10",
-                "rates": 0.03e27,
+                
                 "reserveFactor": 1600,
                 "reserveType": true,
                 "symbol": "aUSDT",

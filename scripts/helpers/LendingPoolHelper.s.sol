@@ -262,19 +262,21 @@ contract LendingPoolHelper {
                 IERC20Detailed(reserveConfig.tokenAddress).approve(
                     address(_contracts.lendingPool), tokenAmount
                 );
-                _contracts.lendingPool.deposit(
-                    reserveConfig.tokenAddress,
-                    true,
-                    tokenAmount,
-                    _contracts.lendingPoolAddressesProvider.getPoolAdmin()
-                );
-                DataTypes.ReserveData memory reserveData = _contracts.lendingPool.getReserveData(
-                    reserveConfig.tokenAddress, reserveConfig.reserveType
-                );
-                require(
-                    IERC20Detailed(reserveData.aTokenAddress).totalSupply() == tokenAmount,
-                    "TotalSupply not equal to deposited amount!"
-                );
+                if (msg.sender != FOUNDRY_DEFAULT) {
+                    _contracts.lendingPool.deposit(
+                        reserveConfig.tokenAddress,
+                        true,
+                        tokenAmount,
+                        _contracts.lendingPoolAddressesProvider.getPoolAdmin()
+                    );
+                    DataTypes.ReserveData memory reserveData = _contracts.lendingPool.getReserveData(
+                        reserveConfig.tokenAddress, reserveConfig.reserveType
+                    );
+                    require(
+                        IERC20Detailed(reserveData.aTokenAddress).totalSupply() == tokenAmount,
+                        "TotalSupply not equal to deposited amount!"
+                    );
+                }
             }
 
             _contracts.lendingPoolConfigurator.enableFlashloan(

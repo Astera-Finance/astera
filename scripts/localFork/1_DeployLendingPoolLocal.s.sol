@@ -113,7 +113,7 @@ contract DeployLendingPoolLocal is Script, LendingPoolHelper, Test {
 
         // Fork Identifier
         string memory RPC = vm.envString("BASE_RPC_URL");
-        uint256 FORK_BLOCK = 21838058;
+        uint256 FORK_BLOCK = 26631073;
         uint256 fork;
         fork = vm.createSelectFork(RPC, FORK_BLOCK);
 

@@ -108,7 +108,6 @@ struct PoolReserversConfig {
     uint256 liquidationThreshold;
     uint256 miniPoolOwnerFee;
     string params;
-    uint256 rates;
     uint256 reserveFactor;
     bool reserveType;
     string symbol;
