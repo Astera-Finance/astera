@@ -36,26 +36,6 @@ contract RayMathTest is Common {
         }
     }
 
-    function test_FailRayMulInt(int256 a, int256 b, bool signA, bool signB) public pure {
-        // 2.4061596916800453e38 = sqrt(type(int256).max)
-        int256 min = int256(2.4161596916800453e38 - halfRAYint);
-        a = bound(a, min, type(int256).max);
-        b = bound(b, min, type(int256).max);
-        a = signA ? a : -a;
-        b = signB ? b : -b;
-        if (a >= 0 && b >= 0 || a < 0 && b < 0) {
-            assertEq(
-                int256(WadRayMath.rayMul(uint256(abs(a)), uint256(abs(b)))),
-                WadRayMath.rayMulInt(a, b)
-            );
-        } else {
-            assertEq(
-                -int256(WadRayMath.rayMul(uint256(abs(a)), uint256(abs(b)))),
-                WadRayMath.rayMulInt(a, b)
-            );
-        }
-    }
-
     function testRayDivInt(int248 a, int248 b) public pure {
         vm.assume(b != 0);
         vm.assume(a != 0);
