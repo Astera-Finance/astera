@@ -132,7 +132,7 @@ contract LendingPoolTest is LendingPoolFixtures {
         uint256 wbtcPrice = commonContracts.oracle.getAssetPrice(address(wbtc));
         uint256 usdcPrice = commonContracts.oracle.getAssetPrice(address(usdc));
         uint256 usdcDepositValue = usdcDepositAmount * usdcPrice / (10 ** PRICE_FEED_DECIMALS);
-        console.log(
+        console2.log(
             "usdcDepositValue %s vs \nusdcDepositAmount %s", usdcDepositValue, usdcDepositAmount
         );
         StaticData memory staticData =
@@ -141,11 +141,11 @@ contract LendingPoolTest is LendingPoolFixtures {
         uint256 wbtcMaxBorrowAmountWithUsdcCollateral;
         {
             uint256 wbtcMaxBorrowAmountRay = usdcMaxBorrowValue.rayDiv(wbtcPrice);
-            console.log("wbtcMaxBorrowAmountRay:", wbtcMaxBorrowAmountRay);
+            console2.log("wbtcMaxBorrowAmountRay:", wbtcMaxBorrowAmountRay);
             wbtcMaxBorrowAmountWithUsdcCollateral = fixture_preciseConvertWithDecimals(
                 wbtcMaxBorrowAmountRay, usdc.decimals(), wbtc.decimals()
             );
-            console.log(
+            console2.log(
                 "wbtcMaxBorrowAmountWithUsdcCollateral:", wbtcMaxBorrowAmountWithUsdcCollateral
             );
             require(
@@ -205,7 +205,7 @@ contract LendingPoolTest is LendingPoolFixtures {
                 wbtc.balanceOf(address(this)) > wbtcMaxBorrowAmountWithUsdcCollateral,
                 "Too less wbtc"
             );
-            console.log("Max to borrow: ", wbtcMaxBorrowAmountWithUsdcCollateral);
+            console2.log("Max to borrow: ", wbtcMaxBorrowAmountWithUsdcCollateral);
         }
         uint256 wbtcDepositAmount = wbtcMaxBorrowAmountWithUsdcCollateral - 1;
 

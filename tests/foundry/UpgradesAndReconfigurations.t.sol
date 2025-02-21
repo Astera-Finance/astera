@@ -17,7 +17,7 @@ import {VariableDebtTokenV2} from "tests/foundry/helpers/VariableDebtTokenV2.sol
 import {ILendingPoolConfigurator} from "contracts/interfaces/ILendingPoolConfigurator.sol";
 
 import "forge-std/StdUtils.sol";
-import "forge-std/console.sol";
+import "forge-std/console2.sol";
 // import {ILendingPool} from "contracts/interfaces/ILendingPool.sol";
 
 contract UpgradesAndReconfigurationsTest is MiniPoolFixtures {
@@ -45,7 +45,7 @@ contract UpgradesAndReconfigurationsTest is MiniPoolFixtures {
         (,, aTokens,) = deployedContracts.cod3xLendDataProvider.getAllLpTokens();
         dynamicDataBefore = new DynamicData[](aTokens.length);
         for (uint8 idx; idx < aTokens.length; idx++) {
-            console.log(
+            console2.log(
                 "%s (%s)",
                 AToken(aTokens[idx]).UNDERLYING_ASSET_ADDRESS(),
                 ERC20(AToken(aTokens[idx]).UNDERLYING_ASSET_ADDRESS()).symbol()
@@ -53,7 +53,7 @@ contract UpgradesAndReconfigurationsTest is MiniPoolFixtures {
             dynamicDataBefore[idx] = deployedContracts.cod3xLendDataProvider.getLpReserveDynamicData(
                 AToken(aTokens[idx]).UNDERLYING_ASSET_ADDRESS(), true
             );
-            console.log(
+            console2.log(
                 "availableLiquidity: %s\n  totalVariableDebt: %s\n",
                 dynamicDataBefore[idx].availableLiquidity,
                 dynamicDataBefore[idx].totalVariableDebt
@@ -67,7 +67,7 @@ contract UpgradesAndReconfigurationsTest is MiniPoolFixtures {
     ) public view {
         DynamicData[] memory dynamicDataAfter = new DynamicData[](aTokens.length);
         for (uint8 idx; idx < aTokens.length; idx++) {
-            console.log(
+            console2.log(
                 "%s (%s)",
                 AToken(aTokens[idx]).UNDERLYING_ASSET_ADDRESS(),
                 ERC20(AToken(aTokens[idx]).UNDERLYING_ASSET_ADDRESS()).symbol()
@@ -75,7 +75,7 @@ contract UpgradesAndReconfigurationsTest is MiniPoolFixtures {
             dynamicDataAfter[idx] = deployedContracts.cod3xLendDataProvider.getLpReserveDynamicData(
                 AToken(aTokens[idx]).UNDERLYING_ASSET_ADDRESS(), true
             );
-            console.log(
+            console2.log(
                 "availableLiquidity: %s\n  totalVariableDebt: %s\n",
                 dynamicDataAfter[idx].availableLiquidity,
                 dynamicDataAfter[idx].totalVariableDebt
@@ -118,10 +118,10 @@ contract UpgradesAndReconfigurationsTest is MiniPoolFixtures {
             deployedContracts.cod3xLendDataProvider.getAllMpTokenInfo(0);
         dynamicDataBefore = new DynamicData[](reserves.length);
         for (uint8 idx; idx < reserves.length; idx++) {
-            console.log("%s (%s)", reserves[idx], ERC20(reserves[idx]).symbol());
+            console2.log("%s (%s)", reserves[idx], ERC20(reserves[idx]).symbol());
             dynamicDataBefore[idx] =
                 deployedContracts.cod3xLendDataProvider.getMpReserveDynamicData(reserves[idx], 0);
-            console.log(
+            console2.log(
                 "availableLiquidity: %s\n  totalVariableDebt: %s\n",
                 dynamicDataBefore[idx].availableLiquidity,
                 dynamicDataBefore[idx].totalVariableDebt
@@ -132,7 +132,7 @@ contract UpgradesAndReconfigurationsTest is MiniPoolFixtures {
     function fixture_checkStorageDataMiniPool(DynamicData[] memory dynamicDataBefore) public view {
         DynamicData[] memory dynamicDataAfter = new DynamicData[](commonContracts.aTokens.length);
         for (uint8 idx; idx < commonContracts.aTokens.length; idx++) {
-            console.log(
+            console2.log(
                 "%s (%s)",
                 AToken(commonContracts.aTokens[idx]).UNDERLYING_ASSET_ADDRESS(),
                 ERC20(AToken(commonContracts.aTokens[idx]).UNDERLYING_ASSET_ADDRESS()).symbol()
@@ -140,7 +140,7 @@ contract UpgradesAndReconfigurationsTest is MiniPoolFixtures {
             dynamicDataAfter[idx] = deployedContracts.cod3xLendDataProvider.getMpReserveDynamicData(
                 AToken(commonContracts.aTokens[idx]).UNDERLYING_ASSET_ADDRESS(), 0
             );
-            console.log(
+            console2.log(
                 "availableLiquidity: %s\n  totalVariableDebt: %s\n",
                 dynamicDataAfter[idx].availableLiquidity,
                 dynamicDataAfter[idx].totalVariableDebt
@@ -200,7 +200,7 @@ contract UpgradesAndReconfigurationsTest is MiniPoolFixtures {
 
         address[] memory reserves = new address[](2 * tokens.length);
         for (uint8 idx = 0; idx < (2 * tokens.length); idx++) {
-            console.log(idx);
+            console2.log(idx);
             if (idx < tokens.length) {
                 reserves[idx] = tokens[idx];
             } else {
@@ -224,7 +224,7 @@ contract UpgradesAndReconfigurationsTest is MiniPoolFixtures {
         address user = makeAddr("user");
 
         /* --- Lending Pool deposit --- */
-        console.log("Lending Pool deposit");
+        console2.log("Lending Pool deposit");
 
         /* Fuzz vector creation */
         // offset = bound(offset, 0, tokens.length - 1);
@@ -254,7 +254,7 @@ contract UpgradesAndReconfigurationsTest is MiniPoolFixtures {
         fixture_depositAndBorrow(collateralType, borrowType, user, address(this), amount);
 
         /* --- Mini Pool deposit --- */
-        console.log("Mini Pool deposit");
+        console2.log("Mini Pool deposit");
 
         /* Fuzz vector creation */
         // offset = bound(offset, 0, tokens.length - 1);
@@ -298,7 +298,7 @@ contract UpgradesAndReconfigurationsTest is MiniPoolFixtures {
         uint256 amount;
         address user = makeAddr("user");
 
-        console.log("Second Lending Pool deposit");
+        console2.log("Second Lending Pool deposit");
 
         TokenTypes memory collateralType = TokenTypes({
             token: erc20Tokens[USDC_OFFSET],
@@ -340,7 +340,7 @@ contract UpgradesAndReconfigurationsTest is MiniPoolFixtures {
             /* Check if addresses are updated */
             deployedContracts.lendingPool = LendingPool(lendingPoolProxy);
             vm.startPrank(address(deployedContracts.lendingPoolAddressesProvider));
-            // console.log(
+            // console2.log(
             //     "Impl: ",
             //     InitializableImmutableAdminUpgradeabilityProxy(payable(address(lendingPoolProxy)))
             //         .implementation()
@@ -381,7 +381,7 @@ contract UpgradesAndReconfigurationsTest is MiniPoolFixtures {
         uint256 amount;
         address user = makeAddr("user");
 
-        console.log("Second Mini Pool deposit");
+        console2.log("Second Mini Pool deposit");
 
         /* Fuzz vector creation */
         // offset = bound(offset, 0, tokens.length - 1);
@@ -482,7 +482,7 @@ contract UpgradesAndReconfigurationsTest is MiniPoolFixtures {
         deal(address(collateralParams.token), user, 10 ** collateralParams.token.decimals() * 1_000);
 
         /* Deposit tests */
-        console.log("Deposit tests");
+        console2.log("Deposit tests");
         fixture_miniPoolBorrow(amount, 0, 1, collateralParams, borrowParams, user);
     }
 
@@ -490,7 +490,7 @@ contract UpgradesAndReconfigurationsTest is MiniPoolFixtures {
         uint256 amount;
         address user = makeAddr("user");
 
-        console.log("Second Lending Pool deposit");
+        console2.log("Second Lending Pool deposit");
 
         TokenTypes memory collateralType = TokenTypes({
             token: erc20Tokens[USDC_OFFSET],
@@ -516,21 +516,21 @@ contract UpgradesAndReconfigurationsTest is MiniPoolFixtures {
         {
             ATokenV2 aTokenV2 = new ATokenV2();
 
-            console.log("aTokenV2 Impl: ", address(aTokenV2));
+            console2.log("aTokenV2 Impl: ", address(aTokenV2));
 
-            console.log("1.aTokenV1 ", address(commonContracts.aTokens[USDC_OFFSET]));
-            console.log("1. aTokenV1 Impl: ", address(commonContracts.aToken));
+            console2.log("1.aTokenV1 ", address(commonContracts.aTokens[USDC_OFFSET]));
+            console2.log("1. aTokenV1 Impl: ", address(commonContracts.aToken));
 
             (address previousPoolImpl,) = deployedContracts.cod3xLendDataProvider.getLpTokens(
                 address(collateralType.token), true
             );
-            console.log("2.aTokenV1 ", previousPoolImpl);
+            console2.log("2.aTokenV1 ", previousPoolImpl);
 
             vm.prank(address(deployedContracts.lendingPoolConfigurator));
             previousPoolImpl = InitializableImmutableAdminUpgradeabilityProxy(
                 payable(previousPoolImpl)
             ).implementation();
-            console.log("2.aTokenV1 Impl", previousPoolImpl);
+            console2.log("2.aTokenV1 Impl", previousPoolImpl);
 
             string memory tmpSymbol = collateralType.token.symbol();
             ILendingPoolConfigurator.UpdateATokenInput memory input = ILendingPoolConfigurator
@@ -573,7 +573,7 @@ contract UpgradesAndReconfigurationsTest is MiniPoolFixtures {
         uint256 amount;
         address user = makeAddr("user");
 
-        console.log("Second Lending Pool deposit");
+        console2.log("Second Lending Pool deposit");
 
         TokenTypes memory collateralType = TokenTypes({
             token: erc20Tokens[USDC_OFFSET],
@@ -602,13 +602,13 @@ contract UpgradesAndReconfigurationsTest is MiniPoolFixtures {
             (, address previousPoolImpl) = deployedContracts.cod3xLendDataProvider.getLpTokens(
                 address(collateralType.token), true
             );
-            console.log("2.aTokenV1 ", previousPoolImpl);
+            console2.log("2.aTokenV1 ", previousPoolImpl);
 
             vm.prank(address(deployedContracts.lendingPoolConfigurator));
             previousPoolImpl = InitializableImmutableAdminUpgradeabilityProxy(
                 payable(previousPoolImpl)
             ).implementation();
-            console.log("2.aTokenV1 Impl", previousPoolImpl);
+            console2.log("2.aTokenV1 Impl", previousPoolImpl);
 
             string memory tmpSymbol = collateralType.token.symbol();
             ILendingPoolConfigurator.UpdateDebtTokenInput memory input = ILendingPoolConfigurator

@@ -56,8 +56,8 @@ contract MiniPoolLiquidationTest is MiniPoolDepositBorrowTest {
         collateralOffset = bound(collateralOffset, 0, tokens.length - 1);
         borrowOffset = bound(borrowOffset, 0, tokens.length - 1);
         vm.assume(collateralOffset != borrowOffset);
-        console.log("[collateral]Offset: ", collateralOffset);
-        console.log("[borrow]Offset: ", borrowOffset);
+        console2.log("[collateral]Offset: ", collateralOffset);
+        console2.log("[borrow]Offset: ", borrowOffset);
 
         /* Test vars */
         address user = makeAddr("user");
@@ -83,7 +83,7 @@ contract MiniPoolLiquidationTest is MiniPoolDepositBorrowTest {
 
         LiquidationVars memory liquidationVars;
         (,,,,, liquidationVars.healthFactor) = IMiniPool(miniPool).getUserAccountData(user);
-        console.log("1. Health factor: ", liquidationVars.healthFactor);
+        console2.log("1. Health factor: ", liquidationVars.healthFactor);
 
         deal(address(collateralParams.token), user, collateralParams.token.balanceOf(address(this)));
 
@@ -92,40 +92,40 @@ contract MiniPoolLiquidationTest is MiniPoolDepositBorrowTest {
         );
 
         (,,,,, liquidationVars.healthFactor) = IMiniPool(miniPool).getUserAccountData(user);
-        console.log("2. Health factor: ", liquidationVars.healthFactor);
+        console2.log("2. Health factor: ", liquidationVars.healthFactor);
 
         priceDecrease = bound(priceDecrease, 2_000, 5_000); /* price descrease by 20 - 50% */
         fixture_changePriceOfToken(collateralParams, priceDecrease, false);
 
         (,,,,, liquidationVars.healthFactor) = IMiniPool(miniPool).getUserAccountData(user);
-        console.log("3. Health factor: ", liquidationVars.healthFactor);
+        console2.log("3. Health factor: ", liquidationVars.healthFactor);
 
         liquidationVars.collateralReserveDataBefore =
             IMiniPool(miniPool).getReserveData(address(collateralParams.token));
         liquidationVars.borrowReserveDataBefore =
             IMiniPool(miniPool).getReserveData(address(borrowParams.token));
 
-        console.log("liquidityIndex: ", liquidationVars.borrowReserveDataBefore.liquidityIndex);
-        console.log(
+        console2.log("liquidityIndex: ", liquidationVars.borrowReserveDataBefore.liquidityIndex);
+        console2.log(
             "variableBorrowIndex: ", liquidationVars.borrowReserveDataBefore.variableBorrowIndex
         );
-        console.log(
+        console2.log(
             "currentLiquidityRate: ", liquidationVars.borrowReserveDataBefore.currentLiquidityRate
         );
-        console.log(
+        console2.log(
             "currentVariableBorrowRate: ",
             liquidationVars.borrowReserveDataBefore.currentVariableBorrowRate
         );
 
-        console.log("liquidityIndex: ", liquidationVars.collateralReserveDataBefore.liquidityIndex);
-        console.log(
+        console2.log("liquidityIndex: ", liquidationVars.collateralReserveDataBefore.liquidityIndex);
+        console2.log(
             "variableBorrowIndex: ", liquidationVars.collateralReserveDataBefore.variableBorrowIndex
         );
-        console.log(
+        console2.log(
             "currentLiquidityRate: ",
             liquidationVars.collateralReserveDataBefore.currentLiquidityRate
         );
-        console.log(
+        console2.log(
             "currentVariableBorrowRate: ",
             liquidationVars.collateralReserveDataBefore.currentVariableBorrowRate
         );
@@ -140,11 +140,11 @@ contract MiniPoolLiquidationTest is MiniPoolDepositBorrowTest {
             (uint256 debtToCover, uint256 _scaledVariableDebt) =
                 aErc6909Token.getScaledUserBalanceAndSupply(user, 2128 + borrowOffset);
             liquidationVars.amountToLiquidate = debtToCover / 2; // maximum possible liquidation amount
-            console.log("1.[OUT] debtToCover: ", debtToCover);
+            console2.log("1.[OUT] debtToCover: ", debtToCover);
             (debtToCover, _scaledVariableDebt) =
                 aErc6909Token.getScaledUserBalanceAndSupply(user, 2000 + borrowOffset);
             liquidationVars.amountToLiquidate = debtToCover / 2; // maximum possible liquidation amount
-            console.log("2.[OUT] debtToCover: ", debtToCover);
+            console2.log("2.[OUT] debtToCover: ", debtToCover);
             liquidationVars.scaledVariableDebt = _scaledVariableDebt;
         }
         {
@@ -159,22 +159,22 @@ contract MiniPoolLiquidationTest is MiniPoolDepositBorrowTest {
                 aErc6909Token.balanceOf(user, 1128 + collateralOffset);
             liquidationVars.liquidatorCollaterallBalance =
                 collateralParams.token.balanceOf(liquidator);
-            console.log("Mini pool aToken: ", address(aErc6909Token));
-            console.log("Borrow ID: ", 2128 + borrowOffset);
-            console.log(
+            console2.log("Mini pool aToken: ", address(aErc6909Token));
+            console2.log("Borrow ID: ", 2128 + borrowOffset);
+            console2.log(
                 "1. miniPool user debt token balance before: %s",
                 liquidationVars.currentVariableDebt
             );
-            console.log(
+            console2.log(
                 "1. miniPool user collateral balance before: %s",
                 liquidationVars.userCollateralBalance
             );
-            // console.log("?? lendingPool user balance before: %s", borrowParams.aToken.balanceOf(user));
-            console.log(
+            // console2.log("?? lendingPool user balance before: %s", borrowParams.aToken.balanceOf(user));
+            console2.log(
                 "2. liquidator debt token balance before: %s",
                 liquidationVars.liquidatorDebtTokenBalance
             );
-            console.log(
+            console2.log(
                 "2. liquidator collateral balance before: %s",
                 liquidationVars.liquidatorCollaterallBalance
             );
@@ -188,31 +188,31 @@ contract MiniPoolLiquidationTest is MiniPoolDepositBorrowTest {
                 liquidationVars.amountToLiquidate,
                 false
             );
-            console.log(
+            console2.log(
                 "--- aToken %s and token %s",
                 address(borrowParams.aToken),
                 address(borrowParams.token)
             );
-            console.log("--- aToken %s", address(aErc6909Token));
-            console.log(
+            console2.log("--- aToken %s", address(aErc6909Token));
+            console2.log(
                 "1. miniPool user balance after: %s",
                 aErc6909Token.balanceOf(user, 2128 + borrowOffset)
             );
-            console.log(
+            console2.log(
                 "2. miniPool user balance after: %s",
                 aErc6909Token.balanceOf(user, 1128 + collateralOffset)
             );
 
-            console.log(
+            console2.log(
                 "3. lendingPool liquidator balance after: %s",
                 collateralParams.token.balanceOf(liquidator)
             );
-            console.log(
+            console2.log(
                 "4. lendingPool liquidator balance after: %s",
                 borrowParams.token.balanceOf(liquidator)
             );
 
-            console.log(
+            console2.log(
                 "User collateral token balance after liquidation shall be less or equal than user collateral balance before"
             );
             assertLe(
@@ -221,7 +221,7 @@ contract MiniPoolLiquidationTest is MiniPoolDepositBorrowTest {
                 "User collateral token balance after liquidation is not less or equal than user collateral balance before"
             );
 
-            console.log(
+            console2.log(
                 "User debt token balance after liquidation shall be less by {amountToLiquidate} than user debt balance before"
             );
             assertEq(
@@ -230,7 +230,7 @@ contract MiniPoolLiquidationTest is MiniPoolDepositBorrowTest {
                     + liquidationVars.amountToLiquidate
             );
 
-            console.log(
+            console2.log(
                 "Liquidator collateral token balance after liquidation shall be greater or equal than half of user collateral balance + liquidator collateral balance before"
             );
             assertGe(
@@ -239,7 +239,7 @@ contract MiniPoolLiquidationTest is MiniPoolDepositBorrowTest {
                     + liquidationVars.userCollateralBalance / 2
             );
 
-            console.log(
+            console2.log(
                 "Liquidator debt token balance after liquidation shall be less by {amountToLiquidate} than user debt balance before"
             );
             assertEq(
@@ -250,7 +250,7 @@ contract MiniPoolLiquidationTest is MiniPoolDepositBorrowTest {
 
             (,,,,, uint256 healthFactorAfterLiquidation) =
                 IMiniPool(miniPool).getUserAccountData(user);
-            console.log(
+            console2.log(
                 "4. Health factor %s vs healthFactorAfterLiquidation %s: ",
                 liquidationVars.healthFactor,
                 healthFactorAfterLiquidation
@@ -281,7 +281,7 @@ contract MiniPoolLiquidationTest is MiniPoolDepositBorrowTest {
         );
         liquidationVars.currentVariableDebt = aErc6909Token.balanceOf(user, 2128 + borrowOffset);
 
-        console.log(
+        console2.log(
             "Debt before liquidation shall be greater by {amountToLiquidate=%s} than debt after liquidation",
             liquidationVars.amountToLiquidate
         );
@@ -290,14 +290,14 @@ contract MiniPoolLiquidationTest is MiniPoolDepositBorrowTest {
             variableDebtBeforeTx - liquidationVars.amountToLiquidate,
             0.01e18
         );
-        console.log(
+        console2.log(
             "Liquidity index for debt token after liquidation shall be greater than liquidity index before liquidation"
         );
         assertGe(
             liquidationVars.borrowReserveDataAfter.liquidityIndex,
             liquidationVars.borrowReserveDataBefore.liquidityIndex
         );
-        console.log(
+        console2.log(
             "Liquidity rate after liquidation shall be less than liquidity rate before liquidation"
         );
         assertLt(
@@ -333,7 +333,7 @@ contract MiniPoolLiquidationTest is MiniPoolDepositBorrowTest {
         collateralOffset = bound(collateralOffset, 0, tokens.length - 1);
         skipDuration = bound(skipDuration, 0, 300 days);
         vm.assume(borrowOffset != collateralOffset && borrowOffset < tokens.length - 1);
-        console.log("Offsets: token0: %s token1: %s", collateralOffset, borrowOffset);
+        console2.log("Offsets: token0: %s token1: %s", collateralOffset, borrowOffset);
 
         TokenParams memory collateralParams = TokenParams(
             erc20Tokens[collateralOffset],
@@ -365,14 +365,14 @@ contract MiniPoolLiquidationTest is MiniPoolDepositBorrowTest {
         );
 
         (,,,,, uint256 healthFactor) = IMiniPool(miniPool).getUserAccountData(user);
-        console.log("1. MiniPool User healthFactor: %e", healthFactor);
+        console2.log("1. MiniPool User healthFactor: %e", healthFactor);
 
         priceDecrease = bound(priceDecrease, 2_000, 5_000); /* price descrease by 20 - 50% */
 
         fixture_changePriceOfToken(collateralParams, priceDecrease, false);
 
         (,,,,, healthFactor) = IMiniPool(miniPool).getUserAccountData(user);
-        console.log("2. MiniPool User healthFactor for user %s: %e", user, healthFactor);
+        console2.log("2. MiniPool User healthFactor for user %s: %e", user, healthFactor);
 
         /**
          * LIQUIDATION PROCESS - START ***********
@@ -384,7 +384,7 @@ contract MiniPoolLiquidationTest is MiniPoolDepositBorrowTest {
             (uint256 debtToCover, uint256 _scaledVariableDebt) =
                 aErc6909Token.getScaledUserBalanceAndSupply(user, 2000 + borrowOffset);
             amountToLiquidate = debtToCover / 2; // maximum possible liquidation amount
-            console.log("[OUTwith] debtToCover: ", debtToCover);
+            console2.log("[OUTwith] debtToCover: ", debtToCover);
             scaledVariableDebt = _scaledVariableDebt;
         }
         {
@@ -394,7 +394,7 @@ contract MiniPoolLiquidationTest is MiniPoolDepositBorrowTest {
 
             fixture_depositTokensToMainPool(amountToLiquidate, liquidator, borrowParams);
 
-            console.log("address(collateralParams.token) : ", address(collateralParams.token));
+            console2.log("address(collateralParams.token) : ", address(collateralParams.token));
             vm.startPrank(liquidator);
             borrowParams.aToken.approve(miniPool, amountToLiquidate);
             IMiniPool(miniPool).liquidationCall(

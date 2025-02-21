@@ -165,7 +165,7 @@ contract LendingPoolConfiguratorTest is Common, LendingPoolFixtures {
             deployedContracts.lendingPool.deposit(
                 address(collateralType.token), true, amount, address(this)
             );
-            console.log("0.Balance: ", collateralType.token.balanceOf(address(this)));
+            console2.log("0.Balance: ", collateralType.token.balanceOf(address(this)));
             deployedContracts.lendingPool.borrow(
                 address(collateralType.token), true, amount / 10, address(this)
             );
@@ -684,7 +684,7 @@ contract LendingPoolConfiguratorTest is Common, LendingPoolFixtures {
             10 ** (collateralTokenParams.token.decimals() + 3) // 1000
         );
         deal(address(collateralTokenParams.token), address(this), amount);
-        console.log("Deposit asset to the mainPool");
+        console2.log("Deposit asset to the mainPool");
         fixture_deposit(
             collateralTokenParams.token,
             collateralTokenParams.aToken,
@@ -703,7 +703,7 @@ contract LendingPoolConfiguratorTest is Common, LendingPoolFixtures {
         ) = deployedContracts.cod3xLendDataProvider.getLpUserAccountData(address(this));
 
         {
-            console.log("Reinit the asset");
+            console2.log("Reinit the asset");
             ILendingPoolConfigurator.InitReserveInput[] memory initInputParams =
                 new ILendingPoolConfigurator.InitReserveInput[](1);
             string memory tmpSymbol = ERC20(tokens[offset]).symbol();
@@ -729,7 +729,7 @@ contract LendingPoolConfiguratorTest is Common, LendingPoolFixtures {
                 params: "0x10"
             });
 
-            console.log("BatchInitReserve");
+            console2.log("BatchInitReserve");
             vm.startPrank(address(deployedContracts.lendingPoolAddressesProvider.getPoolAdmin()));
             vm.expectRevert(bytes(Errors.RL_RESERVE_ALREADY_INITIALIZED));
             deployedContracts.lendingPoolConfigurator.batchInitReserve(initInputParams);

@@ -10,7 +10,7 @@ import {ReserveConfiguration} from
 import "contracts/misc/Cod3xLendDataProvider.sol";
 
 import "forge-std/StdUtils.sol";
-import "forge-std/console.sol";
+import "forge-std/console2.sol";
 // import {ILendingPool} from "contracts/interfaces/ILendingPool.sol";
 
 contract MiniPoolATokenAbstractionTest is MiniPoolFixtures {
@@ -49,7 +49,7 @@ contract MiniPoolATokenAbstractionTest is MiniPoolFixtures {
 
         address[] memory reserves = new address[](2 * tokens.length);
         for (uint8 idx = 0; idx < (2 * tokens.length); idx++) {
-            console.log(idx);
+            console2.log(idx);
             if (idx < tokens.length) {
                 reserves[idx] = tokens[idx];
             } else {
@@ -110,10 +110,10 @@ contract MiniPoolATokenAbstractionTest is MiniPoolFixtures {
 
         vm.stopPrank();
 
-        console.log("wrapped aToken balance :::: ", tokenParams.aToken.balanceOf(user));
-        console.log("asset balance :::: ", tokenParams.token.balanceOf(user));
-        console.log("a6909 :::: ", aErc6909Token.balanceOf(user, aTokenId));
-        console.log("========");
+        console2.log("wrapped aToken balance :::: ", tokenParams.aToken.balanceOf(user));
+        console2.log("asset balance :::: ", tokenParams.token.balanceOf(user));
+        console2.log("a6909 :::: ", aErc6909Token.balanceOf(user, aTokenId));
+        console2.log("========");
 
         // deposit Unwrap == true
         {
@@ -135,10 +135,10 @@ contract MiniPoolATokenAbstractionTest is MiniPoolFixtures {
 
         uint256 midATokenBalance = tokenParams.aToken.balanceOf(address(aErc6909Token));
 
-        console.log("wrapped aToken balance :::: ", tokenParams.aToken.balanceOf(user));
-        console.log("asset balance :::: ", tokenParams.token.balanceOf(user));
-        console.log("a6909 :::: ", aErc6909Token.balanceOf(user, aTokenId));
-        console.log("========");
+        console2.log("wrapped aToken balance :::: ", tokenParams.aToken.balanceOf(user));
+        console2.log("asset balance :::: ", tokenParams.token.balanceOf(user));
+        console2.log("a6909 :::: ", aErc6909Token.balanceOf(user, aTokenId));
+        console2.log("========");
 
         // deposit Unwrap == false
         {
@@ -146,7 +146,7 @@ contract MiniPoolATokenAbstractionTest is MiniPoolFixtures {
             uint256 tokenUserBalance = aErc6909Token.balanceOf(user, aTokenId);
             uint256 tokenBalance = tokenParams.aToken.balanceOf(user);
             tokenParams.aToken.approve(address(miniPool), type(uint256).max);
-            console.log("User balance before: ", tokenBalance);
+            console2.log("User balance before: ", tokenBalance);
             IMiniPool(miniPool).deposit(address(tokenParams.aToken), false, amount, user);
             assertEq(tokenBalance - amount, tokenParams.aToken.balanceOf(user));
             assertEq(tokenUserBalance + amount, aErc6909Token.balanceOf(user, aTokenId));
@@ -200,10 +200,10 @@ contract MiniPoolATokenAbstractionTest is MiniPoolFixtures {
 
         uint256 midATokenBalance = tokenParams.aToken.balanceOf(address(aErc6909Token));
 
-        console.log("wrapped aToken balance :::: ", tokenParams.aToken.balanceOf(user));
-        console.log("asset balance :::: ", tokenParams.token.balanceOf(user));
-        console.log("a6909 :::: ", aErc6909Token.balanceOf(user, aTokenId));
-        console.log("========");
+        console2.log("wrapped aToken balance :::: ", tokenParams.aToken.balanceOf(user));
+        console2.log("asset balance :::: ", tokenParams.token.balanceOf(user));
+        console2.log("a6909 :::: ", aErc6909Token.balanceOf(user, aTokenId));
+        console2.log("========");
 
         // Withdraw Unwrap == false
         {
@@ -273,8 +273,8 @@ contract MiniPoolATokenAbstractionTest is MiniPoolFixtures {
             uint256 borrowAmount = 10_000e6;
 
             IMiniPool(miniPool).borrow(address(tokenParamsUSDC.aToken), false, borrowAmount, user);
-            console.log("user  :::: ", user);
-            console.logAddress(address(tokenParamsUSDC.aToken));
+            console2.log("user  :::: ", user);
+            console2.logAddress(address(tokenParamsUSDC.aToken));
             assertEq(tokenBalance + borrowAmount, tokenParamsUSDC.aToken.balanceOf(user));
             vm.stopPrank();
         }

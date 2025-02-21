@@ -31,7 +31,7 @@ contract LiquidationTest is Common {
     }
 
     function resetOraclePrices() internal {
-        console.log("RESET ->>>>>>>>>>>>>>>>>>>>>>>>>>>>>");
+        console2.log("RESET ->>>>>>>>>>>>>>>>>>>>>>>>>>>>>");
         uint256[] memory timeouts = new uint256[](4);
 
         int256[] memory prices = new int256[](4);
@@ -109,7 +109,7 @@ contract LiquidationTest is Common {
         deployedContracts.lendingPool.deposit(address(wbtc), true, wbtcDepositAmount, user);
 
         uint256 wbtcBalanceBeforeBorrow = wbtc.balanceOf(address(this));
-        console.log("Wbtc balance before: ", wbtcBalanceBeforeBorrow);
+        console2.log("Wbtc balance before: ", wbtcBalanceBeforeBorrow);
 
         /* Main user borrows maxPossible amount of wbtc */
         deployedContracts.lendingPool.borrow(
@@ -283,8 +283,8 @@ contract LiquidationTest is Common {
         {
             (,,,,, uint256 healthFactor) =
                 deployedContracts.lendingPool.getUserAccountData(address(this));
-            // console.log("AFTER LIQUIDATION: ");
-            // console.log("healthFactor: ", healthFactor);
+            // console2.log("AFTER LIQUIDATION: ");
+            // console2.log("healthFactor: ", healthFactor);
             assertGt(healthFactor, 1 ether);
         }
 
@@ -342,8 +342,8 @@ contract LiquidationTest is Common {
                 tokensParams[USDC_OFFSET].token.decimals(),
                 tokensParams[WBTC_OFFSET].token.decimals()
             );
-            // console.log("Max to borrow: ", wbtcMaxBorrowAmountWithUsdcCollateral);
-            // console.log("Balance: ", wbtc.balanceOf(address(this)));
+            // console2.log("Max to borrow: ", wbtcMaxBorrowAmountWithUsdcCollateral);
+            // console2.log("Balance: ", wbtc.balanceOf(address(this)));
             require(
                 tokensParams[WBTC_OFFSET].token.balanceOf(address(this))
                     > wbtcMaxBorrowAmountWithUsdcCollateral,
@@ -380,8 +380,8 @@ contract LiquidationTest is Common {
         {
             (,,,,, uint256 healthFactor) =
                 deployedContracts.lendingPool.getUserAccountData(address(this));
-            // console.log("BEFORE: ");
-            // console.log("healthFactor: ", healthFactor);
+            // console2.log("BEFORE: ");
+            // console2.log("healthFactor: ", healthFactor);
             assertGe(healthFactor, 1 ether);
         }
 
@@ -394,7 +394,7 @@ contract LiquidationTest is Common {
                 tokensParams[USDC_OFFSET].price
                     - tokensParams[USDC_OFFSET].price * priceDecrease / 10_000
             );
-            console.log("NEW Price: ", newUsdcPrice);
+            console2.log("NEW Price: ", newUsdcPrice);
 
             setOraclePrices(newUsdcPrice, USDC_OFFSET);
             tokensParams[USDC_OFFSET].price = newUsdcPrice;
@@ -409,8 +409,8 @@ contract LiquidationTest is Common {
         {
             (,,,,, uint256 healthFactor) =
                 deployedContracts.lendingPool.getUserAccountData(address(this));
-            // console.log("AFTER PRICE CHANGE: ");
-            console.log("healthFactor :::: ", healthFactor);
+            // console2.log("AFTER PRICE CHANGE: ");
+            console2.log("healthFactor :::: ", healthFactor);
             assertLt(healthFactor, 1 ether);
         }
 
@@ -481,15 +481,15 @@ contract LiquidationTest is Common {
         {
             (,,,,, uint256 healthFactor) =
                 deployedContracts.lendingPool.getUserAccountData(address(this));
-            // console.log("AFTER LIQUIDATION: ");
-            // console.log("healthFactor: ", healthFactor);
+            // console2.log("AFTER LIQUIDATION: ");
+            // console2.log("healthFactor: ", healthFactor);
             assertGt(healthFactor, 1 ether);
         }
-        // console.log("currentVariableDebt: ", currentVariableDebt);
-        // console.log("variableDebtBeforeTx : ", variableDebtBeforeTx);
-        // console.log("amountToLiquidate: ", amountToLiquidate);
-        // console.log("availableLiquidity: ", usdcReserveParamsBefore.availableLiquidity);
-        // console.log("expectedCollateralLiquidated: ", expectedCollateralLiquidated);
+        // console2.log("currentVariableDebt: ", currentVariableDebt);
+        // console2.log("variableDebtBeforeTx : ", variableDebtBeforeTx);
+        // console2.log("amountToLiquidate: ", amountToLiquidate);
+        // console2.log("availableLiquidity: ", usdcReserveParamsBefore.availableLiquidity);
+        // console2.log("expectedCollateralLiquidated: ", expectedCollateralLiquidated);
 
         assertApproxEqRel(
             userReservesData.currentVariableDebt, variableDebtBeforeTx - amountToLiquidate, 0.01e18

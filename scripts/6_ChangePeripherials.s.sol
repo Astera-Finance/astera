@@ -8,7 +8,7 @@ import "./DeployDataTypes.sol";
 import "./helpers/ChangePeripherialsHelper.s.sol";
 import "lib/forge-std/src/Test.sol";
 import "lib/forge-std/src/Script.sol";
-import "lib/forge-std/src/console.sol";
+import "lib/forge-std/src/console2.sol";
 
 import {DataTypes} from "../contracts/protocol/libraries/types/DataTypes.sol";
 import {ERC4626Mock} from "lib/openzeppelin-contracts/contracts/mocks/token/ERC4626Mock.sol";
@@ -28,18 +28,18 @@ contract ChangePeripherials is Script, ChangePeripherialsHelper, Test {
 
         vm.writeJson(output, path);
 
-        console.log("PROTOCOL DEPLOYED (check out addresses on %s)", path);
+        console2.log("PROTOCOL DEPLOYED (check out addresses on %s)", path);
     }
 
     function run() external returns (DeployedContracts memory) {
-        console.log("6_ChangePeripherials");
+        console2.log("6_ChangePeripherials");
         // Config fetching
         // Providers
         string memory root = vm.projectRoot();
 
         // Inputs from Peripherials
         string memory path = string.concat(root, "/scripts/inputs/6_ChangePeripherials.json");
-        console.log("PATH: ", path);
+        console2.log("PATH: ", path);
         string memory config = vm.readFile(path);
 
         NewPeripherial[] memory vault = abi.decode(config.parseRaw(".vault"), (NewPeripherial[]));
@@ -64,12 +64,12 @@ contract ChangePeripherials is Script, ChangePeripherialsHelper, Test {
         require(treasury.length == rehypothecation.length, "Lengths settings must be the same");
 
         if (!vm.envBool("MAINNET")) {
-            console.log("Testnet");
+            console2.log("Testnet");
             /* *********** Lending pool settings *********** */
             {
                 string memory outputPath =
                     string.concat(root, "/scripts/outputs/testnet/1_LendingPoolContracts.json");
-                console.log("PATH: ", outputPath);
+                console2.log("PATH: ", outputPath);
                 config = vm.readFile(outputPath);
             }
 
@@ -92,7 +92,7 @@ contract ChangePeripherials is Script, ChangePeripherialsHelper, Test {
 
             /* Read all mocks deployed */
             path = string.concat(root, "/scripts/outputs/testnet/0_MockedTokens.json");
-            console.log("PATH: ", path);
+            console2.log("PATH: ", path);
             config = vm.readFile(path);
             address[] memory mockedTokens = config.readAddressArray(".mockedTokens");
 
@@ -107,7 +107,7 @@ contract ChangePeripherials is Script, ChangePeripherialsHelper, Test {
                 //             keccak256(abi.encodePacked(ERC20(mockedTokens[i]).symbol()))
                 //                 == keccak256(abi.encodePacked(vault[idx].symbol))
                 //         ) {
-                //             console.log(
+                //             console2.log(
                 //                 "Assigning %s instead of %s",
                 //                 address(mockedTokens[i]),
                 //                 vault[idx].tokenAddress
@@ -163,12 +163,12 @@ contract ChangePeripherials is Script, ChangePeripherialsHelper, Test {
             vm.stopBroadcast();
             path = string.concat(root, "/scripts/outputs/testnet/6_ChangePeripherials.json");
         } else if (vm.envBool("MAINNET")) {
-            console.log("Mainnet");
+            console2.log("Mainnet");
             /* *********** Lending pool settings *********** */
             {
                 string memory outputPath =
                     string.concat(root, "/scripts/outputs/mainnet/1_LendingPoolContracts.json");
-                console.log("PATH: ", outputPath);
+                console2.log("PATH: ", outputPath);
                 config = vm.readFile(outputPath);
             }
 
@@ -215,7 +215,7 @@ contract ChangePeripherials is Script, ChangePeripherialsHelper, Test {
             vm.stopBroadcast();
             path = string.concat(root, "/scripts/outputs/mainnet/6_ChangePeripherials.json");
         } else {
-            console.log("No deployment type selected in .env");
+            console2.log("No deployment type selected in .env");
         }
         writeJsonData(path);
         return contracts;

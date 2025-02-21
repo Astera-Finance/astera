@@ -8,18 +8,18 @@ import "./DeployDataTypes.sol";
 import "./helpers/MocksHelper.s.sol";
 import "lib/forge-std/src/Test.sol";
 import "lib/forge-std/src/Script.sol";
-import "lib/forge-std/src/console.sol";
+import "lib/forge-std/src/console2.sol";
 
 contract DeployMocks is Script, MocksHelper, Test {
     using stdJson for string;
 
     function run() external returns (DeployedContracts memory) {
         // Config fetching
-        console.log("CHAIN ID: ", block.chainid);
+        console2.log("CHAIN ID: ", block.chainid);
 
         string memory root = vm.projectRoot();
         string memory path = string.concat(root, "/scripts/inputs/0_MockedTokens.json");
-        console.log("PATH: ", path);
+        console2.log("PATH: ", path);
         string memory config = vm.readFile(path);
         MockedToken[] memory mockedTokensSettings =
             abi.decode(config.parseRaw(".mockedToken"), (MockedToken[]));
@@ -35,7 +35,7 @@ contract DeployMocks is Script, MocksHelper, Test {
             }
 
             // Deployment
-            console.log("Broadcasting....");
+            console2.log("Broadcasting....");
             vm.startBroadcast(vm.envUint("PRIVATE_KEY"));
             mockedTokens = _deployERC20Mocks(symbols, symbols, decimals);
             for (uint8 idx = 0; idx < mockedTokens.length; idx++) {

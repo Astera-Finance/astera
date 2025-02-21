@@ -195,9 +195,9 @@ contract ATokenTest is Common {
 
             /* Deposit to get gToken and transfer to other user which will borrow against it */
             erc20Tokens[idx].approve(address(deployedContracts.lendingPool), amountToTransfer);
-            // console.log("Symbol: ", erc20Tokens[idx].symbol());
-            // console.log("Amount to transfer: ", amountToTransfer);
-            // console.log("Balance>>>>>>>>>>>: ", erc20Tokens[idx].balanceOf(address(this)));
+            // console2.log("Symbol: ", erc20Tokens[idx].symbol());
+            // console2.log("Amount to transfer: ", amountToTransfer);
+            // console2.log("Balance>>>>>>>>>>>: ", erc20Tokens[idx].balanceOf(address(this)));
             deployedContracts.lendingPool.deposit(
                 address(erc20Tokens[idx]), true, amountToTransfer, address(this)
             );
@@ -207,9 +207,9 @@ contract ATokenTest is Common {
             erc20Tokens[nextTokenIndex].approve(
                 address(deployedContracts.lendingPool), amountToBorrow
             );
-            console.log("Symbol: ", erc20Tokens[nextTokenIndex].symbol());
-            console.log("Amount to borrow: ", amountToBorrow);
-            console.log("Balance>>>>>>>>>: ", erc20Tokens[nextTokenIndex].balanceOf(address(this)));
+            console2.log("Symbol: ", erc20Tokens[nextTokenIndex].symbol());
+            console2.log("Amount to borrow: ", amountToBorrow);
+            console2.log("Balance>>>>>>>>>: ", erc20Tokens[nextTokenIndex].balanceOf(address(this)));
             deployedContracts.lendingPool.deposit(
                 address(erc20Tokens[nextTokenIndex]), true, amountToBorrow, address(this)
             );
@@ -245,7 +245,7 @@ contract ATokenTest is Common {
     function testGaslessTokenTransfer(uint256 amountToTransfer) public {
         uint256 privateKey = 123;
         address user1 = vm.addr(privateKey);
-        console.log("User address:", user1);
+        console2.log("User address:", user1);
         address user2 = makeAddr("user2");
         uint256 fee = 1e10;
         amountToTransfer = bound(amountToTransfer, fee + 1, 100e18);

@@ -49,7 +49,7 @@ contract MiniPoolFlashloanTest is Common {
     ) public {
         /* Fuzz vector creation */
         offset = bound(offset, 0, tokens.length - 1);
-        console.log("[deposit]Offset: ", offset);
+        console2.log("[deposit]Offset: ", offset);
         uint256 tokenId = 1128 + offset;
         uint256 aTokenId = 1000 + offset;
 
@@ -67,9 +67,9 @@ contract MiniPoolFlashloanTest is Common {
             uint256 initialATokenBalance = tokenParams.aToken.balanceOf(user);
             tokenParams.token.approve(address(deployedContracts.lendingPool), amount);
             deployedContracts.lendingPool.deposit(address(tokenParams.token), true, amount, user);
-            console.log("User token balance shall be {initialTokenBalance - amount}");
+            console2.log("User token balance shall be {initialTokenBalance - amount}");
             assertEq(tokenParams.token.balanceOf(user), initialTokenBalance - amount, "01");
-            console.log("User grain token balance shall be {initialATokenBalance + amount}");
+            console2.log("User grain token balance shall be {initialATokenBalance + amount}");
             assertEq(tokenParams.aToken.balanceOf(user), initialATokenBalance + amount, "02");
         }
         /* User deposits lending pool's aTokens to the mini pool and 
@@ -79,13 +79,13 @@ contract MiniPoolFlashloanTest is Common {
 
             uint256 grainToken6909Balance = aErc6909Token.scaledTotalSupply(aTokenId);
             uint256 grainTokenDepositAmount = tokenParams.aToken.balanceOf(user);
-            console.log("Balance amount: ", amount);
-            console.log("Balance grainAmount: ", grainTokenDepositAmount);
+            console2.log("Balance amount: ", amount);
+            console2.log("Balance grainAmount: ", grainTokenDepositAmount);
             tokenParams.aToken.approve(address(miniPool), amount);
             IMiniPool(miniPool).deposit(address(tokenParams.aToken), false, amount, user);
-            console.log("User AToken balance shall be less by {amount}");
+            console2.log("User AToken balance shall be less by {amount}");
             assertEq(grainTokenDepositAmount - amount, tokenParams.aToken.balanceOf(user), "11");
-            console.log("User grain token 6909 balance shall be initial balance + amount");
+            console2.log("User grain token 6909 balance shall be initial balance + amount");
             assertEq(
                 grainToken6909Balance + amount, aErc6909Token.scaledTotalSupply(aTokenId), "12"
             );
@@ -97,7 +97,7 @@ contract MiniPoolFlashloanTest is Common {
             uint256 tokenUserBalance = aErc6909Token.balanceOf(user, tokenId);
             uint256 tokenBalance = tokenParams.token.balanceOf(user);
             tokenParams.token.approve(address(miniPool), amount);
-            console.log("User balance after: ", tokenBalance);
+            console2.log("User balance after: ", tokenBalance);
             IMiniPool(miniPool).deposit(address(tokenParams.token), false, amount, user);
             assertEq(tokenBalance - amount, tokenParams.token.balanceOf(user));
             assertEq(tokenUserBalance + amount, aErc6909Token.balanceOf(user, tokenId));
@@ -108,8 +108,8 @@ contract MiniPoolFlashloanTest is Common {
         }
         vm.stopPrank();
 
-        console.log("Scaled totalSupply...");
-        console.log("Address: ", address(aErc6909Token));
+        console2.log("Scaled totalSupply...");
+        console2.log("Address: ", address(aErc6909Token));
 
         uint256 aErc6909TokenBalance = aErc6909Token.scaledTotalSupply(tokenId);
         assertEq(aErc6909TokenBalance, initialSupply + amount);
@@ -155,7 +155,7 @@ contract MiniPoolFlashloanTest is Common {
             )
                 ? (collateralTokenParams.token.balanceOf(address(this)) / 4)
                 : borrowTokenInCollateralToken;
-            console.log(
+            console2.log(
                 "Min nr of collateral in usd: ",
                 (borrowTokenInCollateralToken * collateralTokenParams.price)
                     / (10 ** PRICE_FEED_DECIMALS)
@@ -164,7 +164,7 @@ contract MiniPoolFlashloanTest is Common {
         {
             /* Sb deposits tokens which will be borrowed */
             address liquidityProvider = makeAddr("liquidityProvider");
-            console.log(
+            console2.log(
                 "Deposit borrowTokens: %s with balance: %s",
                 2 * amount,
                 borrowTokenParams.token.balanceOf(address(this))
@@ -174,7 +174,7 @@ contract MiniPoolFlashloanTest is Common {
             /* User deposits collateral */
             uint256 tokenId = 1128 + collateralOffset;
             uint256 aTokenId = 1000 + collateralOffset;
-            console.log(
+            console2.log(
                 "Deposit collateral: %s with balance: %s",
                 minNrOfTokens,
                 collateralTokenParams.token.balanceOf(address(this))
@@ -182,9 +182,9 @@ contract MiniPoolFlashloanTest is Common {
             fixture_MiniPoolDeposit(minNrOfTokens, collateralOffset, user, collateralTokenParams);
             require(aErc6909Token.balanceOf(user, tokenId) > 0, "No token balance");
             require(aErc6909Token.balanceOf(user, aTokenId) > 0, "No aToken balance");
-            console.log("Token balance:", aErc6909Token.balanceOf(user, tokenId));
-            console.log("aToken Balance: ", aErc6909Token.balanceOf(user, aTokenId));
-            console.log(
+            console2.log("Token balance:", aErc6909Token.balanceOf(user, tokenId));
+            console2.log("aToken Balance: ", aErc6909Token.balanceOf(user, aTokenId));
+            console2.log(
                 "Underlying token balance:",
                 collateralTokenParams.token.balanceOf(address(collateralTokenParams.aToken))
             );
@@ -200,15 +200,15 @@ contract MiniPoolFlashloanTest is Common {
             balances.debtToken = aErc6909Token.balanceOf(user, 2000 + borrowOffset);
             balances.token = borrowTokenParams.aToken.balanceOf(user);
             IMiniPool(miniPool).borrow(address(borrowTokenParams.aToken), false, amount, user);
-            console.log("Total supply of debtAToken must be greater than before borrow");
+            console2.log("Total supply of debtAToken must be greater than before borrow");
             assertEq(
                 aErc6909Token.scaledTotalSupply(2000 + borrowOffset), balances.totalSupply + amount
             );
-            console.log("Balance of debtAToken must be greater than before borrow");
+            console2.log("Balance of debtAToken must be greater than before borrow");
             assertEq(
                 aErc6909Token.balanceOf(user, 2000 + borrowOffset), balances.debtToken + amount
             );
-            console.log("Balance of AToken must be greater than before borrow");
+            console2.log("Balance of AToken must be greater than before borrow");
             assertEq(borrowTokenParams.aToken.balanceOf(user), balances.token + amount);
         }
 
@@ -217,25 +217,25 @@ contract MiniPoolFlashloanTest is Common {
             balances.debtToken = aErc6909Token.balanceOf(user, 2128 + borrowOffset);
             balances.token = borrowTokenParams.token.balanceOf(user);
             IMiniPool(miniPool).borrow(address(borrowTokenParams.token), false, amount, user);
-            console.log("Balance of debtToken must be greater than before borrow");
+            console2.log("Balance of debtToken must be greater than before borrow");
             assertEq(
                 aErc6909Token.scaledTotalSupply(2128 + borrowOffset), balances.totalSupply + amount
             );
-            console.log("Balance of debtToken must be greater than before borrow");
+            console2.log("Balance of debtToken must be greater than before borrow");
             assertEq(
                 aErc6909Token.balanceOf(user, 2128 + borrowOffset), balances.debtToken + amount
             );
-            console.log("Balance of token must be greater than before borrow");
+            console2.log("Balance of token must be greater than before borrow");
             assertEq(borrowTokenParams.token.balanceOf(user), balances.token + amount);
         }
 
         (,,,,, uint256 healthFactorAfter) = IMiniPool(miniPool).getUserAccountData(user);
-        console.log(
+        console2.log(
             "HealthFactor must be less than before borrows %s vs %s",
             healthFactorBefore,
             healthFactorAfter
         );
-        console.log("Health factor at the end: ", healthFactorAfter);
+        console2.log("Health factor at the end: ", healthFactorAfter);
         assertGt(healthFactorBefore, healthFactorAfter);
         vm.stopPrank();
     }
@@ -284,18 +284,18 @@ contract MiniPoolFlashloanTest is Common {
             );
         }
 
-        console.log("Choosen amount: ", amount);
+        console2.log("Choosen amount: ", amount);
 
         {
             vm.startPrank(address(miniPoolContracts.miniPoolAddressesProvider));
-            console.log("address of asset:", address(borrowTokenParams.aToken));
+            console2.log("address of asset:", address(borrowTokenParams.aToken));
             uint256 currentFlow = miniPoolContracts.flowLimiter.currentFlow(
                 address(borrowTokenParams.token), miniPool
             );
             miniPoolContracts.flowLimiter.setFlowLimit(
                 address(borrowTokenParams.token), miniPool, currentFlow + amount
             );
-            console.log(
+            console2.log(
                 "FlowLimiter results",
                 miniPoolContracts.flowLimiter.getFlowLimit(
                     address(borrowTokenParams.token), miniPool
@@ -308,9 +308,9 @@ contract MiniPoolFlashloanTest is Common {
         collateralTokenParams.token.transfer(user, minNrOfTokens);
 
         vm.startPrank(user);
-        console.log("Address1: %s Address2: %s", address(miniPoolContracts.miniPoolImpl), miniPool);
+        console2.log("Address1: %s Address2: %s", address(miniPoolContracts.miniPoolImpl), miniPool);
         collateralTokenParams.token.approve(miniPool, minNrOfTokens);
-        console.log(
+        console2.log(
             "minNrOfTokens %s vs balance of tokens %s",
             minNrOfTokens,
             collateralTokenParams.token.balanceOf(address(this))
@@ -326,17 +326,17 @@ contract MiniPoolFlashloanTest is Common {
         balances.debtToken = aErc6909Token.balanceOf(user, 2000 + borrowOffset);
         balances.token = borrowTokenParams.aToken.balanceOf(user);
         IMiniPool(miniPool).borrow(address(borrowTokenParams.aToken), false, amount, user);
-        console.log("Total supply of debtAToken must be greater than before borrow");
+        console2.log("Total supply of debtAToken must be greater than before borrow");
         assertEq(
             aErc6909Token.scaledTotalSupply(2000 + borrowOffset), balances.totalSupply + amount
         );
-        console.log("Balance of debtAToken must be greater than before borrow");
+        console2.log("Balance of debtAToken must be greater than before borrow");
         assertEq(aErc6909Token.balanceOf(user, 2000 + borrowOffset), balances.debtToken + amount);
-        console.log("Balance of AToken must be greater than before borrow");
+        console2.log("Balance of AToken must be greater than before borrow");
         assertEq(borrowTokenParams.aToken.balanceOf(user), balances.token + amount);
 
         (,,,,, uint256 healthFactorAfter) = IMiniPool(miniPool).getUserAccountData(user);
-        console.log("HealthFactor before borrow must be greater than after");
+        console2.log("HealthFactor before borrow must be greater than after");
         assertGt(healthFactorBefore, healthFactorAfter);
 
         vm.stopPrank();
@@ -389,7 +389,7 @@ contract MiniPoolFlashloanTest is Common {
 
         address[] memory reserves = new address[](2 * tokens.length);
         for (uint8 idx = 0; idx < (2 * tokens.length); idx++) {
-            console.log(idx);
+            console2.log(idx);
             if (idx < tokens.length) {
                 reserves[idx] = tokens[idx];
             } else {

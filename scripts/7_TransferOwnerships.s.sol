@@ -8,17 +8,17 @@ import "./DeployDataTypes.sol";
 import "./helpers/TransferOwnershipHelper.s.sol";
 import "lib/forge-std/src/Test.sol";
 import "lib/forge-std/src/Script.sol";
-import "lib/forge-std/src/console.sol";
+import "lib/forge-std/src/console2.sol";
 
 contract TransferOwnerships is Script, TransferOwnershipHelper, Test {
     using stdJson for string;
 
     function run() external returns (DeployedContracts memory) {
-        console.log("7_TransferOwnerships");
+        console2.log("7_TransferOwnerships");
         // Config fetching
         string memory root = vm.projectRoot();
         string memory path = string.concat(root, "/scripts/inputs/7_TransferOwnerships.json");
-        console.log("PATH: ", path);
+        console2.log("PATH: ", path);
         string memory deploymentConfig = vm.readFile(path);
 
         bool transferMiniPoolRole = deploymentConfig.readBool(".transferMiniPoolRole");
@@ -27,12 +27,12 @@ contract TransferOwnerships is Script, TransferOwnershipHelper, Test {
             abi.decode(deploymentConfig.parseRaw(".miniPoolRole"), (MiniPoolRole));
 
         if (!vm.envBool("MAINNET")) {
-            console.log("Testnet");
+            console2.log("Testnet");
             /* *********** Lending pool settings *********** */
             {
                 string memory outputPath =
                     string.concat(root, "/scripts/outputs/testnet/1_LendingPoolContracts.json");
-                console.log("PATH: ", outputPath);
+                console2.log("PATH: ", outputPath);
                 deploymentConfig = vm.readFile(outputPath);
             }
 
@@ -52,7 +52,7 @@ contract TransferOwnerships is Script, TransferOwnershipHelper, Test {
             {
                 string memory outputPath =
                     string.concat(root, "/scripts/outputs/testnet/2_MiniPoolContracts.json");
-                console.log("PATH: ", outputPath);
+                console2.log("PATH: ", outputPath);
                 deploymentConfig = vm.readFile(outputPath);
             }
 
@@ -67,7 +67,7 @@ contract TransferOwnerships is Script, TransferOwnershipHelper, Test {
             {
                 string memory outputPath =
                     string.concat(root, "/scripts/outputs/testnet/3_DeployedStrategies.json");
-                console.log("PATH: ", outputPath);
+                console2.log("PATH: ", outputPath);
                 deploymentConfig = vm.readFile(outputPath);
             }
 
@@ -89,7 +89,7 @@ contract TransferOwnerships is Script, TransferOwnershipHelper, Test {
             {
                 string memory outputPath =
                     string.concat(root, "/scripts/outputs/testnet/6_ChangePeripherials.json");
-                console.log("PATH: ", outputPath);
+                console2.log("PATH: ", outputPath);
                 deploymentConfig = vm.readFile(outputPath);
             }
 
@@ -107,20 +107,20 @@ contract TransferOwnerships is Script, TransferOwnershipHelper, Test {
             /* ***** Action ***** */
             vm.startBroadcast(vm.envUint("PRIVATE_KEY"));
             if (transferMiniPoolRole) {
-                console.log("MiniPool ownership transfer");
+                console2.log("MiniPool ownership transfer");
                 _transferMiniPoolOwnership(miniPoolRole);
             } else {
-                console.log("MainPool ownership transfer");
+                console2.log("MainPool ownership transfer");
                 _transferOwnershipsAndRenounceRoles(roles);
             }
             vm.stopBroadcast();
         } else if (vm.envBool("MAINNET")) {
-            console.log("Mainnet Deployment");
+            console2.log("Mainnet Deployment");
             /* *********** Lending pool settings *********** */
             {
                 string memory outputPath =
                     string.concat(root, "/scripts/outputs/mainnet/1_LendingPoolContracts.json");
-                console.log("PATH: ", outputPath);
+                console2.log("PATH: ", outputPath);
                 deploymentConfig = vm.readFile(outputPath);
             }
 
@@ -141,7 +141,7 @@ contract TransferOwnerships is Script, TransferOwnershipHelper, Test {
             {
                 string memory outputPath =
                     string.concat(root, "/scripts/outputs/mainnet/2_MiniPoolContracts.json");
-                console.log("PATH: ", outputPath);
+                console2.log("PATH: ", outputPath);
                 deploymentConfig = vm.readFile(outputPath);
             }
 
@@ -153,7 +153,7 @@ contract TransferOwnerships is Script, TransferOwnershipHelper, Test {
             {
                 string memory outputPath =
                     string.concat(root, "/scripts/outputs/mainnet/3_DeployedStrategies.json");
-                console.log("PATH: ", outputPath);
+                console2.log("PATH: ", outputPath);
                 deploymentConfig = vm.readFile(outputPath);
             }
 
@@ -175,7 +175,7 @@ contract TransferOwnerships is Script, TransferOwnershipHelper, Test {
             {
                 string memory outputPath =
                     string.concat(root, "/scripts/outputs/mainnet/6_ChangePeripherials.json");
-                console.log("PATH: ", outputPath);
+                console2.log("PATH: ", outputPath);
                 deploymentConfig = vm.readFile(outputPath);
             }
             contracts.rewarder = Rewarder(deploymentConfig.readAddress(".rewarder"));
@@ -192,15 +192,15 @@ contract TransferOwnerships is Script, TransferOwnershipHelper, Test {
             /* ***** Action ***** */
             vm.startBroadcast(vm.envUint("PRIVATE_KEY"));
             if (transferMiniPoolRole) {
-                console.log("MiniPool ownership transfer");
+                console2.log("MiniPool ownership transfer");
                 _transferMiniPoolOwnership(miniPoolRole);
             } else {
-                console.log("MainPool ownership transfer");
+                console2.log("MainPool ownership transfer");
                 _transferOwnershipsAndRenounceRoles(roles);
             }
             vm.stopBroadcast();
         } else {
-            console.log("No deployment type selected in .env");
+            console2.log("No deployment type selected in .env");
         }
     }
 }

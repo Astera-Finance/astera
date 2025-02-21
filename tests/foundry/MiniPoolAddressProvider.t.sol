@@ -71,13 +71,13 @@ contract MiniPoolAddressProvider is Common {
         {
             address miniPoolImpl = address(new MockedContractToUpdate()); // Second version of aToken6909
             /* Test update */
-            console.log("1. Impl: ", miniPoolImpl);
-            console.log(
+            console2.log("1. Impl: ", miniPoolImpl);
+            console2.log(
                 "1. aToken6909Impl", miniPoolContracts.miniPoolAddressesProvider.getMiniPool(0)
             );
             miniPoolContracts.miniPoolAddressesProvider.setMiniPoolImpl(miniPoolImpl, 0);
             address aToken6909Proxy = miniPoolContracts.miniPoolAddressesProvider.getMiniPool(0);
-            console.log("2. aToken6909Impl", aToken6909Proxy);
+            console2.log("2. aToken6909Impl", aToken6909Proxy);
             vm.startPrank(address(miniPoolContracts.miniPoolAddressesProvider));
             assertEq(
                 miniPoolImpl,
@@ -97,23 +97,23 @@ contract MiniPoolAddressProvider is Common {
             address miniPoolImpl = address(new MiniPool());
 
             /* Set on not deployed miniPool */
-            console.log("Revert 1");
+            console2.log("Revert 1");
             vm.expectRevert(bytes(Errors.PAP_POOL_ID_OUT_OF_RANGE));
             miniPoolAddressesProvider.setMiniPoolImpl(miniPoolImpl, 0);
 
             /* Test setting impl with older or the same version (shall revert) */
-            console.log("Revert 2");
+            console2.log("Revert 2");
             vm.expectRevert();
             miniPoolContracts.miniPoolAddressesProvider.setMiniPoolImpl(miniPoolImpl, 0);
 
             /* Test setting of the same address (shall revert) */
-            console.log("Revert 3");
+            console2.log("Revert 3");
             miniPoolImpl = miniPoolContracts.miniPoolAddressesProvider.getMiniPool(0);
             vm.expectRevert();
             miniPoolContracts.miniPoolAddressesProvider.setMiniPoolImpl(miniPoolImpl, 0);
 
             /* Set with Id out of range */
-            console.log("Revert 4");
+            console2.log("Revert 4");
             address newMiniPoolImpl = address(new MockedContractToUpdate());
             vm.expectRevert(bytes(Errors.PAP_POOL_ID_OUT_OF_RANGE));
             miniPoolContracts.miniPoolAddressesProvider.setMiniPoolImpl(newMiniPoolImpl, 2);
@@ -125,15 +125,15 @@ contract MiniPoolAddressProvider is Common {
         {
             address aToken6909Impl = address(new MockedContractToUpdate()); // Second version of aToken6909
             /* Test update */
-            console.log("1. Impl: ", aToken6909Impl);
-            console.log(
+            console2.log("1. Impl: ", aToken6909Impl);
+            console2.log(
                 "1. aToken6909Impl",
                 miniPoolContracts.miniPoolAddressesProvider.getMiniPoolToAERC6909(0)
             );
             miniPoolContracts.miniPoolAddressesProvider.setAToken6909Impl(aToken6909Impl, 0);
             address aToken6909Proxy =
                 miniPoolContracts.miniPoolAddressesProvider.getMiniPoolToAERC6909(0);
-            console.log("2. aToken6909Impl", aToken6909Proxy);
+            console2.log("2. aToken6909Impl", aToken6909Proxy);
             vm.startPrank(address(miniPoolContracts.miniPoolAddressesProvider));
             assertEq(
                 aToken6909Impl,
@@ -153,23 +153,23 @@ contract MiniPoolAddressProvider is Common {
             address aToken6909Impl = address(new ATokenERC6909());
 
             /* Set on not deployed miniPool */
-            console.log("Revert 1");
+            console2.log("Revert 1");
             vm.expectRevert(bytes(Errors.PAP_POOL_ID_OUT_OF_RANGE));
             miniPoolAddressesProvider.setAToken6909Impl(aToken6909Impl, 0);
 
             /* Test setting impl with older or the same version (shall revert) */
-            console.log("Revert 2");
+            console2.log("Revert 2");
             vm.expectRevert();
             miniPoolContracts.miniPoolAddressesProvider.setAToken6909Impl(aToken6909Impl, 0);
 
             /* Test setting of the same address (shall revert) */
-            console.log("Revert 3");
+            console2.log("Revert 3");
             aToken6909Impl = miniPoolContracts.miniPoolAddressesProvider.getMiniPoolToAERC6909(0);
             vm.expectRevert();
             miniPoolContracts.miniPoolAddressesProvider.setAToken6909Impl(aToken6909Impl, 0);
 
             /* Set with Id out of range */
-            console.log("Revert 4");
+            console2.log("Revert 4");
             address newAToken6909Impl = address(new MockedContractToUpdate());
             vm.expectRevert(bytes(Errors.PAP_POOL_ID_OUT_OF_RANGE));
             miniPoolContracts.miniPoolAddressesProvider.setAToken6909Impl(newAToken6909Impl, 2);
@@ -184,15 +184,15 @@ contract MiniPoolAddressProvider is Common {
         {
             address miniPoolConfigImpl = address(new MockedContractToUpdate()); // Second version of MiniPoolConfig
             /* Test update */
-            console.log("1. Impl: ", miniPoolConfigImpl);
-            console.log(
+            console2.log("1. Impl: ", miniPoolConfigImpl);
+            console2.log(
                 "1. MiniPoolConfigurator",
                 miniPoolContracts.miniPoolAddressesProvider.getMiniPoolConfigurator()
             );
             miniPoolContracts.miniPoolAddressesProvider.setMiniPoolConfigurator(miniPoolConfigImpl);
             address miniPoolConfigProxy =
                 miniPoolContracts.miniPoolAddressesProvider.getMiniPoolConfigurator();
-            console.log("2. MiniPoolConfigurator", miniPoolConfigProxy);
+            console2.log("2. MiniPoolConfigurator", miniPoolConfigProxy);
             vm.prank(address(miniPoolContracts.miniPoolAddressesProvider));
             assertEq(
                 InitializableImmutableAdminUpgradeabilityProxy(payable(miniPoolConfigProxy))
@@ -204,13 +204,13 @@ contract MiniPoolAddressProvider is Common {
         /* Test initialization (with new address provider) */
         {
             address miniPoolConfigImpl = address(new MiniPoolConfigurator());
-            console.log("3. Impl: ", miniPoolConfigImpl);
-            console.log(
+            console2.log("3. Impl: ", miniPoolConfigImpl);
+            console2.log(
                 "3. MiniPoolConfigurator", miniPoolAddressesProvider.getMiniPoolConfigurator()
             );
             miniPoolAddressesProvider.setMiniPoolConfigurator(miniPoolConfigImpl);
             address miniPoolConfigProxy = miniPoolAddressesProvider.getMiniPoolConfigurator();
-            console.log("2. MiniPoolConfigurator", miniPoolConfigProxy);
+            console2.log("2. MiniPoolConfigurator", miniPoolConfigProxy);
             vm.prank(address(miniPoolAddressesProvider));
             assertEq(
                 InitializableImmutableAdminUpgradeabilityProxy(payable(miniPoolConfigProxy))
@@ -231,13 +231,13 @@ contract MiniPoolAddressProvider is Common {
         /* ***** Treasury ***** */
         {
             address treasury = makeAddr("Treasury");
-            console.log(
+            console2.log(
                 "1. Treasury",
                 miniPoolContracts.miniPoolAddressesProvider.getMiniPoolCod3xTreasury()
             );
             vm.prank(address(miniPoolContracts.miniPoolConfigurator));
             miniPoolContracts.miniPoolAddressesProvider.setCod3xTreasury(treasury);
-            console.log(
+            console2.log(
                 "2. Treasury",
                 miniPoolContracts.miniPoolAddressesProvider.getMiniPoolCod3xTreasury()
             );
@@ -259,7 +259,7 @@ contract MiniPoolAddressProvider is Common {
                 1e27
             );
 
-            console.log(
+            console2.log(
                 "1. FlowLimit",
                 miniPoolContracts.flowLimiter.getFlowLimit(
                     tokens[0], address(miniPoolContracts.miniPoolImpl)
@@ -269,7 +269,7 @@ contract MiniPoolAddressProvider is Common {
             miniPoolContracts.miniPoolAddressesProvider.setFlowLimit(
                 tokens[0], address(miniPool), flowLimit
             );
-            console.log(
+            console2.log(
                 "2. FlowLimit",
                 miniPoolContracts.flowLimiter.getFlowLimit(tokens[0], address(miniPool))
             );

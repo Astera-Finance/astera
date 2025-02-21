@@ -6,7 +6,7 @@ import "./DeployDataTypes.sol";
 import "./helpers/LendingPoolHelper.s.sol";
 import "lib/forge-std/src/Test.sol";
 import "lib/forge-std/src/Script.sol";
-import "lib/forge-std/src/console.sol";
+import "lib/forge-std/src/console2.sol";
 
 contract DeployLendingPool is Script, LendingPoolHelper, Test {
     using stdJson for string;
@@ -154,15 +154,15 @@ contract DeployLendingPool is Script, LendingPoolHelper, Test {
 
         vm.writeJson(output, path);
 
-        console.log("PROTOCOL DEPLOYED (check out addresses on %s)", path);
+        console2.log("PROTOCOL DEPLOYED (check out addresses on %s)", path);
     }
 
     function run() external returns (DeployedContracts memory) {
-        console.log("1_DeployLendingPool");
+        console2.log("1_DeployLendingPool");
         // Config fetching
         string memory root = vm.projectRoot();
         string memory path = string.concat(root, "/scripts/inputs/1_DeploymentConfig.json");
-        console.log("PATH: ", path);
+        console2.log("PATH: ", path);
         string memory deploymentConfig = vm.readFile(path);
         General memory general = abi.decode(deploymentConfig.parseRaw(".general"), (General));
 
@@ -180,13 +180,13 @@ contract DeployLendingPool is Script, LendingPoolHelper, Test {
         address wethGateway = deploymentConfig.readAddress(".wethGateway");
 
         if (!vm.envBool("MAINNET")) {
-            console.log("Testnet Deployment");
+            console2.log("Testnet Deployment");
             if (!vm.exists(string.concat(root, "/scripts/outputs/testnet"))) {
                 vm.createDir(string.concat(root, "/scripts/outputs/testnet"), true);
             }
             /* Read all mocks deployed */
             path = string.concat(root, "/scripts/outputs/testnet/0_MockedTokens.json");
-            console.log("PATH: ", path);
+            console2.log("PATH: ", path);
             string memory config = vm.readFile(path);
             address[] memory mockedTokens = config.readAddressArray(".mockedTokens");
 
@@ -216,7 +216,7 @@ contract DeployLendingPool is Script, LendingPoolHelper, Test {
             }
             /* Deploy to testnet */
             vm.startBroadcast(vm.envUint("PRIVATE_KEY"));
-            console.log("Deploying lending pool infra");
+            console2.log("Deploying lending pool infra");
             deployLendingPoolInfra(
                 general,
                 volatileStrategies,
@@ -231,7 +231,7 @@ contract DeployLendingPool is Script, LendingPoolHelper, Test {
 
             path = string.concat(root, "/scripts/outputs/testnet/1_LendingPoolContracts.json");
         } else if (vm.envBool("MAINNET")) {
-            console.log("Mainnet Deployment");
+            console2.log("Mainnet Deployment");
             if (!vm.exists(string.concat(root, "/scripts/outputs/mainnet"))) {
                 vm.createDir(string.concat(root, "/scripts/outputs/mainnet"), true);
             }
@@ -251,7 +251,7 @@ contract DeployLendingPool is Script, LendingPoolHelper, Test {
 
             path = string.concat(root, "/scripts/outputs/mainnet/1_LendingPoolContracts.json");
         } else {
-            console.log("No deployment type selected in .env");
+            console2.log("No deployment type selected in .env");
         }
         checkOwnerships();
         checkContractAddresses(poolReserversConfig);
