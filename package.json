@@ -1,0 +1,19 @@
+{
+  "name": "cod3x-lend",
+  "version": "1.0.0",
+  "description": "[INTERNAL ONLY] For the development of Cod3x Lend Protocol Features.",
+  "main": "index.js",
+  "directories": {
+    "lib": "lib",
+    "test": "tests"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@pythnetwork/pyth-sdk-solidity": "^4.0.0"
+  }
+}

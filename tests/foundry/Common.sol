@@ -63,6 +63,8 @@ import
     "contracts/protocol/core/interestRateStrategies/minipool/MiniPoolDefaultReserveInterestRate.sol";
 import "contracts/mocks/oracle/PriceOracle.sol";
 import {MockVaultUnit} from "contracts/mocks/tokens/MockVaultUnit.sol";
+import {MockPyth} from "node_modules/@pythnetwork/pyth-sdk-solidity/MockPyth.sol";
+import {PythAggregatorV3} from "node_modules/@pythnetwork/pyth-sdk-solidity/PythAggregatorV3.sol";
 
 event Deposit(address indexed reserve, address user, address indexed onBehalfOf, uint256 amount);
 
@@ -169,7 +171,9 @@ contract Common is Test {
 
     struct CommonContracts {
         address[] aggregators;
+        address[] aggregatorsPyth;
         Oracle oracle;
+        Oracle oraclePyth;
         WETHGateway wETHGateway;
         AToken aToken;
         VariableDebtToken variableDebtToken;
@@ -195,7 +199,7 @@ contract Common is Test {
     address constant FALLBACK_ORACLE = address(0);
     uint256 constant TVL_CAP = 1e20;
     uint256 constant PERCENTAGE_FACTOR = 10_000;
-    uint8 constant PRICE_FEED_DECIMALS = 8;
+    uint32 constant PRICE_FEED_DECIMALS = 8;
     uint8 constant RAY_DECIMALS = 27;
 
     // Tokens addresses
@@ -405,6 +409,19 @@ contract Common is Test {
             _lendingPoolConfigurator
         );
 
+        (commonContracts.aggregatorsPyth, timeouts) =
+            fixture_getTokenPriceFeedsPyth(erc20tokens, prices);
+
+        commonContracts.oraclePyth = new Oracle(
+            tokens,
+            commonContracts.aggregatorsPyth,
+            timeouts,
+            FALLBACK_ORACLE,
+            BASE_CURRENCY,
+            BASE_CURRENCY_UNIT,
+            _lendingPoolConfigurator
+        );
+
         commonContracts.wETHGateway = new WETHGateway(WETH);
     }
 
@@ -566,6 +583,34 @@ contract Common is Test {
             _priceFeedMocks[idx] =
                 new MockAggregator(_prices[idx], int256(uint256(_tokens[idx].decimals())));
             _aggregators[idx] = address(_priceFeedMocks[idx]);
+            _timeouts[idx] = 0;
+        }
+    }
+
+    function fixture_getTokenPriceFeedsPyth(ERC20[] memory _tokens, int256[] memory _prices)
+        public
+        returns (address[] memory _aggregators, uint256[] memory _timeouts)
+    {
+        require(_tokens.length == _prices.length, "Length of params shall be equal");
+
+        MockPyth _priceFeedMock = new MockPyth(10000, 0);
+        _aggregators = new address[](_tokens.length);
+        _timeouts = new uint256[](_tokens.length);
+        for (uint256 idx; idx < _tokens.length; idx++) {
+            bytes[] memory priceFeedData = new bytes[](1);
+            priceFeedData[0] = _priceFeedMock.createPriceFeedUpdateData(
+                bytes32(idx + 1),
+                int64(_prices[idx]),
+                0,
+                int32(PRICE_FEED_DECIMALS),
+                int64(_prices[idx]),
+                0,
+                uint64(block.timestamp),
+                uint64(block.timestamp)
+            );
+            _priceFeedMock.updatePriceFeeds(priceFeedData);
+            _aggregators[idx] =
+                address(new PythAggregatorV3(address(_priceFeedMock), bytes32(idx + 1)));
             _timeouts[idx] = 0;
         }
     }
