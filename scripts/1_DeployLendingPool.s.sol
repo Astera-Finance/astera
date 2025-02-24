@@ -25,6 +25,7 @@ contract DeployLendingPool is Script, LendingPoolHelper, Test {
         );
         assertEq(contracts.oracle.owner(), vm.addr(vm.envUint("PRIVATE_KEY")));
         assertEq(contracts.wethGateway.owner(), vm.addr(vm.envUint("PRIVATE_KEY")));
+        assertEq(contracts.cod3xLendDataProvider.owner(), vm.addr(vm.envUint("PRIVATE_KEY")));
         for (uint8 idx = 0; idx < contracts.piStrategies.length; idx++) {
             assertEq(contracts.piStrategies[idx].owner(), vm.addr(vm.envUint("PRIVATE_KEY")));
         }
@@ -77,6 +78,22 @@ contract DeployLendingPool is Script, LendingPoolHelper, Test {
                 "Wrong liquidationBonus"
             );
             assertEq(staticData.symbol, poolReserversConfig[idx].symbol, "Wrong Symbol");
+            assertEq(staticData.isActive, true, "reserve is not active");
+            assertEq(staticData.borrowingEnabled, true, "borrowing not enabled");
+            assertEq(staticData.flashloanEnabled, true, "floshloan not enabled");
+            assertEq(staticData.isFrozen, false, "reserve is frozen");
+            assertEq(staticData.usageAsCollateralEnabled, true, "collateral usage not enabled");
+            assertEq(
+                staticData.cod3xReserveFactor,
+                poolReserversConfig[idx].reserveFactor,
+                "wrong cod3xReserveFactor"
+            );
+            assertEq(
+                staticData.miniPoolOwnerReserveFactor,
+                poolReserversConfig[idx].miniPoolOwnerFee,
+                "wrong miniPoolOwnerReserveFactor"
+            );
+            assertEq(staticData.depositCap, 0, "Wrong deposit cap");
         }
     }
 

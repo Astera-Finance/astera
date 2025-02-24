@@ -232,6 +232,9 @@ contract LendingPoolHelper {
         for (uint8 idx = 0; idx < _reservesConfig.length; idx++) {
             PoolReserversConfig memory reserveConfig = _reservesConfig[idx];
 
+            _contracts.lendingPoolConfigurator.disableBorrowingOnReserve(
+                reserveConfig.tokenAddress, reserveConfig.reserveType
+            );
             _contracts.lendingPoolConfigurator.configureReserveAsCollateral(
                 reserveConfig.tokenAddress,
                 reserveConfig.reserveType,
@@ -239,6 +242,35 @@ contract LendingPoolHelper {
                 reserveConfig.liquidationThreshold,
                 reserveConfig.liquidationBonus
             );
+
+            uint256 tokenPrice = _contracts.oracle.getAssetPrice(reserveConfig.tokenAddress);
+
+            uint256 tokenAmount = (usdBootstrapAmount * 10 ** PRICE_FEED_DECIMALS) / tokenPrice
+                / (10 ** (18 - IERC20Detailed(reserveConfig.tokenAddress).decimals()));
+            console.log(
+                "Bootstrap amount: %s %s for price: %s",
+                tokenAmount,
+                IERC20Detailed(reserveConfig.tokenAddress).symbol(),
+                tokenPrice
+            );
+            IERC20Detailed(reserveConfig.tokenAddress).approve(
+                address(_contracts.lendingPool), tokenAmount
+            );
+            if (msg.sender != FOUNDRY_DEFAULT) {
+                _contracts.lendingPool.deposit(
+                    reserveConfig.tokenAddress,
+                    true,
+                    tokenAmount,
+                    _contracts.lendingPoolAddressesProvider.getPoolAdmin()
+                );
+                DataTypes.ReserveData memory reserveData = _contracts.lendingPool.getReserveData(
+                    reserveConfig.tokenAddress, reserveConfig.reserveType
+                );
+                require(
+                    IERC20Detailed(reserveData.aTokenAddress).totalSupply() == tokenAmount,
+                    "TotalSupply not equal to deposited amount!"
+                );
+            }
 
             if (reserveConfig.borrowingEnabled) {
                 _contracts.lendingPoolConfigurator.enableBorrowingOnReserve(
@@ -248,36 +280,6 @@ contract LendingPoolHelper {
             _contracts.lendingPoolConfigurator.setCod3xReserveFactor(
                 reserveConfig.tokenAddress, reserveConfig.reserveType, reserveConfig.reserveFactor
             );
-
-            uint256 tokenPrice = _contracts.oracle.getAssetPrice(reserveConfig.tokenAddress);
-            if (usdBootstrapAmount > tokenPrice) {
-                uint256 tokenAmount = (usdBootstrapAmount / tokenPrice) * 10 ** PRICE_FEED_DECIMALS
-                    / (10 ** (18 - IERC20Detailed(reserveConfig.tokenAddress).decimals()));
-                console.log(
-                    "Bootstrap amount: %s %s for price: %s",
-                    tokenAmount,
-                    IERC20Detailed(reserveConfig.tokenAddress).symbol(),
-                    tokenPrice
-                );
-                IERC20Detailed(reserveConfig.tokenAddress).approve(
-                    address(_contracts.lendingPool), tokenAmount
-                );
-                if (msg.sender != FOUNDRY_DEFAULT) {
-                    _contracts.lendingPool.deposit(
-                        reserveConfig.tokenAddress,
-                        true,
-                        tokenAmount,
-                        _contracts.lendingPoolAddressesProvider.getPoolAdmin()
-                    );
-                    DataTypes.ReserveData memory reserveData = _contracts.lendingPool.getReserveData(
-                        reserveConfig.tokenAddress, reserveConfig.reserveType
-                    );
-                    require(
-                        IERC20Detailed(reserveData.aTokenAddress).totalSupply() == tokenAmount,
-                        "TotalSupply not equal to deposited amount!"
-                    );
-                }
-            }
 
             _contracts.lendingPoolConfigurator.enableFlashloan(
                 reserveConfig.tokenAddress, reserveConfig.reserveType

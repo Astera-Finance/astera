@@ -85,15 +85,6 @@ contract InitAndConfigurationHelper {
                 reserveConfig.liquidationBonus
             );
 
-            if (reserveConfig.borrowingEnabled) {
-                _contracts.lendingPoolConfigurator.enableBorrowingOnReserve(
-                    reserveConfig.tokenAddress, reserveConfig.reserveType
-                );
-            }
-            _contracts.lendingPoolConfigurator.setCod3xReserveFactor(
-                reserveConfig.tokenAddress, reserveConfig.reserveType, reserveConfig.reserveFactor
-            );
-
             uint256 tokenPrice = _contracts.oracle.getAssetPrice(reserveConfig.tokenAddress);
             if (usdBootstrapAmount > tokenPrice) {
                 uint256 tokenAmount = (usdBootstrapAmount / tokenPrice) * 10 ** PRICE_FEED_DECIMALS
@@ -109,7 +100,7 @@ contract InitAndConfigurationHelper {
                 );
                 _contracts.lendingPool.deposit(
                     reserveConfig.tokenAddress,
-                    true,
+                    reserveConfig.reserveType,
                     tokenAmount,
                     contracts.lendingPoolAddressesProvider.getPoolAdmin()
                 );
@@ -121,7 +112,14 @@ contract InitAndConfigurationHelper {
                     "TotalSupply not equal to deposited amount!"
                 );
             }
-
+            if (reserveConfig.borrowingEnabled) {
+                _contracts.lendingPoolConfigurator.enableBorrowingOnReserve(
+                    reserveConfig.tokenAddress, reserveConfig.reserveType
+                );
+            }
+            _contracts.lendingPoolConfigurator.setCod3xReserveFactor(
+                reserveConfig.tokenAddress, reserveConfig.reserveType, reserveConfig.reserveFactor
+            );
             _contracts.lendingPoolConfigurator.enableFlashloan(
                 reserveConfig.tokenAddress, reserveConfig.reserveType
             );
