@@ -148,8 +148,6 @@ contract AddAssets is Script, InitAndConfigurationHelper, Test {
             LendingPoolConfigurator(config.readAddress(".lendingPoolConfigurator"));
         contracts.lendingPoolAddressesProvider =
             LendingPoolAddressesProvider(config.readAddress(".lendingPoolAddressesProvider"));
-        contracts.aTokensAndRatesHelper =
-            ATokensAndRatesHelper(config.readAddress(".aTokensAndRatesHelper"));
         contracts.cod3xLendDataProvider =
             Cod3xLendDataProvider(config.readAddress(".cod3xLendDataProvider"));
         contracts.lendingPool = LendingPool(config.readAddress(".lendingPool"));

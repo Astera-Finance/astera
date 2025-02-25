@@ -24,7 +24,6 @@ import {MiniPoolAddressesProvider} from
     "contracts/protocol/configuration/MiniPoolAddressProvider.sol";
 import {MiniPoolConfigurator} from "contracts/protocol/core/minipool/MiniPoolConfigurator.sol";
 import {FlowLimiter} from "contracts/protocol/core/minipool/FlowLimiter.sol";
-import {ATokensAndRatesHelper} from "contracts/deployments/ATokensAndRatesHelper.sol";
 import {AToken} from "contracts/protocol/tokenization/ERC20/AToken.sol";
 import {ATokenERC6909} from "contracts/protocol/tokenization/ERC6909/ATokenERC6909.sol";
 import {VariableDebtToken} from "contracts/protocol/tokenization/ERC20/VariableDebtToken.sol";
@@ -49,7 +48,6 @@ struct DeployedContracts {
     MiniPoolDefaultReserveInterestRateStrategy[] miniPoolStableStrategies;
     MiniPoolPiReserveInterestRateStrategy[] miniPoolPiStrategies;
     Cod3xLendDataProvider cod3xLendDataProvider;
-    ATokensAndRatesHelper aTokensAndRatesHelper;
     AToken aToken;
     VariableDebtToken variableDebtToken;
     ATokenERC6909 aTokenErc6909Impl;

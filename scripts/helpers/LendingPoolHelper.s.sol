@@ -17,7 +17,6 @@ import
 import "contracts/protocol/core/lendingpool/LendingPool.sol";
 import "contracts/protocol/core/lendingpool/LendingPoolConfigurator.sol";
 
-import "contracts/deployments/ATokensAndRatesHelper.sol";
 import "contracts/protocol/tokenization/ERC20/AToken.sol";
 import "contracts/protocol/tokenization/ERC20/VariableDebtToken.sol";
 import {WadRayMath} from "contracts/protocol/libraries/math/WadRayMath.sol";
@@ -75,11 +74,6 @@ contract LendingPoolHelper {
         address lendingPoolConfiguratorProxy =
             contracts.lendingPoolAddressesProvider.getLendingPoolConfigurator();
         contracts.lendingPoolConfigurator = LendingPoolConfigurator(lendingPoolConfiguratorProxy);
-        contracts.aTokensAndRatesHelper = new ATokensAndRatesHelper(
-            payable(lendingPoolProxy),
-            address(contracts.lendingPoolAddressesProvider),
-            lendingPoolConfiguratorProxy
-        );
 
         /* Pause the pool for the time of the deployment */
         contracts.lendingPoolAddressesProvider.setEmergencyAdmin(deployer); // temporary the deployer
@@ -259,7 +253,7 @@ contract LendingPoolHelper {
             if (msg.sender != FOUNDRY_DEFAULT) {
                 _contracts.lendingPool.deposit(
                     reserveConfig.tokenAddress,
-                    true,
+                    reserveConfig.reserveType,
                     tokenAmount,
                     _contracts.lendingPoolAddressesProvider.getPoolAdmin()
                 );
@@ -270,13 +264,27 @@ contract LendingPoolHelper {
                     IERC20Detailed(reserveData.aTokenAddress).totalSupply() == tokenAmount,
                     "TotalSupply not equal to deposited amount!"
                 );
+                if (reserveConfig.borrowingEnabled) {
+                    _contracts.lendingPoolConfigurator.enableBorrowingOnReserve(
+                        reserveConfig.tokenAddress, reserveConfig.reserveType
+                    );
+                    _contracts.lendingPool.borrow(
+                        reserveConfig.tokenAddress,
+                        reserveConfig.reserveType,
+                        tokenAmount / 2,
+                        _contracts.lendingPoolAddressesProvider.getPoolAdmin()
+                    );
+                    reserveData = _contracts.lendingPool.getReserveData(
+                        reserveConfig.tokenAddress, reserveConfig.reserveType
+                    );
+                    require(
+                        IERC20Detailed(reserveData.variableDebtTokenAddress).totalSupply()
+                            == tokenAmount / 2,
+                        "TotalSupply of debt not equal to borrowed amount!"
+                    );
+                }
             }
 
-            if (reserveConfig.borrowingEnabled) {
-                _contracts.lendingPoolConfigurator.enableBorrowingOnReserve(
-                    reserveConfig.tokenAddress, reserveConfig.reserveType
-                );
-            }
             _contracts.lendingPoolConfigurator.setCod3xReserveFactor(
                 reserveConfig.tokenAddress, reserveConfig.reserveType, reserveConfig.reserveFactor
             );

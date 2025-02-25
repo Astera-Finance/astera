@@ -93,8 +93,6 @@ contract Reconfigure is Script, InitAndConfigurationHelper, Test {
             );
             contracts.lendingPoolConfigurator =
                 LendingPoolConfigurator(deploymentConfig.readAddress(".lendingPoolConfigurator"));
-            contracts.aTokensAndRatesHelper =
-                ATokensAndRatesHelper(deploymentConfig.readAddress(".aTokensAndRatesHelper"));
             contracts.oracle = Oracle(deploymentConfig.readAddress(".oracle"));
 
             readAddressesToContracts(
@@ -199,8 +197,6 @@ contract Reconfigure is Script, InitAndConfigurationHelper, Test {
             );
             contracts.lendingPoolConfigurator =
                 LendingPoolConfigurator(deploymentConfig.readAddress(".lendingPoolConfigurator"));
-            contracts.aTokensAndRatesHelper =
-                ATokensAndRatesHelper(deploymentConfig.readAddress(".aTokensAndRatesHelper"));
             contracts.oracle = Oracle(deploymentConfig.readAddress(".oracle"));
 
             readAddressesToContracts(

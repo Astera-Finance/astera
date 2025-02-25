@@ -229,6 +229,10 @@ contract MiniPoolHelper {
     ) internal {
         for (uint8 idx = 0; idx < _reservesConfig.length; idx++) {
             PoolReserversConfig memory reserveConfig = _reservesConfig[idx];
+            _contracts.miniPoolConfigurator.disableBorrowingOnReserve(
+                reserveConfig.tokenAddress, IMiniPool(_mp)
+            );
+
             _contracts.miniPoolConfigurator.configureReserveAsCollateral(
                 reserveConfig.tokenAddress,
                 reserveConfig.baseLtv,
@@ -241,63 +245,73 @@ contract MiniPoolHelper {
                 reserveConfig.tokenAddress, IMiniPool(_mp)
             );
 
+            uint256 tokenPrice = _contracts.oracle.getAssetPrice(reserveConfig.tokenAddress);
+            uint256 tokenAmount = (_usdBootstrapAmount * 10 ** PRICE_FEED_DECIMALS) / tokenPrice
+                / (10 ** (18 - IERC20Detailed(reserveConfig.tokenAddress).decimals()));
+            console.log(
+                "MiniPool Bootstrap amount: %s %s for price: %s",
+                tokenAmount,
+                IERC20Detailed(reserveConfig.tokenAddress).symbol(),
+                tokenPrice
+            );
+            console.log(
+                "Balance of %s: %s",
+                _contracts.miniPoolAddressesProvider.getPoolAdmin(
+                    _contracts.miniPoolAddressesProvider.getMiniPoolId(_mp)
+                ),
+                IERC20Detailed(reserveConfig.tokenAddress).balanceOf(
+                    _contracts.miniPoolAddressesProvider.getPoolAdmin(
+                        _contracts.miniPoolAddressesProvider.getMiniPoolId(_mp)
+                    )
+                )
+            );
+            console.log("Token address: ", reserveConfig.tokenAddress);
+            // DataTypes.ReserveData memory reserveData = _contracts.lendingPool.getReserveData(
+            //     reserveConfig.tokenAddress, reserveConfig.reserveType
+            // );
+            IERC20Detailed(reserveConfig.tokenAddress).approve(address(_mp), tokenAmount);
+            IMiniPool(_mp).deposit(
+                reserveConfig.tokenAddress,
+                false,
+                tokenAmount,
+                _contracts.miniPoolAddressesProvider.getPoolAdmin(
+                    _contracts.miniPoolAddressesProvider.getMiniPoolId(_mp)
+                )
+            );
+            DataTypes.MiniPoolReserveData memory miniPoolReserveData =
+                IMiniPool(_mp).getReserveData(reserveConfig.tokenAddress);
+            require(
+                IAERC6909(miniPoolReserveData.aErc6909).totalSupply(miniPoolReserveData.aTokenID)
+                    == tokenAmount,
+                "TotalSupply not equal to deposited amount!"
+            );
+
             if (reserveConfig.borrowingEnabled) {
                 _contracts.miniPoolConfigurator.enableBorrowingOnReserve(
                     reserveConfig.tokenAddress, IMiniPool(_mp)
                 );
-            }
-
-            uint256 tokenPrice = _contracts.oracle.getAssetPrice(reserveConfig.tokenAddress);
-            if (_usdBootstrapAmount > tokenPrice) {
-                uint256 tokenAmount = (_usdBootstrapAmount / tokenPrice) * 10 ** PRICE_FEED_DECIMALS
-                    / (10 ** (18 - IERC20Detailed(reserveConfig.tokenAddress).decimals()));
-                console.log(
-                    "MiniPool Bootstrap amount: %s %s for price: %s",
-                    tokenAmount,
-                    IERC20Detailed(reserveConfig.tokenAddress).symbol(),
-                    tokenPrice
-                );
-                console.log(
-                    "Balance of %s: %s",
-                    _contracts.miniPoolAddressesProvider.getPoolAdmin(
-                        _contracts.miniPoolAddressesProvider.getMiniPoolId(_mp)
-                    ),
-                    IERC20Detailed(reserveConfig.tokenAddress).balanceOf(
-                        _contracts.miniPoolAddressesProvider.getPoolAdmin(
-                            _contracts.miniPoolAddressesProvider.getMiniPoolId(_mp)
-                        )
-                    )
-                );
-                console.log("Token address: ", reserveConfig.tokenAddress);
-                // DataTypes.ReserveData memory reserveData = _contracts.lendingPool.getReserveData(
-                //     reserveConfig.tokenAddress, reserveConfig.reserveType
-                // );
-                IERC20Detailed(reserveConfig.tokenAddress).approve(address(_mp), tokenAmount);
-                IMiniPool(_mp).deposit(
+                IMiniPool(_mp).borrow(
                     reserveConfig.tokenAddress,
                     false,
-                    tokenAmount,
+                    tokenAmount / 2,
                     _contracts.miniPoolAddressesProvider.getPoolAdmin(
                         _contracts.miniPoolAddressesProvider.getMiniPoolId(_mp)
                     )
                 );
-                DataTypes.MiniPoolReserveData memory miniPoolReserveData =
-                    IMiniPool(_mp).getReserveData(reserveConfig.tokenAddress);
+                miniPoolReserveData = IMiniPool(_mp).getReserveData(reserveConfig.tokenAddress);
                 require(
                     IAERC6909(miniPoolReserveData.aErc6909).totalSupply(
-                        miniPoolReserveData.aTokenID
-                    ) == tokenAmount,
-                    "TotalSupply not equal to deposited amount!"
+                        miniPoolReserveData.variableDebtTokenID
+                    ) == tokenAmount / 2,
+                    "TotalSupply of debt not equal to borrowed amount!"
                 );
             }
-
             _contracts.miniPoolConfigurator.setCod3xReserveFactor(
                 reserveConfig.tokenAddress, reserveConfig.reserveFactor, IMiniPool(_mp)
             );
             _contracts.miniPoolConfigurator.setMinipoolOwnerReserveFactor(
                 reserveConfig.tokenAddress, reserveConfig.miniPoolOwnerFee, IMiniPool(_mp)
             );
-
             _contracts.miniPoolConfigurator.enableFlashloan(
                 reserveConfig.tokenAddress, IMiniPool(_mp)
             );

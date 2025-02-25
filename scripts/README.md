@@ -741,7 +741,6 @@ The deployment process involves configuration files `./inputs/<Nr>_<InputJsonNam
             "0x89eD3c85B5C1EAe681552747a341E0C4Ca32A622",
             "0x72135819B751FF166472dd2f3022D7950bcd1A32"
         ],
-        "aTokensAndRatesHelper": "0x15EBF0a32e3be1d291aab080962bb77E51573438",
         "cod3xLendDataProvider": "0x9f0F725568eBf6EDF1995816546B961A86Db5Dd9",
         "debtTokens": [
             "0x771Cfa5a7615FA3584Df29fc2df5c9B9b25977D0",

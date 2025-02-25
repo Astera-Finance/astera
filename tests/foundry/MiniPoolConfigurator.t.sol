@@ -780,6 +780,36 @@ contract MiniPoolConfiguratorTest is MiniPoolDepositBorrowTest {
         miniPoolContracts.miniPoolConfigurator.activateReserve(tokens[0], IMiniPool(miniPool));
     }
 
+    function testSetMainPoolAdmin(address newAdmin) public {
+        vm.assume(
+            newAdmin != address(0) && newAdmin != address(miniPoolContracts.miniPoolConfigurator)
+        );
+        address poolAdmin = miniPoolContracts.miniPoolAddressesProvider.getMainPoolAdmin();
+        vm.assume(
+            newAdmin != address(0) && newAdmin != poolAdmin
+                && newAdmin != address(miniPoolContracts.miniPoolAddressesProvider)
+        );
+        console2.log("1.poolAdmin: ", poolAdmin);
+        console2.log("newAdmin: ", newAdmin);
+
+        vm.startPrank(newAdmin);
+        vm.expectRevert(bytes(Errors.VL_CALLER_NOT_POOL_ADMIN));
+        miniPoolContracts.miniPoolConfigurator.activateReserve(tokens[0], IMiniPool(miniPool));
+        vm.stopPrank();
+
+        vm.startPrank(deployedContracts.lendingPoolAddressesProvider.owner());
+        deployedContracts.lendingPoolAddressesProvider.setPoolAdmin(newAdmin);
+        vm.stopPrank();
+
+        poolAdmin = miniPoolContracts.miniPoolAddressesProvider.getMainPoolAdmin();
+        console2.log("2.poolAdmin: ", poolAdmin);
+        assertEq(poolAdmin, newAdmin);
+
+        vm.startPrank(newAdmin);
+        miniPoolContracts.miniPoolConfigurator.setCod3xTreasury(makeAddr("treasury"));
+        vm.stopPrank();
+    }
+
     struct UserAccountData {
         uint256 totalCollateralETH;
         uint256 totalDebtETH;

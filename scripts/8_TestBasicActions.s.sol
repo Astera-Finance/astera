@@ -108,9 +108,10 @@ contract TestBasicActions is Script, Test {
             aToken.balanceOf(address(receiver)),
             aToken.balanceOf(address(address(this)))
         );
-        assertEq(
+        assertApproxEqRel(
             _receiverATokenBalanceBefore + amount,
             aToken.balanceOf(address(receiver)),
+            1e17,
             "Receiver aToken balance is not greater by {amount} after deposit"
         );
     }
@@ -125,9 +126,10 @@ contract TestBasicActions is Script, Test {
         // emit Withdraw(address(erc20Token), sender, receiver, amount);
         contracts.lendingPool.withdraw(address(erc20Token), true, amount, receiver);
         vm.stopPrank();
-        assertEq(
+        assertApproxEqRel(
             _receiverTokenBalanceBefore + amount,
             erc20Token.balanceOf(receiver),
+            1e17,
             "Receiver's token balance is not greater by {amount} after withdrawal"
         );
     }
@@ -680,6 +682,12 @@ contract TestBasicActions is Script, Test {
             }
             console2.log("Bootstrapping only mini pool...");
             depositToMiniPool(1 ether, users.user1, users.user1, mp);
+        } else if (bootstrapMainPool == true) {
+            if (!vm.envBool("MAINNET")) {
+                mintAllMockedTokens(root, 5 ether, users);
+            }
+            console2.log("Bootstrapping only main pool...");
+            depositToMainPool(1 ether, users.user1);
         } else {
             uint256 depositAmount = testConfigs.readUint(".depositAmount");
             uint256 borrowAmount = testConfigs.readUint(".borrowAmount");

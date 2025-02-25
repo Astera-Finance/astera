@@ -12,7 +12,6 @@ contract DeployLendingPool is Script, LendingPoolHelper, Test {
     using stdJson for string;
 
     function checkOwnerships() internal {
-        assertEq(contracts.aTokensAndRatesHelper.owner(), vm.addr(vm.envUint("PRIVATE_KEY")));
         assertEq(contracts.cod3xLendDataProvider.owner(), vm.addr(vm.envUint("PRIVATE_KEY")));
         assertEq(contracts.lendingPoolAddressesProvider.owner(), vm.addr(vm.envUint("PRIVATE_KEY")));
         assertEq(
@@ -146,11 +145,6 @@ contract DeployLendingPool is Script, LendingPoolHelper, Test {
             "lendingPoolContracts",
             "cod3xLendDataProvider",
             address(contracts.cod3xLendDataProvider)
-        );
-        vm.serializeAddress(
-            "lendingPoolContracts",
-            "aTokensAndRatesHelper",
-            address(contracts.aTokensAndRatesHelper)
         );
 
         vm.serializeAddress(
