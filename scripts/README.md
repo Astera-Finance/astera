@@ -97,7 +97,7 @@ The deployment process involves configuration files `./inputs/<Nr>_<InputJsonNam
             "marketReferenceCurrencyAggregator": "0x7e860098F58bBFC8648a4311b374B1D669a2bc6B",
             "networkBaseTokenAggregator": "0x71041dddad3595F9CEd3DcCFBe3D1F4b0a16Bb70",
             "treasury": "0x3151CfCA393FE5Eec690feD2a22222A5a073dAAA",
-            "usdBootstrapAmount": 2000000000000000000 // USD amount in wei that needs to be deposited during deployment to avoid inflation attack
+            "usdBootstrapAmount": 40 // USD amount that needs to be deposited during deployment to avoid inflation attack
         },
         // List of reserves and their configurations
         "poolReserversConfig": [
@@ -179,7 +179,7 @@ The deployment process involves configuration files `./inputs/<Nr>_<InputJsonNam
             "marketReferenceCurrencyAggregator": "0x7e860098F58bBFC8648a4311b374B1D669a2bc6B",
             "networkBaseTokenAggregator": "0x71041dddad3595F9CEd3DcCFBe3D1F4b0a16Bb70",
             "treasury": "0x3151CfCA393FE5Eec690feD2a22222A5a073dAAA",
-            "usdBootstrapAmount": 1000000000000000000 // USD amount in wei that needs to be deposited during deployment to avoid inflation attack
+            "usdBootstrapAmount": 20// USD amount that needs to be deposited during deployment to avoid inflation attack
         },
         // List of reserves and their configurations
         "poolReserversConfig": [
@@ -386,7 +386,7 @@ The deployment process involves configuration files `./inputs/<Nr>_<InputJsonNam
             "marketReferenceCurrencyAggregator": "0x7e860098F58bBFC8648a4311b374B1D669a2bc6B",
             "networkBaseTokenAggregator": "0x71041dddad3595F9CEd3DcCFBe3D1F4b0a16Bb70",
             "treasury": "0x3151CfCA393FE5Eec690feD2a22222A5a073dAAA",
-            "usdBootstrapAmount": 2000000000000000000
+            "usdBootstrapAmount": 40
         },
         "poolAddressesProviderConfig": {
             "marketId": "UV TestNet Market", // Not used in this script
