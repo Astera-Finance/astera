@@ -63,11 +63,6 @@ contract DeployLendingPoolLocal is Script, LendingPoolHelper, Test {
         );
         vm.serializeAddress(
             "lendingPoolContracts",
-            "aTokensAndRatesHelper",
-            address(contracts.aTokensAndRatesHelper)
-        );
-        vm.serializeAddress(
-            "lendingPoolContracts",
             "lendingPool",
             contracts.lendingPoolAddressesProvider.getLendingPool()
         );

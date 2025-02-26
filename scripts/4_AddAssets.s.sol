@@ -6,7 +6,7 @@ import "./DeployDataTypes.sol";
 import "./helpers/InitAndConfigurationHelper.s.sol";
 import "lib/forge-std/src/Test.sol";
 import "lib/forge-std/src/Script.sol";
-import "lib/forge-std/src/console.sol";
+import "lib/forge-std/src/console2.sol";
 
 contract AddAssets is Script, InitAndConfigurationHelper, Test {
     using stdJson for string;
@@ -17,7 +17,7 @@ contract AddAssets is Script, InitAndConfigurationHelper, Test {
         PoolReserversConfig[] memory lendingPoolReserversConfig,
         PoolReserversConfig[] memory miniPoolReserversConfig
     ) public {
-        console.log("Lending pool");
+        console2.log("Lending pool");
         for (uint256 idx = 0; idx < lendingPoolReserversConfig.length; idx++) {
             // DataTypes.ReserveData memory data =
             //     contracts.lendingPool.getReserveData(reserveList[idx], reserveTypes[idx]);
@@ -43,7 +43,7 @@ contract AddAssets is Script, InitAndConfigurationHelper, Test {
             assertEq(staticData.symbol, lendingPoolReserversConfig[idx].symbol, "Wrong Symbol");
         }
 
-        console.log("Mini pool");
+        console2.log("Mini pool");
         uint256 miniPoolCount = contracts.miniPoolAddressesProvider.getMiniPoolCount();
         for (uint256 i = 0; i < miniPoolCount; i++) {
             address mp = contracts.miniPoolAddressesProvider.getMiniPool(i);
@@ -89,7 +89,7 @@ contract AddAssets is Script, InitAndConfigurationHelper, Test {
 
         vm.writeJson(output, path);
 
-        console.log("PROTOCOL DEPLOYED (check out addresses on %s)", path);
+        console2.log("PROTOCOL DEPLOYED (check out addresses on %s)", path);
     }
 
     function readStratAddresses(string memory path) public {
@@ -148,20 +148,18 @@ contract AddAssets is Script, InitAndConfigurationHelper, Test {
             LendingPoolConfigurator(config.readAddress(".lendingPoolConfigurator"));
         contracts.lendingPoolAddressesProvider =
             LendingPoolAddressesProvider(config.readAddress(".lendingPoolAddressesProvider"));
-        contracts.aTokensAndRatesHelper =
-            ATokensAndRatesHelper(config.readAddress(".aTokensAndRatesHelper"));
         contracts.cod3xLendDataProvider =
             Cod3xLendDataProvider(config.readAddress(".cod3xLendDataProvider"));
         contracts.lendingPool = LendingPool(config.readAddress(".lendingPool"));
     }
 
     function run() external returns (DeployedContracts memory) {
-        console.log("4_AddAssets");
+        console2.log("4_AddAssets");
 
         // Config fetching
         string memory root = vm.projectRoot();
         string memory path = string.concat(root, "/scripts/inputs/4_AssetsToAdd.json");
-        console.log("PATH: ", path);
+        console2.log("PATH: ", path);
         string memory config = vm.readFile(path);
 
         General memory general = abi.decode(config.parseRaw(".general"), (General));
@@ -178,7 +176,7 @@ contract AddAssets is Script, InitAndConfigurationHelper, Test {
             abi.decode(config.parseRaw(".oracleConfig"), (OracleConfig));
 
         if (!vm.envBool("MAINNET")) {
-            console.log("Testnet");
+            console2.log("Testnet");
 
             /* Lending pool settings */
             readLendingPoolAddresses(
@@ -191,7 +189,7 @@ contract AddAssets is Script, InitAndConfigurationHelper, Test {
 
             /* Read all mocks deployed */
             path = string.concat(root, "/scripts/outputs/testnet/0_MockedTokens.json");
-            console.log("PATH: ", path);
+            console2.log("PATH: ", path);
             config = vm.readFile(path);
             address[] memory mockedTokens = config.readAddressArray(".mockedTokens");
 
@@ -217,7 +215,7 @@ contract AddAssets is Script, InitAndConfigurationHelper, Test {
                 // }
             }
 
-            console.log("Init and configuration");
+            console2.log("Init and configuration");
             vm.startBroadcast(vm.envUint("PRIVATE_KEY"));
             contracts.oracle = Oracle(contracts.lendingPoolAddressesProvider.getPriceOracle());
             contracts.oracle.setAssetSources(
@@ -230,7 +228,7 @@ contract AddAssets is Script, InitAndConfigurationHelper, Test {
             {
                 string memory outputPath =
                     string.concat(root, "/scripts/outputs/testnet/2_MiniPoolContracts.json");
-                console.log("PATH: ", outputPath);
+                console2.log("PATH: ", outputPath);
                 config = vm.readFile(outputPath);
             }
 
@@ -262,9 +260,9 @@ contract AddAssets is Script, InitAndConfigurationHelper, Test {
                 // }
             }
 
-            console.log("Mini pool init and configuration");
+            console2.log("Mini pool init and configuration");
             vm.startBroadcast(vm.envUint("PRIVATE_KEY"));
-            console.log("Configuration ");
+            console2.log("Configuration ");
             _initAndConfigureMiniPoolReserves(
                 contracts,
                 miniPoolReserversConfig,
@@ -274,7 +272,7 @@ contract AddAssets is Script, InitAndConfigurationHelper, Test {
             vm.stopBroadcast();
             path = string.concat(root, "/scripts/outputs/testnet/4_AddedAssets.json");
         } else if (vm.envBool("MAINNET")) {
-            console.log("Mainnet");
+            console2.log("Mainnet");
             /* Lending pool settings */
             readLendingPoolAddresses(
                 string.concat(root, "/scripts/outputs/mainnet/1_LendingPoolContracts.json")
@@ -297,7 +295,7 @@ contract AddAssets is Script, InitAndConfigurationHelper, Test {
             {
                 string memory outputPath =
                     string.concat(root, "/scripts/outputs/mainnet/2_MiniPoolContracts.json");
-                console.log("PATH: ", outputPath);
+                console2.log("PATH: ", outputPath);
                 config = vm.readFile(outputPath);
             }
             /* Ready mini pool contracts settings */
@@ -308,7 +306,7 @@ contract AddAssets is Script, InitAndConfigurationHelper, Test {
 
             /* Configuration */
             vm.startBroadcast(vm.envUint("PRIVATE_KEY"));
-            console.log("Configuration ");
+            console2.log("Configuration ");
             _initAndConfigureMiniPoolReserves(
                 contracts,
                 miniPoolReserversConfig,
@@ -318,7 +316,7 @@ contract AddAssets is Script, InitAndConfigurationHelper, Test {
             vm.stopBroadcast();
             path = string.concat(root, "/scripts/outputs/mainnet/4_AddedAssets.json");
         } else {
-            console.log("No deployment type selected in .env");
+            console2.log("No deployment type selected in .env");
         }
         checkContracts(lendingPoolReserversConfig, miniPoolReserversConfig);
         writeJsonData(path);

@@ -7,7 +7,7 @@
         "marketReferenceCurrencyAggregator": "0x7e860098F58bBFC8648a4311b374B1D669a2bc6B",
         "networkBaseTokenAggregator": "0x71041dddad3595F9CEd3DcCFBe3D1F4b0a16Bb70",
         "treasury": "0x3151CfCA393FE5Eec690feD2a2446DA5a073d01B",
-        "usdBootstrapAmount": 2000000000000000000
+        "usdBootstrapAmount": 40
     },
     "poolAddressesProviderConfig": {
         "marketId": "UV TestNet Market",
@@ -24,39 +24,22 @@
             "liquidationThreshold": 7500,
             "miniPoolOwnerFee": 150,
             "params": "0x10",
-            "rates": 0.03e27,
             "reserveFactor": 1500,
             "reserveType": true,
-            "symbol": "WBTC",
-            "tokenAddress": "0xb3e343C39a9e5e739724b3Ed0F3B6150e19B4A90"
+            "symbol": "USDT",
+            "tokenAddress": "0x59f4556EAb63901aba586729d8C7dd3f220b4b74"
         }
     ],
-    "miniPoolReserversConfig": [
-        {
-            "baseLtv": 7000,
-            "borrowingEnabled": true,
-            "interestStrat": "VOLATILE",
-            "interestStratId": 0,
-            "liquidationBonus": 10500,
-            "liquidationThreshold": 7500,
-            "miniPoolOwnerFee": 150,
-            "params": "0x10",
-            "rates": 0.03e27,
-            "reserveFactor": 1500,
-            "reserveType": true,
-            "symbol": "WBTC",
-            "tokenAddress": "0xb3e343C39a9e5e739724b3Ed0F3B6150e19B4A90"
-        }
-    ],
+    "miniPoolReserversConfig": [],
     "oracleConfig": {
         "assets": [
-            "0xb3e343C39a9e5e739724b3Ed0F3B6150e19B4A90"
+            "0x59f4556EAb63901aba586729d8C7dd3f220b4b74"
         ],
         "baseCurrency": "0x0000000000000000000000000000000000000000",
         "baseCurrencyUnit": 1e18,
         "fallbackOracle": "0x0000000000000000000000000000000000000000",
         "sources": [
-            "0x0FB99723Aee6f420beAD13e6bBB79b7E6F034298"
+            "0x3ec8593F930EA45ea58c968260e6e9FF53FC934f"
         ],
         "timeouts": [
             100000

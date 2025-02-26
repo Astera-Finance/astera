@@ -6,13 +6,12 @@ import "./DeployDataTypes.sol";
 import "./helpers/LendingPoolHelper.s.sol";
 import "lib/forge-std/src/Test.sol";
 import "lib/forge-std/src/Script.sol";
-import "lib/forge-std/src/console.sol";
+import "lib/forge-std/src/console2.sol";
 
 contract DeployLendingPool is Script, LendingPoolHelper, Test {
     using stdJson for string;
 
     function checkOwnerships() internal {
-        assertEq(contracts.aTokensAndRatesHelper.owner(), vm.addr(vm.envUint("PRIVATE_KEY")));
         assertEq(contracts.cod3xLendDataProvider.owner(), vm.addr(vm.envUint("PRIVATE_KEY")));
         assertEq(contracts.lendingPoolAddressesProvider.owner(), vm.addr(vm.envUint("PRIVATE_KEY")));
         assertEq(
@@ -25,6 +24,7 @@ contract DeployLendingPool is Script, LendingPoolHelper, Test {
         );
         assertEq(contracts.oracle.owner(), vm.addr(vm.envUint("PRIVATE_KEY")));
         assertEq(contracts.wethGateway.owner(), vm.addr(vm.envUint("PRIVATE_KEY")));
+        assertEq(contracts.cod3xLendDataProvider.owner(), vm.addr(vm.envUint("PRIVATE_KEY")));
         for (uint8 idx = 0; idx < contracts.piStrategies.length; idx++) {
             assertEq(contracts.piStrategies[idx].owner(), vm.addr(vm.envUint("PRIVATE_KEY")));
         }
@@ -77,6 +77,22 @@ contract DeployLendingPool is Script, LendingPoolHelper, Test {
                 "Wrong liquidationBonus"
             );
             assertEq(staticData.symbol, poolReserversConfig[idx].symbol, "Wrong Symbol");
+            assertEq(staticData.isActive, true, "reserve is not active");
+            assertEq(staticData.borrowingEnabled, true, "borrowing not enabled");
+            assertEq(staticData.flashloanEnabled, true, "floshloan not enabled");
+            assertEq(staticData.isFrozen, false, "reserve is frozen");
+            assertEq(staticData.usageAsCollateralEnabled, true, "collateral usage not enabled");
+            assertEq(
+                staticData.cod3xReserveFactor,
+                poolReserversConfig[idx].reserveFactor,
+                "wrong cod3xReserveFactor"
+            );
+            assertEq(
+                staticData.miniPoolOwnerReserveFactor,
+                poolReserversConfig[idx].miniPoolOwnerFee,
+                "wrong miniPoolOwnerReserveFactor"
+            );
+            assertEq(staticData.depositCap, 0, "Wrong deposit cap");
         }
     }
 
@@ -130,11 +146,6 @@ contract DeployLendingPool is Script, LendingPoolHelper, Test {
             "cod3xLendDataProvider",
             address(contracts.cod3xLendDataProvider)
         );
-        vm.serializeAddress(
-            "lendingPoolContracts",
-            "aTokensAndRatesHelper",
-            address(contracts.aTokensAndRatesHelper)
-        );
 
         vm.serializeAddress(
             "lendingPoolContracts",
@@ -154,15 +165,15 @@ contract DeployLendingPool is Script, LendingPoolHelper, Test {
 
         vm.writeJson(output, path);
 
-        console.log("PROTOCOL DEPLOYED (check out addresses on %s)", path);
+        console2.log("PROTOCOL DEPLOYED (check out addresses on %s)", path);
     }
 
     function run() external returns (DeployedContracts memory) {
-        console.log("1_DeployLendingPool");
+        console2.log("1_DeployLendingPool");
         // Config fetching
         string memory root = vm.projectRoot();
         string memory path = string.concat(root, "/scripts/inputs/1_DeploymentConfig.json");
-        console.log("PATH: ", path);
+        console2.log("PATH: ", path);
         string memory deploymentConfig = vm.readFile(path);
         General memory general = abi.decode(deploymentConfig.parseRaw(".general"), (General));
 
@@ -180,13 +191,13 @@ contract DeployLendingPool is Script, LendingPoolHelper, Test {
         address wethGateway = deploymentConfig.readAddress(".wethGateway");
 
         if (!vm.envBool("MAINNET")) {
-            console.log("Testnet Deployment");
+            console2.log("Testnet Deployment");
             if (!vm.exists(string.concat(root, "/scripts/outputs/testnet"))) {
                 vm.createDir(string.concat(root, "/scripts/outputs/testnet"), true);
             }
             /* Read all mocks deployed */
             path = string.concat(root, "/scripts/outputs/testnet/0_MockedTokens.json");
-            console.log("PATH: ", path);
+            console2.log("PATH: ", path);
             string memory config = vm.readFile(path);
             address[] memory mockedTokens = config.readAddressArray(".mockedTokens");
 
@@ -216,7 +227,7 @@ contract DeployLendingPool is Script, LendingPoolHelper, Test {
             }
             /* Deploy to testnet */
             vm.startBroadcast(vm.envUint("PRIVATE_KEY"));
-            console.log("Deploying lending pool infra");
+            console2.log("Deploying lending pool infra");
             deployLendingPoolInfra(
                 general,
                 volatileStrategies,
@@ -231,7 +242,7 @@ contract DeployLendingPool is Script, LendingPoolHelper, Test {
 
             path = string.concat(root, "/scripts/outputs/testnet/1_LendingPoolContracts.json");
         } else if (vm.envBool("MAINNET")) {
-            console.log("Mainnet Deployment");
+            console2.log("Mainnet Deployment");
             if (!vm.exists(string.concat(root, "/scripts/outputs/mainnet"))) {
                 vm.createDir(string.concat(root, "/scripts/outputs/mainnet"), true);
             }
@@ -251,7 +262,7 @@ contract DeployLendingPool is Script, LendingPoolHelper, Test {
 
             path = string.concat(root, "/scripts/outputs/mainnet/1_LendingPoolContracts.json");
         } else {
-            console.log("No deployment type selected in .env");
+            console2.log("No deployment type selected in .env");
         }
         checkOwnerships();
         checkContractAddresses(poolReserversConfig);

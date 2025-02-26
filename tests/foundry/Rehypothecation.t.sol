@@ -101,8 +101,8 @@ contract RehypothecationTest is Common, LendingPoolTest {
                 200
             );
 
-            console.log("maxValToBorrow: ", maxValToBorrow);
-            console.log(
+            console2.log("maxValToBorrow: ", maxValToBorrow);
+            console2.log(
                 "maxBorrowTokenToBorrowInCollateralUnit: ", maxBorrowTokenToBorrowInCollateralUnit
             );
             availableFundsAfterBorrow = (maxBorrowTokenToBorrowInCollateralUnit * 15 / 10)
@@ -119,11 +119,11 @@ contract RehypothecationTest is Common, LendingPoolTest {
         );
 
         uint256 remainingPct = 10000 - (wbtcTypes.aToken._farmingPct());
-        console.log("1. WBTC amount: ", wbtcTypes.token.balanceOf(address(wbtcTypes.aToken)));
+        console2.log("1. WBTC amount: ", wbtcTypes.token.balanceOf(address(wbtcTypes.aToken)));
         vm.prank(admin);
         deployedContracts.lendingPoolConfigurator.rebalance(address(wbtcTypes.aToken));
-        console.log("2. WBTC amount: ", wbtcTypes.token.balanceOf(address(wbtcTypes.aToken)));
-        console.log("2. ", (availableFundsAfterBorrow * remainingPct));
+        console2.log("2. WBTC amount: ", wbtcTypes.token.balanceOf(address(wbtcTypes.aToken)));
+        console2.log("2. ", (availableFundsAfterBorrow * remainingPct));
         assertApproxEqAbs(
             wbtcTypes.token.balanceOf(address(wbtcTypes.aToken)),
             ((availableFundsAfterBorrow * remainingPct) + 5000) / 10000,
@@ -139,11 +139,11 @@ contract RehypothecationTest is Common, LendingPoolTest {
             availableFundsAfterBorrow * (wbtcTypes.aToken._farmingPct()) / 10000,
             "WBTC vault amount after rebalance is wrong"
         );
-        console.log("1. Balance in vault: ", vaultBalanceAfterFirstRebalance);
-        console.log(
+        console2.log("1. Balance in vault: ", vaultBalanceAfterFirstRebalance);
+        console2.log(
             "1. totalSupply: %s, totalAsset: %s", wbtcVault.totalSupply(), wbtcVault.totalAssets()
         );
-        console.log("TimeDiff: ", timeDiff);
+        console2.log("TimeDiff: ", timeDiff);
         skip(timeDiff);
 
         // Artificially increasing balance of vault should result in yield for the graintoken
@@ -152,10 +152,10 @@ contract RehypothecationTest is Common, LendingPoolTest {
             uint256 index = deployedContracts.lendingPool.getReserveNormalizedIncome(
                 address(wbtcTypes.token), true
             );
-            console.log("index: ", index);
+            console2.log("index: ", index);
             yieldAmount = index * wbtcVault.totalSupply() / 1e27 - wbtcVault.totalSupply();
-            console.log("yieldAmount: ", yieldAmount);
-            console.log(
+            console2.log("yieldAmount: ", yieldAmount);
+            console2.log(
                 "1.5 BEFORE: totalSupply: %s, totalAsset: %s",
                 wbtcVault.totalSupply(),
                 wbtcVault.totalAssets()
@@ -163,20 +163,20 @@ contract RehypothecationTest is Common, LendingPoolTest {
             deal(
                 address(wbtcTypes.token), address(wbtcVault), wbtcVault.totalSupply() + yieldAmount
             );
-            console.log(
+            console2.log(
                 "1.5 AFTER DEAL: totalSupply: %s, totalAsset: %s",
                 wbtcVault.totalSupply(),
                 wbtcVault.totalAssets()
             );
         }
 
-        console.log("2. Balance in vault: ", wbtcTypes.token.balanceOf(address(wbtcVault)));
-        console.log(
+        console2.log("2. Balance in vault: ", wbtcTypes.token.balanceOf(address(wbtcVault)));
+        console2.log(
             "2. totalSupply: %s, totalAsset: %s", wbtcVault.totalSupply(), wbtcVault.totalAssets()
         );
         skip(timeDiff);
-        console.log("3. Balance in vault: ", wbtcTypes.token.balanceOf(address(wbtcVault)));
-        console.log(
+        console2.log("3. Balance in vault: ", wbtcTypes.token.balanceOf(address(wbtcVault)));
+        console2.log(
             "3. totalSupply: %s, totalAsset: %s", wbtcVault.totalSupply(), wbtcVault.totalAssets()
         );
 
@@ -188,7 +188,7 @@ contract RehypothecationTest is Common, LendingPoolTest {
             1,
             "Token's balance is not the same as before rebalance"
         );
-        console.log(
+        console2.log(
             "Vault balance %s vs expected: %s",
             wbtcTypes.token.balanceOf(address(wbtcVault)),
             vaultBalanceAfterFirstRebalance
@@ -199,7 +199,7 @@ contract RehypothecationTest is Common, LendingPoolTest {
             1,
             "Vault balance is not the same as before rebalance"
         );
-        console.log(
+        console2.log(
             "Admin balance %s vs profit: %s", wbtcTypes.token.balanceOf(address(admin)), yieldAmount
         );
         assertApproxEqAbs(
@@ -271,7 +271,7 @@ contract RehypothecationTest is Common, LendingPoolTest {
                 tokenTypes.token.balanceOf(address(tokenVars.vault)) * vaultReturnPct / 10000;
             deal(address(tokenTypes.token), address(tokenVars.vault), absReturn);
             // aToken rebalance shall be done despite of negative (< vault balance) or positive return
-            console.log("Rebalancing for value: %s vs %s", absReturn, expectedVaultBalance);
+            console2.log("Rebalancing for value: %s vs %s", absReturn, expectedVaultBalance);
             vm.startPrank(admin);
             if (absReturn < expectedVaultBalance + 2 && absReturn > expectedVaultBalance - 2) {
                 deployedContracts.lendingPoolConfigurator.rebalance(address(tokenTypes.aToken));
@@ -370,7 +370,7 @@ contract RehypothecationTest is Common, LendingPoolTest {
             maxBorrowTokenToBorrowInCollateralUnit = fixture_depositAndBorrow(
                 usdcTypes, wbtcTypes, user, address(this), usdcVars.depositSize
             );
-            console.log(
+            console2.log(
                 "maxBorrowTokenToBorrowInCollateralUnit: ", maxBorrowTokenToBorrowInCollateralUnit
             );
             availableFundsAfterBorrow = (maxBorrowTokenToBorrowInCollateralUnit * 15 / 10)
@@ -410,10 +410,10 @@ contract RehypothecationTest is Common, LendingPoolTest {
 
         uint256 wbtcBalanceBeforeRepay = wbtcTypes.token.balanceOf(address(this));
         uint256 wbtcDebtBeforeRepay = wbtcTypes.debtToken.balanceOf(address(this));
-        console.log("wbtcBalanceBeforeRepay: ", wbtcBalanceBeforeRepay);
-        console.log("wbtcDebtBeforeRepay: ", wbtcDebtBeforeRepay);
+        console2.log("wbtcBalanceBeforeRepay: ", wbtcBalanceBeforeRepay);
+        console2.log("wbtcDebtBeforeRepay: ", wbtcDebtBeforeRepay);
 
-        console.log(
+        console2.log(
             "maxBorrowTokenToBorrowInCollateralUnit %s vs availableFundsAfterBorrow %s",
             maxBorrowTokenToBorrowInCollateralUnit,
             availableFundsAfterBorrow
@@ -435,7 +435,7 @@ contract RehypothecationTest is Common, LendingPoolTest {
             wbtcTypes.debtToken.balanceOf(address(this)) + maxBorrowTokenToBorrowInCollateralUnit,
             "User after repayment has less debt"
         );
-        console.log("Debt: ", wbtcTypes.debtToken.balanceOf(address(this)));
+        console2.log("Debt: ", wbtcTypes.debtToken.balanceOf(address(this)));
 
         fixture_withdraw(usdcTypes.token, address(this), address(this), usdcVars.depositSize);
         fixture_withdraw(
@@ -501,8 +501,8 @@ contract RehypothecationTest is Common, LendingPoolTest {
 
     //         uint256 maxValToBorrow =
     //             fixture_getMaxValueToBorrow(usdcTypes.token, wbtcTypes.token, depositSize);
-    //         console.log("maxValToBorrow: ", maxValToBorrow);
-    //         console.log(
+    //         console2.log("maxValToBorrow: ", maxValToBorrow);
+    //         console2.log(
     //             "maxBorrowTokenToBorrowInCollateralUnit: ", maxBorrowTokenToBorrowInCollateralUnit
     //         );
     //         availableFundsAfterBorrow = (maxBorrowTokenToBorrowInCollateralUnit * 15 / 10)
@@ -519,11 +519,11 @@ contract RehypothecationTest is Common, LendingPoolTest {
     //     );
 
     //     uint256 remainingPct = 10000 - (wbtcTypes.aToken.farmingPct());
-    //     console.log("1. WBTC amount: ", wbtcTypes.token.balanceOf(address(wbtcTypes.aToken)));
+    //     console2.log("1. WBTC amount: ", wbtcTypes.token.balanceOf(address(wbtcTypes.aToken)));
     //     vm.prank(admin);
     //     deployedContracts.lendingPoolConfigurator.rebalance(address(wbtcTypes.aToken));
-    //     console.log("2. WBTC amount: ", wbtcTypes.token.balanceOf(address(wbtcTypes.aToken)));
-    //     console.log("2. ", (availableFundsAfterBorrow * remainingPct));
+    //     console2.log("2. WBTC amount: ", wbtcTypes.token.balanceOf(address(wbtcTypes.aToken)));
+    //     console2.log("2. ", (availableFundsAfterBorrow * remainingPct));
     //     assertApproxEqAbs(
     //         wbtcTypes.token.balanceOf(address(wbtcTypes.aToken)),
     //         ((availableFundsAfterBorrow * remainingPct) + 5000) / 10000,
@@ -551,11 +551,11 @@ contract RehypothecationTest is Common, LendingPoolTest {
     //     //     availableFundsAfterBorrow * (wbtcTypes.aToken.farmingPct()) / 10000,
     //     //     "WBTC vault amount after rebalance is wrong"
     //     // );
-    //     console.log("1. Balance in vault: ", vaultBalanceAfterFirstRebalance);
-    //     console.log(
+    //     console2.log("1. Balance in vault: ", vaultBalanceAfterFirstRebalance);
+    //     console2.log(
     //         "1. totalSupply: %s, totalAsset: %s", wbtcVault.totalSupply(), wbtcVault.totalAssets()
     //     );
-    //     console.log("TimeDiff: ", timeDiff);
+    //     console2.log("TimeDiff: ", timeDiff);
     //     skip(timeDiff);
 
     //     // Artificially increasing balance of vault should result in yield for the graintoken
@@ -564,10 +564,10 @@ contract RehypothecationTest is Common, LendingPoolTest {
     //         uint256 index = deployedContracts.lendingPool.getReserveNormalizedIncome(
     //             address(wbtcTypes.token), true
     //         );
-    //         console.log("index: ", index);
+    //         console2.log("index: ", index);
     //         yieldAmount = index * wbtcVault.totalSupply() / 1e27 - wbtcVault.totalSupply();
-    //         console.log("yieldAmount: ", yieldAmount);
-    //         console.log(
+    //         console2.log("yieldAmount: ", yieldAmount);
+    //         console2.log(
     //             "1.5 BEFORE: totalSupply: %s, totalAsset: %s",
     //             wbtcVault.totalSupply(),
     //             wbtcVault.totalAssets()
@@ -575,21 +575,21 @@ contract RehypothecationTest is Common, LendingPoolTest {
     //         deal(
     //             address(wbtcTypes.token), address(wbtcVault), wbtcVault.totalSupply() + yieldAmount
     //         );
-    //         console.log(
+    //         console2.log(
     //             "1.5 AFTER DEAL: totalSupply: %s, totalAsset: %s",
     //             wbtcVault.totalSupply(),
     //             wbtcVault.totalAssets()
     //         );
     //     }
 
-    //     console.log("2. Balance in vault: ", wbtcTypes.token.balanceOf(address(wbtcVault)));
-    //     console.log(
+    //     console2.log("2. Balance in vault: ", wbtcTypes.token.balanceOf(address(wbtcVault)));
+    //     console2.log(
     //         "2. totalSupply: %s, totalAsset: %s", wbtcVault.totalSupply(), wbtcVault.totalAssets()
     //     );
     //     skip(timeDiff);
     //     strat.harvest();
-    //     console.log("3. Balance in vault: ", wbtcTypes.token.balanceOf(address(wbtcVault)));
-    //     console.log(
+    //     console2.log("3. Balance in vault: ", wbtcTypes.token.balanceOf(address(wbtcVault)));
+    //     console2.log(
     //         "3. totalSupply: %s, totalAsset: %s", wbtcVault.totalSupply(), wbtcVault.totalAssets()
     //     );
 
@@ -600,7 +600,7 @@ contract RehypothecationTest is Common, LendingPoolTest {
     //         wbtcTypes.token.balanceOf(address(wbtcTypes.aToken)),
     //         "Token's balance is not the same as before rebalance"
     //     );
-    //     console.log(
+    //     console2.log(
     //         "Vault balance %s vs expected: %s",
     //         wbtcTypes.token.balanceOf(address(wbtcVault)),
     //         vaultBalanceAfterFirstRebalance
@@ -610,7 +610,7 @@ contract RehypothecationTest is Common, LendingPoolTest {
     //     //     depositSize * (wbtcTypes.aToken.farmingPct()) / 10000,
     //     //     "Vault balance is not the same as before rebalance"
     //     // );
-    //     console.log(
+    //     console2.log(
     //         "Admin balance %s vs profit: %s", wbtcTypes.token.balanceOf(address(admin)), yieldAmount
     //     );
     //     // assertEq(

@@ -109,4 +109,69 @@ contract OracleTest is Common {
         commonContracts.oracle.setAssetSources(assets, commonContracts.aggregators, timeouts);
         assertEq(commonContracts.oracle.getAssetPrice(usdcAddress), uint256(prices[0]));
     }
+
+    function testGetAssetPricePyth(uint32 baseCurrency) public {
+        address usdcAddress = address(tokens[0]);
+        vm.assume(baseCurrency != BASE_CURRENCY_UNIT);
+
+        ERC20[] memory erc20tokens = fixture_getErc20Tokens(tokens);
+        int256[] memory prices = new int256[](tokens.length);
+        uint256[] memory timeouts = new uint256[](tokens.length);
+
+        uint256[] memory prevPrices = new uint256[](tokens.length);
+
+        for (uint256 idx = 0; idx < tokens.length; idx++) {
+            prevPrices[idx] = commonContracts.oraclePyth.getAssetPrice(tokens[idx]);
+            console.log("CurrentPrices: ", prevPrices[idx]);
+        }
+
+        // All chainlink price feeds have 8 decimals
+        prices[0] = int256(95 * 10 ** PRICE_FEED_DECIMALS - 1); // USDC
+        prices[1] = int256(63_000 * 10 ** PRICE_FEED_DECIMALS); // WBTC
+        prices[2] = int256(3300 * 10 ** PRICE_FEED_DECIMALS); // ETH
+        prices[3] = int256(95 * 10 ** PRICE_FEED_DECIMALS - 1); // DAI
+        (commonContracts.aggregatorsPyth, timeouts) =
+            fixture_getTokenPriceFeedsPyth(erc20tokens, prices);
+
+        Oracle[] memory _oracles = new Oracle[](tokens.length);
+
+        for (uint256 idx = 0; idx < tokens.length; idx++) {
+            _oracles[idx] = new Oracle(
+                tokens,
+                commonContracts.aggregatorsPyth,
+                timeouts,
+                address(0),
+                tokens[idx],
+                baseCurrency,
+                address(deployedContracts.lendingPoolConfigurator)
+            );
+            assertNotEq(_oracles[idx].getAssetPrice(tokens[idx]), prevPrices[idx]);
+        }
+    }
+
+    function testCdxUsdPricePyth() public {
+        string memory localRpc = vm.envString("BASE_RPC_URL");
+        opFork = vm.createSelectFork(localRpc, 26803485);
+        address pyth = 0x8250f4aF4B972684F7b336503E2D6dFeDeB1487a; // BASE
+
+        bytes32 priceId = 0x9db37f4d5654aad3e37e2e14ffd8d53265fb3026d1d8f91146539eebaa2ef45f; //AERO
+
+        PythAggregatorV3 pythAggregator = new PythAggregatorV3(pyth, priceId);
+
+        (uint80 roundId, int256 price, uint256 startedAt, uint256 timestamp,) =
+            pythAggregator.latestRoundData();
+
+        console2.log("RoundId", uint256(roundId));
+        console2.log("price", price);
+        console2.log("startedAt", startedAt);
+        console2.log("timestamp", timestamp);
+
+        assertNotEq(roundId, 0, "roundId equal to 0");
+        assertNotEq(timestamp, 0, "timestamp equal to 0");
+        assertNotEq(startedAt, 0, "startedAt equal to 0");
+        assertGt(block.timestamp, timestamp, "timestamp grater then block timestamp");
+        assertGe(price, 0, "price less than 0");
+
+        assertApproxEqRel(uint256(price), 0.75e8, 0.02e18, "price is wrong"); // +/- 2%
+    }
 }

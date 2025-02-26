@@ -11,7 +11,7 @@ import {PercentageMath} from "contracts/protocol/libraries/math/PercentageMath.s
 import "contracts/misc/Cod3xLendDataProvider.sol";
 
 import "forge-std/StdUtils.sol";
-import "forge-std/console.sol";
+import "forge-std/console2.sol";
 
 contract MultiplePools is MiniPoolFixtures {
     using PercentageMath for uint256;
@@ -26,32 +26,32 @@ contract MultiplePools is MiniPoolFixtures {
         TokenParamsExtended memory borrowToken,
         uint256 idx
     ) internal view {
-        console.log(
+        console2.log(
             "%s. Balance of USDC in ATOKEN: %s",
             idx,
             collateral.token.balanceOf(address(collateral.aToken))
         );
-        console.log(
+        console2.log(
             "%s. Balance of WBTC in ATOKEN: %s",
             idx,
             borrowToken.token.balanceOf(address(borrowToken.aToken))
         );
-        console.log(
+        console2.log(
             "%s. Balance of USDC in VAULT: %s",
             idx,
             collateral.token.balanceOf(address(collateral.vault))
         );
-        console.log(
+        console2.log(
             "%s. Balance of WBTC in VAULT: %s",
             idx,
             borrowToken.token.balanceOf(address(borrowToken.vault))
         );
-        // console.log(
+        // console2.log(
         //     "%s. Balance of aUSDC in AERC6909: %s",
         //     idx,
         //     collateral.aToken.balanceOf(address(collateral.))
         // );
-        // console.log(
+        // console2.log(
         //     "%s. Balance of aWBTC in AERC6909: %s",
         //     idx,
         //     borrowToken.aToken.balanceOf(address(borrowToken.aTokenWrapper))
@@ -84,38 +84,38 @@ contract MultiplePools is MiniPoolFixtures {
         fixture_transferTokensToTestContract(erc20Tokens, 1_000_000 ether, address(this));
 
         /* Deploy first mini pool */
-        console.log("Deploy first mini pool");
+        console2.log("Deploy first mini pool");
         (miniPoolContracts, id) = fixture_deployMiniPoolSetup(
             address(deployedContracts.lendingPoolAddressesProvider),
             address(deployedContracts.lendingPool),
             address(deployedContracts.cod3xLendDataProvider),
             miniPoolContracts
         );
-        console.log("1.Id: ", id);
-        console.log("1. MiniPoolImpl: ", address(miniPoolContracts.miniPoolImpl));
+        console2.log("1.Id: ", id);
+        console2.log("1. MiniPoolImpl: ", address(miniPoolContracts.miniPoolImpl));
         /* Deploy second mini pool */
-        console.log("Deploy second mini pool");
+        console2.log("Deploy second mini pool");
         (miniPoolContracts, id) = fixture_deployMiniPoolSetup(
             address(deployedContracts.lendingPoolAddressesProvider),
             address(deployedContracts.lendingPool),
             address(deployedContracts.cod3xLendDataProvider),
             miniPoolContracts
         );
-        console.log("2.Id: ", id);
+        console2.log("2.Id: ", id);
         /* Deploy third mini pool */
-        console.log("Deploy third mini pool");
+        console2.log("Deploy third mini pool");
         (miniPoolContracts, id) = fixture_deployMiniPoolSetup(
             address(deployedContracts.lendingPoolAddressesProvider),
             address(deployedContracts.lendingPool),
             address(deployedContracts.cod3xLendDataProvider),
             miniPoolContracts
         );
-        console.log("3.Id: ", id);
-        console.log("2. MiniPoolImpl: ", address(miniPoolContracts.miniPoolImpl));
+        console2.log("3.Id: ", id);
+        console2.log("2. MiniPoolImpl: ", address(miniPoolContracts.miniPoolImpl));
 
         address[] memory reserves = new address[](2 * tokens.length);
         for (uint8 idx = 0; idx < (2 * tokens.length); idx++) {
-            console.log(idx);
+            console2.log(idx);
             if (idx < tokens.length) {
                 reserves[idx] = tokens[idx];
             } else {
@@ -127,17 +127,17 @@ contract MultiplePools is MiniPoolFixtures {
             address(miniPoolContracts.miniPoolAddressesProvider);
         configLpAddresses.stableStrategy = address(miniPoolContracts.stableStrategy);
         configLpAddresses.volatileStrategy = address(miniPoolContracts.volatileStrategy);
-        console.log("Configure first mini pool");
+        console2.log("Configure first mini pool");
         miniPool =
             fixture_configureMiniPoolReserves(reserves, configLpAddresses, miniPoolContracts, 0);
         miniPools.push(miniPool);
         vm.label(miniPool, "MiniPool1");
-        console.log("Configure second mini pool");
+        console2.log("Configure second mini pool");
         miniPool =
             fixture_configureMiniPoolReserves(reserves, configLpAddresses, miniPoolContracts, 1);
         miniPools.push(miniPool);
         vm.label(miniPool, "MiniPool2");
-        console.log("Configure third mini pool");
+        console2.log("Configure third mini pool");
         miniPool =
             fixture_configureMiniPoolReserves(reserves, configLpAddresses, miniPoolContracts, 2);
         miniPools.push(miniPool);
@@ -202,7 +202,7 @@ contract MultiplePools is MiniPoolFixtures {
             commonContracts.mockVaultUnits[WBTC_OFFSET],
             commonContracts.oracle.getAssetPrice(address(erc20Tokens[WBTC_OFFSET]))
         );
-        console.log("\n---------------->>>>>>>>>>> FIRST MINI POOL <<<<<<<<--------------");
+        console2.log("\n---------------->>>>>>>>>>> FIRST MINI POOL <<<<<<<<--------------");
         miniPool = miniPools[0];
         IAERC6909 aErc6909Token =
             IAERC6909(miniPoolContracts.miniPoolAddressesProvider.getMiniPoolToAERC6909(miniPool));
@@ -219,13 +219,13 @@ contract MultiplePools is MiniPoolFixtures {
         // Set flow limiter
         vm.prank(address(miniPoolContracts.miniPoolAddressesProvider));
         miniPoolContracts.flowLimiter.setFlowLimit(address(wbtcParams.token), miniPool, amount2 / 4);
-        console.log(
+        console2.log(
             "1. Remaining flow limit: ",
             miniPoolContracts.flowLimiter.getFlowLimit(address(wbtcParams.token), miniPool)
                 - miniPoolContracts.flowLimiter.currentFlow(address(wbtcParams.token), miniPool)
         );
 
-        console.log("----------------REHYPOTHECATION ON WBTC --------------");
+        console2.log("----------------REHYPOTHECATION ON WBTC --------------");
         turnOnRehypothecation(
             deployedContracts.lendingPoolConfigurator,
             address(wbtcParams.aToken),
@@ -236,7 +236,7 @@ contract MultiplePools is MiniPoolFixtures {
             200
         );
 
-        console.log("----------------REHYPOTHECATION ON USDC ---------------");
+        console2.log("----------------REHYPOTHECATION ON USDC ---------------");
         turnOnRehypothecation(
             deployedContracts.lendingPoolConfigurator,
             address(usdcParams.aToken),
@@ -258,11 +258,11 @@ contract MultiplePools is MiniPoolFixtures {
                 commonContracts.aTokensWrapper[WBTC_OFFSET],
                 commonContracts.oracle.getAssetPrice(address(erc20Tokens[USDC_OFFSET]))
             );
-            console.log("----------------PROVIDER DEPOSITs LIQUIDITY (WBTC)---------------");
+            console2.log("----------------PROVIDER DEPOSITs LIQUIDITY (WBTC)---------------");
             fixture_depositTokensToMainPool(amount2, users.user2, wbtcTokenParams);
             logState(usdcParams, wbtcParams, 2);
 
-            console.log(
+            console2.log(
                 "----------------USER DEPOSITs LIQUIDITY (USDC) TO LENDING POOL---------------"
             );
             /* User deposits tokens to the main lending pool and gets lending pool's aTokens*/
@@ -275,7 +275,7 @@ contract MultiplePools is MiniPoolFixtures {
             testBalances.collateralInVault = usdcParams.token.balanceOf(address(usdcParams.vault));
             testBalances.borrowTokenInVault = wbtcParams.token.balanceOf(address(wbtcParams.vault));
 
-            console.log(
+            console2.log(
                 "----------------USER DEPOSITs LIQUIDITY (aUSDC) TO MINI POOL---------------"
             );
             /* User deposits lending pool's aTokens to the mini pool and
@@ -286,25 +286,27 @@ contract MultiplePools is MiniPoolFixtures {
             logState(usdcParams, wbtcParams, 4);
         }
 
-        console.log("----------------USER1 BORROWs---------------");
+        console2.log("----------------USER1 BORROWs---------------");
         vm.startPrank(users.user1);
         IMiniPool(miniPool).borrow(
             address(wbtcParams.aTokenWrapper), false, amount2 / 4, users.user1
         );
         vm.stopPrank();
         logState(usdcParams, wbtcParams, 5);
-        console.log(
+        console2.log(
             "%s. Balance of WBTC in MINI POOL: %s", 5, wbtcParams.token.balanceOf(address(miniPool))
         );
         uint256 flowLimit =
             miniPoolContracts.flowLimiter.getFlowLimit(address(wbtcParams.token), miniPool);
-        console.log(
+        console2.log(
             "5. Remaining flow limit: ",
             miniPoolContracts.flowLimiter.getFlowLimit(address(wbtcParams.token), miniPool)
                 - miniPoolContracts.flowLimiter.currentFlow(address(wbtcParams.token), miniPool)
         );
-        console.log("5. Balance aToken: ", aErc6909Token.balanceOf(users.user1, 1000 + USDC_OFFSET));
-        console.log(
+        console2.log(
+            "5. Balance aToken: ", aErc6909Token.balanceOf(users.user1, 1000 + USDC_OFFSET)
+        );
+        console2.log(
             "5. AvailableLiquidity: ",
             IERC20(commonContracts.aTokens[USDC_OFFSET]).balanceOf(address(aErc6909Token))
         );
@@ -328,10 +330,10 @@ contract MultiplePools is MiniPoolFixtures {
             testBalances.borrowTokenInVault, wbtcParams.token.balanceOf(address(wbtcParams.vault))
         );
 
-        console.log("----------------TIME TRAVEL---------------");
+        console2.log("----------------TIME TRAVEL---------------");
         skip(skipDuration);
 
-        console.log("\n---------------->>>>>>>>>>> SECOND MINI POOL <<<<<<<<--------------");
+        console2.log("\n---------------->>>>>>>>>>> SECOND MINI POOL <<<<<<<<--------------");
         miniPool = miniPools[1];
         aErc6909Token =
             IAERC6909(miniPoolContracts.miniPoolAddressesProvider.getMiniPoolToAERC6909(miniPool));
@@ -345,7 +347,7 @@ contract MultiplePools is MiniPoolFixtures {
             );
             amount1 = 2e18; //1 ETH
 
-            console.log(
+            console2.log(
                 "----------------USER DEPOSITs LIQUIDITY (USDC) TO LENDING POOL---------------"
             );
             /* User deposits tokens to the main lending pool and gets lending pool's aTokens*/
@@ -356,7 +358,7 @@ contract MultiplePools is MiniPoolFixtures {
             testBalances.collateralInVault = usdcParams.token.balanceOf(address(usdcParams.vault));
             testBalances.borrowTokenInVault = wbtcParams.token.balanceOf(address(wbtcParams.vault));
 
-            console.log(
+            console2.log(
                 "----------------USER DEPOSITs LIQUIDITY (aWETH) TO MINI POOL---------------"
             );
             /* User deposits lending pool's aTokens to the mini pool and
@@ -375,15 +377,15 @@ contract MultiplePools is MiniPoolFixtures {
             vm.prank(address(miniPoolContracts.miniPoolAddressesProvider));
             miniPoolContracts.flowLimiter.setFlowLimit(address(wbtcParams.token), miniPool, amount2);
         }
-        console.log("----------------USER1 BORROWs---------------");
-        console.log("scaledAmountToBorrow: ", scaledAmountToBorrow);
+        console2.log("----------------USER1 BORROWs---------------");
+        console2.log("scaledAmountToBorrow: ", scaledAmountToBorrow);
         vm.startPrank(users.user1);
         IMiniPool(miniPool).borrow(
             address(wbtcParams.aTokenWrapper), false, scaledAmountToBorrow, users.user1
         );
         vm.stopPrank();
         logState(usdcParams, wbtcParams, 9);
-        console.log(
+        console2.log(
             "%s. Balance of WBTC in MINI POOL: %s", 9, wbtcParams.token.balanceOf(address(miniPool))
         );
 
@@ -406,11 +408,11 @@ contract MultiplePools is MiniPoolFixtures {
             testBalances.borrowTokenInVault, wbtcParams.token.balanceOf(address(wbtcParams.vault))
         );
 
-        console.log("1. User1 aWbtc balance: ", wbtcParams.aToken.balanceOf(users.user1));
-        console.log(
+        console2.log("1. User1 aWbtc balance: ", wbtcParams.aToken.balanceOf(users.user1));
+        console2.log(
             "1. User1 scaled aWbtc balance: ", wbtcParams.aToken.scaledBalanceOf(users.user1)
         );
-        console.log("1. User1 wbtc balance: ", wbtcParams.token.balanceOf(users.user1));
+        console2.log("1. User1 wbtc balance: ", wbtcParams.token.balanceOf(users.user1));
 
         vm.startPrank(users.user1);
         deployedContracts.lendingPool.withdraw(
@@ -421,7 +423,7 @@ contract MultiplePools is MiniPoolFixtures {
         );
         vm.stopPrank();
 
-        console.log("2. User1 aWbtc balance: ", wbtcParams.aToken.balanceOf(users.user1));
-        console.log("2. User1 wbtc balance: ", wbtcParams.token.balanceOf(users.user1));
+        console2.log("2. User1 aWbtc balance: ", wbtcParams.aToken.balanceOf(users.user1));
+        console2.log("2. User1 wbtc balance: ", wbtcParams.token.balanceOf(users.user1));
     }
 }

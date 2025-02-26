@@ -27,8 +27,8 @@ abstract contract LendingPoolFixtures is Common {
         emit Deposit(address(erc20Token), sender, receiver, amount);
         deployedContracts.lendingPool.deposit(address(erc20Token), true, amount, receiver);
         vm.stopPrank();
-        console.log("_aTokenBalanceBefore: ", _aTokenBalanceBefore);
-        console.log("_aTokenBalanceAfter: ", erc20Token.balanceOf(address(aToken)));
+        console2.log("_aTokenBalanceBefore: ", _aTokenBalanceBefore);
+        console2.log("_aTokenBalanceAfter: ", erc20Token.balanceOf(address(aToken)));
         assertEq(
             _senderTokenBalanceTokenBefore,
             erc20Token.balanceOf(sender) + amount,
@@ -96,7 +96,7 @@ abstract contract LendingPoolFixtures is Common {
             borrowToken.token.balanceOf(provider) > borrowTokenDepositAmount, "Too less borrowToken"
         );
 
-        console.log("borrowTokenDepositAmount: ", borrowTokenDepositAmount);
+        console2.log("borrowTokenDepositAmount: ", borrowTokenDepositAmount);
         /* Provider deposits wbtc thanks to that there is enough funds to borrow */
         fixture_deposit(
             borrowToken.token, borrowToken.aToken, provider, provider, borrowTokenDepositAmount
@@ -120,7 +120,9 @@ abstract contract LendingPoolFixtures is Common {
             dynamicData.totalVariableDebt + amountToBorrow,
             staticData.cod3xReserveFactor
         );
-        console.log("1. AToken balance: ", borrowToken.token.balanceOf(address(borrowToken.aToken)));
+        console2.log(
+            "1. AToken balance: ", borrowToken.token.balanceOf(address(borrowToken.aToken))
+        );
         /* Borrower borrows maxPossible amount of borrowToken */
         vm.startPrank(borrower);
         vm.expectEmit(true, true, true, true);
@@ -131,7 +133,9 @@ abstract contract LendingPoolFixtures is Common {
             address(borrowToken.token), true, amountToBorrow, borrower
         );
         vm.stopPrank();
-        console.log("2. AToken balance: ", borrowToken.token.balanceOf(address(borrowToken.aToken)));
+        console2.log(
+            "2. AToken balance: ", borrowToken.token.balanceOf(address(borrowToken.aToken))
+        );
         /* Main user's balance should be: initial amount + borrowed amount */
         assertEq(
             borrowTokenBalanceBeforeBorrow + amountToBorrow,

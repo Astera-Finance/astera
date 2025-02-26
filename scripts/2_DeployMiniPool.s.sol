@@ -6,7 +6,7 @@ import "./DeployDataTypes.sol";
 import "./helpers/MiniPoolHelper.s.sol";
 import "lib/forge-std/src/Test.sol";
 import "lib/forge-std/src/Script.sol";
-import "lib/forge-std/src/console.sol";
+import "lib/forge-std/src/console2.sol";
 
 contract DeployMiniPool is Script, Test, MiniPoolHelper {
     using stdJson for string;
@@ -67,6 +67,22 @@ contract DeployMiniPool is Script, Test, MiniPoolHelper {
                     "Wrong liquidationBonus"
                 );
                 assertEq(staticData.symbol, poolReserversConfig[idx].symbol, "Wrong Symbol");
+                assertEq(staticData.isActive, true, "reserve is not active");
+                assertEq(staticData.borrowingEnabled, true, "borrowing not enabled");
+                assertEq(staticData.flashloanEnabled, true, "floshloan not enabled");
+                assertEq(staticData.isFrozen, false, "reserve is frozen");
+                assertEq(staticData.usageAsCollateralEnabled, true, "collateral usage not enabled");
+                assertEq(
+                    staticData.cod3xReserveFactor,
+                    poolReserversConfig[idx].reserveFactor,
+                    "wrong cod3xReserveFactor"
+                );
+                assertEq(
+                    staticData.miniPoolOwnerReserveFactor,
+                    poolReserversConfig[idx].miniPoolOwnerFee,
+                    "wrong miniPoolOwnerReserveFactor"
+                );
+                assertEq(staticData.depositCap, 0, "Wrong deposit cap");
             }
         }
 
@@ -88,7 +104,7 @@ contract DeployMiniPool is Script, Test, MiniPoolHelper {
     }
 
     function readPreviousDeployments(string memory path) internal returns (bool readPrevious) {
-        console.log("PREVIOUS DEPLOYMENT PATH: ", path);
+        console2.log("PREVIOUS DEPLOYMENT PATH: ", path);
         try vm.readFile(path) returns (string memory previousContracts) {
             address[] memory tmpContracts;
             contracts.miniPoolImpl = MiniPool(previousContracts.readAddress(".miniPoolImpl"));
@@ -114,7 +130,7 @@ contract DeployMiniPool is Script, Test, MiniPoolHelper {
                 );
             }
             tmpContracts = previousContracts.readAddressArray(".miniPoolVolatileStrategies");
-            console.log("tmpContracts LENGTH: ", tmpContracts.length);
+            console2.log("tmpContracts LENGTH: ", tmpContracts.length);
             for (uint256 idx = 0; idx < tmpContracts.length; idx++) {
                 contracts.miniPoolVolatileStrategies.push(
                     MiniPoolDefaultReserveInterestRateStrategy(tmpContracts[idx])
@@ -190,15 +206,15 @@ contract DeployMiniPool is Script, Test, MiniPoolHelper {
 
         vm.writeJson(output, path);
 
-        console.log("PROTOCOL DEPLOYED (check out addresses on %s)", path);
+        console2.log("PROTOCOL DEPLOYED (check out addresses on %s)", path);
     }
 
     function run() external returns (DeployedContracts memory) {
-        console.log("2_DeployMiniPool");
+        console2.log("2_DeployMiniPool");
 
         string memory root = vm.projectRoot();
         string memory path = string.concat(root, "/scripts/inputs/2_DeploymentConfig.json");
-        console.log("PATH: ", path);
+        console2.log("PATH: ", path);
         string memory config = vm.readFile(path);
 
         General memory general = abi.decode(config.parseRaw(".general"), (General));
@@ -220,14 +236,14 @@ contract DeployMiniPool is Script, Test, MiniPoolHelper {
         bool readPreviousContracts = config.readBool(".readPreviousContracts");
 
         if (!vm.envBool("MAINNET")) {
-            console.log("Testnet Deployment");
+            console2.log("Testnet Deployment");
 
             /* Read all mocks deployed */
             path = string.concat(root, "/scripts/outputs/testnet/0_MockedTokens.json");
-            console.log("PATH: ", path);
+            console2.log("PATH: ", path);
             config = vm.readFile(path);
             address[] memory mockedTokens = config.readAddressArray(".mockedTokens");
-            console.log("readPreviousContracts: ", readPreviousContracts);
+            console2.log("readPreviousContracts: ", readPreviousContracts);
             if (readPreviousContracts) {
                 readPreviousDeployments(
                     string.concat(root, "/scripts/outputs/testnet/2_MiniPoolContracts.json")
@@ -263,7 +279,7 @@ contract DeployMiniPool is Script, Test, MiniPoolHelper {
             {
                 string memory outputPath =
                     string.concat(root, "/scripts/outputs/testnet/1_LendingPoolContracts.json");
-                console.log("PATH: ", outputPath);
+                console2.log("PATH: ", outputPath);
                 config = vm.readFile(outputPath);
             }
 
@@ -275,10 +291,10 @@ contract DeployMiniPool is Script, Test, MiniPoolHelper {
             contracts.cod3xLendDataProvider =
                 Cod3xLendDataProvider(config.readAddress(".cod3xLendDataProvider"));
 
+            console2.log("Deploying mini pool infra");
+            contracts.oracle = Oracle(contracts.lendingPoolAddressesProvider.getPriceOracle());
             /* Deploy on testnet */
             vm.startBroadcast(vm.envUint("PRIVATE_KEY"));
-            console.log("Deploying mini pool infra");
-            contracts.oracle = Oracle(contracts.lendingPoolAddressesProvider.getPriceOracle());
             contracts.oracle.setAssetSources(
                 oracleConfig.assets, oracleConfig.sources, oracleConfig.timeouts
             );
@@ -294,12 +310,12 @@ contract DeployMiniPool is Script, Test, MiniPoolHelper {
             vm.stopBroadcast();
             path = string.concat(root, "/scripts/outputs/testnet/2_MiniPoolContracts.json");
         } else if (vm.envBool("MAINNET")) {
-            console.log("Mainnet Deployment");
+            console2.log("Mainnet Deployment");
             /* Get deployed lending pool infra dontracts */
             {
                 string memory outputPath =
                     string.concat(root, "/scripts/outputs/mainnet/1_LendingPoolContracts.json");
-                console.log("PATH: ", outputPath);
+                console2.log("PATH: ", outputPath);
                 config = vm.readFile(outputPath);
             }
             contracts.lendingPoolAddressesProvider =
@@ -316,14 +332,14 @@ contract DeployMiniPool is Script, Test, MiniPoolHelper {
                 );
             }
 
+            console2.log("Getting oracle");
+            contracts.oracle = Oracle(contracts.lendingPoolAddressesProvider.getPriceOracle());
             /* Deploy on mainnet */
             vm.startBroadcast(vm.envUint("PRIVATE_KEY"));
-            console.log("Getting oracle");
-            contracts.oracle = Oracle(contracts.lendingPoolAddressesProvider.getPriceOracle());
             contracts.oracle.setAssetSources(
                 oracleConfig.assets, oracleConfig.sources, oracleConfig.timeouts
             );
-            console.log("Deploying mini pool infra");
+            console2.log("Deploying mini pool infra");
             deployMiniPoolInfra(
                 general,
                 volatileStrategies,
@@ -336,7 +352,7 @@ contract DeployMiniPool is Script, Test, MiniPoolHelper {
             vm.stopBroadcast();
             path = string.concat(root, "/scripts/outputs/mainnet/2_MiniPoolContracts.json");
         } else {
-            console.log("No deployment type selected in .env");
+            console2.log("No deployment type selected in .env");
         }
 
         checkOwnerships();

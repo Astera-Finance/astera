@@ -55,7 +55,7 @@ contract Cod3xLendDataProviderTest is MiniPoolFixtures {
 
         address[] memory reserves = new address[](2 * tokens.length);
         for (uint8 idx = 0; idx < (2 * tokens.length); idx++) {
-            console.log(idx);
+            console2.log(idx);
             if (idx < tokens.length) {
                 reserves[idx] = tokens[idx];
             } else {
@@ -87,12 +87,12 @@ contract Cod3xLendDataProviderTest is MiniPoolFixtures {
             aToken: commonContracts.aTokens[1],
             debtToken: commonContracts.variableDebtTokens[1]
         });
-        console.log("Dealing...");
+        console2.log("Dealing...");
         deal(address(wbtcTypes.token), address(this), type(uint256).max / 2);
         deal(address(usdcTypes.token), user1, type(uint256).max / 2);
         deal(address(wbtcTypes.token), user2, type(uint256).max / 2);
         deal(address(usdcTypes.token), user3, type(uint256).max / 2);
-        console.log("Deposit borrow...");
+        console2.log("Deposit borrow...");
         fixture_depositAndBorrow(usdcTypes, wbtcTypes, address(this), user1, usdcDepositAmount);
         fixture_depositAndBorrow(usdcTypes, wbtcTypes, user2, user3, usdcDepositAmount);
 
@@ -102,7 +102,7 @@ contract Cod3xLendDataProviderTest is MiniPoolFixtures {
         StaticData memory staticData = deployedContracts
             .cod3xLendDataProvider
             .getLpReserveStaticData(address(usdcTypes.token), true);
-        console.log("depositCap ", staticData.depositCap);
+        console2.log("depositCap ", staticData.depositCap);
         assertEq(staticData.depositCap, 200);
     }
 
@@ -122,12 +122,12 @@ contract Cod3xLendDataProviderTest is MiniPoolFixtures {
             aToken: commonContracts.aTokens[1],
             debtToken: commonContracts.variableDebtTokens[1]
         });
-        console.log("Dealing...");
+        console2.log("Dealing...");
         deal(address(wbtcTypes.token), address(this), type(uint256).max / 2);
         deal(address(usdcTypes.token), user1, type(uint256).max / 2);
         deal(address(wbtcTypes.token), user2, type(uint256).max / 2);
         deal(address(usdcTypes.token), user3, type(uint256).max / 2);
-        console.log("Deposit borrow...");
+        console2.log("Deposit borrow...");
         fixture_depositAndBorrow(usdcTypes, wbtcTypes, address(this), user1, usdcDepositAmount);
         fixture_depositAndBorrow(usdcTypes, wbtcTypes, user2, user3, usdcDepositAmount);
         {
@@ -135,26 +135,26 @@ contract Cod3xLendDataProviderTest is MiniPoolFixtures {
                 .cod3xLendDataProvider
                 .getLpReserveStaticData(address(usdcTypes.token), true);
 
-            console.log("Decimals: ", staticData.decimals);
+            console2.log("Decimals: ", staticData.decimals);
             assertEq(staticData.decimals, usdcTypes.token.decimals());
 
-            console.log("Ltv: ", staticData.ltv);
+            console2.log("Ltv: ", staticData.ltv);
             assertEq(staticData.ltv, 8000);
-            console.log("Liquidation threshold: ", staticData.liquidationThreshold);
+            console2.log("Liquidation threshold: ", staticData.liquidationThreshold);
             assertEq(staticData.liquidationThreshold, 8500);
-            console.log("LiquidationBonus ", staticData.liquidationBonus);
+            console2.log("LiquidationBonus ", staticData.liquidationBonus);
             assertEq(staticData.liquidationBonus, 10500);
-            console.log("reserveFactor ", staticData.cod3xReserveFactor);
+            console2.log("reserveFactor ", staticData.cod3xReserveFactor);
             assertEq(staticData.cod3xReserveFactor, 1500);
-            console.log("depositCap ", staticData.depositCap);
+            console2.log("depositCap ", staticData.depositCap);
             assertEq(staticData.depositCap, 0);
-            console.log("borrowingEnabled ", staticData.borrowingEnabled);
+            console2.log("borrowingEnabled ", staticData.borrowingEnabled);
             assertEq(staticData.borrowingEnabled, true);
-            console.log("flashloanEnabled ", staticData.flashloanEnabled);
+            console2.log("flashloanEnabled ", staticData.flashloanEnabled);
             assertEq(staticData.flashloanEnabled, true);
-            console.log("isActive ", staticData.isActive);
+            console2.log("isActive ", staticData.isActive);
             assertEq(staticData.isActive, true);
-            console.log("isFrozen ", staticData.isFrozen);
+            console2.log("isFrozen ", staticData.isFrozen);
             assertEq(staticData.isFrozen, false);
 
             vm.startPrank(miniPoolContracts.miniPoolAddressesProvider.getMainPoolAdmin());
@@ -170,7 +170,7 @@ contract Cod3xLendDataProviderTest is MiniPoolFixtures {
         }
         {
             DynamicData memory dynamicData;
-            console.log("\n>>>> USDC <<<<");
+            console2.log("\n>>>> USDC <<<<");
 
             dynamicData = deployedContracts.cod3xLendDataProvider.getLpReserveDynamicData(
                 address(usdcTypes.token), true
@@ -184,14 +184,14 @@ contract Cod3xLendDataProviderTest is MiniPoolFixtures {
             assertEq(dynamicData.variableBorrowRate, 0, "Wrong variableBorrowRate");
             assertEq(dynamicData.variableBorrowIndex, 1e27, "Wrong variableBorrowIndex");
             assertEq(dynamicData.lastUpdateTimestamp, block.timestamp, "Wrong lastUpdateTimestamp");
-            console.log("\n>>>> WBTC <<<<<");
+            console2.log("\n>>>> WBTC <<<<<");
 
             dynamicData = deployedContracts.cod3xLendDataProvider.getLpReserveDynamicData(
                 address(wbtcTypes.token), true
             );
             uint256 wbtcAmount =
                 fixture_getMaxValueToBorrow(usdcTypes.token, wbtcTypes.token, usdcDepositAmount);
-            console.log(
+            console2.log(
                 "availableLiquidity: %s vs %s",
                 dynamicData.availableLiquidity,
                 (2 * wbtcAmount * 15 / 10) - 2 * wbtcAmount
@@ -201,65 +201,67 @@ contract Cod3xLendDataProviderTest is MiniPoolFixtures {
                 dynamicData.availableLiquidity,
                 "Wrong availableLiquidity"
             );
-            console.log("totalVariableDeb: %s vs %s", dynamicData.totalVariableDebt, 2 * wbtcAmount);
+            console2.log(
+                "totalVariableDeb: %s vs %s", dynamicData.totalVariableDebt, 2 * wbtcAmount
+            );
             assertEq(2 * wbtcAmount, dynamicData.totalVariableDebt, "Wrong totalVariableDebt");
-            console.log("liquidityRate ", dynamicData.liquidityRate);
-            console.log("variableBorrowRate ", dynamicData.variableBorrowRate);
-            console.log("liquidityIndex ", dynamicData.liquidityIndex);
-            console.log("variableBorrowIndex ", dynamicData.variableBorrowIndex);
-            console.log("lastUpdateTimestamp ", dynamicData.lastUpdateTimestamp);
+            console2.log("liquidityRate ", dynamicData.liquidityRate);
+            console2.log("variableBorrowRate ", dynamicData.variableBorrowRate);
+            console2.log("liquidityIndex ", dynamicData.liquidityIndex);
+            console2.log("variableBorrowIndex ", dynamicData.variableBorrowIndex);
+            console2.log("lastUpdateTimestamp ", dynamicData.lastUpdateTimestamp);
         }
         {
             (,, address[] memory aTokens, address[] memory debtTokens) =
                 deployedContracts.cod3xLendDataProvider.getAllLpTokens();
             // for (uint256 idx = 0; idx < aTokens.length; idx++) {
-            //     console.log(
+            //     console2.log(
             //         "%sa. Address: %s (%s)",
             //         idx,
             //         commonContracts.aTokens[idx],
             //         ERC20(aTokens[idx]).symbol()
             //     );
-            //     console.log(
+            //     console2.log(
             //         "%sb. Address: %s (%s)", idx, debtTokens[idx], ERC20(debtTokens[idx]).symbol()
             //     );
             // }
         }
         {
-            console.log("\n>>>> USER USDC <<<<");
+            console2.log("\n>>>> USER USDC <<<<");
             UserReserveData memory userReservesData = deployedContracts
                 .cod3xLendDataProvider
                 .getLpUserData(address(usdcTypes.token), true, address(this));
-            console.log("aToken: ", userReservesData.aToken);
-            console.log("debtToken: ", userReservesData.debtToken);
-            console.log("scaledATokenBalance: ", userReservesData.scaledATokenBalance);
-            console.log("scaledVariableDebt: ", userReservesData.scaledVariableDebt);
-            console.log(
+            console2.log("aToken: ", userReservesData.aToken);
+            console2.log("debtToken: ", userReservesData.debtToken);
+            console2.log("scaledATokenBalance: ", userReservesData.scaledATokenBalance);
+            console2.log("scaledVariableDebt: ", userReservesData.scaledVariableDebt);
+            console2.log(
                 "usageAsCollateralEnabledOnUser: ", userReservesData.usageAsCollateralEnabledOnUser
             );
-            console.log("isBorrowing: ", userReservesData.isBorrowing);
+            console2.log("isBorrowing: ", userReservesData.isBorrowing);
 
             userReservesData = deployedContracts.cod3xLendDataProvider.getLpUserData(
                 address(wbtcTypes.token), true, address(this)
             );
-            console.log("\n>>>> USER WBTC <<<<<");
+            console2.log("\n>>>> USER WBTC <<<<<");
             uint256 wbtcAmount =
                 fixture_getMaxValueToBorrow(usdcTypes.token, wbtcTypes.token, usdcDepositAmount);
-            console.log("aToken: ", userReservesData.aToken);
-            console.log("debtToken: ", userReservesData.debtToken);
+            console2.log("aToken: ", userReservesData.aToken);
+            console2.log("debtToken: ", userReservesData.debtToken);
 
-            console.log("scaledATokenBalance: ", userReservesData.scaledATokenBalance);
-            console.log("scaledVariableDebt: ", userReservesData.scaledVariableDebt);
+            console2.log("scaledATokenBalance: ", userReservesData.scaledATokenBalance);
+            console2.log("scaledVariableDebt: ", userReservesData.scaledVariableDebt);
             assertEq(
                 userReservesData.scaledATokenBalance, wbtcAmount * 15 / 10, "Wrong wbtc amount"
             );
             assertEq(userReservesData.scaledVariableDebt, 0);
-            console.log(
+            console2.log(
                 "usageAsCollateralEnabledOnUser: ", userReservesData.usageAsCollateralEnabledOnUser
             );
             assertEq(
                 userReservesData.usageAsCollateralEnabledOnUser, true, "Wrong usage as collateral"
             );
-            console.log("isBorrowing: ", userReservesData.isBorrowing);
+            console2.log("isBorrowing: ", userReservesData.isBorrowing);
             assertEq(userReservesData.isBorrowing, false, "Wrong is borrowing flag");
         }
     }
@@ -280,12 +282,12 @@ contract Cod3xLendDataProviderTest is MiniPoolFixtures {
             aToken: commonContracts.aTokensWrapper[1],
             price: commonContracts.oracle.getAssetPrice(address(erc20Tokens[1]))
         });
-        console.log("Dealing...");
+        console2.log("Dealing...");
         deal(address(wbtcParams.token), address(this), type(uint256).max / 2);
         deal(address(usdcParams.token), user1, type(uint256).max / 2);
         deal(address(wbtcParams.token), user2, type(uint256).max / 2);
         deal(address(usdcParams.token), user3, type(uint256).max / 2);
-        console.log("Deposit borrow...");
+        console2.log("Deposit borrow...");
         fixture_miniPoolBorrow(borrowAmount, 1, 0, wbtcParams, usdcParams, address(this));
         // fixture_miniPoolBorrow(depositAmount, 1, 0, wbtcParams, usdcParams, user2);
         {
@@ -293,26 +295,26 @@ contract Cod3xLendDataProviderTest is MiniPoolFixtures {
                 .cod3xLendDataProvider
                 .getMpReserveStaticData(address(usdcParams.token), 0);
 
-            console.log("Decimals: ", staticData.decimals);
+            console2.log("Decimals: ", staticData.decimals);
             assertEq(staticData.decimals, usdcParams.token.decimals());
 
-            console.log("Ltv: ", staticData.ltv);
+            console2.log("Ltv: ", staticData.ltv);
             assertEq(staticData.ltv, 9500);
-            console.log("Liquidation threshold: ", staticData.liquidationThreshold);
+            console2.log("Liquidation threshold: ", staticData.liquidationThreshold);
             assertEq(staticData.liquidationThreshold, 9700);
-            console.log("LiquidationBonus ", staticData.liquidationBonus);
+            console2.log("LiquidationBonus ", staticData.liquidationBonus);
             assertEq(staticData.liquidationBonus, 10100);
-            console.log("reserveFactor ", staticData.cod3xReserveFactor);
+            console2.log("reserveFactor ", staticData.cod3xReserveFactor);
             assertEq(staticData.cod3xReserveFactor, 0);
-            console.log("depositCap ", staticData.depositCap);
+            console2.log("depositCap ", staticData.depositCap);
             assertEq(staticData.depositCap, 0);
-            console.log("borrowingEnabled ", staticData.borrowingEnabled);
+            console2.log("borrowingEnabled ", staticData.borrowingEnabled);
             assertEq(staticData.borrowingEnabled, true);
-            console.log("flashloanEnabled ", staticData.flashloanEnabled);
+            console2.log("flashloanEnabled ", staticData.flashloanEnabled);
             assertEq(staticData.flashloanEnabled, true);
-            console.log("isActive ", staticData.isActive);
+            console2.log("isActive ", staticData.isActive);
             assertEq(staticData.isActive, true);
-            console.log("isFrozen ", staticData.isFrozen);
+            console2.log("isFrozen ", staticData.isFrozen);
             assertEq(staticData.isFrozen, false);
 
             vm.startPrank(miniPoolContracts.miniPoolAddressesProvider.getMainPoolAdmin());
@@ -329,24 +331,24 @@ contract Cod3xLendDataProviderTest is MiniPoolFixtures {
             assertEq(staticData.depositCap, 200);
         }
         {
-            console.log("\n>>>> USDC <<<<");
+            console2.log("\n>>>> USDC <<<<");
             DynamicData memory dynamicData = deployedContracts
                 .cod3xLendDataProvider
                 .getMpReserveDynamicData(address(usdcParams.token), 0);
             assertEq(dynamicData.availableLiquidity, 0, "Wrong available liquidity");
             assertEq(dynamicData.totalVariableDebt, borrowAmount, "Wrong totalVariableDebt");
-            console.log("liquidityRate ", dynamicData.liquidityRate);
-            console.log("variableBorrowRate ", dynamicData.variableBorrowRate);
-            console.log("liquidityIndex ", dynamicData.liquidityIndex);
-            console.log("variableBorrowIndex ", dynamicData.variableBorrowIndex);
-            console.log("lastUpdateTimestamp ", dynamicData.lastUpdateTimestamp);
+            console2.log("liquidityRate ", dynamicData.liquidityRate);
+            console2.log("variableBorrowRate ", dynamicData.variableBorrowRate);
+            console2.log("liquidityIndex ", dynamicData.liquidityIndex);
+            console2.log("variableBorrowIndex ", dynamicData.variableBorrowIndex);
+            console2.log("lastUpdateTimestamp ", dynamicData.lastUpdateTimestamp);
 
-            console.log("\n>>>> WBTC <<<<<");
+            console2.log("\n>>>> WBTC <<<<<");
             dynamicData = deployedContracts.cod3xLendDataProvider.getMpReserveDynamicData(
                 address(wbtcParams.token), 0
             );
 
-            console.log("availableLiquidity: %", dynamicData.availableLiquidity);
+            console2.log("availableLiquidity: %", dynamicData.availableLiquidity);
             assertGt(dynamicData.availableLiquidity, 0, "Wrong availableLiquidity");
             assertEq(0, dynamicData.totalVariableDebt, "Wrong totalVariableDebt");
             assertEq(dynamicData.liquidityRate, 0, "Wrong liquidityRate");
@@ -363,56 +365,56 @@ contract Cod3xLendDataProviderTest is MiniPoolFixtures {
                 uint256[] memory variableDebtTokenIds
             ) = deployedContracts.cod3xLendDataProvider.getAllMpTokenInfo(0);
             for (uint256 idx = 0; idx < commonContracts.aTokens.length; idx++) {
-                console.log("%sa. Address: %s ", idx, aErc6909Token[idx]);
-                console.log(
+                console2.log("%sa. Address: %s ", idx, aErc6909Token[idx]);
+                console2.log(
                     "%sb. Address: %s (%s)", idx, reserves[idx], ERC20(reserves[idx]).symbol()
                 );
-                console.log("%sa. aTokenId: %s", idx, aTokenIds[idx]);
-                console.log("%sb. variableTokenId: %s ", idx, variableDebtTokenIds[idx]);
+                console2.log("%sa. aTokenId: %s", idx, aTokenIds[idx]);
+                console2.log("%sb. variableTokenId: %s ", idx, variableDebtTokenIds[idx]);
             }
         }
         {
-            console.log("\n>>>> USER USDC <<<<");
+            console2.log("\n>>>> USER USDC <<<<");
             MiniPoolUserReserveData memory userReservesData = deployedContracts
                 .cod3xLendDataProvider
                 .getMpUserData(address(this), 0, address(usdcParams.token));
-            console.log("aTokenId: ", userReservesData.aTokenId);
-            console.log("debtTokenId: ", userReservesData.debtTokenId);
-            console.log("scaledATokenBalance: ", userReservesData.scaledATokenBalance);
-            console.log("scaledVariableDebt: ", userReservesData.scaledVariableDebt);
-            console.log(
+            console2.log("aTokenId: ", userReservesData.aTokenId);
+            console2.log("debtTokenId: ", userReservesData.debtTokenId);
+            console2.log("scaledATokenBalance: ", userReservesData.scaledATokenBalance);
+            console2.log("scaledVariableDebt: ", userReservesData.scaledVariableDebt);
+            console2.log(
                 "usageAsCollateralEnabledOnUser: ", userReservesData.usageAsCollateralEnabledOnUser
             );
-            console.log("isBorrowing: ", userReservesData.isBorrowing);
+            console2.log("isBorrowing: ", userReservesData.isBorrowing);
 
             userReservesData = deployedContracts.cod3xLendDataProvider.getMpUserData(
                 address(this), 0, address(wbtcParams.token)
             );
-            console.log("\n>>>> USER WBTC <<<<<");
+            console2.log("\n>>>> USER WBTC <<<<<");
 
-            console.log("aTokenId: ", userReservesData.aTokenId);
-            console.log("debtTokenId: ", userReservesData.debtTokenId);
+            console2.log("aTokenId: ", userReservesData.aTokenId);
+            console2.log("debtTokenId: ", userReservesData.debtTokenId);
 
-            console.log("scaledATokenBalance: ", userReservesData.scaledATokenBalance);
-            console.log("scaledVariableDebt: ", userReservesData.scaledVariableDebt);
+            console2.log("scaledATokenBalance: ", userReservesData.scaledATokenBalance);
+            console2.log("scaledVariableDebt: ", userReservesData.scaledVariableDebt);
             assertGt(userReservesData.scaledATokenBalance, 0, "Wrong wbtc amount");
             assertEq(userReservesData.scaledVariableDebt, 0);
-            console.log(
+            console2.log(
                 "usageAsCollateralEnabledOnUser: ", userReservesData.usageAsCollateralEnabledOnUser
             );
             assertEq(
                 userReservesData.usageAsCollateralEnabledOnUser, true, "Wrong usage as collateral"
             );
-            console.log("isBorrowing: ", userReservesData.isBorrowing);
+            console2.log("isBorrowing: ", userReservesData.isBorrowing);
             assertEq(userReservesData.isBorrowing, false, "Wrong is borrowing flag");
 
             address underlying =
                 deployedContracts.cod3xLendDataProvider.getUnderlyingAssetFromId(1128, 0);
-            console.log(ERC20(underlying).symbol());
+            console2.log(ERC20(underlying).symbol());
             assertEq(0, deployedContracts.cod3xLendDataProvider.getMpUnderlyingBalanceOf(1128, 0));
 
             underlying = deployedContracts.cod3xLendDataProvider.getUnderlyingAssetFromId(1129, 0);
-            console.log(ERC20(underlying).symbol());
+            console2.log(ERC20(underlying).symbol());
             assertGt(deployedContracts.cod3xLendDataProvider.getMpUnderlyingBalanceOf(1129, 0), 0);
         }
     }
@@ -433,27 +435,27 @@ contract Cod3xLendDataProviderTest is MiniPoolFixtures {
             aToken: commonContracts.aTokensWrapper[1],
             price: commonContracts.oracle.getAssetPrice(address(erc20Tokens[1]))
         });
-        console.log("Dealing...");
+        console2.log("Dealing...");
         deal(address(wbtcParams.token), address(this), type(uint256).max / 2);
         deal(address(usdcParams.token), user1, type(uint256).max / 2);
         deal(address(wbtcParams.token), user2, type(uint256).max / 2);
         deal(address(usdcParams.token), user3, type(uint256).max / 2);
-        console.log("Deposit borrow...");
+        console2.log("Deposit borrow...");
         fixture_miniPoolBorrow(borrowAmount, 1, 0, wbtcParams, usdcParams, address(this));
 
         /* Deploy new mini pools */
-        console.log("Deploy more miniPools");
+        console2.log("Deploy more miniPools");
         (, uint256 miniPoolId) = fixture_deployMiniPoolSetup(
             address(deployedContracts.lendingPoolAddressesProvider),
             address(deployedContracts.lendingPool),
             address(deployedContracts.cod3xLendDataProvider),
             miniPoolContracts
         );
-        console.log("MiniPoolId: ", miniPoolId);
+        console2.log("MiniPoolId: ", miniPoolId);
 
         address[] memory reserves = new address[](2 * tokens.length);
         for (uint8 idx = 0; idx < (2 * tokens.length); idx++) {
-            console.log(idx);
+            console2.log(idx);
             if (idx < tokens.length) {
                 reserves[idx] = tokens[idx];
             } else {
@@ -471,20 +473,20 @@ contract Cod3xLendDataProviderTest is MiniPoolFixtures {
             .cod3xLendDataProvider
             .getMiniPoolsWithReserve(address(wbtcParams.token));
         for (uint256 idx = 0; idx < miniPools.length; idx++) {
-            console.log("%s. Address: %s, Id: %s", idx, miniPools[idx], miniPoolIds[idx]);
+            console2.log("%s. Address: %s, Id: %s", idx, miniPools[idx], miniPoolIds[idx]);
         }
 
         (miniPools, miniPoolIds) = deployedContracts.cod3xLendDataProvider.getMiniPoolsWithReserve(
             address(usdcParams.token)
         );
         for (uint256 idx = 0; idx < miniPools.length; idx++) {
-            console.log("%s. Address: %s, Id: %s", idx, miniPools[idx], miniPoolIds[idx]);
+            console2.log("%s. Address: %s, Id: %s", idx, miniPools[idx], miniPoolIds[idx]);
         }
 
         (miniPools, miniPoolIds) =
             deployedContracts.cod3xLendDataProvider.getMiniPoolsWithReserve(makeAddr("random"));
         for (uint256 idx = 0; idx < miniPools.length; idx++) {
-            console.log("%s. Address: %s, Id: %s", idx, miniPools[idx], miniPoolIds[idx]);
+            console2.log("%s. Address: %s, Id: %s", idx, miniPools[idx], miniPoolIds[idx]);
         }
     }
 }

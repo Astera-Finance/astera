@@ -8,17 +8,101 @@ import "./DeployDataTypes.sol";
 import "./helpers/TransferOwnershipHelper.s.sol";
 import "lib/forge-std/src/Test.sol";
 import "lib/forge-std/src/Script.sol";
-import "lib/forge-std/src/console.sol";
+import "lib/forge-std/src/console2.sol";
 
 contract TransferOwnerships is Script, TransferOwnershipHelper, Test {
     using stdJson for string;
 
+    function _checkOwnerships(MiniPoolRole memory miniPoolRole, bool transferMiniPoolRole)
+        internal
+    {
+        assertEq(
+            contracts.miniPoolAddressesProvider.getLendingPoolAddressesProvider(),
+            address(contracts.lendingPoolAddressesProvider),
+            "AddressesProviders are different between mini pool and main pool. Did you run 1 and 2 scripts ?"
+        );
+
+        assertNotEq(
+            contracts.cod3xLendDataProvider.owner(),
+            vm.addr(vm.envUint("PRIVATE_KEY")),
+            "Owner of data provider is still local address"
+        );
+        assertNotEq(
+            contracts.lendingPoolAddressesProvider.owner(),
+            vm.addr(vm.envUint("PRIVATE_KEY")),
+            "Owner of address provider is still local address"
+        );
+        assertNotEq(
+            contracts.lendingPoolAddressesProvider.getEmergencyAdmin(),
+            vm.addr(vm.envUint("PRIVATE_KEY")),
+            "Emergency admin of lendingPoolAddressesProvider is still local address"
+        );
+        assertNotEq(
+            contracts.lendingPoolAddressesProvider.getPoolAdmin(),
+            vm.addr(vm.envUint("PRIVATE_KEY")),
+            "Pool admin of lendingPoolAddressesProvider is still local address"
+        );
+        assertNotEq(
+            contracts.oracle.owner(),
+            vm.addr(vm.envUint("PRIVATE_KEY")),
+            "Owner of oracle is still local address"
+        );
+        assertNotEq(
+            contracts.wethGateway.owner(),
+            vm.addr(vm.envUint("PRIVATE_KEY")),
+            "Owner of wethGateway is still local address"
+        );
+        assertNotEq(
+            contracts.miniPoolAddressesProvider.owner(),
+            vm.addr(vm.envUint("PRIVATE_KEY")),
+            "Owner of miniPoolAddressesProvider is still local address"
+        );
+        assertNotEq(
+            contracts.rewarder.owner(),
+            vm.addr(vm.envUint("PRIVATE_KEY")),
+            "Owner of rewarder is still local address"
+        );
+        assertNotEq(
+            contracts.rewarder6909.owner(),
+            vm.addr(vm.envUint("PRIVATE_KEY")),
+            "Owner of rewarder6909 is still local address"
+        );
+        assertNotEq(
+            contracts.miniPoolAddressesProvider.getMainPoolAdmin(),
+            vm.addr(vm.envUint("PRIVATE_KEY")),
+            "Main admin pool of miniPoolAddressesProvider is still local address"
+        );
+
+        if (transferMiniPoolRole) {
+            assertNotEq(
+                contracts.miniPoolAddressesProvider.getPoolAdmin(miniPoolRole.miniPoolId),
+                vm.addr(vm.envUint("PRIVATE_KEY")),
+                "Admin pool of miniPoolAddressesProvider is still local address"
+            );
+        }
+
+        for (uint8 idx = 0; idx < contracts.piStrategies.length; idx++) {
+            assertNotEq(
+                contracts.piStrategies[idx].owner(),
+                vm.addr(vm.envUint("PRIVATE_KEY")),
+                "Pi strategy owner is still local address"
+            );
+        }
+        for (uint8 idx = 0; idx < contracts.miniPoolPiStrategies.length; idx++) {
+            assertNotEq(
+                contracts.miniPoolPiStrategies[idx].owner(),
+                vm.addr(vm.envUint("PRIVATE_KEY")),
+                "Mini pool pi strategy owner is still local address"
+            );
+        }
+    }
+
     function run() external returns (DeployedContracts memory) {
-        console.log("7_TransferOwnerships");
+        console2.log("7_TransferOwnerships");
         // Config fetching
         string memory root = vm.projectRoot();
         string memory path = string.concat(root, "/scripts/inputs/7_TransferOwnerships.json");
-        console.log("PATH: ", path);
+        console2.log("PATH: ", path);
         string memory deploymentConfig = vm.readFile(path);
 
         bool transferMiniPoolRole = deploymentConfig.readBool(".transferMiniPoolRole");
@@ -27,20 +111,18 @@ contract TransferOwnerships is Script, TransferOwnershipHelper, Test {
             abi.decode(deploymentConfig.parseRaw(".miniPoolRole"), (MiniPoolRole));
 
         if (!vm.envBool("MAINNET")) {
-            console.log("Testnet");
+            console2.log("Testnet");
             /* *********** Lending pool settings *********** */
             {
                 string memory outputPath =
                     string.concat(root, "/scripts/outputs/testnet/1_LendingPoolContracts.json");
-                console.log("PATH: ", outputPath);
+                console2.log("PATH: ", outputPath);
                 deploymentConfig = vm.readFile(outputPath);
             }
 
             contracts.lendingPoolAddressesProvider = LendingPoolAddressesProvider(
                 deploymentConfig.readAddress(".lendingPoolAddressesProvider")
             );
-            contracts.aTokensAndRatesHelper =
-                ATokensAndRatesHelper(deploymentConfig.readAddress(".aTokensAndRatesHelper"));
             // contracts.treasury = Treasury(deploymentConfig.readAddress(".treasury"));
             contracts.oracle = Oracle(deploymentConfig.readAddress(".oracle"));
             contracts.cod3xLendDataProvider =
@@ -52,7 +134,7 @@ contract TransferOwnerships is Script, TransferOwnershipHelper, Test {
             {
                 string memory outputPath =
                     string.concat(root, "/scripts/outputs/testnet/2_MiniPoolContracts.json");
-                console.log("PATH: ", outputPath);
+                console2.log("PATH: ", outputPath);
                 deploymentConfig = vm.readFile(outputPath);
             }
 
@@ -67,7 +149,7 @@ contract TransferOwnerships is Script, TransferOwnershipHelper, Test {
             {
                 string memory outputPath =
                     string.concat(root, "/scripts/outputs/testnet/3_DeployedStrategies.json");
-                console.log("PATH: ", outputPath);
+                console2.log("PATH: ", outputPath);
                 deploymentConfig = vm.readFile(outputPath);
             }
 
@@ -89,7 +171,7 @@ contract TransferOwnerships is Script, TransferOwnershipHelper, Test {
             {
                 string memory outputPath =
                     string.concat(root, "/scripts/outputs/testnet/6_ChangePeripherials.json");
-                console.log("PATH: ", outputPath);
+                console2.log("PATH: ", outputPath);
                 deploymentConfig = vm.readFile(outputPath);
             }
 
@@ -107,28 +189,26 @@ contract TransferOwnerships is Script, TransferOwnershipHelper, Test {
             /* ***** Action ***** */
             vm.startBroadcast(vm.envUint("PRIVATE_KEY"));
             if (transferMiniPoolRole) {
-                console.log("MiniPool ownership transfer");
+                console2.log("MiniPool ownership transfer");
                 _transferMiniPoolOwnership(miniPoolRole);
             } else {
-                console.log("MainPool ownership transfer");
+                console2.log("MainPool ownership transfer");
                 _transferOwnershipsAndRenounceRoles(roles);
             }
             vm.stopBroadcast();
         } else if (vm.envBool("MAINNET")) {
-            console.log("Mainnet Deployment");
+            console2.log("Mainnet Deployment");
             /* *********** Lending pool settings *********** */
             {
                 string memory outputPath =
                     string.concat(root, "/scripts/outputs/mainnet/1_LendingPoolContracts.json");
-                console.log("PATH: ", outputPath);
+                console2.log("PATH: ", outputPath);
                 deploymentConfig = vm.readFile(outputPath);
             }
 
             contracts.lendingPoolAddressesProvider = LendingPoolAddressesProvider(
                 deploymentConfig.readAddress(".lendingPoolAddressesProvider")
             );
-            contracts.aTokensAndRatesHelper =
-                ATokensAndRatesHelper(deploymentConfig.readAddress(".aTokensAndRatesHelper"));
 
             // contracts.treasury = Treasury(deploymentConfig.readAddress(".treasury"));
             contracts.oracle = Oracle(deploymentConfig.readAddress(".oracle"));
@@ -141,7 +221,7 @@ contract TransferOwnerships is Script, TransferOwnershipHelper, Test {
             {
                 string memory outputPath =
                     string.concat(root, "/scripts/outputs/mainnet/2_MiniPoolContracts.json");
-                console.log("PATH: ", outputPath);
+                console2.log("PATH: ", outputPath);
                 deploymentConfig = vm.readFile(outputPath);
             }
 
@@ -153,7 +233,7 @@ contract TransferOwnerships is Script, TransferOwnershipHelper, Test {
             {
                 string memory outputPath =
                     string.concat(root, "/scripts/outputs/mainnet/3_DeployedStrategies.json");
-                console.log("PATH: ", outputPath);
+                console2.log("PATH: ", outputPath);
                 deploymentConfig = vm.readFile(outputPath);
             }
 
@@ -175,7 +255,7 @@ contract TransferOwnerships is Script, TransferOwnershipHelper, Test {
             {
                 string memory outputPath =
                     string.concat(root, "/scripts/outputs/mainnet/6_ChangePeripherials.json");
-                console.log("PATH: ", outputPath);
+                console2.log("PATH: ", outputPath);
                 deploymentConfig = vm.readFile(outputPath);
             }
             contracts.rewarder = Rewarder(deploymentConfig.readAddress(".rewarder"));
@@ -192,15 +272,16 @@ contract TransferOwnerships is Script, TransferOwnershipHelper, Test {
             /* ***** Action ***** */
             vm.startBroadcast(vm.envUint("PRIVATE_KEY"));
             if (transferMiniPoolRole) {
-                console.log("MiniPool ownership transfer");
+                console2.log("MiniPool ownership transfer");
                 _transferMiniPoolOwnership(miniPoolRole);
             } else {
-                console.log("MainPool ownership transfer");
+                console2.log("MainPool ownership transfer");
                 _transferOwnershipsAndRenounceRoles(roles);
             }
             vm.stopBroadcast();
         } else {
-            console.log("No deployment type selected in .env");
+            console2.log("No deployment type selected in .env");
         }
+        _checkOwnerships(miniPoolRole, transferMiniPoolRole);
     }
 }

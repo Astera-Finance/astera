@@ -5,7 +5,7 @@ pragma solidity ^0.8.23;
 import "./DeployDataTypes.sol";
 import "lib/forge-std/src/Test.sol";
 import "lib/forge-std/src/Script.sol";
-import "lib/forge-std/src/console.sol";
+import "lib/forge-std/src/console2.sol";
 import {StratsHelper} from "./helpers/StratsHelper.s.sol";
 
 contract AddStrats is Script, StratsHelper, Test {
@@ -34,13 +34,13 @@ contract AddStrats is Script, StratsHelper, Test {
                 symbols[idx] = ERC20(contracts.piStrategies[idx]._asset()).symbol();
                 piAddresses[idx] = address(contracts.piStrategies[idx]);
             }
-            console.log("Serializing");
+            console2.log("Serializing");
             vm.serializeString("strategies", "piStrategiesSymbols", symbols);
             vm.serializeAddress("strategies", "piStrategies", piAddresses);
         }
 
         {
-            console.log("Stable");
+            console2.log("Stable");
             address[] memory stableAddresses =
                 new address[](contracts.miniPoolStableStrategies.length);
             for (uint256 idx = 0; idx < contracts.miniPoolStableStrategies.length; idx++) {
@@ -49,7 +49,7 @@ contract AddStrats is Script, StratsHelper, Test {
             vm.serializeAddress("strategies", "miniPoolStableStrategies", stableAddresses);
         }
         {
-            console.log("Volatile");
+            console2.log("Volatile");
             address[] memory volatileAddresses =
                 new address[](contracts.miniPoolVolatileStrategies.length);
             for (uint256 idx = 0; idx < contracts.miniPoolVolatileStrategies.length; idx++) {
@@ -58,7 +58,7 @@ contract AddStrats is Script, StratsHelper, Test {
             vm.serializeAddress("strategies", "miniPoolVolatileStrategies", volatileAddresses);
         }
         {
-            console.log("PiAddresses");
+            console2.log("PiAddresses");
             address[] memory piAddresses = new address[](contracts.miniPoolPiStrategies.length);
             string[] memory symbols = new string[](contracts.miniPoolPiStrategies.length);
             for (uint256 idx = 0; idx < contracts.miniPoolPiStrategies.length; idx++) {
@@ -71,16 +71,16 @@ contract AddStrats is Script, StratsHelper, Test {
 
         vm.writeJson(output, path);
 
-        console.log("PROTOCOL DEPLOYED (check out addresses on %s)", path);
+        console2.log("PROTOCOL DEPLOYED (check out addresses on %s)", path);
     }
 
     function run() external returns (DeployedContracts memory) {
-        console.log("3_AddStrats");
+        console2.log("3_AddStrats");
 
         // Config fetching
         string memory root = vm.projectRoot();
         string memory path = string.concat(root, "/scripts/inputs/3_StratsToAdd.json");
-        console.log("PATH: ", path);
+        console2.log("PATH: ", path);
         string memory config = vm.readFile(path);
         PoolAddressesProviderConfig memory poolAddressesProviderConfig = abi.decode(
             config.parseRaw(".poolAddressesProviderConfig"), (PoolAddressesProviderConfig)
@@ -105,7 +105,7 @@ contract AddStrats is Script, StratsHelper, Test {
             {
                 string memory outputPath =
                     string.concat(root, "/scripts/outputs/testnet/1_LendingPoolContracts.json");
-                console.log("PATH: ", outputPath);
+                console2.log("PATH: ", outputPath);
                 config = vm.readFile(outputPath);
             }
 
@@ -139,7 +139,7 @@ contract AddStrats is Script, StratsHelper, Test {
 
             // /* Read all mocks deployed */
             // path = string.concat(root, "/scripts/outputs/testnet/0_MockedTokens.json");
-            // console.log("PATH: ", path);
+            // console2.log("PATH: ", path);
             // config = vm.readFile(path);
             // address[] memory mockedTokens = config.readAddressArray(".mockedTokens");
 
@@ -168,7 +168,7 @@ contract AddStrats is Script, StratsHelper, Test {
             {
                 string memory outputPath =
                     string.concat(root, "/scripts/outputs/testnet/2_MiniPoolContracts.json");
-                console.log("PATH: ", outputPath);
+                console2.log("PATH: ", outputPath);
                 config = vm.readFile(outputPath);
             }
 
@@ -249,7 +249,7 @@ contract AddStrats is Script, StratsHelper, Test {
             {
                 string memory outputPath =
                     string.concat(root, "/scripts/outputs/mainnet/1_LendingPoolContracts.json");
-                console.log("PATH: ", outputPath);
+                console2.log("PATH: ", outputPath);
                 config = vm.readFile(outputPath);
             }
 
@@ -285,7 +285,7 @@ contract AddStrats is Script, StratsHelper, Test {
             {
                 string memory outputPath =
                     string.concat(root, "/scripts/outputs/mainnet/2_MiniPoolContracts.json");
-                console.log("PATH: ", outputPath);
+                console2.log("PATH: ", outputPath);
                 config = vm.readFile(outputPath);
             }
 

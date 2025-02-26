@@ -62,7 +62,7 @@ contract FlashloanTest is Common {
         (uint256[] memory balancesBefore, address sender) = abi.decode(params, (uint256[], address)); //uint256[], address
         if ((sender == address(this))) {
             for (uint32 idx = 0; idx < tokens.length; idx++) {
-                console.log("[In] Premium: ", premiums[idx]);
+                console2.log("[In] Premium: ", premiums[idx]);
                 totalAmountsToPay[idx] = amounts[idx] + premiums[idx];
                 assertEq(balancesBefore[idx] + amounts[idx], IERC20(assets[idx]).balanceOf(sender));
                 assertEq(assets[idx], tokens[idx]);
@@ -74,7 +74,7 @@ contract FlashloanTest is Common {
             return true;
         } else if (sender == notApproved) {
             for (uint32 idx = 0; idx < tokens.length; idx++) {
-                console.log("[In] Premium: ", premiums[idx]);
+                console2.log("[In] Premium: ", premiums[idx]);
                 totalAmountsToPay[idx] = amounts[idx] + premiums[idx];
                 assertEq(
                     balancesBefore[idx] + amounts[idx], IERC20(assets[idx]).balanceOf(address(this))
@@ -138,7 +138,7 @@ contract FlashloanTest is Common {
         deployedContracts.lendingPool.flashLoan(flashloanParams, amounts, modes, params);
 
         for (uint32 idx = 0; idx < tokens.length; idx++) {
-            console.log(
+            console2.log(
                 "Balance now: %s vs Balance before: %s",
                 IERC20(tokens[idx]).balanceOf(address(commonContracts.aTokens[idx])),
                 balances.aTokenBalancesBefore[idx]
@@ -147,7 +147,7 @@ contract FlashloanTest is Common {
                 IERC20(tokens[idx]).balanceOf(address(commonContracts.aTokens[idx])),
                 balances.aTokenBalancesBefore[idx]
             );
-            console.log(
+            console2.log(
                 "Managed assets now: %s vs Managed assets before: %s",
                 AToken(commonContracts.aTokens[idx]).getTotalManagedAssets(),
                 balances.totalManagedAssetsBefore[idx]
@@ -224,7 +224,7 @@ contract FlashloanTest is Common {
         balances.totalManagedAssetsBefore = new uint256[](tokens.length);
 
         for (uint32 idx = 0; idx < tokens.length; idx++) {
-            console.log(
+            console2.log(
                 "Rehypothecation amt 1: %s",
                 IERC20(tokens[idx]).balanceOf(address(commonContracts.aTokens[idx]))
             );
@@ -239,7 +239,7 @@ contract FlashloanTest is Common {
                 200
             );
 
-            console.log(
+            console2.log(
                 "Rehypothecation amt 2: %s",
                 IERC20(tokens[idx]).balanceOf(address(commonContracts.aTokens[idx]))
             );
@@ -250,7 +250,7 @@ contract FlashloanTest is Common {
                 address(erc20Tokens[idx]), true, amountToDeposit, address(this)
             );
 
-            console.log(
+            console2.log(
                 "Rehypothecation amt 3: %s",
                 IERC20(tokens[idx]).balanceOf(address(commonContracts.aTokens[idx]))
             );
@@ -274,15 +274,15 @@ contract FlashloanTest is Common {
         deployedContracts.lendingPool.flashLoan(flashloanParams, amounts, modes, params);
 
         for (uint32 idx = 0; idx < tokens.length; idx++) {
-            console.log(
+            console2.log(
                 "Rehypothecation amt 4: %s",
                 IERC20(tokens[idx]).balanceOf(address(commonContracts.aTokens[idx]))
             );
-            console.log(
+            console2.log(
                 "Rehypothecation amt 5: %s", commonContracts.aTokens[idx]._underlyingAmount()
             );
-            console.log("Rehypothecation amt 6: %s", commonContracts.aTokens[idx]._farmingBal());
-            console.log("--------------------------------");
+            console2.log("Rehypothecation amt 6: %s", commonContracts.aTokens[idx]._farmingBal());
+            console2.log("--------------------------------");
 
             assertApproxEqRel(
                 commonContracts.aTokens[idx]._farmingBal(),

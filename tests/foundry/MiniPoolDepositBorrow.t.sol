@@ -12,7 +12,7 @@ import {MintableERC20} from "contracts/mocks/tokens/MintableERC20.sol";
 import "contracts/misc/Cod3xLendDataProvider.sol";
 
 import "forge-std/StdUtils.sol";
-import "forge-std/console.sol";
+import "forge-std/console2.sol";
 // import {ILendingPool} from "contracts/interfaces/ILendingPool.sol";
 
 contract MiniPoolDepositBorrowTest is MiniPoolFixtures {
@@ -54,7 +54,7 @@ contract MiniPoolDepositBorrowTest is MiniPoolFixtures {
 
         address[] memory reserves = new address[](2 * tokens.length);
         for (uint8 idx = 0; idx < (2 * tokens.length); idx++) {
-            console.log(idx);
+            console2.log(idx);
             if (idx < tokens.length) {
                 reserves[idx] = tokens[idx];
             } else {
@@ -114,7 +114,7 @@ contract MiniPoolDepositBorrowTest is MiniPoolFixtures {
                 params: "0x10"
             });
 
-            console.log("interestStrategy :::: ", interestStrategy);
+            console2.log("interestStrategy :::: ", interestStrategy);
 
             vm.prank(admin);
             deployedContracts.lendingPoolConfigurator.batchInitReserve(initInputParams);
@@ -142,20 +142,20 @@ contract MiniPoolDepositBorrowTest is MiniPoolFixtures {
 
         (address _aTokenAddress,) = Cod3xLendDataProvider(deployedContracts.cod3xLendDataProvider)
             .getLpTokens(address(mockToken), false);
-        console.log("AToken ::::  ", _aTokenAddress);
+        console2.log("AToken ::::  ", _aTokenAddress);
         aTokensW[0] = address(AToken(_aTokenAddress).WRAPPER_ADDRESS());
 
         {
             IMiniPoolConfigurator.InitReserveInput[] memory initInputParams =
                 new IMiniPoolConfigurator.InitReserveInput[](aTokensW.length);
-            console.log("Getting Mini pool: ");
+            console2.log("Getting Mini pool: ");
             address miniPool = miniPoolContracts.miniPoolAddressesProvider.getMiniPool(0);
 
             string memory tmpSymbol = ERC20(aTokensW[0]).symbol();
             string memory tmpName = ERC20(aTokensW[0]).name();
 
             address interestStrategy = configAddresses.volatileStrategy;
-            // console.log("[common]interestStartegy: ", interestStrategy);
+            // console2.log("[common]interestStartegy: ", interestStrategy);
             initInputParams[0] = IMiniPoolConfigurator.InitReserveInput({
                 underlyingAssetDecimals: ERC20(aTokensW[0]).decimals(),
                 interestRateStrategyAddress: interestStrategy,
@@ -210,8 +210,8 @@ contract MiniPoolDepositBorrowTest is MiniPoolFixtures {
         /* Fuzz vectors */
         collateralOffset = bound(collateralOffset, 0, tokens.length - 1);
         borrowOffset = bound(borrowOffset, 0, tokens.length - 1);
-        console.log("[collateral]Offset: ", collateralOffset);
-        console.log("[borrow]Offset: ", borrowOffset);
+        console2.log("[collateral]Offset: ", collateralOffset);
+        console2.log("[borrow]Offset: ", borrowOffset);
 
         /* Test vars */
         address user = makeAddr("user");
@@ -268,8 +268,8 @@ contract MiniPoolDepositBorrowTest is MiniPoolFixtures {
         validReserveFactor = bound(validReserveFactor, 100, 1_500);
         collateralOffset = bound(collateralOffset, 0, tokens.length - 1);
         borrowOffset = bound(borrowOffset, 0, tokens.length - 1);
-        console.log("[collateral]Offset: ", collateralOffset);
-        console.log("[borrow]Offset: ", borrowOffset);
+        console2.log("[collateral]Offset: ", collateralOffset);
+        console2.log("[borrow]Offset: ", borrowOffset);
 
         /* Test vars */
         address user = makeAddr("user");
@@ -302,8 +302,8 @@ contract MiniPoolDepositBorrowTest is MiniPoolFixtures {
         vm.stopPrank();
 
         address treasury = address(deployedContracts.treasury);
-        console.log("Treasury 1: ", treasury);
-        console.log(
+        console2.log("Treasury 1: ", treasury);
+        console2.log(
             "Treasury 2: ", miniPoolContracts.miniPoolAddressesProvider.getMiniPoolCod3xTreasury()
         );
         vm.prank(miniPoolContracts.miniPoolAddressesProvider.getMainPoolAdmin());
@@ -311,7 +311,7 @@ contract MiniPoolDepositBorrowTest is MiniPoolFixtures {
         IAERC6909 aErc6909Token =
             IAERC6909(miniPoolContracts.miniPoolAddressesProvider.getMiniPoolToAERC6909(miniPool));
 
-        console.log("\n>> First borrowing <<\n");
+        console2.log("\n>> First borrowing <<\n");
         fixture_miniPoolBorrow(
             amount, collateralOffset, borrowOffset, collateralTokenParams, borrowTokenParams, user
         );
@@ -338,21 +338,21 @@ contract MiniPoolDepositBorrowTest is MiniPoolFixtures {
             collateralTokenParams.token.balanceOf(address(this))
         );
 
-        console.log("1.Treasury balance: ", aErc6909Token.balanceOf(treasury, 1128 + borrowOffset));
+        console2.log("1.Treasury balance: ", aErc6909Token.balanceOf(treasury, 1128 + borrowOffset));
         uint256 scaledVariableDebt = aErc6909Token.scaledTotalSupply(2128 + borrowOffset);
 
-        console.log("\n>> Second borrowing MiniPoolBorrow with reserve factor <<\n");
+        console2.log("\n>> Second borrowing MiniPoolBorrow with reserve factor <<\n");
         fixture_miniPoolBorrow(
             amount, collateralOffset, borrowOffset, collateralTokenParams, borrowTokenParams, user
         );
         dynamicData = deployedContracts.cod3xLendDataProvider.getMpReserveDynamicData(
             address(borrowTokenParams.token), 0
         );
-        console.log("2.Treasury balance: ", aErc6909Token.balanceOf(treasury, 1128 + borrowOffset));
-        console.log("Balance of token must be greater than before borrow");
-        console.log("variableBorrowIndex: ", dynamicData.variableBorrowIndex);
-        console.log("previousVariableBorrowIndex: ", previousVariableBorrowIndex);
-        console.log("scaledVariableDebt: ", scaledVariableDebt);
+        console2.log("2.Treasury balance: ", aErc6909Token.balanceOf(treasury, 1128 + borrowOffset));
+        console2.log("Balance of token must be greater than before borrow");
+        console2.log("variableBorrowIndex: ", dynamicData.variableBorrowIndex);
+        console2.log("previousVariableBorrowIndex: ", previousVariableBorrowIndex);
+        console2.log("scaledVariableDebt: ", scaledVariableDebt);
 
         assertApproxEqAbs(
             aErc6909Token.balanceOf(treasury, 1128 + borrowOffset),
@@ -418,8 +418,8 @@ contract MiniPoolDepositBorrowTest is MiniPoolFixtures {
         testParams.cod3xTreasury = address(deployedContracts.treasury);
         testParams.ownerTreasury = makeAddr("ownerTreasury");
 
-        console.log("[collateral]Offset: ", testParams.collateralOffset);
-        console.log("[borrow]Offset: ", testParams.borrowOffset);
+        console2.log("[collateral]Offset: ", testParams.collateralOffset);
+        console2.log("[borrow]Offset: ", testParams.borrowOffset);
 
         /* Test vars */
         address user = makeAddr("user");
@@ -447,7 +447,7 @@ contract MiniPoolDepositBorrowTest is MiniPoolFixtures {
         IAERC6909 aErc6909Token =
             IAERC6909(miniPoolContracts.miniPoolAddressesProvider.getMiniPoolToAERC6909(miniPool));
 
-        console.log("\n>> First borrowing <<\n");
+        console2.log("\n>> First borrowing <<\n");
         fixture_depositTokensToMiniPool(
             2 * testParams.borrowAmount,
             1128 + testParams.borrowOffset,
@@ -491,7 +491,7 @@ contract MiniPoolDepositBorrowTest is MiniPoolFixtures {
             collateralTokenParams.token.balanceOf(address(this))
         );
 
-        console.log(
+        console2.log(
             "1.Treasury balance: ",
             aErc6909Token.balanceOf(testParams.cod3xTreasury, 1128 + testParams.borrowOffset)
         );
@@ -500,8 +500,8 @@ contract MiniPoolDepositBorrowTest is MiniPoolFixtures {
         dynamicParams.scaledTotalSupply =
             aErc6909Token.scaledTotalSupply(1128 + testParams.borrowOffset);
 
-        console.log("\n>> Second borrowing MiniPoolBorrow with reserve factor <<\n");
-        console.log(
+        console2.log("\n>> Second borrowing MiniPoolBorrow with reserve factor <<\n");
+        console2.log(
             "1. Total balance: ", aErc6909Token.scaledTotalSupply(1128 + testParams.borrowOffset)
         );
         fixture_depositTokensToMiniPool(
@@ -511,7 +511,7 @@ contract MiniPoolDepositBorrowTest is MiniPoolFixtures {
             borrowTokenParams,
             aErc6909Token
         );
-        console.log(
+        console2.log(
             "2. Total balance: ", aErc6909Token.scaledTotalSupply(1128 + testParams.borrowOffset)
         );
         fixture_depositTokensToMiniPool(
@@ -530,16 +530,16 @@ contract MiniPoolDepositBorrowTest is MiniPoolFixtures {
         dynamicData = deployedContracts.cod3xLendDataProvider.getMpReserveDynamicData(
             address(borrowTokenParams.token), 0
         );
-        console.log(
+        console2.log(
             "2.Treasury balance: ",
             aErc6909Token.balanceOf(testParams.cod3xTreasury, 1128 + testParams.borrowOffset)
         );
-        console.log("Balance of token must be greater than before borrow");
-        console.log(
+        console2.log("Balance of token must be greater than before borrow");
+        console2.log(
             "Cod3x treasury balance: ",
             aErc6909Token.balanceOf(testParams.cod3xTreasury, 1128 + testParams.borrowOffset)
         );
-        console.log(
+        console2.log(
             "OwnerTreasury balance: ",
             aErc6909Token.balanceOf(testParams.ownerTreasury, 1128 + testParams.borrowOffset)
         );
@@ -615,7 +615,7 @@ contract MiniPoolDepositBorrowTest is MiniPoolFixtures {
         /* Fuzz vectors */
         uint256 amount = ((amountInUsd / borrowTokenParams.price) * 10 ** PRICE_FEED_DECIMALS)
             / 10 ** (18 - borrowTokenParams.token.decimals());
-        console.log("Calculated debt threshold: %s %s", amount, borrowTokenParams.token.symbol());
+        console2.log("Calculated debt threshold: %s %s", amount, borrowTokenParams.token.symbol());
 
         uint256 debtThreshold = amount / (10 ** (borrowTokenParams.token.decimals() - 6));
 
@@ -634,12 +634,12 @@ contract MiniPoolDepositBorrowTest is MiniPoolFixtures {
             user,
             collateralTokenParams.token.balanceOf(address(this))
         );
-        console.log(">>> Bootstraping minDebt %s for %s", amount, borrowTokenParams.token.symbol());
+        console2.log(">>> Bootstraping minDebt %s for %s", amount, borrowTokenParams.token.symbol());
         fixture_miniPoolBorrow(
             amount, offset1, offset2, collateralTokenParams, borrowTokenParams, user
         );
 
-        console.log("Time travel 1");
+        console2.log("Time travel 1");
         vm.warp(block.timestamp + 1 days);
         vm.roll(block.number + 1);
 
@@ -651,7 +651,7 @@ contract MiniPoolDepositBorrowTest is MiniPoolFixtures {
             borrowTokenParams.token.balanceOf(address(this)) / 10
         );
         deal(address(collateralTokenParams.token), otherUser, 1e26);
-        console.log(">>> Real borrow", amount);
+        console2.log(">>> Real borrow", amount);
         fixture_miniPoolBorrow(
             amount, offset1, offset2, collateralTokenParams, borrowTokenParams, otherUser
         );

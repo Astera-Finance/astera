@@ -1,12 +1,12 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.0;
 
-import "forge-std/console.sol";
+import "forge-std/console2.sol";
 
 import "./Common.sol";
 import "contracts/protocol/libraries/helpers/Errors.sol";
 import {WadRayMath} from "contracts/protocol/libraries/math/WadRayMath.sol";
-import "forge-std/console.sol";
+import "forge-std/console2.sol";
 
 contract RayMathTest is Common {
     uint256 internal constant RAY = 1e27;

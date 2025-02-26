@@ -146,7 +146,7 @@ contract MiniPool is
         _minipoolId = minipoolID;
         _updateFlashLoanFee(9);
         _maxNumberOfReserves = 128;
-        _minDebtThreshold = 1e3;
+        _minDebtThreshold = 1e2;
     }
 
     /**
