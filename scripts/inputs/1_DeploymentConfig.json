@@ -8,7 +8,7 @@
         "marketReferenceCurrencyAggregator": "0x7e860098F58bBFC8648a4311b374B1D669a2bc6B",
         "networkBaseTokenAggregator": "0x71041dddad3595F9CEd3DcCFBe3D1F4b0a16Bb70",
         "treasury": "0xfEfcb2fb19b9A70B30646Fdc1A0860Eb12F7ff8b",
-        "usdBootstrapAmount": 2000000000000000000
+        "usdBootstrapAmount": 40
     },
     "poolReserversConfig": [
         {

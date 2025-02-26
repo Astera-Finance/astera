@@ -291,10 +291,10 @@ contract DeployMiniPool is Script, Test, MiniPoolHelper {
             contracts.cod3xLendDataProvider =
                 Cod3xLendDataProvider(config.readAddress(".cod3xLendDataProvider"));
 
-            /* Deploy on testnet */
-            vm.startBroadcast(vm.envUint("PRIVATE_KEY"));
             console2.log("Deploying mini pool infra");
             contracts.oracle = Oracle(contracts.lendingPoolAddressesProvider.getPriceOracle());
+            /* Deploy on testnet */
+            vm.startBroadcast(vm.envUint("PRIVATE_KEY"));
             contracts.oracle.setAssetSources(
                 oracleConfig.assets, oracleConfig.sources, oracleConfig.timeouts
             );
@@ -332,10 +332,10 @@ contract DeployMiniPool is Script, Test, MiniPoolHelper {
                 );
             }
 
-            /* Deploy on mainnet */
-            vm.startBroadcast(vm.envUint("PRIVATE_KEY"));
             console2.log("Getting oracle");
             contracts.oracle = Oracle(contracts.lendingPoolAddressesProvider.getPriceOracle());
+            /* Deploy on mainnet */
+            vm.startBroadcast(vm.envUint("PRIVATE_KEY"));
             contracts.oracle.setAssetSources(
                 oracleConfig.assets, oracleConfig.sources, oracleConfig.timeouts
             );
