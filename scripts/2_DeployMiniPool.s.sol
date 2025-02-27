@@ -52,37 +52,55 @@ contract DeployMiniPool is Script, Test, MiniPoolHelper {
                     address(poolReserversConfig[idx].tokenAddress),
                     "Wrong underlying token"
                 );
-                StaticData memory staticData = contracts
+                AggregatedMiniPoolReservesData memory aggregatedMiniPoolReservesData = contracts
                     .cod3xLendDataProvider
-                    .getMpReserveStaticData(address(poolReserversConfig[idx].tokenAddress), i);
-                assertEq(staticData.ltv, poolReserversConfig[idx].baseLtv, "Wrong Ltv");
+                    .getReserveDataForAssetAtMiniPool(
+                    address(poolReserversConfig[idx].tokenAddress), mp
+                );
                 assertEq(
-                    staticData.liquidationThreshold,
+                    aggregatedMiniPoolReservesData.baseLTVasCollateral,
+                    poolReserversConfig[idx].baseLtv,
+                    "Wrong Ltv"
+                );
+                assertEq(
+                    aggregatedMiniPoolReservesData.reserveLiquidationThreshold,
                     poolReserversConfig[idx].liquidationThreshold,
                     "Wrong liquidationThreshold"
                 );
                 assertEq(
-                    staticData.liquidationBonus,
+                    aggregatedMiniPoolReservesData.reserveLiquidationBonus,
                     poolReserversConfig[idx].liquidationBonus,
                     "Wrong liquidationBonus"
                 );
-                assertEq(staticData.symbol, poolReserversConfig[idx].symbol, "Wrong Symbol");
-                assertEq(staticData.isActive, true, "reserve is not active");
-                assertEq(staticData.borrowingEnabled, true, "borrowing not enabled");
-                assertEq(staticData.flashloanEnabled, true, "floshloan not enabled");
-                assertEq(staticData.isFrozen, false, "reserve is frozen");
-                assertEq(staticData.usageAsCollateralEnabled, true, "collateral usage not enabled");
                 assertEq(
-                    staticData.cod3xReserveFactor,
+                    aggregatedMiniPoolReservesData.symbol,
+                    poolReserversConfig[idx].symbol,
+                    "Wrong Symbol"
+                );
+                assertEq(aggregatedMiniPoolReservesData.isActive, true, "reserve is not active");
+                assertEq(
+                    aggregatedMiniPoolReservesData.borrowingEnabled, true, "borrowing not enabled"
+                );
+                assertEq(
+                    aggregatedMiniPoolReservesData.flashloanEnabled, true, "floshloan not enabled"
+                );
+                assertEq(aggregatedMiniPoolReservesData.isFrozen, false, "reserve is frozen");
+                assertEq(
+                    aggregatedMiniPoolReservesData.usageAsCollateralEnabled,
+                    true,
+                    "collateral usage not enabled"
+                );
+                assertEq(
+                    aggregatedMiniPoolReservesData.cod3xReserveFactor,
                     poolReserversConfig[idx].reserveFactor,
                     "wrong cod3xReserveFactor"
                 );
                 assertEq(
-                    staticData.miniPoolOwnerReserveFactor,
+                    aggregatedMiniPoolReservesData.miniPoolOwnerReserveFactor,
                     poolReserversConfig[idx].miniPoolOwnerFee,
                     "wrong miniPoolOwnerReserveFactor"
                 );
-                assertEq(staticData.depositCap, 0, "Wrong deposit cap");
+                assertEq(aggregatedMiniPoolReservesData.depositCap, 0, "Wrong deposit cap");
             }
         }
 
@@ -289,7 +307,7 @@ contract DeployMiniPool is Script, Test, MiniPoolHelper {
             contracts.lendingPoolConfigurator =
                 LendingPoolConfigurator(config.readAddress(".lendingPoolConfigurator"));
             contracts.cod3xLendDataProvider =
-                Cod3xLendDataProvider(config.readAddress(".cod3xLendDataProvider"));
+                Cod3xLendDataProvider2(config.readAddress(".cod3xLendDataProvider"));
 
             console2.log("Deploying mini pool infra");
             contracts.oracle = Oracle(contracts.lendingPoolAddressesProvider.getPriceOracle());
@@ -324,7 +342,7 @@ contract DeployMiniPool is Script, Test, MiniPoolHelper {
             contracts.lendingPoolConfigurator =
                 LendingPoolConfigurator(config.readAddress(".lendingPoolConfigurator"));
             contracts.cod3xLendDataProvider =
-                Cod3xLendDataProvider(config.readAddress(".cod3xLendDataProvider"));
+                Cod3xLendDataProvider2(config.readAddress(".cod3xLendDataProvider"));
 
             if (readPreviousContracts) {
                 readPreviousDeployments(

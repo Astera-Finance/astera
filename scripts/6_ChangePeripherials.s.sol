@@ -149,7 +149,7 @@ contract ChangePeripherials is Script, ChangePeripherialsHelper, Test {
             _turnOnRehypothecation(rehypothecation);
             /* Data Provider */
             if (cod3xLendDataProvider.deploy) {
-                contracts.cod3xLendDataProvider = new Cod3xLendDataProvider(
+                contracts.cod3xLendDataProvider = new Cod3xLendDataProvider2(
                     cod3xLendDataProvider.networkBaseTokenAggregator,
                     cod3xLendDataProvider.marketReferenceCurrencyAggregator
                 );
@@ -201,7 +201,7 @@ contract ChangePeripherials is Script, ChangePeripherialsHelper, Test {
             _turnOnRehypothecation(rehypothecation);
             /* Data Provider */
             if (cod3xLendDataProvider.deploy) {
-                contracts.cod3xLendDataProvider = new Cod3xLendDataProvider(
+                contracts.cod3xLendDataProvider = new Cod3xLendDataProvider2(
                     cod3xLendDataProvider.networkBaseTokenAggregator,
                     cod3xLendDataProvider.marketReferenceCurrencyAggregator
                 );

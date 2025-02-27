@@ -4,7 +4,8 @@ pragma solidity ^0.8.0;
 import {ERC20} from "contracts/dependencies/openzeppelin/contracts/ERC20.sol";
 import {Rewarder} from "contracts/protocol/rewarder/lendingpool/Rewarder.sol";
 import {Rewarder6909} from "contracts/protocol/rewarder/minipool/Rewarder6909.sol";
-import {Cod3xLendDataProvider} from "contracts/misc/Cod3xLendDataProvider.sol";
+// import {Cod3xLendDataProvider} from "contracts/misc/Cod3xLendDataProvider.sol";
+import {Cod3xLendDataProvider2} from "contracts/misc/Cod3xLendDataProvider2.sol";
 import {Treasury} from "contracts/misc/Treasury.sol";
 import {LendingPoolAddressesProvider} from
     "contracts/protocol/configuration/LendingPoolAddressesProvider.sol";
@@ -47,7 +48,7 @@ struct DeployedContracts {
     MiniPoolDefaultReserveInterestRateStrategy[] miniPoolVolatileStrategies;
     MiniPoolDefaultReserveInterestRateStrategy[] miniPoolStableStrategies;
     MiniPoolPiReserveInterestRateStrategy[] miniPoolPiStrategies;
-    Cod3xLendDataProvider cod3xLendDataProvider;
+    Cod3xLendDataProvider2 cod3xLendDataProvider;
     AToken aToken;
     VariableDebtToken variableDebtToken;
     ATokenERC6909 aTokenErc6909Impl;

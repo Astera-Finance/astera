@@ -12,8 +12,11 @@ import {ATokenERC6909} from "contracts/protocol/tokenization/ERC6909/ATokenERC69
 import {VariableDebtToken} from "contracts/protocol/tokenization/ERC20/VariableDebtToken.sol";
 import {IAERC6909} from "contracts/interfaces/IAERC6909.sol";
 import {Oracle} from "contracts/protocol/core/Oracle.sol";
-import {Cod3xLendDataProvider} from "contracts/misc/Cod3xLendDataProvider.sol";
-import {StaticData, DynamicData} from "contracts/interfaces/ICod3xLendDataProvider.sol";
+import {Cod3xLendDataProvider2} from "contracts/misc/Cod3xLendDataProvider2.sol";
+import {
+    AggregatedMainPoolReservesData,
+    AggregatedMiniPoolReservesData
+} from "contracts/interfaces/ICod3xLendDataProvider2.sol";
 import {IMiniPool} from "contracts/interfaces/IMiniPool.sol";
 
 import {DefaultReserveInterestRateStrategy} from
@@ -143,11 +146,13 @@ contract TestBasicActions is Script, Test {
         uint256 borrowTokenPrice = oracle.getAssetPrice(address(borrowToken));
         uint256 collateralPrice = oracle.getAssetPrice(address(collateral));
         uint256 collateralDepositValue = amount * collateralPrice / (10 ** PRICE_FEED_DECIMALS);
-        StaticData memory staticData =
-            contracts.cod3xLendDataProvider.getLpReserveStaticData(address(collateral), true);
+        AggregatedMainPoolReservesData memory aggregatedMainPoolReservesData = contracts
+            .cod3xLendDataProvider
+            .getAggregatedMainPoolReserveData(address(collateral), true);
         uint256 maxBorrowTokenToBorrowInCollateralUnit;
         {
-            uint256 collateralMaxBorrowValue = staticData.ltv * collateralDepositValue / 10_000;
+            uint256 collateralMaxBorrowValue =
+                aggregatedMainPoolReservesData.ltv * collateralDepositValue / 10_000;
 
             uint256 wbtcMaxBorrowAmountRay = collateralMaxBorrowValue.rayDiv(borrowTokenPrice);
             maxBorrowTokenToBorrowInCollateralUnit = fixture_preciseConvertWithDecimals(
@@ -504,10 +509,10 @@ contract TestBasicActions is Script, Test {
         (address[] memory assets, bool[] memory reserveTypes) =
             contracts.lendingPool.getReservesList();
         for (uint256 idx = 0; idx < assets.length; idx++) {
-            StaticData memory staticData = contracts.cod3xLendDataProvider.getLpReserveStaticData(
-                assets[idx], reserveTypes[idx]
-            );
-            if (!staticData.isFrozen) {
+            AggregatedMainPoolReservesData memory aggregatedMainPoolReservesData = contracts
+                .cod3xLendDataProvider
+                .getAggregatedMainPoolReserveData(assets[idx], reserveTypes[idx]);
+            if (!aggregatedMainPoolReservesData.isFrozen) {
                 DataTypes.ReserveData memory data =
                     contracts.lendingPool.getReserveData(assets[idx], reserveTypes[idx]);
                 console2.log("Price: ", contracts.oracle.getAssetPrice(assets[idx]));
@@ -575,10 +580,12 @@ contract TestBasicActions is Script, Test {
 
         (address[] memory assets,) = IMiniPool(miniPool).getReservesList();
         for (uint256 idx = 0; idx < assets.length; idx++) {
-            StaticData memory staticData = contracts.cod3xLendDataProvider.getMpReserveStaticData(
+            AggregatedMiniPoolReservesData memory aggregatedMainPoolReservesData = contracts
+                .cod3xLendDataProvider
+                .getMiniPoolReservesData(
                 assets[idx], contracts.miniPoolAddressesProvider.getMiniPoolId(miniPool)
             );
-            if (!staticData.isFrozen) {
+            if (!aggregatedMainPoolReservesData.isFrozen) {
                 DataTypes.MiniPoolReserveData memory data =
                     IMiniPool(miniPool).getReserveData(assets[idx]);
                 console2.log("Price: ", contracts.oracle.getAssetPrice(assets[idx]));
