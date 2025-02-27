@@ -6,6 +6,7 @@ typechain
 typechain-types
 inspo
 package-lock.json
+yarn.lock
 providers.json
 docs
 .vscode/
