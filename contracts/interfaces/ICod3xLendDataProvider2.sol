@@ -67,14 +67,20 @@ struct AggregatedMainPoolReservesData {
     uint256 totalScaledVariableDebt;
     uint256 priceInMarketReferenceCurrency;
     address ATokenNonRebasingAddress;
-    // PiReserveInterestRateStrategy
+    // Strategies
     uint256 optimalUtilizationRate;
+    // PiReserveInterestRateStrategy
     uint256 kp;
     uint256 ki;
     uint256 lastPiReserveRateStrategyUpdate;
     int256 errI;
     int256 minControllerError;
     int256 maxErrIAmp;
+    // DefaultReserveInterestRateStrategy
+    uint256 baseVariableBorrowRate;
+    uint256 variableRateSlope1;
+    uint256 variableRateSlope2;
+    uint256 maxVariableBorrowRate;
 }
 
 struct MiniPoolData {
@@ -117,14 +123,20 @@ struct AggregatedMiniPoolReservesData {
     uint256 availableLiquidity;
     uint256 totalScaledVariableDebt;
     uint256 priceInMarketReferenceCurrency;
-    // PiReserveInterestRateStrategy
+    // Strategies
     uint256 optimalUtilizationRate;
+    // PiReserveInterestRateStrategy
     uint256 kp;
     uint256 ki;
     uint256 lastPiReserveRateStrategyUpdate;
     int256 errI;
     int256 minControllerError;
     int256 maxErrIAmp;
+    // DefaultReserveInterestRateStrategy
+    uint256 baseVariableBorrowRate;
+    uint256 variableRateSlope1;
+    uint256 variableRateSlope2;
+    uint256 maxVariableBorrowRate;
     // flowLimiter
     uint256 availableFlow;
     uint256 flowLimit;
