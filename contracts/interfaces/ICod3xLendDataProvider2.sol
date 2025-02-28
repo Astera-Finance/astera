@@ -33,12 +33,12 @@ struct BaseCurrencyInfo {
     uint8 networkBaseTokenPriceDecimals;
 }
 
-
-struct AggregatedMainPoolReservesData { // reserve data for lending pool
+struct AggregatedMainPoolReservesData {
+    // reserve data for lending pool
     // BasicReserveInfo
     address underlyingAsset;
-    string  name;
-    string  symbol;
+    string name;
+    string symbol;
     // ReserveConfiguration
     uint256 decimals;
     uint256 baseLTVasCollateral;
@@ -47,18 +47,18 @@ struct AggregatedMainPoolReservesData { // reserve data for lending pool
     uint256 cod3xReserveFactor;
     uint256 miniPoolOwnerReserveFactor;
     uint256 depositCap;
-    bool    usageAsCollateralEnabled;
-    bool    borrowingEnabled;
-    bool    flashloanEnabled;
-    bool    isActive;
-    bool    isFrozen;
-    bool    reserveType;
+    bool usageAsCollateralEnabled;
+    bool borrowingEnabled;
+    bool flashloanEnabled;
+    bool isActive;
+    bool isFrozen;
+    bool reserveType;
     // ReserveData
     uint128 liquidityIndex;
     uint128 variableBorrowIndex;
     uint128 liquidityRate;
     uint128 variableBorrowRate;
-    uint40  lastUpdateTimestamp;
+    uint40 lastUpdateTimestamp;
     address aTokenAddress;
     address variableDebtTokenAddress;
     address interestRateStrategyAddress;
@@ -87,8 +87,8 @@ struct MiniPoolData {
 struct AggregatedMiniPoolReservesData {
     // BasicReserveInfo
     address underlyingAsset;
-    string  name;
-    string  symbol;
+    string name;
+    string symbol;
     // ReserveConfiguration MiniPool
     uint256 aTokenId;
     uint256 debtTokenId;
@@ -102,17 +102,17 @@ struct AggregatedMiniPoolReservesData {
     uint256 cod3xReserveFactor;
     uint256 miniPoolOwnerReserveFactor;
     uint256 depositCap;
-    bool    usageAsCollateralEnabled;
-    bool    borrowingEnabled;
-    bool    flashloanEnabled;
-    bool    isActive;
-    bool    isFrozen;
+    bool usageAsCollateralEnabled;
+    bool borrowingEnabled;
+    bool flashloanEnabled;
+    bool isActive;
+    bool isFrozen;
     // ReserveData
     uint128 liquidityIndex;
     uint128 variableBorrowIndex;
     uint128 liquidityRate;
     uint128 variableBorrowRate;
-    uint40  lastUpdateTimestamp;
+    uint40 lastUpdateTimestamp;
     address interestRateStrategyAddress;
     uint256 availableLiquidity;
     uint256 totalScaledVariableDebt;
@@ -131,6 +131,4 @@ struct AggregatedMiniPoolReservesData {
     uint256 currentFlow;
 }
 
-interface ICod3xLendDataProvider2 {
- 
-}
+interface ICod3xLendDataProvider2 {}
