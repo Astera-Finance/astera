@@ -53,34 +53,6 @@
       "tokenAddress": "0x"
     },
     {
-      "baseLtv": 5000,
-      "borrowingEnabled": true,
-      "interestStrat": "VOLATILE",
-      "interestStratId": 3,
-      "liquidationBonus": 11000,
-      "liquidationThreshold": 5500,
-      "miniPoolOwnerFee": 0,
-      "params": "0x10",
-      "reserveFactor": 2000,
-      "reserveType": true,
-      "symbol": "TONY",
-      "tokenAddress": "0xb22a793a81ff5b6ad37f40d5fe1e0ac4184d52f3"
-    },
-    {
-      "baseLtv": 5000,
-      "borrowingEnabled": true,
-      "interestStrat": "VOLATILE",
-      "interestStratId": 4,
-      "liquidationBonus": 11000,
-      "liquidationThreshold": 5500,
-      "miniPoolOwnerFee": 0,
-      "params": "0x10",
-      "reserveFactor": 2000,
-      "reserveType": true,
-      "symbol": "CDX",
-      "tokenAddress": "0xC0D3700000c0e32716863323bFd936b54a1633d1"
-    },
-    {
       "baseLtv": 7000,
       "borrowingEnabled": true,
       "interestStrat": "PI",
@@ -115,18 +87,6 @@
       "optimalUtilizationRate": 70e25,
       "variableRateSlope1": 0.0214e27,
       "variableRateSlope2": 0.9636e27
-    },
-    {
-      "baseVariableBorrowRate": 0.05e27,
-      "optimalUtilizationRate": 50e25,
-      "variableRateSlope1": 0.1e27,
-      "variableRateSlope2": 0.85e27
-    },
-    {
-      "baseVariableBorrowRate": 0.05e27,
-      "optimalUtilizationRate": 50e25,
-      "variableRateSlope1": 0.1e27,
-      "variableRateSlope2": 0.85e27
     }
   ],
   "stableStrategies": [],
@@ -147,27 +107,21 @@
       "0x",
       "0x",
       "0x",
-      "0xb22a793a81ff5b6ad37f40d5fe1e0ac4184d52f3",
-      "0xC0D3700000c0e32716863323bFd936b54a1633d1",
       "0xC0D3700000987C99b3C9009069E4f8413fD22330"
     ],
     "baseCurrency": "0x0000000000000000000000000000000000000000",
     "baseCurrencyUnit": 1e8,
     "fallbackOracle": "0x0000000000000000000000000000000000000000",
     "sources": [
-      "0x4aDC67696bA383F43DD60A9e78F2C97Fbbfc7cb1",
-      "0xd30e2101a97dcbAeBCBC04F14C3f624E67A35165",
-      "0x",
-      "0x",
-      "0x",
+      "0x07DA0E54543a844a80ABE69c8A12F22B3aA59f9D",
+      "0x71041dddad3595F9CEd3DcCFBe3D1F4b0a16Bb70",
+      "0x7e860098F58bBFC8648a4311b374B1D669a2bc6B",
       "0x"
     ],
     "timeouts": [
-      100000,
-      100000,
-      100000,
-      100000,
-      100000,
+      1200,
+      1200,
+      86400,
       100000
     ]
   }
