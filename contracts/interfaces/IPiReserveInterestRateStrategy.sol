@@ -33,7 +33,10 @@ interface IPiReserveInterestRateStrategy {
 
     function _errI() external view returns (int256);
 
-    function getAvailableLiquidity(address asset, address aToken) external view returns (uint256, address, uint256);
+    function getAvailableLiquidity(address asset, address aToken)
+        external
+        view
+        returns (uint256, address, uint256);
 
     function getCurrentInterestRates() external view returns (uint256, uint256, uint256);
 

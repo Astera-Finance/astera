@@ -5,13 +5,13 @@ Echidna is a program designed for fuzzing/property-based testing of Ethereum sma
 ### Fuzzing
 
 ```sh
-forge install
+forge install && yarn
 echidna tests/echidna/PropertiesMain.sol --contract PropertiesMain --config tests/echidna/config/config1_fast.yaml
 ```
 
 Medusa: to be fixed.
 ```sh
-forge install
+forge install && yarn
 medusa fuzz --config medusa_config.json
 ```
 

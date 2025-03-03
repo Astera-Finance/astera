@@ -13,13 +13,13 @@ Fill your `RPC_PROVIDER` in the `.env`.
 
 ### Foundry
 ```bash
-forge install
+forge install && yarn
 forge test
 ```
 
 ### Echidna
 ```bash
-forge install
+forge install && yarn
 echidna tests/echidna/PropertiesMain.sol --contract PropertiesMain --config tests/echidna/config/config1_fast.yaml
 ```
 
@@ -32,7 +32,7 @@ echidna tests/echidna/PropertiesMain.sol --contract PropertiesMain --config test
 -   memory/stack: `x`
 -   function params: `x`
 -   contracts/events/structs: `MyContract`
--   errors: `MyContract__ERROR_DESCRIPTION`
+-   errors: in `Errors.sol`
 -   public/external functions: `myFunction()`
 -   internal/private functions: `_myFunction()`
 -   comments: "This is a comment to describe the variable `amount`."
