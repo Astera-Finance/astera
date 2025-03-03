@@ -227,7 +227,7 @@ contract PropertiesBase is PropertiesAsserts, MarketParams {
             FALLBACK_ORACLE,
             BASE_CURRENCY,
             BASE_CURRENCY_UNIT,
-            address(poolConfigurator)
+            address(lendingPoolProvider)
         );
 
         lendingPoolProvider.setPriceOracle(address(oracle));
