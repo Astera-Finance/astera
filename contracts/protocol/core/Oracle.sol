@@ -10,6 +10,8 @@ import {ATokenNonRebasing} from
     "../../../contracts/protocol/tokenization/ERC20/ATokenNonRebasing.sol";
 import {Errors} from "../../../contracts/protocol/libraries/helpers/Errors.sol";
 import {ILendingPoolConfigurator} from "../../../contracts/interfaces/ILendingPoolConfigurator.sol";
+import {ILendingPoolAddressesProvider} from
+    "../../../contracts/interfaces/ILendingPoolAddressesProvider.sol";
 
 /**
  * @title Oracle
@@ -38,14 +40,19 @@ contract Oracle is IOracle, Ownable {
 
     ILendingPoolConfigurator private _lendingpoolConfigurator;
 
+    ILendingPoolAddressesProvider private _lendingpoolAddressesProvider;
+
     /**
      * @dev The base currency address used for price quotes.
      * @notice If `USD` returns `0x0`, if `ETH` returns `WETH` address.
      */
     address public immutable BASE_CURRENCY;
 
-    /// @dev The unit of the base currency used for price normalization.
+    /// @dev The unit of the base currency used for price normalization. MUST BE USD IF USING cdxUSD.
     uint256 public immutable BASE_CURRENCY_UNIT;
+
+    /// @dev The address of the cdxUSD token.
+    address public constant CDX_USD = address(0xC0D3700000987C99b3C9009069E4f8413fD22330);
 
     /**
      * @notice Initializes the Oracle contract.
@@ -56,6 +63,7 @@ contract Oracle is IOracle, Ownable {
      * aggregator is not consistent.
      * @param baseCurrency The base currency used for the price quotes. If USD is used, base currency is 0x0.
      * @param baseCurrencyUnit The unit of the base currency.
+     * @param lendingpoolAddressesProvider The address of the lending pool addresses provider.
      */
     constructor(
         address[] memory assets,
@@ -64,13 +72,15 @@ contract Oracle is IOracle, Ownable {
         address fallbackOracle,
         address baseCurrency,
         uint256 baseCurrencyUnit,
-        address lendingpoolConfigurator
+        address lendingpoolAddressesProvider
     ) Ownable(msg.sender) {
         _setFallbackOracle(fallbackOracle);
         _setAssetsSources(assets, sources, timeouts);
         BASE_CURRENCY = baseCurrency;
         BASE_CURRENCY_UNIT = baseCurrencyUnit;
-        _lendingpoolConfigurator = ILendingPoolConfigurator(lendingpoolConfigurator);
+        _lendingpoolAddressesProvider = ILendingPoolAddressesProvider(lendingpoolAddressesProvider);
+        _lendingpoolConfigurator =
+            ILendingPoolConfigurator(_lendingpoolAddressesProvider.getLendingPoolConfigurator());
 
         emit BaseCurrencySet(baseCurrency, baseCurrencyUnit);
     }
@@ -150,7 +160,14 @@ contract Oracle is IOracle, Ownable {
         IChainlinkAggregator source = _assetsSources[underlying];
         uint256 finalPrice;
 
-        if (underlying == BASE_CURRENCY) {
+        // If the asset is the base currency or cdxUSD and the caller is the lending pool, return the unit
+        // of the base currency.
+        // Since the lending pool is used as a primary market for cdxUSD, this allows the lending pool to get the price
+        // of cdxUSD at 1$ but minipools and other contracts to still get the price of cdxUSD from the aggregator.
+        if (
+            underlying == BASE_CURRENCY
+                || (asset == CDX_USD && msg.sender == _lendingpoolAddressesProvider.getLendingPool())
+        ) {
             finalPrice = BASE_CURRENCY_UNIT;
         } else if (address(source) == address(0)) {
             finalPrice = _fallbackOracle.getAssetPrice(underlying);

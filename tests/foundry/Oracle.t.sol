@@ -55,7 +55,7 @@ contract OracleTest is Common {
             address(0),
             address(0),
             BASE_CURRENCY_UNIT,
-            address(deployedContracts.lendingPoolConfigurator)
+            address(deployedContracts.lendingPoolAddressesProvider)
         );
 
         commonContracts.oracle.setFallbackOracle(address(fallbackOracle));
@@ -84,7 +84,7 @@ contract OracleTest is Common {
             address(0),
             usdcAddress,
             baseCurrency,
-            address(deployedContracts.lendingPoolConfigurator)
+            address(deployedContracts.lendingPoolAddressesProvider)
         );
 
         assertEq(_oracle.getAssetPrice(usdcAddress), baseCurrency);
@@ -143,7 +143,7 @@ contract OracleTest is Common {
                 address(0),
                 tokens[idx],
                 baseCurrency,
-                address(deployedContracts.lendingPoolConfigurator)
+                address(deployedContracts.lendingPoolAddressesProvider)
             );
             assertNotEq(_oracles[idx].getAssetPrice(tokens[idx]), prevPrices[idx]);
         }
