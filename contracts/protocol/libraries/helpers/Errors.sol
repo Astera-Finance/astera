@@ -117,6 +117,18 @@ library Errors {
     string public constant AT_INVALID_SIGNATURE = "46";
     /// @notice Profit handler not set.
     string public constant AT_PROFIT_HANDLER_SET = "47";
+    /// @notice Caller is not AToken.
+    string public constant AT_CALLER_NOT_ATOKEN = "48";
+    /// @dev The aToken has already been set.
+    string public constant AT_ATOKEN_ALREADY_SET = "49";
+    /// @dev The debt token has already been set.
+    string public constant AT_DEBT_TOKEN_ALREADY_SET = "50";
+    /// @notice Caller is not the keeper.
+    string public constant AT_CALLER_NOT_KEEPER = "51";
+    /// @notice Reliquary allocation is more than 100%.
+    string public constant AT_RELIQUARY_ALLOCATION_MORE_THAN_100 = "52";
+    /// @notice The treasury has not been set.
+    string public constant AT_TREASURY_NOT_SET = "53";
 
     /// @notice There is not enough liquidity available to borrow.
     string public constant LP_NOT_ENOUGH_LIQUIDITY_TO_BORROW = "48";

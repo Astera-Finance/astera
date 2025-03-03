@@ -19,7 +19,8 @@ import {ATokenNonRebasing} from "../../contracts/protocol/tokenization/ERC20/ATo
 import {Ownable} from "../../contracts/dependencies/openzeppelin/contracts/Ownable.sol";
 import {Errors} from "../../contracts/protocol/libraries/helpers/Errors.sol";
 import {IFlowLimiter} from "../../contracts/interfaces/base/IFlowLimiter.sol";
-import {IPiReserveInterestRateStrategy} from "../../contracts/interfaces/IPiReserveInterestRateStrategy.sol";
+import {IPiReserveInterestRateStrategy} from
+    "../../contracts/interfaces/IPiReserveInterestRateStrategy.sol";
 import {
     ICod3xLendDataProvider2,
     DataTypes,
@@ -83,8 +84,15 @@ contract Cod3xLendDataProvider2 is Ownable, ICod3xLendDataProvider2 {
         miniPoolAddressProvider = IMiniPoolAddressesProvider(_miniPoolAddressProvider);
     }
     /*------ System Mega Function ------*/
-    function getAllMarketData() public view returns 
-    (AggregatedMainPoolReservesData[] memory mainPoolReservesData, MiniPoolData[] memory miniPoolData) {
+
+    function getAllMarketData()
+        public
+        view
+        returns (
+            AggregatedMainPoolReservesData[] memory mainPoolReservesData,
+            MiniPoolData[] memory miniPoolData
+        )
+    {
         mainPoolReservesData = getMainPoolReservesData();
         miniPoolData = getAllMiniPoolData();
     }
@@ -94,7 +102,7 @@ contract Cod3xLendDataProvider2 is Ownable, ICod3xLendDataProvider2 {
         return getMainPoolReservesData();
     }
 
-        /**
+    /**
      * @notice Retrieves the addresses of all aTokens and debt tokens in the lending pool.
      * @return reserves Array of pool reserves
      * @return reserveTypes Array of the reserve types
@@ -147,10 +155,15 @@ contract Cod3xLendDataProvider2 is Ownable, ICod3xLendDataProvider2 {
      * @notice Retrieves the aggregated data of all main pool reserves.
      * @return reservesData Array of aggregated data for each main pool reserve.
      */
-    function getMainPoolReservesData() public view returns (AggregatedMainPoolReservesData[] memory) {
+    function getMainPoolReservesData()
+        public
+        view
+        returns (AggregatedMainPoolReservesData[] memory)
+    {
         ILendingPool lendingPool = ILendingPool(lendingPoolAddressProvider.getLendingPool());
         (address[] memory reserves, bool[] memory reserveTypes) = lendingPool.getReservesList();
-        AggregatedMainPoolReservesData[] memory reservesData = new AggregatedMainPoolReservesData[](reserves.length);
+        AggregatedMainPoolReservesData[] memory reservesData =
+            new AggregatedMainPoolReservesData[](reserves.length);
         for (uint256 idx = 0; idx < reserves.length; idx++) {
             reservesData[idx] = getAggregatedMainPoolReserveData(reserves[idx], reserveTypes[idx]);
         }
@@ -162,10 +175,12 @@ contract Cod3xLendDataProvider2 is Ownable, ICod3xLendDataProvider2 {
      * @param reserveType The type of the reserve.
      * @return reserveData The aggregated data of the reserve.
      */
-    function getAggregatedMainPoolReserveData(
-        address asset, 
-        bool reserveType
-    ) public view returns (AggregatedMainPoolReservesData memory reserveData) {
+
+    function getAggregatedMainPoolReserveData(address asset, bool reserveType)
+        public
+        view
+        returns (AggregatedMainPoolReservesData memory reserveData)
+    {
         DataTypes.ReserveData memory reserve;
         DataTypes.ReserveConfigurationMap memory reserveConfig;
         ILendingPool lendingPool = ILendingPool(lendingPoolAddressProvider.getLendingPool());
@@ -175,9 +190,10 @@ contract Cod3xLendDataProvider2 is Ownable, ICod3xLendDataProvider2 {
         reserveData.reserveType = reserveType;
         {
             // setting all of these at once incurs a stack too deep error
-            (   reserveData.baseLTVasCollateral, 
-                reserveData.reserveLiquidationThreshold, 
-                reserveData.reserveLiquidationBonus, 
+            (
+                reserveData.baseLTVasCollateral,
+                reserveData.reserveLiquidationThreshold,
+                reserveData.reserveLiquidationBonus,
                 reserveData.decimals,
                 reserveData.cod3xReserveFactor,
                 , // miniPoolOwnerReserveFactor
@@ -186,12 +202,14 @@ contract Cod3xLendDataProvider2 is Ownable, ICod3xLendDataProvider2 {
             reserveData.miniPoolOwnerReserveFactor = reserveConfig.getMinipoolOwnerReserveMemory();
         }
         {
-            (   reserveData.isActive, 
-                reserveData.isFrozen, 
-                reserveData.borrowingEnabled, 
+            (
+                reserveData.isActive,
+                reserveData.isFrozen,
+                reserveData.borrowingEnabled,
                 reserveData.flashloanEnabled
             ) = _decodeFlags(reserveConfig);
-            reserveData.usageAsCollateralEnabled = (reserveData.baseLTVasCollateral != 0) ? true : false;
+            reserveData.usageAsCollateralEnabled =
+                (reserveData.baseLTVasCollateral != 0) ? true : false;
         }
         {
             reserveData.name = IERC20Detailed(asset).name();
@@ -212,19 +230,31 @@ contract Cod3xLendDataProvider2 is Ownable, ICod3xLendDataProvider2 {
             reserveData.id = reserve.id;
         }
         {
-            reserveData.availableLiquidity = IERC20Detailed(asset).balanceOf(address(reserve.aTokenAddress));
-            reserveData.totalScaledVariableDebt = IVariableDebtToken(reserve.variableDebtTokenAddress).scaledTotalSupply();
-            reserveData.priceInMarketReferenceCurrency = IOracle(lendingPoolAddressProvider.getPriceOracle()).getAssetPrice(asset);
+            reserveData.availableLiquidity =
+                IERC20Detailed(asset).balanceOf(address(reserve.aTokenAddress));
+            reserveData.totalScaledVariableDebt =
+                IVariableDebtToken(reserve.variableDebtTokenAddress).scaledTotalSupply();
+            reserveData.priceInMarketReferenceCurrency =
+                IOracle(lendingPoolAddressProvider.getPriceOracle()).getAssetPrice(asset);
             reserveData.ATokenNonRebasingAddress = IAToken(reserve.aTokenAddress).WRAPPER_ADDRESS();
         }
         {
-            reserveData.optimalUtilizationRate = IPiReserveInterestRateStrategy(reserve.interestRateStrategyAddress)._optimalUtilizationRate();
-            reserveData.kp = IPiReserveInterestRateStrategy(reserve.interestRateStrategyAddress)._kp();
-            reserveData.ki = IPiReserveInterestRateStrategy(reserve.interestRateStrategyAddress)._ki();
-            reserveData.lastPiReserveRateStrategyUpdate = IPiReserveInterestRateStrategy(reserve.interestRateStrategyAddress)._lastTimestamp();
-            reserveData.errI = IPiReserveInterestRateStrategy(reserve.interestRateStrategyAddress)._errI();
-            reserveData.minControllerError = IPiReserveInterestRateStrategy(reserve.interestRateStrategyAddress)._minControllerError();
-            reserveData.maxErrIAmp = IPiReserveInterestRateStrategy(reserve.interestRateStrategyAddress)._maxErrIAmp();
+            reserveData.optimalUtilizationRate = IPiReserveInterestRateStrategy(
+                reserve.interestRateStrategyAddress
+            )._optimalUtilizationRate();
+            reserveData.kp =
+                IPiReserveInterestRateStrategy(reserve.interestRateStrategyAddress)._kp();
+            reserveData.ki =
+                IPiReserveInterestRateStrategy(reserve.interestRateStrategyAddress)._ki();
+            reserveData.lastPiReserveRateStrategyUpdate =
+                IPiReserveInterestRateStrategy(reserve.interestRateStrategyAddress)._lastTimestamp();
+            reserveData.errI =
+                IPiReserveInterestRateStrategy(reserve.interestRateStrategyAddress)._errI();
+            reserveData.minControllerError = IPiReserveInterestRateStrategy(
+                reserve.interestRateStrategyAddress
+            )._minControllerError();
+            reserveData.maxErrIAmp =
+                IPiReserveInterestRateStrategy(reserve.interestRateStrategyAddress)._maxErrIAmp();
         }
         return reserveData;
     }
@@ -232,13 +262,18 @@ contract Cod3xLendDataProvider2 is Ownable, ICod3xLendDataProvider2 {
     /// @notice Returns the user's main pool reserves data.
     /// @param user The address of the user.
     /// @return userReservesData The user's main pool reserves data.
-    function getUserMainPoolReservesData(address user) 
-    public view lendingPoolSet returns (UserReserveData[] memory userReservesData) {
+    function getUserMainPoolReservesData(address user)
+        public
+        view
+        lendingPoolSet
+        returns (UserReserveData[] memory userReservesData)
+    {
         ILendingPool lendingPool = ILendingPool(lendingPoolAddressProvider.getLendingPool());
         (address[] memory reserves, bool[] memory reserveTypes) = lendingPool.getReservesList();
-        userReservesData = new UserReserveData[](user != address(0) ? reserves.length : 0);            
+        userReservesData = new UserReserveData[](user != address(0) ? reserves.length : 0);
         for (uint256 idx = 0; idx < reserves.length; idx++) {
-            userReservesData[idx] = getUserMainPoolReserveData(reserves[idx], reserveTypes[idx], user, lendingPool);
+            userReservesData[idx] =
+                getUserMainPoolReserveData(reserves[idx], reserveTypes[idx], user, lendingPool);
         }
         return userReservesData;
     }
@@ -248,9 +283,10 @@ contract Cod3xLendDataProvider2 is Ownable, ICod3xLendDataProvider2 {
     /// @param user The address of the user.
     /// @param lendingPool The lending pool.
     /// @return userReserveData The user's main pool reserves data.
+
     function getUserMainPoolReserveData(
-        address asset, 
-        bool reserveType, 
+        address asset,
+        bool reserveType,
         address user,
         ILendingPool lendingPool
     ) public view returns (UserReserveData memory userReserveData) {
@@ -274,33 +310,48 @@ contract Cod3xLendDataProvider2 is Ownable, ICod3xLendDataProvider2 {
     /* -------------- Mini Pool providers--------------*/
 
     function getAllMiniPoolData() public view returns (MiniPoolData[] memory miniPoolData) {
-        (uint256[] memory miniPoolIDs, address[] memory miniPoolAddresses) = getMiniPoolAddressesAndIDs();
+        (uint256[] memory miniPoolIDs, address[] memory miniPoolAddresses) =
+            getMiniPoolAddressesAndIDs();
         miniPoolData = new MiniPoolData[](miniPoolAddresses.length);
         for (uint256 idx = 0; idx < miniPoolAddresses.length; idx++) {
             miniPoolData[idx].id = miniPoolIDs[idx];
             miniPoolData[idx].miniPoolAddress = miniPoolAddresses[idx];
-            miniPoolData[idx].aToken6909Address = miniPoolAddressProvider.getMiniPoolToAERC6909(miniPoolAddresses[idx]);
+            miniPoolData[idx].aToken6909Address =
+                miniPoolAddressProvider.getMiniPoolToAERC6909(miniPoolAddresses[idx]);
             miniPoolData[idx].reservesData = getMiniPoolReservesData(miniPoolAddresses[idx]);
         }
         return miniPoolData;
     }
 
-    function getMiniPoolData(address miniPoolAddress) public view returns (MiniPoolData memory miniPoolData) {
+    function getMiniPoolData(address miniPoolAddress)
+        public
+        view
+        returns (MiniPoolData memory miniPoolData)
+    {
         miniPoolData.id = miniPoolAddressProvider.getMiniPoolId(miniPoolAddress);
         miniPoolData.miniPoolAddress = miniPoolAddress;
-        miniPoolData.aToken6909Address = miniPoolAddressProvider.getMiniPoolToAERC6909(miniPoolAddress);
+        miniPoolData.aToken6909Address =
+            miniPoolAddressProvider.getMiniPoolToAERC6909(miniPoolAddress);
         miniPoolData.reservesData = getMiniPoolReservesData(miniPoolAddress);
         return miniPoolData;
     }
 
-    function getMiniPoolData(uint256 miniPoolID) public view returns (MiniPoolData memory miniPoolData) {
+    function getMiniPoolData(uint256 miniPoolID)
+        public
+        view
+        returns (MiniPoolData memory miniPoolData)
+    {
         miniPoolData.id = miniPoolID;
-        miniPoolData.miniPoolAddress =  miniPoolAddressProvider.getMiniPool(miniPoolID);
+        miniPoolData.miniPoolAddress = miniPoolAddressProvider.getMiniPool(miniPoolID);
         miniPoolData.aToken6909Address = miniPoolAddressProvider.getMiniPoolToAERC6909(miniPoolID);
         miniPoolData.reservesData = getMiniPoolReservesData(miniPoolData.miniPoolAddress);
     }
 
-    function getMiniPoolAddressesAndIDs() public view returns (uint256[] memory miniPoolIDs, address[] memory miniPoolAddresses) {
+    function getMiniPoolAddressesAndIDs()
+        public
+        view
+        returns (uint256[] memory miniPoolIDs, address[] memory miniPoolAddresses)
+    {
         //IMiniPoolAddressesProvider miniPoolAddressProvider = IMiniPoolAddressesProvider(miniPoolAddressProvider);
         miniPoolAddresses = miniPoolAddressProvider.getMiniPoolList();
         miniPoolIDs = new uint256[](miniPoolAddresses.length);
@@ -310,17 +361,26 @@ contract Cod3xLendDataProvider2 is Ownable, ICod3xLendDataProvider2 {
         return (miniPoolIDs, miniPoolAddresses);
     }
 
-    function getMiniPoolReservesData(address miniPoolAddress) public view returns (AggregatedMiniPoolReservesData[] memory) {
+    function getMiniPoolReservesData(address miniPoolAddress)
+        public
+        view
+        returns (AggregatedMiniPoolReservesData[] memory)
+    {
         IMiniPool miniPool = IMiniPool(miniPoolAddress);
-        (address[] memory reserves, /*all types are false*/) = miniPool.getReservesList();
-        AggregatedMiniPoolReservesData[] memory reservesData = new AggregatedMiniPoolReservesData[](reserves.length);
+        (address[] memory reserves, /*all types are false*/ ) = miniPool.getReservesList();
+        AggregatedMiniPoolReservesData[] memory reservesData =
+            new AggregatedMiniPoolReservesData[](reserves.length);
         for (uint256 idx = 0; idx < reserves.length; idx++) {
             reservesData[idx] = getReserveDataForAssetAtMiniPool(reserves[idx], miniPoolAddress);
         }
         return reservesData;
     }
 
-    function getReserveDataForAssetAtMiniPool(address asset, address miniPoolAddress) public view returns (AggregatedMiniPoolReservesData memory reserveData) {
+    function getReserveDataForAssetAtMiniPool(address asset, address miniPoolAddress)
+        public
+        view
+        returns (AggregatedMiniPoolReservesData memory reserveData)
+    {
         IMiniPool miniPool = IMiniPool(miniPoolAddress);
         DataTypes.MiniPoolReserveData memory reserve = miniPool.getReserveData(asset);
         IAERC6909 aErc6909 = IAERC6909(reserve.aErc6909);
@@ -328,9 +388,10 @@ contract Cod3xLendDataProvider2 is Ownable, ICod3xLendDataProvider2 {
         reserveData.underlyingAsset = asset;
         {
             // setting all of these at once incurs a stack too deep error
-            (   reserveData.baseLTVasCollateral, 
-                reserveData.reserveLiquidationThreshold, 
-                reserveData.reserveLiquidationBonus, 
+            (
+                reserveData.baseLTVasCollateral,
+                reserveData.reserveLiquidationThreshold,
+                reserveData.reserveLiquidationBonus,
                 reserveData.decimals,
                 reserveData.cod3xReserveFactor,
                 , // miniPoolOwnerReserveFactor
@@ -339,12 +400,14 @@ contract Cod3xLendDataProvider2 is Ownable, ICod3xLendDataProvider2 {
             reserveData.miniPoolOwnerReserveFactor = reserveConfig.getMinipoolOwnerReserveMemory();
         }
         {
-            (   reserveData.isActive, 
-                reserveData.isFrozen, 
-                reserveData.borrowingEnabled, 
+            (
+                reserveData.isActive,
+                reserveData.isFrozen,
+                reserveData.borrowingEnabled,
                 reserveData.flashloanEnabled
             ) = _decodeFlags(reserveConfig);
-            reserveData.usageAsCollateralEnabled = (reserveData.baseLTVasCollateral != 0) ? true : false;
+            reserveData.usageAsCollateralEnabled =
+                (reserveData.baseLTVasCollateral != 0) ? true : false;
         }
         {
             reserveData.name = IERC20Detailed(asset).name();
@@ -355,7 +418,7 @@ contract Cod3xLendDataProvider2 is Ownable, ICod3xLendDataProvider2 {
             reserveData.aTokenId = reserve.aTokenID;
             reserveData.debtTokenId = reserve.variableDebtTokenID;
             reserveData.isTranche = reserveData.aTokenId % 1000 < 256 ? true : false;
-            if(reserveData.isTranche) {
+            if (reserveData.isTranche) {
                 reserveData.aTokenNonRebasingAddress = asset;
                 reserveData.underlyingAsset = ATokenNonRebasing(asset).UNDERLYING_ASSET_ADDRESS();
             }
@@ -370,44 +433,70 @@ contract Cod3xLendDataProvider2 is Ownable, ICod3xLendDataProvider2 {
         }
         {
             reserveData.availableLiquidity = IERC20Detailed(asset).balanceOf(address(aErc6909));
-            reserveData.totalScaledVariableDebt = aErc6909.scaledTotalSupply(reserveData.debtTokenId);
-            reserveData.priceInMarketReferenceCurrency = IOracle(lendingPoolAddressProvider.getPriceOracle()).getAssetPrice(asset);
-
+            reserveData.totalScaledVariableDebt =
+                aErc6909.scaledTotalSupply(reserveData.debtTokenId);
+            reserveData.priceInMarketReferenceCurrency =
+                IOracle(lendingPoolAddressProvider.getPriceOracle()).getAssetPrice(asset);
         }
         {
-            reserveData.optimalUtilizationRate = IPiReserveInterestRateStrategy(reserve.interestRateStrategyAddress)._optimalUtilizationRate();
-            reserveData.kp = IPiReserveInterestRateStrategy(reserve.interestRateStrategyAddress)._kp();
-            reserveData.ki = IPiReserveInterestRateStrategy(reserve.interestRateStrategyAddress)._ki();
-            reserveData.lastPiReserveRateStrategyUpdate = IPiReserveInterestRateStrategy(reserve.interestRateStrategyAddress)._lastTimestamp();
-            reserveData.errI = IPiReserveInterestRateStrategy(reserve.interestRateStrategyAddress)._errI();
-            reserveData.minControllerError = IPiReserveInterestRateStrategy(reserve.interestRateStrategyAddress)._minControllerError();
-            reserveData.maxErrIAmp = IPiReserveInterestRateStrategy(reserve.interestRateStrategyAddress)._maxErrIAmp();
+            reserveData.optimalUtilizationRate = IPiReserveInterestRateStrategy(
+                reserve.interestRateStrategyAddress
+            )._optimalUtilizationRate();
+            reserveData.kp =
+                IPiReserveInterestRateStrategy(reserve.interestRateStrategyAddress)._kp();
+            reserveData.ki =
+                IPiReserveInterestRateStrategy(reserve.interestRateStrategyAddress)._ki();
+            reserveData.lastPiReserveRateStrategyUpdate =
+                IPiReserveInterestRateStrategy(reserve.interestRateStrategyAddress)._lastTimestamp();
+            reserveData.errI =
+                IPiReserveInterestRateStrategy(reserve.interestRateStrategyAddress)._errI();
+            reserveData.minControllerError = IPiReserveInterestRateStrategy(
+                reserve.interestRateStrategyAddress
+            )._minControllerError();
+            reserveData.maxErrIAmp =
+                IPiReserveInterestRateStrategy(reserve.interestRateStrategyAddress)._maxErrIAmp();
         }
         {
-            if(reserveData.isTranche) {
+            if (reserveData.isTranche) {
                 IFlowLimiter flowLimiter = IFlowLimiter(miniPoolAddressProvider.getFlowLimiter());
                 reserveData.flowLimit = flowLimiter.getFlowLimit(asset, miniPoolAddress);
                 reserveData.currentFlow = flowLimiter.currentFlow(asset, miniPoolAddress);
-                reserveData.availableFlow = reserveData.flowLimit > reserveData.currentFlow ? reserveData.flowLimit - reserveData.currentFlow : 0;
+                reserveData.availableFlow = reserveData.flowLimit > reserveData.currentFlow
+                    ? reserveData.flowLimit - reserveData.currentFlow
+                    : 0;
             }
         }
         return reserveData;
     }
 
-    function getUserAllMiniPoolReservesData(address user) public view returns (MiniPoolUserReserveData[][] memory userReservesData) {
-        (uint256[] memory miniPoolIDs, address[] memory miniPoolAddresses) = getMiniPoolAddressesAndIDs();
+    function getUserAllMiniPoolReservesData(address user)
+        public
+        view
+        returns (MiniPoolUserReserveData[][] memory userReservesData)
+    {
+        (uint256[] memory miniPoolIDs, address[] memory miniPoolAddresses) =
+            getMiniPoolAddressesAndIDs();
         userReservesData = new MiniPoolUserReserveData[][](miniPoolAddresses.length);
         for (uint256 idx = 0; idx < miniPoolAddresses.length; idx++) {
             userReservesData[idx] = getUserMiniPoolReservesData(user, miniPoolAddresses[idx]);
         }
     }
 
-    function getUserMiniPoolReservesData(address user, address miniPoolAddress) public view returns (MiniPoolUserReserveData[] memory userReservesData) {
+    function getUserMiniPoolReservesData(address user, address miniPoolAddress)
+        public
+        view
+        returns (MiniPoolUserReserveData[] memory userReservesData)
+    {
         IMiniPool miniPool = IMiniPool(miniPoolAddress);
-        (address[] memory reserves, /*all types are false*/) = miniPool.getReservesList();
+        (address[] memory reserves, /*all types are false*/ ) = miniPool.getReservesList();
         userReservesData = new MiniPoolUserReserveData[](reserves.length);
         for (uint256 idx = 0; idx < reserves.length; idx++) {
-            userReservesData[idx] = getUserMiniPoolReserveData(reserves[idx], user, miniPool, IAERC6909(miniPool.getReserveData(reserves[idx]).aErc6909));
+            userReservesData[idx] = getUserMiniPoolReserveData(
+                reserves[idx],
+                user,
+                miniPool,
+                IAERC6909(miniPool.getReserveData(reserves[idx]).aErc6909)
+            );
         }
     }
     /// @notice Returns the user's main pool reserves data.
@@ -416,8 +505,9 @@ contract Cod3xLendDataProvider2 is Ownable, ICod3xLendDataProvider2 {
     /// @param miniPool The mini pool.
     /// @param aErc6909 The aErc6909 token.
     /// @return userReserveData The user's main pool reserves data.
+
     function getUserMiniPoolReserveData(
-        address asset, 
+        address asset,
         address user,
         IMiniPool miniPool,
         IAERC6909 aErc6909
@@ -428,26 +518,34 @@ contract Cod3xLendDataProvider2 is Ownable, ICod3xLendDataProvider2 {
         userReserveData.aTokenId = data.aTokenID;
         userReserveData.debtTokenId = data.variableDebtTokenID;
 
-        userReserveData.currentATokenBalance = IAERC6909(aErc6909).balanceOf(user, userReserveData.aTokenId);
-        (userReserveData.scaledATokenBalance, ) = IAERC6909(aErc6909).getScaledUserBalanceAndSupply(user, userReserveData.aTokenId);
+        userReserveData.currentATokenBalance =
+            IAERC6909(aErc6909).balanceOf(user, userReserveData.aTokenId);
+        (userReserveData.scaledATokenBalance,) =
+            IAERC6909(aErc6909).getScaledUserBalanceAndSupply(user, userReserveData.aTokenId);
         userReserveData.usageAsCollateralEnabledOnUser = userConfig.isUsingAsCollateral(data.id);
         userReserveData.isBorrowing = userConfig.isBorrowing(data.id);
         if (userReserveData.isBorrowing) {
             userReserveData.currentVariableDebt =
                 IAERC6909(aErc6909).balanceOf(user, userReserveData.debtTokenId);
-            (userReserveData.scaledVariableDebt, ) = IAERC6909(aErc6909).getScaledUserBalanceAndSupply(user, userReserveData.debtTokenId);
+            (userReserveData.scaledVariableDebt,) =
+                IAERC6909(aErc6909).getScaledUserBalanceAndSupply(user, userReserveData.debtTokenId);
         }
     }
 
-    function getAllUserMiniPoolAccountDatas(address user) public view returns (
-        uint256[] memory totalCollateralETH,
-        uint256[] memory totalDebtETH,
-        uint256[] memory availableBorrowsETH,
-        uint256[] memory currentLiquidationThreshold,
-        uint256[] memory ltv,
-        uint256[] memory healthFactor
-    ) {
-        (uint256[] memory miniPoolIDs, address[] memory miniPoolAddresses) = getMiniPoolAddressesAndIDs();
+    function getAllUserMiniPoolAccountDatas(address user)
+        public
+        view
+        returns (
+            uint256[] memory totalCollateralETH,
+            uint256[] memory totalDebtETH,
+            uint256[] memory availableBorrowsETH,
+            uint256[] memory currentLiquidationThreshold,
+            uint256[] memory ltv,
+            uint256[] memory healthFactor
+        )
+    {
+        (uint256[] memory miniPoolIDs, address[] memory miniPoolAddresses) =
+            getMiniPoolAddressesAndIDs();
         totalCollateralETH = new uint256[](miniPoolAddresses.length);
         totalDebtETH = new uint256[](miniPoolAddresses.length);
         availableBorrowsETH = new uint256[](miniPoolAddresses.length);
@@ -455,14 +553,26 @@ contract Cod3xLendDataProvider2 is Ownable, ICod3xLendDataProvider2 {
         ltv = new uint256[](miniPoolAddresses.length);
         healthFactor = new uint256[](miniPoolAddresses.length);
         for (uint256 idx = 0; idx < miniPoolAddresses.length; idx++) {
-            (totalCollateralETH[idx], totalDebtETH[idx], availableBorrowsETH[idx], currentLiquidationThreshold[idx], ltv[idx], healthFactor[idx]) = IMiniPool(miniPoolAddresses[idx]).getUserAccountData(user);
+            (
+                totalCollateralETH[idx],
+                totalDebtETH[idx],
+                availableBorrowsETH[idx],
+                currentLiquidationThreshold[idx],
+                ltv[idx],
+                healthFactor[idx]
+            ) = IMiniPool(miniPoolAddresses[idx]).getUserAccountData(user);
         }
     }
 
     /* -------------- Special Helper functions--------------*/
 
-    function getAllMiniPoolsContainingReserve(address reserve) public view returns (address[] memory foundMiniPoolAddresses, bool[] memory isTranche) {
-        (uint256[] memory miniPoolIDs, address[] memory miniPoolAddresses) = getMiniPoolAddressesAndIDs();
+    function getAllMiniPoolsContainingReserve(address reserve)
+        public
+        view
+        returns (address[] memory foundMiniPoolAddresses, bool[] memory isTranche)
+    {
+        (uint256[] memory miniPoolIDs, address[] memory miniPoolAddresses) =
+            getMiniPoolAddressesAndIDs();
         foundMiniPoolAddresses = new address[](miniPoolAddresses.length);
         isTranche = new bool[](miniPoolAddresses.length);
         bool isReserveAvailable;
@@ -470,7 +580,8 @@ contract Cod3xLendDataProvider2 is Ownable, ICod3xLendDataProvider2 {
         address miniPool;
         uint256 idx = 0;
         for (idx = 0; idx < miniPoolAddresses.length; idx++) {
-            (isReserveAvailable, _isTranche, miniPool) = isReserveInMiniPool(reserve, miniPoolIDs[idx]);
+            (isReserveAvailable, _isTranche, miniPool) =
+                isReserveInMiniPool(reserve, miniPoolIDs[idx]);
             if (isReserveAvailable) {
                 foundMiniPoolAddresses[idx] = miniPool;
                 isTranche[idx] = _isTranche;
@@ -496,14 +607,14 @@ contract Cod3xLendDataProvider2 is Ownable, ICod3xLendDataProvider2 {
     {
         ILendingPool lendingPool = ILendingPool(lendingPoolAddressProvider.getLendingPool());
         DataTypes.ReserveData memory reserveData = lendingPool.getReserveData(reserve, true); //should always be true
-        address aToken  = reserveData.aTokenAddress;
+        address aToken = reserveData.aTokenAddress;
         address aTokenWrapper = IAToken(aToken).WRAPPER_ADDRESS();
         isReserveAvailable = false;
         miniPool = miniPoolAddressProvider.getMiniPool(miniPoolId);
         (address[] memory reserves,) = IMiniPool(miniPool).getReservesList();
         for (uint256 idx = 0; idx < reserves.length; idx++) {
             if (reserves[idx] == reserve) {
-                isReserveAvailable = true;    
+                isReserveAvailable = true;
             }
             if (reserves[idx] == aTokenWrapper) {
                 isReserveAvailable = true;
@@ -512,7 +623,7 @@ contract Cod3xLendDataProvider2 is Ownable, ICod3xLendDataProvider2 {
         }
     }
 
-     function getBaseCurrencyInfo()
+    function getBaseCurrencyInfo()
         external
         view
         returns (BaseCurrencyInfo memory baseCurrencyInfo)
@@ -548,18 +659,23 @@ contract Cod3xLendDataProvider2 is Ownable, ICod3xLendDataProvider2 {
         );
 
         baseCurrencyInfo.marketReferenceCurrencyPriceInUsd = price;
-
     }
-
-
 
     /* -------------- Decoding functions--------------*/
 
-    function _decodeConfig(DataTypes.ReserveConfigurationMap memory config) internal pure returns (uint256, uint256, uint256, uint256, uint256, uint256, uint256) {
+    function _decodeConfig(DataTypes.ReserveConfigurationMap memory config)
+        internal
+        pure
+        returns (uint256, uint256, uint256, uint256, uint256, uint256, uint256)
+    {
         return config.getParamsMemory();
     }
 
-    function _decodeFlags(DataTypes.ReserveConfigurationMap memory config) internal pure returns (bool, bool, bool, bool) {
+    function _decodeFlags(DataTypes.ReserveConfigurationMap memory config)
+        internal
+        pure
+        returns (bool, bool, bool, bool)
+    {
         return config.getFlagsMemory();
     }
 }
