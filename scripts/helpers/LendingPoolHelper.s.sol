@@ -140,7 +140,7 @@ contract LendingPoolHelper is InitAndConfigurationHelper {
             oracleConfig.fallbackOracle,
             oracleConfig.baseCurrency,
             oracleConfig.baseCurrencyUnit,
-            address(contracts.lendingPoolConfigurator)
+            address(contracts.lendingPoolAddressesProvider)
         );
         return oracle;
     }
