@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: BUSL-1.1
-pragma solidity 0.8.23;
+pragma solidity ^0.8.23;
 
 import {Ownable} from "../../../contracts/dependencies/openzeppelin/contracts/Ownable.sol";
 import {InitializableImmutableAdminUpgradeabilityProxy} from

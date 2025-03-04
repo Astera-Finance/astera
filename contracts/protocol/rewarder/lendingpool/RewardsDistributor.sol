@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: BUSL-1.1
-pragma solidity 0.8.23;
+pragma solidity ^0.8.23;
 
 import {IRewardsDistributor} from "../../../../contracts/interfaces/IRewardsDistributor.sol";
 import {IERC20Detailed} from

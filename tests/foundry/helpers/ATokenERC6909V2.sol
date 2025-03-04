@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: BUSL-1.1
-pragma solidity 0.8.23;
+pragma solidity ^0.8.23;
 
 import {ILendingPool} from "contracts/interfaces/ILendingPool.sol";
 import {IAToken} from "contracts/interfaces/IAToken.sol";
