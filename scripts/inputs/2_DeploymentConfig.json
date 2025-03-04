@@ -22,7 +22,7 @@
       "reserveFactor": 2000,
       "reserveType": true,
       "symbol": "clcbBTC",
-      "tokenAddress": "0x"
+      "tokenAddress": "0x7ABd9167b72246c17889F15251e8A520999F65Ce"
     },
     {
       "baseLtv": 7000,
@@ -36,7 +36,7 @@
       "reserveFactor": 2000,
       "reserveType": true,
       "symbol": "clWETH",
-      "tokenAddress": "0x"
+      "tokenAddress": "0xC183Db6066dA39ca4C25e3544E6b50350642Fb7f"
     },
     {
       "baseLtv": 8000,
@@ -50,35 +50,7 @@
       "reserveFactor": 2000,
       "reserveType": true,
       "symbol": "clUSDC",
-      "tokenAddress": "0x"
-    },
-    {
-      "baseLtv": 5000,
-      "borrowingEnabled": true,
-      "interestStrat": "VOLATILE",
-      "interestStratId": 3,
-      "liquidationBonus": 11000,
-      "liquidationThreshold": 5500,
-      "miniPoolOwnerFee": 0,
-      "params": "0x10",
-      "reserveFactor": 2000,
-      "reserveType": true,
-      "symbol": "TONY",
-      "tokenAddress": "0xb22a793a81ff5b6ad37f40d5fe1e0ac4184d52f3"
-    },
-    {
-      "baseLtv": 5000,
-      "borrowingEnabled": true,
-      "interestStrat": "VOLATILE",
-      "interestStratId": 4,
-      "liquidationBonus": 11000,
-      "liquidationThreshold": 5500,
-      "miniPoolOwnerFee": 0,
-      "params": "0x10",
-      "reserveFactor": 2000,
-      "reserveType": true,
-      "symbol": "CDX",
-      "tokenAddress": "0xC0D3700000c0e32716863323bFd936b54a1633d1"
+      "tokenAddress": "0x3935C821dA00D0eC7fca1e4965D7cD44185C3bc8"
     },
     {
       "baseLtv": 7000,
@@ -115,18 +87,6 @@
       "optimalUtilizationRate": 70e25,
       "variableRateSlope1": 0.0214e27,
       "variableRateSlope2": 0.9636e27
-    },
-    {
-      "baseVariableBorrowRate": 0.05e27,
-      "optimalUtilizationRate": 50e25,
-      "variableRateSlope1": 0.1e27,
-      "variableRateSlope2": 0.85e27
-    },
-    {
-      "baseVariableBorrowRate": 0.05e27,
-      "optimalUtilizationRate": 50e25,
-      "variableRateSlope1": 0.1e27,
-      "variableRateSlope2": 0.85e27
     }
   ],
   "stableStrategies": [],
@@ -144,30 +104,15 @@
   ],
   "oracleConfig": {
     "assets": [
-      "0x",
-      "0x",
-      "0x",
-      "0xb22a793a81ff5b6ad37f40d5fe1e0ac4184d52f3",
-      "0xC0D3700000c0e32716863323bFd936b54a1633d1",
       "0xC0D3700000987C99b3C9009069E4f8413fD22330"
     ],
     "baseCurrency": "0x0000000000000000000000000000000000000000",
     "baseCurrencyUnit": 1e8,
     "fallbackOracle": "0x0000000000000000000000000000000000000000",
     "sources": [
-      "0x4aDC67696bA383F43DD60A9e78F2C97Fbbfc7cb1",
-      "0xd30e2101a97dcbAeBCBC04F14C3f624E67A35165",
-      "0x",
-      "0x",
-      "0x",
-      "0x"
+      "0x9157E89Eb513B9e206A40CCD9E2F55f8E72Bd502"
     ],
     "timeouts": [
-      100000,
-      100000,
-      100000,
-      100000,
-      100000,
       100000
     ]
   }

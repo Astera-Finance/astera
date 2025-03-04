@@ -21,6 +21,10 @@ import {Errors} from "../../contracts/protocol/libraries/helpers/Errors.sol";
 import {IFlowLimiter} from "../../contracts/interfaces/base/IFlowLimiter.sol";
 import {IPiReserveInterestRateStrategy} from
     "../../contracts/interfaces/IPiReserveInterestRateStrategy.sol";
+import {DefaultReserveInterestRateStrategy} from
+    "../../contracts/protocol/core/interestRateStrategies/lendingpool/DefaultReserveInterestRateStrategy.sol";
+import {MiniPoolDefaultReserveInterestRateStrategy} from
+    "../../contracts/protocol/core/interestRateStrategies/minipool/MiniPoolDefaultReserveInterestRate.sol";
 import {
     ICod3xLendDataProvider2,
     DataTypes,
@@ -239,22 +243,44 @@ contract Cod3xLendDataProvider2 is Ownable, ICod3xLendDataProvider2 {
             reserveData.ATokenNonRebasingAddress = IAToken(reserve.aTokenAddress).WRAPPER_ADDRESS();
         }
         {
-            reserveData.optimalUtilizationRate = IPiReserveInterestRateStrategy(
-                reserve.interestRateStrategyAddress
-            )._optimalUtilizationRate();
-            reserveData.kp =
-                IPiReserveInterestRateStrategy(reserve.interestRateStrategyAddress)._kp();
-            reserveData.ki =
-                IPiReserveInterestRateStrategy(reserve.interestRateStrategyAddress)._ki();
-            reserveData.lastPiReserveRateStrategyUpdate =
-                IPiReserveInterestRateStrategy(reserve.interestRateStrategyAddress)._lastTimestamp();
-            reserveData.errI =
-                IPiReserveInterestRateStrategy(reserve.interestRateStrategyAddress)._errI();
-            reserveData.minControllerError = IPiReserveInterestRateStrategy(
-                reserve.interestRateStrategyAddress
-            )._minControllerError();
-            reserveData.maxErrIAmp =
-                IPiReserveInterestRateStrategy(reserve.interestRateStrategyAddress)._maxErrIAmp();
+            IPiReserveInterestRateStrategy strat =
+                IPiReserveInterestRateStrategy(reserve.interestRateStrategyAddress);
+            try strat._optimalUtilizationRate() {
+                reserveData.optimalUtilizationRate = IPiReserveInterestRateStrategy(
+                    reserve.interestRateStrategyAddress
+                )._optimalUtilizationRate();
+                reserveData.kp =
+                    IPiReserveInterestRateStrategy(reserve.interestRateStrategyAddress)._kp();
+                reserveData.ki =
+                    IPiReserveInterestRateStrategy(reserve.interestRateStrategyAddress)._ki();
+                reserveData.lastPiReserveRateStrategyUpdate = IPiReserveInterestRateStrategy(
+                    reserve.interestRateStrategyAddress
+                )._lastTimestamp();
+                reserveData.errI =
+                    IPiReserveInterestRateStrategy(reserve.interestRateStrategyAddress)._errI();
+                reserveData.minControllerError = IPiReserveInterestRateStrategy(
+                    reserve.interestRateStrategyAddress
+                )._minControllerError();
+                reserveData.maxErrIAmp = IPiReserveInterestRateStrategy(
+                    reserve.interestRateStrategyAddress
+                )._maxErrIAmp();
+            } catch {
+                reserveData.optimalUtilizationRate = DefaultReserveInterestRateStrategy(
+                    reserve.interestRateStrategyAddress
+                ).OPTIMAL_UTILIZATION_RATE();
+                reserveData.baseVariableBorrowRate = DefaultReserveInterestRateStrategy(
+                    reserve.interestRateStrategyAddress
+                ).baseVariableBorrowRate();
+                reserveData.variableRateSlope1 = DefaultReserveInterestRateStrategy(
+                    reserve.interestRateStrategyAddress
+                ).variableRateSlope1();
+                reserveData.variableRateSlope2 = DefaultReserveInterestRateStrategy(
+                    reserve.interestRateStrategyAddress
+                ).variableRateSlope2();
+                reserveData.maxVariableBorrowRate = DefaultReserveInterestRateStrategy(
+                    reserve.interestRateStrategyAddress
+                ).getMaxVariableBorrowRate();
+            }
         }
         return reserveData;
     }
@@ -417,7 +443,7 @@ contract Cod3xLendDataProvider2 is Ownable, ICod3xLendDataProvider2 {
         {
             reserveData.aTokenId = reserve.aTokenID;
             reserveData.debtTokenId = reserve.variableDebtTokenID;
-            reserveData.isTranche = reserveData.aTokenId % 1000 < 256 ? true : false;
+            reserveData.isTranche = reserveData.aTokenId % 1000 < 128 ? true : false;
             if (reserveData.isTranche) {
                 reserveData.aTokenNonRebasingAddress = asset;
                 reserveData.underlyingAsset = ATokenNonRebasing(asset).UNDERLYING_ASSET_ADDRESS();
@@ -439,28 +465,52 @@ contract Cod3xLendDataProvider2 is Ownable, ICod3xLendDataProvider2 {
                 IOracle(lendingPoolAddressProvider.getPriceOracle()).getAssetPrice(asset);
         }
         {
-            reserveData.optimalUtilizationRate = IPiReserveInterestRateStrategy(
-                reserve.interestRateStrategyAddress
-            )._optimalUtilizationRate();
-            reserveData.kp =
-                IPiReserveInterestRateStrategy(reserve.interestRateStrategyAddress)._kp();
-            reserveData.ki =
-                IPiReserveInterestRateStrategy(reserve.interestRateStrategyAddress)._ki();
-            reserveData.lastPiReserveRateStrategyUpdate =
-                IPiReserveInterestRateStrategy(reserve.interestRateStrategyAddress)._lastTimestamp();
-            reserveData.errI =
-                IPiReserveInterestRateStrategy(reserve.interestRateStrategyAddress)._errI();
-            reserveData.minControllerError = IPiReserveInterestRateStrategy(
-                reserve.interestRateStrategyAddress
-            )._minControllerError();
-            reserveData.maxErrIAmp =
-                IPiReserveInterestRateStrategy(reserve.interestRateStrategyAddress)._maxErrIAmp();
+            IPiReserveInterestRateStrategy strat =
+                IPiReserveInterestRateStrategy(reserve.interestRateStrategyAddress);
+            try strat._optimalUtilizationRate() {
+                reserveData.optimalUtilizationRate = IPiReserveInterestRateStrategy(
+                    reserve.interestRateStrategyAddress
+                )._optimalUtilizationRate();
+                reserveData.kp =
+                    IPiReserveInterestRateStrategy(reserve.interestRateStrategyAddress)._kp();
+                reserveData.ki =
+                    IPiReserveInterestRateStrategy(reserve.interestRateStrategyAddress)._ki();
+                reserveData.lastPiReserveRateStrategyUpdate = IPiReserveInterestRateStrategy(
+                    reserve.interestRateStrategyAddress
+                )._lastTimestamp();
+                reserveData.errI =
+                    IPiReserveInterestRateStrategy(reserve.interestRateStrategyAddress)._errI();
+                reserveData.minControllerError = IPiReserveInterestRateStrategy(
+                    reserve.interestRateStrategyAddress
+                )._minControllerError();
+                reserveData.maxErrIAmp = IPiReserveInterestRateStrategy(
+                    reserve.interestRateStrategyAddress
+                )._maxErrIAmp();
+            } catch {
+                reserveData.optimalUtilizationRate = MiniPoolDefaultReserveInterestRateStrategy(
+                    reserve.interestRateStrategyAddress
+                ).OPTIMAL_UTILIZATION_RATE();
+                reserveData.baseVariableBorrowRate = MiniPoolDefaultReserveInterestRateStrategy(
+                    reserve.interestRateStrategyAddress
+                ).baseVariableBorrowRate();
+                reserveData.variableRateSlope1 = MiniPoolDefaultReserveInterestRateStrategy(
+                    reserve.interestRateStrategyAddress
+                ).variableRateSlope1();
+                reserveData.variableRateSlope2 = MiniPoolDefaultReserveInterestRateStrategy(
+                    reserve.interestRateStrategyAddress
+                ).variableRateSlope2();
+                reserveData.maxVariableBorrowRate = MiniPoolDefaultReserveInterestRateStrategy(
+                    reserve.interestRateStrategyAddress
+                ).getMaxVariableBorrowRate();
+            }
         }
         {
             if (reserveData.isTranche) {
                 IFlowLimiter flowLimiter = IFlowLimiter(miniPoolAddressProvider.getFlowLimiter());
-                reserveData.flowLimit = flowLimiter.getFlowLimit(asset, miniPoolAddress);
-                reserveData.currentFlow = flowLimiter.currentFlow(asset, miniPoolAddress);
+                reserveData.flowLimit =
+                    flowLimiter.getFlowLimit(reserveData.underlyingAsset, miniPoolAddress);
+                reserveData.currentFlow =
+                    flowLimiter.currentFlow(reserveData.underlyingAsset, miniPoolAddress);
                 reserveData.availableFlow = reserveData.flowLimit > reserveData.currentFlow
                     ? reserveData.flowLimit - reserveData.currentFlow
                     : 0;

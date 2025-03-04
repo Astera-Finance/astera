@@ -11,7 +11,8 @@ import "contracts/protocol/core/minipool/MiniPoolConfigurator.sol";
 
 import "contracts/protocol/tokenization/ERC20/AToken.sol";
 import "contracts/protocol/tokenization/ERC20/VariableDebtToken.sol";
-import "contracts/misc/Cod3xLendDataProvider.sol";
+// import "contracts/misc/Cod3xLendDataProvider.sol";
+import "contracts/misc/Cod3xLendDataProvider2.sol";
 import "../DeployDataTypes.sol";
 
 import "forge-std/console2.sol";
@@ -327,6 +328,7 @@ contract InitAndConfigurationHelper {
                 ? address(_contracts.volatileStrategies[_reserveConfig.interestStratId])
                 : address(_contracts.stableStrategies[_reserveConfig.interestStratId]);
         }
+        console2.log("Strat determined");
         return interestStrategy;
     }
 

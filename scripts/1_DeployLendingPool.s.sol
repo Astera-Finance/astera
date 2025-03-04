@@ -12,7 +12,6 @@ contract DeployLendingPool is Script, LendingPoolHelper, Test {
     using stdJson for string;
 
     function checkOwnerships() internal {
-        assertEq(contracts.cod3xLendDataProvider.owner(), vm.addr(vm.envUint("PRIVATE_KEY")));
         assertEq(contracts.lendingPoolAddressesProvider.owner(), vm.addr(vm.envUint("PRIVATE_KEY")));
         assertEq(
             contracts.lendingPoolAddressesProvider.getEmergencyAdmin(),
@@ -25,6 +24,7 @@ contract DeployLendingPool is Script, LendingPoolHelper, Test {
         assertEq(contracts.oracle.owner(), vm.addr(vm.envUint("PRIVATE_KEY")));
         assertEq(contracts.wethGateway.owner(), vm.addr(vm.envUint("PRIVATE_KEY")));
         assertEq(contracts.cod3xLendDataProvider.owner(), vm.addr(vm.envUint("PRIVATE_KEY")));
+        // assertEq(contracts.cod3xLendDataProvider.owner(), vm.addr(vm.envUint("PRIVATE_KEY")));
         for (uint8 idx = 0; idx < contracts.piStrategies.length; idx++) {
             assertEq(contracts.piStrategies[idx].owner(), vm.addr(vm.envUint("PRIVATE_KEY")));
         }
@@ -62,37 +62,51 @@ contract DeployLendingPool is Script, LendingPoolHelper, Test {
                 address(poolReserversConfig[idx].tokenAddress),
                 "Wrong underlying token"
             );
-            StaticData memory staticData = contracts.cod3xLendDataProvider.getLpReserveStaticData(
+            AggregatedMainPoolReservesData memory aggregatedMainPoolReservesData = contracts
+                .cod3xLendDataProvider
+                .getAggregatedMainPoolReserveData(
                 address(poolReserversConfig[idx].tokenAddress), reserveTypes[idx]
             );
-            assertEq(staticData.ltv, poolReserversConfig[idx].baseLtv, "Wrong Ltv");
             assertEq(
-                staticData.liquidationThreshold,
+                aggregatedMainPoolReservesData.baseLTVasCollateral,
+                poolReserversConfig[idx].baseLtv,
+                "Wrong Ltv"
+            );
+            assertEq(
+                aggregatedMainPoolReservesData.reserveLiquidationThreshold,
                 poolReserversConfig[idx].liquidationThreshold,
                 "Wrong liquidationThreshold"
             );
             assertEq(
-                staticData.liquidationBonus,
+                aggregatedMainPoolReservesData.reserveLiquidationBonus,
                 poolReserversConfig[idx].liquidationBonus,
                 "Wrong liquidationBonus"
             );
-            assertEq(staticData.symbol, poolReserversConfig[idx].symbol, "Wrong Symbol");
-            assertEq(staticData.isActive, true, "reserve is not active");
-            assertEq(staticData.borrowingEnabled, true, "borrowing not enabled");
-            assertEq(staticData.flashloanEnabled, true, "floshloan not enabled");
-            assertEq(staticData.isFrozen, false, "reserve is frozen");
-            assertEq(staticData.usageAsCollateralEnabled, true, "collateral usage not enabled");
             assertEq(
-                staticData.cod3xReserveFactor,
+                aggregatedMainPoolReservesData.symbol,
+                poolReserversConfig[idx].symbol,
+                "Wrong Symbol"
+            );
+            assertEq(aggregatedMainPoolReservesData.isActive, true, "reserve is not active");
+            assertEq(aggregatedMainPoolReservesData.borrowingEnabled, true, "borrowing not enabled");
+            assertEq(aggregatedMainPoolReservesData.flashloanEnabled, true, "floshloan not enabled");
+            assertEq(aggregatedMainPoolReservesData.isFrozen, false, "reserve is frozen");
+            assertEq(
+                aggregatedMainPoolReservesData.usageAsCollateralEnabled,
+                true,
+                "collateral usage not enabled"
+            );
+            assertEq(
+                aggregatedMainPoolReservesData.cod3xReserveFactor,
                 poolReserversConfig[idx].reserveFactor,
                 "wrong cod3xReserveFactor"
             );
             assertEq(
-                staticData.miniPoolOwnerReserveFactor,
+                aggregatedMainPoolReservesData.miniPoolOwnerReserveFactor,
                 poolReserversConfig[idx].miniPoolOwnerFee,
                 "wrong miniPoolOwnerReserveFactor"
             );
-            assertEq(staticData.depositCap, 0, "Wrong deposit cap");
+            assertEq(aggregatedMainPoolReservesData.depositCap, 0, "Wrong deposit cap");
         }
     }
 
