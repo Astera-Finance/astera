@@ -443,7 +443,7 @@ contract Cod3xLendDataProvider2 is Ownable, ICod3xLendDataProvider2 {
         {
             reserveData.aTokenId = reserve.aTokenID;
             reserveData.debtTokenId = reserve.variableDebtTokenID;
-            reserveData.isTranche = reserveData.aTokenId % 1000 < 256 ? true : false;
+            reserveData.isTranche = reserveData.aTokenId % 1000 < 128 ? true : false;
             if (reserveData.isTranche) {
                 reserveData.aTokenNonRebasingAddress = asset;
                 reserveData.underlyingAsset = ATokenNonRebasing(asset).UNDERLYING_ASSET_ADDRESS();

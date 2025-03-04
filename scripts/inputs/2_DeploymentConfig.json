@@ -22,7 +22,7 @@
       "reserveFactor": 2000,
       "reserveType": true,
       "symbol": "clcbBTC",
-      "tokenAddress": "0x"
+      "tokenAddress": "0x7ABd9167b72246c17889F15251e8A520999F65Ce"
     },
     {
       "baseLtv": 7000,
@@ -36,7 +36,7 @@
       "reserveFactor": 2000,
       "reserveType": true,
       "symbol": "clWETH",
-      "tokenAddress": "0x"
+      "tokenAddress": "0xC183Db6066dA39ca4C25e3544E6b50350642Fb7f"
     },
     {
       "baseLtv": 8000,
@@ -50,7 +50,7 @@
       "reserveFactor": 2000,
       "reserveType": true,
       "symbol": "clUSDC",
-      "tokenAddress": "0x"
+      "tokenAddress": "0x3935C821dA00D0eC7fca1e4965D7cD44185C3bc8"
     },
     {
       "baseLtv": 7000,
@@ -104,24 +104,15 @@
   ],
   "oracleConfig": {
     "assets": [
-      "0x",
-      "0x",
-      "0x",
       "0xC0D3700000987C99b3C9009069E4f8413fD22330"
     ],
     "baseCurrency": "0x0000000000000000000000000000000000000000",
     "baseCurrencyUnit": 1e8,
     "fallbackOracle": "0x0000000000000000000000000000000000000000",
     "sources": [
-      "0x07DA0E54543a844a80ABE69c8A12F22B3aA59f9D",
-      "0x71041dddad3595F9CEd3DcCFBe3D1F4b0a16Bb70",
-      "0x7e860098F58bBFC8648a4311b374B1D669a2bc6B",
       "0x9157E89Eb513B9e206A40CCD9E2F55f8E72Bd502"
     ],
     "timeouts": [
-      1200,
-      1200,
-      86400,
       100000
     ]
   }

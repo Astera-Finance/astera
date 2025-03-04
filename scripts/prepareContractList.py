@@ -3,7 +3,7 @@ import csv
 import os
 
 ## CONFIG
-testnet = True
+testnet = False
 
 explorer = ""
 csv_file = ""
@@ -20,7 +20,7 @@ else:
 
 def createFromScriptOut():
     rows_data = []
-    for root, dirs, files in os.walk(os.getcwd() + "/scripts/outputs/testnet"):
+    for root, dirs, files in os.walk(os.getcwd() + path_to_walk):
         for file in files:
             print("File: ", file)
             if file.endswith('.json'):
