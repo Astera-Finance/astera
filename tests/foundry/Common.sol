@@ -5,64 +5,56 @@ import "forge-std/Test.sol";
 import "forge-std/console2.sol";
 
 import {ReserveConfiguration} from
-    "contracts/protocol/libraries/configuration/ReserveConfiguration.sol";
+    "../../contracts/protocol/libraries/configuration/ReserveConfiguration.sol";
 import {InitializableImmutableAdminUpgradeabilityProxy} from
-    "contracts/protocol/libraries/upgradeability/InitializableImmutableAdminUpgradeabilityProxy.sol";
-import {ERC20} from "contracts/dependencies/openzeppelin/contracts/ERC20.sol";
-import {Rewarder} from "contracts/protocol/rewarder/lendingpool/Rewarder.sol";
-import {Oracle} from "contracts/protocol/core/Oracle.sol";
+    "../../contracts/protocol/libraries/upgradeability/InitializableImmutableAdminUpgradeabilityProxy.sol";
+import {ERC20} from "../../contracts/dependencies/openzeppelin/contracts/ERC20.sol";
+import {Rewarder} from "../../contracts/protocol/rewarder/lendingpool/Rewarder.sol";
+import {Oracle} from "../../contracts/protocol/core/Oracle.sol";
 import {
     Cod3xLendDataProvider,
     StaticData,
     DynamicData,
     UserReserveData
-} from "contracts/misc/Cod3xLendDataProvider.sol";
-import {Treasury} from "contracts/misc/Treasury.sol";
-import {WETHGateway} from "contracts/misc/WETHGateway.sol";
-// import "contracts/protocol/core/lendingpool/logic/ReserveLogic.sol";
-// import "contracts/protocol/core/lendingpool/logic/GenericLogic.sol";
-// import "contracts/protocol/core/lendingpool/logic/ValidationLogic.sol";
+} from "../../contracts/misc/Cod3xLendDataProvider.sol";
+import {Treasury} from "../../contracts/misc/Treasury.sol";
+import {WETHGateway} from "../../contracts/misc/WETHGateway.sol";
 import {
     LendingPoolAddressesProvider,
     ILendingPoolAddressesProvider
-} from "contracts/protocol/configuration/LendingPoolAddressesProvider.sol";
+} from "../../contracts/protocol/configuration/LendingPoolAddressesProvider.sol";
 import {DefaultReserveInterestRateStrategy} from
-    "contracts/protocol/core/interestRateStrategies/lendingpool/DefaultReserveInterestRateStrategy.sol";
+    "../../contracts/protocol/core/interestRateStrategies/lendingpool/DefaultReserveInterestRateStrategy.sol";
 import {PiReserveInterestRateStrategy} from
-    "contracts/protocol/core/interestRateStrategies/lendingpool/PiReserveInterestRateStrategy.sol";
+    "../../contracts/protocol/core/interestRateStrategies/lendingpool/PiReserveInterestRateStrategy.sol";
 import {MiniPoolPiReserveInterestRateStrategy} from
-    "contracts/protocol/core/interestRateStrategies/minipool/MiniPoolPiReserveInterestRateStrategy.sol";
-import {LendingPool} from "contracts/protocol/core/lendingpool/LendingPool.sol";
+    "../../contracts/protocol/core/interestRateStrategies/minipool/MiniPoolPiReserveInterestRateStrategy.sol";
+import {LendingPool} from "../../contracts/protocol/core/lendingpool/LendingPool.sol";
 import {
     LendingPoolConfigurator,
     ILendingPoolConfigurator
-} from "contracts/protocol/core/lendingpool/LendingPoolConfigurator.sol";
-import {MiniPool, IMiniPool} from "contracts/protocol/core/minipool/MiniPool.sol";
+} from "../../contracts/protocol/core/lendingpool/LendingPoolConfigurator.sol";
+import {MiniPool, IMiniPool} from "../../contracts/protocol/core/minipool/MiniPool.sol";
 import {MiniPoolAddressesProvider} from
-    "contracts/protocol/configuration/MiniPoolAddressProvider.sol";
+    "../../contracts/protocol/configuration/MiniPoolAddressProvider.sol";
 import {
     MiniPoolConfigurator,
     IMiniPoolConfigurator
-} from "contracts/protocol/core/minipool/MiniPoolConfigurator.sol";
-import {FlowLimiter} from "contracts/protocol/core/minipool/FlowLimiter.sol";
+} from "../../contracts/protocol/core/minipool/MiniPoolConfigurator.sol";
+import {FlowLimiter} from "../../contracts/protocol/core/minipool/FlowLimiter.sol";
 
-import {ATokensAndRatesHelper} from "contracts/deployments/ATokensAndRatesHelper.sol";
-import {AToken} from "contracts/protocol/tokenization/ERC20/AToken.sol";
-import {ATokenERC6909} from "contracts/protocol/tokenization/ERC6909/ATokenERC6909.sol";
-import {VariableDebtToken} from "contracts/protocol/tokenization/ERC20/VariableDebtToken.sol";
-// import "contracts/mocks/tokens/MintableERC20.sol";
-// import "contracts/mocks/tokens/WETH9Mocked.sol";
-import {MockAggregator} from "contracts/mocks/oracle/MockAggregator.sol";
-import {MockReaperVault2} from "contracts/mocks/tokens/MockVault.sol";
-// import "contracts/mocks/tokens/ExternalContract.sol";
-// import "contracts/mocks/dependencies/IStrategy.sol";
-// import "contracts/mocks/dependencies/IExternalContract.sol";
-import {WadRayMath} from "contracts/protocol/libraries/math/WadRayMath.sol";
+import {ATokensAndRatesHelper} from "../../contracts/deployments/ATokensAndRatesHelper.sol";
+import {AToken} from "../../contracts/protocol/tokenization/ERC20/AToken.sol";
+import {ATokenERC6909} from "../../contracts/protocol/tokenization/ERC6909/ATokenERC6909.sol";
+import {VariableDebtToken} from "../../contracts/protocol/tokenization/ERC20/VariableDebtToken.sol";
+import {MockAggregator} from "../../contracts/mocks/oracle/MockAggregator.sol";
+import {MockReaperVault2} from "../../contracts/mocks/tokens/MockVault.sol";
+import {WadRayMath} from "../../contracts/protocol/libraries/math/WadRayMath.sol";
 
 import
-    "contracts/protocol/core/interestRateStrategies/minipool/MiniPoolDefaultReserveInterestRate.sol";
-import "contracts/mocks/oracle/PriceOracle.sol";
-import {MockVaultUnit} from "contracts/mocks/tokens/MockVaultUnit.sol";
+    "../../contracts/protocol/core/interestRateStrategies/minipool/MiniPoolDefaultReserveInterestRate.sol";
+import "../../contracts/mocks/oracle/PriceOracle.sol";
+import {MockVaultUnit} from "../../contracts/mocks/tokens/MockVaultUnit.sol";
 import {MockPyth} from "node_modules/@pythnetwork/pyth-sdk-solidity/MockPyth.sol";
 import {PythAggregatorV3} from "node_modules/@pythnetwork/pyth-sdk-solidity/PythAggregatorV3.sol";
 
@@ -290,7 +282,7 @@ contract Common is Test {
         address lendingPoolConfiguratorProxyAddress;
         // LendingPoolConfigurator lendingPoolConfiguratorProxy;
         // bytes memory args = abi.encode();
-        // bytes memory bytecode = abi.encodePacked(vm.getCode("contracts/incentives/Rewarder.sol:Rewarder"));
+        // bytes memory bytecode = abi.encodePacked(vm.getCode("../../contracts/incentives/Rewarder.sol:Rewarder"));
         // address anotherAddress;
         // assembly {
         //     anotherAddress := create(0, add(bytecode, 0x20), mload(bytecode))
