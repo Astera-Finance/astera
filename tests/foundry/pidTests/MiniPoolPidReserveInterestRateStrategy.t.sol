@@ -752,4 +752,141 @@ contract MiniPoolPidReserveInterestRateStrategyTest is Common {
         IMiniPool(vars.mp).deposit(address(vars.aToken), false, DUST, vars.user);
         vm.stopPrank();
     }
+
+    function testFuzzMiniPoolFlowLimiterTwoUsers(
+        uint256 debtToSet,
+        uint256 offset1,
+        uint256 offset2
+    ) public {
+        TestVars memory vars;
+        offset1 = bound(offset1, 0, 3);
+        offset2 = bound(offset2, 0, 3);
+
+        address user2 = makeAddr("user2");
+
+        vars.user = makeAddr("user");
+        vars.mpId = 0;
+        vars.mp = deployedMiniPoolContracts.miniPoolAddressesProvider.getMiniPool(vars.mpId);
+        vm.label(vars.mp, "MiniPool");
+        vars.aErc6909Token = IAERC6909(
+            deployedMiniPoolContracts.miniPoolAddressesProvider.getMiniPoolToAERC6909(vars.mp)
+        );
+        vm.label(address(vars.aErc6909Token), "aErc6909Token");
+
+        vars.whaleUser = makeAddr("whaleUser");
+
+        vars.underlying = erc20Tokens[offset1];
+        vars.aToken = commonContracts.aTokensWrapper[offset1];
+        vars.debtToken = commonContracts.variableDebtTokens[offset1];
+        vars.amountInUsd = 100_000 ether;
+        vars.counterUnderlying = erc20Tokens[offset2];
+        vars.underlyingPrice = commonContracts.oracle.getAssetPrice(address(vars.underlying));
+        vars.counterUnderlyingPrice =
+            commonContracts.oracle.getAssetPrice(address(vars.counterUnderlying));
+
+        uint256 amount = ((vars.amountInUsd / vars.underlyingPrice) * 10 ** PRICE_FEED_DECIMALS)
+            / 10 ** (18 - ERC20(vars.underlying).decimals());
+        console.log(
+            "Amount from %s USD %s %s",
+            vars.amountInUsd / 1e18,
+            amount / 10 ** vars.underlying.decimals(),
+            vars.underlying.symbol()
+        );
+
+        debtToSet = 1e3;
+
+        deal(address(vars.underlying), vars.whaleUser, 1e26);
+        deal(address(vars.counterUnderlying), vars.whaleUser, 1e26);
+        deal(address(vars.counterUnderlying), vars.user, 1e26);
+
+        vm.startPrank(deployedMiniPoolContracts.miniPoolAddressesProvider.getMainPoolAdmin());
+        deployedMiniPoolContracts.miniPoolConfigurator.setMinDebtThreshold(
+            debtToSet, IMiniPool(vars.mp)
+        );
+        deployedMiniPoolContracts.miniPoolConfigurator.setCod3xTreasury(vars.user);
+        vm.stopPrank();
+
+        vm.startPrank(vars.whaleUser);
+        vars.underlying.approve(address(deployedContracts.lendingPool), amount);
+        deployedContracts.lendingPool.deposit(
+            address(vars.underlying), true, amount, vars.whaleUser
+        );
+        vm.stopPrank();
+
+        console.log("Underlying: ", vars.underlying.symbol());
+        console.log("Counter underlying: ", vars.counterUnderlying.symbol());
+
+        vm.startPrank(vars.user);
+        uint256 counterAmount = (
+            fixture_convertWithDecimals(
+                amount, vars.counterUnderlying.decimals(), vars.underlying.decimals()
+            ) * vars.underlyingPrice
+        ) / vars.counterUnderlyingPrice;
+        console.log(
+            "Counter amount: %s decimals counter: %s decimals under: %s",
+            counterAmount,
+            vars.counterUnderlying.decimals(),
+            vars.underlying.decimals()
+        );
+        vars.counterUnderlying.approve(address(vars.mp), counterAmount);
+        console.log(
+            "User balance: ",
+            vars.counterUnderlying.balanceOf(vars.user) / 10 ** vars.counterUnderlying.decimals()
+        );
+        console.log("User deposits: %s %s", counterAmount, vars.counterUnderlying.symbol());
+        IMiniPool(vars.mp).deposit(address(vars.counterUnderlying), false, counterAmount, vars.user);
+        vm.stopPrank();
+
+        vars.flowLimiter = address(deployedMiniPoolContracts.flowLimiter);
+
+        console.log("UnderlyingPrice", vars.underlyingPrice);
+        console.log("CounterUnderlyingPrice", vars.counterUnderlyingPrice);
+
+        uint256 dust = IMiniPool(vars.mp).minDebtThreshold(vars.underlying.decimals());
+
+        console.log("Calculated DUST: ", dust);
+
+        // assert(false);
+        vm.prank(address(deployedMiniPoolContracts.miniPoolAddressesProvider));
+        deployedMiniPoolContracts.flowLimiter.setFlowLimit(
+            address(vars.underlying), vars.mp, dust * 100
+        );
+
+        //@audit borrow dust from empty minipool
+        vm.startPrank(vars.user);
+        console.log("User borrows %s %s", dust, vars.aToken.symbol());
+        IMiniPool(vars.mp).borrow(address(vars.aToken), false, dust, vars.user); // Utilization can become huge
+        assertEq(vars.debtToken.balanceOf(vars.mp), dust);
+        vm.stopPrank();
+
+        //@audit Donate usdc to aErc6909 token
+        vm.startPrank(vars.whaleUser);
+        vars.counterUnderlying.approve(vars.mp, counterAmount);
+        console.log("1.whale deposits %s %s", counterAmount, vars.counterUnderlying.symbol());
+        IMiniPool(vars.mp).deposit(
+            address(vars.counterUnderlying), false, counterAmount, vars.whaleUser
+        );
+        vm.stopPrank();
+
+        vm.startPrank(vars.whaleUser);
+        console.log("whale borrows %s %s", dust, vars.aToken.symbol());
+        IMiniPool(vars.mp).borrow(address(vars.aToken), false, dust, vars.whaleUser); // Utilization can become huge
+        assertEq(vars.debtToken.balanceOf(vars.mp), 2 * dust);
+        vm.stopPrank();
+
+        // vm.startPrank(address(deployedMiniPoolContracts.miniPoolConfigurator));
+        // IMiniPool(vars.mp).syncRatesState(address(vars.aToken)); // Utilization is 19999999999600000 (~2e16)
+        // vm.stopPrank();
+
+        console.log("Time travel 1");
+        vm.warp(block.timestamp + 2 days); // Max is DELTA_TIME_MARGIN (5 days)
+        vm.roll(block.number + 1);
+
+        console.log("Deposit >>> DEBT TO SET", debtToSet);
+        vm.startPrank(vars.whaleUser);
+        vars.aToken.approve(vars.mp, 10 * dust);
+        console.log("2.whale deposits %s %s", dust, vars.aToken.symbol());
+        IMiniPool(vars.mp).deposit(address(vars.aToken), false, dust / 2, vars.user);
+        vm.stopPrank();
+    }
 }
