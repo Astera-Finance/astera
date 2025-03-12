@@ -226,6 +226,7 @@ library MiniPoolValidationLogic {
      * @param amountSent The amount sent for the repayment. Can be an actual value or uint(-1).
      * @param onBehalfOf The address of the user `msg.sender` is repaying for.
      * @param variableDebt The borrow balance of the user.
+     * @param minAmount The minimum amount to be repaid.
      * @notice Checks that:
      * - The reserve is active.
      * - The amount is valid and not zero.
