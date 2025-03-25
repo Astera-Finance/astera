@@ -169,9 +169,9 @@ interface IMiniPool {
 
     function liquidationCall(
         address collateralAsset,
-        bool collateralAssetType,
+        bool unwrap,
         address debtAsset,
-        bool debtAssetType,
+        bool wrap,
         address user,
         uint256 debtToCover,
         bool receiveAToken
