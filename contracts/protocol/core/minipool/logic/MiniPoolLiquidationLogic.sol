@@ -4,7 +4,6 @@ pragma solidity ^0.8.23;
 import {IMiniPoolAddressesProvider} from
     "../../../../../contracts/interfaces/IMiniPoolAddressesProvider.sol";
 import {Errors} from "../../../../../contracts/protocol/libraries/helpers/Errors.sol";
-
 import {IERC20} from "../../../../../contracts/dependencies/openzeppelin/contracts/IERC20.sol";
 import {IAERC6909} from "../../../../../contracts/interfaces/IAERC6909.sol";
 import {IOracle} from "../../../../../contracts/interfaces/IOracle.sol";
@@ -24,6 +23,13 @@ import {ReserveConfiguration} from
 import {MiniPoolReserveLogic} from
     "../../../../../contracts/protocol/core/minipool/logic/MiniPoolReserveLogic.sol";
 import {DataTypes} from "../../../../../contracts/protocol/libraries/types/DataTypes.sol";
+import {ILendingPool} from "../../../../../contracts/interfaces/ILendingPool.sol";
+import {ILendingPoolConfigurator} from
+    "../../../../../contracts/interfaces/ILendingPoolConfigurator.sol";
+import {ILendingPoolAddressesProvider} from
+    "../../../../../contracts/interfaces/ILendingPoolAddressesProvider.sol";
+import {ATokenNonRebasing} from
+    "../../../../../contracts/protocol/tokenization/ERC6909/ATokenERC6909.sol";
 
 /**
  * @title MiniPoolLiquidationLogic
@@ -100,7 +106,9 @@ library MiniPoolLiquidationLogic {
         address addressesProvider;
         uint256 reservesCount;
         address collateralAsset;
+        bool unwrap;
         address debtAsset;
+        bool wrap;
         address user;
         uint256 debtToCover;
         bool receiveAToken;
@@ -235,7 +243,7 @@ library MiniPoolLiquidationLogic {
                 msg.sender,
                 vars.aTokenID,
                 vars.maxCollateralToLiquidate,
-                false,
+                params.unwrap,
                 collateralReserve.liquidityIndex
             );
         }
@@ -247,10 +255,30 @@ library MiniPoolLiquidationLogic {
             emit ReserveUsedAsCollateralDisabled(params.collateralAsset, params.user);
         }
 
-        // Transfers the debt asset being repaid to the aToken, where the liquidity is kept.
-        IERC20(params.debtAsset).safeTransferFrom(
-            msg.sender, address(vars.atoken6909), vars.actualDebtToLiquidate
-        );
+        // If wrap is true and the asset is an aToken, we use special handling, otherwise we default to standard transfer.
+        if (
+            params.wrap
+                && ILendingPoolConfigurator(
+                    ILendingPoolAddressesProvider(addressesProvider.getLendingPoolAddressesProvider())
+                        .getLendingPoolConfigurator()
+                ).getIsAToken(params.debtAsset)
+        ) {
+            address underlying = ATokenNonRebasing(params.debtAsset).UNDERLYING_ASSET_ADDRESS();
+            address lendingPool = addressesProvider.getLendingPool();
+            uint256 underlyingAmount =
+                ATokenNonRebasing(params.debtAsset).convertToAssets(vars.actualDebtToLiquidate);
+
+            IERC20(underlying).safeTransferFrom(msg.sender, address(this), underlyingAmount);
+            IERC20(underlying).forceApprove(lendingPool, underlyingAmount);
+            ILendingPool(lendingPool).deposit(
+                underlying, true, underlyingAmount, address(vars.atoken6909)
+            );
+        } else {
+            // Transfers the debt asset being repaid to the aToken, where the liquidity is kept.
+            IERC20(params.debtAsset).safeTransferFrom(
+                msg.sender, address(vars.atoken6909), vars.actualDebtToLiquidate
+            );
+        }
 
         vars.atoken6909.handleRepayment(
             msg.sender, params.user, debtReserve.aTokenID, vars.actualDebtToLiquidate

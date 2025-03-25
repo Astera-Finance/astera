@@ -183,7 +183,9 @@ contract MiniPoolLiquidationTest is MiniPoolDepositBorrowTest {
             borrowParams.token.approve(miniPool, liquidationVars.amountToLiquidate);
             IMiniPool(miniPool).liquidationCall(
                 address(collateralParams.token),
+                false,
                 address(borrowParams.token),
+                false,
                 user,
                 liquidationVars.amountToLiquidate,
                 false
@@ -399,7 +401,9 @@ contract MiniPoolLiquidationTest is MiniPoolDepositBorrowTest {
             borrowParams.aToken.approve(miniPool, amountToLiquidate);
             IMiniPool(miniPool).liquidationCall(
                 address(collateralParams.token),
+                false,
                 address(borrowParams.aToken),
+                false,
                 user,
                 amountToLiquidate,
                 false

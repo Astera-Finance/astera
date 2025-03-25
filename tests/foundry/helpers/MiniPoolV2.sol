@@ -356,7 +356,11 @@ contract MiniPoolV2 is
      * - The caller (liquidator) covers `debtToCover` amount of debt of the user getting liquidated, and receives
      *   a proportionally amount of the `collateralAsset` plus a bonus to cover market risk.
      * @param collateralAsset The address of the underlying asset used as collateral, to receive as result of the liquidation.
+     * @param unwrap If true, and `asset` is an aToken, the liquidator will directly receive the underlying. If true and
+     * `asset` is a not an aToken, this variable is ignored.
      * @param debtAsset The address of the underlying borrowed asset to be repaid with the liquidation.
+     * @param wrap Convert the underlying in AToken from the lendingpool. If true and `asset` is a not an aToken,
+     * this variable is ignored.
      * @param user The address of the borrower getting liquidated.
      * @param debtToCover The debt amount of borrowed `asset` the liquidator wants to cover.
      * @param receiveAToken `true` if the liquidators wants to receive the collateral aTokens, `false` if he wants
@@ -364,7 +368,9 @@ contract MiniPoolV2 is
      */
     function liquidationCall(
         address collateralAsset,
+        bool unwrap,
         address debtAsset,
+        bool wrap,
         address user,
         uint256 debtToCover,
         bool receiveAToken
@@ -377,7 +383,9 @@ contract MiniPoolV2 is
                 address(_addressesProvider),
                 _reservesCount,
                 collateralAsset,
+                unwrap,
                 debtAsset,
+                wrap,
                 user,
                 debtToCover,
                 receiveAToken
