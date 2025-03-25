@@ -18,6 +18,10 @@ import {MiniPoolReserveLogic} from "./MiniPoolReserveLogic.sol";
 import {ILendingPool} from "../../../../../contracts/interfaces/ILendingPool.sol";
 import {ATokenNonRebasing} from
     "../../../../../contracts/protocol/tokenization/ERC20/ATokenNonRebasing.sol";
+import {ILendingPoolAddressesProvider} from
+    "../../../../../contracts/interfaces/ILendingPoolAddressesProvider.sol";
+import {ILendingPoolConfigurator} from
+    "../../../../../contracts/interfaces/ILendingPoolConfigurator.sol";
 
 /**
  * @title MiniPoolDepositLogic library
@@ -88,7 +92,14 @@ library MiniPoolDepositLogic {
         reserve.updateState();
         reserve.updateInterestRates(params.asset, params.amount, 0);
 
-        if (wrap) {
+        // If wrap is true and the asset is an aToken, we use special handling, otherwise we default to standard transfer.
+        if (
+            wrap
+                && ILendingPoolConfigurator(
+                    ILendingPoolAddressesProvider(addressesProvider.getLendingPoolAddressesProvider())
+                        .getLendingPoolConfigurator()
+                ).getIsAToken(params.asset)
+        ) {
             address underlying = ATokenNonRebasing(params.asset).UNDERLYING_ASSET_ADDRESS();
             address lendingPool = addressesProvider.getLendingPool();
             uint256 underlyingAmount =

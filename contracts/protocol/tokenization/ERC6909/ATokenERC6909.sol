@@ -22,6 +22,10 @@ import {Strings} from "openzeppelin-contracts/contracts/utils/Strings.sol";
 import {SafeERC20} from "../../../../contracts/dependencies/openzeppelin/contracts/SafeERC20.sol";
 import {IMiniPoolAddressProviderUpdatable} from
     "../../../../contracts/interfaces/IMiniPoolAddressProviderUpdatable.sol";
+import {ILendingPoolConfigurator} from
+    "../../../../contracts/interfaces/ILendingPoolConfigurator.sol";
+import {ILendingPoolAddressesProvider} from
+    "../../../../contracts/interfaces/ILendingPoolAddressesProvider.sol";
 
 /**
  * @title ERC6909-MultiToken
@@ -262,13 +266,20 @@ contract ATokenERC6909 is
     function transferUnderlyingTo(address to, uint256 id, uint256 amount, bool unwrap) public {
         require(msg.sender == address(POOL), Errors.AT_CALLER_MUST_BE_LENDING_POOL);
 
-        if (unwrap) {
-            ATokenNonRebasing asset = ATokenNonRebasing(_underlyingAssetAddresses[id]);
+        address underlyingAsset = _underlyingAssetAddresses[id];
+        if (
+            unwrap
+                && ILendingPoolConfigurator(
+                    ILendingPoolAddressesProvider(_addressesProvider.getLendingPoolAddressesProvider())
+                        .getLendingPoolConfigurator()
+                ).getIsAToken(underlyingAsset)
+        ) {
+            ATokenNonRebasing asset = ATokenNonRebasing(underlyingAsset);
             ILendingPool(_addressesProvider.getLendingPool()).withdraw(
                 asset.UNDERLYING_ASSET_ADDRESS(), true, asset.convertToAssets(amount), to
             );
         } else {
-            IERC20(_underlyingAssetAddresses[id]).safeTransfer(to, amount);
+            IERC20(underlyingAsset).safeTransfer(to, amount);
         }
     }
 

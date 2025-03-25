@@ -49,7 +49,7 @@ interface IMiniPoolAddressesProvider {
      * @param newAddress The address being set.
      * @param hasProxy Whether the address is set in a proxy contract.
      */
-    event AddressSet(bytes32 indexed id, address indexed newAddress, bool hasProxy);
+    event AddressSet(bytes32 id, address indexed newAddress, bool hasProxy);
 
     /**
      * @dev Emitted when the mini pool configurator implementation is updated.
