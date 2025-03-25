@@ -44,7 +44,7 @@ contract ATokenNonRebasing {
      * @return The name of the token.
      */
     function name() public view returns (string memory) {
-        return _aToken.name();
+        return string.concat("Wrapped ", _aToken.name());
     }
 
     /**
@@ -52,7 +52,7 @@ contract ATokenNonRebasing {
      * @return The symbol of the token.
      */
     function symbol() public view returns (string memory) {
-        return _aToken.symbol();
+        return string.concat("w", _aToken.symbol());
     }
 
     /**
