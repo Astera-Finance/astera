@@ -50,11 +50,11 @@ contract ATokenNonRebasingTest is Common {
         unbackedATokenMint_fixture();
         for (uint32 idx = 0; idx < commonContracts.aTokens.length; idx++) {
             assertEq(
-                commonContracts.aTokens[idx].name(),
+                string.concat("Wrapped ", commonContracts.aTokens[idx].name()),
                 AToken(commonContracts.aTokens[idx].WRAPPER_ADDRESS()).name()
             );
             assertEq(
-                commonContracts.aTokens[idx].symbol(),
+                string.concat("w", commonContracts.aTokens[idx].symbol()),
                 AToken(commonContracts.aTokens[idx].WRAPPER_ADDRESS()).symbol()
             );
             assertEq(

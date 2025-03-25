@@ -31,16 +31,17 @@ interface IMiniPoolAddressesProvider {
     /**
      * @dev Emitted when a new mini pool proxy is created.
      * @param poolId The ID of the mini pool.
+     * @param id The identifier of the proxy.
      * @param newAddress The address of the created proxy contract.
      */
-    event ProxyCreated(uint256 poolId, address indexed newAddress);
+    event ProxyCreated(uint256 indexed poolId, bytes32 indexed id, address indexed newAddress);
 
     /**
      * @dev Emitted when a new proxy is created.
      * @param id The identifier of the proxy.
      * @param newAddress The address of the created proxy contract.
      */
-    event ProxyCreated(bytes32 id, address indexed newAddress);
+    event ProxyCreated(bytes32 indexed id, address indexed newAddress);
 
     /**
      * @dev Emitted when an address is set.
@@ -48,7 +49,7 @@ interface IMiniPoolAddressesProvider {
      * @param newAddress The address being set.
      * @param hasProxy Whether the address is set in a proxy contract.
      */
-    event AddressSet(bytes32 id, address indexed newAddress, bool hasProxy);
+    event AddressSet(bytes32 indexed id, address indexed newAddress, bool hasProxy);
 
     /**
      * @dev Emitted when the mini pool configurator implementation is updated.
@@ -61,7 +62,7 @@ interface IMiniPoolAddressesProvider {
      * @param newAdmin The address of the new pool admin.
      * @param miniPoolId The ID of the mini pool.
      */
-    event PoolAdminSet(address newAdmin, uint256 miniPoolId);
+    event PoolAdminSet(address indexed newAdmin, uint256 indexed miniPoolId);
 
     /**
      * @dev Emitted when a Cod3x treasury is set for all mini pools.

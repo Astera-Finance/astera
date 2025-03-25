@@ -78,12 +78,12 @@ contract MiniPoolAddressesProvider is Ownable, IMiniPoolAddressesProvider {
     /// @dev Maximum number of reserves with flow borrowing.
     uint256 private _maxReservesWithFlowBorrowing = 6;
 
-    /// @dev Constant identifier for lending pool addresses provider.
+    /// @dev Constant identifier for contracts.
     bytes32 private constant LENDING_POOL_ADDRESSES_PROVIDER =
         keccak256("LENDING_POOL_ADDRESSES_PROVIDER");
-
-    /// @dev Constant identifier for mini pool configurator.
     bytes32 private constant MINI_POOL_CONFIGURATOR = keccak256("MINI_POOL_CONFIGURATOR");
+    bytes32 private constant MINI_POOL = keccak256("MINI_POOL");
+    bytes32 private constant ATOKEN_ERC6909 = keccak256("ATOKEN_ERC6909");
 
     /**
      * @dev Constructor to initialize the contract.
@@ -493,7 +493,7 @@ contract MiniPoolAddressesProvider is Ownable, IMiniPoolAddressesProvider {
         _miniPoolsConfig[miniPoolCount].miniPool = address(proxy);
         _minipoolToId[address(proxy)] = miniPoolCount;
 
-        emit ProxyCreated(miniPoolCount, address(proxy));
+        emit ProxyCreated(miniPoolCount, MINI_POOL, address(proxy));
     }
 
     /**
@@ -510,7 +510,7 @@ contract MiniPoolAddressesProvider is Ownable, IMiniPoolAddressesProvider {
         aTokenProxy.initialize(aTokenImpl, params);
 
         _miniPoolsConfig[miniPoolCount].aErc6909 = address(aTokenProxy);
-        emit ProxyCreated(miniPoolCount, address(aTokenProxy));
+        emit ProxyCreated(miniPoolCount, ATOKEN_ERC6909, address(aTokenProxy));
     }
 
     /**
