@@ -222,6 +222,19 @@ contract MiniPoolAddressesProvider is Ownable, IMiniPoolAddressesProvider {
     }
 
     /**
+     * @dev Checks if an address is a registered mini pool.
+     * @param miniPool The address to check.
+     * @return True if the address is a registered mini pool, false otherwise.
+     */
+    function isMiniPool(address miniPool) external view returns (bool) {
+        uint256 miniPoolId = _minipoolToId[miniPool];
+        if (_miniPoolsConfig[miniPoolId].miniPool != miniPool) {
+            return false;
+        }
+        return true;
+    }
+
+    /**
      * @dev Returns the aToken address for a specific pool ID.
      * @param id The pool ID.
      * @return The aToken address.

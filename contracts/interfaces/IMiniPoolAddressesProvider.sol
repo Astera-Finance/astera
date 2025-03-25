@@ -113,6 +113,8 @@ interface IMiniPoolAddressesProvider {
 
     function getMiniPoolToAERC6909(uint256 id) external view returns (address);
 
+    function isMiniPool(address miniPool) external view returns (bool);
+
     function getMiniPoolCod3xTreasury() external view returns (address);
 
     function getMiniPoolOwnerTreasury(uint256 id) external view returns (address);
