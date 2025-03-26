@@ -62,14 +62,14 @@ contract ATokenERC6909 is
      * @param id The identifier of the token.
      * @param amount The amount of tokens minted.
      */
-    event Mint(address indexed treasury, uint256 indexed id, uint256 amount);
+    event Mint(address indexed treasury, uint256 indexed id, uint256 amount, uint256 index);
 
     /**
      * @notice Emitted when a token is burned.
      * @param id The identifier of the token.
      * @param amount The amount of tokens burned.
      */
-    event Burn(address indexed user, uint256 indexed id, uint256 amount);
+    event Burn(address indexed user, uint256 indexed id, uint256 amount, uint256 index);
 
     /**
      * @notice Emitted when the incentives controller is set.
@@ -332,7 +332,7 @@ contract ATokenERC6909 is
         require(amountScaled != 0, Errors.AT_INVALID_MINT_AMOUNT);
         _mint(onBehalfOf, id, amountScaled);
 
-        emit Mint(onBehalfOf, id, amountScaled);
+        emit Mint(onBehalfOf, id, amountScaled, index);
 
         return previousBalance == 0;
     }
@@ -364,7 +364,7 @@ contract ATokenERC6909 is
         }
         _burn(user, id, amountScaled);
 
-        emit Burn(user, id, amountScaled);
+        emit Burn(user, id, amountScaled, index);
     }
 
     /**
@@ -553,7 +553,7 @@ contract ATokenERC6909 is
         uint256 amountScaled = amount.rayDiv(index);
         _mint(treasury, id, amountScaled);
 
-        emit Mint(treasury, id, amountScaled);
+        emit Mint(treasury, id, amountScaled, index);
     }
 
     /**
