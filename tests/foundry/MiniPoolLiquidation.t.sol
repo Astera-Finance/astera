@@ -8,6 +8,9 @@ import {PercentageMath} from "contracts/protocol/libraries/math/PercentageMath.s
 import {ReserveConfiguration} from
     "contracts/protocol/libraries/configuration/ReserveConfiguration.sol";
 import "forge-std/StdUtils.sol";
+import "contracts/interfaces/IAToken.sol";
+import "contracts/protocol/tokenization/ERC20/ATokenNonRebasing.sol";
+import "forge-std/console2.sol";
 
 contract MiniPoolLiquidationTest is MiniPoolDepositBorrowTest {
     using WadRayMath for uint256;
@@ -413,5 +416,279 @@ contract MiniPoolLiquidationTest is MiniPoolDepositBorrowTest {
         /**
          * LIQUIDATION PROCESS - END ***********
          */
+    }
+
+    function testLiquidationsWithFlowFromLendingPoolWrap() public {
+        uint256 collateralOffset = 2;
+        uint256 borrowOffset = 1;
+
+        TokenParams memory collateralParams = TokenParams(
+            erc20Tokens[collateralOffset],
+            commonContracts.aTokensWrapper[collateralOffset],
+            commonContracts.oracle.getAssetPrice(address(erc20Tokens[collateralOffset]))
+        );
+        TokenParams memory borrowParams = TokenParams(
+            erc20Tokens[borrowOffset],
+            commonContracts.aTokensWrapper[borrowOffset],
+            commonContracts.oracle.getAssetPrice(address(erc20Tokens[borrowOffset]))
+        );
+
+        IAERC6909 aErc6909Token =
+            IAERC6909(miniPoolContracts.miniPoolAddressesProvider.getMiniPoolToAERC6909(miniPool));
+
+        address lpUser = makeAddr("lpUser");
+        deal(address(borrowParams.token), lpUser, 1_000_000e6); // 1 000 000 USDC
+        uint256 amountLp = borrowParams.token.balanceOf(lpUser) / 10;
+
+        {
+            vm.startPrank(lpUser);
+            borrowParams.token.approve(miniPool, type(uint256).max);
+            IMiniPool(miniPool).deposit(
+                address(borrowParams.aToken),
+                true,
+                collateralParams.aToken.convertToShares(amountLp),
+                lpUser
+            );
+
+            deal(address(collateralParams.token), lpUser, 10e18);
+            collateralParams.token.approve(
+                address(deployedContracts.lendingPool), type(uint256).max
+            );
+            deployedContracts.lendingPool.deposit(
+                address(collateralParams.token), true, 10e18, lpUser
+            );
+            deployedContracts.lendingPool.borrow(
+                address(collateralParams.token), true, 1e18, lpUser
+            );
+
+            vm.stopPrank();
+        }
+
+        address user = makeAddr("user");
+        {
+            deal(address(collateralParams.token), user, 100_000e18); // 100 000 WETH
+            uint256 amountColl = collateralParams.token.balanceOf(user) / 10;
+
+            vm.startPrank(user);
+
+            //deposit
+            collateralParams.token.approve(miniPool, type(uint256).max);
+            IMiniPool(miniPool).deposit(
+                address(collateralParams.aToken),
+                true,
+                collateralParams.aToken.convertToShares(amountColl),
+                user
+            );
+
+            skip(1 days);
+
+            vm.startPrank(lpUser);
+            IMiniPool(miniPool).borrow(address(collateralParams.aToken), false, 1e18, lpUser);
+            vm.stopPrank();
+
+            vm.startPrank(user);
+            //borrow
+            uint256 amountBorrow = 50_000e6; // 10 000 USDC
+            IMiniPool(miniPool).borrow(address(borrowParams.aToken), true, amountBorrow, user);
+
+            vm.stopPrank();
+        }
+        {
+            (,,,,, uint256 healthFactor) = IMiniPool(miniPool).getUserAccountData(user);
+            console2.log("2. MiniPool User healthFactor for user %s: %18e", user, healthFactor);
+
+            fixture_changePriceOfToken(collateralParams, 1000, false); // -20%
+
+            (,,,,, healthFactor) = IMiniPool(miniPool).getUserAccountData(user);
+            console2.log("2. MiniPool User healthFactor for user %s: %18e", user, healthFactor);
+        }
+        skip(1 days);
+        // /**
+        //  * LIQUIDATION PROCESS - START ***********
+        //  */
+        uint256 amountToLiquidate;
+        {
+            (uint256 debtToCover, uint256 _scaledVariableDebt) =
+                aErc6909Token.getScaledUserBalanceAndSupply(user, 2000 + borrowOffset);
+            amountToLiquidate = debtToCover / 2; // maximum possible liquidation amount
+            console2.log("[OUTwith] debtToCover: ", debtToCover);
+        }
+
+        skip(1 days);
+
+        {
+            /* prepare funds */
+            address liquidator = makeAddr("liquidator");
+            deal(address(borrowParams.token), liquidator, amountToLiquidate); // 100 000 WETH
+
+            uint256 oldBalanceBorrowToken = borrowParams.token.balanceOf(address(liquidator));
+            uint256 oldBalanceCollateralParamsaToken =
+                collateralParams.aToken.balanceOf(address(liquidator));
+
+            assertNotEq(oldBalanceBorrowToken, 0);
+
+            vm.startPrank(liquidator);
+            borrowParams.token.approve(miniPool, type(uint256).max);
+            borrowParams.aToken.approve(miniPool, type(uint256).max);
+            IMiniPool(miniPool).liquidationCall(
+                address(collateralParams.aToken),
+                false,
+                address(borrowParams.aToken),
+                true,
+                user,
+                amountToLiquidate,
+                false
+            );
+            vm.stopPrank();
+
+            assertEq(borrowParams.token.balanceOf(address(liquidator)), 0);
+            assertGt(
+                collateralParams.aToken.balanceOf(address(liquidator)),
+                oldBalanceCollateralParamsaToken
+            );
+        }
+    }
+
+    function testLiquidationsWithFlowFromLendingPoolWrapUnwrap() public {
+        uint256 collateralOffset = 2;
+        uint256 borrowOffset = 1;
+
+        TokenParams memory collateralParams = TokenParams(
+            erc20Tokens[collateralOffset],
+            commonContracts.aTokensWrapper[collateralOffset],
+            commonContracts.oracle.getAssetPrice(address(erc20Tokens[collateralOffset]))
+        );
+        TokenParams memory borrowParams = TokenParams(
+            erc20Tokens[borrowOffset],
+            commonContracts.aTokensWrapper[borrowOffset],
+            commonContracts.oracle.getAssetPrice(address(erc20Tokens[borrowOffset]))
+        );
+
+        IAERC6909 aErc6909Token =
+            IAERC6909(miniPoolContracts.miniPoolAddressesProvider.getMiniPoolToAERC6909(miniPool));
+
+        address lpUser = makeAddr("lpUser");
+        deal(address(borrowParams.token), lpUser, 1_000_000e6); // 1 000 000 USDC
+        uint256 amountLp = borrowParams.token.balanceOf(lpUser) / 10;
+
+        {
+            vm.startPrank(lpUser);
+            borrowParams.token.approve(miniPool, type(uint256).max);
+            IMiniPool(miniPool).deposit(
+                address(borrowParams.aToken),
+                true,
+                collateralParams.aToken.convertToShares(amountLp),
+                lpUser
+            );
+
+            deal(address(collateralParams.token), lpUser, 10e18);
+            collateralParams.token.approve(
+                address(deployedContracts.lendingPool), type(uint256).max
+            );
+            deployedContracts.lendingPool.deposit(
+                address(collateralParams.token), true, 10e18, lpUser
+            );
+            deployedContracts.lendingPool.borrow(
+                address(collateralParams.token), true, 1e18, lpUser
+            );
+
+            vm.stopPrank();
+        }
+
+        address user = makeAddr("user");
+        {
+            deal(address(collateralParams.token), user, 100_000e18); // 100 000 WETH
+            uint256 amountColl = collateralParams.token.balanceOf(user) / 10;
+
+            vm.startPrank(user);
+
+            //deposit
+            collateralParams.token.approve(miniPool, type(uint256).max);
+            IMiniPool(miniPool).deposit(
+                address(collateralParams.aToken),
+                true,
+                collateralParams.aToken.convertToShares(amountColl),
+                user
+            );
+
+            skip(1 days);
+
+            vm.startPrank(lpUser);
+            IMiniPool(miniPool).borrow(address(collateralParams.aToken), false, 1e18, lpUser);
+            vm.stopPrank();
+
+            vm.startPrank(user);
+            //borrow
+            uint256 amountBorrow = 50_000e6; // 10 000 USDC
+            IMiniPool(miniPool).borrow(address(borrowParams.aToken), true, amountBorrow, user);
+
+            vm.stopPrank();
+        }
+        {
+            (,,,,, uint256 healthFactor) = IMiniPool(miniPool).getUserAccountData(user);
+            console2.log("2. MiniPool User healthFactor for user %s: %18e", user, healthFactor);
+
+            fixture_changePriceOfToken(collateralParams, 1000, false); // -20%
+
+            (,,,,, healthFactor) = IMiniPool(miniPool).getUserAccountData(user);
+            console2.log("2. MiniPool User healthFactor for user %s: %18e", user, healthFactor);
+        }
+        skip(1 days);
+        // /**
+        //  * LIQUIDATION PROCESS - START ***********
+        //  */
+        uint256 amountToLiquidate;
+        {
+            (uint256 debtToCover, uint256 _scaledVariableDebt) =
+                aErc6909Token.getScaledUserBalanceAndSupply(user, 2000 + borrowOffset);
+            amountToLiquidate = debtToCover / 2; // maximum possible liquidation amount
+            console2.log("[OUTwith] debtToCover: ", debtToCover);
+        }
+        skip(1 days);
+
+        {
+            /* prepare funds */
+            address liquidator = makeAddr("liquidator");
+            deal(address(borrowParams.token), liquidator, amountToLiquidate); // 100 000 WETH
+
+            // console2.log("collateralParams.token.balanceOf(address(this)) 1  ::: ", collateralParams.token.balanceOf(address(liquidator)));
+            // console2.log("collateralParams.aToken.balanceOf(address(this)) 1 ::: ", collateralParams.aToken.balanceOf(address(liquidator)));
+            // console2.log("collateralParams.aToken.balanceOf(address(this)) 1 ::: ", IERC20(ATokenNonRebasing(address(collateralParams.aToken)).ATOKEN_ADDRESS()).balanceOf(address(liquidator)));
+            // console2.log("borrowParams.Token.balanceOf(address(this)) 1  ::: ", borrowParams.token.balanceOf(address(liquidator)));
+            // console2.log("borrowParams.aToken.balanceOf(address(this)) 1 ::: ", borrowParams.aToken.balanceOf(address(liquidator)));
+
+            uint256 oldBalanceBorrowToken = borrowParams.token.balanceOf(address(liquidator));
+            uint256 oldBalanceCollateralParamsaToken =
+                collateralParams.token.balanceOf(address(liquidator));
+
+            assertNotEq(oldBalanceBorrowToken, 0);
+
+            vm.startPrank(liquidator);
+            borrowParams.token.approve(miniPool, type(uint256).max);
+            borrowParams.aToken.approve(miniPool, type(uint256).max);
+            IMiniPool(miniPool).liquidationCall(
+                address(collateralParams.aToken),
+                true,
+                address(borrowParams.aToken),
+                true,
+                user,
+                amountToLiquidate,
+                false
+            );
+            vm.stopPrank();
+
+            assertEq(borrowParams.token.balanceOf(address(liquidator)), 0);
+            assertGt(
+                collateralParams.token.balanceOf(address(liquidator)),
+                oldBalanceCollateralParamsaToken
+            );
+
+            // console2.log("--------------------------------");
+            // console2.log("collateralParams.token.balanceOf(address(this)) 1  ::: ", collateralParams.token.balanceOf(address(liquidator)));
+            // console2.log("collateralParams.aToken.balanceOf(address(this)) 1 ::: ", collateralParams.aToken.balanceOf(address(liquidator)));
+            // console2.log("collateralParams.aToken.balanceOf(address(this)) 1 ::: ", IERC20(ATokenNonRebasing(address(collateralParams.aToken)).ATOKEN_ADDRESS()).balanceOf(address(liquidator)));
+            // console2.log("borrowParams.Token.balanceOf(address(this)) 1  ::: ", borrowParams.token.balanceOf(address(liquidator)));
+            // console2.log("borrowParams.aToken.balanceOf(address(this)) 1 ::: ", borrowParams.aToken.balanceOf(address(liquidator)));
+        }
     }
 }
