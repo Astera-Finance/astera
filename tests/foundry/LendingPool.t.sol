@@ -2,10 +2,10 @@
 pragma solidity ^0.8.0;
 
 import "./LendingPoolFixtures.t.sol";
-import "contracts/protocol/libraries/helpers/Errors.sol";
-import {WadRayMath} from "contracts/protocol/libraries/math/WadRayMath.sol";
-import {MathUtils} from "contracts/protocol/libraries/math/MathUtils.sol";
-import "contracts/protocol/libraries/configuration/ReserveConfiguration.sol";
+import "../../contracts/protocol/libraries/helpers/Errors.sol";
+import {WadRayMath} from "../../contracts/protocol/libraries/math/WadRayMath.sol";
+import {MathUtils} from "../../contracts/protocol/libraries/math/MathUtils.sol";
+import "../../contracts/protocol/libraries/configuration/ReserveConfiguration.sol";
 // import {ILendingPool} from "contracts/interfaces/ILendingPool.sol";
 
 contract LendingPoolTest is LendingPoolFixtures {
