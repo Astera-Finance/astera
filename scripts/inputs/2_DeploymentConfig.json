@@ -21,8 +21,8 @@
       "params": "0x10",
       "reserveFactor": 2000,
       "reserveType": true,
-      "symbol": "clcbBTC",
-      "tokenAddress": "0x7ABd9167b72246c17889F15251e8A520999F65Ce"
+      "symbol": "wclcbBTC",
+      "tokenAddress": "0xD536112A8CFA6f2c83af90c7bb8ECDB2ADa1B681"
     },
     {
       "baseLtv": 7000,
@@ -35,8 +35,8 @@
       "params": "0x10",
       "reserveFactor": 2000,
       "reserveType": true,
-      "symbol": "clWETH",
-      "tokenAddress": "0xC183Db6066dA39ca4C25e3544E6b50350642Fb7f"
+      "symbol": "wclWETH",
+      "tokenAddress": "0xC26a7c3b1dCf525c4BaF3D015fD53362b2fCeD7a"
     },
     {
       "baseLtv": 8000,
@@ -49,8 +49,8 @@
       "params": "0x10",
       "reserveFactor": 2000,
       "reserveType": true,
-      "symbol": "clUSDC",
-      "tokenAddress": "0x3935C821dA00D0eC7fca1e4965D7cD44185C3bc8"
+      "symbol": "wclUSDC",
+      "tokenAddress": "0x34F50AE8dF584334dfbbd1aF2a085B62bc9ecB12"
     },
     {
       "baseLtv": 7000,

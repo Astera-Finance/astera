@@ -22,8 +22,8 @@ via_ir = false
 [rpc_endpoints]
 sepolia = "${ARB_SEPOLIA}"
 
-[etherscan]
-sepolia = { key = "${ETHERSCAN_KEY}", url = "https://api-sepolia.etherscan.io/api" }
+# [etherscan]
+# sepolia = { key = "${ETHERSCAN_KEY}", url = "https://api-sepolia.etherscan.io/api" }
 
 [fmt]
 line_length = 100
