@@ -165,6 +165,7 @@ interface ILendingPoolConfigurator {
      * @param asset The address of the underlying asset of the reserve
      * @param proxy The aToken proxy address
      * @param implementation The new aToken implementation
+     * @param reserveType Whether the reserve is boosted by a vault
      */
     event ATokenUpgraded(
         address indexed asset,
@@ -177,7 +178,7 @@ interface ILendingPoolConfigurator {
      * @dev Emitted when the implementation of a variable debt token is upgraded
      * @param asset The address of the underlying asset of the reserve
      * @param proxy The variable debt token proxy address
-     * @param implementation The new aToken implementation
+     * @param implementation The new variable debt token implementation
      */
     event VariableDebtTokenUpgraded(
         address indexed asset, address indexed proxy, address indexed implementation

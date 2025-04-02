@@ -59,15 +59,19 @@ contract ATokenERC6909 is
 
     /**
      * @notice Emitted when a token is minted.
-     * @param id The identifier of the token.
-     * @param amount The amount of tokens minted.
+     * @param user The address of the user receiving the minted tokens
+     * @param id The identifier of the token
+     * @param amount The amount of tokens minted
+     * @param index The index of the reserve at the time of minting
      */
-    event Mint(address indexed treasury, uint256 indexed id, uint256 amount, uint256 index);
+    event Mint(address indexed user, uint256 indexed id, uint256 amount, uint256 index);
 
     /**
      * @notice Emitted when a token is burned.
-     * @param id The identifier of the token.
-     * @param amount The amount of tokens burned.
+     * @param user The address of the user whose tokens are being burned
+     * @param id The identifier of the token
+     * @param amount The amount of tokens burned
+     * @param index The index of the reserve at the time of burning
      */
     event Burn(address indexed user, uint256 indexed id, uint256 amount, uint256 index);
 
