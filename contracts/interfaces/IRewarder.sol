@@ -6,14 +6,37 @@ pragma solidity ^0.8.0;
  * @author Cod3x
  */
 interface IRewarder {
+    /**
+     * @notice Emitted when rewards are accrued for a user
+     * @param user The address of the user for whom rewards are being accrued
+     * @param amount The amount of rewards accrued
+     */
     event RewardsAccrued(address indexed user, uint256 amount);
 
+    /**
+     * @notice Emitted when rewards are claimed by a user
+     * @param user The address of the user claiming rewards
+     * @param to The address receiving the claimed rewards
+     * @param amount The amount of rewards claimed
+     */
     event RewardsClaimed(address indexed user, address indexed to, uint256 amount);
 
+    /**
+     * @notice Emitted when rewards are claimed on behalf of a user
+     * @param user The address of the user for whom rewards are claimed
+     * @param to The address receiving the claimed rewards
+     * @param claimer The address that initiated the claim
+     * @param amount The amount of rewards claimed
+     */
     event RewardsClaimed(
         address indexed user, address indexed to, address indexed claimer, uint256 amount
     );
 
+    /**
+     * @notice Emitted when a claimer is set for a user
+     * @param user The address of the user
+     * @param claimer The address authorized to claim on behalf of the user
+     */
     event ClaimerSet(address indexed user, address indexed claimer);
 
     function getAssetData(address asset) external view returns (uint256, uint256, uint256);
