@@ -106,9 +106,9 @@ library MiniPoolLiquidationLogic {
         address addressesProvider;
         uint256 reservesCount;
         address collateralAsset;
-        bool unwrap;
+        bool unwrapCollateralToLpUnderlying;
         address debtAsset;
-        bool wrap;
+        bool wrapDebtToLpAtoken;
         address user;
         uint256 debtToCover;
         bool receiveAToken;
@@ -243,7 +243,7 @@ library MiniPoolLiquidationLogic {
                 msg.sender,
                 vars.aTokenID,
                 vars.maxCollateralToLiquidate,
-                params.unwrap,
+                params.unwrapCollateralToLpUnderlying,
                 collateralReserve.liquidityIndex
             );
         }
@@ -255,9 +255,9 @@ library MiniPoolLiquidationLogic {
             emit ReserveUsedAsCollateralDisabled(params.collateralAsset, params.user);
         }
 
-        // If wrap is true and the asset is an aToken, we use special handling, otherwise we default to standard transfer.
+        // If `wrapDebtToLpAtoken` is true and the asset is an aToken, we use special handling, otherwise we default to standard transfer.
         if (
-            params.wrap
+            params.wrapDebtToLpAtoken
                 && ILendingPoolConfigurator(
                     ILendingPoolAddressesProvider(addressesProvider.getLendingPoolAddressesProvider())
                         .getLendingPoolConfigurator()

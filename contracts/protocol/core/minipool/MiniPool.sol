@@ -359,10 +359,10 @@ contract MiniPool is
      * - The caller (liquidator) covers `debtToCover` amount of debt of the user getting liquidated, and receives
      *   a proportionally amount of the `collateralAsset` plus a bonus to cover market risk.
      * @param collateralAsset The address of the underlying asset used as collateral, to receive as result of the liquidation.
-     * @param unwrap If true, and `asset` is an aToken, the liquidator will directly receive the underlying. If true and
+     * @param unwrapCollateralToLpUnderlying If true, and `asset` is an aToken, the liquidator will directly receive the underlying. If true and
      * `asset` is a not an aToken, this variable is ignored.
      * @param debtAsset The address of the underlying borrowed asset to be repaid with the liquidation.
-     * @param wrap Convert the underlying in AToken from the lendingpool. If true and `asset` is a not an aToken,
+     * @param wrapDebtToLpAtoken Convert the underlying in AToken from the lendingpool. If true and `asset` is a not an aToken,
      * this variable is ignored.
      * @param user The address of the borrower getting liquidated.
      * @param debtToCover The debt amount of borrowed `asset` the liquidator wants to cover.
@@ -371,15 +371,15 @@ contract MiniPool is
      */
     function liquidationCall(
         address collateralAsset,
-        bool unwrap,
+        bool unwrapCollateralToLpUnderlying,
         address debtAsset,
-        bool wrap,
+        bool wrapDebtToLpAtoken,
         address user,
         uint256 debtToCover,
         bool receiveAToken
     ) external override whenNotPaused {
         // If the liquidator wants to receive aTokens, we don't unwrap the collateral asset.
-        unwrap = receiveAToken ? false : unwrap;
+        unwrapCollateralToLpUnderlying = receiveAToken ? false : unwrapCollateralToLpUnderlying;
 
         MiniPoolLiquidationLogic.liquidationCall(
             _reserves,
@@ -389,9 +389,9 @@ contract MiniPool is
                 address(_addressesProvider),
                 _reservesCount,
                 collateralAsset,
-                unwrap,
+                unwrapCollateralToLpUnderlying,
                 debtAsset,
-                wrap,
+                wrapDebtToLpAtoken,
                 user,
                 debtToCover,
                 receiveAToken

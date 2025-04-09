@@ -227,8 +227,9 @@ contract MiniPoolAddressesProvider is Ownable, IMiniPoolAddressesProvider {
      * @return True if the address is a registered mini pool, false otherwise.
      */
     function isMiniPool(address miniPool) external view returns (bool) {
-        uint256 miniPoolId = _minipoolToId[miniPool];
-        if (_miniPoolsConfig[miniPoolId].miniPool != miniPool) {
+        if (
+            miniPool == address(0) || _miniPoolsConfig[_minipoolToId[miniPool]].miniPool != miniPool
+        ) {
             return false;
         }
         return true;
