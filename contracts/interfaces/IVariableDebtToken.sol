@@ -12,12 +12,12 @@ import {IRewarder} from "../../contracts/interfaces/IRewarder.sol";
 interface IVariableDebtToken is IScaledBalanceToken, IInitializableDebtToken {
     /**
      * @dev Emitted after the mint action
-     * @param from The address performing the mint
+     * @param user The address performing the mint
      * @param onBehalfOf The address of the user on which behalf minting has been performed
-     * @param value The amount to be minted
+     * @param amount The amount to be minted
      * @param index The last index of the reserve
      */
-    event Mint(address indexed from, address indexed onBehalfOf, uint256 value, uint256 index);
+    event Mint(address indexed user, address indexed onBehalfOf, uint256 amount, uint256 index);
 
     /**
      * @dev Emitted when variable debt is burnt

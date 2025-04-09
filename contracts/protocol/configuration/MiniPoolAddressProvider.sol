@@ -78,12 +78,12 @@ contract MiniPoolAddressesProvider is Ownable, IMiniPoolAddressesProvider {
     /// @dev Maximum number of reserves with flow borrowing.
     uint256 private _maxReservesWithFlowBorrowing = 6;
 
-    /// @dev Constant identifier for lending pool addresses provider.
+    /// @dev Constant identifier for contracts.
     bytes32 private constant LENDING_POOL_ADDRESSES_PROVIDER =
         keccak256("LENDING_POOL_ADDRESSES_PROVIDER");
-
-    /// @dev Constant identifier for mini pool configurator.
     bytes32 private constant MINI_POOL_CONFIGURATOR = keccak256("MINI_POOL_CONFIGURATOR");
+    bytes32 private constant MINI_POOL = keccak256("MINI_POOL");
+    bytes32 private constant ATOKEN_ERC6909 = keccak256("ATOKEN_ERC6909");
 
     /**
      * @dev Constructor to initialize the contract.
@@ -219,6 +219,20 @@ contract MiniPoolAddressesProvider is Ownable, IMiniPoolAddressesProvider {
     function getMiniPoolToAERC6909(address miniPool) external view returns (address) {
         uint256 miniPoolId = _getMiniPoolId(miniPool);
         return _miniPoolsConfig[miniPoolId].aErc6909;
+    }
+
+    /**
+     * @dev Checks if an address is a registered mini pool.
+     * @param miniPool The address to check.
+     * @return True if the address is a registered mini pool, false otherwise.
+     */
+    function isMiniPool(address miniPool) external view returns (bool) {
+        if (
+            miniPool == address(0) || _miniPoolsConfig[_minipoolToId[miniPool]].miniPool != miniPool
+        ) {
+            return false;
+        }
+        return true;
     }
 
     /**
@@ -493,7 +507,7 @@ contract MiniPoolAddressesProvider is Ownable, IMiniPoolAddressesProvider {
         _miniPoolsConfig[miniPoolCount].miniPool = address(proxy);
         _minipoolToId[address(proxy)] = miniPoolCount;
 
-        emit ProxyCreated(miniPoolCount, address(proxy));
+        emit ProxyCreated(miniPoolCount, MINI_POOL, address(proxy));
     }
 
     /**
@@ -510,7 +524,7 @@ contract MiniPoolAddressesProvider is Ownable, IMiniPoolAddressesProvider {
         aTokenProxy.initialize(aTokenImpl, params);
 
         _miniPoolsConfig[miniPoolCount].aErc6909 = address(aTokenProxy);
-        emit ProxyCreated(miniPoolCount, address(aTokenProxy));
+        emit ProxyCreated(miniPoolCount, ATOKEN_ERC6909, address(aTokenProxy));
     }
 
     /**

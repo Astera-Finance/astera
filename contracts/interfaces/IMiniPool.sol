@@ -23,7 +23,7 @@ interface IMiniPool {
 
     /**
      * @dev Emitted on withdraw()
-     * @param reserve The address of the underlyng asset being withdrawn
+     * @param reserve The address of the underlying asset being withdrawn
      * @param user The address initiating the withdrawal, owner of aTokens
      * @param to Address that will receive the underlying
      * @param amount The amount to be withdrawn
@@ -149,7 +149,6 @@ interface IMiniPool {
     /**
      * @dev Emitted when set new minimal debt threshold
      * @param threshold - minimal debt threshold value to set
-     *
      */
     event MinDebtThresholdSet(uint256 indexed threshold);
 
@@ -169,7 +168,9 @@ interface IMiniPool {
 
     function liquidationCall(
         address collateralAsset,
+        bool unwrap,
         address debtAsset,
+        bool wrap,
         address user,
         uint256 debtToCover,
         bool receiveAToken

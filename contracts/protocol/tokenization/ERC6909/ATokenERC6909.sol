@@ -22,6 +22,10 @@ import {Strings} from "openzeppelin-contracts/contracts/utils/Strings.sol";
 import {SafeERC20} from "../../../../contracts/dependencies/openzeppelin/contracts/SafeERC20.sol";
 import {IMiniPoolAddressProviderUpdatable} from
     "../../../../contracts/interfaces/IMiniPoolAddressProviderUpdatable.sol";
+import {ILendingPoolConfigurator} from
+    "../../../../contracts/interfaces/ILendingPoolConfigurator.sol";
+import {ILendingPoolAddressesProvider} from
+    "../../../../contracts/interfaces/ILendingPoolAddressesProvider.sol";
 
 /**
  * @title ERC6909-MultiToken
@@ -55,17 +59,21 @@ contract ATokenERC6909 is
 
     /**
      * @notice Emitted when a token is minted.
-     * @param id The identifier of the token.
-     * @param amount The amount of tokens minted.
+     * @param user The address of the user receiving the minted tokens
+     * @param id The identifier of the token
+     * @param amount The amount of tokens minted
+     * @param index The index of the reserve at the time of minting
      */
-    event Mint(address indexed treasury, uint256 indexed id, uint256 amount);
+    event Mint(address indexed user, uint256 indexed id, uint256 amount, uint256 index);
 
     /**
      * @notice Emitted when a token is burned.
-     * @param id The identifier of the token.
-     * @param amount The amount of tokens burned.
+     * @param user The address of the user whose tokens are being burned
+     * @param id The identifier of the token
+     * @param amount The amount of tokens burned
+     * @param index The index of the reserve at the time of burning
      */
-    event Burn(address indexed user, uint256 indexed id, uint256 amount);
+    event Burn(address indexed user, uint256 indexed id, uint256 amount, uint256 index);
 
     /**
      * @notice Emitted when the incentives controller is set.
@@ -262,13 +270,20 @@ contract ATokenERC6909 is
     function transferUnderlyingTo(address to, uint256 id, uint256 amount, bool unwrap) public {
         require(msg.sender == address(POOL), Errors.AT_CALLER_MUST_BE_LENDING_POOL);
 
-        if (unwrap) {
-            ATokenNonRebasing asset = ATokenNonRebasing(_underlyingAssetAddresses[id]);
+        address underlyingAsset = _underlyingAssetAddresses[id];
+        if (
+            unwrap
+                && ILendingPoolConfigurator(
+                    ILendingPoolAddressesProvider(_addressesProvider.getLendingPoolAddressesProvider())
+                        .getLendingPoolConfigurator()
+                ).getIsAToken(underlyingAsset)
+        ) {
+            ATokenNonRebasing asset = ATokenNonRebasing(underlyingAsset);
             ILendingPool(_addressesProvider.getLendingPool()).withdraw(
                 asset.UNDERLYING_ASSET_ADDRESS(), true, asset.convertToAssets(amount), to
             );
         } else {
-            IERC20(_underlyingAssetAddresses[id]).safeTransfer(to, amount);
+            IERC20(underlyingAsset).safeTransfer(to, amount);
         }
     }
 
@@ -321,7 +336,7 @@ contract ATokenERC6909 is
         require(amountScaled != 0, Errors.AT_INVALID_MINT_AMOUNT);
         _mint(onBehalfOf, id, amountScaled);
 
-        emit Mint(onBehalfOf, id, amountScaled);
+        emit Mint(onBehalfOf, id, amountScaled, index);
 
         return previousBalance == 0;
     }
@@ -353,7 +368,7 @@ contract ATokenERC6909 is
         }
         _burn(user, id, amountScaled);
 
-        emit Burn(user, id, amountScaled);
+        emit Burn(user, id, amountScaled, index);
     }
 
     /**
@@ -542,7 +557,7 @@ contract ATokenERC6909 is
         uint256 amountScaled = amount.rayDiv(index);
         _mint(treasury, id, amountScaled);
 
-        emit Mint(treasury, id, amountScaled);
+        emit Mint(treasury, id, amountScaled, index);
     }
 
     /**

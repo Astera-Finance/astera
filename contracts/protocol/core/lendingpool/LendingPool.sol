@@ -438,8 +438,7 @@ contract LendingPool is
     function _isMiniPool(address user) internal view returns (bool) {
         address minipoolAddressProvider = _addressesProvider.getMiniPoolAddressesProvider();
         if (minipoolAddressProvider == address(0)) return false;
-        return IMiniPoolAddressesProvider(minipoolAddressProvider).getMiniPoolToAERC6909(user)
-            != address(0);
+        return IMiniPoolAddressesProvider(minipoolAddressProvider).isMiniPool(user);
     }
 
     /**

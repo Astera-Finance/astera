@@ -653,6 +653,7 @@ contract PropertiesBase is PropertiesAsserts, MarketParams {
         uint256 lenDebtTokenUser;
         uint256 aTokenID;
         uint256 debtTokenID;
+        bool randReceiveAToken;
     }
 
     /// @custom:invariant 100 - To be liquidated on a given collateral asset, the target user must own the associated `aTokenColl`.
@@ -671,6 +672,7 @@ contract PropertiesBase is PropertiesAsserts, MarketParams {
         for (uint256 i = 0; i < users.length; i++) {
             LocalVars_TryLiquidate memory v;
 
+            v.randReceiveAToken = randReceiveAToken;
             v.target = users[i];
             (,,,,, v.targetHealthFactorBefore) = pool.getUserAccountData(address(v.target));
             if (v.targetHealthFactorBefore < 1e18) {
@@ -706,7 +708,7 @@ contract PropertiesBase is PropertiesAsserts, MarketParams {
                         true,
                         address(v.target),
                         v.randAmt,
-                        randReceiveAToken
+                        v.randReceiveAToken
                     )
                 );
 
@@ -772,6 +774,7 @@ contract PropertiesBase is PropertiesAsserts, MarketParams {
 
             for (uint256 i = 0; i < users.length; i++) {
                 LocalVars_TryLiquidate memory v;
+                v.randReceiveAToken = randReceiveAToken;
 
                 v.target = users[i];
                 (,,,,, v.targetHealthFactorBefore) = pool_.getUserAccountData(address(v.target));
@@ -808,10 +811,12 @@ contract PropertiesBase is PropertiesAsserts, MarketParams {
                         abi.encodeWithSelector(
                             pool_.liquidationCall.selector,
                             address(v.collAsset),
+                            false,
                             address(v.debtAsset),
+                            false,
                             address(v.target),
                             v.randAmt,
-                            randReceiveAToken
+                            v.randReceiveAToken
                         )
                     );
 

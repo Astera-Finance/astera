@@ -22,6 +22,10 @@ import {Helpers} from "../../../../../contracts/protocol/libraries/helpers/Helpe
 import {ILendingPool} from "../../../../../contracts/interfaces/ILendingPool.sol";
 import {ATokenNonRebasing} from
     "../../../../../contracts/protocol/tokenization/ERC20/ATokenNonRebasing.sol";
+import {ILendingPoolConfigurator} from
+    "../../../../../contracts/interfaces/ILendingPoolConfigurator.sol";
+import {ILendingPoolAddressesProvider} from
+    "../../../../../contracts/interfaces/ILendingPoolAddressesProvider.sol";
 
 /**
  * @title MiniPoolBorrowLogic library
@@ -280,7 +284,15 @@ library MiniPoolBorrowLogic {
             _usersConfig[params.onBehalfOf].setBorrowing(reserve.id, false);
         }
 
-        if (wrap) {
+        // If wrap is true and the asset is an aToken, we use special handling, otherwise we default to standard transfer.
+        if (
+            wrap
+                && ILendingPoolConfigurator(
+                    ILendingPoolAddressesProvider(
+                        params.addressesProvider.getLendingPoolAddressesProvider()
+                    ).getLendingPoolConfigurator()
+                ).getIsAToken(params.asset)
+        ) {
             address underlying = ATokenNonRebasing(params.asset).UNDERLYING_ASSET_ADDRESS();
             address lendingPool = params.addressesProvider.getLendingPool();
             uint256 underlyingAmount =

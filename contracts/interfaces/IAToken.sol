@@ -13,29 +13,29 @@ import {IRewarder} from "../../contracts/interfaces/IRewarder.sol";
 interface IAToken is IERC20, IScaledBalanceToken, IInitializableAToken {
     /**
      * @dev Emitted after the mint action.
-     * @param from The address performing the mint.
-     * @param value The amount being.
+     * @param user The address performing the mint.
+     * @param amount The amount being.
      * @param index The new liquidity index of the reserve.
      */
-    event Mint(address indexed from, uint256 value, uint256 index);
+    event Mint(address indexed user, uint256 amount, uint256 index);
 
     /**
      * @dev Emitted after aTokens are burned.
-     * @param from The owner of the aTokens, getting them burned.
+     * @param user The owner of the aTokens, getting them burned.
      * @param target The address that will receive the underlying.
-     * @param value The amount being burned.
+     * @param amount The amount being burned.
      * @param index The new liquidity index of the reserve.
      */
-    event Burn(address indexed from, address indexed target, uint256 value, uint256 index);
+    event Burn(address indexed user, address indexed target, uint256 amount, uint256 index);
 
     /**
      * @dev Emitted during the transfer action.
-     * @param from The user whose tokens are being transferred.
+     * @param user The user whose tokens are being transferred.
      * @param to The recipient.
-     * @param value The amount being transferred.
+     * @param amount The amount being transferred.
      * @param index The new liquidity index of the reserve.
      */
-    event BalanceTransfer(address indexed from, address indexed to, uint256 value, uint256 index);
+    event BalanceTransfer(address indexed user, address indexed to, uint256 amount, uint256 index);
 
     /**
      * @dev Emitted during the rebalance action.

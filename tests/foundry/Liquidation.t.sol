@@ -11,6 +11,8 @@ contract LiquidationTest is Common {
     ERC20[] erc20Tokens;
     DeployedContracts deployedContracts;
     ConfigAddresses configAddresses;
+    DeployedMiniPoolContracts miniPoolContracts;
+    address miniPool;
 
     function setOraclePrices(uint256 newPrice, uint256 index) internal {
         uint256[] memory timeouts = new uint256[](4);
@@ -71,6 +73,32 @@ contract LiquidationTest is Common {
         erc20Tokens = fixture_getErc20Tokens(tokens);
         fixture_transferTokensToTestContract(erc20Tokens, 1_000_000 ether, address(this));
         resetOraclePrices();
+
+        (miniPoolContracts,) = fixture_deployMiniPoolSetup(
+            address(deployedContracts.lendingPoolAddressesProvider),
+            address(deployedContracts.lendingPool),
+            address(deployedContracts.cod3xLendDataProvider),
+            miniPoolContracts
+        );
+
+        address[] memory reserves = new address[](2 * tokens.length);
+        for (uint8 idx = 0; idx < (2 * tokens.length); idx++) {
+            console2.log(idx);
+            if (idx < tokens.length) {
+                reserves[idx] = tokens[idx];
+            } else {
+                reserves[idx] =
+                    address(commonContracts.aTokens[idx - tokens.length].WRAPPER_ADDRESS());
+            }
+        }
+        configAddresses.cod3xLendDataProvider = address(miniPoolContracts.miniPoolAddressesProvider);
+        configAddresses.stableStrategy = address(miniPoolContracts.stableStrategy);
+        configAddresses.volatileStrategy = address(miniPoolContracts.volatileStrategy);
+        miniPool =
+            fixture_configureMiniPoolReserves(reserves, configAddresses, miniPoolContracts, 0);
+        vm.prank(miniPoolContracts.miniPoolAddressesProvider.getMainPoolAdmin());
+        miniPoolContracts.miniPoolConfigurator.setMinDebtThreshold(0, IMiniPool(miniPool));
+        vm.label(miniPool, "MiniPool");
     }
 
     function testLiquidationOfHealthyLoan() public {

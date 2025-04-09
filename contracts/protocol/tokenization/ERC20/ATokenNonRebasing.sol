@@ -44,7 +44,7 @@ contract ATokenNonRebasing {
      * @return The name of the token.
      */
     function name() public view returns (string memory) {
-        return _aToken.name();
+        return string.concat("Wrapped ", _aToken.name());
     }
 
     /**
@@ -52,7 +52,7 @@ contract ATokenNonRebasing {
      * @return The symbol of the token.
      */
     function symbol() public view returns (string memory) {
-        return _aToken.symbol();
+        return string.concat("w", _aToken.symbol());
     }
 
     /**
@@ -159,7 +159,9 @@ contract ATokenNonRebasing {
         returns (bool)
     {
         _aToken.transferShare(sender, recipient, amountShare);
-        _approve(sender, msg.sender, _aToken.shareAllowances(sender, msg.sender) - amountShare);
+        uint256 oldAllowance = _aToken.shareAllowances(sender, msg.sender);
+        require(oldAllowance >= amountShare, "ERC20: transfer amount exceeds allowance");
+        _approve(sender, msg.sender, oldAllowance - amountShare);
 
         emit Transfer(sender, recipient, amountShare);
 
@@ -188,9 +190,9 @@ contract ATokenNonRebasing {
         virtual
         returns (bool)
     {
-        _approve(
-            msg.sender, spender, _aToken.shareAllowances(msg.sender, spender) - subtractedValue
-        );
+        uint256 oldAllowance = _aToken.shareAllowances(msg.sender, spender);
+        require(oldAllowance >= subtractedValue, "ERC20: decreased allowance below zero");
+        _approve(msg.sender, spender, oldAllowance - subtractedValue);
         return true;
     }
 

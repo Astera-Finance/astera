@@ -47,7 +47,7 @@ interface ILendingPoolAddressesProvider {
      * @param id The identifier `bytes32` of the proxy being created.
      * @param newAddress The address of the newly created proxy contract.
      */
-    event ProxyCreated(bytes32 id, address indexed newAddress);
+    event ProxyCreated(bytes32 indexed id, address indexed newAddress);
 
     /**
      * @dev Emitted when an address mapping is set in the provider.
