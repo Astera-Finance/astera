@@ -10,12 +10,22 @@ interface IWETHGateway {
         external
         payable;
 
+    function depositETHMiniPool(address lendingPool, address onBehalfOf) external payable;
+
     function withdrawETH(address lendingPool, bool reserveType, uint256 amount, address onBehalfOf)
         external;
+
+    function withdrawETHMiniPool(address miniPool, uint256 amount, address to) external;
 
     function repayETH(address lendingPool, bool reserveType, uint256 amount, address onBehalfOf)
         external
         payable;
 
+    function repayETHMiniPool(address miniPool, uint256 amount, address onBehalfOf)
+        external
+        payable;
+
     function borrowETH(address lendingPool, bool reserveType, uint256 amount) external;
+
+    function borrowETHMiniPool(address miniPool, uint256 amount) external;
 }

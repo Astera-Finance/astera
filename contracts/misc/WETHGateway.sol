@@ -6,6 +6,7 @@ import {IERC20} from "../../contracts/dependencies/openzeppelin/contracts/IERC20
 import {IWETH} from "../../contracts/interfaces/base/IWETH.sol";
 import {IWETHGateway} from "../../contracts/interfaces/base/IWETHGateway.sol";
 import {ILendingPool} from "../../contracts/interfaces/ILendingPool.sol";
+import {IMiniPool} from "../../contracts/interfaces/IMiniPool.sol";
 import {IAToken} from "../../contracts/interfaces/IAToken.sol";
 import {ReserveConfiguration} from
     "../../contracts/protocol/libraries/configuration/ReserveConfiguration.sol";
@@ -13,6 +14,7 @@ import {UserConfiguration} from
     "../../contracts/protocol/libraries/configuration/UserConfiguration.sol";
 import {Helpers} from "../../contracts/protocol/libraries/helpers/Helpers.sol";
 import {DataTypes} from "../../contracts/protocol/libraries/types/DataTypes.sol";
+import {IAERC6909} from "../../contracts/interfaces/IAERC6909.sol";
 
 /**
  * @title WETHGateway
@@ -32,8 +34,20 @@ contract WETHGateway is IWETHGateway, Ownable {
         WETH = IWETH(weth);
     }
 
+    /**
+     * @dev Authorizes the LendingPool to spend WETH on behalf of the contract.
+     * @param lendingPool Address of the LendingPool to authorize
+     */
     function authorizeLendingPool(address lendingPool) external onlyOwner {
         WETH.approve(lendingPool, type(uint256).max);
+    }
+
+    /**
+     * @dev Authorizes the MiniPool to spend WETH on behalf of the contract.
+     * @param miniPool Address of the MiniPool to authorize
+     */
+    function authorizeMiniPool(address miniPool) external onlyOwner {
+        WETH.approve(miniPool, type(uint256).max);
     }
 
     /**
@@ -52,6 +66,16 @@ contract WETHGateway is IWETHGateway, Ownable {
     }
 
     /**
+     * @dev Deposits ETH into the MiniPool, converting it to WETH and minting aTokens.
+     * @param miniPool Address of the MiniPool
+     * @param onBehalfOf Address of the user who will receive the aTokens
+     */
+    function depositETHMiniPool(address miniPool, address onBehalfOf) external payable override {
+        WETH.deposit{value: msg.value}();
+        IMiniPool(miniPool).deposit(address(WETH), true, msg.value, onBehalfOf);
+    }
+
+    /**
      * @dev withdraws the WETH _reserves of msg.sender.
      * @param lendingPool address of the targeted underlying lending pool
      * @param amount amount of aWETH to withdraw and receive native ETH
@@ -64,17 +88,48 @@ contract WETHGateway is IWETHGateway, Ownable {
         IAToken aWETH = IAToken(
             ILendingPool(lendingPool).getReserveData(address(WETH), reserveType).aTokenAddress
         );
-        uint256 userBalance = aWETH.balanceOf(msg.sender);
-        uint256 amountToWithdraw = amount;
+
+        uint256 amountToWithdraw;
 
         // if amount is equal to uint(-1), the user wants to redeem everything
         if (amount == type(uint256).max) {
+            uint256 userBalance = aWETH.balanceOf(msg.sender);
             amountToWithdraw = userBalance;
+        } else {
+            amountToWithdraw = amount;
         }
         aWETH.transferFrom(msg.sender, address(this), amountToWithdraw);
         ILendingPool(lendingPool).withdraw(
             address(WETH), reserveType, amountToWithdraw, address(this)
         );
+        WETH.withdraw(amountToWithdraw);
+        _safeTransferETH(to, amountToWithdraw);
+    }
+
+    /**
+     * @dev Withdraws ETH from the MiniPool by redeeming aTokens.
+     * @param miniPool Address of the MiniPool
+     * @param amount Amount of aTokens to withdraw (use uint256.max to withdraw all)
+     * @param to Address to receive the withdrawn ETH
+     */
+    function withdrawETHMiniPool(address miniPool, uint256 amount, address to) external {
+        DataTypes.MiniPoolReserveData memory miniPoolReserveData =
+            IMiniPool(miniPool).getReserveData(address(WETH));
+
+        uint256 amountToWithdraw;
+
+        if (amount == type(uint256).max) {
+            uint256 userBalance = IAERC6909(miniPoolReserveData.aErc6909).balanceOf(
+                msg.sender, miniPoolReserveData.aTokenID
+            );
+            amountToWithdraw = userBalance;
+        } else {
+            amountToWithdraw = amount;
+        }
+        IAERC6909(miniPoolReserveData.aErc6909).transferFrom(
+            msg.sender, address(this), miniPoolReserveData.aTokenID, amountToWithdraw
+        );
+        IMiniPool(miniPool).withdraw(address(WETH), true, amountToWithdraw, address(this));
         WETH.withdraw(amountToWithdraw);
         _safeTransferETH(to, amountToWithdraw);
     }
@@ -108,12 +163,52 @@ contract WETHGateway is IWETHGateway, Ownable {
     }
 
     /**
+     * @dev Repays a borrow on the MiniPool using ETH.
+     * @param miniPool Address of the MiniPool
+     * @param amount Amount to repay (use uint256.max to repay all)
+     * @param onBehalfOf Address of the user for whom the repayment is made
+     */
+    function repayETHMiniPool(address miniPool, uint256 amount, address onBehalfOf)
+        external
+        payable
+    {
+        (uint256 variableDebt) = Helpers.getUserCurrentDebtMemory(
+            onBehalfOf, IMiniPool(miniPool).getReserveData(address(WETH))
+        );
+
+        uint256 paybackAmount;
+
+        if (amount < paybackAmount) {
+            paybackAmount = amount;
+        } else {
+            paybackAmount = variableDebt;
+        }
+        require(msg.value >= paybackAmount, "msg.value is less than repayment amount");
+        WETH.deposit{value: paybackAmount}();
+        IMiniPool(miniPool).repay(address(WETH), true, msg.value, onBehalfOf);
+
+        // refund remaining dust eth
+        if (msg.value > paybackAmount) _safeTransferETH(msg.sender, msg.value - paybackAmount);
+    }
+
+    /**
      * @dev borrow WETH, unwraps to ETH and send both the ETH and DebtTokens to msg.sender, via `approveDelegation` and onBehalf argument in `LendingPool.borrow`.
      * @param lendingPool address of the targeted underlying lending pool
      * @param amount the amount of ETH to borrow
      */
     function borrowETH(address lendingPool, bool reserveType, uint256 amount) external override {
         ILendingPool(lendingPool).borrow(address(WETH), reserveType, amount, msg.sender);
+        WETH.withdraw(amount);
+        _safeTransferETH(msg.sender, amount);
+    }
+
+    /**
+     * @dev Borrows ETH from the MiniPool by taking a debt position.
+     * @param miniPool Address of the MiniPool
+     * @param amount Amount of ETH to borrow
+     */
+    function borrowETHMiniPool(address miniPool, uint256 amount) external {
+        IMiniPool(miniPool).borrow(address(WETH), true, amount, msg.sender);
         WETH.withdraw(amount);
         _safeTransferETH(msg.sender, amount);
     }
