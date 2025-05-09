@@ -336,7 +336,7 @@ contract Common is Test {
         deployedContracts.cod3xLendDataProvider.setLendingPoolAddressProvider(
             address(deployedContracts.lendingPoolAddressesProvider)
         );
-        commonContracts.wETHGateway = new WETHGateway(WETH);
+
         deployedContracts.stableStrategy = new DefaultReserveInterestRateStrategy(
             deployedContracts.lendingPoolAddressesProvider,
             sStrat[0],
@@ -414,8 +414,6 @@ contract Common is Test {
             BASE_CURRENCY_UNIT,
             _lendingPoolAddressesProvider
         );
-
-        commonContracts.wETHGateway = new WETHGateway(WETH);
     }
 
     function fixture_configureProtocol(
@@ -428,7 +426,6 @@ contract Common is Test {
         fixture_configureReserves(
             configAddresses, lendingPoolConfiguratorProxy, lendingPoolAddressesProvider, _aToken
         );
-        commonContracts.wETHGateway.authorizeLendingPool(ledingPool);
 
         vm.prank(admin);
         lendingPoolConfiguratorProxy.setPoolPause(false);
@@ -441,6 +438,10 @@ contract Common is Test {
         commonContracts.variableDebtTokens = fixture_getVarDebtTokens(
             tokens, Cod3xLendDataProvider(configAddresses.cod3xLendDataProvider)
         );
+        commonContracts.wETHGateway =
+            new WETHGateway(address(commonContracts.aTokensWrapper[WETH_OFFSET]));
+        commonContracts.wETHGateway.authorizeLendingPool(ledingPool);
+
         for (uint256 idx; idx < tokens.length; idx++) {
             vm.label(
                 address(commonContracts.aTokens[idx]), string.concat("AToken ", uintToString(idx))

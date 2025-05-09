@@ -24,14 +24,16 @@ contract WETHGateway is IWETHGateway, Ownable {
     using ReserveConfiguration for DataTypes.ReserveConfigurationMap;
     using UserConfiguration for DataTypes.UserConfigurationMap;
 
+    IAToken internal immutable AWETH;
     IWETH internal immutable WETH;
 
     /**
      * @dev Sets the WETH address and the LendingPoolAddressesProvider address. Infinite approves lending pool.
-     * @param weth Address of the Wrapped Ether contract
+     * @param aWeth Address of the Wrapped Ether contract
      */
-    constructor(address weth) Ownable(msg.sender) {
-        WETH = IWETH(weth);
+    constructor(address aWeth) Ownable(msg.sender) {
+        AWETH = IAToken(aWeth);
+        WETH = IWETH(IAToken(aWeth).UNDERLYING_ASSET_ADDRESS());
     }
 
     /**
@@ -54,6 +56,7 @@ contract WETHGateway is IWETHGateway, Ownable {
      * @dev deposits WETH into the reserve, using native ETH. A corresponding amount of the overlying asset (aTokens)
      * is minted.
      * @param lendingPool address of the targeted underlying lending pool
+     * @param reserveType boolean indicating the type of reserve
      * @param onBehalfOf address of the user who will receive the aTokens representing the deposit
      */
     function depositETH(address lendingPool, bool reserveType, address onBehalfOf)
@@ -68,16 +71,23 @@ contract WETHGateway is IWETHGateway, Ownable {
     /**
      * @dev Deposits ETH into the MiniPool, converting it to WETH and minting aTokens.
      * @param miniPool Address of the MiniPool
+     * @param wrap boolean indicating whether to wrap the ETH into aTokens
      * @param onBehalfOf Address of the user who will receive the aTokens
      */
-    function depositETHMiniPool(address miniPool, address onBehalfOf) external payable override {
+    function depositETHMiniPool(address miniPool, bool wrap, address onBehalfOf)
+        external
+        payable
+        override
+    {
         WETH.deposit{value: msg.value}();
-        IMiniPool(miniPool).deposit(address(WETH), true, msg.value, onBehalfOf);
+        if (wrap) IMiniPool(miniPool).deposit(address(AWETH), true, msg.value, onBehalfOf);
+        else IMiniPool(miniPool).deposit(address(WETH), false, msg.value, onBehalfOf);
     }
 
     /**
-     * @dev withdraws the WETH _reserves of msg.sender.
+     * @dev withdraws the WETH reserves of msg.sender.
      * @param lendingPool address of the targeted underlying lending pool
+     * @param reserveType boolean indicating the type of reserve
      * @param amount amount of aWETH to withdraw and receive native ETH
      * @param to address of the user who will receive native ETH
      */
@@ -110,33 +120,59 @@ contract WETHGateway is IWETHGateway, Ownable {
      * @dev Withdraws ETH from the MiniPool by redeeming aTokens.
      * @param miniPool Address of the MiniPool
      * @param amount Amount of aTokens to withdraw (use uint256.max to withdraw all)
+     * @param wrap boolean indicating whether to unwrap the aTokens into ETH
      * @param to Address to receive the withdrawn ETH
      */
-    function withdrawETHMiniPool(address miniPool, uint256 amount, address to) external {
-        DataTypes.MiniPoolReserveData memory miniPoolReserveData =
-            IMiniPool(miniPool).getReserveData(address(WETH));
+    function withdrawETHMiniPool(address miniPool, uint256 amount, bool wrap, address to)
+        external
+    {
+        if (wrap) {
+            DataTypes.MiniPoolReserveData memory miniPoolReserveData =
+                IMiniPool(miniPool).getReserveData(address(AWETH));
 
-        uint256 amountToWithdraw;
+            uint256 amountToWithdraw;
 
-        if (amount == type(uint256).max) {
-            uint256 userBalance = IAERC6909(miniPoolReserveData.aErc6909).balanceOf(
-                msg.sender, miniPoolReserveData.aTokenID
+            if (amount == type(uint256).max) {
+                uint256 userBalance = IAERC6909(miniPoolReserveData.aErc6909).balanceOf(
+                    msg.sender, miniPoolReserveData.aTokenID
+                );
+                amountToWithdraw = userBalance;
+            } else {
+                amountToWithdraw = amount;
+            }
+            IAERC6909(miniPoolReserveData.aErc6909).transferFrom(
+                msg.sender, address(this), miniPoolReserveData.aTokenID, amountToWithdraw
             );
-            amountToWithdraw = userBalance;
+            IMiniPool(miniPool).withdraw(address(AWETH), true, amountToWithdraw, address(this));
+            WETH.withdraw(amountToWithdraw);
+            _safeTransferETH(to, amountToWithdraw);
         } else {
-            amountToWithdraw = amount;
+            DataTypes.MiniPoolReserveData memory miniPoolReserveData =
+                IMiniPool(miniPool).getReserveData(address(WETH));
+
+            uint256 amountToWithdraw;
+
+            if (amount == type(uint256).max) {
+                uint256 userBalance = IAERC6909(miniPoolReserveData.aErc6909).balanceOf(
+                    msg.sender, miniPoolReserveData.aTokenID
+                );
+                amountToWithdraw = userBalance;
+            } else {
+                amountToWithdraw = amount;
+            }
+            IAERC6909(miniPoolReserveData.aErc6909).transferFrom(
+                msg.sender, address(this), miniPoolReserveData.aTokenID, amountToWithdraw
+            );
+            IMiniPool(miniPool).withdraw(address(WETH), false, amountToWithdraw, address(this));
+            WETH.withdraw(amountToWithdraw);
+            _safeTransferETH(to, amountToWithdraw);
         }
-        IAERC6909(miniPoolReserveData.aErc6909).transferFrom(
-            msg.sender, address(this), miniPoolReserveData.aTokenID, amountToWithdraw
-        );
-        IMiniPool(miniPool).withdraw(address(WETH), true, amountToWithdraw, address(this));
-        WETH.withdraw(amountToWithdraw);
-        _safeTransferETH(to, amountToWithdraw);
     }
 
     /**
      * @dev repays a borrow on the WETH reserve, for the specified amount (or for the whole amount, if uint256(-1) is specified).
      * @param lendingPool address of the targeted underlying lending pool
+     * @param reserveType boolean indicating the type of reserve
      * @param amount the amount to repay, or uint256(-1) if the user wants to repay everything
      * @param onBehalfOf the address for which msg.sender is repaying
      */
@@ -166,26 +202,41 @@ contract WETHGateway is IWETHGateway, Ownable {
      * @dev Repays a borrow on the MiniPool using ETH.
      * @param miniPool Address of the MiniPool
      * @param amount Amount to repay (use uint256.max to repay all)
+     * @param wrap boolean indicating whether to repay using aTokens
      * @param onBehalfOf Address of the user for whom the repayment is made
      */
-    function repayETHMiniPool(address miniPool, uint256 amount, address onBehalfOf)
+    function repayETHMiniPool(address miniPool, uint256 amount, bool wrap, address onBehalfOf)
         external
         payable
     {
-        (uint256 variableDebt) = Helpers.getUserCurrentDebtMemory(
-            onBehalfOf, IMiniPool(miniPool).getReserveData(address(WETH))
-        );
-
         uint256 paybackAmount;
+        if (wrap) {
+            (uint256 variableDebt) = Helpers.getUserCurrentDebtMemory(
+                onBehalfOf, IMiniPool(miniPool).getReserveData(address(AWETH))
+            );
 
-        if (amount < paybackAmount) {
-            paybackAmount = amount;
+            if (amount < paybackAmount) {
+                paybackAmount = amount;
+            } else {
+                paybackAmount = variableDebt;
+            }
+            require(msg.value >= paybackAmount, "msg.value is less than repayment amount");
+            WETH.deposit{value: paybackAmount}();
+            IMiniPool(miniPool).repay(address(AWETH), true, msg.value, onBehalfOf);
         } else {
-            paybackAmount = variableDebt;
+            (uint256 variableDebt) = Helpers.getUserCurrentDebtMemory(
+                onBehalfOf, IMiniPool(miniPool).getReserveData(address(WETH))
+            );
+
+            if (amount < paybackAmount) {
+                paybackAmount = amount;
+            } else {
+                paybackAmount = variableDebt;
+            }
+            require(msg.value >= paybackAmount, "msg.value is less than repayment amount");
+            WETH.deposit{value: paybackAmount}();
+            IMiniPool(miniPool).repay(address(WETH), false, msg.value, onBehalfOf);
         }
-        require(msg.value >= paybackAmount, "msg.value is less than repayment amount");
-        WETH.deposit{value: paybackAmount}();
-        IMiniPool(miniPool).repay(address(WETH), true, msg.value, onBehalfOf);
 
         // refund remaining dust eth
         if (msg.value > paybackAmount) _safeTransferETH(msg.sender, msg.value - paybackAmount);
@@ -194,6 +245,7 @@ contract WETHGateway is IWETHGateway, Ownable {
     /**
      * @dev borrow WETH, unwraps to ETH and send both the ETH and DebtTokens to msg.sender, via `approveDelegation` and onBehalf argument in `LendingPool.borrow`.
      * @param lendingPool address of the targeted underlying lending pool
+     * @param reserveType boolean indicating the type of reserve
      * @param amount the amount of ETH to borrow
      */
     function borrowETH(address lendingPool, bool reserveType, uint256 amount) external override {
@@ -206,9 +258,14 @@ contract WETHGateway is IWETHGateway, Ownable {
      * @dev Borrows ETH from the MiniPool by taking a debt position.
      * @param miniPool Address of the MiniPool
      * @param amount Amount of ETH to borrow
+     * @param wrap boolean indicating whether to borrow using aTokens
      */
-    function borrowETHMiniPool(address miniPool, uint256 amount) external {
-        IMiniPool(miniPool).borrow(address(WETH), true, amount, msg.sender);
+    function borrowETHMiniPool(address miniPool, uint256 amount, bool wrap) external {
+        if (wrap) {
+            IMiniPool(miniPool).borrow(address(AWETH), true, amount, msg.sender);
+        } else {
+            IMiniPool(miniPool).borrow(address(WETH), false, amount, msg.sender);
+        }
         WETH.withdraw(amount);
         _safeTransferETH(msg.sender, amount);
     }
