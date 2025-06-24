@@ -22,6 +22,38 @@ contract InitAndConfigurationHelper {
     uint256 constant PRICE_FEED_DECIMALS = 8;
     DeployedContracts contracts;
 
+    function _getTokenAmount(uint256 usdBootstrapAmount, address tokenAddress)
+        internal
+        returns (uint256)
+    {
+        uint256 tokenPrice = contracts.oracle.getAssetPrice(tokenAddress);
+        if (contracts.lendingPoolConfigurator.getIsAToken(tokenAddress)) {
+            console2.log(
+                "Oracle decimals: ",
+                IChainlinkAggregator(
+                    contracts.oracle.getSourceOfAsset(
+                        ATokenNonRebasing(tokenAddress).UNDERLYING_ASSET_ADDRESS()
+                    )
+                ).decimals()
+            );
+            return usdBootstrapAmount
+                * 10
+                    ** IChainlinkAggregator(
+                        contracts.oracle.getSourceOfAsset(
+                            ATokenNonRebasing(tokenAddress).UNDERLYING_ASSET_ADDRESS()
+                        )
+                    ).decimals() * 10 ** IERC20Detailed(tokenAddress).decimals() / tokenPrice;
+        } else {
+            console2.log(
+                "Oracle decimals: ",
+                IChainlinkAggregator(contracts.oracle.getSourceOfAsset(tokenAddress)).decimals()
+            );
+            return usdBootstrapAmount
+                * 10 ** IChainlinkAggregator(contracts.oracle.getSourceOfAsset(tokenAddress)).decimals()
+                * 10 ** IERC20Detailed(tokenAddress).decimals() / tokenPrice;
+        }
+    }
+
     function _initAndConfigureReserves(
         DeployedContracts memory _contracts,
         PoolReserversConfig[] memory _reservesConfig,
@@ -36,7 +68,10 @@ contract InitAndConfigurationHelper {
             bool assetExist = false;
             PoolReserversConfig memory reserveConfig = _reservesConfig[idx];
             require(
-                contracts.oracle.getSourceOfAsset(reserveConfig.tokenAddress) != address(0),
+                contracts.oracle.getSourceOfAsset(reserveConfig.tokenAddress) != address(0)
+                    || contracts.oracle.getSourceOfAsset(
+                        ATokenNonRebasing(reserveConfig.tokenAddress).UNDERLYING_ASSET_ADDRESS()
+                    ) != address(0),
                 "Oracle config not compliant"
             );
             string memory tmpSymbol = ERC20(reserveConfig.tokenAddress).symbol();
@@ -88,16 +123,14 @@ contract InitAndConfigurationHelper {
                 reserveConfig.liquidationBonus
             );
 
-            uint256 tokenPrice = _contracts.oracle.getAssetPrice(reserveConfig.tokenAddress);
-            uint256 tokenAmount = usdBootstrapAmount * contracts.oracle.BASE_CURRENCY_UNIT()
-                * 10 ** IERC20Detailed(reserveConfig.tokenAddress).decimals() / tokenPrice;
+            uint256 tokenAmount = _getTokenAmount(usdBootstrapAmount, reserveConfig.tokenAddress);
 
-            console2.log(
-                "Bootstrap amount: %s %s for price: %s",
-                tokenAmount,
-                IERC20Detailed(reserveConfig.tokenAddress).symbol(),
-                tokenPrice
-            );
+            // console2.log(
+            //     "Bootstrap amount: %s %s for price: %s",
+            //     tokenAmount,
+            //     IERC20Detailed(reserveConfig.tokenAddress).symbol(),
+            //     tokenPrice
+            // );
             IERC20Detailed(reserveConfig.tokenAddress).approve(
                 address(_contracts.lendingPool), tokenAmount
             );
@@ -223,8 +256,8 @@ contract InitAndConfigurationHelper {
             );
 
             uint256 tokenPrice = _contracts.oracle.getAssetPrice(reserveConfig.tokenAddress);
-            uint256 tokenAmount = _usdBootstrapAmount * contracts.oracle.BASE_CURRENCY_UNIT()
-                * 10 ** IERC20Detailed(reserveConfig.tokenAddress).decimals() / tokenPrice;
+            uint256 tokenAmount = _getTokenAmount(_usdBootstrapAmount, reserveConfig.tokenAddress);
+
             console2.log(
                 "MiniPool Bootstrap amount: %s %s for price: %s",
                 tokenAmount,

@@ -13,6 +13,7 @@ import {VariableDebtToken} from "contracts/protocol/tokenization/ERC20/VariableD
 import {IAERC6909} from "contracts/interfaces/IAERC6909.sol";
 import {Oracle} from "contracts/protocol/core/Oracle.sol";
 import {Cod3xLendDataProvider2} from "contracts/misc/Cod3xLendDataProvider2.sol";
+import {Cod3xLendDataProvider} from "contracts/misc/Cod3xLendDataProvider.sol";
 import {
     AggregatedMainPoolReservesData,
     AggregatedMiniPoolReservesData
@@ -152,7 +153,7 @@ contract TestBasicActions is Script, Test {
         uint256 maxBorrowTokenToBorrowInCollateralUnit;
         {
             uint256 collateralMaxBorrowValue =
-                aggregatedMainPoolReservesData.ltv * collateralDepositValue / 10_000;
+                aggregatedMainPoolReservesData.baseLTVasCollateral * collateralDepositValue / 10_000;
 
             uint256 wbtcMaxBorrowAmountRay = collateralMaxBorrowValue.rayDiv(borrowTokenPrice);
             maxBorrowTokenToBorrowInCollateralUnit = fixture_preciseConvertWithDecimals(
@@ -163,7 +164,7 @@ contract TestBasicActions is Script, Test {
         return maxBorrowTokenToBorrowInCollateralUnit;
     }
 
-    function fixture_getATokenWrapper(address _token, Cod3xLendDataProvider cod3xLendDataProvider)
+    function fixture_getATokenWrapper(address _token, Cod3xLendDataProvider2 cod3xLendDataProvider)
         public
         view
         returns (AToken _aTokenW)
@@ -173,7 +174,7 @@ contract TestBasicActions is Script, Test {
         _aTokenW = AToken(address(AToken(_aTokenAddress).WRAPPER_ADDRESS()));
     }
 
-    function fixture_getAToken(address _token, Cod3xLendDataProvider cod3xLendDataProvider)
+    function fixture_getAToken(address _token, Cod3xLendDataProvider2 cod3xLendDataProvider)
         public
         view
         returns (AToken _aToken)
@@ -183,7 +184,7 @@ contract TestBasicActions is Script, Test {
         _aToken = AToken(_aTokenAddress);
     }
 
-    function fixture_getVarDebtToken(address _token, Cod3xLendDataProvider cod3xLendDataProvider)
+    function fixture_getVarDebtToken(address _token, Cod3xLendDataProvider2 cod3xLendDataProvider)
         public
         returns (VariableDebtToken _varDebtToken)
     {
@@ -247,7 +248,11 @@ contract TestBasicActions is Script, Test {
         DataTypes.MiniPoolReserveData memory collateralData =
             IMiniPool(miniPool).getReserveData(address(collateralParams.aToken));
 
-        console2.log("----------------USER1 DEPOSIT---------------");
+        console2.log(
+            "----------------USER1 DEPOSIT--------------- Balance %s: %s",
+            ERC20(address(collateralParams.aToken)).symbol(),
+            ERC20(address(collateralParams.aToken)).balanceOf(users.user1)
+        );
         fixture_depositTokensToMiniPool(
             depositAmount,
             collateralData.aTokenID,
@@ -369,7 +374,7 @@ contract TestBasicActions is Script, Test {
 
         contracts.lendingPool = LendingPool(deployedContracts.readAddress(".lendingPool"));
         contracts.cod3xLendDataProvider =
-            Cod3xLendDataProvider(deployedContracts.readAddress(".cod3xLendDataProvider"));
+            Cod3xLendDataProvider2(deployedContracts.readAddress(".cod3xLendDataProvider"));
         contracts.lendingPoolAddressesProvider = LendingPoolAddressesProvider(
             deployedContracts.readAddress(".lendingPoolAddressesProvider")
         );
@@ -580,12 +585,9 @@ contract TestBasicActions is Script, Test {
 
         (address[] memory assets,) = IMiniPool(miniPool).getReservesList();
         for (uint256 idx = 0; idx < assets.length; idx++) {
-            AggregatedMiniPoolReservesData memory aggregatedMainPoolReservesData = contracts
-                .cod3xLendDataProvider
-                .getMiniPoolReservesData(
-                assets[idx], contracts.miniPoolAddressesProvider.getMiniPoolId(miniPool)
-            );
-            if (!aggregatedMainPoolReservesData.isFrozen) {
+            AggregatedMiniPoolReservesData[] memory aggregatedMainPoolReservesData =
+                contracts.cod3xLendDataProvider.getMiniPoolReservesData(miniPool);
+            if (!aggregatedMainPoolReservesData[idx].isFrozen) {
                 DataTypes.MiniPoolReserveData memory data =
                     IMiniPool(miniPool).getReserveData(assets[idx]);
                 console2.log("Price: ", contracts.oracle.getAssetPrice(assets[idx]));

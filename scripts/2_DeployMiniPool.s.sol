@@ -42,66 +42,58 @@ contract DeployMiniPool is Script, Test, MiniPoolHelper {
         );
 
         uint256 miniPoolCount = contracts.miniPoolAddressesProvider.getMiniPoolCount();
-        for (uint256 i = 0; i < miniPoolCount; i++) {
-            address mp = contracts.miniPoolAddressesProvider.getMiniPool(i);
+        address mp = contracts.miniPoolAddressesProvider.getMiniPool(miniPoolCount - 1);
 
-            (address[] memory reserveList,) = IMiniPool(mp).getReservesList();
-            for (uint256 idx = 0; idx < reserveList.length; idx++) {
-                assertEq(
-                    reserveList[idx],
-                    address(poolReserversConfig[idx].tokenAddress),
-                    "Wrong underlying token"
-                );
-                AggregatedMiniPoolReservesData memory aggregatedMiniPoolReservesData = contracts
-                    .cod3xLendDataProvider
-                    .getReserveDataForAssetAtMiniPool(
-                    address(poolReserversConfig[idx].tokenAddress), mp
-                );
-                assertEq(
-                    aggregatedMiniPoolReservesData.baseLTVasCollateral,
-                    poolReserversConfig[idx].baseLtv,
-                    "Wrong Ltv"
-                );
-                assertEq(
-                    aggregatedMiniPoolReservesData.reserveLiquidationThreshold,
-                    poolReserversConfig[idx].liquidationThreshold,
-                    "Wrong liquidationThreshold"
-                );
-                assertEq(
-                    aggregatedMiniPoolReservesData.reserveLiquidationBonus,
-                    poolReserversConfig[idx].liquidationBonus,
-                    "Wrong liquidationBonus"
-                );
-                assertEq(
-                    aggregatedMiniPoolReservesData.symbol,
-                    poolReserversConfig[idx].symbol,
-                    "Wrong Symbol"
-                );
-                assertEq(aggregatedMiniPoolReservesData.isActive, true, "reserve is not active");
-                assertEq(
-                    aggregatedMiniPoolReservesData.borrowingEnabled, true, "borrowing not enabled"
-                );
-                assertEq(
-                    aggregatedMiniPoolReservesData.flashloanEnabled, true, "floshloan not enabled"
-                );
-                assertEq(aggregatedMiniPoolReservesData.isFrozen, false, "reserve is frozen");
-                assertEq(
-                    aggregatedMiniPoolReservesData.usageAsCollateralEnabled,
-                    true,
-                    "collateral usage not enabled"
-                );
-                assertEq(
-                    aggregatedMiniPoolReservesData.cod3xReserveFactor,
-                    poolReserversConfig[idx].reserveFactor,
-                    "wrong cod3xReserveFactor"
-                );
-                assertEq(
-                    aggregatedMiniPoolReservesData.miniPoolOwnerReserveFactor,
-                    poolReserversConfig[idx].miniPoolOwnerFee,
-                    "wrong miniPoolOwnerReserveFactor"
-                );
-                assertEq(aggregatedMiniPoolReservesData.depositCap, 0, "Wrong deposit cap");
-            }
+        (address[] memory reserveList,) = IMiniPool(mp).getReservesList();
+        for (uint256 idx = 0; idx < reserveList.length; idx++) {
+            assertEq(
+                reserveList[idx],
+                address(poolReserversConfig[idx].tokenAddress),
+                "Wrong underlying token"
+            );
+            AggregatedMiniPoolReservesData memory aggregatedMiniPoolReservesData = contracts
+                .cod3xLendDataProvider
+                .getReserveDataForAssetAtMiniPool(address(poolReserversConfig[idx].tokenAddress), mp);
+            assertEq(
+                aggregatedMiniPoolReservesData.baseLTVasCollateral,
+                poolReserversConfig[idx].baseLtv,
+                "Wrong Ltv"
+            );
+            assertEq(
+                aggregatedMiniPoolReservesData.reserveLiquidationThreshold,
+                poolReserversConfig[idx].liquidationThreshold,
+                "Wrong liquidationThreshold"
+            );
+            assertEq(
+                aggregatedMiniPoolReservesData.reserveLiquidationBonus,
+                poolReserversConfig[idx].liquidationBonus,
+                "Wrong liquidationBonus"
+            );
+            assertEq(
+                aggregatedMiniPoolReservesData.symbol,
+                poolReserversConfig[idx].symbol,
+                "Wrong Symbol"
+            );
+            assertEq(aggregatedMiniPoolReservesData.isActive, true, "reserve is not active");
+            assertEq(aggregatedMiniPoolReservesData.borrowingEnabled, true, "borrowing not enabled");
+            assertEq(aggregatedMiniPoolReservesData.flashloanEnabled, true, "floshloan not enabled");
+            assertEq(aggregatedMiniPoolReservesData.isFrozen, false, "reserve is frozen");
+            assertEq(
+                aggregatedMiniPoolReservesData.usageAsCollateralEnabled,
+                true,
+                "collateral usage not enabled"
+            );
+            assertEq(
+                aggregatedMiniPoolReservesData.cod3xReserveFactor,
+                poolReserversConfig[idx].reserveFactor,
+                "wrong cod3xReserveFactor"
+            );
+            assertEq(
+                aggregatedMiniPoolReservesData.miniPoolOwnerReserveFactor,
+                poolReserversConfig[idx].miniPoolOwnerFee,
+                "wrong miniPoolOwnerReserveFactor"
+            );
+            assertEq(aggregatedMiniPoolReservesData.depositCap, 0, "Wrong deposit cap");
         }
 
         assertEq(

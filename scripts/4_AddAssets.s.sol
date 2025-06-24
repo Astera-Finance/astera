@@ -22,26 +22,27 @@ contract AddAssets is Script, InitAndConfigurationHelper, Test {
             AggregatedMainPoolReservesData memory aggregatedMainPoolReservesData = contracts
                 .cod3xLendDataProvider
                 .getAggregatedMainPoolReserveData(
-                address(poolReserversConfig[idx].tokenAddress), reserveTypes[idx]
+                address(lendingPoolReserversConfig[idx].tokenAddress),
+                lendingPoolReserversConfig[idx].reserveType
             );
             assertEq(
                 aggregatedMainPoolReservesData.baseLTVasCollateral,
-                poolReserversConfig[idx].baseLtv,
+                lendingPoolReserversConfig[idx].baseLtv,
                 "Wrong Ltv"
             );
             assertEq(
                 aggregatedMainPoolReservesData.reserveLiquidationThreshold,
-                poolReserversConfig[idx].liquidationThreshold,
+                lendingPoolReserversConfig[idx].liquidationThreshold,
                 "Wrong liquidationThreshold"
             );
             assertEq(
                 aggregatedMainPoolReservesData.reserveLiquidationBonus,
-                poolReserversConfig[idx].liquidationBonus,
+                lendingPoolReserversConfig[idx].liquidationBonus,
                 "Wrong liquidationBonus"
             );
             assertEq(
                 aggregatedMainPoolReservesData.symbol,
-                poolReserversConfig[idx].symbol,
+                lendingPoolReserversConfig[idx].symbol,
                 "Wrong Symbol"
             );
             assertEq(aggregatedMainPoolReservesData.isActive, true, "reserve is not active");
@@ -55,12 +56,12 @@ contract AddAssets is Script, InitAndConfigurationHelper, Test {
             );
             assertEq(
                 aggregatedMainPoolReservesData.cod3xReserveFactor,
-                poolReserversConfig[idx].reserveFactor,
+                lendingPoolReserversConfig[idx].reserveFactor,
                 "wrong cod3xReserveFactor"
             );
             assertEq(
                 aggregatedMainPoolReservesData.miniPoolOwnerReserveFactor,
-                poolReserversConfig[idx].miniPoolOwnerFee,
+                lendingPoolReserversConfig[idx].miniPoolOwnerFee,
                 "wrong miniPoolOwnerReserveFactor"
             );
             assertEq(aggregatedMainPoolReservesData.depositCap, 0, "Wrong deposit cap");
@@ -75,26 +76,26 @@ contract AddAssets is Script, InitAndConfigurationHelper, Test {
                 AggregatedMiniPoolReservesData memory aggregatedMiniPoolReservesData = contracts
                     .cod3xLendDataProvider
                     .getReserveDataForAssetAtMiniPool(
-                    address(poolReserversConfig[idx].tokenAddress), mp
+                    address(miniPoolReserversConfig[idx].tokenAddress), mp
                 );
                 assertEq(
                     aggregatedMiniPoolReservesData.baseLTVasCollateral,
-                    poolReserversConfig[idx].baseLtv,
+                    miniPoolReserversConfig[idx].baseLtv,
                     "Wrong Ltv"
                 );
                 assertEq(
                     aggregatedMiniPoolReservesData.reserveLiquidationThreshold,
-                    poolReserversConfig[idx].liquidationThreshold,
+                    miniPoolReserversConfig[idx].liquidationThreshold,
                     "Wrong liquidationThreshold"
                 );
                 assertEq(
                     aggregatedMiniPoolReservesData.reserveLiquidationBonus,
-                    poolReserversConfig[idx].liquidationBonus,
+                    miniPoolReserversConfig[idx].liquidationBonus,
                     "Wrong liquidationBonus"
                 );
                 assertEq(
                     aggregatedMiniPoolReservesData.symbol,
-                    poolReserversConfig[idx].symbol,
+                    miniPoolReserversConfig[idx].symbol,
                     "Wrong Symbol"
                 );
                 assertEq(aggregatedMiniPoolReservesData.isActive, true, "reserve is not active");
@@ -112,12 +113,12 @@ contract AddAssets is Script, InitAndConfigurationHelper, Test {
                 );
                 assertEq(
                     aggregatedMiniPoolReservesData.cod3xReserveFactor,
-                    poolReserversConfig[idx].reserveFactor,
+                    miniPoolReserversConfig[idx].reserveFactor,
                     "wrong cod3xReserveFactor"
                 );
                 assertEq(
                     aggregatedMiniPoolReservesData.miniPoolOwnerReserveFactor,
-                    poolReserversConfig[idx].miniPoolOwnerFee,
+                    miniPoolReserversConfig[idx].miniPoolOwnerFee,
                     "wrong miniPoolOwnerReserveFactor"
                 );
                 assertEq(aggregatedMiniPoolReservesData.depositCap, 0, "Wrong deposit cap");
