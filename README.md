@@ -1,7 +1,6 @@
 # Astera Protocol
-[INTERNAL ONLY] For the development of Astera Protocol Features.
 
-*(Please create branches for each of the below features -- do not merge to master)*
+For the development of Astera Protocol Features.
 
 ## Quick start
 
