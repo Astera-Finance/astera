@@ -49,7 +49,7 @@ import {IMiniPoolAddressProviderUpdatable} from
  * - To be covered by a proxy contract, owned by the MiniPoolAddressesProvider of the specific market.
  * - All admin functions are callable by the MiniPoolConfigurator contract defined also in the
  *   MiniPoolAddressesProvider.
- * @author Cod3x
+ * @author Conclave
  */
 contract MiniPoolV2 is
     VersionedInitializable,

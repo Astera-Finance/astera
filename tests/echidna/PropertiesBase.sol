@@ -153,7 +153,7 @@ contract PropertiesBase is PropertiesAsserts, MarketParams {
     uint256[] internal timeouts;
     MockVaultUnit[] internal mockedVaults;
 
-    /// Cod3x Lend contracts
+    /// Astera contracts
     Oracle internal oracle;
     Cod3xLendDataProvider internal cod3xLendDataProvider;
     address internal treasury;

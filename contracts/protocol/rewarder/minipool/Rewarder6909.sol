@@ -8,7 +8,7 @@ import {RewardsController6909} from
 
 /**
  * @title Rewarder6909
- * @author Cod3x
+ * @author Conclave
  * @notice Contract for managing reward vaults and transferring rewards for ERC6909 tokens.
  * @dev Inherits from RewardsController6909 and implements reward vault management functionality.
  */

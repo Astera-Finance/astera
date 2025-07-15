@@ -240,7 +240,7 @@ contract Common is Test {
     bool[] isStableStrategy = [true, false, false, true];
     bool[] reserveTypes = [true, true, true, true];
     // Protocol deployment variables
-    string constant MARKET_ID = "Cod3x Lend Genesis Market";
+    string constant MARKET_ID = "Astera Genesis Market";
 
     CommonContracts public commonContracts;
 
@@ -480,9 +480,9 @@ contract Common is Test {
                 treasury: configAddresses.treasury,
                 incentivesController: configAddresses.rewarder,
                 underlyingAssetName: tmpSymbol,
-                aTokenName: string.concat("Cod3x Lend ", tmpSymbol),
+                aTokenName: string.concat("Astera ", tmpSymbol),
                 aTokenSymbol: string.concat("cl", tmpSymbol),
-                variableDebtTokenName: string.concat("Cod3x Lend variable debt bearing ", tmpSymbol),
+                variableDebtTokenName: string.concat("Astera variable debt bearing ", tmpSymbol),
                 variableDebtTokenSymbol: string.concat("variableDebt", tmpSymbol),
                 params: "0x10"
             });

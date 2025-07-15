@@ -24,8 +24,8 @@ import {EnumerableSet} from
 
 /**
  * @title FlashLoanLogic
- * @author Cod3x
- * @notice Implements the flash loan logic for the Cod3x lending protocol.
+ * @author Conclave
+ * @notice Implements the flash loan logic for the Astera protocol.
  * @dev Contains functions to execute flash loans and handle their repayments.
  */
 library FlashLoanLogic {

@@ -27,8 +27,8 @@ import {IAddressProviderUpdatable} from
 
 /**
  * @title LendingPoolConfigurator contract
- * @author Cod3x
- * @dev Implements the configuration methods for the Cod3x Lend protocol.
+ * @author Conclave
+ * @dev Implements the configuration methods for the Astera protocol.
  * @notice This contract handles the configuration of reserves and other protocol parameters.
  */
 contract LendingPoolConfigurator is

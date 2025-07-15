@@ -35,7 +35,7 @@ import {ATokenNonRebasing} from
  * @title MiniPoolLiquidationLogic
  * @notice Library implementing liquidation functionality for the MiniPool protocol.
  * @dev Contains core liquidation logic including health factor validation, collateral calculations and liquidation execution.
- * @author Cod3x
+ * @author Conclave
  */
 library MiniPoolLiquidationLogic {
     using SafeERC20 for IERC20;

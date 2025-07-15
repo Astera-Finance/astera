@@ -9,7 +9,7 @@ import {IRewarder} from "../../../../contracts/interfaces/IRewarder.sol";
 /**
  * @title IncentivizedERC20
  * @notice Implementation of the basic ERC20 standard with incentives functionality.
- * @author Cod3x
+ * @author Conclave
  * @dev This contract extends the basic ERC20 implementation with incentives tracking capabilities.
  */
 abstract contract IncentivizedERC20 is IERC20, IERC20Detailed {

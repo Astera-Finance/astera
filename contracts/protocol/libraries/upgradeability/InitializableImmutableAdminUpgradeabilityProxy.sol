@@ -8,7 +8,7 @@ import {Proxy} from "../../../../contracts/dependencies/openzeppelin/upgradeabil
 
 /**
  * @title InitializableAdminUpgradeabilityProxy
- * @author Cod3x
+ * @author Conclave
  * @notice Proxy contract that combines immutable admin functionality with initialization capabilities.
  * @dev Extends `BaseImmutableAdminUpgradeabilityProxy` with an initializer function for one-time setup.
  * This contract inherits initialization capabilities from `InitializableUpgradeabilityProxy` and admin

@@ -32,7 +32,7 @@ import {IAddressProviderUpdatable} from "contracts/interfaces/IAddressProviderUp
 
 /**
  * @title LendingPool contract
- * @dev Main point of interaction with an Cod3x Lend protocol's market.
+ * @dev Main point of interaction with an Astera protocol's market.
  *
  * - Minipools can borrow from the main lending pool on aTokens from the main lending pool.
  * - Admin can activate rehypothecation on reserves.
@@ -40,7 +40,7 @@ import {IAddressProviderUpdatable} from "contracts/interfaces/IAddressProviderUp
  * - To be covered by a proxy contract, owned by the LendingPoolAddressesProvider of the specific market
  * - All admin functions are callable by the LendingPoolConfigurator contract defined also in the
  *   LendingPoolAddressesProvider
- * @author Cod3x
+ * @author Conclave
  */
 contract LendingPoolV2 is
     VersionedInitializable,

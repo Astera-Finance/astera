@@ -7,7 +7,7 @@ import {DataTypes} from "../../contracts/protocol/libraries/types/DataTypes.sol"
 
 /**
  * @title IMiniPool interface.
- * @author Cod3x
+ * @author Conclave
  */
 interface IMiniPool {
     /**

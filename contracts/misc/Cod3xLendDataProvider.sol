@@ -36,7 +36,7 @@ import {IChainlinkAggregator} from "../../contracts/interfaces/base/IChainlinkAg
  * @title Cod3xLendDataProvider
  * @dev This contract provides data access functions for lending pool and minipool information.
  * It retrieves static and dynamic configurations, user data, and token addresses from both types of pools.
- * @author Cod3x
+ * @author Conclave
  */
 contract Cod3xLendDataProvider is Ownable, ICod3xLendDataProvider {
     using ReserveConfiguration for DataTypes.ReserveConfigurationMap;

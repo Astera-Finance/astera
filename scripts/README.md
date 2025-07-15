@@ -18,7 +18,7 @@
    - [📊 3_DeployedStrategies](#3_deployedstrategies)
 
 ### Overview
-Scripts allow to deploy Cod3x-Lend infrastructure and properly configure it.
+Scripts allow to deploy Astera infrastructure and properly configure it.
 The deployment process involves configuration files `./inputs/<Nr>_<InputJsonName>.json` and corresponding scripts `(./<Nr>_<ScriptName>.s.sol)`. Typically, the scripts should be executed in numerical order. They generate output json files with deployed contract addresses that can be used by next script without the need to configure manually. Each script file requires at least one configuration file to be available and properly configured (example configurations with all descriptions are available [here](#configuration-files)). The scripts may require also more json files as an inputs. Usually they are generated from previous scripts and available in `./outputs` folder.
 
 ![alt text](./imgs/Configuration.png)
@@ -90,9 +90,9 @@ The deployment process involves configuration files `./inputs/<Nr>_<InputJsonNam
     {
         "wethGateway": "0xe43208266aEad29736433aA0b6F035a2Ffc3BB9F",
         "general": {
-            "aTokenNamePrefix": "Cod3x Lend ",
+            "aTokenNamePrefix": "Astera ",
             "aTokenSymbolPrefix": "cl",
-            "debtTokenNamePrefix": "Cod3x Lend variable debt bearing ",
+            "debtTokenNamePrefix": "Astera variable debt bearing ",
             "debtTokenSymbolPrefix": "clDebt",
             "marketReferenceCurrencyAggregator": "0x7e860098F58bBFC8648a4311b374B1D669a2bc6B",
             "networkBaseTokenAggregator": "0x71041dddad3595F9CEd3DcCFBe3D1F4b0a16Bb70",
@@ -172,9 +172,9 @@ The deployment process involves configuration files `./inputs/<Nr>_<InputJsonNam
     ```json
     {
         "general": {
-            "aTokenNamePrefix": "Cod3x Lend ",
+            "aTokenNamePrefix": "Astera ",
             "aTokenSymbolPrefix": "cl",
-            "debtTokenNamePrefix": "Cod3x Lend variable debt bearing ",
+            "debtTokenNamePrefix": "Astera variable debt bearing ",
             "debtTokenSymbolPrefix": "clDebt",
             "marketReferenceCurrencyAggregator": "0x7e860098F58bBFC8648a4311b374B1D669a2bc6B",
             "networkBaseTokenAggregator": "0x71041dddad3595F9CEd3DcCFBe3D1F4b0a16Bb70",
@@ -379,9 +379,9 @@ The deployment process involves configuration files `./inputs/<Nr>_<InputJsonNam
 
     {
         "general": {
-            "aTokenNamePrefix": "Cod3x Lend ",
+            "aTokenNamePrefix": "Astera ",
             "aTokenSymbolPrefix": "cl",
-            "debtTokenNamePrefix": "Cod3x Lend variable debt bearing ",
+            "debtTokenNamePrefix": "Astera variable debt bearing ",
             "debtTokenSymbolPrefix": "clDebt",
             "marketReferenceCurrencyAggregator": "0x7e860098F58bBFC8648a4311b374B1D669a2bc6B",
             "networkBaseTokenAggregator": "0x71041dddad3595F9CEd3DcCFBe3D1F4b0a16Bb70",

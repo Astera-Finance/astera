@@ -14,7 +14,7 @@ import {Errors} from "../../../../contracts/protocol/libraries/helpers/Errors.so
 
 /**
  * @title RewardsController
- * @author Cod3x
+ * @author Conclave
  * @notice Contract to manage rewards distribution and claiming.
  * @dev Abstract contract that inherits from RewardsDistributor and implements IRewardsController.
  */

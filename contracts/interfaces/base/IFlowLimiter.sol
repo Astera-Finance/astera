@@ -5,7 +5,7 @@ import {IMiniPool} from "../../../contracts/interfaces/IMiniPool.sol";
 
 /**
  * @title IFlowLimiter interface.
- * @author Cod3x
+ * @author Conclave
  */
 interface IFlowLimiter {
     /**

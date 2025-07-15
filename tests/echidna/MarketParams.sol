@@ -7,7 +7,7 @@ contract MarketParams {
     uint256 internal constant BPS = 10000;
 
     // Market config
-    string internal constant MARKET_ID = "Cod3x Lend";
+    string internal constant MARKET_ID = "Astera";
     address internal constant FALLBACK_ORACLE = address(0);
     address internal constant BASE_CURRENCY = address(0);
     uint256 internal constant BASE_CURRENCY_UNIT = 100000000;

@@ -9,7 +9,7 @@ import {Errors} from "../../contracts/protocol/libraries/helpers/Errors.sol";
 import {SafeERC20} from "../../contracts/dependencies/openzeppelin/contracts/SafeERC20.sol";
 /**
  * @title RewardsVault
- * @author Cod3x
+ * @author Conclave
  */
 
 contract RewardsVault is Ownable {

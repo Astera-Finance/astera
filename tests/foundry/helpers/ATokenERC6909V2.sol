@@ -19,7 +19,7 @@ import {Strings} from "openzeppelin-contracts/contracts/utils/Strings.sol";
 
 /**
  * @title ERC6909-MultiToken
- * @author Cod3x - 0xGoober
+ * @author Conclave - 0xGoober
  * @notice Built to service all collateral and debt tokens for a specific MiniPool.
  * @dev Current implementation allows for 128 tranched tokens from the Main Pool and 1000-128 unique tokens
  *      from the MiniPool.
@@ -515,7 +515,7 @@ contract ATokenERC6909V2 is IncentivizedERC6909, VersionedInitializable {
      * @param name The token name.
      * @param symbol The token symbol.
      * @param decimals The number of decimals.
-     * @dev Sets name as "Cod3x Lend Minipool {minipoolId}{name}" and symbol as "cl-{minipoolId}-{symbol}".
+     * @dev Sets name as "Astera Minipool {minipoolId}{name}" and symbol as "cl-{minipoolId}-{symbol}".
      */
     function _initializeATokenID(
         uint256 id,
@@ -531,9 +531,7 @@ contract ATokenERC6909V2 is IncentivizedERC6909, VersionedInitializable {
         require(id < DEBT_TOKEN_ADDRESSABLE_ID, Errors.AT_INVALID_ATOKEN_ID);
         _setName(
             id,
-            string.concat(
-                "Cod3x Lend Minipool ", string.concat(Strings.toString(_minipoolId), name)
-            )
+            string.concat("Astera Minipool ", string.concat(Strings.toString(_minipoolId), name))
         );
         _setSymbol(
             id,

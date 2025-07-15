@@ -8,7 +8,7 @@ import {IMiniPoolAddressesProvider} from "../../contracts/interfaces/IMiniPoolAd
 
 /**
  * @title IFlashLoanReceiver interface
- * @author Cod3x
+ * @author Conclave
  * @dev implement this interface to develop a flashloan-compatible flashLoanReceiver contract
  */
 interface IFlashLoanReceiver {

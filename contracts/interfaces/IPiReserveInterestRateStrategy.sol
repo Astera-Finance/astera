@@ -3,7 +3,7 @@ pragma solidity ^0.8.0;
 
 /**
  * @title IPiReserveRateStrategy interface.
- * @author Cod3x
+ * @author Conclave
  */
 interface IPiReserveInterestRateStrategy {
     function baseVariableBorrowRate() external view returns (uint256);

@@ -23,7 +23,7 @@ import {MathUtils} from "../../../contracts/protocol/libraries/math/MathUtils.so
 
 /**
  * @title MockMinipoolReserveInterestRateStrategy contract
- * @author Cod3x
+ * @author Conclave
  *
  */
 contract MockMinipoolReserveInterestRateStrategy {

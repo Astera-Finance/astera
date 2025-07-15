@@ -21,8 +21,8 @@ import {IAddressProviderUpdatable} from
 
 /**
  * @title MiniPoolConfigurator contract.
- * @author Cod3x.
- * @notice Implements the configuration methods for the Cod3x Lend MiniPool protocol.
+ * @author Conclave.
+ * @notice Implements the configuration methods for the Astera MiniPool protocol.
  * @dev This contract manages reserve configurations, pool parameters, and access controls.
  */
 contract MiniPoolConfigurator is

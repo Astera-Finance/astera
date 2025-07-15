@@ -1,5 +1,5 @@
-# Cod3x Lend Protocol
-[INTERNAL ONLY] For the development of Cod3x Lend Protocol Features.
+# Astera Protocol
+[INTERNAL ONLY] For the development of Astera Protocol Features.
 
 *(Please create branches for each of the below features -- do not merge to master)*
 

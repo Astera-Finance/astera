@@ -14,7 +14,7 @@ import {IAddressProviderUpdatable} from
  * @dev Main registry of addresses part of or connected to the protocol, including permissioned roles.
  * - Acting also as factory of proxies and admin of those, so with right to change its implementations.
  * - Owned by the Cod3x Governance.
- * @author Cod3x
+ * @author Conclave
  */
 contract LendingPoolAddressesProvider is Ownable, ILendingPoolAddressesProvider {
     mapping(bytes32 => address) private _addresses;

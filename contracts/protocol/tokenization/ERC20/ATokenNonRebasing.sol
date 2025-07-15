@@ -5,7 +5,7 @@ import {AToken} from "../../../../contracts/protocol/tokenization/ERC20/AToken.s
 
 /**
  * @title ERC20 Non Rebasing AToken wrapper
- * @author Cod3x - Beirao
+ * @author Conclave - Beirao
  * @notice This contract wraps an AToken to provide a non-rebasing ERC20 interface.
  * @dev All operations are performed in terms of shares rather than underlying assets.
  */

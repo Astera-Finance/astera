@@ -17,7 +17,7 @@ import {IFlowLimiter} from "../../../../contracts/interfaces/base/IFlowLimiter.s
  * from the main Lending Pool.
  * @dev Implements flow control mechanisms to manage fund transfers between the main
  * Lending Pool and miniPools.
- * @author Cod3x
+ * @author Conclave
  */
 contract FlowLimiter is IFlowLimiter {
     /// @notice The addresses provider for the mini pool.

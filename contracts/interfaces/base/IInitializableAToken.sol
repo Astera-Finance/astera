@@ -6,7 +6,7 @@ import {IRewarder} from "../../../contracts/interfaces/IRewarder.sol";
 
 /**
  * @title IInitializableAToken interface.
- * @author Cod3x
+ * @author Conclave
  */
 interface IInitializableAToken {
     /**

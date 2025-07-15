@@ -20,8 +20,8 @@ import {EnumerableSet} from
 
 /**
  * @title DepositLogic library
- * @author Cod3x
- * @notice Implements the core deposit logic for the Cod3x lending protocol.
+ * @author Conclave
+ * @notice Implements the core deposit logic for the Astera protocol.
  * @dev Contains functions to handle deposits of assets into the protocol and related events.
  */
 library DepositLogic {

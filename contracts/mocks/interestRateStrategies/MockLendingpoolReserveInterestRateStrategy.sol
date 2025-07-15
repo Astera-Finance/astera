@@ -17,7 +17,7 @@ import {ReserveConfiguration} from
 
 /**
  * @title MockLendingpoolReserveInterestRateStrategy contract
- * @author Cod3x
+ * @author Conclave
  *
  */
 contract MockLendingpoolReserveInterestRateStrategy {

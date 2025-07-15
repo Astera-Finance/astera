@@ -26,7 +26,7 @@ import {EnumerableSet} from
 
 /**
  * @title BorrowLogic library
- * @author Cod3x
+ * @author Conclave
  * @notice Implements functions to validate and execute borrowing-related actions in the protocol.
  * @dev Contains core borrowing logic including user account data calculation, borrow execution and repayment handling.
  */

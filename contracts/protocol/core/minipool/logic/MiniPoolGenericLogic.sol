@@ -14,7 +14,7 @@ import {DataTypes} from "../../../../../contracts/protocol/libraries/types/DataT
 
 /**
  * @title MiniPoolGenericLogic library
- * @author Cod3x
+ * @author Conclave
  * @notice Implements protocol-level logic to calculate and validate the state of a user's positions.
  * @dev Contains core functions for health factor calculations and user account data management.
  */

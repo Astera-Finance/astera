@@ -17,9 +17,9 @@ import {ATokenNonRebasing} from
     "../../../../contracts/protocol/tokenization/ERC20/ATokenNonRebasing.sol";
 
 /**
- * @title Cod3x Lend ERC20 AToken
- * @notice Implementation of the interest bearing token for the Cod3x Lend protocol.
- * @author Cod3x
+ * @title Astera ERC20 AToken
+ * @notice Implementation of the interest bearing token for the Astera protocol.
+ * @author Conclave
  */
 contract AToken is
     VersionedInitializable,

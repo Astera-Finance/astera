@@ -12,7 +12,7 @@ import {IncentivizedERC20} from "contracts/protocol/tokenization/ERC20/Incentivi
 
 /**
  * @title VariableDebtToken
- * @author Cod3x
+ * @author Conclave
  * @notice Implements a variable debt token to track the borrowing positions of users at variable rate mode.
  */
 contract VariableDebtTokenV2 is

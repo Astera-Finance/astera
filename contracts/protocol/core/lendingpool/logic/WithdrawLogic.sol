@@ -22,7 +22,7 @@ import {EnumerableSet} from
 /**
  * @title Withdraw Logic library
  * @notice Implements the logic to withdraw assets from the protocol.
- * @author Cod3x
+ * @author Conclave
  * @dev Contains core functions for managing withdrawals and transfers.
  */
 library WithdrawLogic {

@@ -722,9 +722,9 @@ contract LendingPoolConfiguratorTest is Common, LendingPoolFixtures {
                 treasury: configAddresses.treasury,
                 incentivesController: configAddresses.rewarder,
                 underlyingAssetName: tmpSymbol,
-                aTokenName: string.concat("Cod3x Lend ", tmpSymbol),
+                aTokenName: string.concat("Astera ", tmpSymbol),
                 aTokenSymbol: string.concat("cl", tmpSymbol),
-                variableDebtTokenName: string.concat("Cod3x Lend variable debt bearing ", tmpSymbol),
+                variableDebtTokenName: string.concat("Astera variable debt bearing ", tmpSymbol),
                 variableDebtTokenSymbol: string.concat("variableDebt", tmpSymbol),
                 params: "0x10"
             });

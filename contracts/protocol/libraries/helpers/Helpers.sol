@@ -7,7 +7,7 @@ import {DataTypes} from "../../../../contracts/protocol/libraries/types/DataType
 
 /**
  * @title Helpers library
- * @author Cod3x
+ * @author Conclave
  * @notice Library containing helper functions for fetching user debt balances.
  */
 library Helpers {

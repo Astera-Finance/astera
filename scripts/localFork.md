@@ -2,7 +2,7 @@
 # Setup base local fork.
 
 ```
-git clone https://github.com/Cod3x-Labs/Cod3x-Lend
+https://github.com/Astera-Finance/astera
 git checkout liquidationBotFixes
 mv .env.example .env
 ```

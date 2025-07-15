@@ -14,7 +14,7 @@ import {DataTypes} from "../../../../../contracts/protocol/libraries/types/DataT
 
 /**
  * @title GenericLogic library
- * @author Cod3x
+ * @author Conclave
  * @notice Implements protocol-level logic to calculate and validate the state of a user.
  * @dev Contains core functions for calculating user account data and health factors.
  */

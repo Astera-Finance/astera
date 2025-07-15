@@ -1,9 +1,9 @@
 {
     "wethGateway": "0x4200000000000000000000000000000000000006",
     "general": {
-        "aTokenNamePrefix": "Cod3x Lend ",
+        "aTokenNamePrefix": "Astera ",
         "aTokenSymbolPrefix": "cl",
-        "debtTokenNamePrefix": "Cod3x Lend variable debt bearing ",
+        "debtTokenNamePrefix": "Astera variable debt bearing ",
         "debtTokenSymbolPrefix": "clDebt",
         "marketReferenceCurrencyAggregator": "0x7e860098F58bBFC8648a4311b374B1D669a2bc6B",
         "networkBaseTokenAggregator": "0x71041dddad3595F9CEd3DcCFBe3D1F4b0a16Bb70",

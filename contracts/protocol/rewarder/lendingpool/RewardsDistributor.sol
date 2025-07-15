@@ -10,7 +10,7 @@ import {Ownable} from "lib/openzeppelin-contracts/contracts/access/Ownable.sol";
 
 /**
  * @title RewardsDistributor
- * @author Cod3x
+ * @author Conclave
  * @notice Contract for managing and distributing rewards to users based on their asset balances.
  * @dev Abstract contract that inherits from IRewardsDistributor and Ownable.
  */

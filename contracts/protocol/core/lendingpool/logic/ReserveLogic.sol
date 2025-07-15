@@ -23,7 +23,7 @@ import {EnumerableSet} from
 
 /**
  * @title ReserveLogic library
- * @author Cod3x
+ * @author Conclave
  * @notice Implements the logic to update the reserves state.
  * @dev Contains core functions for managing reserve state updates and calculations.
  */

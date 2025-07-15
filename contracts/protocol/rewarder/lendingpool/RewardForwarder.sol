@@ -9,7 +9,7 @@ import {Errors} from "../../../../contracts/protocol/libraries/helpers/Errors.so
 
 /**
  * @title RewardForwarder
- * @author Cod3x - 0xGoober
+ * @author Conclave - 0xGoober
  * @notice Contract that manages the forwarding of rewards to registered claimees.
  * @dev Inherits from `Ownable` to restrict admin functions.
  */

@@ -3,7 +3,7 @@ pragma solidity ^0.8.0;
 
 /**
  * @title IMiniPoolReserveInterestRateStrategy interface.
- * @author Cod3x
+ * @author Conclave
  */
 interface IMiniPoolReserveInterestRateStrategy {
     function baseVariableBorrowRate() external view returns (uint256);

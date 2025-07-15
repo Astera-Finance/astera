@@ -13,7 +13,7 @@ import {SafeERC20} from "../../contracts/dependencies/openzeppelin/contracts/Saf
 
 /**
  * @title Treasury
- * @author Cod3x
+ * @author Conclave
  */
 contract Treasury is Ownable {
     using SafeERC20 for IERC20;

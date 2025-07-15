@@ -539,7 +539,7 @@ contract UpgradesAndReconfigurationsTest is MiniPoolFixtures {
                 reserveType: true,
                 treasury: address(deployedContracts.treasury),
                 incentivesController: address(deployedContracts.rewarder),
-                name: string.concat("Cod3x Lend ", tmpSymbol),
+                name: string.concat("Astera ", tmpSymbol),
                 symbol: string.concat("cl", tmpSymbol),
                 implementation: address(aTokenV2),
                 params: "0x10"
@@ -616,7 +616,7 @@ contract UpgradesAndReconfigurationsTest is MiniPoolFixtures {
                 asset: address(collateralType.token),
                 reserveType: true,
                 incentivesController: address(deployedContracts.rewarder),
-                name: string.concat("Cod3x Lend Debt", tmpSymbol),
+                name: string.concat("Astera Debt", tmpSymbol),
                 symbol: string.concat("debt", tmpSymbol),
                 implementation: address(variableDebtTokenV2),
                 params: "0x10"

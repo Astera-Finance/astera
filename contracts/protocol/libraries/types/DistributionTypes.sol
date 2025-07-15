@@ -3,7 +3,7 @@ pragma solidity ^0.8.23;
 
 /**
  * @title DistributionTypes
- * @author Cod3x
+ * @author Conclave
  * @notice Library containing data structures used for reward distribution.
  * @dev Contains core data structures for managing reward distributions and user asset data.
  */

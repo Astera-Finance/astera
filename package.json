@@ -1,7 +1,7 @@
 {
-  "name": "cod3x-lend",
+  "name": "Astera",
   "version": "1.0.0",
-  "description": "[INTERNAL ONLY] For the development of Cod3x Lend Protocol Features.",
+  "description": "[INTERNAL ONLY] For the development of Astera Protocol Features.",
   "main": "index.js",
   "directories": {
     "lib": "lib",

@@ -6,7 +6,7 @@ import {DataTypes} from "../../../../contracts/protocol/libraries/types/DataType
 
 /**
  * @title UserConfiguration library
- * @author Cod3x
+ * @author Conclave
  * @notice Implements the bitmap logic to handle the user configuration
  */
 library UserConfiguration {

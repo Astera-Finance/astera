@@ -3,7 +3,7 @@ pragma solidity ^0.8.23;
 
 /**
  * @title DataTypes
- * @author Cod3x
+ * @author Conclave
  * @notice Library containing data structures used across the protocol.
  * @dev Contains core data structures for reserves, user configurations, and system parameters.
  */

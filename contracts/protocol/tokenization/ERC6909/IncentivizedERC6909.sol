@@ -7,7 +7,7 @@ import {ERC6909} from "lib/solady/src/tokens/ERC6909.sol";
 /**
  * @title IncentivizedERC6909
  * @notice Basic ERC6909 implementation with incentives functionality.
- * @author Cod3x, inspired by the Solady ERC6909 implementation and AAVEs incentivized ERC20
+ * @author Conclave, inspired by the Solady ERC6909 implementation and AAVEs incentivized ERC20
  */
 abstract contract IncentivizedERC6909 is ERC6909 /*, IAERC6909 */ {
     /// @dev Mapping from `id` to token name.

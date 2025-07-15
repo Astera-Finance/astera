@@ -5,7 +5,7 @@ import {DistributionTypes} from "../../contracts/protocol/libraries/types/Distri
 
 /**
  * @title IMiniPoolRewardsDistributor interface.
- * @author Cod3x
+ * @author Conclave
  */
 interface IMiniPoolRewardsDistributor {
     /**

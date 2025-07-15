@@ -3,7 +3,7 @@ pragma solidity ^0.8.0;
 
 /**
  * @title IWETH interface.
- * @author Cod3x
+ * @author Conclave
  */
 interface IWETH {
     function deposit() external payable;

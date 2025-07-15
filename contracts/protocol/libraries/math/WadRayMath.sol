@@ -4,7 +4,7 @@ pragma solidity ^0.8.23;
 import {Errors} from "../../../../contracts/protocol/libraries/helpers/Errors.sol";
 /**
  * @title WadRayMath library
- * @author Cod3x
+ * @author Conclave
  * @notice Provides multiplication and division functions for wads (decimal numbers with 18 digits precision) and rays (decimals with 27 digits precision).
  * @dev Core math library for precise decimal calculations using wad (1e18) and ray (1e27) units.
  */

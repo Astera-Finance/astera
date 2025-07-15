@@ -3,7 +3,7 @@ pragma solidity ^0.8.0;
 
 /**
  * @title IWETHGateway interface.
- * @author Cod3x
+ * @author Conclave
  */
 interface IWETHGateway {
     function depositETH(address lendingPool, bool reserveType, address onBehalfOf)

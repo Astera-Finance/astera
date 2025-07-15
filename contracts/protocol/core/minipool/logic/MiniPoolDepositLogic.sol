@@ -26,7 +26,7 @@ import {ILendingPoolConfigurator} from
 /**
  * @title MiniPoolDepositLogic library
  * @notice Implements the logic to deposit assets into the protocol.
- * @author Cod3x
+ * @author Conclave
  * @dev Handles both direct deposits and wrapped deposits of assets, managing state updates and user configurations.
  */
 library MiniPoolDepositLogic {

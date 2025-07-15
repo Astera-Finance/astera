@@ -29,7 +29,7 @@ import {ILendingPoolAddressesProvider} from
 
 /**
  * @title MiniPoolBorrowLogic library
- * @author Cod3x
+ * @author Conclave
  * @notice Implements functions to validate and execute borrowing-related actions in the MiniPool.
  * @dev Contains core borrowing logic including health factor calculations, borrow execution and repayment handling.
  */

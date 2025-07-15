@@ -19,7 +19,7 @@ import {IAERC6909} from "../../../../../contracts/interfaces/IAERC6909.sol";
 
 /**
  * @title MiniPoolValidationLogic library
- * @author Cod3x
+ * @author Conclave
  * @notice Implements functions to validate the different actions of the protocol.
  * @dev Contains validation logic for all core protocol actions.
  */

@@ -7,7 +7,7 @@ import {IRewarder} from "../../contracts/interfaces/IRewarder.sol";
 
 /**
  * @title IVariableDebtToken interface.
- * @author Cod3x
+ * @author Conclave
  */
 interface IVariableDebtToken is IScaledBalanceToken, IInitializableDebtToken {
     /**

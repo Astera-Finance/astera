@@ -6,7 +6,7 @@ import {IMiniPool} from "./IMiniPool.sol";
 
 /**
  * @title IMiniPoolConfigurator interface.
- * @author Cod3x
+ * @author Conclave
  */
 interface IMiniPoolConfigurator {
     struct InitReserveInput {

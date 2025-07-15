@@ -11,7 +11,7 @@ import {Errors} from "../../../../contracts/protocol/libraries/helpers/Errors.so
 
 /**
  * @title RewardsDistributor6909
- * @author Cod3x
+ * @author Conclave
  * @notice Abstract contract for distributing rewards to ERC6909 token holders.
  * @dev Implements core reward distribution logic and state management.
  */

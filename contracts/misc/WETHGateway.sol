@@ -17,7 +17,7 @@ import {DataTypes} from "../../contracts/protocol/libraries/types/DataTypes.sol"
 import {IAERC6909} from "../../contracts/interfaces/IAERC6909.sol";
 /**
  * @title WETHGateway
- * @author Cod3x
+ * @author Conclave
  */
 
 contract WETHGateway is IWETHGateway, Ownable {

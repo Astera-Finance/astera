@@ -5,7 +5,7 @@ import {WadRayMath} from "./WadRayMath.sol";
 
 /**
  * @title MathUtils library
- * @author Cod3x
+ * @author Conclave
  * @notice Provides functions to perform linear and compounded interest rate calculations.
  * @dev Contains helper functions for interest calculations using both linear and compound formulas.
  */

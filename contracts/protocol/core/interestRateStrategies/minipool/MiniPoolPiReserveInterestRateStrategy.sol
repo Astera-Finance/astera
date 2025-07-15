@@ -28,7 +28,7 @@ import {ReserveConfiguration} from
  * adjust the interest rate according to the `_kp` and `_ki` variables.
  * @dev ATTENTION: This contract must not be used as a library. One MiniPoolPiReserveInterestRateStrategy
  * needs to be associated with only one market.
- * @author Cod3x
+ * @author Conclave
  */
 contract MiniPoolPiReserveInterestRateStrategy is
     BasePiReserveRateStrategy,

@@ -8,7 +8,7 @@ import {RewardsController} from
 
 /**
  * @title Rewarder
- * @author Cod3x
+ * @author Conclave
  * @notice Contract for managing reward vaults and transferring rewards for lending pool tokens.
  * @dev Inherits from RewardsController and implements reward vault management functionality.
  */

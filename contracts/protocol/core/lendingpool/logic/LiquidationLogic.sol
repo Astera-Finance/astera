@@ -30,8 +30,8 @@ import {EnumerableSet} from
 
 /**
  * @title LiquidationLogic library
- * @author Cod3x
- * @notice Implements the liquidation logic for the Cod3x lending protocol.
+ * @author Conclave
+ * @notice Implements the liquidation logic for the Astera protocol.
  * @dev Contains functions to handle liquidations of undercollateralized positions.
  */
 library LiquidationLogic {

@@ -10,7 +10,7 @@ import {DataTypes} from "../../../../contracts/protocol/libraries/types/DataType
  * @title MiniPoolStorage
  * @notice Contract that stores the state and configuration for a MiniPool.
  * @dev Contains mappings and variables used across the MiniPool system.
- * @author Cod3x
+ * @author Conclave
  */
 contract MiniPoolStorage {
     /// @dev The addresses provider contract managing this MiniPool's addresses.

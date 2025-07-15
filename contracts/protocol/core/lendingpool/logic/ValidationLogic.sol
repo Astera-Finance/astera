@@ -18,7 +18,7 @@ import {DataTypes} from "../../../../../contracts/protocol/libraries/types/DataT
 
 /**
  * @title ValidationLogic library
- * @author Cod3x
+ * @author Conclave
  * @notice Implements functions to validate the different actions of the protocol.
  * @dev Contains validation functions for all protocol operations.
  */

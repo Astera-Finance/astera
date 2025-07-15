@@ -3,7 +3,7 @@ pragma solidity ^0.8.0;
 
 /**
  * @title IScaledBalanceToken interface.
- * @author Cod3x
+ * @author Conclave
  */
 interface IScaledBalanceToken {
     function scaledBalanceOf(address user) external view returns (uint256);

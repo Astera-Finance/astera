@@ -22,7 +22,7 @@ import {IAERC6909} from "../../../../../contracts/interfaces/IAERC6909.sol";
 
 /**
  * @title MiniPoolFlashLoanLogic
- * @author Cod3x
+ * @author Conclave
  * @notice Library implementing flash loan functionality for the MiniPool protocol.
  * @dev Handles flash loan execution, validation, and repayment logic.
  */

@@ -8,7 +8,7 @@ import {IRewarder} from "../../contracts/interfaces/IRewarder.sol";
 
 /**
  * @title IAToken interface.
- * @author Cod3x
+ * @author Conclave
  */
 interface IAToken is IERC20, IScaledBalanceToken, IInitializableAToken {
     /**

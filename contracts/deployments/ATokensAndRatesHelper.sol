@@ -14,7 +14,7 @@ import {Ownable} from "../../contracts/dependencies/openzeppelin/contracts/Ownab
 /**
  * @title ATokensAndRatesHelper
  * @notice AToken deployer helper
- * @author Cod3x
+ * @author Conclave
  */
 contract ATokensAndRatesHelper is Ownable {
     address private pool;

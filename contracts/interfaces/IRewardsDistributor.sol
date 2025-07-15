@@ -5,7 +5,7 @@ import {DistributionTypes} from "../../contracts/protocol/libraries/types/Distri
 
 /**
  * @title IRewardsDistributor interface.
- * @author Cod3x
+ * @author Conclave
  */
 interface IRewardsDistributor {
     /**

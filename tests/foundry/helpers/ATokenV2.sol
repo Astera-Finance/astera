@@ -15,9 +15,9 @@ import {IERC4626} from "lib/openzeppelin-contracts/lib/forge-std/src/interfaces/
 import {ATokenNonRebasing} from "contracts/protocol/tokenization/ERC20/ATokenNonRebasing.sol";
 
 /**
- * @title Cod3x Lend ERC20 AToken
- * @notice Implementation of the interest bearing token for the Cod3x Lend protocol.
- * @author Cod3x
+ * @title Astera ERC20 AToken
+ * @notice Implementation of the interest bearing token for the Astera protocol.
+ * @author Conclave
  */
 contract ATokenV2 is
     VersionedInitializable,

@@ -3,7 +3,7 @@ pragma solidity ^0.8.0;
 
 /**
  * @title IChainlinkAggregator interface.
- * @author Cod3x
+ * @author Conclave
  */
 interface IChainlinkAggregator {
     function decimals() external view returns (uint8);

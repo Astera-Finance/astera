@@ -6,7 +6,7 @@ import {DataTypes} from "../../../../contracts/protocol/libraries/types/DataType
 
 /**
  * @title ReserveConfiguration library
- * @author Cod3x
+ * @author Conclave
  * @notice Implements the bitmap logic to handle the reserve configuration
  */
 library ReserveConfiguration {

@@ -9,7 +9,7 @@ import {EnumerableSet} from
 
 /**
  * @title LendingPoolStorage
- * @author Cod3x
+ * @author Conclave
  * @dev Contract containing storage variables for the LendingPool contract.
  */
 contract LendingPoolStorage {

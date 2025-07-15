@@ -15,7 +15,7 @@ import {ILendingPoolAddressesProvider} from
 
 /**
  * @title Oracle
- * @author Cod3x
+ * @author Conclave
  * @notice Proxy smart contract to get the price of an asset from a price source, with Chainlink Aggregator
  * smart contracts as primary option.
  * @dev The contract has the following features:

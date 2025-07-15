@@ -5,7 +5,7 @@ import {ILendingPoolAddressesProvider} from "./ILendingPoolAddressesProvider.sol
 
 /**
  * @title ILendingPoolConfigurator interface.
- * @author Cod3x
+ * @author Conclave
  */
 interface ILendingPoolConfigurator {
     struct InitReserveInput {

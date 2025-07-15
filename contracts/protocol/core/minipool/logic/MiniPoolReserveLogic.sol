@@ -16,7 +16,7 @@ import {ReserveLogic} from
 
 /**
  * @title MiniPoolReserveLogic library
- * @author Cod3x
+ * @author Conclave
  * @notice Implements the logic to update the reserves state in the MiniPool protocol.
  * @dev Contains core reserve management functionality including index calculations, state updates, and interest accrual.
  */

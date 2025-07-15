@@ -7,7 +7,7 @@ import {IERC6909} from "../../contracts/interfaces/base/IERC6909.sol";
 
 /**
  * @title IAERC6909 interface.
- * @author Cod3x
+ * @author Conclave
  */
 interface IAERC6909 is IERC6909 {
     /**
