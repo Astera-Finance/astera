@@ -118,7 +118,7 @@ contract AToken is
      * @notice Initializes the aToken contract with its core configuration.
      * @dev Sets up the token metadata, pool references, and EIP712 domain separator.
      * @param pool The address of the lending pool where this aToken will be used.
-     * @param treasury The address of the Cod3x treasury, receiving the fees on this aToken.
+     * @param treasury The address of the Astera treasury, receiving the fees on this aToken.
      * @param underlyingAsset The address of the underlying asset of this aToken (E.g. `WETH` for aWETH).
      * @param incentivesController The smart contract managing potential incentives distribution.
      * @param aTokenDecimals The decimals of the aToken, same as the underlying asset's.
@@ -222,12 +222,16 @@ contract AToken is
     }
 
     /**
-     * @notice Mints aTokens to the Cod3x treasury.
+     * @notice Mints aTokens to the Astera treasury.
      * @dev Only callable by the LendingPool contract. Does not check for rounding errors.
      * @param amount The amount of tokens to mint.
      * @param index The new liquidity index of the reserve.
      */
-    function mintToCod3xTreasury(uint256 amount, uint256 index) external override onlyLendingPool {
+    function mintToAsteraTreasury(uint256 amount, uint256 index)
+        external
+        override
+        onlyLendingPool
+    {
         if (amount == 0) {
             return;
         }
@@ -330,7 +334,7 @@ contract AToken is
         return super.totalSupply();
     }
 
-    /// @dev Returns the address of the Cod3x treasury, receiving the fees on this aToken.
+    /// @dev Returns the address of the Astera treasury, receiving the fees on this aToken.
     function RESERVE_TREASURY_ADDRESS() public view returns (address) {
         return _treasury;
     }

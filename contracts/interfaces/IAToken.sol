@@ -92,7 +92,7 @@ interface IAToken is IERC20, IScaledBalanceToken, IInitializableAToken {
     function burn(address user, address receiverOfUnderlying, uint256 amount, uint256 index)
         external;
 
-    function mintToCod3xTreasury(uint256 amount, uint256 index) external;
+    function mintToAsteraTreasury(uint256 amount, uint256 index) external;
 
     function transferOnLiquidation(address from, address to, uint256 value) external;
 

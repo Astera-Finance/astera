@@ -52,7 +52,7 @@ contract DeployMiniPool is Script, Test, MiniPoolHelper {
                 "Wrong underlying token"
             );
             AggregatedMiniPoolReservesData memory aggregatedMiniPoolReservesData = contracts
-                .cod3xLendDataProvider
+                .asteraLendDataProvider
                 .getReserveDataForAssetAtMiniPool(address(poolReserversConfig[idx].tokenAddress), mp);
             assertEq(
                 aggregatedMiniPoolReservesData.baseLTVasCollateral,
@@ -84,9 +84,9 @@ contract DeployMiniPool is Script, Test, MiniPoolHelper {
                 "collateral usage not enabled"
             );
             assertEq(
-                aggregatedMiniPoolReservesData.cod3xReserveFactor,
+                aggregatedMiniPoolReservesData.asteraReserveFactor,
                 poolReserversConfig[idx].reserveFactor,
-                "wrong cod3xReserveFactor"
+                "wrong asteraReserveFactor"
             );
             assertEq(
                 aggregatedMiniPoolReservesData.miniPoolOwnerReserveFactor,
@@ -298,8 +298,8 @@ contract DeployMiniPool is Script, Test, MiniPoolHelper {
             contracts.lendingPool = LendingPool(config.readAddress(".lendingPool"));
             contracts.lendingPoolConfigurator =
                 LendingPoolConfigurator(config.readAddress(".lendingPoolConfigurator"));
-            contracts.cod3xLendDataProvider =
-                Cod3xLendDataProvider2(config.readAddress(".cod3xLendDataProvider"));
+            contracts.asteraLendDataProvider =
+                AsteraLendDataProvider2(config.readAddress(".asteraLendDataProvider"));
 
             console2.log("Deploying mini pool infra");
             contracts.oracle = Oracle(contracts.lendingPoolAddressesProvider.getPriceOracle());
@@ -333,8 +333,8 @@ contract DeployMiniPool is Script, Test, MiniPoolHelper {
             contracts.lendingPool = LendingPool(config.readAddress(".lendingPool"));
             contracts.lendingPoolConfigurator =
                 LendingPoolConfigurator(config.readAddress(".lendingPoolConfigurator"));
-            contracts.cod3xLendDataProvider =
-                Cod3xLendDataProvider2(config.readAddress(".cod3xLendDataProvider"));
+            contracts.asteraLendDataProvider =
+                AsteraLendDataProvider2(config.readAddress(".asteraLendDataProvider"));
 
             if (readPreviousContracts) {
                 readPreviousDeployments(

@@ -71,7 +71,7 @@ contract MiniPoolHelper is InitAndConfigurationHelper {
                 address(contracts.miniPoolAddressesProvider)
             );
             contracts.lendingPoolAddressesProvider.setFlowLimiter(address(contracts.flowLimiter));
-            contracts.cod3xLendDataProvider.setMiniPoolAddressProvider(
+            contracts.asteraLendDataProvider.setMiniPoolAddressProvider(
                 address(contracts.miniPoolAddressesProvider)
             );
         } else {

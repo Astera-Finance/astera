@@ -19,7 +19,7 @@ import {Errors} from "../libraries/helpers/Errors.sol";
  * @title MiniPoolAddressesProvider contract
  * @dev Main registry of addresses part of or connected to the protocol, including permissioned roles.
  * - Acting also as factory of proxies and admin of those, so with right to change its implementations.
- * - Owned by the Cod3x Governance.
+ * - Owned by the Astera Governance.
  * @author Conclave
  */
 contract MiniPoolAddressesProvider is Ownable, IMiniPoolAddressesProvider {
@@ -27,7 +27,7 @@ contract MiniPoolAddressesProvider is Ownable, IMiniPoolAddressesProvider {
      * @dev Struct containing configuration for a mini pool.
      * @param miniPool Address of the mini pool contract.
      * @param aErc6909 Address of the associated aToken contract.
-     * @param cod3xTreasury Address of the Cod3x treasury.
+     * @param asteraTreasury Address of the Astera treasury.
      * @param minipoolOwnerTreasury Address of the mini pool owner's treasury.
      * @param admin Address of the pool admin.
      */
@@ -69,8 +69,8 @@ contract MiniPoolAddressesProvider is Ownable, IMiniPoolAddressesProvider {
     /// @dev Counter for the number of mini pools.
     uint256 private _miniPoolCount;
 
-    /// @dev Address of the Cod3x treasury.
-    address private _cod3xTreasury;
+    /// @dev Address of the Astera treasury.
+    address private _asteraTreasury;
 
     /// @dev Counter for the number of reserves with flow borrowing.
     uint256 private _numberOfReservesWithFlowBorrowing;
@@ -245,11 +245,11 @@ contract MiniPoolAddressesProvider is Ownable, IMiniPoolAddressesProvider {
     }
 
     /**
-     * @dev Returns the Cod3x treasury address.
+     * @dev Returns the Astera treasury address.
      * @return The treasury address.
      */
-    function getMiniPoolCod3xTreasury() external view returns (address) {
-        return _cod3xTreasury;
+    function getMiniPoolAsteraTreasury() external view returns (address) {
+        return _asteraTreasury;
     }
 
     /**
@@ -436,12 +436,12 @@ contract MiniPoolAddressesProvider is Ownable, IMiniPoolAddressesProvider {
     }
 
     /**
-     * @dev Sets the Cod3x treasury address for all mini pools.
+     * @dev Sets the Astera treasury address for all mini pools.
      * @param treasury The new treasury address.
      */
-    function setCod3xTreasury(address treasury) external onlyMiniPoolConfigurator {
-        _cod3xTreasury = treasury;
-        emit Cod3xTreasurySet(treasury);
+    function setAsteraTreasury(address treasury) external onlyMiniPoolConfigurator {
+        _asteraTreasury = treasury;
+        emit AsteraTreasurySet(treasury);
     }
 
     /**

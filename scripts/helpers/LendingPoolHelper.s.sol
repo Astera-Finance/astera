@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.0;
 
-import "contracts/misc/Cod3xLendDataProvider2.sol";
+import "contracts/misc/AsteraLendDataProvider2.sol";
 
 import
     "contracts/protocol/core/interestRateStrategies/lendingpool/DefaultReserveInterestRateStrategy.sol";
@@ -66,10 +66,10 @@ contract LendingPoolHelper is InitAndConfigurationHelper {
 
         contracts.oracle = _deployOracle(_oracleConfig);
         contracts.lendingPoolAddressesProvider.setPriceOracle(address(contracts.oracle));
-        contracts.cod3xLendDataProvider = new Cod3xLendDataProvider2(
+        contracts.asteraLendDataProvider = new AsteraLendDataProvider2(
             general.networkBaseTokenAggregator, general.marketReferenceCurrencyAggregator
         );
-        contracts.cod3xLendDataProvider.setLendingPoolAddressProvider(
+        contracts.asteraLendDataProvider.setLendingPoolAddressProvider(
             address(contracts.lendingPoolAddressesProvider)
         );
         contracts.wethGateway = new WETHGateway(wethGateway);

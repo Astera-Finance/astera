@@ -127,7 +127,7 @@ contract MockMinipoolReserveInterestRateStrategy {
         return (currentLiquidityRate, currentBorrowRate);
     }
 
-    function getCod3xReserveFactor(address _asset, uint256 _minipoolId)
+    function getAsteraReserveFactor(address _asset, uint256 _minipoolId)
         public
         view
         returns (uint256)
@@ -135,15 +135,15 @@ contract MockMinipoolReserveInterestRateStrategy {
         DataTypes.ReserveConfigurationMap memory reserve = IMiniPool(
             IMiniPoolAddressesProvider(addressesProvider).getMiniPool(_minipoolId)
         ).getConfiguration(_asset);
-        return _getCod3xReserveFactor(reserve);
+        return _getAsteraReserveFactor(reserve);
     }
 
-    function _getCod3xReserveFactor(DataTypes.ReserveConfigurationMap memory self)
+    function _getAsteraReserveFactor(DataTypes.ReserveConfigurationMap memory self)
         internal
         pure
         returns (uint256)
     {
-        return (self.data & ~ReserveConfiguration.COD3X_RESERVE_FACTOR_MASK)
-            >> ReserveConfiguration.COD3X_RESERVE_FACTOR_START_BIT_POSITION;
+        return (self.data & ~ReserveConfiguration.ASTERA_RESERVE_FACTOR_MASK)
+            >> ReserveConfiguration.ASTERA_RESERVE_FACTOR_START_BIT_POSITION;
     }
 }

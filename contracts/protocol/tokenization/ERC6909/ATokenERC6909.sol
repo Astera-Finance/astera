@@ -288,13 +288,13 @@ contract ATokenERC6909 is
     }
 
     /**
-     * @notice Mints tokens to the Cod3x treasury.
+     * @notice Mints tokens to the Astera treasury.
      * @param id The token ID.
      * @param amount The amount to mint.
      * @param index The current liquidity index.
      */
-    function mintToCod3xTreasury(uint256 id, uint256 amount, uint256 index) external {
-        address treasury = _addressesProvider.getMiniPoolCod3xTreasury();
+    function mintToAsteraTreasury(uint256 id, uint256 amount, uint256 index) external {
+        address treasury = _addressesProvider.getMiniPoolAsteraTreasury();
         _mintToTreasury(id, amount, index, treasury);
     }
 

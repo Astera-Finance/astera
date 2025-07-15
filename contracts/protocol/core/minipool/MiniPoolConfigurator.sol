@@ -134,11 +134,11 @@ contract MiniPoolConfigurator is
     }
 
     /**
-     * @dev Sets the Cod3x treasury address for all mini pools.
+     * @dev Sets the Astera treasury address for all mini pools.
      * @param treasury The new treasury address.
      */
-    function setCod3xTreasury(address treasury) public onlyMainPoolAdmin {
-        addressesProvider.setCod3xTreasury(treasury);
+    function setAsteraTreasury(address treasury) public onlyMainPoolAdmin {
+        addressesProvider.setAsteraTreasury(treasury);
     }
 
     /**
@@ -178,12 +178,12 @@ contract MiniPoolConfigurator is
     }
 
     /**
-     * @dev Updates the Cod3x reserve factor for a reserve.
+     * @dev Updates the Astera reserve factor for a reserve.
      * @param asset The address of the underlying asset.
      * @param reserveFactor The new reserve factor.
      * @param pool The MiniPool instance to update.
      */
-    function setCod3xReserveFactor(address asset, uint256 reserveFactor, IMiniPool pool)
+    function setAsteraReserveFactor(address asset, uint256 reserveFactor, IMiniPool pool)
         external
         onlyMainPoolAdmin
     {
@@ -191,13 +191,13 @@ contract MiniPoolConfigurator is
 
         DataTypes.ReserveConfigurationMap memory currentConfig = pool.getConfiguration(asset);
 
-        currentConfig.setCod3xReserveFactor(reserveFactor);
+        currentConfig.setAsteraReserveFactor(reserveFactor);
 
         pool.setConfiguration(asset, currentConfig.data);
 
         pool.syncRatesState(asset);
 
-        emit Cod3xReserveFactorChanged(asset, reserveFactor);
+        emit AsteraReserveFactorChanged(asset, reserveFactor);
     }
 
     /**

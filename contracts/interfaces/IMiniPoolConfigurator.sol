@@ -110,11 +110,11 @@ interface IMiniPoolConfigurator {
     event DisableFlashloan(address indexed asset);
 
     /**
-     * @dev Emitted when a Cod3x reserve factor is updated
+     * @dev Emitted when a Astera reserve factor is updated
      * @param asset The address of the underlying asset of the reserve
      * @param factor The new reserve factor
      */
-    event Cod3xReserveFactorChanged(address indexed asset, uint256 factor);
+    event AsteraReserveFactorChanged(address indexed asset, uint256 factor);
 
     /**
      * @dev Emitted when a minipool owner reserve factor is updated
@@ -161,7 +161,7 @@ interface IMiniPoolConfigurator {
     function updateFlashloanPremiumTotal(uint128 newFlashloanPremiumTotal, IMiniPool pool)
         external;
 
-    function setCod3xTreasury(address treasury) external;
+    function setAsteraTreasury(address treasury) external;
 
     function setFlowLimit(address asset, uint256 limit, IMiniPool pool) external;
 
@@ -171,7 +171,8 @@ interface IMiniPoolConfigurator {
         IMiniPool pool
     ) external;
 
-    function setCod3xReserveFactor(address asset, uint256 reserveFactor, IMiniPool pool) external;
+    function setAsteraReserveFactor(address asset, uint256 reserveFactor, IMiniPool pool)
+        external;
 
     function setDepositCap(address asset, uint256 depositCap, IMiniPool pool) external;
 

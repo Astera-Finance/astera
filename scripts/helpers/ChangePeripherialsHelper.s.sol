@@ -18,7 +18,7 @@ contract ChangePeripherialsHelper {
 
     function _changePeripherials(
         NewPeripherial[] memory treasury,
-        NewMiniPoolPeripherial memory cod3xTreasury,
+        NewMiniPoolPeripherial memory asteraTreasury,
         NewPeripherial[] memory vault,
         NewPeripherial[] memory rewarder,
         NewPeripherial[] memory rewarder6909,
@@ -28,8 +28,8 @@ contract ChangePeripherialsHelper {
         require(treasury.length == vault.length, "Lengths of settings must be the same");
         require(treasury.length == rewarder.length, "Lengths settings must be the same");
 
-        if (cod3xTreasury.configure == true) {
-            contracts.miniPoolConfigurator.setCod3xTreasury(cod3xTreasury.newAddress);
+        if (asteraTreasury.configure == true) {
+            contracts.miniPoolConfigurator.setAsteraTreasury(asteraTreasury.newAddress);
         }
 
         for (uint8 idx = 0; idx < treasury.length; idx++) {

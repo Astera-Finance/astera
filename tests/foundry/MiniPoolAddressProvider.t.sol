@@ -23,7 +23,7 @@ contract MiniPoolAddressProvider is Common {
         assertEq(vm.activeFork(), opFork);
         deployedContracts = fixture_deployProtocol();
         configAddresses = ConfigAddresses(
-            address(deployedContracts.cod3xLendDataProvider),
+            address(deployedContracts.asteraLendDataProvider),
             address(deployedContracts.stableStrategy),
             address(deployedContracts.volatileStrategy),
             address(deployedContracts.treasury),
@@ -44,7 +44,7 @@ contract MiniPoolAddressProvider is Common {
         (miniPoolContracts,) = fixture_deployMiniPoolSetup(
             address(deployedContracts.lendingPoolAddressesProvider),
             address(deployedContracts.lendingPool),
-            address(deployedContracts.cod3xLendDataProvider),
+            address(deployedContracts.asteraLendDataProvider),
             miniPoolContracts
         );
 
@@ -58,7 +58,8 @@ contract MiniPoolAddressProvider is Common {
             }
         }
 
-        configAddresses.cod3xLendDataProvider = address(miniPoolContracts.miniPoolAddressesProvider);
+        configAddresses.asteraLendDataProvider =
+            address(miniPoolContracts.miniPoolAddressesProvider);
         configAddresses.stableStrategy = address(miniPoolContracts.stableStrategy);
         configAddresses.volatileStrategy = address(miniPoolContracts.volatileStrategy);
         miniPool =
@@ -233,16 +234,16 @@ contract MiniPoolAddressProvider is Common {
             address treasury = makeAddr("Treasury");
             console2.log(
                 "1. Treasury",
-                miniPoolContracts.miniPoolAddressesProvider.getMiniPoolCod3xTreasury()
+                miniPoolContracts.miniPoolAddressesProvider.getMiniPoolAsteraTreasury()
             );
             vm.prank(address(miniPoolContracts.miniPoolConfigurator));
-            miniPoolContracts.miniPoolAddressesProvider.setCod3xTreasury(treasury);
+            miniPoolContracts.miniPoolAddressesProvider.setAsteraTreasury(treasury);
             console2.log(
                 "2. Treasury",
-                miniPoolContracts.miniPoolAddressesProvider.getMiniPoolCod3xTreasury()
+                miniPoolContracts.miniPoolAddressesProvider.getMiniPoolAsteraTreasury()
             );
             assertEq(
-                miniPoolContracts.miniPoolAddressesProvider.getMiniPoolCod3xTreasury(),
+                miniPoolContracts.miniPoolAddressesProvider.getMiniPoolAsteraTreasury(),
                 treasury,
                 "Wrong treasury"
             );
@@ -436,7 +437,7 @@ contract MiniPoolAddressProvider is Common {
             address(erc20Tokens[0]), miniPool, randomNumber
         );
         miniPoolContracts.miniPoolAddressesProvider.setPoolAdmin(0, randomAddress);
-        miniPoolContracts.miniPoolAddressesProvider.setCod3xTreasury(address(0));
+        miniPoolContracts.miniPoolAddressesProvider.setAsteraTreasury(address(0));
         miniPoolContracts.miniPoolAddressesProvider.setMinipoolOwnerTreasuryToMiniPool(
             0, randomAddress
         );
@@ -471,7 +472,7 @@ contract MiniPoolAddressProvider is Common {
         vm.expectRevert(bytes(Errors.LP_CALLER_NOT_LENDING_POOL_CONFIGURATOR));
         miniPoolContracts.miniPoolAddressesProvider.setPoolAdmin(0, randomAddress);
         vm.expectRevert(bytes(Errors.LP_CALLER_NOT_LENDING_POOL_CONFIGURATOR));
-        miniPoolContracts.miniPoolAddressesProvider.setCod3xTreasury(address(0));
+        miniPoolContracts.miniPoolAddressesProvider.setAsteraTreasury(address(0));
         vm.expectRevert(bytes(Errors.LP_CALLER_NOT_LENDING_POOL_CONFIGURATOR));
         miniPoolContracts.miniPoolAddressesProvider.setMinipoolOwnerTreasuryToMiniPool(
             0, randomAddress

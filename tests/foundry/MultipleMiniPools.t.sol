@@ -8,7 +8,7 @@ import {PercentageMath} from "contracts/protocol/libraries/math/PercentageMath.s
 import {ReserveConfiguration} from
     "contracts/protocol/libraries/configuration/ReserveConfiguration.sol";
 import {PercentageMath} from "contracts/protocol/libraries/math/PercentageMath.sol";
-import "contracts/misc/Cod3xLendDataProvider.sol";
+import "contracts/misc/AsteraLendDataProvider.sol";
 
 import "forge-std/StdUtils.sol";
 import "forge-std/console2.sol";
@@ -64,7 +64,7 @@ contract MultiplePools is MiniPoolFixtures {
         deployedContracts = fixture_deployProtocol();
 
         configLpAddresses = ConfigAddresses(
-            address(deployedContracts.cod3xLendDataProvider),
+            address(deployedContracts.asteraLendDataProvider),
             address(deployedContracts.stableStrategy),
             address(deployedContracts.volatileStrategy),
             address(deployedContracts.treasury),
@@ -88,7 +88,7 @@ contract MultiplePools is MiniPoolFixtures {
         (miniPoolContracts, id) = fixture_deployMiniPoolSetup(
             address(deployedContracts.lendingPoolAddressesProvider),
             address(deployedContracts.lendingPool),
-            address(deployedContracts.cod3xLendDataProvider),
+            address(deployedContracts.asteraLendDataProvider),
             miniPoolContracts
         );
         console2.log("1.Id: ", id);
@@ -98,7 +98,7 @@ contract MultiplePools is MiniPoolFixtures {
         (miniPoolContracts, id) = fixture_deployMiniPoolSetup(
             address(deployedContracts.lendingPoolAddressesProvider),
             address(deployedContracts.lendingPool),
-            address(deployedContracts.cod3xLendDataProvider),
+            address(deployedContracts.asteraLendDataProvider),
             miniPoolContracts
         );
         console2.log("2.Id: ", id);
@@ -107,7 +107,7 @@ contract MultiplePools is MiniPoolFixtures {
         (miniPoolContracts, id) = fixture_deployMiniPoolSetup(
             address(deployedContracts.lendingPoolAddressesProvider),
             address(deployedContracts.lendingPool),
-            address(deployedContracts.cod3xLendDataProvider),
+            address(deployedContracts.asteraLendDataProvider),
             miniPoolContracts
         );
         console2.log("3.Id: ", id);
@@ -123,7 +123,7 @@ contract MultiplePools is MiniPoolFixtures {
                     address(commonContracts.aTokens[idx - tokens.length].WRAPPER_ADDRESS());
             }
         }
-        configLpAddresses.cod3xLendDataProvider =
+        configLpAddresses.asteraLendDataProvider =
             address(miniPoolContracts.miniPoolAddressesProvider);
         configLpAddresses.stableStrategy = address(miniPoolContracts.stableStrategy);
         configLpAddresses.volatileStrategy = address(miniPoolContracts.volatileStrategy);

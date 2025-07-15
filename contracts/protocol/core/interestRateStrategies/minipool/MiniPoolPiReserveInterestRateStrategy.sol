@@ -133,7 +133,7 @@ contract MiniPoolPiReserveInterestRateStrategy is
         uint256 currentLiquidityRate = _getLiquidityRate(
             currentVariableBorrowRate,
             utilizationRate,
-            ReserveConfiguration.getCod3xReserveFactorMemory(reserve.configuration)
+            ReserveConfiguration.getAsteraReserveFactorMemory(reserve.configuration)
                 + ReserveConfiguration.getMinipoolOwnerReserveMemory(reserve.configuration)
         );
         return (currentLiquidityRate, currentVariableBorrowRate, utilizationRate);

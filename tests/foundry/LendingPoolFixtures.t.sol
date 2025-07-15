@@ -68,7 +68,7 @@ abstract contract LendingPoolFixtures is Common {
         uint256 collateralPrice = commonContracts.oracle.getAssetPrice(address(collateral));
         uint256 collateralDepositValue = amount * collateralPrice / (10 ** PRICE_FEED_DECIMALS);
         StaticData memory staticData = deployedContracts
-            .cod3xLendDataProvider
+            .asteraLendDataProvider
             .getLpReserveStaticData(address(collateral), true);
         uint256 maxBorrowTokenToBorrowInCollateralUnit;
         {
@@ -106,11 +106,11 @@ abstract contract LendingPoolFixtures is Common {
         uint256 debtBalanceBefore = borrowToken.debtToken.balanceOf(borrower);
 
         DynamicData memory dynamicData = deployedContracts
-            .cod3xLendDataProvider
+            .asteraLendDataProvider
             .getLpReserveDynamicData(address(borrowToken.token), true);
 
         StaticData memory staticData = deployedContracts
-            .cod3xLendDataProvider
+            .asteraLendDataProvider
             .getLpReserveStaticData(address(borrowToken.token), true);
         (, uint256 expectedBorrowRate) = deployedContracts.volatileStrategy.calculateInterestRates(
             address(borrowToken.token),
@@ -118,7 +118,7 @@ abstract contract LendingPoolFixtures is Common {
             0,
             amountToBorrow,
             dynamicData.totalVariableDebt + amountToBorrow,
-            staticData.cod3xReserveFactor
+            staticData.asteraReserveFactor
         );
         console2.log(
             "1. AToken balance: ", borrowToken.token.balanceOf(address(borrowToken.aToken))

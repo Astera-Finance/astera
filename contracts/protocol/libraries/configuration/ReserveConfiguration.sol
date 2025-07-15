@@ -26,7 +26,7 @@ library ReserveConfiguration {
         0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFBFFFFFFFFFFFFFF;
     uint256 internal constant FLASHLOAN_ENABLED_MASK =
         0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF7FFFFFFFFFFFFFF;
-    uint256 internal constant COD3X_RESERVE_FACTOR_MASK =
+    uint256 internal constant ASTERA_RESERVE_FACTOR_MASK =
         0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF0000FFFFFFFFFFFFFFF;
     uint256 internal constant MINIPOOL_OWNER_RESERVE_FACTOR_MASK =
         0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF0000FFFFFFFFFFFFFFFFFFF;
@@ -43,7 +43,7 @@ library ReserveConfiguration {
     uint256 internal constant IS_FROZEN_START_BIT_POSITION = 57;
     uint256 internal constant BORROWING_ENABLED_START_BIT_POSITION = 58;
     uint256 internal constant FLASHLOAN_ENABLED_START_BIT_POSITION = 59;
-    uint256 internal constant COD3X_RESERVE_FACTOR_START_BIT_POSITION = 60;
+    uint256 internal constant ASTERA_RESERVE_FACTOR_START_BIT_POSITION = 60;
     uint256 internal constant MINIPOOL_OWNER_FACTOR_START_BIT_POSITION = 76;
     uint256 internal constant DEPOSIT_CAP_START_BIT_POSITION = 92;
     uint256 internal constant RESERVE_TYPE_START_BIT_POSITION = 164;
@@ -235,45 +235,45 @@ library ReserveConfiguration {
     }
 
     /**
-     * @dev Sets the Cod3x reserve factor of the reserve.
+     * @dev Sets the Astera reserve factor of the reserve.
      * @param self The reserve configuration map.
      * @param reserveFactor The reserve factor value to set.
      */
-    function setCod3xReserveFactor(
+    function setAsteraReserveFactor(
         DataTypes.ReserveConfigurationMap memory self,
         uint256 reserveFactor
     ) internal pure {
         require(reserveFactor <= MAX_VALID_RESERVE_FACTOR, Errors.RC_INVALID_RESERVE_FACTOR);
 
-        self.data = (self.data & COD3X_RESERVE_FACTOR_MASK)
-            | (reserveFactor << COD3X_RESERVE_FACTOR_START_BIT_POSITION);
+        self.data = (self.data & ASTERA_RESERVE_FACTOR_MASK)
+            | (reserveFactor << ASTERA_RESERVE_FACTOR_START_BIT_POSITION);
     }
 
     /**
-     * @dev Gets the Cod3x reserve factor of the reserve.
+     * @dev Gets the Astera reserve factor of the reserve.
      * @param self The reserve configuration map.
-     * @return The current Cod3x reserve factor value.
+     * @return The current Astera reserve factor value.
      */
-    function getCod3xReserveFactor(DataTypes.ReserveConfigurationMap storage self)
+    function getAsteraReserveFactor(DataTypes.ReserveConfigurationMap storage self)
         internal
         view
         returns (uint256)
     {
-        return (self.data & ~COD3X_RESERVE_FACTOR_MASK) >> COD3X_RESERVE_FACTOR_START_BIT_POSITION;
+        return (self.data & ~ASTERA_RESERVE_FACTOR_MASK) >> ASTERA_RESERVE_FACTOR_START_BIT_POSITION;
     }
 
     /**
-     * @notice Gets the Cod3x reserve factor from reserve configuration.
-     * @dev This is a redefined version of getCod3xReserveFactor() for memory usage.
+     * @notice Gets the Astera reserve factor from reserve configuration.
+     * @dev This is a redefined version of getAsteraReserveFactor() for memory usage.
      * @param self The reserve configuration.
-     * @return The Cod3x reserve factor.
+     * @return The Astera reserve factor.
      */
-    function getCod3xReserveFactorMemory(DataTypes.ReserveConfigurationMap memory self)
+    function getAsteraReserveFactorMemory(DataTypes.ReserveConfigurationMap memory self)
         internal
         pure
         returns (uint256)
     {
-        return (self.data & ~COD3X_RESERVE_FACTOR_MASK) >> COD3X_RESERVE_FACTOR_START_BIT_POSITION;
+        return (self.data & ~ASTERA_RESERVE_FACTOR_MASK) >> ASTERA_RESERVE_FACTOR_START_BIT_POSITION;
     }
 
     /**
@@ -394,7 +394,7 @@ library ReserveConfiguration {
     /**
      * @dev Gets the configuration parameters of the reserve.
      * @param self The reserve configuration map.
-     * @return A tuple containing LTV, liquidation threshold, liquidation bonus, decimals, and Cod3x reserve factor.
+     * @return A tuple containing LTV, liquidation threshold, liquidation bonus, decimals, and Astera reserve factor.
      */
     function getParams(DataTypes.ReserveConfigurationMap storage self)
         internal
@@ -408,14 +408,14 @@ library ReserveConfiguration {
             (dataLocal & ~LIQUIDATION_THRESHOLD_MASK) >> LIQUIDATION_THRESHOLD_START_BIT_POSITION,
             (dataLocal & ~LIQUIDATION_BONUS_MASK) >> LIQUIDATION_BONUS_START_BIT_POSITION,
             (dataLocal & ~DECIMALS_MASK) >> RESERVE_DECIMALS_START_BIT_POSITION,
-            (dataLocal & ~COD3X_RESERVE_FACTOR_MASK) >> COD3X_RESERVE_FACTOR_START_BIT_POSITION
+            (dataLocal & ~ASTERA_RESERVE_FACTOR_MASK) >> ASTERA_RESERVE_FACTOR_START_BIT_POSITION
         );
     }
 
     /**
      * @dev Gets the configuration parameters of the reserve from a memory object.
      * @param self The reserve configuration map.
-     * @return A tuple containing LTV, liquidation threshold, liquidation bonus, decimals, Cod3x reserve factor, minipool owner reserve factor, and deposit cap.
+     * @return A tuple containing LTV, liquidation threshold, liquidation bonus, decimals, Astera reserve factor, minipool owner reserve factor, and deposit cap.
      */
     function getParamsMemory(DataTypes.ReserveConfigurationMap memory self)
         internal
@@ -427,7 +427,7 @@ library ReserveConfiguration {
             (self.data & ~LIQUIDATION_THRESHOLD_MASK) >> LIQUIDATION_THRESHOLD_START_BIT_POSITION,
             (self.data & ~LIQUIDATION_BONUS_MASK) >> LIQUIDATION_BONUS_START_BIT_POSITION,
             (self.data & ~DECIMALS_MASK) >> RESERVE_DECIMALS_START_BIT_POSITION,
-            (self.data & ~COD3X_RESERVE_FACTOR_MASK) >> COD3X_RESERVE_FACTOR_START_BIT_POSITION,
+            (self.data & ~ASTERA_RESERVE_FACTOR_MASK) >> ASTERA_RESERVE_FACTOR_START_BIT_POSITION,
             (self.data & ~MINIPOOL_OWNER_RESERVE_FACTOR_MASK)
                 >> MINIPOOL_OWNER_FACTOR_START_BIT_POSITION,
             (self.data & ~DEPOSIT_CAP_MASK) >> DEPOSIT_CAP_START_BIT_POSITION

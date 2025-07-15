@@ -52,7 +52,7 @@ contract PidReserveInterestRateStrategyTest is Common {
 
         // we replace stableStrategy and volatileStrategy by pidStrat
         configAddresses = ConfigAddresses(
-            address(deployedContracts.cod3xLendDataProvider),
+            address(deployedContracts.asteraLendDataProvider),
             address(pidStrat), // address(deployedContracts.stableStrategy), usdc, dai
             address(deployedContracts.volatileStrategy), // address(deployedContracts.volatileStrategy), wbtc, weth
             address(deployedContracts.treasury),
@@ -67,9 +67,9 @@ contract PidReserveInterestRateStrategyTest is Common {
             deployedContracts.lendingPoolAddressesProvider
         );
         commonContracts.aTokens =
-            fixture_getATokens(tokens, deployedContracts.cod3xLendDataProvider);
+            fixture_getATokens(tokens, deployedContracts.asteraLendDataProvider);
         commonContracts.variableDebtTokens =
-            fixture_getVarDebtTokens(tokens, deployedContracts.cod3xLendDataProvider);
+            fixture_getVarDebtTokens(tokens, deployedContracts.asteraLendDataProvider);
         commonContracts.mockedVaults =
             fixture_deployReaperVaultMocks(tokens, address(deployedContracts.treasury));
         erc20Tokens = fixture_getErc20Tokens(tokens);

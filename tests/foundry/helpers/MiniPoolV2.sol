@@ -442,7 +442,7 @@ contract MiniPoolV2 is
                     asset,
                     false,
                     remainingBalance - ERROR_REMAINDER_MARGIN,
-                    _addressesProvider.getMiniPoolCod3xTreasury()
+                    _addressesProvider.getMiniPoolAsteraTreasury()
                 );
             }
         }

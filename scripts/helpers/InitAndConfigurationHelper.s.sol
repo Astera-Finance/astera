@@ -11,8 +11,8 @@ import "contracts/protocol/core/minipool/MiniPoolConfigurator.sol";
 
 import "contracts/protocol/tokenization/ERC20/AToken.sol";
 import "contracts/protocol/tokenization/ERC20/VariableDebtToken.sol";
-// import "contracts/misc/Cod3xLendDataProvider.sol";
-import "contracts/misc/Cod3xLendDataProvider2.sol";
+// import "contracts/misc/AsteraLendDataProvider.sol";
+import "contracts/misc/AsteraLendDataProvider2.sol";
 import "../DeployDataTypes.sol";
 
 import "forge-std/console2.sol";
@@ -174,7 +174,7 @@ contract InitAndConfigurationHelper {
                 }
             }
 
-            _contracts.lendingPoolConfigurator.setCod3xReserveFactor(
+            _contracts.lendingPoolConfigurator.setAsteraReserveFactor(
                 reserveConfig.tokenAddress, reserveConfig.reserveType, reserveConfig.reserveFactor
             );
             _contracts.lendingPoolConfigurator.enableFlashloan(
@@ -320,7 +320,7 @@ contract InitAndConfigurationHelper {
                     reserveConfig.tokenAddress, IMiniPool(_mp)
                 );
             }
-            _contracts.miniPoolConfigurator.setCod3xReserveFactor(
+            _contracts.miniPoolConfigurator.setAsteraReserveFactor(
                 reserveConfig.tokenAddress, reserveConfig.reserveFactor, IMiniPool(_mp)
             );
             _contracts.miniPoolConfigurator.setMinipoolOwnerReserveFactor(

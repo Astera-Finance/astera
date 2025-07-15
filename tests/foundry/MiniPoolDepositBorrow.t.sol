@@ -9,7 +9,7 @@ import {ReserveConfiguration} from
     "contracts/protocol/libraries/configuration/ReserveConfiguration.sol";
 import {PercentageMath} from "contracts/protocol/libraries/math/PercentageMath.sol";
 import {MintableERC20} from "contracts/mocks/tokens/MintableERC20.sol";
-import "contracts/misc/Cod3xLendDataProvider.sol";
+import "contracts/misc/AsteraLendDataProvider.sol";
 
 import "forge-std/StdUtils.sol";
 import "forge-std/console2.sol";
@@ -27,7 +27,7 @@ contract MiniPoolDepositBorrowTest is MiniPoolFixtures {
         deployedContracts = fixture_deployProtocol();
 
         configLpAddresses = ConfigAddresses(
-            address(deployedContracts.cod3xLendDataProvider),
+            address(deployedContracts.asteraLendDataProvider),
             address(deployedContracts.stableStrategy),
             address(deployedContracts.volatileStrategy),
             address(deployedContracts.treasury),
@@ -48,7 +48,7 @@ contract MiniPoolDepositBorrowTest is MiniPoolFixtures {
         (miniPoolContracts,) = fixture_deployMiniPoolSetup(
             address(deployedContracts.lendingPoolAddressesProvider),
             address(deployedContracts.lendingPool),
-            address(deployedContracts.cod3xLendDataProvider),
+            address(deployedContracts.asteraLendDataProvider),
             miniPoolContracts
         );
 
@@ -62,7 +62,7 @@ contract MiniPoolDepositBorrowTest is MiniPoolFixtures {
                     address(commonContracts.aTokens[idx - tokens.length].WRAPPER_ADDRESS());
             }
         }
-        configLpAddresses.cod3xLendDataProvider =
+        configLpAddresses.asteraLendDataProvider =
             address(miniPoolContracts.miniPoolAddressesProvider);
         configLpAddresses.stableStrategy = address(miniPoolContracts.stableStrategy);
         configLpAddresses.volatileStrategy = address(miniPoolContracts.volatileStrategy);
@@ -140,7 +140,7 @@ contract MiniPoolDepositBorrowTest is MiniPoolFixtures {
 
         address[] memory aTokensW = new address[](1);
 
-        (address _aTokenAddress,) = Cod3xLendDataProvider(deployedContracts.cod3xLendDataProvider)
+        (address _aTokenAddress,) = AsteraLendDataProvider(deployedContracts.asteraLendDataProvider)
             .getLpTokens(address(mockToken), false);
         console2.log("AToken ::::  ", _aTokenAddress);
         aTokensW[0] = address(AToken(_aTokenAddress).WRAPPER_ADDRESS());
@@ -253,14 +253,14 @@ contract MiniPoolDepositBorrowTest is MiniPoolFixtures {
          * Test Scenario:
          * 1. User adds token as collateral into the miniPool
          * 2. User borrows token
-         * 3. Cod3x and pool owner treasuries are set
+         * 3. Astera and pool owner treasuries are set
          * 4. Reserve factors are established to non-zero values
          * Invariants:
          * 1. Balance of debtToken for user in IERC6909 standard increased
          * 2. Total supply of debtToken shall increase
          * 3. Health of user's position shall decrease
          * 4. User shall have borrowed assets
-         * 5. Cod3x treasury shall have some funds taken according to cod3x reserve factor
+         * 5. Astera treasury shall have some funds taken according to astera reserve factor
          * 6. Owner treasury shall have some funds taken according to owner reserve factor
          */
 
@@ -304,10 +304,10 @@ contract MiniPoolDepositBorrowTest is MiniPoolFixtures {
         address treasury = address(deployedContracts.treasury);
         console2.log("Treasury 1: ", treasury);
         console2.log(
-            "Treasury 2: ", miniPoolContracts.miniPoolAddressesProvider.getMiniPoolCod3xTreasury()
+            "Treasury 2: ", miniPoolContracts.miniPoolAddressesProvider.getMiniPoolAsteraTreasury()
         );
         vm.prank(miniPoolContracts.miniPoolAddressesProvider.getMainPoolAdmin());
-        miniPoolContracts.miniPoolConfigurator.setCod3xTreasury(treasury);
+        miniPoolContracts.miniPoolConfigurator.setAsteraTreasury(treasury);
         IAERC6909 aErc6909Token =
             IAERC6909(miniPoolContracts.miniPoolAddressesProvider.getMiniPoolToAERC6909(miniPool));
 
@@ -316,10 +316,10 @@ contract MiniPoolDepositBorrowTest is MiniPoolFixtures {
             amount, collateralOffset, borrowOffset, collateralTokenParams, borrowTokenParams, user
         );
         DynamicData memory dynamicData = deployedContracts
-            .cod3xLendDataProvider
+            .asteraLendDataProvider
             .getMpReserveDynamicData(address(borrowTokenParams.token), 0);
         vm.startPrank(miniPoolContracts.miniPoolAddressesProvider.getMainPoolAdmin());
-        miniPoolContracts.miniPoolConfigurator.setCod3xReserveFactor(
+        miniPoolContracts.miniPoolConfigurator.setAsteraReserveFactor(
             address(borrowTokenParams.token), validReserveFactor, IMiniPool(miniPool)
         );
         uint256 previousVariableBorrowIndex = dynamicData.variableBorrowIndex;
@@ -345,7 +345,7 @@ contract MiniPoolDepositBorrowTest is MiniPoolFixtures {
         fixture_miniPoolBorrow(
             amount, collateralOffset, borrowOffset, collateralTokenParams, borrowTokenParams, user
         );
-        dynamicData = deployedContracts.cod3xLendDataProvider.getMpReserveDynamicData(
+        dynamicData = deployedContracts.asteraLendDataProvider.getMpReserveDynamicData(
             address(borrowTokenParams.token), 0
         );
         console2.log("2.Treasury balance: ", aErc6909Token.balanceOf(treasury, 1128 + borrowOffset));
@@ -378,16 +378,16 @@ contract MiniPoolDepositBorrowTest is MiniPoolFixtures {
         uint256 borrowAmount;
         uint256 collateralOffset;
         uint256 borrowOffset;
-        uint256 cod3xReserveFactor;
+        uint256 asteraReserveFactor;
         uint256 ownerReserveFactor;
-        address cod3xTreasury;
+        address asteraTreasury;
         address ownerTreasury;
     }
 
     struct DynamicParams {
         uint256 scaledVariableDebt;
         uint256 scaledTotalSupply;
-        uint256 cod3xTreasuryAmountToMint;
+        uint256 asteraTreasuryAmountToMint;
         uint256 ownerTreasuryAmountToMint;
     }
 
@@ -413,9 +413,9 @@ contract MiniPoolDepositBorrowTest is MiniPoolFixtures {
         testParams.borrowAmount = 1e8; // 1 BTC
         testParams.collateralOffset = 0; // USDC
         testParams.borrowOffset = 1; // BTC
-        testParams.cod3xReserveFactor = 500; // 5%
+        testParams.asteraReserveFactor = 500; // 5%
         testParams.ownerReserveFactor = 200; //2%
-        testParams.cod3xTreasury = address(deployedContracts.treasury);
+        testParams.asteraTreasury = address(deployedContracts.treasury);
         testParams.ownerTreasury = makeAddr("ownerTreasury");
 
         console2.log("[collateral]Offset: ", testParams.collateralOffset);
@@ -437,7 +437,7 @@ contract MiniPoolDepositBorrowTest is MiniPoolFixtures {
         deal(address(collateralTokenParams.token), user, 2 * testParams.depositAmount);
 
         vm.prank(miniPoolContracts.miniPoolAddressesProvider.getMainPoolAdmin());
-        miniPoolContracts.miniPoolConfigurator.setCod3xTreasury(testParams.cod3xTreasury);
+        miniPoolContracts.miniPoolConfigurator.setAsteraTreasury(testParams.asteraTreasury);
         vm.startPrank(miniPoolContracts.miniPoolAddressesProvider.getPoolAdmin(0));
         miniPoolContracts.miniPoolConfigurator.setMinipoolOwnerTreasuryToMiniPool(
             testParams.ownerTreasury, IMiniPool(miniPool)
@@ -469,12 +469,12 @@ contract MiniPoolDepositBorrowTest is MiniPoolFixtures {
         vm.stopPrank();
 
         DynamicData memory dynamicData = deployedContracts
-            .cod3xLendDataProvider
+            .asteraLendDataProvider
             .getMpReserveDynamicData(address(borrowTokenParams.token), 0);
         uint256 previousVariableBorrowIndex = dynamicData.variableBorrowIndex;
         vm.startPrank(miniPoolContracts.miniPoolAddressesProvider.getMainPoolAdmin());
-        miniPoolContracts.miniPoolConfigurator.setCod3xReserveFactor(
-            address(borrowTokenParams.token), testParams.cod3xReserveFactor, IMiniPool(miniPool)
+        miniPoolContracts.miniPoolConfigurator.setAsteraReserveFactor(
+            address(borrowTokenParams.token), testParams.asteraReserveFactor, IMiniPool(miniPool)
         );
         vm.stopPrank();
 
@@ -493,7 +493,7 @@ contract MiniPoolDepositBorrowTest is MiniPoolFixtures {
 
         console2.log(
             "1.Treasury balance: ",
-            aErc6909Token.balanceOf(testParams.cod3xTreasury, 1128 + testParams.borrowOffset)
+            aErc6909Token.balanceOf(testParams.asteraTreasury, 1128 + testParams.borrowOffset)
         );
         dynamicParams.scaledVariableDebt =
             aErc6909Token.scaledTotalSupply(2128 + testParams.borrowOffset);
@@ -527,27 +527,27 @@ contract MiniPoolDepositBorrowTest is MiniPoolFixtures {
         );
         vm.stopPrank();
 
-        dynamicData = deployedContracts.cod3xLendDataProvider.getMpReserveDynamicData(
+        dynamicData = deployedContracts.asteraLendDataProvider.getMpReserveDynamicData(
             address(borrowTokenParams.token), 0
         );
         console2.log(
             "2.Treasury balance: ",
-            aErc6909Token.balanceOf(testParams.cod3xTreasury, 1128 + testParams.borrowOffset)
+            aErc6909Token.balanceOf(testParams.asteraTreasury, 1128 + testParams.borrowOffset)
         );
         console2.log("Balance of token must be greater than before borrow");
         console2.log(
-            "Cod3x treasury balance: ",
-            aErc6909Token.balanceOf(testParams.cod3xTreasury, 1128 + testParams.borrowOffset)
+            "Astera treasury balance: ",
+            aErc6909Token.balanceOf(testParams.asteraTreasury, 1128 + testParams.borrowOffset)
         );
         console2.log(
             "OwnerTreasury balance: ",
             aErc6909Token.balanceOf(testParams.ownerTreasury, 1128 + testParams.borrowOffset)
         );
 
-        dynamicParams.cod3xTreasuryAmountToMint = (
+        dynamicParams.asteraTreasuryAmountToMint = (
             dynamicParams.scaledVariableDebt.rayMul(dynamicData.variableBorrowIndex)
                 - dynamicParams.scaledVariableDebt.rayMul(previousVariableBorrowIndex)
-        ).percentMul(testParams.cod3xReserveFactor);
+        ).percentMul(testParams.asteraReserveFactor);
 
         dynamicParams.ownerTreasuryAmountToMint = (
             dynamicParams.scaledVariableDebt.rayMul(dynamicData.variableBorrowIndex)
@@ -555,8 +555,8 @@ contract MiniPoolDepositBorrowTest is MiniPoolFixtures {
         ).percentMul(testParams.ownerReserveFactor);
 
         assertApproxEqAbs(
-            aErc6909Token.balanceOf(testParams.cod3xTreasury, 1128 + testParams.borrowOffset),
-            dynamicParams.cod3xTreasuryAmountToMint,
+            aErc6909Token.balanceOf(testParams.asteraTreasury, 1128 + testParams.borrowOffset),
+            dynamicParams.asteraTreasuryAmountToMint,
             1
         );
         assertApproxEqAbs(
@@ -569,7 +569,7 @@ contract MiniPoolDepositBorrowTest is MiniPoolFixtures {
         assertApproxEqAbs(
             dynamicParams.scaledTotalSupply
                 + (
-                    2 * testParams.borrowAmount + dynamicParams.cod3xTreasuryAmountToMint
+                    2 * testParams.borrowAmount + dynamicParams.asteraTreasuryAmountToMint
                         + dynamicParams.ownerTreasuryAmountToMint
                 ).rayDiv(dynamicData.liquidityIndex),
             aErc6909Token.scaledTotalSupply(1128 + testParams.borrowOffset),

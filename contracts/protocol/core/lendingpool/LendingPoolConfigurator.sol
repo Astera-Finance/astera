@@ -467,7 +467,7 @@ contract LendingPoolConfigurator is
      * @notice The reserve factor determines the portion of interest that goes to the protocol.
      * @notice Emits a `ReserveFactorChanged` event.
      */
-    function setCod3xReserveFactor(address asset, bool reserveType, uint256 reserveFactor)
+    function setAsteraReserveFactor(address asset, bool reserveType, uint256 reserveFactor)
         external
         onlyPoolAdmin
     {
@@ -476,7 +476,7 @@ contract LendingPoolConfigurator is
         DataTypes.ReserveConfigurationMap memory currentConfig =
             pool.getConfiguration(asset, reserveType);
 
-        currentConfig.setCod3xReserveFactor(reserveFactor);
+        currentConfig.setAsteraReserveFactor(reserveFactor);
 
         pool.setConfiguration(asset, reserveType, currentConfig.data);
 

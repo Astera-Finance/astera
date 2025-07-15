@@ -23,7 +23,7 @@ contract MiniPoolConfiguratorTest is MiniPoolDepositBorrowTest {
     event ReserveFrozen(address indexed asset);
     event ReserveUnfrozen(address indexed asset);
     event ReserveFactorChanged(address indexed asset, uint256 factor);
-    event Cod3xReserveFactorChanged(address indexed asset, uint256 factor);
+    event AsteraReserveFactorChanged(address indexed asset, uint256 factor);
     event MinipoolOwnerReserveFactorChanged(address indexed asset, uint256 factor);
 
     event ReserveDepositCapChanged(address indexed asset, uint256 depositCap);
@@ -69,7 +69,7 @@ contract MiniPoolConfiguratorTest is MiniPoolDepositBorrowTest {
             uint128(randomNumber), IMiniPool(newMiniPool)
         );
         vm.expectRevert(bytes(Errors.VL_CALLER_NOT_POOL_ADMIN));
-        miniPoolContracts.miniPoolConfigurator.setCod3xTreasury(randomAddress);
+        miniPoolContracts.miniPoolConfigurator.setAsteraTreasury(randomAddress);
         vm.expectRevert(bytes(Errors.VL_CALLER_NOT_POOL_ADMIN));
         miniPoolContracts.miniPoolConfigurator.setFlowLimit(
             tokenAddress, randomNumber, IMiniPool(newMiniPool)
@@ -79,7 +79,7 @@ contract MiniPoolConfiguratorTest is MiniPoolDepositBorrowTest {
             tokenAddress, randomAddress, IMiniPool(miniPool)
         );
         vm.expectRevert(bytes(Errors.VL_CALLER_NOT_POOL_ADMIN));
-        miniPoolContracts.miniPoolConfigurator.setCod3xReserveFactor(
+        miniPoolContracts.miniPoolConfigurator.setAsteraReserveFactor(
             tokenAddress, randomNumber, IMiniPool(miniPool)
         );
         vm.expectRevert(bytes(Errors.VL_CALLER_NOT_POOL_ADMIN));
@@ -239,26 +239,26 @@ contract MiniPoolConfiguratorTest is MiniPoolDepositBorrowTest {
         }
     }
 
-    function testMiniPoolSetCod3xReserveFactor_Positive(uint256 validReserveFactor) public {
+    function testMiniPoolSetAsteraReserveFactor_Positive(uint256 validReserveFactor) public {
         validReserveFactor = bound(validReserveFactor, 0, MAX_VALID_RESERVE_FACTOR);
         for (uint32 idx; idx < erc20Tokens.length; idx++) {
             DataTypes.ReserveConfigurationMap memory configuration =
                 IMiniPool(miniPool).getConfiguration(address(erc20Tokens[idx]));
             console2.log("config data: ", configuration.data);
             uint256 reserveFactor = (
-                configuration.data & ~ReserveConfiguration.COD3X_RESERVE_FACTOR_MASK
-            ) >> ReserveConfiguration.COD3X_RESERVE_FACTOR_START_BIT_POSITION;
+                configuration.data & ~ReserveConfiguration.ASTERA_RESERVE_FACTOR_MASK
+            ) >> ReserveConfiguration.ASTERA_RESERVE_FACTOR_START_BIT_POSITION;
             assertEq(reserveFactor, 0, "reserveFactor is not 0");
             vm.expectEmit(true, false, false, false);
-            emit Cod3xReserveFactorChanged(address(erc20Tokens[idx]), validReserveFactor);
+            emit AsteraReserveFactorChanged(address(erc20Tokens[idx]), validReserveFactor);
             vm.startPrank(miniPoolContracts.miniPoolAddressesProvider.getMainPoolAdmin());
-            miniPoolContracts.miniPoolConfigurator.setCod3xReserveFactor(
+            miniPoolContracts.miniPoolConfigurator.setAsteraReserveFactor(
                 address(erc20Tokens[idx]), validReserveFactor, IMiniPool(miniPool)
             );
             vm.stopPrank();
             configuration = IMiniPool(miniPool).getConfiguration(address(erc20Tokens[idx]));
-            reserveFactor = (configuration.data & ~ReserveConfiguration.COD3X_RESERVE_FACTOR_MASK)
-                >> ReserveConfiguration.COD3X_RESERVE_FACTOR_START_BIT_POSITION;
+            reserveFactor = (configuration.data & ~ReserveConfiguration.ASTERA_RESERVE_FACTOR_MASK)
+                >> ReserveConfiguration.ASTERA_RESERVE_FACTOR_START_BIT_POSITION;
             assertEq(reserveFactor, validReserveFactor, "reserveFactor is wrong");
         }
     }
@@ -276,13 +276,13 @@ contract MiniPoolConfiguratorTest is MiniPoolDepositBorrowTest {
         }
     }
 
-    function testMiniPoolSetCod3xReserveFactor_Negative(uint256 invalidReserveFactor) public {
+    function testMiniPoolSetAsteraReserveFactor_Negative(uint256 invalidReserveFactor) public {
         invalidReserveFactor =
             bound(invalidReserveFactor, MAX_VALID_RESERVE_FACTOR + 1, type(uint256).max);
         for (uint32 idx; idx < erc20Tokens.length; idx++) {
             vm.startPrank(miniPoolContracts.miniPoolAddressesProvider.getMainPoolAdmin());
             vm.expectRevert(bytes(Errors.RC_INVALID_RESERVE_FACTOR));
-            miniPoolContracts.miniPoolConfigurator.setCod3xReserveFactor(
+            miniPoolContracts.miniPoolConfigurator.setAsteraReserveFactor(
                 address(erc20Tokens[idx]), invalidReserveFactor, IMiniPool(miniPool)
             );
             vm.stopPrank();
@@ -323,7 +323,7 @@ contract MiniPoolConfiguratorTest is MiniPoolDepositBorrowTest {
         uint256 minNrOfTokens;
         {
             StaticData memory staticData = deployedContracts
-                .cod3xLendDataProvider
+                .asteraLendDataProvider
                 .getLpReserveStaticData(address(collateralTokenParams.token), true);
             console2.log("collateralTokenLtv: ", staticData.ltv);
             uint256 borrowTokenInUsd = (amount * borrowTokenParams.price * 10_000)
@@ -398,7 +398,7 @@ contract MiniPoolConfiguratorTest is MiniPoolDepositBorrowTest {
 
         address treasury = makeAddr("treasury");
         vm.prank(miniPoolContracts.miniPoolAddressesProvider.getMainPoolAdmin());
-        miniPoolContracts.miniPoolConfigurator.setCod3xTreasury(treasury);
+        miniPoolContracts.miniPoolConfigurator.setAsteraTreasury(treasury);
 
         /* Test vars */
         address user = makeAddr("user");
@@ -423,7 +423,7 @@ contract MiniPoolConfiguratorTest is MiniPoolDepositBorrowTest {
         uint256 minNrOfTokens;
         {
             StaticData memory staticData = deployedContracts
-                .cod3xLendDataProvider
+                .asteraLendDataProvider
                 .getLpReserveStaticData(address(collateralTokenParams.token), true);
             uint256 borrowTokenInUsd = (amount * borrowTokenParams.price * 10_000)
                 / ((10 ** PRICE_FEED_DECIMALS) * staticData.ltv);
@@ -463,7 +463,7 @@ contract MiniPoolConfiguratorTest is MiniPoolDepositBorrowTest {
 
         /* Setting reserve factor that allow minting to the treasury */
         vm.startPrank(miniPoolContracts.miniPoolAddressesProvider.getMainPoolAdmin());
-        miniPoolContracts.miniPoolConfigurator.setCod3xReserveFactor(
+        miniPoolContracts.miniPoolConfigurator.setAsteraReserveFactor(
             address(borrowTokenParams.token), validReserveFactor, IMiniPool(miniPool)
         );
         vm.stopPrank();
@@ -504,7 +504,7 @@ contract MiniPoolConfiguratorTest is MiniPoolDepositBorrowTest {
             vm.stopPrank();
             // DataTypes.ReserveConfigurationMap memory currentConfig =
             //     deployedContracts.lendingPool.getConfiguration(address(erc20Tokens[idx]), false);
-            // assertEq(currentConfig.getCod3xReserveFactor(), validReserveFactor);
+            // assertEq(currentConfig.getAsteraReserveFactor(), validReserveFactor);
         }
     }
 
@@ -806,7 +806,7 @@ contract MiniPoolConfiguratorTest is MiniPoolDepositBorrowTest {
         assertEq(poolAdmin, newAdmin);
 
         vm.startPrank(newAdmin);
-        miniPoolContracts.miniPoolConfigurator.setCod3xTreasury(makeAddr("treasury"));
+        miniPoolContracts.miniPoolConfigurator.setAsteraTreasury(makeAddr("treasury"));
         vm.stopPrank();
     }
 
@@ -842,7 +842,7 @@ contract MiniPoolConfiguratorTest is MiniPoolDepositBorrowTest {
             beforeUserAccountData.currentLiquidationThreshold,
             beforeUserAccountData.ltv,
             beforeUserAccountData.healthFactor
-        ) = deployedContracts.cod3xLendDataProvider.getMpUserAccountData(address(this), miniPool);
+        ) = deployedContracts.asteraLendDataProvider.getMpUserAccountData(address(this), miniPool);
 
         {
             console2.log("Reinit the erc20 asset");
@@ -906,7 +906,7 @@ contract MiniPoolConfiguratorTest is MiniPoolDepositBorrowTest {
             afterUserAccountData.currentLiquidationThreshold,
             afterUserAccountData.ltv,
             afterUserAccountData.healthFactor
-        ) = deployedContracts.cod3xLendDataProvider.getMpUserAccountData(address(this), miniPool);
+        ) = deployedContracts.asteraLendDataProvider.getMpUserAccountData(address(this), miniPool);
 
         assertEq(afterUserAccountData.totalCollateralETH, beforeUserAccountData.totalCollateralETH);
         assertEq(afterUserAccountData.totalDebtETH, beforeUserAccountData.totalDebtETH);

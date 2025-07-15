@@ -25,7 +25,7 @@ import {ReserveConfiguration} from
 import {IAERC6909} from "contracts/interfaces/IAERC6909.sol";
 import {IAToken} from "contracts/interfaces/IAToken.sol";
 import {IVariableDebtToken} from "contracts/interfaces/IVariableDebtToken.sol";
-import {ICod3xLendDataProvider} from "contracts/interfaces/ICod3xLendDataProvider.sol";
+import {IAsteraLendDataProvider} from "contracts/interfaces/IAsteraLendDataProvider.sol";
 import {IFlashLoanReceiver} from "contracts/interfaces/IFlashLoanReceiver.sol";
 import {ILendingPool} from "contracts/interfaces/ILendingPool.sol";
 import {ILendingPoolAddressesProvider} from "contracts/interfaces/ILendingPoolAddressesProvider.sol";
@@ -44,7 +44,7 @@ import {IRewarder} from "contracts/interfaces/IRewarder.sol";
 import {IRewardsController} from "contracts/interfaces/IRewardsController.sol";
 import {IRewardsDistributor} from "contracts/interfaces/IRewardsDistributor.sol";
 
-import {Cod3xLendDataProvider} from "contracts/misc/Cod3xLendDataProvider.sol";
+import {AsteraLendDataProvider} from "contracts/misc/AsteraLendDataProvider.sol";
 import {RewardsVault} from "contracts/misc/RewardsVault.sol";
 import {Treasury} from "contracts/misc/Treasury.sol";
 import {WETHGateway} from "contracts/misc/WETHGateway.sol";
@@ -155,9 +155,9 @@ contract PropertiesBase is PropertiesAsserts, MarketParams {
 
     /// Astera contracts
     Oracle internal oracle;
-    Cod3xLendDataProvider internal cod3xLendDataProvider;
+    AsteraLendDataProvider internal asteraLendDataProvider;
     address internal treasury;
-    address internal cod3xTreasury;
+    address internal asteraTreasury;
 
     // LendingPool
     LendingPoolAddressesProvider internal lendingPoolProvider;
@@ -203,7 +203,7 @@ contract PropertiesBase is PropertiesAsserts, MarketParams {
         lendingPoolProvider.setPoolAdmin(address(this));
         lendingPoolProvider.setEmergencyAdmin(address(this));
         treasury = address(0xAAAA);
-        cod3xTreasury = address(0xBBBB);
+        asteraTreasury = address(0xBBBB);
         profitHandler = address(0xCCCC);
 
         pool = new MockLendingPool();
@@ -232,8 +232,8 @@ contract PropertiesBase is PropertiesAsserts, MarketParams {
 
         lendingPoolProvider.setPriceOracle(address(oracle));
 
-        cod3xLendDataProvider = new Cod3xLendDataProvider(ETH_USD_SOURCE, USDC_USD_SOURCE);
-        cod3xLendDataProvider.setLendingPoolAddressProvider(address(lendingPoolProvider));
+        asteraLendDataProvider = new AsteraLendDataProvider(ETH_USD_SOURCE, USDC_USD_SOURCE);
+        asteraLendDataProvider.setLendingPoolAddressProvider(address(lendingPoolProvider));
 
         defaultRateStrategies = new DefaultReserveInterestRateStrategy(
             lendingPoolProvider,
@@ -305,7 +305,7 @@ contract PropertiesBase is PropertiesAsserts, MarketParams {
 
         for (uint256 i = 0; i < totalNbTokens; i++) {
             (address aTokenAddress, address variableDebtTokenAddress) =
-                cod3xLendDataProvider.getLpTokens(address(assets[i]), true);
+                asteraLendDataProvider.getLpTokens(address(assets[i]), true);
             aTokens.push(AToken(aTokenAddress));
             aTokensNonRebasing.push(ATokenNonRebasing(AToken(aTokenAddress).WRAPPER_ADDRESS()));
             debtTokens.push(VariableDebtToken(variableDebtTokenAddress));
@@ -337,13 +337,13 @@ contract PropertiesBase is PropertiesAsserts, MarketParams {
 
         miniPoolProvider.setMiniPoolConfigurator(address(new MiniPoolConfigurator()));
         miniPoolConfigurator = MiniPoolConfigurator(miniPoolProvider.getMiniPoolConfigurator());
-        miniPoolConfigurator.setCod3xTreasury(cod3xTreasury);
+        miniPoolConfigurator.setAsteraTreasury(asteraTreasury);
 
         lendingPoolProvider.setMiniPoolAddressesProvider(address(miniPoolProvider));
 
         flowLimiter = new FlowLimiter(IMiniPoolAddressesProvider(address(miniPoolProvider)));
         lendingPoolProvider.setFlowLimiter(address(flowLimiter));
-        cod3xLendDataProvider.setMiniPoolAddressProvider(address(miniPoolProvider));
+        asteraLendDataProvider.setMiniPoolAddressProvider(address(miniPoolProvider));
 
         minipoolDefaultRateStrategies = new MiniPoolDefaultReserveInterestRateStrategy(
             IMiniPoolAddressesProvider(address(miniPoolProvider)),
@@ -430,7 +430,7 @@ contract PropertiesBase is PropertiesAsserts, MarketParams {
                 );
                 miniPoolConfigurator.activateReserve(token, IMiniPool(_miniPool));
                 miniPoolConfigurator.enableBorrowingOnReserve(token, IMiniPool(_miniPool));
-                miniPoolConfigurator.setCod3xReserveFactor(
+                miniPoolConfigurator.setAsteraReserveFactor(
                     token, DEFAULT_RESERVE_FACTOR, IMiniPool(address(_miniPool))
                 );
                 if (j % 2 == 0) {

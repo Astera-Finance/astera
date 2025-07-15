@@ -35,7 +35,7 @@ interface IAERC6909 is IERC6909 {
 
     function transferUnderlyingTo(address to, uint256 id, uint256 amount, bool unwrap) external;
 
-    function mintToCod3xTreasury(uint256 id, uint256 amount, uint256 index) external;
+    function mintToAsteraTreasury(uint256 id, uint256 amount, uint256 index) external;
 
     function mintToMinipoolOwnerTreasury(uint256 id, uint256 amount, uint256 index) external;
 

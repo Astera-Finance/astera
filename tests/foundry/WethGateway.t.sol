@@ -33,7 +33,7 @@ contract WethGatewayTest is Common {
         deployedContracts = fixture_deployProtocol();
 
         configLpAddresses = ConfigAddresses(
-            address(deployedContracts.cod3xLendDataProvider),
+            address(deployedContracts.asteraLendDataProvider),
             address(deployedContracts.stableStrategy),
             address(deployedContracts.volatileStrategy),
             address(deployedContracts.treasury),
@@ -54,7 +54,7 @@ contract WethGatewayTest is Common {
         (miniPoolContracts,) = fixture_deployMiniPoolSetup(
             address(deployedContracts.lendingPoolAddressesProvider),
             address(deployedContracts.lendingPool),
-            address(deployedContracts.cod3xLendDataProvider),
+            address(deployedContracts.asteraLendDataProvider),
             miniPoolContracts
         );
 
@@ -68,7 +68,7 @@ contract WethGatewayTest is Common {
                     address(commonContracts.aTokens[idx - tokens.length].WRAPPER_ADDRESS());
             }
         }
-        configLpAddresses.cod3xLendDataProvider =
+        configLpAddresses.asteraLendDataProvider =
             address(miniPoolContracts.miniPoolAddressesProvider);
         configLpAddresses.stableStrategy = address(miniPoolContracts.stableStrategy);
         configLpAddresses.volatileStrategy = address(miniPoolContracts.volatileStrategy);
@@ -143,7 +143,7 @@ contract WethGatewayTest is Common {
         commonContracts.wETHGateway.authorizeMiniPool(address(miniPool));
         uint256 initialBalance = ERC20(
             address(
-                fixture_getATokensWrapper(tokens, deployedContracts.cod3xLendDataProvider)[WETH_OFFSET]
+                fixture_getATokensWrapper(tokens, deployedContracts.asteraLendDataProvider)[WETH_OFFSET]
             )
         ).balanceOf(address(aTokensErc6909));
         uint256 initialATokenBalance = aTokensErc6909.balanceOf(user, 1000 + WETH_OFFSET);
@@ -158,7 +158,7 @@ contract WethGatewayTest is Common {
         assertEq(
             ERC20(
                 address(
-                    fixture_getATokensWrapper(tokens, deployedContracts.cod3xLendDataProvider)[WETH_OFFSET]
+                    fixture_getATokensWrapper(tokens, deployedContracts.asteraLendDataProvider)[WETH_OFFSET]
                 )
             ).balanceOf(address(aTokensErc6909)),
             initialBalance + commonContracts.wETHGateway.AWETH().convertToShares(amount),
@@ -191,7 +191,7 @@ contract WethGatewayTest is Common {
     //         IAERC6909(miniPoolContracts.miniPoolAddressesProvider.getMiniPoolToAERC6909(miniPool));
     //     uint256 initialBalance = ERC20(
     //         address(
-    //             fixture_getATokensWrapper(tokens, deployedContracts.cod3xLendDataProvider)[WETH_OFFSET]
+    //             fixture_getATokensWrapper(tokens, deployedContracts.asteraLendDataProvider)[WETH_OFFSET]
     //         )
     //     ).balanceOf(address(aTokensErc6909));
     //     commonContracts.wETHGateway.authorizeMiniPool(address(miniPool));
@@ -203,7 +203,7 @@ contract WethGatewayTest is Common {
     //     assertEq(
     //         ERC20(
     //             address(
-    //                 fixture_getATokensWrapper(tokens, deployedContracts.cod3xLendDataProvider)[WETH_OFFSET]
+    //                 fixture_getATokensWrapper(tokens, deployedContracts.asteraLendDataProvider)[WETH_OFFSET]
     //             )
     //         ).balanceOf(address(aTokensErc6909)),
     //         initialBalance + commonContracts.wETHGateway.AWETH().convertToShares(amount),
@@ -273,7 +273,7 @@ contract WethGatewayTest is Common {
         commonContracts.wETHGateway.authorizeMiniPool(address(miniPool));
         uint256 initialBalance = ERC20(
             address(
-                fixture_getATokensWrapper(tokens, deployedContracts.cod3xLendDataProvider)[WETH_OFFSET]
+                fixture_getATokensWrapper(tokens, deployedContracts.asteraLendDataProvider)[WETH_OFFSET]
             )
         ).balanceOf(address(aTokensErc6909));
         deal(address(user), amount);
@@ -294,7 +294,7 @@ contract WethGatewayTest is Common {
         assertEq(
             ERC20(
                 address(
-                    fixture_getATokensWrapper(tokens, deployedContracts.cod3xLendDataProvider)[WETH_OFFSET]
+                    fixture_getATokensWrapper(tokens, deployedContracts.asteraLendDataProvider)[WETH_OFFSET]
                 )
             ).balanceOf(address(aTokensErc6909)),
             initialBalance,

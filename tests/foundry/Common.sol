@@ -12,11 +12,11 @@ import {ERC20} from "../../contracts/dependencies/openzeppelin/contracts/ERC20.s
 import {Rewarder} from "../../contracts/protocol/rewarder/lendingpool/Rewarder.sol";
 import {Oracle} from "../../contracts/protocol/core/Oracle.sol";
 import {
-    Cod3xLendDataProvider,
+    AsteraLendDataProvider,
     StaticData,
     DynamicData,
     UserReserveData
-} from "../../contracts/misc/Cod3xLendDataProvider.sol";
+} from "../../contracts/misc/AsteraLendDataProvider.sol";
 import {Treasury} from "../../contracts/misc/Treasury.sol";
 import {WETHGateway} from "../../contracts/misc/WETHGateway.sol";
 import {
@@ -93,7 +93,7 @@ contract Common is Test {
     }
 
     struct ConfigAddresses {
-        address cod3xLendDataProvider;
+        address asteraLendDataProvider;
         address stableStrategy;
         address volatileStrategy;
         address treasury;
@@ -120,7 +120,7 @@ contract Common is Test {
         DefaultReserveInterestRateStrategy stableStrategy;
         DefaultReserveInterestRateStrategy volatileStrategy;
         PiReserveInterestRateStrategy piStrategy;
-        Cod3xLendDataProvider cod3xLendDataProvider;
+        AsteraLendDataProvider asteraLendDataProvider;
         ATokensAndRatesHelper aTokensAndRatesHelper;
     }
 
@@ -331,9 +331,9 @@ contract Common is Test {
             address(commonContracts.oracle)
         );
         vm.label(address(commonContracts.oracle), "Oracle");
-        deployedContracts.cod3xLendDataProvider =
-            new Cod3xLendDataProvider(ETH_USD_SOURCE, USDC_USD_SOURCE);
-        deployedContracts.cod3xLendDataProvider.setLendingPoolAddressProvider(
+        deployedContracts.asteraLendDataProvider =
+            new AsteraLendDataProvider(ETH_USD_SOURCE, USDC_USD_SOURCE);
+        deployedContracts.asteraLendDataProvider.setLendingPoolAddressProvider(
             address(deployedContracts.lendingPoolAddressesProvider)
         );
 
@@ -430,13 +430,14 @@ contract Common is Test {
         vm.prank(admin);
         lendingPoolConfiguratorProxy.setPoolPause(false);
 
-        commonContracts.aTokens =
-            fixture_getATokens(tokens, Cod3xLendDataProvider(configAddresses.cod3xLendDataProvider));
+        commonContracts.aTokens = fixture_getATokens(
+            tokens, AsteraLendDataProvider(configAddresses.asteraLendDataProvider)
+        );
         commonContracts.aTokensWrapper = fixture_getATokensWrapper(
-            tokens, Cod3xLendDataProvider(configAddresses.cod3xLendDataProvider)
+            tokens, AsteraLendDataProvider(configAddresses.asteraLendDataProvider)
         );
         commonContracts.variableDebtTokens = fixture_getVarDebtTokens(
-            tokens, Cod3xLendDataProvider(configAddresses.cod3xLendDataProvider)
+            tokens, AsteraLendDataProvider(configAddresses.asteraLendDataProvider)
         );
         commonContracts.wETHGateway =
             new WETHGateway(address(commonContracts.aTokensWrapper[WETH_OFFSET]));
@@ -512,11 +513,11 @@ contract Common is Test {
 
     function fixture_getATokens(
         address[] memory _tokens,
-        Cod3xLendDataProvider cod3xLendDataProvider
+        AsteraLendDataProvider asteraLendDataProvider
     ) public view returns (AToken[] memory _aTokens) {
         _aTokens = new AToken[](_tokens.length);
         for (uint32 idx = 0; idx < _tokens.length; idx++) {
-            (address _aTokenAddress,) = cod3xLendDataProvider.getLpTokens(_tokens[idx], true);
+            (address _aTokenAddress,) = asteraLendDataProvider.getLpTokens(_tokens[idx], true);
             // console2.log("AToken%s: %s", idx, _aTokenAddress);
             _aTokens[idx] = AToken(_aTokenAddress);
         }
@@ -524,11 +525,11 @@ contract Common is Test {
 
     function fixture_getATokensWrapper(
         address[] memory _tokens,
-        Cod3xLendDataProvider cod3xLendDataProvider
+        AsteraLendDataProvider asteraLendDataProvider
     ) public view returns (AToken[] memory _aTokensW) {
         _aTokensW = new AToken[](_tokens.length);
         for (uint32 idx = 0; idx < _tokens.length; idx++) {
-            (address _aTokenAddress,) = cod3xLendDataProvider.getLpTokens(_tokens[idx], true);
+            (address _aTokenAddress,) = asteraLendDataProvider.getLpTokens(_tokens[idx], true);
             // console2.log("AToken%s: %s", idx, _aTokenAddress);
             _aTokensW[idx] = AToken(address(AToken(_aTokenAddress).WRAPPER_ADDRESS()));
         }
@@ -536,11 +537,11 @@ contract Common is Test {
 
     function fixture_getVarDebtTokens(
         address[] memory _tokens,
-        Cod3xLendDataProvider cod3xLendDataProvider
+        AsteraLendDataProvider asteraLendDataProvider
     ) public returns (VariableDebtToken[] memory _varDebtTokens) {
         _varDebtTokens = new VariableDebtToken[](_tokens.length);
         for (uint32 idx = 0; idx < _tokens.length; idx++) {
-            (, address _variableDebtToken) = cod3xLendDataProvider.getLpTokens(_tokens[idx], true);
+            (, address _variableDebtToken) = asteraLendDataProvider.getLpTokens(_tokens[idx], true);
             // console2.log("Atoken address", _variableDebtToken);
             string memory debtToken = string.concat("debtToken", uintToString(idx));
             vm.label(_variableDebtToken, debtToken);
@@ -667,7 +668,7 @@ contract Common is Test {
     function fixture_deployMiniPoolSetup(
         address _lendingPoolAddressesProvider,
         address _lendingPool,
-        address _cod3xLendDataProvider,
+        address _asteraLendDataProvider,
         DeployedMiniPoolContracts memory miniPoolContracts
     ) public returns (DeployedMiniPoolContracts memory, uint256) {
         uint256 miniPoolId;
@@ -733,7 +734,7 @@ contract Common is Test {
                 commonContracts.defaultPidConfig.kp,
                 commonContracts.defaultPidConfig.ki
             );
-            Cod3xLendDataProvider(_cod3xLendDataProvider).setMiniPoolAddressProvider(
+            AsteraLendDataProvider(_asteraLendDataProvider).setMiniPoolAddressProvider(
                 address(miniPoolContracts.miniPoolAddressesProvider)
             );
         } else {

@@ -21,7 +21,7 @@ import {ILendingPoolAddressesProvider} from
  * @dev The contract has the following features:
  * - Abstract aToken price to underlying asset price adjusted to the asset/share conversion ratio.
  * - If the returned price by a Chainlink aggregator is <= 0, the call is forwarded to a `fallbackOracle`.
- * - Owned by the Cod3x Governance system, allowed to add sources for assets, replace them
+ * - Owned by the Astera Governance system, allowed to add sources for assets, replace them
  *   and change the `fallbackOracle`.
  * @dev ATTENTION: All aggregators (main and fallback) are expected to return prices in BASE_CURRENCY with the
  * same BASE_CURRENCY_UNIT unit.
@@ -86,7 +86,7 @@ contract Oracle is IOracle, Ownable {
     }
 
     /**
-     * @notice External function called by the Cod3x Governance to set or replace sources of assets.
+     * @notice External function called by the Astera Governance to set or replace sources of assets.
      * @param assets The addresses of the assets.
      * @param sources The address of the source of each asset.
      * @param timeouts The chainlink timeout of each asset.
@@ -101,7 +101,7 @@ contract Oracle is IOracle, Ownable {
 
     /**
      * @notice Sets the fallback oracle.
-     * @dev Only callable by the Cod3x Governance.
+     * @dev Only callable by the Astera Governance.
      * @param fallbackOracle The address of the fallback oracle.
      */
     function setFallbackOracle(address fallbackOracle) external onlyOwner {

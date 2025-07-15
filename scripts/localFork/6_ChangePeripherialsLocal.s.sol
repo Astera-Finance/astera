@@ -17,7 +17,7 @@ contract ChangePeripherialsLocal is Script, ChangePeripherialsHelper, Test {
     function writeJsonData(string memory root, string memory path) internal {
         /* Write important contracts into the file */
         vm.serializeAddress(
-            "peripherials", "cod3xLendDataProvider", address(contracts.cod3xLendDataProvider)
+            "peripherials", "asteraLendDataProvider", address(contracts.asteraLendDataProvider)
         );
         vm.serializeAddress("peripherials", "rewarder", address(contracts.rewarder));
 
@@ -56,8 +56,8 @@ contract ChangePeripherialsLocal is Script, ChangePeripherialsHelper, Test {
         NewPeripherial[] memory vault = abi.decode(config.parseRaw(".vault"), (NewPeripherial[]));
         NewPeripherial[] memory treasury =
             abi.decode(config.parseRaw(".treasury"), (NewPeripherial[]));
-        NewMiniPoolPeripherial memory miniPoolCod3xTreasury =
-            abi.decode(config.parseRaw(".miniPoolCod3xTreasury"), (NewMiniPoolPeripherial));
+        NewMiniPoolPeripherial memory miniPoolAsteraTreasury =
+            abi.decode(config.parseRaw(".miniPoolAsteraTreasury"), (NewMiniPoolPeripherial));
         NewPeripherial[] memory rewarder =
             abi.decode(config.parseRaw(".rewarder"), (NewPeripherial[]));
         NewPeripherial[] memory rewarder6909 =
@@ -67,8 +67,8 @@ contract ChangePeripherialsLocal is Script, ChangePeripherialsHelper, Test {
             abi.decode(config.parseRaw(".rehypothecation"), (Rehypothecation[]));
 
         uint256 miniPoolId = config.readUint(".miniPoolId");
-        DataProvider memory cod3xLendDataProvider =
-            abi.decode(config.parseRaw(".cod3xLendDataProvider"), (DataProvider));
+        DataProvider memory asteraLendDataProvider =
+            abi.decode(config.parseRaw(".asteraLendDataProvider"), (DataProvider));
 
         address profitHandler = config.readAddress(".profitHandler");
 
@@ -92,7 +92,7 @@ contract ChangePeripherialsLocal is Script, ChangePeripherialsHelper, Test {
         console.log("Changing peripherials");
         _changePeripherials(
             treasury,
-            miniPoolCod3xTreasury,
+            miniPoolAsteraTreasury,
             vault,
             rewarder,
             rewarder6909,
@@ -101,15 +101,15 @@ contract ChangePeripherialsLocal is Script, ChangePeripherialsHelper, Test {
         );
         _turnOnRehypothecation(rehypothecation);
         /* Data Provider */
-        if (cod3xLendDataProvider.deploy) {
-            contracts.cod3xLendDataProvider = new Cod3xLendDataProvider(
-                cod3xLendDataProvider.networkBaseTokenAggregator,
-                cod3xLendDataProvider.marketReferenceCurrencyAggregator
+        if (asteraLendDataProvider.deploy) {
+            contracts.asteraLendDataProvider = new AsteraLendDataProvider(
+                asteraLendDataProvider.networkBaseTokenAggregator,
+                asteraLendDataProvider.marketReferenceCurrencyAggregator
             );
-            contracts.cod3xLendDataProvider.setLendingPoolAddressProvider(
+            contracts.asteraLendDataProvider.setLendingPoolAddressProvider(
                 lendingPoolAddressesProvider
             );
-            contracts.cod3xLendDataProvider.setMiniPoolAddressProvider(miniPoolAddressesProvider);
+            contracts.asteraLendDataProvider.setMiniPoolAddressProvider(miniPoolAddressesProvider);
         }
         vm.stopPrank();
 

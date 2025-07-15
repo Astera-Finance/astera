@@ -23,7 +23,7 @@ contract TransferOwnerships is Script, TransferOwnershipHelper, Test {
         );
 
         assertNotEq(
-            contracts.cod3xLendDataProvider.owner(),
+            contracts.asteraLendDataProvider.owner(),
             vm.addr(vm.envUint("PRIVATE_KEY")),
             "Owner of data provider is still local address"
         );
@@ -125,8 +125,8 @@ contract TransferOwnerships is Script, TransferOwnershipHelper, Test {
             );
             // contracts.treasury = Treasury(deploymentConfig.readAddress(".treasury"));
             contracts.oracle = Oracle(deploymentConfig.readAddress(".oracle"));
-            contracts.cod3xLendDataProvider =
-                Cod3xLendDataProvider(deploymentConfig.readAddress(".cod3xLendDataProvider"));
+            contracts.asteraLendDataProvider =
+                AsteraLendDataProvider(deploymentConfig.readAddress(".asteraLendDataProvider"));
             contracts.wethGateway =
                 WETHGateway(payable(deploymentConfig.readAddress(".wethGateway")));
 
@@ -178,9 +178,9 @@ contract TransferOwnerships is Script, TransferOwnershipHelper, Test {
             contracts.rewarder = Rewarder(deploymentConfig.readAddress(".rewarder"));
             contracts.rewarder6909 = Rewarder6909(deploymentConfig.readAddress(".rewarder6909"));
 
-            address dataProviderAddress = deploymentConfig.readAddress(".cod3xLendDataProvider");
+            address dataProviderAddress = deploymentConfig.readAddress(".asteraLendDataProvider");
             if (dataProviderAddress != address(0)) {
-                contracts.cod3xLendDataProvider = Cod3xLendDataProvider(dataProviderAddress);
+                contracts.asteraLendDataProvider = AsteraLendDataProvider(dataProviderAddress);
             }
 
             require(address(contracts.rewarder) != address(0), "Rewarder's address is 0");
@@ -212,8 +212,8 @@ contract TransferOwnerships is Script, TransferOwnershipHelper, Test {
 
             // contracts.treasury = Treasury(deploymentConfig.readAddress(".treasury"));
             contracts.oracle = Oracle(deploymentConfig.readAddress(".oracle"));
-            contracts.cod3xLendDataProvider =
-                Cod3xLendDataProvider(deploymentConfig.readAddress(".cod3xLendDataProvider"));
+            contracts.asteraLendDataProvider =
+                AsteraLendDataProvider(deploymentConfig.readAddress(".asteraLendDataProvider"));
             contracts.wethGateway =
                 WETHGateway(payable(deploymentConfig.readAddress(".wethGateway")));
 
@@ -261,9 +261,9 @@ contract TransferOwnerships is Script, TransferOwnershipHelper, Test {
             contracts.rewarder = Rewarder(deploymentConfig.readAddress(".rewarder"));
             contracts.rewarder6909 = Rewarder6909(deploymentConfig.readAddress(".rewarder6909"));
 
-            address dataProviderAddress = deploymentConfig.readAddress(".cod3xLendDataProvider");
+            address dataProviderAddress = deploymentConfig.readAddress(".asteraLendDataProvider");
             if (dataProviderAddress != address(0)) {
-                contracts.cod3xLendDataProvider = Cod3xLendDataProvider(dataProviderAddress);
+                contracts.asteraLendDataProvider = AsteraLendDataProvider(dataProviderAddress);
             }
 
             require(address(contracts.rewarder) != address(0), "Rewarder's address is 0");

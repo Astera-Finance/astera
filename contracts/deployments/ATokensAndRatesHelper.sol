@@ -57,7 +57,7 @@ contract ATokensAndRatesHelper is Ownable {
                     inputParams[i].asset, inputParams[i].reserveType
                 );
             }
-            configurator.setCod3xReserveFactor(
+            configurator.setAsteraReserveFactor(
                 inputParams[i].asset, inputParams[i].reserveType, inputParams[i].reserveFactor
             );
         }

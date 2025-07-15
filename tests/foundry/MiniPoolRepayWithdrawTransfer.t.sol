@@ -1232,7 +1232,7 @@ contract MiniPoolRepayWithdrawTransferTest is MiniPoolDepositBorrowTest {
             IAERC6909(miniPoolContracts.miniPoolAddressesProvider.getMiniPoolToAERC6909(miniPool));
 
         vm.prank(miniPoolContracts.miniPoolAddressesProvider.getMainPoolAdmin());
-        miniPoolContracts.miniPoolConfigurator.setCod3xTreasury(address(0x1111));
+        miniPoolContracts.miniPoolConfigurator.setAsteraTreasury(address(0x1111));
 
         /* Deposit tests */
         fixture_depositTokensToMainPool(amountUsdc, user, tokenParamsUsdc);
@@ -1268,7 +1268,7 @@ contract MiniPoolRepayWithdrawTransferTest is MiniPoolDepositBorrowTest {
 
         logMinipoolFlow(address(tokenParamsUsdc.token), user2);
 
-        address treasury = miniPoolContracts.miniPoolAddressesProvider.getMiniPoolCod3xTreasury();
+        address treasury = miniPoolContracts.miniPoolAddressesProvider.getMiniPoolAsteraTreasury();
         uint256 treasuryBalance = commonContracts.aTokens[USDC_OFFSET].balanceOf(treasury);
 
         assertApproxEqRel(
@@ -1307,7 +1307,7 @@ contract MiniPoolRepayWithdrawTransferTest is MiniPoolDepositBorrowTest {
             IAERC6909(miniPoolContracts.miniPoolAddressesProvider.getMiniPoolToAERC6909(miniPool));
 
         vm.prank(miniPoolContracts.miniPoolAddressesProvider.getMainPoolAdmin());
-        miniPoolContracts.miniPoolConfigurator.setCod3xTreasury(address(0x1111));
+        miniPoolContracts.miniPoolConfigurator.setAsteraTreasury(address(0x1111));
 
         /* Deposit tests */
         fixture_depositTokensToMainPool(amountUsdc, user, tokenParamsUsdc);
@@ -1343,7 +1343,7 @@ contract MiniPoolRepayWithdrawTransferTest is MiniPoolDepositBorrowTest {
 
         logMinipoolFlow(address(tokenParamsUsdc.token), user2);
 
-        address treasury = miniPoolContracts.miniPoolAddressesProvider.getMiniPoolCod3xTreasury();
+        address treasury = miniPoolContracts.miniPoolAddressesProvider.getMiniPoolAsteraTreasury();
         uint256 treasuryBalance = commonContracts.aTokens[USDC_OFFSET].balanceOf(treasury);
 
         assertEq(treasuryBalance, 0, "3");
@@ -1376,7 +1376,7 @@ contract MiniPoolRepayWithdrawTransferTest is MiniPoolDepositBorrowTest {
         uint256 LrAssetLp = 1e26;
 
         vm.prank(miniPoolContracts.miniPoolAddressesProvider.getMainPoolAdmin());
-        miniPoolContracts.miniPoolConfigurator.setCod3xTreasury(address(0x1111));
+        miniPoolContracts.miniPoolConfigurator.setAsteraTreasury(address(0x1111));
 
         MockLendingpoolReserveInterestRateStrategy mockLendingpoolReserveInterestRateStrategy = new MockLendingpoolReserveInterestRateStrategy(
             deployedContracts.lendingPoolAddressesProvider, BrAssetLp, LrAssetLp
@@ -1399,7 +1399,7 @@ contract MiniPoolRepayWithdrawTransferTest is MiniPoolDepositBorrowTest {
         vm.startPrank(deployedContracts.lendingPoolAddressesProvider.getPoolAdmin());
         LendingPoolConfigurator(
             deployedContracts.lendingPoolAddressesProvider.getLendingPoolConfigurator()
-        ).setCod3xReserveFactor(address(tokenParamsUsdc.token), true, 0);
+        ).setAsteraReserveFactor(address(tokenParamsUsdc.token), true, 0);
 
         LendingPoolConfigurator(
             deployedContracts.lendingPoolAddressesProvider.getLendingPoolConfigurator()
@@ -1550,7 +1550,7 @@ contract MiniPoolRepayWithdrawTransferTest is MiniPoolDepositBorrowTest {
         uint256 LrAssetLp = bound(seedLr, 1e24, BrAssetLp); //1e26;
 
         vm.prank(miniPoolContracts.miniPoolAddressesProvider.getMainPoolAdmin());
-        miniPoolContracts.miniPoolConfigurator.setCod3xTreasury(address(0x1111));
+        miniPoolContracts.miniPoolConfigurator.setAsteraTreasury(address(0x1111));
 
         MockLendingpoolReserveInterestRateStrategy mockLendingpoolReserveInterestRateStrategy = new MockLendingpoolReserveInterestRateStrategy(
             deployedContracts.lendingPoolAddressesProvider, BrAssetLp, LrAssetLp
@@ -1573,7 +1573,7 @@ contract MiniPoolRepayWithdrawTransferTest is MiniPoolDepositBorrowTest {
         vm.startPrank(deployedContracts.lendingPoolAddressesProvider.getPoolAdmin());
         LendingPoolConfigurator(
             deployedContracts.lendingPoolAddressesProvider.getLendingPoolConfigurator()
-        ).setCod3xReserveFactor(address(tokenParamsUsdc.token), true, 0);
+        ).setAsteraReserveFactor(address(tokenParamsUsdc.token), true, 0);
 
         LendingPoolConfigurator(
             deployedContracts.lendingPoolAddressesProvider.getLendingPoolConfigurator()
@@ -1661,7 +1661,7 @@ contract MiniPoolRepayWithdrawTransferTest is MiniPoolDepositBorrowTest {
         uint256 LrAssetLp = bound(seedLr, 1e24, BrAssetLp); //1e26;
 
         vm.prank(miniPoolContracts.miniPoolAddressesProvider.getMainPoolAdmin());
-        miniPoolContracts.miniPoolConfigurator.setCod3xTreasury(address(0x1111));
+        miniPoolContracts.miniPoolConfigurator.setAsteraTreasury(address(0x1111));
 
         MockLendingpoolReserveInterestRateStrategy mockLendingpoolReserveInterestRateStrategy = new MockLendingpoolReserveInterestRateStrategy(
             deployedContracts.lendingPoolAddressesProvider, BrAssetLp, LrAssetLp
@@ -1684,7 +1684,7 @@ contract MiniPoolRepayWithdrawTransferTest is MiniPoolDepositBorrowTest {
         vm.startPrank(deployedContracts.lendingPoolAddressesProvider.getPoolAdmin());
         LendingPoolConfigurator(
             deployedContracts.lendingPoolAddressesProvider.getLendingPoolConfigurator()
-        ).setCod3xReserveFactor(address(tokenParamsUsdc.token), true, 0);
+        ).setAsteraReserveFactor(address(tokenParamsUsdc.token), true, 0);
 
         LendingPoolConfigurator(
             deployedContracts.lendingPoolAddressesProvider.getLendingPoolConfigurator()
@@ -1810,7 +1810,7 @@ contract MiniPoolRepayWithdrawTransferTest is MiniPoolDepositBorrowTest {
         uint256 LrAssetLp = 24572385661946913996488476; // 1e26; // bound(seedLr, BrAssetLp, 1e27); //1e26;
 
         vm.prank(miniPoolContracts.miniPoolAddressesProvider.getMainPoolAdmin());
-        miniPoolContracts.miniPoolConfigurator.setCod3xTreasury(address(0x1111));
+        miniPoolContracts.miniPoolConfigurator.setAsteraTreasury(address(0x1111));
 
         MockLendingpoolReserveInterestRateStrategy mockLendingpoolReserveInterestRateStrategy = new MockLendingpoolReserveInterestRateStrategy(
             deployedContracts.lendingPoolAddressesProvider, BrAssetLp, LrAssetLp
@@ -1833,7 +1833,7 @@ contract MiniPoolRepayWithdrawTransferTest is MiniPoolDepositBorrowTest {
         vm.startPrank(deployedContracts.lendingPoolAddressesProvider.getPoolAdmin());
         LendingPoolConfigurator(
             deployedContracts.lendingPoolAddressesProvider.getLendingPoolConfigurator()
-        ).setCod3xReserveFactor(address(tokenParamsUsdc.token), true, 0);
+        ).setAsteraReserveFactor(address(tokenParamsUsdc.token), true, 0);
 
         LendingPoolConfigurator(
             deployedContracts.lendingPoolAddressesProvider.getLendingPoolConfigurator()
@@ -1960,7 +1960,7 @@ contract MiniPoolRepayWithdrawTransferTest is MiniPoolDepositBorrowTest {
         uint256 LrAssetLp = 45587775560685013095732752; // bound(seedLr, 1e24, BrAssetLp); //1e26;
 
         vm.prank(miniPoolContracts.miniPoolAddressesProvider.getMainPoolAdmin());
-        miniPoolContracts.miniPoolConfigurator.setCod3xTreasury(address(0x1111));
+        miniPoolContracts.miniPoolConfigurator.setAsteraTreasury(address(0x1111));
 
         MockLendingpoolReserveInterestRateStrategy mockLendingpoolReserveInterestRateStrategy = new MockLendingpoolReserveInterestRateStrategy(
             deployedContracts.lendingPoolAddressesProvider, BrAssetLp, LrAssetLp
@@ -1983,7 +1983,7 @@ contract MiniPoolRepayWithdrawTransferTest is MiniPoolDepositBorrowTest {
         vm.startPrank(deployedContracts.lendingPoolAddressesProvider.getPoolAdmin());
         LendingPoolConfigurator(
             deployedContracts.lendingPoolAddressesProvider.getLendingPoolConfigurator()
-        ).setCod3xReserveFactor(address(tokenParamsUsdc.token), true, 0);
+        ).setAsteraReserveFactor(address(tokenParamsUsdc.token), true, 0);
 
         LendingPoolConfigurator(
             deployedContracts.lendingPoolAddressesProvider.getLendingPoolConfigurator()
@@ -2130,7 +2130,7 @@ contract MiniPoolRepayWithdrawTransferTest is MiniPoolDepositBorrowTest {
             IAERC6909(miniPoolContracts.miniPoolAddressesProvider.getMiniPoolToAERC6909(miniPool));
 
         vm.prank(miniPoolContracts.miniPoolAddressesProvider.getMainPoolAdmin());
-        miniPoolContracts.miniPoolConfigurator.setCod3xTreasury(address(0x1111));
+        miniPoolContracts.miniPoolConfigurator.setAsteraTreasury(address(0x1111));
 
         /* Deposit tests */
         fixture_depositTokensToMainPool(amountUsdc, user, tokenParamsUsdc);
@@ -2184,7 +2184,7 @@ contract MiniPoolRepayWithdrawTransferTest is MiniPoolDepositBorrowTest {
         uint256 LrAssetLp = 1e26;
 
         vm.prank(miniPoolContracts.miniPoolAddressesProvider.getMainPoolAdmin());
-        miniPoolContracts.miniPoolConfigurator.setCod3xTreasury(address(0x1111));
+        miniPoolContracts.miniPoolConfigurator.setAsteraTreasury(address(0x1111));
 
         MockLendingpoolReserveInterestRateStrategy mockLendingpoolReserveInterestRateStrategy = new MockLendingpoolReserveInterestRateStrategy(
             deployedContracts.lendingPoolAddressesProvider, BrAssetLp, LrAssetLp
@@ -2207,7 +2207,7 @@ contract MiniPoolRepayWithdrawTransferTest is MiniPoolDepositBorrowTest {
         vm.startPrank(deployedContracts.lendingPoolAddressesProvider.getPoolAdmin());
         LendingPoolConfigurator(
             deployedContracts.lendingPoolAddressesProvider.getLendingPoolConfigurator()
-        ).setCod3xReserveFactor(address(tokenParamsUsdc.token), true, 0);
+        ).setAsteraReserveFactor(address(tokenParamsUsdc.token), true, 0);
 
         LendingPoolConfigurator(
             deployedContracts.lendingPoolAddressesProvider.getLendingPoolConfigurator()

@@ -23,8 +23,8 @@ contract DeployLendingPool is Script, LendingPoolHelper, Test {
         );
         assertEq(contracts.oracle.owner(), vm.addr(vm.envUint("PRIVATE_KEY")));
         assertEq(contracts.wethGateway.owner(), vm.addr(vm.envUint("PRIVATE_KEY")));
-        assertEq(contracts.cod3xLendDataProvider.owner(), vm.addr(vm.envUint("PRIVATE_KEY")));
-        // assertEq(contracts.cod3xLendDataProvider.owner(), vm.addr(vm.envUint("PRIVATE_KEY")));
+        assertEq(contracts.asteraLendDataProvider.owner(), vm.addr(vm.envUint("PRIVATE_KEY")));
+        // assertEq(contracts.asteraLendDataProvider.owner(), vm.addr(vm.envUint("PRIVATE_KEY")));
         for (uint8 idx = 0; idx < contracts.piStrategies.length; idx++) {
             assertEq(contracts.piStrategies[idx].owner(), vm.addr(vm.envUint("PRIVATE_KEY")));
         }
@@ -63,7 +63,7 @@ contract DeployLendingPool is Script, LendingPoolHelper, Test {
                 "Wrong underlying token"
             );
             AggregatedMainPoolReservesData memory aggregatedMainPoolReservesData = contracts
-                .cod3xLendDataProvider
+                .asteraLendDataProvider
                 .getAggregatedMainPoolReserveData(
                 address(poolReserversConfig[idx].tokenAddress), reserveTypes[idx]
             );
@@ -97,9 +97,9 @@ contract DeployLendingPool is Script, LendingPoolHelper, Test {
                 "collateral usage not enabled"
             );
             assertEq(
-                aggregatedMainPoolReservesData.cod3xReserveFactor,
+                aggregatedMainPoolReservesData.asteraReserveFactor,
                 poolReserversConfig[idx].reserveFactor,
-                "wrong cod3xReserveFactor"
+                "wrong asteraReserveFactor"
             );
             assertEq(
                 aggregatedMainPoolReservesData.miniPoolOwnerReserveFactor,
@@ -135,7 +135,7 @@ contract DeployLendingPool is Script, LendingPoolHelper, Test {
         }
 
         (,, address[] memory aTokens, address[] memory debtTokens) =
-            contracts.cod3xLendDataProvider.getAllLpTokens();
+            contracts.asteraLendDataProvider.getAllLpTokens();
 
         vm.serializeAddress("lendingPoolContracts", "aTokens", aTokens);
 
@@ -157,8 +157,8 @@ contract DeployLendingPool is Script, LendingPoolHelper, Test {
 
         vm.serializeAddress(
             "lendingPoolContracts",
-            "cod3xLendDataProvider",
-            address(contracts.cod3xLendDataProvider)
+            "asteraLendDataProvider",
+            address(contracts.asteraLendDataProvider)
         );
 
         vm.serializeAddress(

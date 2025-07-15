@@ -20,7 +20,7 @@ contract AddAssets is Script, InitAndConfigurationHelper, Test {
         console2.log("Lending pool");
         for (uint256 idx = 0; idx < lendingPoolReserversConfig.length; idx++) {
             AggregatedMainPoolReservesData memory aggregatedMainPoolReservesData = contracts
-                .cod3xLendDataProvider
+                .asteraLendDataProvider
                 .getAggregatedMainPoolReserveData(
                 address(lendingPoolReserversConfig[idx].tokenAddress),
                 lendingPoolReserversConfig[idx].reserveType
@@ -55,9 +55,9 @@ contract AddAssets is Script, InitAndConfigurationHelper, Test {
                 "collateral usage not enabled"
             );
             assertEq(
-                aggregatedMainPoolReservesData.cod3xReserveFactor,
+                aggregatedMainPoolReservesData.asteraReserveFactor,
                 lendingPoolReserversConfig[idx].reserveFactor,
-                "wrong cod3xReserveFactor"
+                "wrong asteraReserveFactor"
             );
             assertEq(
                 aggregatedMainPoolReservesData.miniPoolOwnerReserveFactor,
@@ -74,7 +74,7 @@ contract AddAssets is Script, InitAndConfigurationHelper, Test {
 
             for (uint256 idx = 0; idx < miniPoolReserversConfig.length; idx++) {
                 AggregatedMiniPoolReservesData memory aggregatedMiniPoolReservesData = contracts
-                    .cod3xLendDataProvider
+                    .asteraLendDataProvider
                     .getReserveDataForAssetAtMiniPool(
                     address(miniPoolReserversConfig[idx].tokenAddress), mp
                 );
@@ -112,9 +112,9 @@ contract AddAssets is Script, InitAndConfigurationHelper, Test {
                     "collateral usage not enabled"
                 );
                 assertEq(
-                    aggregatedMiniPoolReservesData.cod3xReserveFactor,
+                    aggregatedMiniPoolReservesData.asteraReserveFactor,
                     miniPoolReserversConfig[idx].reserveFactor,
-                    "wrong cod3xReserveFactor"
+                    "wrong asteraReserveFactor"
                 );
                 assertEq(
                     aggregatedMiniPoolReservesData.miniPoolOwnerReserveFactor,
@@ -128,7 +128,7 @@ contract AddAssets is Script, InitAndConfigurationHelper, Test {
 
     function writeJsonData(string memory path) internal {
         (,, address[] memory aTokens, address[] memory debtTokens) =
-            contracts.cod3xLendDataProvider.getAllLpTokens();
+            contracts.asteraLendDataProvider.getAllLpTokens();
 
         {
             address[] memory wrappedTokens = new address[](aTokens.length);
@@ -206,8 +206,8 @@ contract AddAssets is Script, InitAndConfigurationHelper, Test {
             LendingPoolConfigurator(config.readAddress(".lendingPoolConfigurator"));
         contracts.lendingPoolAddressesProvider =
             LendingPoolAddressesProvider(config.readAddress(".lendingPoolAddressesProvider"));
-        contracts.cod3xLendDataProvider =
-            Cod3xLendDataProvider2(config.readAddress(".cod3xLendDataProvider"));
+        contracts.asteraLendDataProvider =
+            AsteraLendDataProvider2(config.readAddress(".asteraLendDataProvider"));
         contracts.lendingPool = LendingPool(config.readAddress(".lendingPool"));
     }
 

@@ -65,10 +65,10 @@ interface IMiniPoolAddressesProvider {
     event PoolAdminSet(address indexed newAdmin, uint256 indexed miniPoolId);
 
     /**
-     * @dev Emitted when a Cod3x treasury is set for all mini pools.
-     * @param treasury The address of the Cod3x treasury.
+     * @dev Emitted when a Astera treasury is set for all mini pools.
+     * @param treasury The address of the Astera treasury.
      */
-    event Cod3xTreasurySet(address indexed treasury);
+    event AsteraTreasurySet(address indexed treasury);
 
     /**
      * @dev Emitted when a mini pool owner treasury is set.
@@ -115,7 +115,7 @@ interface IMiniPoolAddressesProvider {
 
     function isMiniPool(address miniPool) external view returns (bool);
 
-    function getMiniPoolCod3xTreasury() external view returns (address);
+    function getMiniPoolAsteraTreasury() external view returns (address);
 
     function getMiniPoolOwnerTreasury(uint256 id) external view returns (address);
 
@@ -136,7 +136,7 @@ interface IMiniPoolAddressesProvider {
         external
         returns (uint256);
 
-    function setCod3xTreasury(address treasury) external;
+    function setAsteraTreasury(address treasury) external;
 
     function setMinipoolOwnerTreasuryToMiniPool(uint256 id, address treasury) external;
 

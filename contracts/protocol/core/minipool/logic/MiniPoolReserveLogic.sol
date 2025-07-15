@@ -211,7 +211,7 @@ library MiniPoolReserveLogic {
             liquidityAdded,
             liquidityTaken,
             vars.totalVariableDebt,
-            reserve.configuration.getCod3xReserveFactor()
+            reserve.configuration.getAsteraReserveFactor()
                 + reserve.configuration.getMinipoolOwnerReserveFactor()
         );
         require(vars.newLiquidityRate <= type(uint128).max, Errors.RL_LIQUIDITY_RATE_OVERFLOW);
@@ -233,9 +233,9 @@ library MiniPoolReserveLogic {
         uint256 currentVariableDebt;
         uint256 previousVariableDebt;
         uint256 totalDebtAccrued;
-        uint256 amountToMintCod3x;
+        uint256 amountToMintAstera;
         uint256 amountToMintMinipoolOwner;
-        uint256 cod3xReserveFactor;
+        uint256 asteraReserveFactor;
         uint256 minipoolOwnerReserveFactor;
     }
 
@@ -257,10 +257,10 @@ library MiniPoolReserveLogic {
     ) internal {
         MintToTreasuryLocalVars memory vars;
 
-        vars.cod3xReserveFactor = reserve.configuration.getCod3xReserveFactor();
+        vars.asteraReserveFactor = reserve.configuration.getAsteraReserveFactor();
         vars.minipoolOwnerReserveFactor = reserve.configuration.getMinipoolOwnerReserveFactor();
 
-        if (vars.cod3xReserveFactor == 0 && vars.minipoolOwnerReserveFactor == 0) {
+        if (vars.asteraReserveFactor == 0 && vars.minipoolOwnerReserveFactor == 0) {
             return;
         }
 
@@ -273,12 +273,12 @@ library MiniPoolReserveLogic {
         // Debt accrued is the sum of the current debt minus the sum of the debt at the last update.
         vars.totalDebtAccrued = vars.currentVariableDebt - vars.previousVariableDebt;
 
-        if (vars.cod3xReserveFactor != 0) {
-            vars.amountToMintCod3x = vars.totalDebtAccrued.percentMul(vars.cod3xReserveFactor);
+        if (vars.asteraReserveFactor != 0) {
+            vars.amountToMintAstera = vars.totalDebtAccrued.percentMul(vars.asteraReserveFactor);
 
-            if (vars.amountToMintCod3x != 0) {
-                IAERC6909(reserve.aErc6909).mintToCod3xTreasury(
-                    reserve.aTokenID, vars.amountToMintCod3x, newLiquidityIndex
+            if (vars.amountToMintAstera != 0) {
+                IAERC6909(reserve.aErc6909).mintToAsteraTreasury(
+                    reserve.aTokenID, vars.amountToMintAstera, newLiquidityIndex
                 );
             }
         }

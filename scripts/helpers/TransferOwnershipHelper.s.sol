@@ -32,7 +32,7 @@ contract TransferOwnershipHelper {
             contracts.rewarder6909.transferOwnership(roles.rewarderOwner);
         }
         contracts.oracle.transferOwnership(roles.oracleOwner);
-        contracts.cod3xLendDataProvider.transferOwnership(roles.dataProviderOwner);
+        contracts.asteraLendDataProvider.transferOwnership(roles.dataProviderOwner);
 
         for (uint256 idx = 0; idx < contracts.piStrategies.length; idx++) {
             contracts.piStrategies[idx].transferOwnership(roles.piInterestStrategiesOwner);

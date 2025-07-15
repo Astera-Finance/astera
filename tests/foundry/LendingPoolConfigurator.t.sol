@@ -65,7 +65,7 @@ contract LendingPoolConfiguratorTest is Common, LendingPoolFixtures {
         assertEq(vm.activeFork(), opFork);
         deployedContracts = fixture_deployProtocol();
         configAddresses = ConfigAddresses(
-            address(deployedContracts.cod3xLendDataProvider),
+            address(deployedContracts.asteraLendDataProvider),
             address(deployedContracts.stableStrategy),
             address(deployedContracts.volatileStrategy),
             address(deployedContracts.treasury),
@@ -147,7 +147,7 @@ contract LendingPoolConfiguratorTest is Common, LendingPoolFixtures {
             );
             // DataTypes.ReserveConfigurationMap memory currentConfig =
             //     deployedContracts.lendingPool.getConfiguration(address(erc20Tokens[idx]), false);
-            // assertEq(currentConfig.getCod3xReserveFactor(), validReserveFactor);
+            // assertEq(currentConfig.getAsteraReserveFactor(), validReserveFactor);
         }
     }
 
@@ -264,32 +264,32 @@ contract LendingPoolConfiguratorTest is Common, LendingPoolFixtures {
             );
             // DataTypes.ReserveConfigurationMap memory currentConfig =
             //     deployedContracts.lendingPool.getConfiguration(address(erc20Tokens[idx]), false);
-            // assertEq(currentConfig.getCod3xReserveFactor(), validReserveFactor);
+            // assertEq(currentConfig.getAsteraReserveFactor(), validReserveFactor);
         }
     }
 
-    function testsetCod3xReserveFactor_Positive(uint256 validReserveFactor) public {
+    function testsetAsteraReserveFactor_Positive(uint256 validReserveFactor) public {
         validReserveFactor = bound(validReserveFactor, 0, MAX_VALID_RESERVE_FACTOR);
         for (uint32 idx; idx < erc20Tokens.length; idx++) {
             vm.expectEmit(true, false, false, false);
             emit ReserveFactorChanged(address(erc20Tokens[idx]), true, validReserveFactor);
             vm.prank(admin);
-            deployedContracts.lendingPoolConfigurator.setCod3xReserveFactor(
+            deployedContracts.lendingPoolConfigurator.setAsteraReserveFactor(
                 address(erc20Tokens[idx]), true, validReserveFactor
             );
             // DataTypes.ReserveConfigurationMap memory currentConfig =
             //     deployedContracts.lendingPool.getConfiguration(address(erc20Tokens[idx]), false);
-            // assertEq(currentConfig.getCod3xReserveFactor(), validReserveFactor);
+            // assertEq(currentConfig.getAsteraReserveFactor(), validReserveFactor);
         }
     }
 
-    function testsetCod3xReserveFactor_Negative(uint256 invalidReserveFactor) public {
+    function testsetAsteraReserveFactor_Negative(uint256 invalidReserveFactor) public {
         invalidReserveFactor =
             bound(invalidReserveFactor, MAX_VALID_RESERVE_FACTOR + 1, type(uint256).max);
         for (uint32 idx; idx < erc20Tokens.length; idx++) {
             vm.expectRevert(bytes(Errors.RC_INVALID_RESERVE_FACTOR));
             vm.prank(admin);
-            deployedContracts.lendingPoolConfigurator.setCod3xReserveFactor(
+            deployedContracts.lendingPoolConfigurator.setAsteraReserveFactor(
                 address(erc20Tokens[idx]), true, invalidReserveFactor
             );
         }
@@ -306,7 +306,7 @@ contract LendingPoolConfiguratorTest is Common, LendingPoolFixtures {
             );
             // DataTypes.ReserveConfigurationMap memory currentConfig =
             //     deployedContracts.lendingPool.getConfiguration(address(erc20Tokens[idx]), false);
-            // assertEq(currentConfig.getCod3xReserveFactor(), validReserveFactor);
+            // assertEq(currentConfig.getAsteraReserveFactor(), validReserveFactor);
         }
     }
 
@@ -700,7 +700,7 @@ contract LendingPoolConfiguratorTest is Common, LendingPoolFixtures {
             beforeUserAccountData.currentLiquidationThreshold,
             beforeUserAccountData.ltv,
             beforeUserAccountData.healthFactor
-        ) = deployedContracts.cod3xLendDataProvider.getLpUserAccountData(address(this));
+        ) = deployedContracts.asteraLendDataProvider.getLpUserAccountData(address(this));
 
         {
             console2.log("Reinit the asset");
@@ -744,7 +744,7 @@ contract LendingPoolConfiguratorTest is Common, LendingPoolFixtures {
             afterUserAccountData.currentLiquidationThreshold,
             afterUserAccountData.ltv,
             afterUserAccountData.healthFactor
-        ) = deployedContracts.cod3xLendDataProvider.getLpUserAccountData(address(this));
+        ) = deployedContracts.asteraLendDataProvider.getLpUserAccountData(address(this));
 
         assertEq(afterUserAccountData.totalCollateralETH, beforeUserAccountData.totalCollateralETH);
         assertEq(afterUserAccountData.totalDebtETH, beforeUserAccountData.totalDebtETH);

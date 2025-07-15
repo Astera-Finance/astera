@@ -73,7 +73,7 @@ library DataTypes {
      *  - bit 57: Reserve is frozen.
      *  - bit 58: Borrowing is enabled.
      *  - bit 59: Flashloan is enabled.
-     *  - bits 60-75: `Cod3x` reserve factor.
+     *  - bits 60-75: `Astera` reserve factor.
      *  - bits 76-91: Minipool owner reserve factor.
      *  - bits 92-163: Deposit cap.
      *  - bit 164: Reserve type.

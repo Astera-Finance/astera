@@ -203,7 +203,7 @@ forge t --mt testCallSequence -vvvv
 - `deactivateReserve(address asset, bool reserveType)`
 - `freezeReserve(address asset, bool reserveType)`
 - `unfreezeReserve(address asset, bool reserveType)`
-- `setCod3xReserveFactor(address asset, bool reserveType, uint256 reserveFactor)`
+- `setAsteraReserveFactor(address asset, bool reserveType, uint256 reserveFactor)`
 - `setDepositCap(address asset, bool reserveType, uint256 depositCap)`
 - `setReserveInterestRateStrategyAddress(address asset, bool reserveType, address rateStrategyAddress)`
 - `setPoolPause(bool val)`
@@ -227,7 +227,7 @@ forge t --mt testCallSequence -vvvv
 - `setAToken6909Impl(address impl, uint256 miniPoolId)`
 - `setAddress(bytes32 id, address newAddress)`
 - `setMiniPoolConfigurator(address configuratorImpl)`
-- `setCod3xTreasury(uint256 id, address treasury)`
+- `setAsteraTreasury(uint256 id, address treasury)`
   
 ### MiniPoolConfiguration
 
@@ -241,7 +241,7 @@ forge t --mt testCallSequence -vvvv
 - `unfreezeReserve(address asset, IMiniPool pool)`
 - `enableFlashloan(address asset, IMiniPool pool)`
 - `disableFlashloan(address asset, IMiniPool pool)`
-- `setCod3xReserveFactor(address asset, uint256 reserveFactor, IMiniPool pool)`
+- `setAsteraReserveFactor(address asset, uint256 reserveFactor, IMiniPool pool)`
 - `setMinipoolOwnerReserveFactor(address asset, uint256 reserveFactor, IMiniPool pool)`
 - `setDepositCap(address asset, uint256 depositCap, IMiniPool pool)`
 - `setReserveInterestRateStrategyAddress(address asset, address rateStrategyAddress, IMiniPool pool)`
