@@ -149,7 +149,7 @@ contract OracleTest is Common {
         }
     }
 
-    function testCdxUsdPricePyth() public {
+    function testAsUsdPricePyth() public {
         string memory localRpc = vm.envString("BASE_RPC_URL");
         opFork = vm.createSelectFork(localRpc, 26803485);
         address pyth = 0x8250f4aF4B972684F7b336503E2D6dFeDeB1487a; // BASE

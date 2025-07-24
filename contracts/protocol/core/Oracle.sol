@@ -48,11 +48,11 @@ contract Oracle is IOracle, Ownable {
      */
     address public immutable BASE_CURRENCY;
 
-    /// @dev The unit of the base currency used for price normalization. MUST BE USD IF USING cdxUSD.
+    /// @dev The unit of the base currency used for price normalization. MUST BE USD IF USING asUSD.
     uint256 public immutable BASE_CURRENCY_UNIT;
 
-    /// @dev The address of the cdxUSD token.
-    address public constant CDX_USD = address(0xC0D3700000987C99b3C9009069E4f8413fD22330);
+    /// @dev The address of the asUSD token.
+    address public constant AS_USD = address(0xC0D3700000987C99b3C9009069E4f8413fD22330);
 
     /**
      * @notice Initializes the Oracle contract.
@@ -160,13 +160,13 @@ contract Oracle is IOracle, Ownable {
         IChainlinkAggregator source = _assetsSources[underlying];
         uint256 finalPrice;
 
-        // If the asset is the base currency or cdxUSD and the caller is the lending pool, return the unit
+        // If the asset is the base currency or asUSD and the caller is the lending pool, return the unit
         // of the base currency.
-        // Since the lending pool is used as a primary market for cdxUSD, this allows the lending pool to get the price
-        // of cdxUSD at 1$ but minipools and other contracts to still get the price of cdxUSD from the aggregator.
+        // Since the lending pool is used as a primary market for asUSD, this allows the lending pool to get the price
+        // of asUSD at 1$ but minipools and other contracts to still get the price of asUSD from the aggregator.
         if (
             underlying == BASE_CURRENCY
-                || (asset == CDX_USD && msg.sender == _lendingpoolAddressesProvider.getLendingPool())
+                || (asset == AS_USD && msg.sender == _lendingpoolAddressesProvider.getLendingPool())
         ) {
             finalPrice = BASE_CURRENCY_UNIT;
         } else if (address(source) == address(0)) {

@@ -34,7 +34,7 @@ anvil --fork-url $BASE_RPC_URL --fork-block-number 28178226
 
 ## Setup liquidity
 
-Get some ETH to `wETH`, `cbBTC`, `USDC` and `cdxUSD`.
+Get some ETH to `wETH`, `cbBTC`, `USDC` and `asUSD`.
 ```
 forge script scripts/localFork/0_DealToken.s.sol --chain-id 8453 --rpc-url $RPC_URL --private-key $PRIVATE_KEY --broadcast -vvvv 
 ```
@@ -60,5 +60,5 @@ forge script scripts/2_DeployMiniPool.s.sol --chain-id 8453 --rpc-url $RPC_URL -
 ETH    = 1920$
 BTC    = 85800$
 USDC   = 1$
-cdxUSD = 1$
+asUSD = 1$
 ```

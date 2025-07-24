@@ -63,7 +63,7 @@
       "params": "0x10",
       "reserveFactor": 2000,
       "reserveType": true,
-      "symbol": "cdxUSD",
+      "symbol": "asUSD",
       "tokenAddress": "0xC0D3700000987C99b3C9009069E4f8413fD22330"
     }
   ],
@@ -98,7 +98,7 @@
       "maxITimeAmp": 1728000,
       "minControllerError": -3001e23,
       "optimalUtilizationRate": 75e25,
-      "symbol": "cdxUSD",
+      "symbol": "asUSD",
       "tokenAddress": "0xC0D3700000987C99b3C9009069E4f8413fD22330"
     }
   ],

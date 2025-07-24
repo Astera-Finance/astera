@@ -42,7 +42,7 @@ contract DealTOken is Script, Test {
     address constant WETH = 0x4200000000000000000000000000000000000006;
     address constant USDC = 0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913;
     address constant CBBTC = 0xcbB7C0000aB88B473b1f5aFd9ef808440eed33Bf;
-    address constant CDXUSD = 0xC0D3700000987C99b3C9009069E4f8413fD22330;
+    address constant ASUSD = 0xC0D3700000987C99b3C9009069E4f8413fD22330;
 
     // Recipient address - we'll use the deployer address
     address recipient;
@@ -82,7 +82,7 @@ contract DealTOken is Script, Test {
             block.timestamp*2
         );
 
-        routes[0] = IAerodromeRouter.Route({from: WETH, to: CDXUSD, stable: false, factory: address(0x420DD381b31aEf6683db6B902084cB0FFECe40Da)});
+        routes[0] = IAerodromeRouter.Route({from: WETH, to: ASUSD, stable: false, factory: address(0x420DD381b31aEf6683db6B902084cB0FFECe40Da)});
         ROUTER.swapExactETHForTokens{value: 1 ether}(
             1e2,
             routes,
@@ -99,7 +99,7 @@ contract DealTOken is Script, Test {
         // Log balances
         logBalance("WETH", WETH);
         logBalance("cbBTC ", CBBTC);
-        logBalance("cdxUSD ", CDXUSD);
+        logBalance("asUSD ", ASUSD);
         logBalance("USDC", USDC);
         
     }
