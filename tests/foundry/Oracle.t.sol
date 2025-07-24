@@ -17,7 +17,7 @@ contract OracleTest is Common {
         assertEq(vm.activeFork(), opFork);
         deployedContracts = fixture_deployProtocol();
         configAddresses = ConfigAddresses(
-            address(deployedContracts.asteraLendDataProvider),
+            address(deployedContracts.asteraDataProvider),
             address(deployedContracts.stableStrategy),
             address(deployedContracts.volatileStrategy),
             address(deployedContracts.treasury),

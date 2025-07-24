@@ -569,7 +569,7 @@ The deployment process involves configuration files `./inputs/<Nr>_<InputJsonNam
     ```json
     {
         "miniPoolId": 0, //Id of mini pool to configure
-        "asteraLendDataProvider": {
+        "asteraDataProvider": {
             "deploy": false,
             "marketReferenceCurrencyAggregator": "0x7e860098F58bBFC8648a4311b374B1D669a2bc6B",
             "networkBaseTokenAggregator": "0x71041dddad3595F9CEd3DcCFBe3D1F4b0a16Bb70"
@@ -741,7 +741,7 @@ The deployment process involves configuration files `./inputs/<Nr>_<InputJsonNam
             "0x89eD3c85B5C1EAe681552747a341E0C4Ca32A622",
             "0x72135819B751FF166472dd2f3022D7950bcd1A32"
         ],
-        "asteraLendDataProvider": "0x9f0F725568eBf6EDF1995816546B961A86Db5Dd9",
+        "asteraDataProvider": "0x9f0F725568eBf6EDF1995816546B961A86Db5Dd9",
         "debtTokens": [
             "0x771Cfa5a7615FA3584Df29fc2df5c9B9b25977D0",
             "0x83a850e2b49360798E77209fAd8F349B799744e6"
@@ -873,7 +873,7 @@ The deployment process involves configuration files `./inputs/<Nr>_<InputJsonNam
   - Example:
   ```json
     {
-    "asteraLendDataProvider": "0x9dcf274D58d4Fc29CB093bE979d509555d1F157D",
+    "asteraDataProvider": "0x9dcf274D58d4Fc29CB093bE979d509555d1F157D",
     "rewarder": "0x3460a33582FC850d707ceA83f29f49D7b6290979",
     "rewarder6909": "0xCA3c1FC0d5EdbAC5d8AB7742D4ff6F7053E04280"
     }

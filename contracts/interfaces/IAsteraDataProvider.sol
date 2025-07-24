@@ -120,7 +120,7 @@ struct AllMpPoolData {
     bool usageAsCollateralEnabled;
 }
 
-interface IAsteraLendDataProvider {
+interface IAsteraDataProvider {
     /*------ Only Owner ------*/
     function setLendingPoolAddressProvider(address _lendingPoolAddressProvider) external;
     function setMiniPoolAddressProvider(address _miniPoolAddressProvider) external;

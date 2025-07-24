@@ -65,7 +65,7 @@ contract LendingPoolConfiguratorTest is Common, LendingPoolFixtures {
         assertEq(vm.activeFork(), opFork);
         deployedContracts = fixture_deployProtocol();
         configAddresses = ConfigAddresses(
-            address(deployedContracts.asteraLendDataProvider),
+            address(deployedContracts.asteraDataProvider),
             address(deployedContracts.stableStrategy),
             address(deployedContracts.volatileStrategy),
             address(deployedContracts.treasury),
@@ -700,7 +700,7 @@ contract LendingPoolConfiguratorTest is Common, LendingPoolFixtures {
             beforeUserAccountData.currentLiquidationThreshold,
             beforeUserAccountData.ltv,
             beforeUserAccountData.healthFactor
-        ) = deployedContracts.asteraLendDataProvider.getLpUserAccountData(address(this));
+        ) = deployedContracts.asteraDataProvider.getLpUserAccountData(address(this));
 
         {
             console2.log("Reinit the asset");
@@ -744,7 +744,7 @@ contract LendingPoolConfiguratorTest is Common, LendingPoolFixtures {
             afterUserAccountData.currentLiquidationThreshold,
             afterUserAccountData.ltv,
             afterUserAccountData.healthFactor
-        ) = deployedContracts.asteraLendDataProvider.getLpUserAccountData(address(this));
+        ) = deployedContracts.asteraDataProvider.getLpUserAccountData(address(this));
 
         assertEq(afterUserAccountData.totalCollateralETH, beforeUserAccountData.totalCollateralETH);
         assertEq(afterUserAccountData.totalDebtETH, beforeUserAccountData.totalDebtETH);

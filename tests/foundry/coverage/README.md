@@ -7,7 +7,7 @@ To see coverage on the side bar:
 - AToken.t.sol
 - ATokenErc6909.t.sol
 - ATokenNonRebasing.t.sol
-- AsteraLendDataProvider.t.sol
+- AsteraDataProvider.t.sol
 - DefaultReserveInterestRateStrategy.t.sol
 - LendingPoolAddressesProvider.t.sol
 - LendingPoolConfigurator.t.sol
@@ -65,7 +65,7 @@ To see coverage on the side bar:
 - ATokenNonRebasing.t.sol:
   - [ ] Increase/decrease allowance
 
-- AsteraLendDataProvider.t.sol
+- AsteraDataProvider.t.sol
   - [ ] Dev In progress
 
 - DefaultReserveInterestRateStrategy.t.sol - DONE

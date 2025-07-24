@@ -36,7 +36,7 @@ contract MiniPoolPidReserveInterestRateStrategyTest is Common {
         (deployedMiniPoolContracts,) = fixture_deployMiniPoolSetup(
             address(deployedContracts.lendingPoolAddressesProvider),
             address(deployedContracts.lendingPool),
-            address(deployedContracts.asteraLendDataProvider),
+            address(deployedContracts.asteraDataProvider),
             deployedMiniPoolContracts
         );
         console.log("PiReserveInterestRateStrategy deployment: ");
@@ -67,7 +67,7 @@ contract MiniPoolPidReserveInterestRateStrategyTest is Common {
 
         // we replace stableStrategy and volatileStrategy by pidStrat
         configAddresses = ConfigAddresses(
-            address(deployedContracts.asteraLendDataProvider),
+            address(deployedContracts.asteraDataProvider),
             address(pidStrat), // address(deployedContracts.stableStrategy), usdc, dai
             address(pidStrat), // address(deployedContracts.volatileStrategy), wbtc, weth
             address(deployedContracts.treasury),
@@ -101,16 +101,15 @@ contract MiniPoolPidReserveInterestRateStrategyTest is Common {
         miniPool = deployedMiniPoolContracts.miniPoolAddressesProvider.getMiniPool(0);
         console.log("2.Minipool: ", miniPool);
 
-        commonContracts.aTokens =
-            fixture_getATokens(tokens, deployedContracts.asteraLendDataProvider);
-        // variableDebtTokens = fixture_getVarDebtTokens(tokens, deployedContracts.asteraLendDataProvider);
+        commonContracts.aTokens = fixture_getATokens(tokens, deployedContracts.asteraDataProvider);
+        // variableDebtTokens = fixture_getVarDebtTokens(tokens, deployedContracts.asteraDataProvider);
         commonContracts.mockedVaults =
             fixture_deployReaperVaultMocks(tokens, address(deployedContracts.treasury));
         erc20Tokens = fixture_getErc20Tokens(tokens);
         fixture_transferTokensToTestContract(erc20Tokens, 100_000_000 ether, address(this));
         console.log("strat address: ", address(miniPoolPidStrat));
         configAddresses = ConfigAddresses(
-            address(deployedContracts.asteraLendDataProvider),
+            address(deployedContracts.asteraDataProvider),
             address(miniPoolPidStrat), // address(deployedContracts.stableStrategy), usdc, dai
             address(miniPoolPidStrat), // address(deployedContracts.volatileStrategy), wbtc, weth
             address(deployedContracts.treasury),
@@ -684,7 +683,7 @@ contract MiniPoolPidReserveInterestRateStrategyTest is Common {
         vars.whaleUser = makeAddr("whaleUser");
         console.log("testMiniPoolFlowLimiterDust -> getting LpTokens");
         (address _aTokenAddress, address _variableDebtToken) =
-            deployedContracts.asteraLendDataProvider.getLpTokens(address(testToken), true);
+            deployedContracts.asteraDataProvider.getLpTokens(address(testToken), true);
 
         vars.underlying = testToken;
         vars.aToken = AToken(address(AToken(_aTokenAddress).WRAPPER_ADDRESS()));

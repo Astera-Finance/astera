@@ -323,7 +323,7 @@ contract MiniPoolConfiguratorTest is MiniPoolDepositBorrowTest {
         uint256 minNrOfTokens;
         {
             StaticData memory staticData = deployedContracts
-                .asteraLendDataProvider
+                .asteraDataProvider
                 .getLpReserveStaticData(address(collateralTokenParams.token), true);
             console2.log("collateralTokenLtv: ", staticData.ltv);
             uint256 borrowTokenInUsd = (amount * borrowTokenParams.price * 10_000)
@@ -423,7 +423,7 @@ contract MiniPoolConfiguratorTest is MiniPoolDepositBorrowTest {
         uint256 minNrOfTokens;
         {
             StaticData memory staticData = deployedContracts
-                .asteraLendDataProvider
+                .asteraDataProvider
                 .getLpReserveStaticData(address(collateralTokenParams.token), true);
             uint256 borrowTokenInUsd = (amount * borrowTokenParams.price * 10_000)
                 / ((10 ** PRICE_FEED_DECIMALS) * staticData.ltv);
@@ -842,7 +842,7 @@ contract MiniPoolConfiguratorTest is MiniPoolDepositBorrowTest {
             beforeUserAccountData.currentLiquidationThreshold,
             beforeUserAccountData.ltv,
             beforeUserAccountData.healthFactor
-        ) = deployedContracts.asteraLendDataProvider.getMpUserAccountData(address(this), miniPool);
+        ) = deployedContracts.asteraDataProvider.getMpUserAccountData(address(this), miniPool);
 
         {
             console2.log("Reinit the erc20 asset");
@@ -906,7 +906,7 @@ contract MiniPoolConfiguratorTest is MiniPoolDepositBorrowTest {
             afterUserAccountData.currentLiquidationThreshold,
             afterUserAccountData.ltv,
             afterUserAccountData.healthFactor
-        ) = deployedContracts.asteraLendDataProvider.getMpUserAccountData(address(this), miniPool);
+        ) = deployedContracts.asteraDataProvider.getMpUserAccountData(address(this), miniPool);
 
         assertEq(afterUserAccountData.totalCollateralETH, beforeUserAccountData.totalCollateralETH);
         assertEq(afterUserAccountData.totalDebtETH, beforeUserAccountData.totalDebtETH);

@@ -17,7 +17,7 @@ contract ChangePeripherialsLocal is Script, ChangePeripherialsHelper, Test {
     function writeJsonData(string memory root, string memory path) internal {
         /* Write important contracts into the file */
         vm.serializeAddress(
-            "peripherials", "asteraLendDataProvider", address(contracts.asteraLendDataProvider)
+            "peripherials", "asteraDataProvider", address(contracts.asteraDataProvider)
         );
         vm.serializeAddress("peripherials", "rewarder", address(contracts.rewarder));
 
@@ -67,8 +67,8 @@ contract ChangePeripherialsLocal is Script, ChangePeripherialsHelper, Test {
             abi.decode(config.parseRaw(".rehypothecation"), (Rehypothecation[]));
 
         uint256 miniPoolId = config.readUint(".miniPoolId");
-        DataProvider memory asteraLendDataProvider =
-            abi.decode(config.parseRaw(".asteraLendDataProvider"), (DataProvider));
+        DataProvider memory asteraDataProvider =
+            abi.decode(config.parseRaw(".asteraDataProvider"), (DataProvider));
 
         address profitHandler = config.readAddress(".profitHandler");
 
@@ -101,15 +101,15 @@ contract ChangePeripherialsLocal is Script, ChangePeripherialsHelper, Test {
         );
         _turnOnRehypothecation(rehypothecation);
         /* Data Provider */
-        if (asteraLendDataProvider.deploy) {
-            contracts.asteraLendDataProvider = new AsteraLendDataProvider(
-                asteraLendDataProvider.networkBaseTokenAggregator,
-                asteraLendDataProvider.marketReferenceCurrencyAggregator
+        if (asteraDataProvider.deploy) {
+            contracts.asteraDataProvider = new AsteraDataProvider(
+                asteraDataProvider.networkBaseTokenAggregator,
+                asteraDataProvider.marketReferenceCurrencyAggregator
             );
-            contracts.asteraLendDataProvider.setLendingPoolAddressProvider(
+            contracts.asteraDataProvider.setLendingPoolAddressProvider(
                 lendingPoolAddressesProvider
             );
-            contracts.asteraLendDataProvider.setMiniPoolAddressProvider(miniPoolAddressesProvider);
+            contracts.asteraDataProvider.setMiniPoolAddressProvider(miniPoolAddressesProvider);
         }
         vm.stopPrank();
 

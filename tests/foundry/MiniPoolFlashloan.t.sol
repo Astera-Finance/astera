@@ -139,7 +139,7 @@ contract MiniPoolFlashloanTest is Common {
         uint256 minNrOfTokens;
         {
             StaticData memory staticData = deployedContracts
-                .asteraLendDataProvider
+                .asteraDataProvider
                 .getLpReserveStaticData(address(collateralTokenParams.token), true);
             uint256 borrowTokenInUsd = (amount * borrowTokenParams.price * 10_000)
                 / ((10 ** PRICE_FEED_DECIMALS) * staticData.ltv);
@@ -257,7 +257,7 @@ contract MiniPoolFlashloanTest is Common {
         uint256 minNrOfTokens;
         {
             StaticData memory staticData = deployedContracts
-                .asteraLendDataProvider
+                .asteraDataProvider
                 .getLpReserveStaticData(address(collateralTokenParams.token), true);
             uint256 borrowTokenInUsd = (amount * borrowTokenParams.price * 10000)
                 / ((10 ** PRICE_FEED_DECIMALS) * staticData.ltv);
@@ -362,7 +362,7 @@ contract MiniPoolFlashloanTest is Common {
         assertEq(vm.activeFork(), opFork);
         deployedContracts = fixture_deployProtocol();
         configAddresses = ConfigAddresses(
-            address(deployedContracts.asteraLendDataProvider),
+            address(deployedContracts.asteraDataProvider),
             address(deployedContracts.stableStrategy),
             address(deployedContracts.volatileStrategy),
             address(deployedContracts.treasury),
@@ -383,7 +383,7 @@ contract MiniPoolFlashloanTest is Common {
         (miniPoolContracts,) = fixture_deployMiniPoolSetup(
             address(deployedContracts.lendingPoolAddressesProvider),
             address(deployedContracts.lendingPool),
-            address(deployedContracts.asteraLendDataProvider),
+            address(deployedContracts.asteraDataProvider),
             miniPoolContracts
         );
 
@@ -397,8 +397,7 @@ contract MiniPoolFlashloanTest is Common {
                     address(commonContracts.aTokens[idx - tokens.length].WRAPPER_ADDRESS());
             }
         }
-        configAddresses.asteraLendDataProvider =
-            address(miniPoolContracts.miniPoolAddressesProvider);
+        configAddresses.asteraDataProvider = address(miniPoolContracts.miniPoolAddressesProvider);
         configAddresses.stableStrategy = address(miniPoolContracts.stableStrategy);
         configAddresses.volatileStrategy = address(miniPoolContracts.volatileStrategy);
         miniPool =

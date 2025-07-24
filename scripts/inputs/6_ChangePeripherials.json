@@ -1,6 +1,6 @@
 {
     "miniPoolId": 0,
-    "asteraLendDataProvider": {
+    "asteraDataProvider": {
         "deploy": true,
         "marketReferenceCurrencyAggregator": "0x7e860098F58bBFC8648a4311b374B1D669a2bc6B",
         "networkBaseTokenAggregator": "0x71041dddad3595F9CEd3DcCFBe3D1F4b0a16Bb70"

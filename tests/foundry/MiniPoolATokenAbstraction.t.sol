@@ -7,7 +7,7 @@ import {WadRayMath} from "contracts/protocol/libraries/math/WadRayMath.sol";
 import {PercentageMath} from "contracts/protocol/libraries/math/PercentageMath.sol";
 import {ReserveConfiguration} from
     "contracts/protocol/libraries/configuration/ReserveConfiguration.sol";
-import "contracts/misc/AsteraLendDataProvider.sol";
+import "contracts/misc/AsteraDataProvider.sol";
 
 import "forge-std/StdUtils.sol";
 import "forge-std/console2.sol";
@@ -22,7 +22,7 @@ contract MiniPoolATokenAbstractionTest is MiniPoolFixtures {
         deployedContracts = fixture_deployProtocol();
 
         configLpAddresses = ConfigAddresses(
-            address(deployedContracts.asteraLendDataProvider),
+            address(deployedContracts.asteraDataProvider),
             address(deployedContracts.stableStrategy),
             address(deployedContracts.volatileStrategy),
             address(deployedContracts.treasury),
@@ -43,7 +43,7 @@ contract MiniPoolATokenAbstractionTest is MiniPoolFixtures {
         (miniPoolContracts,) = fixture_deployMiniPoolSetup(
             address(deployedContracts.lendingPoolAddressesProvider),
             address(deployedContracts.lendingPool),
-            address(deployedContracts.asteraLendDataProvider),
+            address(deployedContracts.asteraDataProvider),
             miniPoolContracts
         );
 
@@ -57,8 +57,7 @@ contract MiniPoolATokenAbstractionTest is MiniPoolFixtures {
                     address(commonContracts.aTokens[idx - tokens.length].WRAPPER_ADDRESS());
             }
         }
-        configLpAddresses.asteraLendDataProvider =
-            address(miniPoolContracts.miniPoolAddressesProvider);
+        configLpAddresses.asteraDataProvider = address(miniPoolContracts.miniPoolAddressesProvider);
         configLpAddresses.stableStrategy = address(miniPoolContracts.stableStrategy);
         configLpAddresses.volatileStrategy = address(miniPoolContracts.volatileStrategy);
         miniPool =

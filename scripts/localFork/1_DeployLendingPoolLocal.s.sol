@@ -36,7 +36,7 @@ contract DeployLendingPoolLocal is Script, LendingPoolHelper, Test {
         }
 
         (,, address[] memory aTokens, address[] memory debtTokens) =
-            contracts.asteraLendDataProvider.getAllLpTokens();
+            contracts.asteraDataProvider.getAllLpTokens();
 
         vm.serializeAddress("lendingPoolContracts", "aTokens", aTokens);
 
@@ -58,8 +58,8 @@ contract DeployLendingPoolLocal is Script, LendingPoolHelper, Test {
 
         vm.serializeAddress(
             "lendingPoolContracts",
-            "asteraLendDataProvider",
-            address(contracts.asteraLendDataProvider)
+            "asteraDataProvider",
+            address(contracts.asteraDataProvider)
         );
         vm.serializeAddress(
             "lendingPoolContracts",

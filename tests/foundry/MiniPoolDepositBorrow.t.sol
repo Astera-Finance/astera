@@ -9,7 +9,7 @@ import {ReserveConfiguration} from
     "contracts/protocol/libraries/configuration/ReserveConfiguration.sol";
 import {PercentageMath} from "contracts/protocol/libraries/math/PercentageMath.sol";
 import {MintableERC20} from "contracts/mocks/tokens/MintableERC20.sol";
-import "contracts/misc/AsteraLendDataProvider.sol";
+import "contracts/misc/AsteraDataProvider.sol";
 
 import "forge-std/StdUtils.sol";
 import "forge-std/console2.sol";
@@ -27,7 +27,7 @@ contract MiniPoolDepositBorrowTest is MiniPoolFixtures {
         deployedContracts = fixture_deployProtocol();
 
         configLpAddresses = ConfigAddresses(
-            address(deployedContracts.asteraLendDataProvider),
+            address(deployedContracts.asteraDataProvider),
             address(deployedContracts.stableStrategy),
             address(deployedContracts.volatileStrategy),
             address(deployedContracts.treasury),
@@ -48,7 +48,7 @@ contract MiniPoolDepositBorrowTest is MiniPoolFixtures {
         (miniPoolContracts,) = fixture_deployMiniPoolSetup(
             address(deployedContracts.lendingPoolAddressesProvider),
             address(deployedContracts.lendingPool),
-            address(deployedContracts.asteraLendDataProvider),
+            address(deployedContracts.asteraDataProvider),
             miniPoolContracts
         );
 
@@ -62,8 +62,7 @@ contract MiniPoolDepositBorrowTest is MiniPoolFixtures {
                     address(commonContracts.aTokens[idx - tokens.length].WRAPPER_ADDRESS());
             }
         }
-        configLpAddresses.asteraLendDataProvider =
-            address(miniPoolContracts.miniPoolAddressesProvider);
+        configLpAddresses.asteraDataProvider = address(miniPoolContracts.miniPoolAddressesProvider);
         configLpAddresses.stableStrategy = address(miniPoolContracts.stableStrategy);
         configLpAddresses.volatileStrategy = address(miniPoolContracts.volatileStrategy);
         miniPool =
@@ -140,7 +139,7 @@ contract MiniPoolDepositBorrowTest is MiniPoolFixtures {
 
         address[] memory aTokensW = new address[](1);
 
-        (address _aTokenAddress,) = AsteraLendDataProvider(deployedContracts.asteraLendDataProvider)
+        (address _aTokenAddress,) = AsteraDataProvider(deployedContracts.asteraDataProvider)
             .getLpTokens(address(mockToken), false);
         console2.log("AToken ::::  ", _aTokenAddress);
         aTokensW[0] = address(AToken(_aTokenAddress).WRAPPER_ADDRESS());
@@ -316,7 +315,7 @@ contract MiniPoolDepositBorrowTest is MiniPoolFixtures {
             amount, collateralOffset, borrowOffset, collateralTokenParams, borrowTokenParams, user
         );
         DynamicData memory dynamicData = deployedContracts
-            .asteraLendDataProvider
+            .asteraDataProvider
             .getMpReserveDynamicData(address(borrowTokenParams.token), 0);
         vm.startPrank(miniPoolContracts.miniPoolAddressesProvider.getMainPoolAdmin());
         miniPoolContracts.miniPoolConfigurator.setAsteraReserveFactor(
@@ -345,7 +344,7 @@ contract MiniPoolDepositBorrowTest is MiniPoolFixtures {
         fixture_miniPoolBorrow(
             amount, collateralOffset, borrowOffset, collateralTokenParams, borrowTokenParams, user
         );
-        dynamicData = deployedContracts.asteraLendDataProvider.getMpReserveDynamicData(
+        dynamicData = deployedContracts.asteraDataProvider.getMpReserveDynamicData(
             address(borrowTokenParams.token), 0
         );
         console2.log("2.Treasury balance: ", aErc6909Token.balanceOf(treasury, 1128 + borrowOffset));
@@ -469,7 +468,7 @@ contract MiniPoolDepositBorrowTest is MiniPoolFixtures {
         vm.stopPrank();
 
         DynamicData memory dynamicData = deployedContracts
-            .asteraLendDataProvider
+            .asteraDataProvider
             .getMpReserveDynamicData(address(borrowTokenParams.token), 0);
         uint256 previousVariableBorrowIndex = dynamicData.variableBorrowIndex;
         vm.startPrank(miniPoolContracts.miniPoolAddressesProvider.getMainPoolAdmin());
@@ -527,7 +526,7 @@ contract MiniPoolDepositBorrowTest is MiniPoolFixtures {
         );
         vm.stopPrank();
 
-        dynamicData = deployedContracts.asteraLendDataProvider.getMpReserveDynamicData(
+        dynamicData = deployedContracts.asteraDataProvider.getMpReserveDynamicData(
             address(borrowTokenParams.token), 0
         );
         console2.log(

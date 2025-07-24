@@ -17,7 +17,7 @@ contract ATokenTest is Common {
         assertEq(vm.activeFork(), opFork);
         deployedContracts = fixture_deployProtocol();
         configAddresses = ConfigAddresses(
-            address(deployedContracts.asteraLendDataProvider),
+            address(deployedContracts.asteraDataProvider),
             address(deployedContracts.stableStrategy),
             address(deployedContracts.volatileStrategy),
             address(deployedContracts.treasury),
@@ -140,7 +140,7 @@ contract ATokenTest is Common {
             vm.startPrank(user);
             uint256 amountToBorrow;
             StaticData memory staticData = deployedContracts
-                .asteraLendDataProvider
+                .asteraDataProvider
                 .getLpReserveStaticData(address(erc20Tokens[idx]), true);
             amountToBorrow = ((staticData.ltv * 2 * amount) / 10_000) - 1;
 
@@ -178,7 +178,7 @@ contract ATokenTest is Common {
                 uint256 nextTokenAssetPrice =
                     commonContracts.oracle.getAssetPrice(address(erc20Tokens[nextTokenIndex]));
                 StaticData memory staticData = deployedContracts
-                    .asteraLendDataProvider
+                    .asteraDataProvider
                     .getLpReserveStaticData(address(erc20Tokens[idx]), true);
 
                 uint256 currentAssetDepositValue =

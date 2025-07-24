@@ -18,7 +18,7 @@ contract DefaultReserveInterestRateStrategyTest is Common {
         assertEq(vm.activeFork(), opFork);
         deployedContracts = fixture_deployProtocol();
         configAddresses = ConfigAddresses(
-            address(deployedContracts.asteraLendDataProvider),
+            address(deployedContracts.asteraDataProvider),
             address(deployedContracts.stableStrategy),
             address(deployedContracts.volatileStrategy),
             address(deployedContracts.treasury),
@@ -32,10 +32,9 @@ contract DefaultReserveInterestRateStrategyTest is Common {
             deployedContracts.lendingPoolConfigurator,
             deployedContracts.lendingPoolAddressesProvider
         );
-        commonContracts.aTokens =
-            fixture_getATokens(tokens, deployedContracts.asteraLendDataProvider);
+        commonContracts.aTokens = fixture_getATokens(tokens, deployedContracts.asteraDataProvider);
         commonContracts.variableDebtTokens =
-            fixture_getVarDebtTokens(tokens, deployedContracts.asteraLendDataProvider);
+            fixture_getVarDebtTokens(tokens, deployedContracts.asteraDataProvider);
         commonContracts.mockedVaults =
             fixture_deployReaperVaultMocks(tokens, address(deployedContracts.treasury));
         erc20Tokens = fixture_getErc20Tokens(tokens);
@@ -47,7 +46,7 @@ contract DefaultReserveInterestRateStrategyTest is Common {
         for (uint32 idx = 0; idx < erc20Tokens.length; idx++) {
             uint256 currentLiquidityRate = 0;
             uint256 currentVariableBorrowRate = 0;
-            staticData[idx] = deployedContracts.asteraLendDataProvider.getLpReserveStaticData(
+            staticData[idx] = deployedContracts.asteraDataProvider.getLpReserveStaticData(
                 address(erc20Tokens[idx]), false
             );
             (currentLiquidityRate, currentVariableBorrowRate) = deployedContracts
@@ -70,7 +69,7 @@ contract DefaultReserveInterestRateStrategyTest is Common {
         for (uint32 idx = 0; idx < erc20Tokens.length; idx++) {
             uint256 currentLiquidityRate = 0;
             uint256 currentVariableBorrowRate = 0;
-            staticData[idx] = deployedContracts.asteraLendDataProvider.getLpReserveStaticData(
+            staticData[idx] = deployedContracts.asteraDataProvider.getLpReserveStaticData(
                 address(erc20Tokens[idx]), false
             );
             (currentLiquidityRate, currentVariableBorrowRate) = deployedContracts
@@ -101,7 +100,7 @@ contract DefaultReserveInterestRateStrategyTest is Common {
         for (uint32 idx = 0; idx < erc20Tokens.length; idx++) {
             uint256 currentLiquidityRate = 0;
             uint256 currentVariableBorrowRate = 0;
-            staticData[idx] = deployedContracts.asteraLendDataProvider.getLpReserveStaticData(
+            staticData[idx] = deployedContracts.asteraDataProvider.getLpReserveStaticData(
                 address(erc20Tokens[idx]), false
             );
             (currentLiquidityRate, currentVariableBorrowRate) = deployedContracts

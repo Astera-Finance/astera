@@ -143,4 +143,4 @@ struct AggregatedMiniPoolReservesData {
     uint256 currentFlow;
 }
 
-interface IAsteraLendDataProvider2 {}
+interface IAsteraDataProvider2 {}

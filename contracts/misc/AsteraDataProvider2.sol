@@ -26,7 +26,7 @@ import {DefaultReserveInterestRateStrategy} from
 import {MiniPoolDefaultReserveInterestRateStrategy} from
     "../../contracts/protocol/core/interestRateStrategies/minipool/MiniPoolDefaultReserveInterestRate.sol";
 import {
-    IAsteraLendDataProvider2,
+    IAsteraDataProvider2,
     DataTypes,
     AggregatedMainPoolReservesData,
     AggregatedMiniPoolReservesData,
@@ -34,17 +34,17 @@ import {
     UserReserveData,
     MiniPoolUserReserveData,
     BaseCurrencyInfo
-} from "../../contracts/interfaces/IAsteraLendDataProvider2.sol";
+} from "../../contracts/interfaces/IAsteraDataProvider2.sol";
 import {IOracle} from "../../contracts/interfaces/IOracle.sol";
 import {IChainlinkAggregator} from "../../contracts/interfaces/base/IChainlinkAggregator.sol";
 
 /**
- * @title AsteraLendDataProvider
+ * @title AsteraDataProvider
  * @dev This contract provides data access functions for lending pool and minipool information.
  * It retrieves static and dynamic configurations, user data, and token addresses from both types of pools.
  * @author Conclave
  */
-contract AsteraLendDataProvider2 is Ownable, IAsteraLendDataProvider2 {
+contract AsteraDataProvider2 is Ownable, IAsteraDataProvider2 {
     using ReserveConfiguration for DataTypes.ReserveConfigurationMap;
     using UserConfiguration for DataTypes.UserConfigurationMap;
 

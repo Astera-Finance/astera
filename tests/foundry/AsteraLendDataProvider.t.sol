@@ -9,25 +9,25 @@ import {LendingPoolConfigurator} from
     "contracts/protocol/core/lendingpool/LendingPoolConfigurator.sol";
 import {MiniPoolConfigurator} from "contracts/protocol/core/minipool/MiniPoolConfigurator.sol";
 import {MathUtils} from "contracts/protocol/libraries/math/MathUtils.sol";
-import {AsteraLendDataProvider} from "contracts/misc/AsteraLendDataProvider.sol";
-import "contracts/interfaces/IAsteraLendDataProvider.sol";
+import {AsteraDataProvider} from "contracts/misc/AsteraDataProvider.sol";
+import "contracts/interfaces/IAsteraDataProvider.sol";
 import "forge-std/StdUtils.sol";
 import "contracts/protocol/libraries/helpers/Errors.sol";
 import "./MiniPoolFixtures.t.sol";
 
-contract AsteraLendDataProviderTest is MiniPoolFixtures {
+contract AsteraDataProviderTest is MiniPoolFixtures {
     using WadRayMath for uint256;
     using PercentageMath for uint256;
 
     ERC20[] erc20Tokens;
-    AsteraLendDataProvider asteraLendDataProvider;
+    AsteraDataProvider asteraDataProvider;
 
     function setUp() public override {
         opFork = vm.createSelectFork(RPC, FORK_BLOCK);
         assertEq(vm.activeFork(), opFork);
         deployedContracts = fixture_deployProtocol();
         configAddresses = ConfigAddresses(
-            address(deployedContracts.asteraLendDataProvider),
+            address(deployedContracts.asteraDataProvider),
             address(deployedContracts.stableStrategy),
             address(deployedContracts.volatileStrategy),
             address(deployedContracts.treasury),
@@ -49,7 +49,7 @@ contract AsteraLendDataProviderTest is MiniPoolFixtures {
         (miniPoolContracts, miniPoolId) = fixture_deployMiniPoolSetup(
             address(deployedContracts.lendingPoolAddressesProvider),
             address(deployedContracts.lendingPool),
-            address(deployedContracts.asteraLendDataProvider),
+            address(deployedContracts.asteraDataProvider),
             miniPoolContracts
         );
 
@@ -99,9 +99,9 @@ contract AsteraLendDataProviderTest is MiniPoolFixtures {
         vm.prank(admin);
         deployedContracts.lendingPoolConfigurator.setDepositCap(address(usdcTypes.token), true, 200);
 
-        StaticData memory staticData = deployedContracts
-            .asteraLendDataProvider
-            .getLpReserveStaticData(address(usdcTypes.token), true);
+        StaticData memory staticData = deployedContracts.asteraDataProvider.getLpReserveStaticData(
+            address(usdcTypes.token), true
+        );
         console2.log("depositCap ", staticData.depositCap);
         assertEq(staticData.depositCap, 200);
     }
@@ -132,7 +132,7 @@ contract AsteraLendDataProviderTest is MiniPoolFixtures {
         fixture_depositAndBorrow(usdcTypes, wbtcTypes, user2, user3, usdcDepositAmount);
         {
             StaticData memory staticData = deployedContracts
-                .asteraLendDataProvider
+                .asteraDataProvider
                 .getLpReserveStaticData(address(usdcTypes.token), true);
 
             console2.log("Decimals: ", staticData.decimals);
@@ -163,7 +163,7 @@ contract AsteraLendDataProviderTest is MiniPoolFixtures {
             );
             vm.stopPrank();
 
-            staticData = deployedContracts.asteraLendDataProvider.getLpReserveStaticData(
+            staticData = deployedContracts.asteraDataProvider.getLpReserveStaticData(
                 address(usdcTypes.token), true
             );
             assertEq(staticData.depositCap, 200);
@@ -172,7 +172,7 @@ contract AsteraLendDataProviderTest is MiniPoolFixtures {
             DynamicData memory dynamicData;
             console2.log("\n>>>> USDC <<<<");
 
-            dynamicData = deployedContracts.asteraLendDataProvider.getLpReserveDynamicData(
+            dynamicData = deployedContracts.asteraDataProvider.getLpReserveDynamicData(
                 address(usdcTypes.token), true
             );
             assertEq(
@@ -186,7 +186,7 @@ contract AsteraLendDataProviderTest is MiniPoolFixtures {
             assertEq(dynamicData.lastUpdateTimestamp, block.timestamp, "Wrong lastUpdateTimestamp");
             console2.log("\n>>>> WBTC <<<<<");
 
-            dynamicData = deployedContracts.asteraLendDataProvider.getLpReserveDynamicData(
+            dynamicData = deployedContracts.asteraDataProvider.getLpReserveDynamicData(
                 address(wbtcTypes.token), true
             );
             uint256 wbtcAmount =
@@ -213,7 +213,7 @@ contract AsteraLendDataProviderTest is MiniPoolFixtures {
         }
         {
             (,, address[] memory aTokens, address[] memory debtTokens) =
-                deployedContracts.asteraLendDataProvider.getAllLpTokens();
+                deployedContracts.asteraDataProvider.getAllLpTokens();
             // for (uint256 idx = 0; idx < aTokens.length; idx++) {
             //     console2.log(
             //         "%sa. Address: %s (%s)",
@@ -229,7 +229,7 @@ contract AsteraLendDataProviderTest is MiniPoolFixtures {
         {
             console2.log("\n>>>> USER USDC <<<<");
             UserReserveData memory userReservesData = deployedContracts
-                .asteraLendDataProvider
+                .asteraDataProvider
                 .getLpUserData(address(usdcTypes.token), true, address(this));
             console2.log("aToken: ", userReservesData.aToken);
             console2.log("debtToken: ", userReservesData.debtToken);
@@ -240,7 +240,7 @@ contract AsteraLendDataProviderTest is MiniPoolFixtures {
             );
             console2.log("isBorrowing: ", userReservesData.isBorrowing);
 
-            userReservesData = deployedContracts.asteraLendDataProvider.getLpUserData(
+            userReservesData = deployedContracts.asteraDataProvider.getLpUserData(
                 address(wbtcTypes.token), true, address(this)
             );
             console2.log("\n>>>> USER WBTC <<<<<");
@@ -292,7 +292,7 @@ contract AsteraLendDataProviderTest is MiniPoolFixtures {
         // fixture_miniPoolBorrow(depositAmount, 1, 0, wbtcParams, usdcParams, user2);
         {
             StaticData memory staticData = deployedContracts
-                .asteraLendDataProvider
+                .asteraDataProvider
                 .getMpReserveStaticData(address(usdcParams.token), 0);
 
             console2.log("Decimals: ", staticData.decimals);
@@ -325,7 +325,7 @@ contract AsteraLendDataProviderTest is MiniPoolFixtures {
             );
             vm.stopPrank();
 
-            staticData = deployedContracts.asteraLendDataProvider.getMpReserveStaticData(
+            staticData = deployedContracts.asteraDataProvider.getMpReserveStaticData(
                 address(usdcParams.token), 0
             );
             assertEq(staticData.depositCap, 200);
@@ -333,7 +333,7 @@ contract AsteraLendDataProviderTest is MiniPoolFixtures {
         {
             console2.log("\n>>>> USDC <<<<");
             DynamicData memory dynamicData = deployedContracts
-                .asteraLendDataProvider
+                .asteraDataProvider
                 .getMpReserveDynamicData(address(usdcParams.token), 0);
             assertEq(dynamicData.availableLiquidity, 0, "Wrong available liquidity");
             assertEq(dynamicData.totalVariableDebt, borrowAmount, "Wrong totalVariableDebt");
@@ -344,7 +344,7 @@ contract AsteraLendDataProviderTest is MiniPoolFixtures {
             console2.log("lastUpdateTimestamp ", dynamicData.lastUpdateTimestamp);
 
             console2.log("\n>>>> WBTC <<<<<");
-            dynamicData = deployedContracts.asteraLendDataProvider.getMpReserveDynamicData(
+            dynamicData = deployedContracts.asteraDataProvider.getMpReserveDynamicData(
                 address(wbtcParams.token), 0
             );
 
@@ -363,7 +363,7 @@ contract AsteraLendDataProviderTest is MiniPoolFixtures {
                 address[] memory reserves,
                 uint256[] memory aTokenIds,
                 uint256[] memory variableDebtTokenIds
-            ) = deployedContracts.asteraLendDataProvider.getAllMpTokenInfo(0);
+            ) = deployedContracts.asteraDataProvider.getAllMpTokenInfo(0);
             for (uint256 idx = 0; idx < commonContracts.aTokens.length; idx++) {
                 console2.log("%sa. Address: %s ", idx, aErc6909Token[idx]);
                 console2.log(
@@ -376,7 +376,7 @@ contract AsteraLendDataProviderTest is MiniPoolFixtures {
         {
             console2.log("\n>>>> USER USDC <<<<");
             MiniPoolUserReserveData memory userReservesData = deployedContracts
-                .asteraLendDataProvider
+                .asteraDataProvider
                 .getMpUserData(address(this), 0, address(usdcParams.token));
             console2.log("aTokenId: ", userReservesData.aTokenId);
             console2.log("debtTokenId: ", userReservesData.debtTokenId);
@@ -387,7 +387,7 @@ contract AsteraLendDataProviderTest is MiniPoolFixtures {
             );
             console2.log("isBorrowing: ", userReservesData.isBorrowing);
 
-            userReservesData = deployedContracts.asteraLendDataProvider.getMpUserData(
+            userReservesData = deployedContracts.asteraDataProvider.getMpUserData(
                 address(this), 0, address(wbtcParams.token)
             );
             console2.log("\n>>>> USER WBTC <<<<<");
@@ -409,13 +409,13 @@ contract AsteraLendDataProviderTest is MiniPoolFixtures {
             assertEq(userReservesData.isBorrowing, false, "Wrong is borrowing flag");
 
             address underlying =
-                deployedContracts.asteraLendDataProvider.getUnderlyingAssetFromId(1128, 0);
+                deployedContracts.asteraDataProvider.getUnderlyingAssetFromId(1128, 0);
             console2.log(ERC20(underlying).symbol());
-            assertEq(0, deployedContracts.asteraLendDataProvider.getMpUnderlyingBalanceOf(1128, 0));
+            assertEq(0, deployedContracts.asteraDataProvider.getMpUnderlyingBalanceOf(1128, 0));
 
-            underlying = deployedContracts.asteraLendDataProvider.getUnderlyingAssetFromId(1129, 0);
+            underlying = deployedContracts.asteraDataProvider.getUnderlyingAssetFromId(1129, 0);
             console2.log(ERC20(underlying).symbol());
-            assertGt(deployedContracts.asteraLendDataProvider.getMpUnderlyingBalanceOf(1129, 0), 0);
+            assertGt(deployedContracts.asteraDataProvider.getMpUnderlyingBalanceOf(1129, 0), 0);
         }
     }
 
@@ -448,7 +448,7 @@ contract AsteraLendDataProviderTest is MiniPoolFixtures {
         (, uint256 miniPoolId) = fixture_deployMiniPoolSetup(
             address(deployedContracts.lendingPoolAddressesProvider),
             address(deployedContracts.lendingPool),
-            address(deployedContracts.asteraLendDataProvider),
+            address(deployedContracts.asteraDataProvider),
             miniPoolContracts
         );
         console2.log("MiniPoolId: ", miniPoolId);
@@ -469,22 +469,20 @@ contract AsteraLendDataProviderTest is MiniPoolFixtures {
         borrowAmount = 7e18;
         fixture_miniPoolBorrow(borrowAmount, 1, 0, wbtcParams, usdcParams, user2);
 
-        (address[] memory miniPools, uint256[] memory miniPoolIds) = deployedContracts
-            .asteraLendDataProvider
-            .getMiniPoolsWithReserve(address(wbtcParams.token));
-        for (uint256 idx = 0; idx < miniPools.length; idx++) {
-            console2.log("%s. Address: %s, Id: %s", idx, miniPools[idx], miniPoolIds[idx]);
-        }
-
-        (miniPools, miniPoolIds) = deployedContracts.asteraLendDataProvider.getMiniPoolsWithReserve(
-            address(usdcParams.token)
-        );
+        (address[] memory miniPools, uint256[] memory miniPoolIds) =
+            deployedContracts.asteraDataProvider.getMiniPoolsWithReserve(address(wbtcParams.token));
         for (uint256 idx = 0; idx < miniPools.length; idx++) {
             console2.log("%s. Address: %s, Id: %s", idx, miniPools[idx], miniPoolIds[idx]);
         }
 
         (miniPools, miniPoolIds) =
-            deployedContracts.asteraLendDataProvider.getMiniPoolsWithReserve(makeAddr("random"));
+            deployedContracts.asteraDataProvider.getMiniPoolsWithReserve(address(usdcParams.token));
+        for (uint256 idx = 0; idx < miniPools.length; idx++) {
+            console2.log("%s. Address: %s, Id: %s", idx, miniPools[idx], miniPoolIds[idx]);
+        }
+
+        (miniPools, miniPoolIds) =
+            deployedContracts.asteraDataProvider.getMiniPoolsWithReserve(makeAddr("random"));
         for (uint256 idx = 0; idx < miniPools.length; idx++) {
             console2.log("%s. Address: %s, Id: %s", idx, miniPools[idx], miniPoolIds[idx]);
         }

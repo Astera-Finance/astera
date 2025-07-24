@@ -9,7 +9,7 @@ import "contracts/mocks/tokens/MintableERC20.sol";
 import {DistributionTypes} from "contracts/protocol/libraries/types/DistributionTypes.sol";
 import {RewardForwarder} from "contracts/protocol/rewarder/lendingpool/RewardForwarder.sol";
 import "contracts/protocol/tokenization/ERC6909/ATokenERC6909.sol";
-import {MiniPoolUserReserveData} from "../../contracts/interfaces/IAsteraLendDataProvider.sol";
+import {MiniPoolUserReserveData} from "../../contracts/interfaces/IAsteraDataProvider.sol";
 
 import "forge-std/StdUtils.sol";
 
@@ -159,7 +159,7 @@ contract MiniPoolRewarderTest is Common {
         assertEq(vm.activeFork(), opFork);
         deployedContracts = fixture_deployProtocol();
         configAddresses = ConfigAddresses(
-            address(deployedContracts.asteraLendDataProvider),
+            address(deployedContracts.asteraDataProvider),
             address(deployedContracts.stableStrategy),
             address(deployedContracts.volatileStrategy),
             address(deployedContracts.treasury),
@@ -180,7 +180,7 @@ contract MiniPoolRewarderTest is Common {
         (miniPoolContracts,) = fixture_deployMiniPoolSetup(
             address(deployedContracts.lendingPoolAddressesProvider),
             address(deployedContracts.lendingPool),
-            address(deployedContracts.asteraLendDataProvider),
+            address(deployedContracts.asteraDataProvider),
             miniPoolContracts
         );
 
@@ -195,8 +195,7 @@ contract MiniPoolRewarderTest is Common {
             }
             console2.log("reserves[idx] : ", reserves[idx]);
         }
-        configAddresses.asteraLendDataProvider =
-            address(miniPoolContracts.miniPoolAddressesProvider);
+        configAddresses.asteraDataProvider = address(miniPoolContracts.miniPoolAddressesProvider);
         configAddresses.stableStrategy = address(miniPoolContracts.stableStrategy);
         configAddresses.volatileStrategy = address(miniPoolContracts.volatileStrategy);
         miniPool =
@@ -2411,7 +2410,7 @@ contract MiniPoolRewarderTest is Common {
         );
         console2.log("3.Balance of ", wethParams.aTokenWrapper.balanceOf(user1));
         MiniPoolUserReserveData memory userReservesData = deployedContracts
-            .asteraLendDataProvider
+            .asteraDataProvider
             .getMpUserData(user1, miniPool, address(wethParams.aTokenWrapper));
         console2.log("scaledATokenBalance: ", userReservesData.scaledATokenBalance);
         console2.log("scaledVariableDebt: ", userReservesData.scaledVariableDebt);

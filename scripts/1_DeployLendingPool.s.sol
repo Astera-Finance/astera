@@ -23,8 +23,8 @@ contract DeployLendingPool is Script, LendingPoolHelper, Test {
         );
         assertEq(contracts.oracle.owner(), vm.addr(vm.envUint("PRIVATE_KEY")));
         assertEq(contracts.wethGateway.owner(), vm.addr(vm.envUint("PRIVATE_KEY")));
-        assertEq(contracts.asteraLendDataProvider.owner(), vm.addr(vm.envUint("PRIVATE_KEY")));
-        // assertEq(contracts.asteraLendDataProvider.owner(), vm.addr(vm.envUint("PRIVATE_KEY")));
+        assertEq(contracts.asteraDataProvider.owner(), vm.addr(vm.envUint("PRIVATE_KEY")));
+        // assertEq(contracts.asteraDataProvider.owner(), vm.addr(vm.envUint("PRIVATE_KEY")));
         for (uint8 idx = 0; idx < contracts.piStrategies.length; idx++) {
             assertEq(contracts.piStrategies[idx].owner(), vm.addr(vm.envUint("PRIVATE_KEY")));
         }
@@ -63,7 +63,7 @@ contract DeployLendingPool is Script, LendingPoolHelper, Test {
                 "Wrong underlying token"
             );
             AggregatedMainPoolReservesData memory aggregatedMainPoolReservesData = contracts
-                .asteraLendDataProvider
+                .asteraDataProvider
                 .getAggregatedMainPoolReserveData(
                 address(poolReserversConfig[idx].tokenAddress), reserveTypes[idx]
             );
@@ -135,7 +135,7 @@ contract DeployLendingPool is Script, LendingPoolHelper, Test {
         }
 
         (,, address[] memory aTokens, address[] memory debtTokens) =
-            contracts.asteraLendDataProvider.getAllLpTokens();
+            contracts.asteraDataProvider.getAllLpTokens();
 
         vm.serializeAddress("lendingPoolContracts", "aTokens", aTokens);
 
@@ -157,8 +157,8 @@ contract DeployLendingPool is Script, LendingPoolHelper, Test {
 
         vm.serializeAddress(
             "lendingPoolContracts",
-            "asteraLendDataProvider",
-            address(contracts.asteraLendDataProvider)
+            "asteraDataProvider",
+            address(contracts.asteraDataProvider)
         );
 
         vm.serializeAddress(

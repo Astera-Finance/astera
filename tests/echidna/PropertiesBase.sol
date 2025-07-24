@@ -25,7 +25,7 @@ import {ReserveConfiguration} from
 import {IAERC6909} from "contracts/interfaces/IAERC6909.sol";
 import {IAToken} from "contracts/interfaces/IAToken.sol";
 import {IVariableDebtToken} from "contracts/interfaces/IVariableDebtToken.sol";
-import {IAsteraLendDataProvider} from "contracts/interfaces/IAsteraLendDataProvider.sol";
+import {IAsteraDataProvider} from "contracts/interfaces/IAsteraDataProvider.sol";
 import {IFlashLoanReceiver} from "contracts/interfaces/IFlashLoanReceiver.sol";
 import {ILendingPool} from "contracts/interfaces/ILendingPool.sol";
 import {ILendingPoolAddressesProvider} from "contracts/interfaces/ILendingPoolAddressesProvider.sol";
@@ -44,7 +44,7 @@ import {IRewarder} from "contracts/interfaces/IRewarder.sol";
 import {IRewardsController} from "contracts/interfaces/IRewardsController.sol";
 import {IRewardsDistributor} from "contracts/interfaces/IRewardsDistributor.sol";
 
-import {AsteraLendDataProvider} from "contracts/misc/AsteraLendDataProvider.sol";
+import {AsteraDataProvider} from "contracts/misc/AsteraDataProvider.sol";
 import {RewardsVault} from "contracts/misc/RewardsVault.sol";
 import {Treasury} from "contracts/misc/Treasury.sol";
 import {WETHGateway} from "contracts/misc/WETHGateway.sol";
@@ -155,7 +155,7 @@ contract PropertiesBase is PropertiesAsserts, MarketParams {
 
     /// Astera contracts
     Oracle internal oracle;
-    AsteraLendDataProvider internal asteraLendDataProvider;
+    AsteraDataProvider internal asteraDataProvider;
     address internal treasury;
     address internal asteraTreasury;
 
@@ -232,8 +232,8 @@ contract PropertiesBase is PropertiesAsserts, MarketParams {
 
         lendingPoolProvider.setPriceOracle(address(oracle));
 
-        asteraLendDataProvider = new AsteraLendDataProvider(ETH_USD_SOURCE, USDC_USD_SOURCE);
-        asteraLendDataProvider.setLendingPoolAddressProvider(address(lendingPoolProvider));
+        asteraDataProvider = new AsteraDataProvider(ETH_USD_SOURCE, USDC_USD_SOURCE);
+        asteraDataProvider.setLendingPoolAddressProvider(address(lendingPoolProvider));
 
         defaultRateStrategies = new DefaultReserveInterestRateStrategy(
             lendingPoolProvider,
@@ -305,7 +305,7 @@ contract PropertiesBase is PropertiesAsserts, MarketParams {
 
         for (uint256 i = 0; i < totalNbTokens; i++) {
             (address aTokenAddress, address variableDebtTokenAddress) =
-                asteraLendDataProvider.getLpTokens(address(assets[i]), true);
+                asteraDataProvider.getLpTokens(address(assets[i]), true);
             aTokens.push(AToken(aTokenAddress));
             aTokensNonRebasing.push(ATokenNonRebasing(AToken(aTokenAddress).WRAPPER_ADDRESS()));
             debtTokens.push(VariableDebtToken(variableDebtTokenAddress));
@@ -343,7 +343,7 @@ contract PropertiesBase is PropertiesAsserts, MarketParams {
 
         flowLimiter = new FlowLimiter(IMiniPoolAddressesProvider(address(miniPoolProvider)));
         lendingPoolProvider.setFlowLimiter(address(flowLimiter));
-        asteraLendDataProvider.setMiniPoolAddressProvider(address(miniPoolProvider));
+        asteraDataProvider.setMiniPoolAddressProvider(address(miniPoolProvider));
 
         minipoolDefaultRateStrategies = new MiniPoolDefaultReserveInterestRateStrategy(
             IMiniPoolAddressesProvider(address(miniPoolProvider)),

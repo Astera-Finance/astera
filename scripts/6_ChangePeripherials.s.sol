@@ -19,7 +19,7 @@ contract ChangePeripherials is Script, ChangePeripherialsHelper, Test {
     function writeJsonData(string memory path) internal {
         /* Write important contracts into the file */
         vm.serializeAddress(
-            "peripherials", "asteraLendDataProvider", address(contracts.asteraLendDataProvider)
+            "peripherials", "asteraDataProvider", address(contracts.asteraDataProvider)
         );
         vm.serializeAddress("peripherials", "rewarder", address(contracts.rewarder));
 
@@ -56,8 +56,8 @@ contract ChangePeripherials is Script, ChangePeripherialsHelper, Test {
             abi.decode(config.parseRaw(".rehypothecation"), (Rehypothecation[]));
 
         uint256 miniPoolId = config.readUint(".miniPoolId");
-        DataProvider memory asteraLendDataProvider =
-            abi.decode(config.parseRaw(".asteraLendDataProvider"), (DataProvider));
+        DataProvider memory asteraDataProvider =
+            abi.decode(config.parseRaw(".asteraDataProvider"), (DataProvider));
 
         address profitHandler = config.readAddress(".profitHandler");
 
@@ -148,15 +148,15 @@ contract ChangePeripherials is Script, ChangePeripherialsHelper, Test {
             );
             _turnOnRehypothecation(rehypothecation);
             /* Data Provider */
-            if (asteraLendDataProvider.deploy) {
-                contracts.asteraLendDataProvider = new AsteraLendDataProvider2(
-                    asteraLendDataProvider.networkBaseTokenAggregator,
-                    asteraLendDataProvider.marketReferenceCurrencyAggregator
+            if (asteraDataProvider.deploy) {
+                contracts.asteraDataProvider = new AsteraDataProvider2(
+                    asteraDataProvider.networkBaseTokenAggregator,
+                    asteraDataProvider.marketReferenceCurrencyAggregator
                 );
-                contracts.asteraLendDataProvider.setLendingPoolAddressProvider(
+                contracts.asteraDataProvider.setLendingPoolAddressProvider(
                     address(contracts.lendingPoolAddressesProvider)
                 );
-                contracts.asteraLendDataProvider.setMiniPoolAddressProvider(
+                contracts.asteraDataProvider.setMiniPoolAddressProvider(
                     address(contracts.miniPoolAddressesProvider)
                 );
             }
@@ -200,15 +200,15 @@ contract ChangePeripherials is Script, ChangePeripherialsHelper, Test {
             );
             _turnOnRehypothecation(rehypothecation);
             /* Data Provider */
-            if (asteraLendDataProvider.deploy) {
-                contracts.asteraLendDataProvider = new AsteraLendDataProvider2(
-                    asteraLendDataProvider.networkBaseTokenAggregator,
-                    asteraLendDataProvider.marketReferenceCurrencyAggregator
+            if (asteraDataProvider.deploy) {
+                contracts.asteraDataProvider = new AsteraDataProvider2(
+                    asteraDataProvider.networkBaseTokenAggregator,
+                    asteraDataProvider.marketReferenceCurrencyAggregator
                 );
-                contracts.asteraLendDataProvider.setLendingPoolAddressProvider(
+                contracts.asteraDataProvider.setLendingPoolAddressProvider(
                     address(contracts.lendingPoolAddressesProvider)
                 );
-                contracts.asteraLendDataProvider.setMiniPoolAddressProvider(
+                contracts.asteraDataProvider.setMiniPoolAddressProvider(
                     address(contracts.miniPoolAddressesProvider)
                 );
             }

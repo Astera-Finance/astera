@@ -12,12 +12,12 @@ import {ATokenERC6909} from "contracts/protocol/tokenization/ERC6909/ATokenERC69
 import {VariableDebtToken} from "contracts/protocol/tokenization/ERC20/VariableDebtToken.sol";
 import {IAERC6909} from "contracts/interfaces/IAERC6909.sol";
 import {Oracle} from "contracts/protocol/core/Oracle.sol";
-import {AsteraLendDataProvider2} from "contracts/misc/AsteraLendDataProvider2.sol";
-import {AsteraLendDataProvider} from "contracts/misc/AsteraLendDataProvider.sol";
+import {AsteraDataProvider2} from "contracts/misc/AsteraDataProvider2.sol";
+import {AsteraDataProvider} from "contracts/misc/AsteraDataProvider.sol";
 import {
     AggregatedMainPoolReservesData,
     AggregatedMiniPoolReservesData
-} from "contracts/interfaces/IAsteraLendDataProvider2.sol";
+} from "contracts/interfaces/IAsteraDataProvider2.sol";
 import {IMiniPool} from "contracts/interfaces/IMiniPool.sol";
 
 import {DefaultReserveInterestRateStrategy} from
@@ -148,7 +148,7 @@ contract TestBasicActions is Script, Test {
         uint256 collateralPrice = oracle.getAssetPrice(address(collateral));
         uint256 collateralDepositValue = amount * collateralPrice / (10 ** PRICE_FEED_DECIMALS);
         AggregatedMainPoolReservesData memory aggregatedMainPoolReservesData = contracts
-            .asteraLendDataProvider
+            .asteraDataProvider
             .getAggregatedMainPoolReserveData(address(collateral), true);
         uint256 maxBorrowTokenToBorrowInCollateralUnit;
         {
@@ -164,31 +164,31 @@ contract TestBasicActions is Script, Test {
         return maxBorrowTokenToBorrowInCollateralUnit;
     }
 
-    function fixture_getATokenWrapper(address _token, AsteraLendDataProvider2 asteraLendDataProvider)
+    function fixture_getATokenWrapper(address _token, AsteraDataProvider2 asteraDataProvider)
         public
         view
         returns (AToken _aTokenW)
     {
-        (address _aTokenAddress,) = asteraLendDataProvider.getLpTokens(_token, true);
+        (address _aTokenAddress,) = asteraDataProvider.getLpTokens(_token, true);
         // console2.log("AToken%s: %s", idx, _aTokenAddress);
         _aTokenW = AToken(address(AToken(_aTokenAddress).WRAPPER_ADDRESS()));
     }
 
-    function fixture_getAToken(address _token, AsteraLendDataProvider2 asteraLendDataProvider)
+    function fixture_getAToken(address _token, AsteraDataProvider2 asteraDataProvider)
         public
         view
         returns (AToken _aToken)
     {
-        (address _aTokenAddress,) = asteraLendDataProvider.getLpTokens(_token, true);
+        (address _aTokenAddress,) = asteraDataProvider.getLpTokens(_token, true);
         // console2.log("AToken%s: %s", idx, _aTokenAddress);
         _aToken = AToken(_aTokenAddress);
     }
 
-    function fixture_getVarDebtToken(address _token, AsteraLendDataProvider2 asteraLendDataProvider)
+    function fixture_getVarDebtToken(address _token, AsteraDataProvider2 asteraDataProvider)
         public
         returns (VariableDebtToken _varDebtToken)
     {
-        (, address _variableDebtToken) = asteraLendDataProvider.getLpTokens(_token, true);
+        (, address _variableDebtToken) = asteraDataProvider.getLpTokens(_token, true);
         _varDebtToken = VariableDebtToken(_variableDebtToken);
     }
 
@@ -373,8 +373,8 @@ contract TestBasicActions is Script, Test {
         string memory deployedContracts = vm.readFile(pathMain);
 
         contracts.lendingPool = LendingPool(deployedContracts.readAddress(".lendingPool"));
-        contracts.asteraLendDataProvider =
-            AsteraLendDataProvider2(deployedContracts.readAddress(".asteraLendDataProvider"));
+        contracts.asteraDataProvider =
+            AsteraDataProvider2(deployedContracts.readAddress(".asteraDataProvider"));
         contracts.lendingPoolAddressesProvider = LendingPoolAddressesProvider(
             deployedContracts.readAddress(".lendingPoolAddressesProvider")
         );
@@ -515,7 +515,7 @@ contract TestBasicActions is Script, Test {
             contracts.lendingPool.getReservesList();
         for (uint256 idx = 0; idx < assets.length; idx++) {
             AggregatedMainPoolReservesData memory aggregatedMainPoolReservesData = contracts
-                .asteraLendDataProvider
+                .asteraDataProvider
                 .getAggregatedMainPoolReserveData(assets[idx], reserveTypes[idx]);
             if (!aggregatedMainPoolReservesData.isFrozen) {
                 DataTypes.ReserveData memory data =
@@ -528,7 +528,7 @@ contract TestBasicActions is Script, Test {
                     collateralAmount / (10 ** (18 - ERC20(assets[idx]).decimals()));
                 console2.log("depositAmount: ", depositAmount);
                 AToken aToken =
-                    fixture_getATokenWrapper(assets[idx], contracts.asteraLendDataProvider);
+                    fixture_getATokenWrapper(assets[idx], contracts.asteraDataProvider);
                 TokenParams memory collateralParams =
                     TokenParams({token: ERC20(assets[idx]), aToken: aToken});
                 console2.log("Depositing: ", depositAmount);
@@ -586,7 +586,7 @@ contract TestBasicActions is Script, Test {
         (address[] memory assets,) = IMiniPool(miniPool).getReservesList();
         for (uint256 idx = 0; idx < assets.length; idx++) {
             AggregatedMiniPoolReservesData[] memory aggregatedMainPoolReservesData =
-                contracts.asteraLendDataProvider.getMiniPoolReservesData(miniPool);
+                contracts.asteraDataProvider.getMiniPoolReservesData(miniPool);
             if (!aggregatedMainPoolReservesData[idx].isFrozen) {
                 DataTypes.MiniPoolReserveData memory data =
                     IMiniPool(miniPool).getReserveData(assets[idx]);
@@ -671,10 +671,10 @@ contract TestBasicActions is Script, Test {
         TokenParams memory collateralParams;
         TokenParams memory borrowParams;
         {
-            AToken aToken = fixture_getATokenWrapper(collateral, contracts.asteraLendDataProvider);
+            AToken aToken = fixture_getATokenWrapper(collateral, contracts.asteraDataProvider);
             collateralParams = TokenParams({token: ERC20(collateral), aToken: aToken});
 
-            aToken = fixture_getATokenWrapper(borrowAsset, contracts.asteraLendDataProvider);
+            aToken = fixture_getATokenWrapper(borrowAsset, contracts.asteraDataProvider);
             borrowParams = TokenParams({token: ERC20(borrowAsset), aToken: aToken});
         }
 

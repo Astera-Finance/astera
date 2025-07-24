@@ -8,7 +8,7 @@ import {PercentageMath} from "contracts/protocol/libraries/math/PercentageMath.s
 import {ReserveConfiguration} from
     "contracts/protocol/libraries/configuration/ReserveConfiguration.sol";
 import {PercentageMath} from "contracts/protocol/libraries/math/PercentageMath.sol";
-import "contracts/misc/AsteraLendDataProvider.sol";
+import "contracts/misc/AsteraDataProvider.sol";
 import {LendingPoolV2} from "tests/foundry/helpers/LendingPoolV2.sol";
 import {MiniPoolV2} from "tests/foundry/helpers/MiniPoolV2.sol";
 import {ATokenERC6909V2} from "tests/foundry/helpers/ATokenERC6909V2.sol";
@@ -42,7 +42,7 @@ contract UpgradesAndReconfigurationsTest is MiniPoolFixtures {
         fixture_depositAndBorrow(collateralType, borrowType, user, address(this), amount);
 
         /* Checks */
-        (,, aTokens,) = deployedContracts.asteraLendDataProvider.getAllLpTokens();
+        (,, aTokens,) = deployedContracts.asteraDataProvider.getAllLpTokens();
         dynamicDataBefore = new DynamicData[](aTokens.length);
         for (uint8 idx; idx < aTokens.length; idx++) {
             console2.log(
@@ -50,9 +50,9 @@ contract UpgradesAndReconfigurationsTest is MiniPoolFixtures {
                 AToken(aTokens[idx]).UNDERLYING_ASSET_ADDRESS(),
                 ERC20(AToken(aTokens[idx]).UNDERLYING_ASSET_ADDRESS()).symbol()
             );
-            dynamicDataBefore[idx] = deployedContracts
-                .asteraLendDataProvider
-                .getLpReserveDynamicData(AToken(aTokens[idx]).UNDERLYING_ASSET_ADDRESS(), true);
+            dynamicDataBefore[idx] = deployedContracts.asteraDataProvider.getLpReserveDynamicData(
+                AToken(aTokens[idx]).UNDERLYING_ASSET_ADDRESS(), true
+            );
             console2.log(
                 "availableLiquidity: %s\n  totalVariableDebt: %s\n",
                 dynamicDataBefore[idx].availableLiquidity,
@@ -72,7 +72,7 @@ contract UpgradesAndReconfigurationsTest is MiniPoolFixtures {
                 AToken(aTokens[idx]).UNDERLYING_ASSET_ADDRESS(),
                 ERC20(AToken(aTokens[idx]).UNDERLYING_ASSET_ADDRESS()).symbol()
             );
-            dynamicDataAfter[idx] = deployedContracts.asteraLendDataProvider.getLpReserveDynamicData(
+            dynamicDataAfter[idx] = deployedContracts.asteraDataProvider.getLpReserveDynamicData(
                 AToken(aTokens[idx]).UNDERLYING_ASSET_ADDRESS(), true
             );
             console2.log(
@@ -114,13 +114,12 @@ contract UpgradesAndReconfigurationsTest is MiniPoolFixtures {
         fixture_miniPoolBorrow(amount, 0, 1, collateralParams, borrowParams, user);
 
         /* Checks */
-        (, address[] memory reserves,,) =
-            deployedContracts.asteraLendDataProvider.getAllMpTokenInfo(0);
+        (, address[] memory reserves,,) = deployedContracts.asteraDataProvider.getAllMpTokenInfo(0);
         dynamicDataBefore = new DynamicData[](reserves.length);
         for (uint8 idx; idx < reserves.length; idx++) {
             console2.log("%s (%s)", reserves[idx], ERC20(reserves[idx]).symbol());
             dynamicDataBefore[idx] =
-                deployedContracts.asteraLendDataProvider.getMpReserveDynamicData(reserves[idx], 0);
+                deployedContracts.asteraDataProvider.getMpReserveDynamicData(reserves[idx], 0);
             console2.log(
                 "availableLiquidity: %s\n  totalVariableDebt: %s\n",
                 dynamicDataBefore[idx].availableLiquidity,
@@ -137,7 +136,7 @@ contract UpgradesAndReconfigurationsTest is MiniPoolFixtures {
                 AToken(commonContracts.aTokens[idx]).UNDERLYING_ASSET_ADDRESS(),
                 ERC20(AToken(commonContracts.aTokens[idx]).UNDERLYING_ASSET_ADDRESS()).symbol()
             );
-            dynamicDataAfter[idx] = deployedContracts.asteraLendDataProvider.getMpReserveDynamicData(
+            dynamicDataAfter[idx] = deployedContracts.asteraDataProvider.getMpReserveDynamicData(
                 AToken(commonContracts.aTokens[idx]).UNDERLYING_ASSET_ADDRESS(), 0
             );
             console2.log(
@@ -173,7 +172,7 @@ contract UpgradesAndReconfigurationsTest is MiniPoolFixtures {
         deployedContracts = fixture_deployProtocol();
 
         configLpAddresses = ConfigAddresses(
-            address(deployedContracts.asteraLendDataProvider),
+            address(deployedContracts.asteraDataProvider),
             address(deployedContracts.stableStrategy),
             address(deployedContracts.volatileStrategy),
             address(deployedContracts.treasury),
@@ -194,7 +193,7 @@ contract UpgradesAndReconfigurationsTest is MiniPoolFixtures {
         (miniPoolContracts,) = fixture_deployMiniPoolSetup(
             address(deployedContracts.lendingPoolAddressesProvider),
             address(deployedContracts.lendingPool),
-            address(deployedContracts.asteraLendDataProvider),
+            address(deployedContracts.asteraDataProvider),
             miniPoolContracts
         );
 
@@ -208,8 +207,7 @@ contract UpgradesAndReconfigurationsTest is MiniPoolFixtures {
                     address(commonContracts.aTokens[idx - tokens.length].WRAPPER_ADDRESS());
             }
         }
-        configLpAddresses.asteraLendDataProvider =
-            address(miniPoolContracts.miniPoolAddressesProvider);
+        configLpAddresses.asteraDataProvider = address(miniPoolContracts.miniPoolAddressesProvider);
         configLpAddresses.stableStrategy = address(miniPoolContracts.stableStrategy);
         configLpAddresses.volatileStrategy = address(miniPoolContracts.volatileStrategy);
         miniPool =
@@ -521,7 +519,7 @@ contract UpgradesAndReconfigurationsTest is MiniPoolFixtures {
             console2.log("1.aTokenV1 ", address(commonContracts.aTokens[USDC_OFFSET]));
             console2.log("1. aTokenV1 Impl: ", address(commonContracts.aToken));
 
-            (address previousPoolImpl,) = deployedContracts.asteraLendDataProvider.getLpTokens(
+            (address previousPoolImpl,) = deployedContracts.asteraDataProvider.getLpTokens(
                 address(collateralType.token), true
             );
             console2.log("2.aTokenV1 ", previousPoolImpl);
@@ -548,7 +546,7 @@ contract UpgradesAndReconfigurationsTest is MiniPoolFixtures {
             vm.prank(admin); //pool admin
             deployedContracts.lendingPoolConfigurator.updateAToken(input);
 
-            (address currentImpl,) = deployedContracts.asteraLendDataProvider.getLpTokens(
+            (address currentImpl,) = deployedContracts.asteraDataProvider.getLpTokens(
                 address(collateralType.token), true
             );
 
@@ -599,7 +597,7 @@ contract UpgradesAndReconfigurationsTest is MiniPoolFixtures {
         {
             VariableDebtTokenV2 variableDebtTokenV2 = new VariableDebtTokenV2();
 
-            (, address previousPoolImpl) = deployedContracts.asteraLendDataProvider.getLpTokens(
+            (, address previousPoolImpl) = deployedContracts.asteraDataProvider.getLpTokens(
                 address(collateralType.token), true
             );
             console2.log("2.aTokenV1 ", previousPoolImpl);
@@ -625,7 +623,7 @@ contract UpgradesAndReconfigurationsTest is MiniPoolFixtures {
             vm.prank(admin); //pool admin
             deployedContracts.lendingPoolConfigurator.updateVariableDebtToken(input);
 
-            (, address currentImpl) = deployedContracts.asteraLendDataProvider.getLpTokens(
+            (, address currentImpl) = deployedContracts.asteraDataProvider.getLpTokens(
                 address(collateralType.token), true
             );
 

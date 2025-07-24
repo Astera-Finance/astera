@@ -19,7 +19,7 @@ contract LendingPoolTest is LendingPoolFixtures {
         assertEq(vm.activeFork(), opFork);
         deployedContracts = fixture_deployProtocol();
         configAddresses = ConfigAddresses(
-            address(deployedContracts.asteraLendDataProvider),
+            address(deployedContracts.asteraDataProvider),
             address(deployedContracts.stableStrategy),
             address(deployedContracts.volatileStrategy),
             address(deployedContracts.treasury),
@@ -33,8 +33,8 @@ contract LendingPoolTest is LendingPoolFixtures {
             deployedContracts.lendingPoolConfigurator,
             deployedContracts.lendingPoolAddressesProvider
         );
-        // aTokens = fixture_getATokens(tokens, deployedContracts.asteraLendDataProvider);
-        // variableDebtTokens = fixture_getVarDebtTokens(tokens, deployedContracts.asteraLendDataProvider);
+        // aTokens = fixture_getATokens(tokens, deployedContracts.asteraDataProvider);
+        // variableDebtTokens = fixture_getVarDebtTokens(tokens, deployedContracts.asteraDataProvider);
         erc20Tokens = fixture_getErc20Tokens(tokens);
         fixture_transferTokensToTestContract(erc20Tokens, 100_000 ether, address(this));
     }
@@ -136,7 +136,7 @@ contract LendingPoolTest is LendingPoolFixtures {
             "usdcDepositValue %s vs \nusdcDepositAmount %s", usdcDepositValue, usdcDepositAmount
         );
         StaticData memory staticData =
-            deployedContracts.asteraLendDataProvider.getLpReserveStaticData(address(usdc), true);
+            deployedContracts.asteraDataProvider.getLpReserveStaticData(address(usdc), true);
         uint256 usdcMaxBorrowValue = staticData.ltv * usdcDepositValue / 10_000;
         uint256 wbtcMaxBorrowAmountWithUsdcCollateral;
         {
@@ -193,7 +193,7 @@ contract LendingPoolTest is LendingPoolFixtures {
         uint256 usdcPrice = commonContracts.oracle.getAssetPrice(address(usdc));
         uint256 usdcDepositValue = usdcDepositAmount * usdcPrice / (10 ** PRICE_FEED_DECIMALS);
         StaticData memory staticData =
-            deployedContracts.asteraLendDataProvider.getLpReserveStaticData(address(usdc), true);
+            deployedContracts.asteraDataProvider.getLpReserveStaticData(address(usdc), true);
         uint256 usdcMaxBorrowValue = staticData.ltv * usdcDepositValue / 10_000;
         uint256 wbtcMaxBorrowAmountWithUsdcCollateral;
         {
@@ -233,7 +233,7 @@ contract LendingPoolTest is LendingPoolFixtures {
         tokenDepositAmount = bound(tokenDepositAmount, 3, 2_000_000);
         // uint256 usdcDepositValue = usdcDepositAmount * usdcPrice / (10 ** PRICE_FEED_DECIMALS);
         StaticData memory staticData =
-            deployedContracts.asteraLendDataProvider.getLpReserveStaticData(address(token), true);
+            deployedContracts.asteraDataProvider.getLpReserveStaticData(address(token), true);
 
         uint256 tokenMaxBorrowAmount = staticData.ltv * tokenDepositAmount / 10_000;
 
@@ -252,7 +252,7 @@ contract LendingPoolTest is LendingPoolFixtures {
         );
 
         staticData =
-            deployedContracts.asteraLendDataProvider.getLpReserveStaticData(address(token), true);
+            deployedContracts.asteraDataProvider.getLpReserveStaticData(address(token), true);
         (, uint256 expectedBorrowRate) = deployedContracts.volatileStrategy.calculateInterestRates(
             address(token),
             address(commonContracts.aTokens[idx]),

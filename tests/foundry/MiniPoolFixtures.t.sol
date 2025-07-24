@@ -35,7 +35,7 @@ abstract contract MiniPoolFixtures is LendingPoolFixtures {
             // console2.log("User token balance shall be {initialTokenBalance - amount}");
             assertEq(tokenParams.token.balanceOf(user), initialTokenBalance - amount, "01");
             DynamicData memory dynamicData = deployedContracts
-                .asteraLendDataProvider
+                .asteraDataProvider
                 .getLpReserveDynamicData(address(tokenParams.token), true);
             // console2.log("User atoken balance shall be {initialATokenBalance + amount}");
             assertEq(
@@ -172,7 +172,7 @@ abstract contract MiniPoolFixtures is LendingPoolFixtures {
         uint256 minNrOfTokens;
         {
             StaticData memory staticData = deployedContracts
-                .asteraLendDataProvider
+                .asteraDataProvider
                 .getLpReserveStaticData(address(collateralTokenParams.token), true);
             uint256 borrowTokenInUsd = (amount * borrowTokenParams.price * 10_000)
                 / ((10 ** PRICE_FEED_DECIMALS) * staticData.ltv);
@@ -317,7 +317,7 @@ abstract contract MiniPoolFixtures is LendingPoolFixtures {
         uint256 minNrOfTokens;
         {
             StaticData memory staticData = deployedContracts
-                .asteraLendDataProvider
+                .asteraDataProvider
                 .getLpReserveStaticData(address(collateralTokenParams.token), true);
             uint256 borrowTokenInUsd = (amount * borrowTokenParams.price * 10000)
                 / ((10 ** PRICE_FEED_DECIMALS) * staticData.ltv);

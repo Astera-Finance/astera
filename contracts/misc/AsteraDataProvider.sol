@@ -19,7 +19,7 @@ import {Ownable} from "../../contracts/dependencies/openzeppelin/contracts/Ownab
 import {Errors} from "../../contracts/protocol/libraries/helpers/Errors.sol";
 import {IFlowLimiter} from "../../contracts/interfaces/base/IFlowLimiter.sol";
 import {
-    IAsteraLendDataProvider,
+    IAsteraDataProvider,
     DataTypes,
     StaticData,
     DynamicData,
@@ -28,17 +28,17 @@ import {
     AllLpPoolData,
     AllMpPoolData,
     BaseCurrencyInfo
-} from "../../contracts/interfaces/IAsteraLendDataProvider.sol";
+} from "../../contracts/interfaces/IAsteraDataProvider.sol";
 import {IOracle} from "../../contracts/interfaces/IOracle.sol";
 import {IChainlinkAggregator} from "../../contracts/interfaces/base/IChainlinkAggregator.sol";
 
 /**
- * @title AsteraLendDataProvider
+ * @title AsteraDataProvider
  * @dev This contract provides data access functions for lending pool and minipool information.
  * It retrieves static and dynamic configurations, user data, and token addresses from both types of pools.
  * @author Conclave
  */
-contract AsteraLendDataProvider is Ownable, IAsteraLendDataProvider {
+contract AsteraDataProvider is Ownable, IAsteraDataProvider {
     using ReserveConfiguration for DataTypes.ReserveConfigurationMap;
     using UserConfiguration for DataTypes.UserConfigurationMap;
 

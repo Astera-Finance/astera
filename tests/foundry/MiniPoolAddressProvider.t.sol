@@ -23,7 +23,7 @@ contract MiniPoolAddressProvider is Common {
         assertEq(vm.activeFork(), opFork);
         deployedContracts = fixture_deployProtocol();
         configAddresses = ConfigAddresses(
-            address(deployedContracts.asteraLendDataProvider),
+            address(deployedContracts.asteraDataProvider),
             address(deployedContracts.stableStrategy),
             address(deployedContracts.volatileStrategy),
             address(deployedContracts.treasury),
@@ -44,7 +44,7 @@ contract MiniPoolAddressProvider is Common {
         (miniPoolContracts,) = fixture_deployMiniPoolSetup(
             address(deployedContracts.lendingPoolAddressesProvider),
             address(deployedContracts.lendingPool),
-            address(deployedContracts.asteraLendDataProvider),
+            address(deployedContracts.asteraDataProvider),
             miniPoolContracts
         );
 
@@ -58,8 +58,7 @@ contract MiniPoolAddressProvider is Common {
             }
         }
 
-        configAddresses.asteraLendDataProvider =
-            address(miniPoolContracts.miniPoolAddressesProvider);
+        configAddresses.asteraDataProvider = address(miniPoolContracts.miniPoolAddressesProvider);
         configAddresses.stableStrategy = address(miniPoolContracts.stableStrategy);
         configAddresses.volatileStrategy = address(miniPoolContracts.volatileStrategy);
         miniPool =

@@ -20,7 +20,7 @@ contract AddAssets is Script, InitAndConfigurationHelper, Test {
         console2.log("Lending pool");
         for (uint256 idx = 0; idx < lendingPoolReserversConfig.length; idx++) {
             AggregatedMainPoolReservesData memory aggregatedMainPoolReservesData = contracts
-                .asteraLendDataProvider
+                .asteraDataProvider
                 .getAggregatedMainPoolReserveData(
                 address(lendingPoolReserversConfig[idx].tokenAddress),
                 lendingPoolReserversConfig[idx].reserveType
@@ -74,7 +74,7 @@ contract AddAssets is Script, InitAndConfigurationHelper, Test {
 
             for (uint256 idx = 0; idx < miniPoolReserversConfig.length; idx++) {
                 AggregatedMiniPoolReservesData memory aggregatedMiniPoolReservesData = contracts
-                    .asteraLendDataProvider
+                    .asteraDataProvider
                     .getReserveDataForAssetAtMiniPool(
                     address(miniPoolReserversConfig[idx].tokenAddress), mp
                 );
@@ -128,7 +128,7 @@ contract AddAssets is Script, InitAndConfigurationHelper, Test {
 
     function writeJsonData(string memory path) internal {
         (,, address[] memory aTokens, address[] memory debtTokens) =
-            contracts.asteraLendDataProvider.getAllLpTokens();
+            contracts.asteraDataProvider.getAllLpTokens();
 
         {
             address[] memory wrappedTokens = new address[](aTokens.length);
@@ -206,8 +206,8 @@ contract AddAssets is Script, InitAndConfigurationHelper, Test {
             LendingPoolConfigurator(config.readAddress(".lendingPoolConfigurator"));
         contracts.lendingPoolAddressesProvider =
             LendingPoolAddressesProvider(config.readAddress(".lendingPoolAddressesProvider"));
-        contracts.asteraLendDataProvider =
-            AsteraLendDataProvider2(config.readAddress(".asteraLendDataProvider"));
+        contracts.asteraDataProvider =
+            AsteraDataProvider2(config.readAddress(".asteraDataProvider"));
         contracts.lendingPool = LendingPool(config.readAddress(".lendingPool"));
     }
 

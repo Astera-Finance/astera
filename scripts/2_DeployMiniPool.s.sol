@@ -52,7 +52,7 @@ contract DeployMiniPool is Script, Test, MiniPoolHelper {
                 "Wrong underlying token"
             );
             AggregatedMiniPoolReservesData memory aggregatedMiniPoolReservesData = contracts
-                .asteraLendDataProvider
+                .asteraDataProvider
                 .getReserveDataForAssetAtMiniPool(address(poolReserversConfig[idx].tokenAddress), mp);
             assertEq(
                 aggregatedMiniPoolReservesData.baseLTVasCollateral,
@@ -298,8 +298,8 @@ contract DeployMiniPool is Script, Test, MiniPoolHelper {
             contracts.lendingPool = LendingPool(config.readAddress(".lendingPool"));
             contracts.lendingPoolConfigurator =
                 LendingPoolConfigurator(config.readAddress(".lendingPoolConfigurator"));
-            contracts.asteraLendDataProvider =
-                AsteraLendDataProvider2(config.readAddress(".asteraLendDataProvider"));
+            contracts.asteraDataProvider =
+                AsteraDataProvider2(config.readAddress(".asteraDataProvider"));
 
             console2.log("Deploying mini pool infra");
             contracts.oracle = Oracle(contracts.lendingPoolAddressesProvider.getPriceOracle());
@@ -333,8 +333,8 @@ contract DeployMiniPool is Script, Test, MiniPoolHelper {
             contracts.lendingPool = LendingPool(config.readAddress(".lendingPool"));
             contracts.lendingPoolConfigurator =
                 LendingPoolConfigurator(config.readAddress(".lendingPoolConfigurator"));
-            contracts.asteraLendDataProvider =
-                AsteraLendDataProvider2(config.readAddress(".asteraLendDataProvider"));
+            contracts.asteraDataProvider =
+                AsteraDataProvider2(config.readAddress(".asteraDataProvider"));
 
             if (readPreviousContracts) {
                 readPreviousDeployments(

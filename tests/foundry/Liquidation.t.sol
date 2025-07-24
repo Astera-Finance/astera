@@ -52,7 +52,7 @@ contract LiquidationTest is Common {
         assertEq(vm.activeFork(), opFork);
         deployedContracts = fixture_deployProtocol();
         configAddresses = ConfigAddresses(
-            address(deployedContracts.asteraLendDataProvider),
+            address(deployedContracts.asteraDataProvider),
             address(deployedContracts.stableStrategy),
             address(deployedContracts.volatileStrategy),
             address(deployedContracts.treasury),
@@ -77,7 +77,7 @@ contract LiquidationTest is Common {
         (miniPoolContracts,) = fixture_deployMiniPoolSetup(
             address(deployedContracts.lendingPoolAddressesProvider),
             address(deployedContracts.lendingPool),
-            address(deployedContracts.asteraLendDataProvider),
+            address(deployedContracts.asteraDataProvider),
             miniPoolContracts
         );
 
@@ -91,8 +91,7 @@ contract LiquidationTest is Common {
                     address(commonContracts.aTokens[idx - tokens.length].WRAPPER_ADDRESS());
             }
         }
-        configAddresses.asteraLendDataProvider =
-            address(miniPoolContracts.miniPoolAddressesProvider);
+        configAddresses.asteraDataProvider = address(miniPoolContracts.miniPoolAddressesProvider);
         configAddresses.stableStrategy = address(miniPoolContracts.stableStrategy);
         configAddresses.volatileStrategy = address(miniPoolContracts.volatileStrategy);
         miniPool =
@@ -113,7 +112,7 @@ contract LiquidationTest is Common {
         uint256 usdcPrice = commonContracts.oracle.getAssetPrice(address(usdc));
         uint256 usdcDepositValue = usdcDepositAmount * usdcPrice / (10 ** PRICE_FEED_DECIMALS);
         StaticData memory staticData =
-            deployedContracts.asteraLendDataProvider.getLpReserveStaticData(address(usdc), true);
+            deployedContracts.asteraDataProvider.getLpReserveStaticData(address(usdc), true);
         uint256 usdcMaxBorrowValue = staticData.ltv * usdcDepositValue / 10_000;
         uint256 wbtcMaxBorrowAmountWithUsdcCollateral;
         {
@@ -145,9 +144,8 @@ contract LiquidationTest is Common {
             address(wbtc), true, wbtcMaxBorrowAmountWithUsdcCollateral, address(this)
         );
 
-        UserReserveData memory userReservesData = deployedContracts
-            .asteraLendDataProvider
-            .getLpUserData(address(usdc), true, address(this));
+        UserReserveData memory userReservesData =
+            deployedContracts.asteraDataProvider.getLpUserData(address(usdc), true, address(this));
 
         vm.expectRevert(bytes(Errors.LPCM_HEALTH_FACTOR_NOT_BELOW_THRESHOLD));
         deployedContracts.lendingPool.liquidationCall(
@@ -175,7 +173,7 @@ contract LiquidationTest is Common {
         {
             uint256 usdcDepositAmount = 5e9; /* $5k */ // consider fuzzing here
             StaticData memory staticData = deployedContracts
-                .asteraLendDataProvider
+                .asteraDataProvider
                 .getLpReserveStaticData(address(tokensParams[USDC_OFFSET].token), true);
 
             uint256 usdcMaxBorrowAmount = staticData.ltv * usdcDepositAmount / 10_000;
@@ -237,10 +235,10 @@ contract LiquidationTest is Common {
         }
 
         DynamicData memory wbtcReserveParamsBefore = deployedContracts
-            .asteraLendDataProvider
+            .asteraDataProvider
             .getLpReserveDynamicData(address(tokensParams[WBTC_OFFSET].token), true);
         DynamicData memory usdcReserveParamsBefore = deployedContracts
-            .asteraLendDataProvider
+            .asteraDataProvider
             .getLpReserveDynamicData(address(tokensParams[USDC_OFFSET].token), true);
 
         {
@@ -255,9 +253,9 @@ contract LiquidationTest is Common {
         uint256 amountToLiquidate;
         uint256 scaledVariableDebt;
 
-        UserReserveData memory userReservesData = deployedContracts
-            .asteraLendDataProvider
-            .getLpUserData(address(tokensParams[WBTC_OFFSET].token), true, address(this));
+        UserReserveData memory userReservesData = deployedContracts.asteraDataProvider.getLpUserData(
+            address(tokensParams[WBTC_OFFSET].token), true, address(this)
+        );
         amountToLiquidate = userReservesData.currentVariableDebt / 2; // maximum possible liquidation amount
         scaledVariableDebt = userReservesData.scaledVariableDebt;
 
@@ -285,16 +283,16 @@ contract LiquidationTest is Common {
          * LIQUIDATION PROCESS - END ***********
          */
         DynamicData memory wbtcReserveParamsAfter = deployedContracts
-            .asteraLendDataProvider
+            .asteraDataProvider
             .getLpReserveDynamicData(address(tokensParams[WBTC_OFFSET].token), true);
         DynamicData memory usdcReserveParamsAfter = deployedContracts
-            .asteraLendDataProvider
+            .asteraDataProvider
             .getLpReserveDynamicData(address(tokensParams[USDC_OFFSET].token), true);
         uint256 expectedCollateralLiquidated;
 
         {
             StaticData memory staticData = deployedContracts
-                .asteraLendDataProvider
+                .asteraDataProvider
                 .getLpReserveStaticData(address(tokensParams[USDC_OFFSET].token), true);
 
             expectedCollateralLiquidated = tokensParams[WBTC_OFFSET].price
@@ -317,7 +315,7 @@ contract LiquidationTest is Common {
             assertGt(healthFactor, 1 ether);
         }
 
-        userReservesData = deployedContracts.asteraLendDataProvider.getLpUserData(
+        userReservesData = deployedContracts.asteraDataProvider.getLpUserData(
             address(tokensParams[WBTC_OFFSET].token), true, address(this)
         );
 
@@ -336,7 +334,7 @@ contract LiquidationTest is Common {
             usdcReserveParamsBefore.availableLiquidity - expectedCollateralLiquidated,
             0.01e18
         );
-        userReservesData = deployedContracts.asteraLendDataProvider.getLpUserData(
+        userReservesData = deployedContracts.asteraDataProvider.getLpUserData(
             address(tokensParams[USDC_OFFSET].token), true, address(this)
         );
         assertEq(userReservesData.usageAsCollateralEnabledOnUser, true);
@@ -359,7 +357,7 @@ contract LiquidationTest is Common {
                 uint256 usdcDepositValue = usdcDepositAmount * tokensParams[USDC_OFFSET].price
                     / (10 ** PRICE_FEED_DECIMALS);
                 StaticData memory staticData = deployedContracts
-                    .asteraLendDataProvider
+                    .asteraDataProvider
                     .getLpReserveStaticData(address(tokensParams[USDC_OFFSET].token), true);
 
                 usdcMaxBorrowValue = staticData.ltv * usdcDepositValue / 10_000;
@@ -430,10 +428,10 @@ contract LiquidationTest is Common {
         }
 
         DynamicData memory wbtcReserveParamsBefore = deployedContracts
-            .asteraLendDataProvider
+            .asteraDataProvider
             .getLpReserveDynamicData(address(tokensParams[WBTC_OFFSET].token), true);
         DynamicData memory usdcReserveParamsBefore = deployedContracts
-            .asteraLendDataProvider
+            .asteraDataProvider
             .getLpReserveDynamicData(address(tokensParams[USDC_OFFSET].token), true);
         {
             (,,,,, uint256 healthFactor) =
@@ -449,9 +447,9 @@ contract LiquidationTest is Common {
         uint256 amountToLiquidate;
         uint256 scaledVariableDebt;
 
-        UserReserveData memory userReservesData = deployedContracts
-            .asteraLendDataProvider
-            .getLpUserData(address(tokensParams[WBTC_OFFSET].token), true, address(this));
+        UserReserveData memory userReservesData = deployedContracts.asteraDataProvider.getLpUserData(
+            address(tokensParams[WBTC_OFFSET].token), true, address(this)
+        );
         amountToLiquidate = userReservesData.currentVariableDebt / 2; // maximum possible liquidation amount
         scaledVariableDebt = userReservesData.scaledVariableDebt;
 
@@ -479,20 +477,20 @@ contract LiquidationTest is Common {
          * LIQUIDATION PROCESS - END ***********
          */
         DynamicData memory wbtcReserveParamsAfter = deployedContracts
-            .asteraLendDataProvider
+            .asteraDataProvider
             .getLpReserveDynamicData(address(tokensParams[WBTC_OFFSET].token), true);
         DynamicData memory usdcReserveParamsAfter = deployedContracts
-            .asteraLendDataProvider
+            .asteraDataProvider
             .getLpReserveDynamicData(address(tokensParams[USDC_OFFSET].token), true);
         uint256 expectedCollateralLiquidated;
 
-        userReservesData = deployedContracts.asteraLendDataProvider.getLpUserData(
+        userReservesData = deployedContracts.asteraDataProvider.getLpUserData(
             address(tokensParams[WBTC_OFFSET].token), true, address(this)
         );
 
         {
             StaticData memory staticData = deployedContracts
-                .asteraLendDataProvider
+                .asteraDataProvider
                 .getLpReserveStaticData(address(tokensParams[USDC_OFFSET].token), true);
 
             expectedCollateralLiquidated = tokensParams[WBTC_OFFSET].price
@@ -536,7 +534,7 @@ contract LiquidationTest is Common {
             0.01e18
         );
 
-        userReservesData = deployedContracts.asteraLendDataProvider.getLpUserData(
+        userReservesData = deployedContracts.asteraDataProvider.getLpUserData(
             address(tokensParams[USDC_OFFSET].token), true, address(this)
         );
         assertEq(userReservesData.usageAsCollateralEnabledOnUser, true);

@@ -11,8 +11,8 @@ import "contracts/protocol/core/minipool/MiniPoolConfigurator.sol";
 
 import "contracts/protocol/tokenization/ERC20/AToken.sol";
 import "contracts/protocol/tokenization/ERC20/VariableDebtToken.sol";
-// import "contracts/misc/AsteraLendDataProvider.sol";
-import "contracts/misc/AsteraLendDataProvider2.sol";
+// import "contracts/misc/AsteraDataProvider.sol";
+import "contracts/misc/AsteraDataProvider2.sol";
 import "../DeployDataTypes.sol";
 
 import "forge-std/console2.sol";
