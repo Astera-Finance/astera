@@ -52,7 +52,7 @@ contract Oracle is IOracle, Ownable {
     uint256 public immutable BASE_CURRENCY_UNIT;
 
     /// @dev The address of the asUSD token.
-    address public constant AS_USD = address(0xC0D3700000987C99b3C9009069E4f8413fD22330);
+    address public constant AS_USD = address(0xa500000000e482752f032eA387390b6025a2377b);
 
     /**
      * @notice Initializes the Oracle contract.

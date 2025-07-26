@@ -22,7 +22,7 @@ contract DeployLendingPool is Script, LendingPoolHelper, Test {
             vm.addr(vm.envUint("PRIVATE_KEY"))
         );
         assertEq(contracts.oracle.owner(), vm.addr(vm.envUint("PRIVATE_KEY")));
-        assertEq(contracts.wethGateway.owner(), vm.addr(vm.envUint("PRIVATE_KEY")));
+        // assertEq(contracts.wethGateway.owner(), vm.addr(vm.envUint("PRIVATE_KEY")));
         assertEq(contracts.asteraDataProvider.owner(), vm.addr(vm.envUint("PRIVATE_KEY")));
         // assertEq(contracts.asteraDataProvider.owner(), vm.addr(vm.envUint("PRIVATE_KEY")));
         for (uint8 idx = 0; idx < contracts.piStrategies.length; idx++) {
@@ -156,9 +156,7 @@ contract DeployLendingPool is Script, LendingPoolHelper, Test {
         );
 
         vm.serializeAddress(
-            "lendingPoolContracts",
-            "asteraDataProvider",
-            address(contracts.asteraDataProvider)
+            "lendingPoolContracts", "asteraDataProvider", address(contracts.asteraDataProvider)
         );
 
         vm.serializeAddress(

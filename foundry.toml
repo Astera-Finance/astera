@@ -8,6 +8,7 @@ ignored_warnings_from = ["tests/"]
 optimizer = true
 optimizer_runs = 500
 solc_version = '0.8.23'
+#evm_version  = "paris" # uncomment when problems with PUSH0
 show_progress = true
 fs_permissions = [{ access = "read-write", path = "./"}]
 ignored_error_codes = [3628]
@@ -18,6 +19,7 @@ remappings = [
 ]
 gas_limit = "18446744073709551615"
 via_ir = false
+
 
 [rpc_endpoints]
 sepolia = "${ARB_SEPOLIA}"

@@ -1,17 +1,17 @@
 {
     "transferMiniPoolRole": false,
     "roles": {
-        "addressesProviderOwner": "0xfEfcb2fb19b9A70B30646Fdc1A0860Eb12F7ff8b",
-        "emergencyAdmin": "0xfEfcb2fb19b9A70B30646Fdc1A0860Eb12F7ff8b",
-        "dataProviderOwner": "0xfEfcb2fb19b9A70B30646Fdc1A0860Eb12F7ff8b",
-        "oracleOwner": "0xfEfcb2fb19b9A70B30646Fdc1A0860Eb12F7ff8b",
-        "piInterestStrategiesOwner": "0xfEfcb2fb19b9A70B30646Fdc1A0860Eb12F7ff8b",
-        "poolAdmin": "0xfEfcb2fb19b9A70B30646Fdc1A0860Eb12F7ff8b",
-        "rewarderOwner": "0xfEfcb2fb19b9A70B30646Fdc1A0860Eb12F7ff8b"
+        "addressesProviderOwner": "0x7D66a2e916d79c0988D41F1E50a1429074ec53a4",
+        "emergencyAdmin": "0xDa77d6C0281fCb3e41BD966aC393502a1C524224",
+        "dataProviderOwner": "0x7D66a2e916d79c0988D41F1E50a1429074ec53a4",
+        "oracleOwner": "0x7D66a2e916d79c0988D41F1E50a1429074ec53a4",
+        "piInterestStrategiesOwner": "0x7D66a2e916d79c0988D41F1E50a1429074ec53a4",
+        "poolAdmin": "0x7D66a2e916d79c0988D41F1E50a1429074ec53a4",
+        "rewarderOwner": "0x7D66a2e916d79c0988D41F1E50a1429074ec53a4"
     },
     "miniPoolRole": {
         "miniPoolId": 0,
-        "newPoolOwner": "0xfEfcb2fb19b9A70B30646Fdc1A0860Eb12F7ff8b",
-        "poolOwnerTreasury": "0xfEfcb2fb19b9A70B30646Fdc1A0860Eb12F7ff8b"
+        "newPoolOwner": "0x7D66a2e916d79c0988D41F1E50a1429074ec53a4",
+        "poolOwnerTreasury": "0x7D66a2e916d79c0988D41F1E50a1429074ec53a4"
     }
 }

@@ -24,7 +24,9 @@ contract TransferOwnershipHelper {
         contracts.wethGateway.transferOwnership(roles.poolAdmin);
         contracts.lendingPoolAddressesProvider.setEmergencyAdmin(roles.emergencyAdmin);
         contracts.lendingPoolAddressesProvider.transferOwnership(roles.addressesProviderOwner);
-        contracts.miniPoolAddressesProvider.transferOwnership(roles.addressesProviderOwner);
+        if (address(contracts.miniPoolAddressesProvider) != address(0)) {
+            contracts.miniPoolAddressesProvider.transferOwnership(roles.addressesProviderOwner);
+        }
         if (address(0) != address(contracts.rewarder)) {
             contracts.rewarder.transferOwnership(roles.rewarderOwner);
         }
@@ -35,10 +37,16 @@ contract TransferOwnershipHelper {
         contracts.asteraDataProvider.transferOwnership(roles.dataProviderOwner);
 
         for (uint256 idx = 0; idx < contracts.piStrategies.length; idx++) {
-            contracts.piStrategies[idx].transferOwnership(roles.piInterestStrategiesOwner);
+            if (address(contracts.piStrategies[idx]) != address(0)) {
+                contracts.piStrategies[idx].transferOwnership(roles.piInterestStrategiesOwner);
+            }
         }
         for (uint256 idx = 0; idx < contracts.miniPoolPiStrategies.length; idx++) {
-            contracts.miniPoolPiStrategies[idx].transferOwnership(roles.piInterestStrategiesOwner);
+            if (address(contracts.miniPoolPiStrategies[idx]) != address(0)) {
+                contracts.miniPoolPiStrategies[idx].transferOwnership(
+                    roles.piInterestStrategiesOwner
+                );
+            }
         }
     }
 }

@@ -1,13 +1,13 @@
 {
-    "wethGateway": "0x4200000000000000000000000000000000000006",
+    "wethGateway": "0xe5D7C2a44FfDDf6b295A15c148167daaAf5Cf34f",
     "general": {
         "aTokenNamePrefix": "Astera ",
-        "aTokenSymbolPrefix": "cl",
+        "aTokenSymbolPrefix": "as-",
         "debtTokenNamePrefix": "Astera variable debt bearing ",
-        "debtTokenSymbolPrefix": "clDebt",
-        "marketReferenceCurrencyAggregator": "0x7e860098F58bBFC8648a4311b374B1D669a2bc6B",
-        "networkBaseTokenAggregator": "0x71041dddad3595F9CEd3DcCFBe3D1F4b0a16Bb70",
-        "treasury": "0xfEfcb2fb19b9A70B30646Fdc1A0860Eb12F7ff8b",
+        "debtTokenSymbolPrefix": "asDebt-",
+        "marketReferenceCurrencyAggregator": "0xAADAa473C1bDF7317ec07c915680Af29DeBfdCb5",
+        "networkBaseTokenAggregator": "0x3c6Cd9Cc7c7a4c2Cf5a82734CD249D7D593354dA",
+        "treasury": "0x7D66a2e916d79c0988D41F1E50a1429074ec53a4",
         "usdBootstrapAmount": 40
     },
     "poolReserversConfig": [
@@ -22,8 +22,8 @@
             "params": "0x10",
             "reserveFactor": 2000,
             "reserveType": true,
-            "symbol": "cbBTC",
-            "tokenAddress": "0xcbB7C0000aB88B473b1f5aFd9ef808440eed33Bf"
+            "symbol": "WBTC",
+            "tokenAddress": "0x3aAB2285ddcDdaD8edf438C1bAB47e1a9D05a9b4"
         },
         {
             "baseLtv": 7500,
@@ -37,7 +37,7 @@
             "reserveFactor": 2000,
             "reserveType": true,
             "symbol": "WETH",
-            "tokenAddress": "0x4200000000000000000000000000000000000006"
+            "tokenAddress": "0xe5D7C2a44FfDDf6b295A15c148167daaAf5Cf34f"
         },
         {
             "baseLtv": 8500,
@@ -51,7 +51,21 @@
             "reserveFactor": 2000,
             "reserveType": true,
             "symbol": "USDC",
-            "tokenAddress": "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913"
+            "tokenAddress": "0x176211869cA2b568f2A7D4EE941E073a821EE1ff"
+        },
+        {
+            "baseLtv": 8500,
+            "borrowingEnabled": true,
+            "interestStrat": "PI",
+            "interestStratId": 3,
+            "liquidationBonus": 10800,
+            "liquidationThreshold": 9000,
+            "miniPoolOwnerFee": 0,
+            "params": "0x10",
+            "reserveFactor": 2000,
+            "reserveType": true,
+            "symbol": "USDT",
+            "tokenAddress": "0xA219439258ca9da29E9Cc4cE5596924745e12B93"
         }
     ],
     "volatileStrategies": [],
@@ -64,8 +78,8 @@
             "maxITimeAmp": 1728000,
             "minControllerError": -3675e23,
             "optimalUtilizationRate": 70e25,
-            "symbol": "cbBTC",
-            "tokenAddress": "0xcbB7C0000aB88B473b1f5aFd9ef808440eed33Bf"
+            "symbol": "WBTC",
+            "tokenAddress": "0x3aAB2285ddcDdaD8edf438C1bAB47e1a9D05a9b4"
         },
         {
             "assetReserveType": true,
@@ -75,7 +89,7 @@
             "minControllerError": -3001e23,
             "optimalUtilizationRate": 70e25,
             "symbol": "WETH",
-            "tokenAddress": "0x4200000000000000000000000000000000000006"
+            "tokenAddress": "0xe5D7C2a44FfDDf6b295A15c148167daaAf5Cf34f"
         },
         {
             "assetReserveType": true,
@@ -85,26 +99,39 @@
             "minControllerError": -2479e23,
             "optimalUtilizationRate": 80e25,
             "symbol": "USDC",
-            "tokenAddress": "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913"
+            "tokenAddress": "0x176211869cA2b568f2A7D4EE941E073a821EE1ff"
+        },
+        {
+            "assetReserveType": true,
+            "ki": 13e19,
+            "kp": 1e27,
+            "maxITimeAmp": 1728000,
+            "minControllerError": -2479e23,
+            "optimalUtilizationRate": 80e25,
+            "symbol": "USDT",
+            "tokenAddress": "0xA219439258ca9da29E9Cc4cE5596924745e12B93"
         }
     ],
     "oracleConfig": {
         "assets": [
-            "0xcbB7C0000aB88B473b1f5aFd9ef808440eed33Bf",
-            "0x4200000000000000000000000000000000000006",
-            "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913"
+            "0x3aAB2285ddcDdaD8edf438C1bAB47e1a9D05a9b4",
+            "0xe5D7C2a44FfDDf6b295A15c148167daaAf5Cf34f",
+            "0x176211869cA2b568f2A7D4EE941E073a821EE1ff",
+            "0xA219439258ca9da29E9Cc4cE5596924745e12B93"
         ],
         "baseCurrency": "0x0000000000000000000000000000000000000000",
         "baseCurrencyUnit": 1e8,
         "fallbackOracle": "0x0000000000000000000000000000000000000000",
         "sources": [
-            "0x07DA0E54543a844a80ABE69c8A12F22B3aA59f9D",
-            "0x71041dddad3595F9CEd3DcCFBe3D1F4b0a16Bb70",
-            "0x7e860098F58bBFC8648a4311b374B1D669a2bc6B"
+            "0x7A99092816C8BD5ec8ba229e3a6E6Da1E628E1F9",
+            "0x3c6Cd9Cc7c7a4c2Cf5a82734CD249D7D593354dA",
+            "0xAADAa473C1bDF7317ec07c915680Af29DeBfdCb5",
+            "0xefCA2bbe0EdD0E22b2e0d2F8248E99F4bEf4A7dB"
         ],
         "timeouts": [
-            1200,
-            1200,
+            86400,
+            86400,
+            86400,
             86400
         ]
     }

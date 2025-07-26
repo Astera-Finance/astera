@@ -72,8 +72,8 @@ contract LendingPoolHelper is InitAndConfigurationHelper {
         contracts.asteraDataProvider.setLendingPoolAddressProvider(
             address(contracts.lendingPoolAddressesProvider)
         );
-        contracts.wethGateway = new WETHGateway(wethGateway);
-        contracts.wethGateway.authorizeLendingPool(address(contracts.lendingPool));
+        // contracts.wethGateway = new WETHGateway(wethGateway);
+        // contracts.wethGateway.authorizeLendingPool(address(contracts.lendingPool));
     }
 
     function _deployStrategies(

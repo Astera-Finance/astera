@@ -8,12 +8,12 @@ testnet = False
 explorer = ""
 csv_file = ""
 if(testnet):
-    explorer = "https://sepolia.basescan.org/address/" 
+    explorer = "https://lineascan.build/address/" 
     csv_file = os.getcwd() + "/scripts/outputs/testnet/contracts.csv"
     chain_id = "84532"
     path_to_walk = "/scripts/outputs/testnet"
 else:
-    explorer = "https://basescan.org/address/"
+    explorer = "https://lineascan.build/address/"
     csv_file = os.getcwd() + "/scripts/outputs/mainnet/contracts.csv"
     chain_id = "8453"
     path_to_walk = "/scripts/outputs/mainnet"
