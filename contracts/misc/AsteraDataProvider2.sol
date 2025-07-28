@@ -336,6 +336,9 @@ contract AsteraDataProvider2 is Ownable, IAsteraDataProvider2 {
     /* -------------- Mini Pool providers--------------*/
 
     function getAllMiniPoolData() public view returns (MiniPoolData[] memory miniPoolData) {
+        if (address(miniPoolAddressProvider) == address(0)) {
+            return new MiniPoolData[](0);
+        }
         (uint256[] memory miniPoolIDs, address[] memory miniPoolAddresses) =
             getMiniPoolAddressesAndIDs();
         miniPoolData = new MiniPoolData[](miniPoolAddresses.length);
