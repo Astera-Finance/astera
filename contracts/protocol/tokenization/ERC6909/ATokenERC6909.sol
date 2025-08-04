@@ -602,12 +602,15 @@ contract ATokenERC6909 is
         require(id < DEBT_TOKEN_ADDRESSABLE_ID, Errors.AT_INVALID_ATOKEN_ID);
         _setName(
             id,
-            string.concat("Astera Minipool ", string.concat(Strings.toString(_minipoolId), name))
+            string.concat(
+                "Astera Minipool ",
+                string.concat(Strings.toString(_minipoolId), string.concat(" ", name))
+            )
         );
         _setSymbol(
             id,
             string.concat(
-                string.concat("cl-", Strings.toString(_minipoolId)), string.concat("-", symbol)
+                string.concat("as-", Strings.toString(_minipoolId)), string.concat("-", symbol)
             )
         ); // cl-{minipoolId}-{symbol}
         _setDecimals(id, decimals);
@@ -634,8 +637,19 @@ contract ATokenERC6909 is
         require(bytes(name).length != 0);
         require(bytes(symbol).length != 0);
         require(decimals != 0);
-        _setName(id, string.concat("Variable Debt ", name));
-        _setSymbol(id, string.concat("vDebt", symbol));
+        _setName(
+            id,
+            string.concat(
+                "Variable Debt ",
+                string.concat(Strings.toString(_minipoolId), string.concat(" ", name))
+            )
+        );
+        _setSymbol(
+            id,
+            string.concat(
+                "asDebt-", string.concat(Strings.toString(_minipoolId), string.concat("-", symbol))
+            )
+        );
         _setDecimals(id, decimals);
         _setUnderlyingAsset(id, underlyingAsset);
 
