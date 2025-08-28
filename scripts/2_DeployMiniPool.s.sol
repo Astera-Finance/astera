@@ -7,6 +7,7 @@ import "./helpers/MiniPoolHelper.s.sol";
 import "lib/forge-std/src/Test.sol";
 import "lib/forge-std/src/Script.sol";
 import "lib/forge-std/src/console2.sol";
+import "lib/solady/src/tokens/ERC6909.sol";
 
 contract DeployMiniPool is Script, Test, MiniPoolHelper {
     using stdJson for string;
@@ -94,6 +95,17 @@ contract DeployMiniPool is Script, Test, MiniPoolHelper {
                 "wrong miniPoolOwnerReserveFactor"
             );
             assertEq(aggregatedMiniPoolReservesData.depositCap, 0, "Wrong deposit cap");
+            ERC6909 aErc6909 = ERC6909(contracts.miniPoolAddressesProvider.getMiniPoolToAERC6909(0));
+            console2.log(
+                "Reserve symbol: %s and name %s",
+                aErc6909.symbol(1000 + idx),
+                aErc6909.name(1000 + idx)
+            );
+            console2.log(
+                "Reserve symbol: %s and name %s",
+                aErc6909.symbol(2000 + idx),
+                aErc6909.name(2000 + idx)
+            );
         }
 
         assertEq(
@@ -113,7 +125,10 @@ contract DeployMiniPool is Script, Test, MiniPoolHelper {
         );
     }
 
-    function readPreviousDeployments(string memory path) internal returns (bool readPrevious) {
+    function readPreviousDeployments(string memory path, bool usePreviousStrats)
+        internal
+        returns (bool readPrevious)
+    {
         console2.log("PREVIOUS DEPLOYMENT PATH: ", path);
         try vm.readFile(path) returns (string memory previousContracts) {
             address[] memory tmpContracts;
@@ -127,25 +142,29 @@ contract DeployMiniPool is Script, Test, MiniPoolHelper {
             // for (uint256 idx = 0; idx < tmpContracts.length; idx++) {
             //     contracts.aTokenErc6909.push(ATokenERC6909(tmpContracts[idx]));
             // }
-            tmpContracts = previousContracts.readAddressArray(".miniPoolPiStrategies");
-            for (uint256 idx = 0; idx < tmpContracts.length; idx++) {
-                contracts.miniPoolPiStrategies.push(
-                    MiniPoolPiReserveInterestRateStrategy(tmpContracts[idx])
-                );
+            if (usePreviousStrats) {
+                tmpContracts = previousContracts.readAddressArray(".miniPoolPiStrategies");
+                for (uint256 idx = 0; idx < tmpContracts.length; idx++) {
+                    contracts.miniPoolPiStrategies.push(
+                        MiniPoolPiReserveInterestRateStrategy(tmpContracts[idx])
+                    );
+                }
+                tmpContracts = previousContracts.readAddressArray(".miniPoolStableStrategies");
+                for (uint256 idx = 0; idx < tmpContracts.length; idx++) {
+                    contracts.miniPoolStableStrategies.push(
+                        MiniPoolDefaultReserveInterestRateStrategy(tmpContracts[idx])
+                    );
+                }
+                tmpContracts = previousContracts.readAddressArray(".miniPoolVolatileStrategies");
+                for (uint256 idx = 0; idx < tmpContracts.length; idx++) {
+                    contracts.miniPoolVolatileStrategies.push(
+                        MiniPoolDefaultReserveInterestRateStrategy(tmpContracts[idx])
+                    );
+                }
             }
-            tmpContracts = previousContracts.readAddressArray(".miniPoolStableStrategies");
-            for (uint256 idx = 0; idx < tmpContracts.length; idx++) {
-                contracts.miniPoolStableStrategies.push(
-                    MiniPoolDefaultReserveInterestRateStrategy(tmpContracts[idx])
-                );
-            }
-            tmpContracts = previousContracts.readAddressArray(".miniPoolVolatileStrategies");
-            console2.log("tmpContracts LENGTH: ", tmpContracts.length);
-            for (uint256 idx = 0; idx < tmpContracts.length; idx++) {
-                contracts.miniPoolVolatileStrategies.push(
-                    MiniPoolDefaultReserveInterestRateStrategy(tmpContracts[idx])
-                );
-            }
+            console2.log("Pi strat length:", contracts.miniPoolPiStrategies.length);
+            console2.log("Stable strat length:", contracts.miniPoolStableStrategies.length);
+            console2.log("Volatile strat length:", contracts.miniPoolVolatileStrategies.length);
             contracts.flowLimiter = FlowLimiter(previousContracts.readAddress(".flowLimiter"));
             contracts.miniPoolAddressesProvider = MiniPoolAddressesProvider(
                 previousContracts.readAddress(".miniPoolAddressesProvider")
@@ -256,7 +275,8 @@ contract DeployMiniPool is Script, Test, MiniPoolHelper {
             console2.log("readPreviousContracts: ", readPreviousContracts);
             if (readPreviousContracts) {
                 readPreviousDeployments(
-                    string.concat(root, "/scripts/outputs/testnet/2_MiniPoolContracts.json")
+                    string.concat(root, "/scripts/outputs/testnet/2_MiniPoolContracts.json"),
+                    usePreviousStrats
                 );
             }
 
@@ -338,7 +358,8 @@ contract DeployMiniPool is Script, Test, MiniPoolHelper {
 
             if (readPreviousContracts) {
                 readPreviousDeployments(
-                    string.concat(root, "/scripts/outputs/mainnet/2_MiniPoolContracts.json")
+                    string.concat(root, "/scripts/outputs/mainnet/2_MiniPoolContracts.json"),
+                    usePreviousStrats
                 );
             }
 

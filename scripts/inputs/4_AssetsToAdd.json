@@ -1,12 +1,12 @@
 {
     "general": {
         "aTokenNamePrefix": "Astera ",
-        "aTokenSymbolPrefix": "cl",
+        "aTokenSymbolPrefix": "as-",
         "debtTokenNamePrefix": "Astera variable debt bearing ",
-        "debtTokenSymbolPrefix": "clDebt",
-        "marketReferenceCurrencyAggregator": "0x7e860098F58bBFC8648a4311b374B1D669a2bc6B",
-        "networkBaseTokenAggregator": "0x71041dddad3595F9CEd3DcCFBe3D1F4b0a16Bb70",
-        "treasury": "0x3151CfCA393FE5Eec690feD2a2446DA5a073d01B",
+        "debtTokenSymbolPrefix": "asDebt-",
+        "marketReferenceCurrencyAggregator": "0xAADAa473C1bDF7317ec07c915680Af29DeBfdCb5",
+        "networkBaseTokenAggregator": "0x3c6Cd9Cc7c7a4c2Cf5a82734CD249D7D593354dA",
+        "treasury": "0x7D66a2e916d79c0988D41F1E50a1429074ec53a4",
         "usdBootstrapAmount": 40
     },
     "poolAddressesProviderConfig": {

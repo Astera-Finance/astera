@@ -251,6 +251,9 @@ contract TransferOwnerships is Script, TransferOwnershipHelper, Test {
                 );
             }
 
+            contracts.miniPoolConfigurator =
+                MiniPoolConfigurator(deploymentConfig.readAddress(".miniPoolConfigurator"));
+
             /* *********** Strategies *********** */
             outputPath = string.concat(root, "/scripts/outputs/mainnet/3_DeployedStrategies.json");
             console2.log("PATH: ", outputPath);
