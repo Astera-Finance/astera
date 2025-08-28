@@ -16,18 +16,25 @@ import {LstAggregator} from "contracts/protocol/core/LstAggregator.sol"; // Adju
 contract DeployLstAggregator is Script {
     // Chainlink Price Feed addresses for Base Mainnet
     // ETH/USD price feed
-    address private immutable ETH_USD_PRICE_FEED = 0x71041dddad3595F9CEd3DcCFBe3D1F4b0a16Bb70;
-    // stETH/ETH price feed
-    address private immutable STETH_ETH_PRICE_FEED = 0xf586d0728a47229e747d824a939000Cf21dEF5A0;
+    address private immutable ETH_USD_PRICE_FEED = 0x3c6Cd9Cc7c7a4c2Cf5a82734CD249D7D593354dA;
     // wstETH/ETH price feed
-    address private immutable WSTETH_ETH_PRICE_FEED = 0x43a5C292A453A3bF3606fa856197f09D7B74251a;
+    // available WETH / USD address private immutable WSTETH_ETH_PRICE_FEED = 0x43a5C292A453A3bF3606fa856197f09D7B74251a;
+    // ezETH/ETH price feed
+    address private immutable EZETH_ETH_PRICE_FEED = 0xB1d9A4Fe9331E28C5588B63343BF064A397aadB8;
+    // ezETH/ETH price feed exchange rate
+    address private immutable EZETH_ETH_PRICE_FEED_EXCHANGE_RATE =
+        0xb71F79770BA599940F454c70e63d4DE0E8606731;
     // weETH/ETH price feed
-    address private immutable WEETH_ETH_PRICE_FEED = 0xFC1415403EbB0c693f9a7844b92aD2Ff24775C65;
+    address private immutable WEETH_ETH_PRICE_FEED = 0xC4bF21Ab46bd22Cf993c0AAa363577bD2Af83544;
+
+    // wrsETH/rsETH price feed
+    address private immutable WRS_ETH_PRICE_FEED = 0xEEDF0B095B5dfe75F3881Cb26c19DA209A27463a;
 
     // Aggregator name for the deployed contract
-    string private constant AGGREGATOR_NAME_ST = "stETH/USD";
-    string private constant AGGREGATOR_NAME_WST = "wstETH/USD";
+    // string private constant AGGREGATOR_NAME_WST = "wstETH/USD";
+    string private constant AGGREGATOR_NAME_EZ = "ezETH/USD";
     string private constant AGGREGATOR_NAME_WE = "weETH/USD";
+    string private constant AGGREGATOR_NAME_WRS = "wrsETH/USD";
 
     /**
      * @notice The main function to run the deployment script.

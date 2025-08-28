@@ -246,12 +246,11 @@ contract AddStrats is Script, StratsHelper, Test {
             path = string.concat(root, "/scripts/outputs/testnet/3_DeployedStrategies.json");
         } else if (vm.envBool("MAINNET")) {
             /* ****** Lending pool settings */
-            {
-                string memory outputPath =
-                    string.concat(root, "/scripts/outputs/mainnet/1_LendingPoolContracts.json");
-                console2.log("PATH: ", outputPath);
-                config = vm.readFile(outputPath);
-            }
+
+            string memory outputPath =
+                string.concat(root, "/scripts/outputs/mainnet/1_LendingPoolContracts.json");
+            console2.log("PATH: ", outputPath);
+            config = vm.readFile(outputPath);
 
             {
                 address[] memory stableStrats = config.readAddressArray(".stableStrategies");
@@ -282,45 +281,44 @@ contract AddStrats is Script, StratsHelper, Test {
                 LendingPoolAddressesProvider(config.readAddress(".lendingPoolAddressesProvider"));
 
             /* ******* Mini pool settings */
-            {
-                string memory outputPath =
-                    string.concat(root, "/scripts/outputs/mainnet/2_MiniPoolContracts.json");
-                console2.log("PATH: ", outputPath);
+
+            outputPath = string.concat(root, "/scripts/outputs/mainnet/2_MiniPoolContracts.json");
+            console2.log("PATH: ", outputPath);
+
+            if (vm.exists(outputPath)) {
                 config = vm.readFile(outputPath);
-            }
-
-            {
-                address[] memory miniStableStrats =
-                    config.readAddressArray(".miniPoolStableStrategies");
-                for (uint8 idx = 0; idx < miniStableStrats.length; idx++) {
-                    contracts.miniPoolStableStrategies.push(
-                        MiniPoolDefaultReserveInterestRateStrategy(miniStableStrats[idx])
-                    );
+                {
+                    address[] memory miniStableStrats =
+                        config.readAddressArray(".miniPoolStableStrategies");
+                    for (uint8 idx = 0; idx < miniStableStrats.length; idx++) {
+                        contracts.miniPoolStableStrategies.push(
+                            MiniPoolDefaultReserveInterestRateStrategy(miniStableStrats[idx])
+                        );
+                    }
                 }
-            }
 
-            {
-                address[] memory miniVolatileStrats =
-                    config.readAddressArray(".miniPoolVolatileStrategies");
-                for (uint8 idx = 0; idx < miniVolatileStrats.length; idx++) {
-                    contracts.miniPoolVolatileStrategies.push(
-                        MiniPoolDefaultReserveInterestRateStrategy(miniVolatileStrats[idx])
-                    );
+                {
+                    address[] memory miniVolatileStrats =
+                        config.readAddressArray(".miniPoolVolatileStrategies");
+                    for (uint8 idx = 0; idx < miniVolatileStrats.length; idx++) {
+                        contracts.miniPoolVolatileStrategies.push(
+                            MiniPoolDefaultReserveInterestRateStrategy(miniVolatileStrats[idx])
+                        );
+                    }
                 }
-            }
 
-            {
-                address[] memory miniPiStrats = config.readAddressArray(".miniPoolPiStrategies");
-                for (uint8 idx = 0; idx < miniPiStrats.length; idx++) {
-                    contracts.miniPoolPiStrategies.push(
-                        MiniPoolPiReserveInterestRateStrategy(miniPiStrats[idx])
-                    );
+                {
+                    address[] memory miniPiStrats = config.readAddressArray(".miniPoolPiStrategies");
+                    for (uint8 idx = 0; idx < miniPiStrats.length; idx++) {
+                        contracts.miniPoolPiStrategies.push(
+                            MiniPoolPiReserveInterestRateStrategy(miniPiStrats[idx])
+                        );
+                    }
                 }
+
+                contracts.miniPoolAddressesProvider =
+                    MiniPoolAddressesProvider(config.readAddress(".miniPoolAddressesProvider"));
             }
-
-            contracts.miniPoolAddressesProvider =
-                MiniPoolAddressesProvider(config.readAddress(".miniPoolAddressesProvider"));
-
             /* Deploy on the mainnet */
             vm.startBroadcast(vm.envUint("PRIVATE_KEY"));
             _deployStrategies(
@@ -329,13 +327,15 @@ contract AddStrats is Script, StratsHelper, Test {
                 stableStrategies,
                 piStrategies
             );
-            _deployMiniPoolStrategies(
-                contracts.miniPoolAddressesProvider,
-                miniPoolId,
-                miniPoolVolatileStrategies,
-                miniPoolStableStrategies,
-                miniPoolPiStrategies
-            );
+            if (vm.exists(outputPath)) {
+                _deployMiniPoolStrategies(
+                    contracts.miniPoolAddressesProvider,
+                    miniPoolId,
+                    miniPoolVolatileStrategies,
+                    miniPoolStableStrategies,
+                    miniPoolPiStrategies
+                );
+            }
             vm.stopBroadcast();
             path = string.concat(root, "/scripts/outputs/mainnet/3_DeployedStrategies.json");
         }

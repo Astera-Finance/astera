@@ -4,91 +4,128 @@
     "aTokenSymbolPrefix": "as-",
     "debtTokenNamePrefix": "Astera variable debt bearing ",
     "debtTokenSymbolPrefix": "asDebt-",
-    "marketReferenceCurrencyAggregator": "0x7e860098F58bBFC8648a4311b374B1D669a2bc6B",
-    "networkBaseTokenAggregator": "0x71041dddad3595F9CEd3DcCFBe3D1F4b0a16Bb70",
-    "treasury": "0xfEfcb2fb19b9A70B30646Fdc1A0860Eb12F7ff8b",
-    "usdBootstrapAmount": 20
+    "marketReferenceCurrencyAggregator": "0xAADAa473C1bDF7317ec07c915680Af29DeBfdCb5",
+    "networkBaseTokenAggregator": "0x3c6Cd9Cc7c7a4c2Cf5a82734CD249D7D593354dA",
+    "treasury": "0x7D66a2e916d79c0988D41F1E50a1429074ec53a4",
+    "usdBootstrapAmount": 25
   },
   "poolReserversConfig": [
     {
-      "baseLtv": 7000,
-      "borrowingEnabled": true,
-      "interestStrat": "VOLATILE",
-      "interestStratId": 0,
-      "liquidationBonus": 10800,
-      "liquidationThreshold": 7500,
-      "miniPoolOwnerFee": 0,
-      "params": "0x10",
-      "reserveFactor": 2000,
-      "reserveType": true,
-      "symbol": "wclcbBTC",
-      "tokenAddress": "0xD536112A8CFA6f2c83af90c7bb8ECDB2ADa1B681"
-    },
-    {
-      "baseLtv": 7000,
-      "borrowingEnabled": true,
-      "interestStrat": "VOLATILE",
-      "interestStratId": 1,
-      "liquidationBonus": 10800,
-      "liquidationThreshold": 7500,
-      "miniPoolOwnerFee": 0,
-      "params": "0x10",
-      "reserveFactor": 2000,
-      "reserveType": true,
-      "symbol": "wclWETH",
-      "tokenAddress": "0xC26a7c3b1dCf525c4BaF3D015fD53362b2fCeD7a"
-    },
-    {
-      "baseLtv": 8000,
-      "borrowingEnabled": true,
-      "interestStrat": "VOLATILE",
-      "interestStratId": 2,
-      "liquidationBonus": 10800,
-      "liquidationThreshold": 8500,
-      "miniPoolOwnerFee": 0,
-      "params": "0x10",
-      "reserveFactor": 2000,
-      "reserveType": true,
-      "symbol": "wclUSDC",
-      "tokenAddress": "0x34F50AE8dF584334dfbbd1aF2a085B62bc9ecB12"
-    },
-    {
-      "baseLtv": 7000,
+      "baseLtv": 7500,
       "borrowingEnabled": true,
       "interestStrat": "PI",
       "interestStratId": 0,
       "liquidationBonus": 10800,
-      "liquidationThreshold": 7500,
+      "liquidationThreshold": 8000,
+      "miniPoolOwnerFee": 0,
+      "params": "0x10",
+      "reserveFactor": 2000,
+      "reserveType": true,
+      "symbol": "was-WBTC",
+      "tokenAddress": "0x7dfd2F6d984CA9A2d2ffAb7350E6948E4315047b"
+    },
+    {
+      "baseLtv": 7500,
+      "borrowingEnabled": true,
+      "interestStrat": "PI",
+      "interestStratId": 1,
+      "liquidationBonus": 10800,
+      "liquidationThreshold": 8000,
+      "miniPoolOwnerFee": 0,
+      "params": "0x10",
+      "reserveFactor": 2000,
+      "reserveType": true,
+      "symbol": "was-WETH",
+      "tokenAddress": "0x9A4cA144F38963007cFAC645d77049a1Dd4b209A"
+    },
+    {
+      "baseLtv": 8500,
+      "borrowingEnabled": true,
+      "interestStrat": "PI",
+      "interestStratId": 2,
+      "liquidationBonus": 10800,
+      "liquidationThreshold": 9000,
+      "miniPoolOwnerFee": 0,
+      "params": "0x10",
+      "reserveFactor": 2000,
+      "reserveType": true,
+      "symbol": "was-USDC",
+      "tokenAddress": "0xAD7b51293DeB2B7dbCef4C5c3379AfaF63ef5944"
+    },
+    {
+      "baseLtv": 8500,
+      "borrowingEnabled": true,
+      "interestStrat": "PI",
+      "interestStratId": 3,
+      "liquidationBonus": 10800,
+      "liquidationThreshold": 9000,
+      "miniPoolOwnerFee": 0,
+      "params": "0x10",
+      "reserveFactor": 2000,
+      "reserveType": true,
+      "symbol": "was-USDT",
+      "tokenAddress": "0x1579072d23FB3f545016Ac67E072D37e1281624C"
+    },
+    {
+      "baseLtv": 8500,
+      "borrowingEnabled": true,
+      "interestStrat": "PI",
+      "interestStratId": 4,
+      "liquidationBonus": 10800,
+      "liquidationThreshold": 9000,
       "miniPoolOwnerFee": 0,
       "params": "0x10",
       "reserveFactor": 2000,
       "reserveType": true,
       "symbol": "asUSD",
-      "tokenAddress": "0xC0D3700000987C99b3C9009069E4f8413fD22330"
+      "tokenAddress": "0xa500000000e482752f032eA387390b6025a2377b"
+    },
+    {
+      "baseLtv": 7000,
+      "borrowingEnabled": true,
+      "interestStrat": "PI",
+      "interestStratId": 5,
+      "liquidationBonus": 10800,
+      "liquidationThreshold": 7500,
+      "miniPoolOwnerFee": 0,
+      "params": "0x10",
+      "reserveFactor": 2000,
+      "reserveType": true,
+      "symbol": "wstETH",
+      "tokenAddress": "0xB5beDd42000b71FddE22D3eE8a79Bd49A568fC8F"
+    },
+    {
+      "baseLtv": 7000,
+      "borrowingEnabled": true,
+      "interestStrat": "PI",
+      "interestStratId": 6,
+      "liquidationBonus": 10800,
+      "liquidationThreshold": 7500,
+      "miniPoolOwnerFee": 0,
+      "params": "0x10",
+      "reserveFactor": 2000,
+      "reserveType": true,
+      "symbol": "weETH",
+      "tokenAddress": "0x1Bf74C010E6320bab11e2e5A532b5AC15e0b8aA6"
+    },
+    {
+      "baseLtv": 7000,
+      "borrowingEnabled": true,
+      "interestStrat": "PI",
+      "interestStratId": 7,
+      "liquidationBonus": 10800,
+      "liquidationThreshold": 7500,
+      "miniPoolOwnerFee": 0,
+      "params": "0x10",
+      "reserveFactor": 2000,
+      "reserveType": true,
+      "symbol": "ezETH",
+      "tokenAddress": "0x2416092f143378750bb29b79eD961ab195CcEea5"
     }
   ],
   "usePreviousStrats": false,
-  "readPreviousContracts": false,
-  "volatileStrategies": [
-    {
-      "baseVariableBorrowRate": 0.005e27,
-      "optimalUtilizationRate": 60e25,
-      "variableRateSlope1": 0.025e27,
-      "variableRateSlope2": 0.97e27
-    },
-    {
-      "baseVariableBorrowRate": 0.01e27,
-      "optimalUtilizationRate": 60e25,
-      "variableRateSlope1": 0.025e27,
-      "variableRateSlope2": 0.965e27
-    },
-    {
-      "baseVariableBorrowRate": 0.015e27,
-      "optimalUtilizationRate": 70e25,
-      "variableRateSlope1": 0.0214e27,
-      "variableRateSlope2": 0.9636e27
-    }
-  ],
+  "readPreviousContracts": true,
+  "volatileStrategies": [],
   "stableStrategies": [],
   "piStrategies": [
     {
@@ -96,24 +133,100 @@
       "ki": 13e19,
       "kp": 1e27,
       "maxITimeAmp": 1728000,
+      "minControllerError": -3675e23,
+      "optimalUtilizationRate": 70e25,
+      "symbol": "was-WBTC",
+      "tokenAddress": "0x7dfd2F6d984CA9A2d2ffAb7350E6948E4315047b"
+    },
+    {
+      "assetReserveType": true,
+      "ki": 13e19,
+      "kp": 1e27,
+      "maxITimeAmp": 1728000,
       "minControllerError": -3001e23,
-      "optimalUtilizationRate": 75e25,
+      "optimalUtilizationRate": 70e25,
+      "symbol": "was-WETH",
+      "tokenAddress": "0x9A4cA144F38963007cFAC645d77049a1Dd4b209A"
+    },
+    {
+      "assetReserveType": true,
+      "ki": 13e19,
+      "kp": 1e27,
+      "maxITimeAmp": 1728000,
+      "minControllerError": -2479e23,
+      "optimalUtilizationRate": 80e25,
+      "symbol": "was-USDC",
+      "tokenAddress": "0xAD7b51293DeB2B7dbCef4C5c3379AfaF63ef5944"
+    },
+    {
+      "assetReserveType": true,
+      "ki": 13e19,
+      "kp": 1e27,
+      "maxITimeAmp": 1728000,
+      "minControllerError": -2479e23,
+      "optimalUtilizationRate": 80e25,
+      "symbol": "was-USDT",
+      "tokenAddress": "0x1579072d23FB3f545016Ac67E072D37e1281624C"
+    },
+    {
+      "assetReserveType": true,
+      "ki": 13e19,
+      "kp": 1e27,
+      "maxITimeAmp": 1728000,
+      "minControllerError": -2479e23,
+      "optimalUtilizationRate": 80e25,
       "symbol": "asUSD",
-      "tokenAddress": "0xC0D3700000987C99b3C9009069E4f8413fD22330"
+      "tokenAddress": "0xa500000000e482752f032eA387390b6025a2377b"
+    },
+    {
+      "assetReserveType": true,
+      "ki": 13e19,
+      "kp": 1e27,
+      "maxITimeAmp": 1728000,
+      "minControllerError": -3001e23,
+      "optimalUtilizationRate": 60e25,
+      "symbol": "wstETH",
+      "tokenAddress": "0xB5beDd42000b71FddE22D3eE8a79Bd49A568fC8F"
+    },
+    {
+      "assetReserveType": true,
+      "ki": 13e19,
+      "kp": 1e27,
+      "maxITimeAmp": 1728000,
+      "minControllerError": -3001e23,
+      "optimalUtilizationRate": 60e25,
+      "symbol": "weETH",
+      "tokenAddress": "0x1Bf74C010E6320bab11e2e5A532b5AC15e0b8aA6"
+    },
+    {
+      "assetReserveType": true,
+      "ki": 13e19,
+      "kp": 1e27,
+      "maxITimeAmp": 1728000,
+      "minControllerError": -3001e23,
+      "optimalUtilizationRate": 60e25,
+      "symbol": "ezETH",
+      "tokenAddress": "0x2416092f143378750bb29b79eD961ab195CcEea5"
     }
   ],
   "oracleConfig": {
     "assets": [
-      "0xC0D3700000987C99b3C9009069E4f8413fD22330"
+      "0xB5beDd42000b71FddE22D3eE8a79Bd49A568fC8F",
+      "0x1Bf74C010E6320bab11e2e5A532b5AC15e0b8aA6",
+      "0x2416092f143378750bb29b79eD961ab195CcEea5"
     ],
     "baseCurrency": "0x0000000000000000000000000000000000000000",
     "baseCurrencyUnit": 1e8,
     "fallbackOracle": "0x0000000000000000000000000000000000000000",
     "sources": [
-      "0x9157E89Eb513B9e206A40CCD9E2F55f8E72Bd502"
+      "0x8eCE1AbA32716FdDe8D6482bfd88E9a0ee01f565",
+      "0x494a5FF482D780eb7Db3De30c4ad136Da9745A0C",
+      "0x9cFa74F081c89Eba75990F500D4e2A9C2Cd90838"
     ],
     "timeouts": [
-      100000
+      86400,
+      86400,
+      86400
     ]
   }
 }

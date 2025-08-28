@@ -20,6 +20,13 @@ contract TransferOwnershipHelper {
     }
 
     function _transferOwnershipsAndRenounceRoles(Roles memory roles) internal {
+        console.log("Transfer admin to:");
+        console.log(roles.poolAdmin);
+        console.log(roles.emergencyAdmin);
+        console.log(roles.addressesProviderOwner);
+        console.log(roles.oracleOwner);
+        console.log(roles.dataProviderOwner);
+        console.log(roles.piInterestStrategiesOwner);
         contracts.lendingPoolAddressesProvider.setPoolAdmin(roles.poolAdmin);
         contracts.wethGateway.transferOwnership(roles.poolAdmin);
         contracts.lendingPoolAddressesProvider.setEmergencyAdmin(roles.emergencyAdmin);
