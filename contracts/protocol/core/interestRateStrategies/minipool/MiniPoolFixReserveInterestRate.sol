@@ -23,10 +23,13 @@ contract MiniPoolFixReserveInterestRate is IMiniPoolReserveInterestRateStrategy 
     using PercentageMath for uint256;
 
     /// @dev Address of the minipool addresses provider.
-    IMiniPoolAddressesProvider public immutable addressesProvider_;
+    IMiniPoolAddressesProvider public immutable _addressesProvider;
 
     /// @dev The interest rate.
-    uint256 public borrowRate_;
+    uint256 public _borrowRate;
+
+    /// @dev ID of the minipool this strategy is associated with.
+    uint256 public immutable _minipoolId;
 
     /// @dev Emitted when the borrow rate is updated.
     event BorrowRateUpdated(uint256 newBorrowRate);
@@ -36,9 +39,14 @@ contract MiniPoolFixReserveInterestRate is IMiniPoolReserveInterestRateStrategy 
      * @param provider Address of the lending pool addresses provider.
      * @param initialBorrowRate The initial borrow rate.
      */
-    constructor(IMiniPoolAddressesProvider provider, uint256 initialBorrowRate) {
-        addressesProvider_ = provider;
-        borrowRate_ = initialBorrowRate;
+    constructor(
+        IMiniPoolAddressesProvider provider,
+        uint256 initialBorrowRate,
+        uint256 minipoolId
+    ) {
+        _addressesProvider = provider;
+        _borrowRate = initialBorrowRate;
+        _minipoolId = minipoolId;
     }
 
     /**
@@ -47,21 +55,27 @@ contract MiniPoolFixReserveInterestRate is IMiniPoolReserveInterestRateStrategy 
      * @param newBorrowRate The new borrow rate.
      */
     function updateBorrowRate(uint256 newBorrowRate) external {
-        if (msg.sender != addressesProvider_.getMainPoolAdmin()) {
+        if (msg.sender != _addressesProvider.getPoolAdmin(_minipoolId)) {
             revert(Errors.VL_CALLER_NOT_POOL_ADMIN);
         }
-        borrowRate_ = newBorrowRate;
+
+        // Must be less than 100%.
+        if (newBorrowRate > WadRayMath.ray()) {
+            revert(Errors.VL_INVALID_BORROW_RATE);
+        }
+
+        _borrowRate = newBorrowRate;
         emit BorrowRateUpdated(newBorrowRate);
     }
 
     /// @notice Returns the base variable borrow rate.
     function baseVariableBorrowRate() external view override returns (uint256) {
-        return borrowRate_;
+        return _borrowRate;
     }
 
     /// @notice Returns the maximum variable borrow rate.
     function getMaxVariableBorrowRate() external view override returns (uint256) {
-        return borrowRate_;
+        return _borrowRate;
     }
 
     /**
@@ -124,7 +138,7 @@ contract MiniPoolFixReserveInterestRate is IMiniPoolReserveInterestRateStrategy 
             ? 0
             : totalVariableDebt.rayDiv(availableLiquidity + totalVariableDebt);
 
-        uint256 currentLiquidityRate = borrowRate_.rayMul(utilizationRate).percentMul(
+        uint256 currentLiquidityRate = _borrowRate.rayMul(utilizationRate).percentMul(
             PercentageMath.PERCENTAGE_FACTOR - reserveFactor
         );
 
@@ -132,6 +146,6 @@ contract MiniPoolFixReserveInterestRate is IMiniPoolReserveInterestRateStrategy 
             revert(Errors.VL_TRANCHED_ASSETS_NOT_SUPPORTED_WITH_FIX_RATE);
         }
 
-        return (currentLiquidityRate, borrowRate_);
+        return (currentLiquidityRate, _borrowRate);
     }
 }

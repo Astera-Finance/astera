@@ -21,10 +21,10 @@ contract FixReserveInterestRateStrategy is IReserveInterestRateStrategy {
     using PercentageMath for uint256;
 
     /// @dev Address of the lending pool addresses provider.
-    ILendingPoolAddressesProvider public immutable addressesProvider_;
+    ILendingPoolAddressesProvider public immutable _addressesProvider;
 
     /// @dev The interest rate.
-    uint256 public borrowRate_;
+    uint256 public _borrowRate;
 
     /// @dev Emitted when the borrow rate is updated.
     event BorrowRateUpdated(uint256 newBorrowRate);
@@ -35,8 +35,8 @@ contract FixReserveInterestRateStrategy is IReserveInterestRateStrategy {
      * @param initialBorrowRate The initial borrow rate.
      */
     constructor(ILendingPoolAddressesProvider provider, uint256 initialBorrowRate) {
-        addressesProvider_ = provider;
-        borrowRate_ = initialBorrowRate;
+        _addressesProvider = provider;
+        _borrowRate = initialBorrowRate;
     }
 
     /**
@@ -45,21 +45,27 @@ contract FixReserveInterestRateStrategy is IReserveInterestRateStrategy {
      * @param newBorrowRate The new borrow rate.
      */
     function updateBorrowRate(uint256 newBorrowRate) external {
-        if (msg.sender != addressesProvider_.getPoolAdmin()) {
+        if (msg.sender != _addressesProvider.getPoolAdmin()) {
             revert(Errors.VL_CALLER_NOT_POOL_ADMIN);
         }
-        borrowRate_ = newBorrowRate;
+
+        // Must be less than 100%.
+        if (newBorrowRate > WadRayMath.ray()) {
+            revert(Errors.VL_INVALID_BORROW_RATE);
+        }
+
+        _borrowRate = newBorrowRate;
         emit BorrowRateUpdated(newBorrowRate);
     }
 
     /// @notice Returns the base variable borrow rate.
     function baseVariableBorrowRate() external view override returns (uint256) {
-        return borrowRate_;
+        return _borrowRate;
     }
 
     /// @notice Returns the maximum variable borrow rate.
     function getMaxVariableBorrowRate() external view override returns (uint256) {
-        return borrowRate_;
+        return _borrowRate;
     }
 
     /**
@@ -104,7 +110,7 @@ contract FixReserveInterestRateStrategy is IReserveInterestRateStrategy {
         uint256 totalVariableDebt,
         uint256 reserveFactor
     ) public view returns (uint256, uint256) {
-        uint256 currentBorrowRate = borrowRate_;
+        uint256 currentBorrowRate = _borrowRate;
         uint256 utilizationRate = totalVariableDebt == 0
             ? 0
             : totalVariableDebt.rayDiv(availableLiquidity + totalVariableDebt);
