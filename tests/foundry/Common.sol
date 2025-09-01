@@ -57,6 +57,10 @@ import "../../contracts/mocks/oracle/PriceOracle.sol";
 import {MockVaultUnit} from "../../contracts/mocks/tokens/MockVaultUnit.sol";
 import {MockPyth} from "node_modules/@pythnetwork/pyth-sdk-solidity/MockPyth.sol";
 import {PythAggregatorV3} from "node_modules/@pythnetwork/pyth-sdk-solidity/PythAggregatorV3.sol";
+import {FixReserveInterestRateStrategy} from
+    "../../contracts/protocol/core/interestRateStrategies/lendingpool/FixReserveInterestRateStrategy.sol";
+import {MiniPoolFixReserveInterestRate} from
+    "../../contracts/protocol/core/interestRateStrategies/minipool/MiniPoolFixReserveInterestRate.sol";
 
 event Deposit(address indexed reserve, address user, address indexed onBehalfOf, uint256 amount);
 
@@ -120,6 +124,7 @@ contract Common is Test {
         DefaultReserveInterestRateStrategy stableStrategy;
         DefaultReserveInterestRateStrategy volatileStrategy;
         PiReserveInterestRateStrategy piStrategy;
+        FixReserveInterestRateStrategy fixStrategy;
         AsteraDataProvider asteraDataProvider;
         ATokensAndRatesHelper aTokensAndRatesHelper;
     }
@@ -131,6 +136,7 @@ contract Common is Test {
         MiniPoolDefaultReserveInterestRateStrategy stableStrategy;
         MiniPoolDefaultReserveInterestRateStrategy volatileStrategy;
         MiniPoolPiReserveInterestRateStrategy piStrategy;
+        MiniPoolFixReserveInterestRate fixStrategy;
         ATokenERC6909 aToken6909Impl;
         FlowLimiter flowLimiter;
     }
@@ -370,6 +376,11 @@ contract Common is Test {
             commonContracts.defaultPidConfig.optimalUtilizationRate,
             commonContracts.defaultPidConfig.kp,
             commonContracts.defaultPidConfig.ki
+        );
+
+        deployedContracts.fixStrategy = new FixReserveInterestRateStrategy(
+            deployedContracts.lendingPoolAddressesProvider,
+            1e26 // 10%
         );
 
         return (deployedContracts);
