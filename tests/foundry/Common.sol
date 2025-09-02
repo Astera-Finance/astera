@@ -379,7 +379,6 @@ contract Common is Test {
         );
 
         deployedContracts.fixStrategy = new FixReserveInterestRateStrategy(
-            deployedContracts.lendingPoolAddressesProvider,
             1e26 // 10%
         );
 

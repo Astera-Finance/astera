@@ -48,9 +48,7 @@ contract MiniPoolLendingPoolFixRateStrategyTest is MiniPoolFixtures {
 
         // Create fixed-rate strategy bound to this MiniPool ID
         miniPoolContracts.fixStrategy = new MiniPoolFixReserveInterestRate(
-            IMiniPoolAddressesProvider(address(miniPoolContracts.miniPoolAddressesProvider)),
-            0.1e27, // 10% annualized borrow rate in ray
-            miniPoolId
+            0.1e27 // 10% annualized borrow rate in ray
         );
 
         // Configure MiniPool reserves (use default strategies initially)
