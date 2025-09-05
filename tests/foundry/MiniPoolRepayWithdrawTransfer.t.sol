@@ -2463,4 +2463,28 @@ contract MiniPoolRepayWithdrawTransferTest is MiniPoolDepositBorrowTest {
         vm.expectRevert(bytes(Errors.VL_NO_DEBT_OF_SELECTED_TYPE));
         IMiniPool(miniPool).repay(address(borrowParams.token), false, amount, user);
     }
+
+    function testDepositCapWithDeposit() public {
+        TokenParams memory tokenParams =
+            TokenParams(erc20Tokens[WBTC_OFFSET], commonContracts.aTokensWrapper[WBTC_OFFSET], 0);
+        vm.startPrank(miniPoolContracts.miniPoolAddressesProvider.getMainPoolAdmin());
+        miniPoolContracts.miniPoolConfigurator.setDepositCap(
+            address(erc20Tokens[WBTC_OFFSET]), 1, IMiniPool(miniPool)
+        );
+        vm.stopPrank();
+        vm.prank(makeAddr("user"));
+        fixture_MiniPoolDeposit(99999999, WBTC_OFFSET, makeAddr("user"), tokenParams);
+    }
+
+    function testDepositCapWithDeposit_18() public {
+        TokenParams memory tokenParams =
+            TokenParams(erc20Tokens[WETH_OFFSET], commonContracts.aTokensWrapper[WETH_OFFSET], 0);
+        vm.startPrank(miniPoolContracts.miniPoolAddressesProvider.getMainPoolAdmin());
+        miniPoolContracts.miniPoolConfigurator.setDepositCap(
+            address(erc20Tokens[WETH_OFFSET]), 1, IMiniPool(miniPool)
+        );
+        vm.stopPrank();
+        vm.prank(makeAddr("user"));
+        fixture_MiniPoolDeposit(9e17, WETH_OFFSET, makeAddr("user"), tokenParams);
+    }
 }

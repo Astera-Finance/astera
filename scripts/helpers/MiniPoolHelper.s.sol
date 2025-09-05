@@ -24,7 +24,7 @@ contract MiniPoolHelper is InitAndConfigurationHelper {
         address _deployer,
         bool _usePreviousStrats
     ) public {
-        uint256 miniPoolId = _deployMiniPoolContracts(_deployer);
+        uint256 miniPoolId = _deployMiniPoolContracts(_deployer, _general.treasury);
 
         if (!_usePreviousStrats) {
             _deployMiniPoolStrategies(
@@ -41,7 +41,10 @@ contract MiniPoolHelper is InitAndConfigurationHelper {
         );
     }
 
-    function _deployMiniPoolContracts(address deployer) internal returns (uint256) {
+    function _deployMiniPoolContracts(address deployer, address treasury)
+        internal
+        returns (uint256)
+    {
         if (address(contracts.miniPoolImpl) == address(0)) {
             contracts.miniPoolImpl = new MiniPool();
         }
@@ -74,10 +77,13 @@ contract MiniPoolHelper is InitAndConfigurationHelper {
             contracts.asteraDataProvider.setMiniPoolAddressProvider(
                 address(contracts.miniPoolAddressesProvider)
             );
+            contracts.miniPoolConfigurator.setAsteraTreasury(treasury);
         } else {
             miniPoolId = contracts.miniPoolAddressesProvider.deployMiniPool(
                 address(contracts.miniPoolImpl), address(contracts.aTokenErc6909Impl), deployer
             );
+            address miniPool = contracts.miniPoolAddressesProvider.getMiniPool(miniPoolId);
+            contracts.miniPoolConfigurator.setMinipoolOwnerTreasuryToMiniPool(treasury, miniPool);
         }
 
         return miniPoolId;

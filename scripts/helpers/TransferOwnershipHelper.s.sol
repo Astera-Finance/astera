@@ -27,32 +27,87 @@ contract TransferOwnershipHelper {
         console.log(roles.oracleOwner);
         console.log(roles.dataProviderOwner);
         console.log(roles.piInterestStrategiesOwner);
-        contracts.lendingPoolAddressesProvider.setPoolAdmin(roles.poolAdmin);
-        contracts.wethGateway.transferOwnership(roles.poolAdmin);
-        contracts.lendingPoolAddressesProvider.setEmergencyAdmin(roles.emergencyAdmin);
-        contracts.lendingPoolAddressesProvider.transferOwnership(roles.addressesProviderOwner);
+
+        if (
+            contracts.lendingPoolAddressesProvider.getPoolAdmin() == msg.sender
+                && contracts.lendingPoolAddressesProvider.getPoolAdmin() != roles.poolAdmin
+        ) {
+            contracts.lendingPoolAddressesProvider.setPoolAdmin(roles.poolAdmin);
+        }
+        if (
+            contracts.wethGateway.owner() == msg.sender
+                && contracts.wethGateway.owner() != roles.poolAdmin
+        ) {
+            contracts.wethGateway.transferOwnership(roles.poolAdmin);
+        }
+        if (
+            contracts.lendingPoolAddressesProvider.owner() == msg.sender
+                && contracts.lendingPoolAddressesProvider.getEmergencyAdmin() != roles.emergencyAdmin
+        ) {
+            contracts.lendingPoolAddressesProvider.setEmergencyAdmin(roles.emergencyAdmin);
+        }
+        if (
+            contracts.lendingPoolAddressesProvider.owner() == msg.sender
+                && contracts.lendingPoolAddressesProvider.owner() != roles.addressesProviderOwner
+        ) {
+            contracts.lendingPoolAddressesProvider.transferOwnership(roles.addressesProviderOwner);
+        }
         if (address(contracts.miniPoolAddressesProvider) != address(0)) {
-            contracts.miniPoolAddressesProvider.transferOwnership(roles.addressesProviderOwner);
+            if (
+                contracts.miniPoolAddressesProvider.owner() == msg.sender
+                    && contracts.miniPoolAddressesProvider.owner() != roles.addressesProviderOwner
+            ) {
+                contracts.miniPoolAddressesProvider.transferOwnership(roles.addressesProviderOwner);
+            }
         }
         if (address(0) != address(contracts.rewarder)) {
-            contracts.rewarder.transferOwnership(roles.rewarderOwner);
+            if (
+                contracts.rewarder.owner() == msg.sender
+                    && contracts.rewarder.owner() != roles.rewarderOwner
+            ) {
+                contracts.rewarder.transferOwnership(roles.rewarderOwner);
+            }
         }
         if (address(0) != address(contracts.rewarder6909)) {
-            contracts.rewarder6909.transferOwnership(roles.rewarderOwner);
+            if (
+                contracts.rewarder6909.owner() == msg.sender
+                    && contracts.rewarder6909.owner() != roles.rewarderOwner
+            ) {
+                contracts.rewarder6909.transferOwnership(roles.rewarderOwner);
+            }
         }
-        contracts.oracle.transferOwnership(roles.oracleOwner);
-        contracts.asteraDataProvider.transferOwnership(roles.dataProviderOwner);
+        if (contracts.oracle.owner() == msg.sender && contracts.oracle.owner() != roles.oracleOwner)
+        {
+            contracts.oracle.transferOwnership(roles.oracleOwner);
+        }
+        if (
+            contracts.asteraDataProvider.owner() == msg.sender
+                && contracts.asteraDataProvider.owner() != roles.dataProviderOwner
+        ) {
+            contracts.asteraDataProvider.transferOwnership(roles.dataProviderOwner);
+        }
 
         for (uint256 idx = 0; idx < contracts.piStrategies.length; idx++) {
             if (address(contracts.piStrategies[idx]) != address(0)) {
-                contracts.piStrategies[idx].transferOwnership(roles.piInterestStrategiesOwner);
+                if (
+                    contracts.piStrategies[idx].owner() == msg.sender
+                        && contracts.piStrategies[idx].owner() != roles.piInterestStrategiesOwner
+                ) {
+                    contracts.piStrategies[idx].transferOwnership(roles.piInterestStrategiesOwner);
+                }
             }
         }
         for (uint256 idx = 0; idx < contracts.miniPoolPiStrategies.length; idx++) {
             if (address(contracts.miniPoolPiStrategies[idx]) != address(0)) {
-                contracts.miniPoolPiStrategies[idx].transferOwnership(
-                    roles.piInterestStrategiesOwner
-                );
+                if (
+                    contracts.miniPoolPiStrategies[idx].owner() == msg.sender
+                        && contracts.miniPoolPiStrategies[idx].owner()
+                            != roles.piInterestStrategiesOwner
+                ) {
+                    contracts.miniPoolPiStrategies[idx].transferOwnership(
+                        roles.piInterestStrategiesOwner
+                    );
+                }
             }
         }
     }
