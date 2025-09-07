@@ -98,6 +98,11 @@ struct PoolAddressesProviderConfig {
     address poolOwner;
 }
 
+struct Factors {
+    uint256 m_factor;
+    uint256 n_factor;
+}
+
 struct PoolReserversConfig {
     uint256 baseLtv;
     bool borrowingEnabled;

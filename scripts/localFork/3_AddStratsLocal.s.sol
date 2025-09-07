@@ -88,6 +88,7 @@ contract AddStratsLocal is Script, StratsHelper, Test {
         PoolAddressesProviderConfig memory poolAddressesProviderConfig = abi.decode(
             deploymentConfig.parseRaw(".poolAddressesProviderConfig"), (PoolAddressesProviderConfig)
         );
+        Factors memory factors = abi.decode(deploymentConfig.parseRaw(".factors"), (Factors));
         uint256 miniPoolId = poolAddressesProviderConfig.poolId;
         LinearStrategy[] memory volatileStrategies =
             abi.decode(deploymentConfig.parseRaw(".volatileStrategies"), (LinearStrategy[]));
@@ -127,6 +128,16 @@ contract AddStratsLocal is Script, StratsHelper, Test {
             miniPoolStableStrategies,
             miniPoolPiStrategies
         );
+        /* Pi miniPool strats */
+        address[] memory tmpStrats = deployedStrategies.readAddressArray(".miniPoolPiStrategies");
+        for (uint8 idx = 0; idx < miniPoolPiStrategies.length; idx++) {
+            require(
+                contracts.miniPoolPiStrategies[idx].M_FACTOR() == factors.m_factor, "Wrong M_FACTOR"
+            );
+            require(
+                contracts.miniPoolPiStrategies[idx].N_FACTOR() == factors.n_factor, "Wrong N_FACTOR"
+            );
+        }
         vm.stopPrank();
 
         writeJsonData(root, path);
