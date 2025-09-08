@@ -188,3 +188,13 @@ struct DataProvider {
     address marketReferenceCurrencyAggregator;
     address networkBaseTokenAggregator;
 }
+
+struct RewardedTokenConfig {
+    uint256 assetId;
+    uint256 distributionTime;
+    uint256 emissionPerSecond;
+    uint256 incentivesAmount;
+    address miniPool;
+    address rewardToken;
+    address rewardedToken;
+}
