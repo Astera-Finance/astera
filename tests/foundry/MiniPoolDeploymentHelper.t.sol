@@ -16,6 +16,8 @@ contract MiniPoolDeploymentHelperTest is Test {
     address constant DATA_PROVIDER = 0xE4FeC590F1Cf71B36c0A782Aac2E4589aFdaD88e;
     MiniPoolDeploymentHelper helper;
 
+    address constant MINI_POOL = 0x52280eA8979d52033E14df086F4dF555a258bEb4;
+
     function setUp() public {
         // LINEA setup
         uint256 opFork = vm.createSelectFork(
@@ -33,7 +35,7 @@ contract MiniPoolDeploymentHelperTest is Test {
         desiredReserves[0] = MiniPoolDeploymentHelper.HelperPoolReserversConfig({
             baseLtv: 7500,
             borrowingEnabled: true,
-            interestStrat: 0x47968bf518FB5A3f4360DE36B67497e11b6C0872,
+            interestStrat: 0x2fDdcaA16cE32dEe94bAb649cfF007d949688695,
             liquidationBonus: 10800,
             liquidationThreshold: 8000,
             miniPoolOwnerFee: 0,
@@ -44,7 +46,7 @@ contract MiniPoolDeploymentHelperTest is Test {
         desiredReserves[1] = MiniPoolDeploymentHelper.HelperPoolReserversConfig({
             baseLtv: 7500,
             borrowingEnabled: true,
-            interestStrat: 0xE27379F420990791a56159D54F9bad8864F217b8,
+            interestStrat: 0xddD8e5DabEAFa69c4717710072692F041b081f0a,
             liquidationBonus: 10800,
             liquidationThreshold: 8000,
             miniPoolOwnerFee: 0,
@@ -52,32 +54,11 @@ contract MiniPoolDeploymentHelperTest is Test {
             depositCap: 0,
             tokenAddress: 0x9A4cA144F38963007cFAC645d77049a1Dd4b209A
         });
+
         desiredReserves[2] = MiniPoolDeploymentHelper.HelperPoolReserversConfig({
             baseLtv: 8500,
             borrowingEnabled: true,
-            interestStrat: 0x499685b9A2438D0aBc36EBedaf966A2c9B18C3c0,
-            liquidationBonus: 10800,
-            liquidationThreshold: 9000,
-            miniPoolOwnerFee: 0,
-            reserveFactor: 2000,
-            depositCap: 0,
-            tokenAddress: 0xa500000000e482752f032eA387390b6025a2377b
-        });
-        desiredReserves[3] = MiniPoolDeploymentHelper.HelperPoolReserversConfig({
-            baseLtv: 5000,
-            borrowingEnabled: true,
-            interestStrat: 0xc3012640D1d6cE061632f4cea7f52360d50cbeD4,
-            liquidationBonus: 11500,
-            liquidationThreshold: 6500,
-            miniPoolOwnerFee: 0,
-            reserveFactor: 2000,
-            depositCap: 2500000,
-            tokenAddress: 0xe4eEB461Ad1e4ef8b8EF71a33694CCD84Af051C4
-        });
-        desiredReserves[4] = MiniPoolDeploymentHelper.HelperPoolReserversConfig({
-            baseLtv: 8500,
-            borrowingEnabled: true,
-            interestStrat: 0x488D8e33f20bDc1C698632617331e68647128311,
+            interestStrat: 0x3D20691a0BF115Ae4134f6D2ecf1BA2c5C77484f,
             liquidationBonus: 10800,
             liquidationThreshold: 9000,
             miniPoolOwnerFee: 0,
@@ -85,10 +66,10 @@ contract MiniPoolDeploymentHelperTest is Test {
             depositCap: 0,
             tokenAddress: 0xAD7b51293DeB2B7dbCef4C5c3379AfaF63ef5944
         });
-        desiredReserves[5] = MiniPoolDeploymentHelper.HelperPoolReserversConfig({
+        desiredReserves[3] = MiniPoolDeploymentHelper.HelperPoolReserversConfig({
             baseLtv: 8500,
             borrowingEnabled: true,
-            interestStrat: 0x6c24D7aF724E1F73CE2D26c6c6b4044f4a9d0a43,
+            interestStrat: 0xE27da48971de86167e78519aD1120cF315E82E93,
             liquidationBonus: 10800,
             liquidationThreshold: 9000,
             miniPoolOwnerFee: 0,
@@ -96,9 +77,29 @@ contract MiniPoolDeploymentHelperTest is Test {
             depositCap: 0,
             tokenAddress: 0x1579072d23FB3f545016Ac67E072D37e1281624C
         });
-        (uint256 errCode, uint8 idx) = helper.checkDeploymentParams(
-            0x65559abECD1227Cc1779F500453Da1f9fcADd928, desiredReserves
-        );
+        desiredReserves[4] = MiniPoolDeploymentHelper.HelperPoolReserversConfig({
+            baseLtv: 8500,
+            borrowingEnabled: true,
+            interestStrat: 0x07C8b3B605C29bAD6e7fDD2b5912Dfa506a6806c,
+            liquidationBonus: 10800,
+            liquidationThreshold: 9000,
+            miniPoolOwnerFee: 0,
+            reserveFactor: 2000,
+            depositCap: 0,
+            tokenAddress: 0xa500000000e482752f032eA387390b6025a2377b
+        });
+        desiredReserves[5] = MiniPoolDeploymentHelper.HelperPoolReserversConfig({
+            baseLtv: 8500,
+            borrowingEnabled: true,
+            interestStrat: 0xa91e6190dDde5E4D501ABf9611d6640d9092b32d,
+            liquidationBonus: 10800,
+            liquidationThreshold: 9000,
+            miniPoolOwnerFee: 0,
+            reserveFactor: 2000,
+            depositCap: 0,
+            tokenAddress: 0xacA92E438df0B2401fF60dA7E4337B687a2435DA
+        });
+        (uint256 errCode, uint8 idx) = helper.checkDeploymentParams(MINI_POOL, desiredReserves);
         console2.log("Err code: %s idx: %s", errCode, idx);
         assertEq(errCode, 0);
     }

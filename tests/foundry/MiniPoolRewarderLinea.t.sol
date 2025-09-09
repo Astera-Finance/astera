@@ -217,27 +217,43 @@ contract MiniPoolRewarderTest is Common {
         assertEq(user2Rewards[0], 0 ether, "wrong user2 rewards");
     }
 
-    // function test_miniPoolLinea() public {
-    //     address myAddr = 0xF1D6ab29d12cF2bee25A195579F544BFcC3dD78f;
-    //     AToken wasWeth = AToken(0x9A4cA144F38963007cFAC645d77049a1Dd4b209A);
-    //     ERC20 weth = ERC20(0xe5D7C2a44FfDDf6b295A15c148167daaAf5Cf34f);
-    //     IMiniPool _miniPool = IMiniPool(miniPoolAddressesProvider.getMiniPool(1));
+    function test_miniPoolLinea() public {
+        address myAddr = 0xEdeA7aAF2036686b01a5c1D1Fd09a86042BB4189;
+        AToken wasWeth = AToken(0x9A4cA144F38963007cFAC645d77049a1Dd4b209A);
+        ERC20 weth = ERC20(0xe5D7C2a44FfDDf6b295A15c148167daaAf5Cf34f);
+        IMiniPool _miniPool = IMiniPool(miniPoolAddressesProvider.getMiniPool(2));
+        // deal(address(weth), myAddr, 10 ether);
+        uint256 convertedBalance = wasWeth.convertToShares(weth.balanceOf(myAddr) / 2);
+        wasWeth.approve(address(_miniPool), convertedBalance);
+        weth.approve(address(_miniPool), weth.balanceOf(myAddr));
+        console2.log(
+            "My Balance %s vs after convertion %s from Rabby %s",
+            weth.balanceOf(myAddr),
+            convertedBalance,
+            40189414104992199
+        );
 
-    //     uint256 convertedBalance = wasWeth.convertToShares(weth.balanceOf(myAddr));
-    //     wasWeth.approve(address(_miniPool), convertedBalance);
-    //     console2.log(
-    //         "My Balance %s vs after convertion %s from Rabby %s",
-    //         weth.balanceOf(myAddr),
-    //         convertedBalance,
-    //         40189414104992199
-    //     );
+        // console2.log("Converted balance", convertedBalance);
+        vm.startPrank(myAddr);
+        // console2.log("First deposit");
+        IMiniPool(_miniPool).deposit(address(wasWeth), true, convertedBalance, myAddr);
 
-    //     // console2.log("Converted balance", convertedBalance);
-    //     vm.startPrank(myAddr);
-    //     // console2.log("First deposit");
-    //     IMiniPool(_miniPool).deposit(address(wasWeth), true, convertedBalance, myAddr);
+        vm.stopPrank();
+        assert(false);
+    }
 
-    //     vm.stopPrank();
-    //     assert(false);
-    // }
+    function test_setStratLinea() public {
+        address addr = 0x7D66a2e916d79c0988D41F1E50a1429074ec53a4;
+
+        // console2.log("Converted balance", convertedBalance);
+        vm.startPrank(addr);
+        // console2.log("First deposit");
+        miniPoolConfigurator.setReserveInterestRateStrategyAddress(
+            0xa500000000e482752f032eA387390b6025a2377b,
+            0x9F5B9761Ac612aa2d0775807bEcB8AB6DC99a0fd,
+            IMiniPool(0x65559abECD1227Cc1779F500453Da1f9fcADd928)
+        );
+
+        vm.stopPrank();
+    }
 }
