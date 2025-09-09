@@ -25,9 +25,9 @@ abstract contract BasePiReserveRateStrategy is Ownable {
     using PercentageMath for uint256;
 
     /// @dev Multiplier factor used in interest rate calculations.
-    int256 public constant M_FACTOR = 100e25;
+    int256 public constant M_FACTOR = 20e25;
     /// @dev Power factor used in interest rate calculations.
-    uint256 public constant N_FACTOR = 4;
+    uint256 public constant N_FACTOR = 2;
     /// @dev Ray precision constant (1e27).
     int256 public constant RAY = 1e27;
 

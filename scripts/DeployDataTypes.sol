@@ -83,8 +83,8 @@ struct General {
 
 struct Roles {
     address addressesProviderOwner;
-    address emergencyAdmin;
     address dataProviderOwner;
+    address emergencyAdmin;
     address oracleOwner;
     address piInterestStrategiesOwner;
     address poolAdmin;
@@ -96,6 +96,11 @@ struct PoolAddressesProviderConfig {
     string marketId;
     uint256 poolId;
     address poolOwner;
+}
+
+struct Factors {
+    uint256 m_factor;
+    uint256 n_factor;
 }
 
 struct PoolReserversConfig {
@@ -182,4 +187,14 @@ struct DataProvider {
     bool deploy;
     address marketReferenceCurrencyAggregator;
     address networkBaseTokenAggregator;
+}
+
+struct RewardedTokenConfig {
+    uint256 assetId;
+    uint256 distributionTime;
+    uint256 emissionPerSecond;
+    uint256 incentivesAmount;
+    address miniPool;
+    address rewardToken;
+    address rewardedToken;
 }
