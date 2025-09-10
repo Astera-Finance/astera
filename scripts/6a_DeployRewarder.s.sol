@@ -96,6 +96,8 @@ contract DeployRewarder is Script {
             console2.log("%s Configuring assetID: %s", idx, rewardedTokenConfigs[idx].assetId);
             vm.startBroadcast();
             miniPoolRewarder.configureAssets(configs);
+            rewardsVaults[idx].transferOwnership(miniPoolAddressesProvider.getMainPoolAdmin());
+
             vm.stopBroadcast();
 
             console2.log(
@@ -130,6 +132,10 @@ contract DeployRewarder is Script {
             //     IMiniPool(rewardedTokenConfigs[idx].miniPool)
             // );
         }
+
+        vm.startBroadcast();
+        miniPoolRewarder.transferOwnership(miniPoolAddressesProvider.getMainPoolAdmin());
+        vm.stopBroadcast();
 
         console2.log("Deployed Rewarder: ", address(miniPoolRewarder));
         console2.log("Deployed Vaults:");

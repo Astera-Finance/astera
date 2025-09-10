@@ -116,7 +116,6 @@ contract MiniPoolRewarderTest is Common {
 
         fixture_deployMiniPoolRewarder();
 
-        console2.log("First config");
         fixture_configureMiniPoolRewarder(
             1002, //assetID USDC
             0, //rewardTokenIndex
@@ -124,7 +123,6 @@ contract MiniPoolRewarderTest is Common {
             1 ether, //emissionsPerSecond
             uint32(block.timestamp + 100) //distributionEnd
         );
-        console2.log("Second config");
         fixture_configureMiniPoolRewarder(
             1001, //assetID WETH
             0, //rewardTokenIndex
@@ -132,7 +130,6 @@ contract MiniPoolRewarderTest is Common {
             1 ether, //emissionsPerSecond
             uint32(block.timestamp + 100) //distributionEnd
         );
-        console2.log("Third config");
         fixture_configureMiniPoolRewarder(
             1001, //assetID WETH
             1, //rewardTokenIndex
@@ -156,6 +153,14 @@ contract MiniPoolRewarderTest is Common {
             1 ether, //emissionsPerSecond
             uint32(block.timestamp + 100) //distributionEnd
         );
+
+        fixture_configureMiniPoolRewarder(
+            2128, //assetID debt asUSD
+            0, //rewardTokenIndex
+            3 ether, //rewardTokenAMT
+            1 ether, //emissionsPerSecond
+            uint32(block.timestamp + 100) //distributionEnd
+        );
     }
 
     function test_basicRewarder6909() public {
@@ -164,7 +169,7 @@ contract MiniPoolRewarderTest is Common {
         user1 = makeAddr("user1");
         user2 = makeAddr("user2");
 
-        ERC20 weth = ERC20(0xe5D7C2a44FfDDf6b295A15c148167daaAf5Cf34f);
+        ERC20 weth = ERC20(0xa500000000e482752f032eA387390b6025a2377b);
         ERC20 wasWeth = ERC20(0x9A4cA144F38963007cFAC645d77049a1Dd4b209A);
         console2.log("Dealing tokens");
         deal(address(weth), user1, 100 ether);
@@ -215,6 +220,50 @@ contract MiniPoolRewarderTest is Common {
         assertGt(user1Rewards[0], 0, "wrong user1 rewards0");
         assertGt(user1Rewards[1], 0, "wrong user1 rewards1");
         assertEq(user2Rewards[0], 0 ether, "wrong user2 rewards");
+    }
+
+    function test_basicRewarder6909_1() public {
+        address user1;
+        user1 = makeAddr("user1");
+
+        ERC20 asUsd = ERC20(0xa500000000e482752f032eA387390b6025a2377b);
+        console2.log("Dealing tokens");
+        deal(address(asUsd), user1, 100 ether);
+
+        console2.log("User2 depositing");
+        vm.startPrank(user1);
+        asUsd.approve(address(miniPool), 100 ether);
+        vm.stopPrank();
+
+        console2.log("User1 depositing");
+        vm.startPrank(user1);
+        asUsd.approve(address(miniPool), 90 ether);
+        IMiniPool(miniPool).deposit(address(asUsd), false, 90 ether, user1);
+        IMiniPool(miniPool).borrow(address(asUsd), false, 50 ether, user1);
+        vm.stopPrank();
+
+        vm.warp(block.timestamp + 100);
+        vm.roll(block.number + 1);
+
+        console2.log("Getting rewards vault");
+        address vault = miniPoolRewarder.getRewardsVault(address(rewardTokens[0]));
+        console2.log("vault", address(vault));
+
+        DistributionTypes.Asset6909[] memory assets = new DistributionTypes.Asset6909[](4);
+        assets[0] = DistributionTypes.Asset6909(aTokensErc6909Addr, 1001);
+        assets[1] = DistributionTypes.Asset6909(aTokensErc6909Addr, 1002);
+        assets[2] = DistributionTypes.Asset6909(aTokensErc6909Addr, 2001);
+        assets[3] = DistributionTypes.Asset6909(aTokensErc6909Addr, 2002);
+        assets[3] = DistributionTypes.Asset6909(aTokensErc6909Addr, 2128);
+
+        vm.startPrank(user1);
+        (, uint256[] memory user1Rewards) = miniPoolRewarder.claimAllRewardsToSelf(assets);
+        vm.stopPrank();
+
+        console2.log("user1Rewards[0]", user1Rewards[0]);
+
+        assertGt(user1Rewards[0], 0, "wrong user1 rewards0");
+        assertEq(user1Rewards[1], 0, "wrong user1 rewards1");
     }
 
     // function test_miniPoolLinea() public {
