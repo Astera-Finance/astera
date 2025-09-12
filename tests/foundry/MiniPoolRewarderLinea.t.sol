@@ -169,7 +169,7 @@ contract MiniPoolRewarderTest is Common {
         user1 = makeAddr("user1");
         user2 = makeAddr("user2");
 
-        ERC20 weth = ERC20(0xa500000000e482752f032eA387390b6025a2377b);
+        ERC20 weth = ERC20(0xe5D7C2a44FfDDf6b295A15c148167daaAf5Cf34f);
         ERC20 wasWeth = ERC20(0x9A4cA144F38963007cFAC645d77049a1Dd4b209A);
         console2.log("Dealing tokens");
         deal(address(weth), user1, 100 ether);

@@ -1,49 +1,44 @@
 {
+    "rewardTokens": [
+        "0xe4eEB461Ad1e4ef8b8EF71a33694CCD84Af051C4",
+        "0xa500000000e482752f032eA387390b6025a2377b"
+    ],
     "rewardedTokenConfigs": [
         {
             "assetId": 1002,
-            "distributionTime": 2592000,
-            "emissionPerSecond": 1e18,
-            "incentivesAmount": 2592000e18,
+            "distributionTime": 2419200,
+            "emissionPerSecond": 2.066798941e15,
+            "incentivesAmount": 5000e18,
             "miniPool": "0x65559abECD1227Cc1779F500453Da1f9fcADd928",
             "rewardToken": "0xe4eEB461Ad1e4ef8b8EF71a33694CCD84Af051C4",
             "rewardedToken": "0xAD7b51293DeB2B7dbCef4C5c3379AfaF63ef5944"
         },
         {
             "assetId": 1001,
-            "distributionTime": 2592000,
-            "emissionPerSecond": 1e18,
-            "incentivesAmount": 2592000e18,
+            "distributionTime": 2419200,
+            "emissionPerSecond": 2.066798942e15,
+            "incentivesAmount": 5000e18,
             "miniPool": "0x65559abECD1227Cc1779F500453Da1f9fcADd928",
             "rewardToken": "0xe4eEB461Ad1e4ef8b8EF71a33694CCD84Af051C4",
             "rewardedToken": "0x9A4cA144F38963007cFAC645d77049a1Dd4b209A"
         },
         {
-            "assetId": 1001,
-            "distributionTime": 2592000,
-            "emissionPerSecond": 1e18,
-            "incentivesAmount": 2592000e18,
-            "miniPool": "0x0baFB30B72925e6d53F4d0A089bE1CeFbB5e3401",
-            "rewardToken": "0xa500000000e482752f032eA387390b6025a2377b",
-            "rewardedToken": "0x9A4cA144F38963007cFAC645d77049a1Dd4b209A"
+            "assetId": 2002,
+            "distributionTime": 2419200,
+            "emissionPerSecond": 2.066798942e15,
+            "incentivesAmount": 5000e18,
+            "miniPool": "0x65559abECD1227Cc1779F500453Da1f9fcADd928",
+            "rewardToken": "0xe4eEB461Ad1e4ef8b8EF71a33694CCD84Af051C4",
+            "rewardedToken": "0xAD7b51293DeB2B7dbCef4C5c3379AfaF63ef5944"
         },
         {
             "assetId": 2001,
-            "distributionTime": 2592000,
-            "emissionPerSecond": 1e18,
-            "incentivesAmount": 2592000e18,
-            "miniPool": "0x0baFB30B72925e6d53F4d0A089bE1CeFbB5e3401",
-            "rewardToken": "0xa500000000e482752f032eA387390b6025a2377b",
+            "distributionTime": 2419200,
+            "emissionPerSecond": 2.066798942e15,
+            "incentivesAmount": 5000e18,
+            "miniPool": "0x65559abECD1227Cc1779F500453Da1f9fcADd928",
+            "rewardToken": "0xe4eEB461Ad1e4ef8b8EF71a33694CCD84Af051C4",
             "rewardedToken": "0x9A4cA144F38963007cFAC645d77049a1Dd4b209A"
-        },
-        {
-            "assetId": 2128,
-            "distributionTime": 2592000,
-            "emissionPerSecond": 1e18,
-            "incentivesAmount": 2592000e18,
-            "miniPool": "0x0baFB30B72925e6d53F4d0A089bE1CeFbB5e3401",
-            "rewardToken": "0xa500000000e482752f032eA387390b6025a2377b",
-            "rewardedToken": "0xa500000000e482752f032eA387390b6025a2377b"
         }
     ]
 }
