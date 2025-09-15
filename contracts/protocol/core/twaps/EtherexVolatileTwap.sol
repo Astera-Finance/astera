@@ -7,8 +7,10 @@ import {ERC20} from "lib/openzeppelin-contracts/contracts/token/ERC20/ERC20.sol"
 import {Ownable} from "lib/openzeppelin-contracts/contracts/access/Ownable.sol";
 import {IEtherexPair} from "contracts/interfaces/IEtherexPair.sol";
 
+import "forge-std/console2.sol";
+
 /// @title Oracle using Thena TWAP oracle as data source
-/// @author zefram.eth/lookee/Eidolon
+/// @author xRave110
 /// @notice The oracle contract that provides the current price to purchase
 /// the underlying token while exercising options. Uses Thena TWAP oracle
 /// as data source, and then applies a lower bound.
@@ -33,7 +35,7 @@ contract EtherexVolatileTwap is ITwapOracle, Ownable {
     /// Events
     /// -----------------------------------------------------------------------
 
-    event SetParams(uint56 secs, uint128 minPrice);
+    event SetParams(uint128 maxPrice, uint128 minPrice);
 
     /// -----------------------------------------------------------------------
     /// Immutable parameters
@@ -49,43 +51,26 @@ contract EtherexVolatileTwap is ITwapOracle, Ownable {
     /// -----------------------------------------------------------------------
 
     /// @notice The size of the window to take the TWAP value over in seconds.
-    uint56 public secs;
+    uint56 public timeWindow;
 
     /// @notice The minimum value returned by getPrice(). Maintains a floor for the
     /// price to mitigate potential attacks on the TWAP oracle.
     uint128 public minPrice;
-
-    /// @notice Whether the price should be returned in terms of token0.
-    /// If false, the price is returned in terms of token1.
-    bool public isToken0;
+    uint128 public maxPrice;
 
     /// -----------------------------------------------------------------------
     /// Constructor
     /// -----------------------------------------------------------------------
 
-    constructor(
-        IEtherexPair etherexPair_,
-        address token,
-        address owner_,
-        uint56 secs_,
-        uint128 minPrice_
-    ) Ownable(owner_) {
-        if (
-            ERC20(etherexPair_.token0()).decimals() != 18
-                || ERC20(etherexPair_.token1()).decimals() != 18
-        ) revert ThenaOracle__InvalidParams();
-        if (etherexPair_.stable()) revert ThenaOracle__StablePairsUnsupported();
-        if (etherexPair_.token0() != token && etherexPair_.token1() != token) {
-            revert ThenaOracle__InvalidParams();
-        }
-        if (secs_ < MIN_SECS) revert ThenaOracle__InvalidWindow();
+    constructor(IEtherexPair _etherexPair, address _owner, uint56 _timeWindow, uint128 _minPrice)
+        Ownable(_owner)
+    {
+        if (_timeWindow < MIN_SECS) revert ThenaOracle__InvalidWindow();
+        timeWindow = _timeWindow;
+        etherexPair = _etherexPair;
+        minPrice = _minPrice;
 
-        etherexPair = etherexPair_;
-        isToken0 = etherexPair_.token0() == token;
-        secs = secs_;
-        minPrice = minPrice_;
-
-        emit SetParams(secs_, minPrice_);
+        emit SetParams(_timeWindow, _minPrice);
     }
 
     /// -----------------------------------------------------------------------
@@ -94,59 +79,47 @@ contract EtherexVolatileTwap is ITwapOracle, Ownable {
 
     /// @inheritdoc ITwapOracle
     function getAssetPrice(address _asset) external view override returns (uint256 price) {
-        if (_asset != etherexPair.token0() && _asset != etherexPair.token1()) {
-            revert ThenaOracle__InvalidParams();
+        price = etherexPair.current(_asset, 10 ** ERC20(_asset).decimals());
+
+        if (price < minPrice) revert ThenaOracle__BelowMinPrice();
+    }
+
+    /* add only assets in the pool ! */
+    function getAssetPriceWithQuote(address _asset) external view returns (uint256 price) {
+        uint256 granuality = 1;
+        uint256 _timeWindow = timeWindow;
+        uint256 timeElapsed = 0;
+        uint256 length = etherexPair.observationLength();
+        for (; timeElapsed < _timeWindow; granuality++) {
+            timeElapsed = block.timestamp - etherexPair.observations(length - granuality).timestamp;
+            console2.log("Time elapsed: %s vs timeWindow %s", timeElapsed, timeWindow);
         }
-        /// -----------------------------------------------------------------------
-        /// Storage loads
-        /// -----------------------------------------------------------------------
 
-        uint256 secs_ = secs;
+        console2.log("Granuality: ", granuality);
+        price = etherexPair.quote(_asset, 10 ** ERC20(_asset).decimals(), granuality);
 
-        /// -----------------------------------------------------------------------
-        /// Computation
-        /// -----------------------------------------------------------------------
+        if (price < minPrice) revert ThenaOracle__BelowMinPrice();
+    }
 
-        // query Thena oracle to get TWAP value
-        {
-            (
-                uint256 reserve0CumulativeCurrent,
-                uint256 reserve1CumulativeCurrent,
-                uint256 blockTimestampCurrent
-            ) = etherexPair.currentCumulativePrices();
-            uint256 observationLength = etherexPair.observationLength();
-            IEtherexPair.Observation memory lastObs = etherexPair.lastObservation();
-
-            uint32 T = uint32(blockTimestampCurrent - lastObs.timestamp);
-            if (T < secs_) {
-                lastObs = etherexPair.observations(observationLength - 2);
-                T = uint32(blockTimestampCurrent - lastObs.timestamp);
-            }
-            uint112 reserve0 = safe112((reserve0CumulativeCurrent - lastObs.reserve0Cumulative) / T);
-            uint112 reserve1 = safe112((reserve1CumulativeCurrent - lastObs.reserve1Cumulative) / T);
-
-            if (!isToken0) {
-                price = uint256(reserve0) * WAD / (reserve1);
-            } else {
-                price = uint256(reserve1) * WAD / (reserve0);
-            }
+    function getAssetPriceWithSampleWindow(address _asset) external view returns (uint256 price) {
+        uint256 granuality = 1;
+        uint256 _timeWindow = timeWindow;
+        uint256 timeElapsed = 0;
+        uint256 length = etherexPair.observationLength();
+        for (; timeElapsed < _timeWindow; granuality++) {
+            timeElapsed = block.timestamp - etherexPair.observations(length - granuality).timestamp;
+            console2.log("Time elapsed: %s vs timeWindow %s", timeElapsed, timeWindow);
         }
+
+        console2.log("Granuality: ", granuality);
+        price = etherexPair.sample(_asset, 10 ** ERC20(_asset).decimals(), 1, granuality)[0];
 
         if (price < minPrice) revert ThenaOracle__BelowMinPrice();
     }
 
     /// @inheritdoc ITwapOracle
-    function getTokens()
-        external
-        view
-        override
-        returns (address paymentToken, address underlyingToken)
-    {
-        if (isToken0) {
-            return (etherexPair.token1(), etherexPair.token0());
-        } else {
-            return (etherexPair.token0(), etherexPair.token1());
-        }
+    function getTokens() external view override returns (address token0, address token1) {
+        return (etherexPair.token0(), etherexPair.token1());
     }
 
     /// -----------------------------------------------------------------------
@@ -154,22 +127,17 @@ contract EtherexVolatileTwap is ITwapOracle, Ownable {
     /// -----------------------------------------------------------------------
 
     /// @notice Updates the oracle parameters. Only callable by the owner.
-    /// @param secs_ The size of the window to take the TWAP value over in seconds.
-    /// @param minPrice_ The minimum value returned by getPrice(). Maintains a floor for the
+    /// @param _maxPrice The maximum value returned by getAssetPrice().
+    /// @param _minPrice The minimum value returned by getAssetPrice(). Maintains a floor for the
     /// price to mitigate potential attacks on the TWAP oracle.
-    function setParams(uint56 secs_, uint128 minPrice_) external onlyOwner {
-        if (secs_ < MIN_SECS) revert ThenaOracle__InvalidWindow();
-        secs = secs_;
-        minPrice = minPrice_;
-        emit SetParams(secs_, minPrice_);
+    function setMinMaxPrice(uint128 _maxPrice, uint128 _minPrice) external onlyOwner {
+        maxPrice = _maxPrice;
+        minPrice = _minPrice;
+        emit SetParams(_maxPrice, _minPrice);
     }
 
-    /// -----------------------------------------------------------------------
-    /// Util functions
-    /// -----------------------------------------------------------------------
-
-    function safe112(uint256 n) internal pure returns (uint112) {
-        if (n >= 2 ** 112) revert ThenaOracle__Overflow();
-        return uint112(n);
+    function settimeWindow(uint56 _timeWindow) external onlyOwner {
+        if (_timeWindow < MIN_SECS) revert ThenaOracle__InvalidWindow();
+        timeWindow = _timeWindow;
     }
 }
