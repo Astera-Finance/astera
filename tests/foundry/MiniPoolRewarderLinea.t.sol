@@ -178,201 +178,145 @@ contract MiniPoolRewarderTest is Common {
         );
     }
 
-    // function test_reconfigurationOnExistingMiniPool() public {
-    //     Rewarder6909 existingMiniPoolRewarder =
-    //         Rewarder6909(0x16cB961f0C6d9860266AC9BCE811A494bce190D0);
-    //     AsteraDataProvider2 existingDataProvider =
-    //         AsteraDataProvider2(0xE4FeC590F1Cf71B36c0A782Aac2E4589aFdaD88e);
-    //     DistributionTypes.Asset6909[] memory allAssets = new DistributionTypes.Asset6909[](4);
-    //     allAssets[0] = DistributionTypes.Asset6909(aTokensErc6909Addr, 1001);
-    //     allAssets[1] = DistributionTypes.Asset6909(aTokensErc6909Addr, 1002);
-    //     allAssets[2] = DistributionTypes.Asset6909(aTokensErc6909Addr, 2001);
-    //     allAssets[3] = DistributionTypes.Asset6909(aTokensErc6909Addr, 2002);
-    //     uint256 rewards = existingMiniPoolRewarder.getUserRewardsBalance(
-    //         allAssets,
-    //         0xF1D6ab29d12cF2bee25A195579F544BFcC3dD78f,
-    //         0xe4eEB461Ad1e4ef8b8EF71a33694CCD84Af051C4
-    //     );
-    //     console.log("Rewards: ", rewards);
-    //     (
-    //         uint256 index,
-    //         uint256 emissionPerSecond,
-    //         uint256 lastUpdateTimestamp,
-    //         uint256 distributionEnd
-    //     ) = existingMiniPoolRewarder.getRewardsData(
-    //         aTokensErc6909Addr, 1001, 0xe4eEB461Ad1e4ef8b8EF71a33694CCD84Af051C4
-    //     );
-    //     console2.log("index: %s, emissionPerSecond: %s,", index, emissionPerSecond);
-    //     console2.log(
-    //         " lastUpdateTimestamp: %s, distributionEnd %s", lastUpdateTimestamp, distributionEnd
-    //     );
+    function test_reconfigurationOnExistingMiniPool() public {
+        Rewarder6909 existingMiniPoolRewarder =
+            Rewarder6909(0xbE11D710E0f74aE301e73cBd16e7C4150bc81656);
+        AsteraDataProvider2 existingDataProvider =
+            AsteraDataProvider2(0xE4FeC590F1Cf71B36c0A782Aac2E4589aFdaD88e);
+        DistributionTypes.Asset6909[] memory allAssets = new DistributionTypes.Asset6909[](4);
+        allAssets[0] = DistributionTypes.Asset6909(aTokensErc6909Addr, 1001);
+        allAssets[1] = DistributionTypes.Asset6909(aTokensErc6909Addr, 1002);
+        allAssets[2] = DistributionTypes.Asset6909(aTokensErc6909Addr, 2001);
+        allAssets[3] = DistributionTypes.Asset6909(aTokensErc6909Addr, 2002);
+        uint256 rewards = existingMiniPoolRewarder.getUserRewardsBalance(
+            allAssets,
+            0xF1D6ab29d12cF2bee25A195579F544BFcC3dD78f,
+            0xe4eEB461Ad1e4ef8b8EF71a33694CCD84Af051C4
+        );
+        console.log("Rewards: ", rewards);
+        // (
+        //     uint256 index,
+        //     uint256 emissionPerSecond,
+        //     uint256 lastUpdateTimestamp,
+        //     uint256 distributionEnd
+        // ) = existingMiniPoolRewarder.getRewardsData(
+        //     aTokensErc6909Addr, 1001, 0xe4eEB461Ad1e4ef8b8EF71a33694CCD84Af051C4
+        // );
+        // console2.log("index: %s, emissionPerSecond: %s,", index, emissionPerSecond);
+        // console2.log(
+        //     " lastUpdateTimestamp: %s, distributionEnd %s", lastUpdateTimestamp, distributionEnd
+        // );
 
-    //     address user1;
-    //     user1 = makeAddr("user1");
-    //     // address aTokensErc6909Addr = miniPoolAddressesProvider.getMiniPoolToAERC6909(2);
-    //     // ILendingPool lendingPool = ILendingPool(lendingPoolAddressesProvider.getLendingPool());
-    //     IMiniPool rex33MiniPool = IMiniPool(miniPoolAddressesProvider.getMiniPool(2));
+        address user1;
+        user1 = makeAddr("user1");
+        // address aTokensErc6909Addr = miniPoolAddressesProvider.getMiniPoolToAERC6909(2);
+        // ILendingPool lendingPool = ILendingPool(lendingPoolAddressesProvider.getLendingPool());
+        IMiniPool rex33MiniPool = IMiniPool(miniPoolAddressesProvider.getMiniPool(2));
 
-    //     ERC20 weth = ERC20(0xe5D7C2a44FfDDf6b295A15c148167daaAf5Cf34f);
-    //     ERC20 usdc = ERC20(0x176211869cA2b568f2A7D4EE941E073a821EE1ff);
-    //     // ERC20 wasWeth = ERC20(0x9A4cA144F38963007cFAC645d77049a1Dd4b209A);
-    //     console2.log("Dealing tokens");
-    //     AggregatedMiniPoolReservesData memory wethAggregatedMiniPoolReservesData =
-    //     existingDataProvider.getReserveDataForAssetAtMiniPool(
-    //         0x9A4cA144F38963007cFAC645d77049a1Dd4b209A, address(rex33MiniPool)
-    //     );
+        ERC20 weth = ERC20(0xe5D7C2a44FfDDf6b295A15c148167daaAf5Cf34f);
+        // ERC20 wasWeth = ERC20(0x9A4cA144F38963007cFAC645d77049a1Dd4b209A);
+        console2.log("Dealing tokens");
+        AggregatedMiniPoolReservesData memory wethAggregatedMiniPoolReservesData =
+        existingDataProvider.getReserveDataForAssetAtMiniPool(
+            0x9A4cA144F38963007cFAC645d77049a1Dd4b209A, address(rex33MiniPool)
+        );
 
-    //     deal(
-    //         address(weth),
-    //         user1,
-    //         2
-    //             * (
-    //                 wethAggregatedMiniPoolReservesData.availableLiquidity
-    //                     + wethAggregatedMiniPoolReservesData.totalScaledVariableDebt
-    //             )
-    //     );
-    //     console2.log(
-    //         "weth available liquidity: %s vs balance: %s",
-    //         wethAggregatedMiniPoolReservesData.availableLiquidity
-    //             + wethAggregatedMiniPoolReservesData.totalScaledVariableDebt,
-    //         weth.balanceOf(user1)
-    //     );
+        deal(
+            address(weth),
+            user1,
+            2
+                * (
+                    wethAggregatedMiniPoolReservesData.availableLiquidity
+                        + wethAggregatedMiniPoolReservesData.totalScaledVariableDebt
+                )
+        );
+        console2.log(
+            "weth available liquidity: %s vs balance: %s",
+            wethAggregatedMiniPoolReservesData.availableLiquidity
+                + wethAggregatedMiniPoolReservesData.totalScaledVariableDebt,
+            weth.balanceOf(user1)
+        );
 
-    //     AggregatedMiniPoolReservesData memory usdcAggregatedMiniPoolReservesData =
-    //     existingDataProvider.getReserveDataForAssetAtMiniPool(
-    //         0xAD7b51293DeB2B7dbCef4C5c3379AfaF63ef5944, address(rex33MiniPool)
-    //     );
-    //     console2.log(
-    //         "usdc available liquidity: ",
-    //         usdcAggregatedMiniPoolReservesData.availableLiquidity
-    //             + usdcAggregatedMiniPoolReservesData.totalScaledVariableDebt
-    //     );
-    //     deal(
-    //         address(usdc),
-    //         user1,
-    //         2
-    //             * (
-    //                 usdcAggregatedMiniPoolReservesData.availableLiquidity
-    //                     + usdcAggregatedMiniPoolReservesData.totalScaledVariableDebt
-    //             )
-    //     );
+        console2.log("Getting rewards vault");
+        RewardsVault vault = RewardsVault(
+            existingMiniPoolRewarder.getRewardsVault(
+                address(0xe4eEB461Ad1e4ef8b8EF71a33694CCD84Af051C4)
+            )
+        );
+        // console2.log("vault", address(vault));
 
-    //     console2.log("Getting rewards vault");
-    //     RewardsVault vault = RewardsVault(
-    //         existingMiniPoolRewarder.getRewardsVault(
-    //             address(0xe4eEB461Ad1e4ef8b8EF71a33694CCD84Af051C4)
-    //         )
-    //     );
-    //     console2.log("vault", address(vault));
+        // vm.startPrank(user1);
+        // weth.approve(address(lendingPool), 100 ether);
+        // lendingPool.deposit(address(weth), true, 100 ether, user1);
+        // assertGt(wasWeth.balanceOf(user1), 90 ether);
+        // vm.stopPrank();
 
-    //     /* ACTION AFTER DEPLOYMENT */
-    //     vm.startPrank(miniPoolAddressesProvider.getMainPoolAdmin());
-    //     vault.approveIncentivesController(20000 ether);
-    //     miniPoolConfigurator.setRewarderForReserve(
-    //         0xAD7b51293DeB2B7dbCef4C5c3379AfaF63ef5944,
-    //         address(existingMiniPoolRewarder),
-    //         IMiniPool(0x65559abECD1227Cc1779F500453Da1f9fcADd928)
-    //     );
-    //     /* Transfer REX33 into the vault */
-    //     ERC20(0xe4eEB461Ad1e4ef8b8EF71a33694CCD84Af051C4).transfer(address(vault), 20000 ether);
-    //     vm.stopPrank();
+        console2.log("User1 depositing");
+        vm.startPrank(user1);
+        weth.approve(address(rex33MiniPool), weth.balanceOf(user1));
+        IMiniPool(rex33MiniPool).deposit(
+            0x9A4cA144F38963007cFAC645d77049a1Dd4b209A, true, weth.balanceOf(user1) / 2, user1
+        );
+        IMiniPool(rex33MiniPool).borrow(
+            0x9A4cA144F38963007cFAC645d77049a1Dd4b209A,
+            true,
+            wethAggregatedMiniPoolReservesData.totalScaledVariableDebt,
+            user1
+        );
+        vm.stopPrank();
 
-    //     // vm.startPrank(user1);
-    //     // weth.approve(address(lendingPool), 100 ether);
-    //     // lendingPool.deposit(address(weth), true, 100 ether, user1);
-    //     // assertGt(wasWeth.balanceOf(user1), 90 ether);
-    //     // vm.stopPrank();
+        vm.warp(block.timestamp + 2 days);
+        vm.roll(block.number + 1);
 
-    //     console2.log("User1 depositing");
-    //     vm.startPrank(user1);
-    //     weth.approve(address(rex33MiniPool), weth.balanceOf(user1));
-    //     IMiniPool(rex33MiniPool).deposit(
-    //         0x9A4cA144F38963007cFAC645d77049a1Dd4b209A, true, weth.balanceOf(user1) / 2, user1
-    //     );
-    //     IMiniPool(rex33MiniPool).borrow(
-    //         0x9A4cA144F38963007cFAC645d77049a1Dd4b209A,
-    //         true,
-    //         wethAggregatedMiniPoolReservesData.totalScaledVariableDebt,
-    //         user1
-    //     );
+        DistributionTypes.Asset6909[] memory assets = new DistributionTypes.Asset6909[](1);
+        assets[0] = DistributionTypes.Asset6909(aTokensErc6909Addr, 1001);
 
-    //     usdc.approve(address(rex33MiniPool), usdc.balanceOf(user1));
-    //     IMiniPool(rex33MiniPool).deposit(
-    //         0xAD7b51293DeB2B7dbCef4C5c3379AfaF63ef5944, true, usdc.balanceOf(user1) / 2, user1
-    //     );
-    //     IMiniPool(rex33MiniPool).borrow(
-    //         0xAD7b51293DeB2B7dbCef4C5c3379AfaF63ef5944,
-    //         true,
-    //         usdcAggregatedMiniPoolReservesData.totalScaledVariableDebt,
-    //         user1
-    //     );
-    //     vm.stopPrank();
+        console2.log("1. User claims");
+        vm.startPrank(user1);
+        (, uint256[] memory user1Rewards) = existingMiniPoolRewarder.claimAllRewardsToSelf(assets);
+        vm.stopPrank();
 
-    //     console2.log("28 days %s vs %s ", 28 days, 2419200);
-    //     vm.warp(block.timestamp + 28 days);
-    //     vm.roll(block.number + 1);
+        console2.log("1. user1Rewards[0]", user1Rewards[0]);
 
-    //     DistributionTypes.Asset6909[] memory assets = new DistributionTypes.Asset6909[](1);
-    //     assets[0] = DistributionTypes.Asset6909(aTokensErc6909Addr, 1001);
+        assertApproxEqRel(user1Rewards[0], 864000, 15e16, "wrong user1 rewards0 for weth");
+        assertEq(
+            user1Rewards[0],
+            ERC20(0xe4eEB461Ad1e4ef8b8EF71a33694CCD84Af051C4).balanceOf(user1),
+            "wrong user1 rewards0 for weth"
+        );
+        uint256 previousUserRewards = user1Rewards[0];
 
-    //     vm.startPrank(user1);
-    //     (, uint256[] memory user1Rewards) = existingMiniPoolRewarder.claimAllRewardsToSelf(assets);
-    //     vm.stopPrank();
+        DistributionTypes.MiniPoolRewardsConfigInput[] memory configs =
+            new DistributionTypes.MiniPoolRewardsConfigInput[](1);
+        configs[0] = DistributionTypes.MiniPoolRewardsConfigInput(
+            uint88(1e17),
+            uint32(block.timestamp + 2 days),
+            assets[0],
+            address(0xe4eEB461Ad1e4ef8b8EF71a33694CCD84Af051C4)
+        );
+        vm.startPrank(miniPoolAddressesProvider.getMainPoolAdmin());
+        vault.approveIncentivesController(2 days * 1e17);
+        ERC20(0xe4eEB461Ad1e4ef8b8EF71a33694CCD84Af051C4).transfer(address(vault), 2 days * 1e17);
+        existingMiniPoolRewarder.configureAssets(configs);
+        vm.stopPrank();
 
-    //     console2.log("1. user1Rewards[0]", user1Rewards[0]);
+        vm.warp(block.timestamp + 2 days);
+        vm.roll(block.number + 1);
 
-    //     assertApproxEqRel(user1Rewards[0], 2500e18, 1e16, "wrong user1 rewards0 for weth");
-    //     assertEq(
-    //         user1Rewards[0],
-    //         ERC20(0xe4eEB461Ad1e4ef8b8EF71a33694CCD84Af051C4).balanceOf(user1),
-    //         "wrong user1 rewards0 for weth"
-    //     );
-    //     // uint256 tmpRewardsAmount = user1Rewards[0];
+        console2.log("2. User claims");
+        vm.startPrank(user1);
+        (, user1Rewards) = existingMiniPoolRewarder.claimAllRewardsToSelf(assets);
+        vm.stopPrank();
 
-    //     assets[0] = DistributionTypes.Asset6909(aTokensErc6909Addr, 2001);
-    //     vm.startPrank(user1);
-    //     (, user1Rewards) = existingMiniPoolRewarder.claimAllRewardsToSelf(assets);
-    //     vm.stopPrank();
+        console2.log("1. user1Rewards[0]", user1Rewards[0]);
 
-    //     console2.log("2. user1Rewards[0]", user1Rewards[0]);
-    //     assertApproxEqRel(user1Rewards[0], 2500e18, 1e16, "wrong user1 rewards0 for weth");
-    //     assertApproxEqRel(
-    //         ERC20(0xe4eEB461Ad1e4ef8b8EF71a33694CCD84Af051C4).balanceOf(user1),
-    //         5000e18,
-    //         1e16,
-    //         "Wrong user balance for weth"
-    //     );
-
-    //     assets[0] = DistributionTypes.Asset6909(aTokensErc6909Addr, 1002);
-
-    //     vm.startPrank(user1);
-    //     (, user1Rewards) = existingMiniPoolRewarder.claimAllRewardsToSelf(assets);
-    //     vm.stopPrank();
-
-    //     console2.log("3. user1Rewards[0]", user1Rewards[0]);
-
-    //     assertApproxEqRel(user1Rewards[0], 2500e18, 1e16, "wrong user1 rewards0 for usdc");
-    //     assertApproxEqRel(
-    //         ERC20(0xe4eEB461Ad1e4ef8b8EF71a33694CCD84Af051C4).balanceOf(user1),
-    //         7500e18,
-    //         1e16,
-    //         "wrong user1 balance for usdc"
-    //     );
-
-    //     assets[0] = DistributionTypes.Asset6909(aTokensErc6909Addr, 2002);
-    //     vm.startPrank(user1);
-    //     (, user1Rewards) = existingMiniPoolRewarder.claimAllRewardsToSelf(assets);
-    //     vm.stopPrank();
-
-    //     console2.log("4. user1Rewards[0]", user1Rewards[0]);
-    //     assertApproxEqRel(user1Rewards[0], 2500e18, 1e16, "wrong user1 rewards0 for usdc");
-    //     assertApproxEqRel(
-    //         ERC20(0xe4eEB461Ad1e4ef8b8EF71a33694CCD84Af051C4).balanceOf(user1),
-    //         10000e18,
-    //         1e16,
-    //         "wrong user1 balance for usdc"
-    //     );
-    // }
+        assertApproxEqRel(user1Rewards[0], 1 days * 1e17, 5e16, "wrong user1 rewards0 for weth");
+        assertEq(
+            user1Rewards[0] + previousUserRewards,
+            ERC20(0xe4eEB461Ad1e4ef8b8EF71a33694CCD84Af051C4).balanceOf(user1),
+            "wrong user1 rewards0 for weth"
+        );
+    }
 
     function test_basicRewarder6909() public {
         address user1;
