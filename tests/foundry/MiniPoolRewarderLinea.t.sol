@@ -12,29 +12,42 @@ import "contracts/protocol/tokenization/ERC6909/ATokenERC6909.sol";
 import {MiniPoolUserReserveData} from "../../contracts/interfaces/IAsteraDataProvider.sol";
 import {IAsteraDataProvider2} from "../../contracts/interfaces/IAsteraDataProvider2.sol";
 import {AToken} from "../../contracts/protocol/tokenization/ERC20/AToken.sol";
+import {AsteraDataProvider2} from "contracts/misc/AsteraDataProvider2.sol";
+import {
+    IAsteraDataProvider2,
+    AggregatedMiniPoolReservesData
+} from "contracts/interfaces/IAsteraDataProvider2.sol";
 import "forge-std/StdUtils.sol";
+
+import {
+    IncentiveDataProvider,
+    AggregatedReserveIncentiveData,
+    RewardInfo,
+    UserReserveIncentiveData,
+    UserRewardInfo
+} from "contracts/misc/IncentiveDataProvider.sol";
 
 contract MiniPoolRewarderTest is Common {
     using WadRayMath for uint256;
 
-    ERC20[] erc20Tokens;
     Rewarder6909 miniPoolRewarder;
     RewardsVault[] miniPoolRewardsVaults;
     MintableERC20[] rewardTokens;
 
-    ConfigAddresses configAddresses;
     address aTokensErc6909Addr;
     uint256 REWARDING_TOKENS_AMOUNT = 3;
 
     address constant ORACLE = 0xd971e9EC7357e9306c2a138E5c4eAfC04d241C87;
-    ILendingPoolAddressesProvider lendingPoolAddressesProvider =
+    ILendingPoolAddressesProvider constant lendingPoolAddressesProvider =
         ILendingPoolAddressesProvider(0x9a460e7BD6D5aFCEafbE795e05C48455738fB119);
-    IMiniPoolAddressesProvider miniPoolAddressesProvider =
+    IMiniPoolAddressesProvider constant miniPoolAddressesProvider =
         IMiniPoolAddressesProvider(0x9399aF805e673295610B17615C65b9d0cE1Ed306);
-    IMiniPoolConfigurator miniPoolConfigurator =
+    IMiniPoolConfigurator constant miniPoolConfigurator =
         IMiniPoolConfigurator(0x41296B58279a81E20aF1c05D32b4f132b72b1B01);
-    IAsteraDataProvider2 dataProvider =
+    IAsteraDataProvider2 constant dataProvider =
         IAsteraDataProvider2(0xE4FeC590F1Cf71B36c0A782Aac2E4589aFdaD88e);
+
+    IncentiveDataProvider incentiveDataProvider;
 
     ILendingPool lendingPool;
     IMiniPool miniPool;
@@ -114,6 +127,8 @@ contract MiniPoolRewarderTest is Common {
         miniPool = IMiniPool(miniPoolAddressesProvider.getMiniPool(2));
         aTokensErc6909Addr = miniPoolAddressesProvider.getMiniPoolToAERC6909(2);
 
+        incentiveDataProvider = new IncentiveDataProvider(address(miniPoolAddressesProvider));
+
         fixture_deployMiniPoolRewarder();
 
         fixture_configureMiniPoolRewarder(
@@ -162,6 +177,202 @@ contract MiniPoolRewarderTest is Common {
             uint32(block.timestamp + 100) //distributionEnd
         );
     }
+
+    // function test_reconfigurationOnExistingMiniPool() public {
+    //     Rewarder6909 existingMiniPoolRewarder =
+    //         Rewarder6909(0x16cB961f0C6d9860266AC9BCE811A494bce190D0);
+    //     AsteraDataProvider2 existingDataProvider =
+    //         AsteraDataProvider2(0xE4FeC590F1Cf71B36c0A782Aac2E4589aFdaD88e);
+    //     DistributionTypes.Asset6909[] memory allAssets = new DistributionTypes.Asset6909[](4);
+    //     allAssets[0] = DistributionTypes.Asset6909(aTokensErc6909Addr, 1001);
+    //     allAssets[1] = DistributionTypes.Asset6909(aTokensErc6909Addr, 1002);
+    //     allAssets[2] = DistributionTypes.Asset6909(aTokensErc6909Addr, 2001);
+    //     allAssets[3] = DistributionTypes.Asset6909(aTokensErc6909Addr, 2002);
+    //     uint256 rewards = existingMiniPoolRewarder.getUserRewardsBalance(
+    //         allAssets,
+    //         0xF1D6ab29d12cF2bee25A195579F544BFcC3dD78f,
+    //         0xe4eEB461Ad1e4ef8b8EF71a33694CCD84Af051C4
+    //     );
+    //     console.log("Rewards: ", rewards);
+    //     (
+    //         uint256 index,
+    //         uint256 emissionPerSecond,
+    //         uint256 lastUpdateTimestamp,
+    //         uint256 distributionEnd
+    //     ) = existingMiniPoolRewarder.getRewardsData(
+    //         aTokensErc6909Addr, 1001, 0xe4eEB461Ad1e4ef8b8EF71a33694CCD84Af051C4
+    //     );
+    //     console2.log("index: %s, emissionPerSecond: %s,", index, emissionPerSecond);
+    //     console2.log(
+    //         " lastUpdateTimestamp: %s, distributionEnd %s", lastUpdateTimestamp, distributionEnd
+    //     );
+
+    //     address user1;
+    //     user1 = makeAddr("user1");
+    //     // address aTokensErc6909Addr = miniPoolAddressesProvider.getMiniPoolToAERC6909(2);
+    //     // ILendingPool lendingPool = ILendingPool(lendingPoolAddressesProvider.getLendingPool());
+    //     IMiniPool rex33MiniPool = IMiniPool(miniPoolAddressesProvider.getMiniPool(2));
+
+    //     ERC20 weth = ERC20(0xe5D7C2a44FfDDf6b295A15c148167daaAf5Cf34f);
+    //     ERC20 usdc = ERC20(0x176211869cA2b568f2A7D4EE941E073a821EE1ff);
+    //     // ERC20 wasWeth = ERC20(0x9A4cA144F38963007cFAC645d77049a1Dd4b209A);
+    //     console2.log("Dealing tokens");
+    //     AggregatedMiniPoolReservesData memory wethAggregatedMiniPoolReservesData =
+    //     existingDataProvider.getReserveDataForAssetAtMiniPool(
+    //         0x9A4cA144F38963007cFAC645d77049a1Dd4b209A, address(rex33MiniPool)
+    //     );
+
+    //     deal(
+    //         address(weth),
+    //         user1,
+    //         2
+    //             * (
+    //                 wethAggregatedMiniPoolReservesData.availableLiquidity
+    //                     + wethAggregatedMiniPoolReservesData.totalScaledVariableDebt
+    //             )
+    //     );
+    //     console2.log(
+    //         "weth available liquidity: %s vs balance: %s",
+    //         wethAggregatedMiniPoolReservesData.availableLiquidity
+    //             + wethAggregatedMiniPoolReservesData.totalScaledVariableDebt,
+    //         weth.balanceOf(user1)
+    //     );
+
+    //     AggregatedMiniPoolReservesData memory usdcAggregatedMiniPoolReservesData =
+    //     existingDataProvider.getReserveDataForAssetAtMiniPool(
+    //         0xAD7b51293DeB2B7dbCef4C5c3379AfaF63ef5944, address(rex33MiniPool)
+    //     );
+    //     console2.log(
+    //         "usdc available liquidity: ",
+    //         usdcAggregatedMiniPoolReservesData.availableLiquidity
+    //             + usdcAggregatedMiniPoolReservesData.totalScaledVariableDebt
+    //     );
+    //     deal(
+    //         address(usdc),
+    //         user1,
+    //         2
+    //             * (
+    //                 usdcAggregatedMiniPoolReservesData.availableLiquidity
+    //                     + usdcAggregatedMiniPoolReservesData.totalScaledVariableDebt
+    //             )
+    //     );
+
+    //     console2.log("Getting rewards vault");
+    //     RewardsVault vault = RewardsVault(
+    //         existingMiniPoolRewarder.getRewardsVault(
+    //             address(0xe4eEB461Ad1e4ef8b8EF71a33694CCD84Af051C4)
+    //         )
+    //     );
+    //     console2.log("vault", address(vault));
+
+    //     /* ACTION AFTER DEPLOYMENT */
+    //     vm.startPrank(miniPoolAddressesProvider.getMainPoolAdmin());
+    //     vault.approveIncentivesController(20000 ether);
+    //     miniPoolConfigurator.setRewarderForReserve(
+    //         0xAD7b51293DeB2B7dbCef4C5c3379AfaF63ef5944,
+    //         address(existingMiniPoolRewarder),
+    //         IMiniPool(0x65559abECD1227Cc1779F500453Da1f9fcADd928)
+    //     );
+    //     /* Transfer REX33 into the vault */
+    //     ERC20(0xe4eEB461Ad1e4ef8b8EF71a33694CCD84Af051C4).transfer(address(vault), 20000 ether);
+    //     vm.stopPrank();
+
+    //     // vm.startPrank(user1);
+    //     // weth.approve(address(lendingPool), 100 ether);
+    //     // lendingPool.deposit(address(weth), true, 100 ether, user1);
+    //     // assertGt(wasWeth.balanceOf(user1), 90 ether);
+    //     // vm.stopPrank();
+
+    //     console2.log("User1 depositing");
+    //     vm.startPrank(user1);
+    //     weth.approve(address(rex33MiniPool), weth.balanceOf(user1));
+    //     IMiniPool(rex33MiniPool).deposit(
+    //         0x9A4cA144F38963007cFAC645d77049a1Dd4b209A, true, weth.balanceOf(user1) / 2, user1
+    //     );
+    //     IMiniPool(rex33MiniPool).borrow(
+    //         0x9A4cA144F38963007cFAC645d77049a1Dd4b209A,
+    //         true,
+    //         wethAggregatedMiniPoolReservesData.totalScaledVariableDebt,
+    //         user1
+    //     );
+
+    //     usdc.approve(address(rex33MiniPool), usdc.balanceOf(user1));
+    //     IMiniPool(rex33MiniPool).deposit(
+    //         0xAD7b51293DeB2B7dbCef4C5c3379AfaF63ef5944, true, usdc.balanceOf(user1) / 2, user1
+    //     );
+    //     IMiniPool(rex33MiniPool).borrow(
+    //         0xAD7b51293DeB2B7dbCef4C5c3379AfaF63ef5944,
+    //         true,
+    //         usdcAggregatedMiniPoolReservesData.totalScaledVariableDebt,
+    //         user1
+    //     );
+    //     vm.stopPrank();
+
+    //     console2.log("28 days %s vs %s ", 28 days, 2419200);
+    //     vm.warp(block.timestamp + 28 days);
+    //     vm.roll(block.number + 1);
+
+    //     DistributionTypes.Asset6909[] memory assets = new DistributionTypes.Asset6909[](1);
+    //     assets[0] = DistributionTypes.Asset6909(aTokensErc6909Addr, 1001);
+
+    //     vm.startPrank(user1);
+    //     (, uint256[] memory user1Rewards) = existingMiniPoolRewarder.claimAllRewardsToSelf(assets);
+    //     vm.stopPrank();
+
+    //     console2.log("1. user1Rewards[0]", user1Rewards[0]);
+
+    //     assertApproxEqRel(user1Rewards[0], 2500e18, 1e16, "wrong user1 rewards0 for weth");
+    //     assertEq(
+    //         user1Rewards[0],
+    //         ERC20(0xe4eEB461Ad1e4ef8b8EF71a33694CCD84Af051C4).balanceOf(user1),
+    //         "wrong user1 rewards0 for weth"
+    //     );
+    //     // uint256 tmpRewardsAmount = user1Rewards[0];
+
+    //     assets[0] = DistributionTypes.Asset6909(aTokensErc6909Addr, 2001);
+    //     vm.startPrank(user1);
+    //     (, user1Rewards) = existingMiniPoolRewarder.claimAllRewardsToSelf(assets);
+    //     vm.stopPrank();
+
+    //     console2.log("2. user1Rewards[0]", user1Rewards[0]);
+    //     assertApproxEqRel(user1Rewards[0], 2500e18, 1e16, "wrong user1 rewards0 for weth");
+    //     assertApproxEqRel(
+    //         ERC20(0xe4eEB461Ad1e4ef8b8EF71a33694CCD84Af051C4).balanceOf(user1),
+    //         5000e18,
+    //         1e16,
+    //         "Wrong user balance for weth"
+    //     );
+
+    //     assets[0] = DistributionTypes.Asset6909(aTokensErc6909Addr, 1002);
+
+    //     vm.startPrank(user1);
+    //     (, user1Rewards) = existingMiniPoolRewarder.claimAllRewardsToSelf(assets);
+    //     vm.stopPrank();
+
+    //     console2.log("3. user1Rewards[0]", user1Rewards[0]);
+
+    //     assertApproxEqRel(user1Rewards[0], 2500e18, 1e16, "wrong user1 rewards0 for usdc");
+    //     assertApproxEqRel(
+    //         ERC20(0xe4eEB461Ad1e4ef8b8EF71a33694CCD84Af051C4).balanceOf(user1),
+    //         7500e18,
+    //         1e16,
+    //         "wrong user1 balance for usdc"
+    //     );
+
+    //     assets[0] = DistributionTypes.Asset6909(aTokensErc6909Addr, 2002);
+    //     vm.startPrank(user1);
+    //     (, user1Rewards) = existingMiniPoolRewarder.claimAllRewardsToSelf(assets);
+    //     vm.stopPrank();
+
+    //     console2.log("4. user1Rewards[0]", user1Rewards[0]);
+    //     assertApproxEqRel(user1Rewards[0], 2500e18, 1e16, "wrong user1 rewards0 for usdc");
+    //     assertApproxEqRel(
+    //         ERC20(0xe4eEB461Ad1e4ef8b8EF71a33694CCD84Af051C4).balanceOf(user1),
+    //         10000e18,
+    //         1e16,
+    //         "wrong user1 balance for usdc"
+    //     );
+    // }
 
     function test_basicRewarder6909() public {
         address user1;
@@ -223,38 +434,76 @@ contract MiniPoolRewarderTest is Common {
     }
 
     function test_basicRewarder6909_1() public {
-        address user1;
-        user1 = makeAddr("user1");
+        address user1 = makeAddr("user1");
 
         ERC20 asUsd = ERC20(0xa500000000e482752f032eA387390b6025a2377b);
         console2.log("Dealing tokens");
-        deal(address(asUsd), user1, 100 ether);
+        {
+            AsteraDataProvider2 existingDataProvider =
+                AsteraDataProvider2(0xE4FeC590F1Cf71B36c0A782Aac2E4589aFdaD88e);
+            AggregatedMiniPoolReservesData memory asUsdAggregatedMiniPoolReservesData =
+            existingDataProvider.getReserveDataForAssetAtMiniPool(address(asUsd), address(miniPool));
 
-        console2.log("User2 depositing");
-        vm.startPrank(user1);
-        asUsd.approve(address(miniPool), 100 ether);
-        vm.stopPrank();
+            uint256 amountToDeposit = asUsdAggregatedMiniPoolReservesData.availableLiquidity
+                + asUsdAggregatedMiniPoolReservesData.totalScaledVariableDebt;
+            deal(address(asUsd), user1, 2 * amountToDeposit);
 
-        console2.log("User1 depositing");
-        vm.startPrank(user1);
-        asUsd.approve(address(miniPool), 90 ether);
-        IMiniPool(miniPool).deposit(address(asUsd), false, 90 ether, user1);
-        IMiniPool(miniPool).borrow(address(asUsd), false, 50 ether, user1);
-        vm.stopPrank();
-
+            console2.log("User1 depositing", amountToDeposit);
+            vm.startPrank(user1);
+            asUsd.approve(address(miniPool), amountToDeposit);
+            IMiniPool(miniPool).deposit(address(asUsd), false, amountToDeposit, user1);
+            console2.log(
+                "User1 borrowing", asUsdAggregatedMiniPoolReservesData.totalScaledVariableDebt
+            );
+            IMiniPool(miniPool).borrow(
+                address(asUsd),
+                false,
+                asUsdAggregatedMiniPoolReservesData.totalScaledVariableDebt,
+                user1
+            );
+            vm.stopPrank();
+        }
         vm.warp(block.timestamp + 100);
         vm.roll(block.number + 1);
 
-        console2.log("Getting rewards vault");
-        address vault = miniPoolRewarder.getRewardsVault(address(rewardTokens[0]));
-        console2.log("vault", address(vault));
+        DistributionTypes.Asset6909[] memory assets = new DistributionTypes.Asset6909[](1);
+        // assets[0] = DistributionTypes.Asset6909(aTokensErc6909Addr, 1001);
+        // assets[1] = DistributionTypes.Asset6909(aTokensErc6909Addr, 1002);
+        // assets[2] = DistributionTypes.Asset6909(aTokensErc6909Addr, 2001);
+        // assets[3] = DistributionTypes.Asset6909(aTokensErc6909Addr, 2002);
+        assets[0] = DistributionTypes.Asset6909(aTokensErc6909Addr, 2128);
 
-        DistributionTypes.Asset6909[] memory assets = new DistributionTypes.Asset6909[](4);
-        assets[0] = DistributionTypes.Asset6909(aTokensErc6909Addr, 1001);
-        assets[1] = DistributionTypes.Asset6909(aTokensErc6909Addr, 1002);
-        assets[2] = DistributionTypes.Asset6909(aTokensErc6909Addr, 2001);
-        assets[3] = DistributionTypes.Asset6909(aTokensErc6909Addr, 2002);
-        assets[3] = DistributionTypes.Asset6909(aTokensErc6909Addr, 2128);
+        console2.log(
+            "1. Get user unclaimed rewards: ",
+            miniPoolRewarder.getUserUnclaimedRewardsFromStorage(user1, address(rewardTokens[0]))
+        );
+        console2.log(
+            "1. Get user rewards rewards: ",
+            miniPoolRewarder.getUserRewardsBalance(assets, user1, address(rewardTokens[0]))
+        );
+
+        vm.startPrank(user1);
+        IMiniPool(miniPool).borrow(address(asUsd), false, 10, user1);
+        vm.stopPrank();
+
+        console2.log(
+            "2. Get user unclaimed rewards: ",
+            miniPoolRewarder.getUserUnclaimedRewardsFromStorage(user1, address(rewardTokens[0]))
+        );
+        console2.log(
+            "2. Get user rewards rewards: ",
+            miniPoolRewarder.getUserRewardsBalance(assets, user1, address(rewardTokens[0]))
+        );
+
+        // AggregatedReserveIncentiveData[] memory reserveIncentiveData =
+        //     incentiveDataProvider.getReservesIncentivesData();
+
+        // UserReserveIncentiveData[] memory userReserveIncentiveData =
+        //     incentiveDataProvider.getUserReservesIncentivesData(user1);
+
+        // logAggregatedReserveIncentiveData(reserveIncentiveData);
+
+        // logUserReserveIncentiveData(userReserveIncentiveData);
 
         vm.startPrank(user1);
         (, uint256[] memory user1Rewards) = miniPoolRewarder.claimAllRewardsToSelf(assets);
@@ -262,8 +511,96 @@ contract MiniPoolRewarderTest is Common {
 
         console2.log("user1Rewards[0]", user1Rewards[0]);
 
-        assertGt(user1Rewards[0], 0, "wrong user1 rewards0");
+        assertApproxEqRel(user1Rewards[0], 50 ether, 1e16, "wrong user1 rewards0");
         assertEq(user1Rewards[1], 0, "wrong user1 rewards1");
+    }
+
+    function logAggregatedReserveIncentiveData(AggregatedReserveIncentiveData[] memory arr)
+        internal
+        pure
+    {
+        for (uint256 i = 0; i < arr.length; ++i) {
+            AggregatedReserveIncentiveData memory d = arr[i];
+            console2.log("  UserReserveIncentiveData i: ", i);
+            console2.log("    underlyingAsset:", d.underlyingAsset);
+            console2.log("    miniPool:", d.miniPool);
+            logIncentiveData("    asIncentiveData", d.asIncentiveData);
+            logIncentiveData("    asDebtIncentiveData", d.asDebtIncentiveData);
+            console2.log("    erc6909:", d.erc6909);
+            console2.log("    asTokenId:", d.asTokenId);
+            console2.log("    asDebtTokenId:", d.asDebtTokenId);
+            console2.log("    incentiveControllerAddress:", d.incentiveControllerAddress);
+        }
+    }
+
+    function logIncentiveData(string memory prefix, RewardInfo[] memory rewardsTokenInformation)
+        internal
+        pure
+    {
+        for (uint256 j = 0; j < rewardsTokenInformation.length; ++j) {
+            logRewardInfo(prefix, rewardsTokenInformation[j], j);
+        }
+    }
+
+    function logRewardInfo(string memory prefix, RewardInfo memory info, uint256 idx)
+        internal
+        pure
+    {
+        console2.log(prefix, "  --RewardInfo idx:", idx);
+        console2.log(prefix, "    rewardTokenSymbol:", info.rewardTokenSymbol);
+        console2.log(prefix, "    rewardTokenAddress:", info.rewardTokenAddress);
+        console2.log(prefix, "    rewardOracleAddress:", info.rewardOracleAddress);
+        console2.log(prefix, "    emissionPerSecond:", info.emissionPerSecond);
+        console2.log(
+            prefix, "    incentivesLastUpdateTimestamp:", info.incentivesLastUpdateTimestamp
+        );
+        console2.log(prefix, "    tokenIncentivesIndex:", info.tokenIncentivesIndex);
+        console2.log(prefix, "    emissionEndTimestamp:", info.emissionEndTimestamp);
+        console2.log(prefix, "    rewardPriceFeed:", uint256(info.rewardPriceFeed));
+        console2.log(prefix, "    rewardTokenDecimals:", info.rewardTokenDecimals);
+        console2.log(prefix, "    precision:", info.precision);
+        console2.log(prefix, "    priceFeedDecimals:", info.priceFeedDecimals);
+    }
+
+    function logUserReserveIncentiveData(UserReserveIncentiveData[] memory arr) internal pure {
+        for (uint256 i = 0; i < arr.length; ++i) {
+            UserReserveIncentiveData memory d = arr[i];
+            console2.log("  UserReserveIncentiveData i:", i);
+            console2.log("    underlyingAsset:", d.underlyingAsset);
+            console2.log("    miniPool:", d.miniPool);
+            console2.log("    erc6909:", d.erc6909);
+            console2.log("    tokenId:", d.asTokenId);
+            console2.log("    tokenId:", d.asDebtTokenId);
+            console2.log("    incentiveControllerAddress:", d.incentiveControllerAddress);
+            logUserIncentiveData("    asTokenIncentivesUserData", d.asTokenIncentivesUserData);
+            logUserIncentiveData(
+                "    asDebtTokenIncentivesUserData", d.asDebtTokenIncentivesUserData
+            );
+        }
+    }
+
+    function logUserIncentiveData(
+        string memory prefix,
+        UserRewardInfo[] memory userRewardsInformation
+    ) internal pure {
+        for (uint256 j = 0; j < userRewardsInformation.length; ++j) {
+            logUserRewardInfo(prefix, userRewardsInformation[j], j);
+        }
+    }
+
+    function logUserRewardInfo(string memory prefix, UserRewardInfo memory info, uint256 idx)
+        internal
+        pure
+    {
+        console2.log(prefix, "  --UserRewardInfo idx:", idx);
+        console2.log(prefix, "    rewardTokenSymbol:", info.rewardTokenSymbol);
+        console2.log(prefix, "    rewardOracleAddress:", info.rewardOracleAddress);
+        console2.log(prefix, "    rewardTokenAddress:", info.rewardTokenAddress);
+        console2.log(prefix, "    userUnclaimedRewards:", info.userUnclaimedRewards);
+        console2.log(prefix, "    tokenIncentivesUserIndex:", info.tokenIncentivesUserIndex);
+        console2.log(prefix, "    rewardPriceFeed:", uint256(info.rewardPriceFeed));
+        console2.log(prefix, "    priceFeedDecimals:", info.priceFeedDecimals);
+        console2.log(prefix, "    rewardTokenDecimals:", info.rewardTokenDecimals);
     }
 
     // function test_miniPoolLinea() public {
