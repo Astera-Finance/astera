@@ -1,5 +1,6 @@
 import matplotlib.pyplot as plt
 from matplotlib.ticker import MultipleLocator
+import matplotlib.ticker as ticker
 
 # Read and print the contents of a text file
 def read_text_file(file_path):
@@ -19,8 +20,8 @@ def read_text_file(file_path):
                     time_s = splitted_list[0].split(": ")[-1]
                     
                 x_time.append(time_s)
-                y_twap.append(int(splitted_list[1].split(": ")[-1])/1e18)
-                y_spot.append(int(splitted_list[2].split(": ")[-1])/1e18)
+                y_twap.append(int(splitted_list[1].split(": ")[-1])/1e8)
+                y_spot.append(int(splitted_list[2].split(": ")[-1])/1e8)
     except FileNotFoundError:
         print(f"The file {file_path} does not exist.")
     except Exception as err:
@@ -48,8 +49,8 @@ ax.set_title('Oracle price ({})'.format(file_path))
 ax.set_xlabel('Time [min]')
 ax.set_ylabel('Pirces')
 
-plt.gca().xaxis.set_major_locator(MultipleLocator(2))
-plt.gca().yaxis.set_major_locator(MultipleLocator(0.01))
+plt.gca().xaxis.set_major_locator(ticker.MaxNLocator(nbins=20))
+plt.gca().yaxis.set_major_locator(ticker.MaxNLocator(nbins=20))
 ax.legend()
 plt.grid(True)
 
