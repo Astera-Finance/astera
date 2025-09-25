@@ -22,6 +22,7 @@ contract EtherexTwap is IChainlinkAggregator, Ownable {
     error EtherexTwap_InvalidParams();
     error EtherexTwap__StablePairsUnsupported();
     error EtherexTwap__ServiceNotAvailable();
+    error EtherexTwap_WrongPriceFeedDecimals();
 
     /* Events */
     event SetParams(uint128 minPrice);
@@ -46,13 +47,18 @@ contract EtherexTwap is IChainlinkAggregator, Ownable {
      */
     uint128 public minPrice;
 
+    /**
+     * @notice Token for which the price is given
+     */
     address public token;
 
-    /// @notice Whether the price should be returned in terms of token0.
-    /// If false, the price is returned in terms of token1.
-    bool isToken0;
+    /**
+     * @notice Whether the price should be returned in terms of token0.
+     * If false, the price is returned in terms of token1.
+     */
+    bool public isToken0;
 
-    IChainlinkAggregator priceFeed;
+    IChainlinkAggregator public priceFeed;
 
     constructor(
         IEtherexPair _etherexPair,
@@ -70,12 +76,15 @@ contract EtherexTwap is IChainlinkAggregator, Ownable {
         if (_timeWindow < MIN_TIME_WINDOW) {
             revert EtherexTwap__InvalidWindow();
         }
+        if (_etherexPair.stable()) revert EtherexTwap__StablePairsUnsupported();
         if (
             ERC20(_etherexPair.token0()).decimals() != 18
                 || ERC20(_etherexPair.token1()).decimals() != 18
         ) revert EtherexTwap_InvalidParams();
-        if (_etherexPair.stable()) revert EtherexTwap__StablePairsUnsupported();
 
+        if (IChainlinkAggregator(_priceFeed).decimals() != 8) {
+            revert EtherexTwap_WrongPriceFeedDecimals();
+        }
         /* Assignment */
         timeWindow = _timeWindow;
         etherexPair = _etherexPair;
@@ -174,14 +183,30 @@ contract EtherexTwap is IChainlinkAggregator, Ownable {
     }
 
     /* --- Additional getters --- */
+    /**
+     * @notice Returns the underlying token addresses of the Etherex pair.
+     * @dev Fetches token0 and token1 from the EtherexPair contract.
+     * @return token0 The address of token0.
+     * @return token1 The address of token1.
+     */
     function getTokens() external view returns (address token0, address token1) {
         return (etherexPair.token0(), etherexPair.token1());
     }
 
+    /**
+     * @notice Returns the address of the associated Etherex pair contract.
+     * @dev This is the actual pair contract address used for pricing and reserves.
+     * @return The address of the EtherexPair contract.
+     */
     function getPairAddress() external view returns (address) {
         return address(etherexPair);
     }
 
+    /**
+     * @notice Gets the current spot price from the Etherex pair in 8 decimals precision.
+     * @dev The price is scaled by the Chainlink price feed and normalized to 8 decimals.
+     * @return Spot price as an int256 value (8 decimals).
+     */
     function getSpotPrice() external view returns (int256) {
         uint256 spotPrice = _getSpotPrice();
         int256 answer = priceFeed.latestAnswer();
@@ -191,6 +216,10 @@ contract EtherexTwap is IChainlinkAggregator, Ownable {
 
     /* --- Private --- */
 
+    /**
+     * @notice Internal spot price calculation from current reserves.
+     * @return price The raw spot price (scaled by WAD).
+     */
     function _getSpotPrice() private view returns (uint256 price) {
         (uint112 _reserve0, uint112 _reserve1,) = etherexPair.getReserves();
         if (!isToken0) {
@@ -200,6 +229,12 @@ contract EtherexTwap is IChainlinkAggregator, Ownable {
         }
     }
 
+    /**
+     * @notice Calculates the Time-Weighted Average Price (TWAP) for the configured time window.
+     * @dev Fetches observations, handles edge case if timeElapsed is insufficient,
+     *      and calculates the twap price with chain-specific decimals.
+     * @return TWAP value as a uint256 (scaled by WAD).
+     */
     function _getTwapPrice() private view returns (uint256) {
         IEtherexPair.Observation memory _observation = etherexPair.lastObservation();
         (uint256 reserve0Cumulative, uint256 reserve1Cumulative,) =

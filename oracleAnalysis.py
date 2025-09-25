@@ -32,7 +32,7 @@ def read_text_file(file_path):
     return x_time, y_twap, y_spot
 
 # Example usage
-file_path = "./Data120MinEtherex1.txt"
+file_path = "./REX_USD_5Min.txt"
 x_time, y_twap, y_spot = read_text_file(file_path)
 
 
