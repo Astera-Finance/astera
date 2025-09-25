@@ -83,6 +83,28 @@ contract TwapLineaTest is Test {
         assertEq(price_1, uint256(price_2));
     }
 
+    function test_latestRoundData() public view {
+        (
+            uint80 roundId,
+            int256 answer,
+            uint256 startedAt,
+            uint256 updatedAt,
+            uint80 answeredInRound
+        ) = wstEthRexTwap.latestRoundData();
+
+        console2.log("roundId:", roundId);
+        console2.log("answer:", answer);
+        console2.log("startedAt:", startedAt);
+        console2.log("updatedAt:", updatedAt);
+        console2.log("answeredInRound:", answeredInRound);
+
+        assertNotEq(roundId, 0, "roundId is 0");
+        assertGt(answer, 0, "answer is not greater than 0");
+        assertNotEq(startedAt, 0, "startedAt is 0");
+        assertLe(updatedAt, block.timestamp, "updatedAt greater than current timestamp");
+        assertNotEq(answeredInRound, 0, "answeredInRound is 0");
+    }
+
     function test_singleBlockManipulation() public {
         address manipulator = makeAddr("manipulator");
         deal(address(REX), manipulator, 1000000 ether);
