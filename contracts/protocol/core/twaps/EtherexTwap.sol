@@ -23,6 +23,7 @@ contract EtherexTwap is IChainlinkAggregator, Ownable {
     error EtherexTwap__StablePairsUnsupported();
     error EtherexTwap__ServiceNotAvailable();
     error EtherexTwap_WrongPriceFeedDecimals();
+    error EtherexTwap__Overflow();
 
     /* Events */
     event SetParams(uint128 minPrice);
@@ -190,7 +191,11 @@ contract EtherexTwap is IChainlinkAggregator, Ownable {
      * @return token1 The address of token1.
      */
     function getTokens() external view returns (address token0, address token1) {
-        return (etherexPair.token0(), etherexPair.token1());
+        if (isToken0) {
+            return (etherexPair.token1(), etherexPair.token0());
+        } else {
+            return (etherexPair.token0(), etherexPair.token1());
+        }
     }
 
     /**
@@ -245,15 +250,16 @@ contract EtherexTwap is IChainlinkAggregator, Ownable {
             timeElapsed = block.timestamp - _observation.timestamp;
         }
         uint112 _reserve0 =
-            uint112((reserve0Cumulative - _observation.reserve0Cumulative) / timeElapsed);
+            safe112((reserve0Cumulative - _observation.reserve0Cumulative) / timeElapsed);
         uint112 _reserve1 =
-            uint112((reserve1Cumulative - _observation.reserve1Cumulative) / timeElapsed);
+            safe112((reserve1Cumulative - _observation.reserve1Cumulative) / timeElapsed);
         uint256 twapPrice;
         if (!isToken0) {
             twapPrice = uint256(_reserve0) * WAD / (_reserve1);
         } else {
             twapPrice = uint256(_reserve1) * WAD / (_reserve0);
         }
+        if (twapPrice < minPrice) revert EtherexTwap__BelowMinPrice();
         return twapPrice;
     }
 
@@ -275,5 +281,10 @@ contract EtherexTwap is IChainlinkAggregator, Ownable {
         if (_timeWindow < MIN_TIME_WINDOW) revert EtherexTwap__InvalidWindow();
         timeWindow = _timeWindow;
         emit SetTimeWindow(timeWindow);
+    }
+
+    function safe112(uint256 n) internal pure returns (uint112) {
+        if (n >= 2 ** 112) revert EtherexTwap__Overflow();
+        return uint112(n);
     }
 }
