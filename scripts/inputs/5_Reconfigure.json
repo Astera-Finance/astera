@@ -1,53 +1,52 @@
 {
     "poolAddressesProviderConfig": {
         "marketId": "UV TestNet Market",
-        "poolId": 0,
-        "poolOwner": "0xf298Db641560E5B733C43181937207482Ff79bc9"
+        "poolId": 3,
+        "poolOwner": "0x7D66a2e916d79c0988D41F1E50a1429074ec53a4"
     },
-    "lendingPoolReserversConfig": [
-        {
-            "baseLtv": 7000,
-            "borrowingEnabled": true,
-            "interestStrat": "STABLE",
-            "interestStratId": 0,
-            "liquidationBonus": 10500,
-            "liquidationThreshold": 7400,
-            "miniPoolOwnerFee": 230,
-            "params": "0x10",
-            "reserveFactor": 1500,
-            "reserveType": true,
-            "symbol": "USDC",
-            "tokenAddress": "0x8c53BF01E052A2aFA06b2d9d87aE49972799E62f"
-        }
-    ],
+    "lendingPoolReserversConfig": [],
     "miniPoolReserversConfig": [
         {
-            "baseLtv": 7000,
+            "baseLtv": 7500,
             "borrowingEnabled": true,
             "interestStrat": "PI",
             "interestStratId": 0,
-            "liquidationBonus": 10500,
-            "liquidationThreshold": 7400,
-            "miniPoolOwnerFee": 230,
-            "params": "0x10",
-            "reserveFactor": 1500,
-            "reserveType": true,
-            "symbol": "aUSDC",
-            "tokenAddress": "0x088607f8f2aAE9Ab9b7EE16C988A5Ca857DB8F15"
-        },
-        {
-            "baseLtv": 7000,
-            "borrowingEnabled": true,
-            "interestStrat": "VOLATILE",
-            "interestStratId": 0,
-            "liquidationBonus": 10500,
-            "liquidationThreshold": 7500,
+            "liquidationBonus": 10800,
+            "liquidationThreshold": 8000,
             "miniPoolOwnerFee": 0,
             "params": "0x10",
-            "reserveFactor": 1500,
+            "reserveFactor": 2000,
             "reserveType": true,
-            "symbol": "WBTC",
-            "tokenAddress": "0xb3e343C39a9e5e739724b3Ed0F3B6150e19B4A90"
+            "symbol": "was-WBTC",
+            "tokenAddress": "0x7dfd2F6d984CA9A2d2ffAb7350E6948E4315047b"
+        },
+        {
+            "baseLtv": 7500,
+            "borrowingEnabled": true,
+            "interestStrat": "PI",
+            "interestStratId": 1,
+            "liquidationBonus": 10800,
+            "liquidationThreshold": 8000,
+            "miniPoolOwnerFee": 0,
+            "params": "0x10",
+            "reserveFactor": 2000,
+            "reserveType": true,
+            "symbol": "was-WETH",
+            "tokenAddress": "0x9A4cA144F38963007cFAC645d77049a1Dd4b209A"
+        },
+        {
+            "baseLtv": 8500,
+            "borrowingEnabled": true,
+            "interestStrat": "PI",
+            "interestStratId": 2,
+            "liquidationBonus": 10800,
+            "liquidationThreshold": 9000,
+            "miniPoolOwnerFee": 0,
+            "params": "0x10",
+            "reserveFactor": 2000,
+            "reserveType": true,
+            "symbol": "was-USDC",
+            "tokenAddress": "0xAD7b51293DeB2B7dbCef4C5c3379AfaF63ef5944"
         }
     ]
 }

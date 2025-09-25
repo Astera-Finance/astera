@@ -10,7 +10,7 @@
         "rewarderOwner": "0x7D66a2e916d79c0988D41F1E50a1429074ec53a4"
     },
     "miniPoolRole": {
-        "miniPoolId": 1,
+        "miniPoolId": 2,
         "newPoolOwner": "0x7D66a2e916d79c0988D41F1E50a1429074ec53a4",
         "poolOwnerTreasury": "0x7D66a2e916d79c0988D41F1E50a1429074ec53a4"
     }
