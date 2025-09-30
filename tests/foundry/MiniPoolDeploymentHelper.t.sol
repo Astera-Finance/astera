@@ -3,10 +3,12 @@ pragma solidity ^0.8.0;
 
 import {
     MiniPoolDeploymentHelper,
-    IMiniPoolConfigurator
+    IMiniPoolConfigurator,
+    AsteraDataProvider2
 } from "contracts/deployments/MiniPoolDeploymentHelper.sol";
 import {Test} from "forge-std/Test.sol";
 import {console2} from "forge-std/console2.sol";
+import {AggregatedMiniPoolReservesData} from "contracts/interfaces/IAsteraDataProvider2.sol";
 
 // Tests all the functions in MiniPoolDeploymentHelper
 contract MiniPoolDeploymentHelperTest is Test {
@@ -17,6 +19,7 @@ contract MiniPoolDeploymentHelperTest is Test {
     MiniPoolDeploymentHelper helper;
 
     address constant MINI_POOL = 0x52280eA8979d52033E14df086F4dF555a258bEb4;
+    address constant ADMIN = 0x7D66a2e916d79c0988D41F1E50a1429074ec53a4;
 
     function setUp() public {
         // LINEA setup
@@ -159,5 +162,66 @@ contract MiniPoolDeploymentHelperTest is Test {
         //     _initInputParams,
         //     _reservesConfig
         // );
+    }
+
+    function test_SetReserveFactorForAssets() public {
+        address[] memory assets = new address[](2);
+        uint256[] memory reserveFactors = new uint256[](2);
+        assets[0] = 0x7dfd2F6d984CA9A2d2ffAb7350E6948E4315047b;
+        assets[1] = 0x9A4cA144F38963007cFAC645d77049a1Dd4b209A;
+        // assets[2] = 0xAD7b51293DeB2B7dbCef4C5c3379AfaF63ef5944;
+        // assets[3] = 0x1579072d23FB3f545016Ac67E072D37e1281624C;
+
+        reserveFactors[0] = 1000;
+        reserveFactors[1] = 2001;
+        // reserveFactors[2] = 3000;
+        // reserveFactors[3] = 4000;
+
+        AggregatedMiniPoolReservesData[] memory data =
+            AsteraDataProvider2(DATA_PROVIDER).getMiniPoolReservesData(MINI_POOL);
+
+        console2.log("Data length", data.length);
+
+        uint256[] memory previousReserveFactor = new uint256[](2);
+        for (uint256 idx = 0; idx < data.length; idx++) {
+            for (uint256 i = 0; i < assets.length; i++) {
+                if (data[idx].aTokenNonRebasingAddress == assets[i]) {
+                    previousReserveFactor[idx] = data[idx].asteraReserveFactor;
+                    break;
+                }
+            }
+        }
+
+        vm.prank(ADMIN);
+        helper.setReserveFactorsForAssets(assets, reserveFactors, MINI_POOL);
+
+        data = AsteraDataProvider2(DATA_PROVIDER).getMiniPoolReservesData(MINI_POOL);
+
+        console2.log("Data length", data.length);
+        console2.log("Assets length", assets.length);
+
+        for (uint256 idx = 0; idx < data.length; idx++) {
+            for (uint256 i = 0; i < assets.length; i++) {
+                console2.log(
+                    "data[idx].underlyingAsset %s, assets[i] %s",
+                    data[idx].aTokenNonRebasingAddress,
+                    assets[i]
+                );
+                if (data[idx].aTokenNonRebasingAddress == assets[i]) {
+                    console2.log(
+                        "previousReserveFactor[idx] %s vs data[idx].asteraReserveFactor %s",
+                        previousReserveFactor[idx],
+                        data[idx].asteraReserveFactor
+                    );
+                    assertNotEq(
+                        previousReserveFactor[idx],
+                        data[idx].asteraReserveFactor,
+                        "Reserve factor didn't change"
+                    );
+                    break;
+                }
+            }
+        }
+        assert(false);
     }
 }

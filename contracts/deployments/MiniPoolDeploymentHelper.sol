@@ -20,7 +20,7 @@ import {
     AsteraDataProvider2,
     AggregatedMiniPoolReservesData
 } from "contracts/misc/AsteraDataProvider2.sol";
-// import {console2} from "forge-std/console2.sol";
+import {console2} from "forge-std/console2.sol";
 
 /**
  * @title MiniPoolDeploymentHelper
@@ -289,9 +289,30 @@ contract MiniPoolDeploymentHelper is Ownable {
         address _miniPool
     ) external onlyOwner {
         require(_assets.length == _reserveFactors.length, "Array length mismatch!");
+
         for (uint8 i = 0; i < _assets.length; i++) {
-            miniPoolConfigurator.setAsteraReserveFactor(
-                _assets[i], _reserveFactors[i], IMiniPool(_miniPool)
+            console2.log("address(miniPoolConfigurator)", address(miniPoolConfigurator));
+            /* Can't do it because miniPoolConfigurator is a proxy */
+            // (bool success, bytes memory returndata) = address(miniPoolConfigurator).delegatecall(
+            //     abi.encodeWithSelector(
+            //         IMiniPoolConfigurator.setAsteraReserveFactor.selector,
+            //         _assets[i],
+            //         _reserveFactors[i],
+            //         _miniPool
+            //     )
+            // );
+            // require(success, "delegatecall failed");
+        }
+    }
+
+    function setInterestRateStartsForAssets(
+        address[] calldata _assets,
+        address[] calldata _interestStrats,
+        address _miniPool
+    ) external onlyOwner {
+        for (uint8 i = 0; i < _assets.length; i++) {
+            miniPoolConfigurator.setReserveInterestRateStrategyAddress(
+                _assets[i], _interestStrats[i], IMiniPool(_miniPool)
             );
         }
     }
