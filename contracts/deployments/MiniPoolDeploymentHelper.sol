@@ -20,6 +20,10 @@ import {
     AsteraDataProvider2,
     AggregatedMiniPoolReservesData
 } from "contracts/misc/AsteraDataProvider2.sol";
+
+import {IPiReserveInterestRateStrategy} from
+    "contracts/interfaces/IPiReserveInterestRateStrategy.sol";
+
 import {console2} from "forge-std/console2.sol";
 
 /**
@@ -41,6 +45,11 @@ contract MiniPoolDeploymentHelper is Ownable {
     uint256 public constant WRONG_BORROWING_STATUS = 0x200;
     uint256 public constant ASSET_NOT_ACTIVE = 0x400;
     uint256 public constant NO_LIQUIDITY = 0x800;
+    uint256 public constant WRONG_MIN_CONTROLLER_ERROR = 0x1000;
+    uint256 public constant WRONG_OPTIMAL_UTILIZATION_RATE = 0x2000;
+    uint256 public constant WRONG_KP = 0x4000;
+    uint256 public constant WRONG_KI = 0x8000;
+    uint256 public constant WRONG_MAX_ERR_I_AMP = 0x10000;
 
     IOracle private oracle;
     MiniPoolAddressesProvider private miniPoolAddressesProvider;
@@ -57,6 +66,11 @@ contract MiniPoolDeploymentHelper is Ownable {
         uint256 reserveFactor;
         uint256 depositCap;
         address tokenAddress;
+        int256 minControllerError;
+        uint256 optimalUtilizationRate;
+        uint256 kp;
+        uint256 ki;
+        int256 maxErrIAmp;
     }
 
     constructor(
@@ -172,93 +186,96 @@ contract MiniPoolDeploymentHelper is Ownable {
         if (reservesData.length != _desiredConfig.length) {
             errCode |= WRONG_LENGTH;
         }
+        console2.log("---- Test for miniPool %s -----", _miniPool);
         for (uint8 i = 0; i < _desiredConfig.length; i++) {
+            IPiReserveInterestRateStrategy strat =
+                IPiReserveInterestRateStrategy(reservesData[i].interestRateStrategyAddress);
             if (
                 reservesData[i].aTokenNonRebasingAddress != _desiredConfig[i].tokenAddress
                     && reservesData[i].underlyingAsset != _desiredConfig[i].tokenAddress
             ) {
                 errCode |= WRONG_ORDER;
-                // console2.log(
-                //     "Order mismatch for asset %s, got %s, expected %s",
-                //     reservesData[i].underlyingAsset,
-                //     reservesData[i].aTokenNonRebasingAddress,
-                //     _desiredConfig[i].tokenAddress
-                // );
+                console2.log(
+                    "Order mismatch for asset %s, got %s, expected %s",
+                    reservesData[i].underlyingAsset,
+                    reservesData[i].aTokenNonRebasingAddress,
+                    _desiredConfig[i].tokenAddress
+                );
             }
             if (reservesData[i].baseLTVasCollateral != _desiredConfig[i].baseLtv) {
                 errCode |= WRONG_LTV;
-                // console2.log(
-                //     "LTV mismatch for asset %s, got %s, expected %s",
-                //     reservesData[i].underlyingAsset,
-                //     reservesData[i].baseLTVasCollateral,
-                //     _desiredConfig[i].baseLtv
-                // );
+                console2.log(
+                    "LTV mismatch for asset %s, got %s, expected %s",
+                    reservesData[i].underlyingAsset,
+                    reservesData[i].baseLTVasCollateral,
+                    _desiredConfig[i].baseLtv
+                );
             }
-            if (reservesData[i].interestRateStrategyAddress != _desiredConfig[i].interestStrat) {
+            if (address(strat) != _desiredConfig[i].interestStrat) {
                 errCode |= WRONG_STRAT;
-                // console2.log(
-                //     "Strat mismatch for asset %s, got %s, expected %s",
-                //     reservesData[i].underlyingAsset,
-                //     reservesData[i].interestRateStrategyAddress,
-                //     _desiredConfig[i].interestStrat
-                // );
+                console2.log(
+                    "Strat mismatch for asset %s, got %s, expected %s",
+                    reservesData[i].underlyingAsset,
+                    reservesData[i].interestRateStrategyAddress,
+                    _desiredConfig[i].interestStrat
+                );
             }
             if (reservesData[i].reserveLiquidationBonus != _desiredConfig[i].liquidationBonus) {
                 errCode |= WRONG_LIQUIDATION_BONUS;
-                // console2.log(
-                //     "Liq bonus mismatch for asset %s, got %s, expected %s",
-                //     reservesData[i].underlyingAsset,
-                //     reservesData[i].reserveLiquidationBonus,
-                //     _desiredConfig[i].liquidationBonus
-                // );
+                console2.log(
+                    "Liq bonus mismatch for asset %s, got %s, expected %s",
+                    reservesData[i].underlyingAsset,
+                    reservesData[i].reserveLiquidationBonus,
+                    _desiredConfig[i].liquidationBonus
+                );
             }
             if (
                 reservesData[i].reserveLiquidationThreshold
                     != _desiredConfig[i].liquidationThreshold
             ) {
                 errCode |= WRONG_LIQUIDATION_THRESHOLD;
-                // console2.log(
-                //     "Liq threshold mismatch for asset %s, got %s, expected %s",
-                //     reservesData[i].underlyingAsset,
-                //     reservesData[i].reserveLiquidationThreshold,
-                //     _desiredConfig[i].liquidationThreshold
-                // );
+                console2.log(
+                    "Liq threshold mismatch for asset %s, got %s, expected %s",
+                    reservesData[i].underlyingAsset,
+                    reservesData[i].reserveLiquidationThreshold,
+                    _desiredConfig[i].liquidationThreshold
+                );
             }
             if (reservesData[i].miniPoolOwnerReserveFactor != _desiredConfig[i].miniPoolOwnerFee) {
                 errCode |= WRONG_MINI_POOL_OWNER_FEE;
-                // console2.log(
-                //     "MiniPool owner fee mismatch for asset %s, got %s, expected %s",
-                //     reservesData[i].underlyingAsset,
-                //     reservesData[i].miniPoolOwnerReserveFactor,
-                //     _desiredConfig[i].miniPoolOwnerFee
-                // );
+                console2.log(
+                    "MiniPool owner fee mismatch for asset %s, got %s, expected %s",
+                    reservesData[i].underlyingAsset,
+                    reservesData[i].miniPoolOwnerReserveFactor,
+                    _desiredConfig[i].miniPoolOwnerFee
+                );
             }
             if (reservesData[i].asteraReserveFactor != _desiredConfig[i].reserveFactor) {
                 errCode |= WRONG_RESERVE_FACTOR;
-                // console2.log(
-                //     "Reserve factor mismatch for asset %s, got %s, expected %s",
-                //     reservesData[i].underlyingAsset,
-                //     reservesData[i].asteraReserveFactor,
-                //     _desiredConfig[i].reserveFactor
-                // );
+                console2.log(
+                    "Reserve factor mismatch for asset %s, got %s, expected %s",
+                    reservesData[i].underlyingAsset,
+                    reservesData[i].asteraReserveFactor,
+                    _desiredConfig[i].reserveFactor
+                );
             }
             if (reservesData[i].depositCap != _desiredConfig[i].depositCap) {
                 errCode |= WRONG_DEPOSIT_CAP;
-                // console2.log(
-                //     "Deposit cap mismatch for asset %s, got %s, expected %s",
-                //     reservesData[i].underlyingAsset,
-                //     reservesData[i].depositCap,
-                //     _desiredConfig[i].depositCap
-                // );
+                console2.log(
+                    "Deposit cap mismatch for asset %s, got %s, expected %s",
+                    reservesData[i].underlyingAsset,
+                    reservesData[i].depositCap,
+                    _desiredConfig[i].depositCap
+                );
             }
             if (reservesData[i].asteraReserveFactor != _desiredConfig[i].reserveFactor) {
                 errCode |= WRONG_RESERVE_FACTOR;
-                // console2.log(
-                //     "Reserve factor mismatch for asset %s, got %s, expected %s",
-                //     reservesData[i].underlyingAsset,
-                //     reservesData[i].asteraReserveFactor,
-                //     _desiredConfig[i].reserveFactor
-                // );
+                console2.log(
+                    "Reserve factor mismatch for asset %s, got %s, expected %s",
+                    reservesData[i].underlyingAsset,
+                    reservesData[i].asteraReserveFactor,
+                    _desiredConfig[i].reserveFactor
+                );
             }
             if (reservesData[i].borrowingEnabled != _desiredConfig[i].borrowingEnabled) {
                 errCode |= WRONG_BORROWING_STATUS;
@@ -267,6 +284,56 @@ contract MiniPoolDeploymentHelper is Ownable {
             if (reservesData[i].isActive == false) {
                 errCode |= ASSET_NOT_ACTIVE;
             }
+
+            if (strat._minControllerError() != _desiredConfig[i].minControllerError) {
+                errCode |= WRONG_MIN_CONTROLLER_ERROR;
+                console2.log(
+                    "Wrong min controller error for asset %s", reservesData[i].underlyingAsset
+                );
+                console2.log("got %s,", strat._minControllerError());
+
+                console2.log(" expected %s", _desiredConfig[i].minControllerError);
+            }
+
+            if (strat._optimalUtilizationRate() != _desiredConfig[i].optimalUtilizationRate) {
+                errCode |= WRONG_OPTIMAL_UTILIZATION_RATE;
+                console2.log(
+                    "Wrong Uo error for asset %s, got %s, expected %s",
+                    reservesData[i].underlyingAsset,
+                    strat._optimalUtilizationRate(),
+                    _desiredConfig[i].optimalUtilizationRate
+                );
+            }
+
+            if (strat._kp() != _desiredConfig[i].kp) {
+                errCode |= WRONG_KP;
+                console2.log(
+                    "Wrong kp error for asset %s, got %s, expected %s",
+                    reservesData[i].underlyingAsset,
+                    strat._kp(),
+                    _desiredConfig[i].kp
+                );
+            }
+
+            if (strat._ki() != _desiredConfig[i].ki) {
+                errCode |= WRONG_KI;
+                console2.log(
+                    "Wrong ki error for asset %s, got %s, expected %s",
+                    reservesData[i].underlyingAsset,
+                    strat._ki(),
+                    _desiredConfig[i].ki
+                );
+            }
+
+            // if (strat._maxErrIAmp() != _desiredConfig[i].maxErrIAmp) {
+            //     errCode |= WRONG_MAX_ERR_I_AMP;
+            //     console2.log(
+            //         "Wrong _maxErrIAmp error for asset %s, got %s, expected %s",
+            //         reservesData[i].underlyingAsset,
+            //         uint256(strat._maxErrIAmp()),
+            //         uint256(_desiredConfig[i].maxErrIAmp)
+            //     );
+            // }
 
             DataTypes.MiniPoolReserveData memory miniPoolReserveData =
                 IMiniPool(_miniPool).getReserveData(_desiredConfig[i].tokenAddress);
@@ -291,7 +358,7 @@ contract MiniPoolDeploymentHelper is Ownable {
         require(_assets.length == _reserveFactors.length, "Array length mismatch!");
 
         for (uint8 i = 0; i < _assets.length; i++) {
-            console2.log("address(miniPoolConfigurator)", address(miniPoolConfigurator));
+            // console2.log("address(miniPoolConfigurator)", address(miniPoolConfigurator));
             /* Can't do it because miniPoolConfigurator is a proxy */
             // (bool success, bytes memory returndata) = address(miniPoolConfigurator).delegatecall(
             //     abi.encodeWithSelector(
