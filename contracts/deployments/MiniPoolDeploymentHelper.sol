@@ -27,8 +27,12 @@ import {IPiReserveInterestRateStrategy} from
 import {console2} from "forge-std/console2.sol";
 
 /**
+ * NOT AUDITED !! -> ONLY FOR TEST PURPOSE - CHECK ALL MINI POOLS PARAMS
+ */
+
+/**
  * @title MiniPoolDeploymentHelper
- * @notice Helper contract to deploy and configure MiniPools with reserves
+ * @notice Helper contract to deploy and configure MiniPools with reserves and check params
  * @author Conclave - xRave110
  */
 contract MiniPoolDeploymentHelper is Ownable {
@@ -358,8 +362,11 @@ contract MiniPoolDeploymentHelper is Ownable {
         require(_assets.length == _reserveFactors.length, "Array length mismatch!");
 
         for (uint8 i = 0; i < _assets.length; i++) {
+            miniPoolConfigurator.setAsteraReserveFactor(
+                _assets[i], _reserveFactors[i], IMiniPool(_miniPool)
+            );
             // console2.log("address(miniPoolConfigurator)", address(miniPoolConfigurator));
-            /* Can't do it because miniPoolConfigurator is a proxy */
+            /* Can't do delegatecall because miniPoolConfigurator is a proxy */
             // (bool success, bytes memory returndata) = address(miniPoolConfigurator).delegatecall(
             //     abi.encodeWithSelector(
             //         IMiniPoolConfigurator.setAsteraReserveFactor.selector,
