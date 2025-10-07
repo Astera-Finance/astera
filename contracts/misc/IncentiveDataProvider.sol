@@ -25,7 +25,7 @@ import {DistributionTypes} from "../../contracts/protocol/libraries/types/Distri
 import {IAToken} from "../../contracts/interfaces/IAToken.sol";
 
 contract IncentiveDataProvider is Ownable, IIncentiveDataProvider {
-    IMiniPoolAddressesProvider miniPoolAddressProvider;
+    IMiniPoolAddressesProvider public miniPoolAddressProvider;
 
     constructor(address _miniPoolAddressProvider) Ownable(msg.sender) {
         miniPoolAddressProvider = IMiniPoolAddressesProvider(_miniPoolAddressProvider);
@@ -75,6 +75,7 @@ contract IncentiveDataProvider is Ownable, IIncentiveDataProvider {
                 new AggregatedReserveIncentiveData[](reservesAcrossAllMiniPools);
         }
         uint256 previousIdx = 0;
+
         for (uint256 idx = 0; idx < miniPoolCount; idx++) {
             IMiniPool miniPool = IMiniPool(miniPoolAddressProvider.getMiniPool(idx));
             (address[] memory reserves,) = miniPool.getReservesList();
@@ -100,17 +101,15 @@ contract IncentiveDataProvider is Ownable, IIncentiveDataProvider {
                 reserveIncentiveData.asDebtTokenId = reserveData.variableDebtTokenID;
                 reserveIncentiveData.incentiveControllerAddress = miniPoolRewarder;
 
-                reserveIncentiveData.asIncentiveData = _getIncentiveData(
-                    miniPoolRewarder, reserveIncentiveData.underlyingAsset, asset6909
-                );
+                reserveIncentiveData.asIncentiveData =
+                    _getIncentiveData(miniPoolRewarder, asset6909);
 
                 asset6909 = DistributionTypes.Asset6909(
                     reserveData.aErc6909, reserveData.variableDebtTokenID
                 );
 
-                reserveIncentiveData.asDebtIncentiveData = _getIncentiveData(
-                    miniPoolRewarder, reserveIncentiveData.underlyingAsset, asset6909
-                );
+                reserveIncentiveData.asDebtIncentiveData =
+                    _getIncentiveData(miniPoolRewarder, asset6909);
             }
             previousIdx += reserves.length;
         }
@@ -119,7 +118,6 @@ contract IncentiveDataProvider is Ownable, IIncentiveDataProvider {
 
     function _getIncentiveData(
         address _miniPoolRewarder,
-        address _underlyingAsset,
         DistributionTypes.Asset6909 memory _asset6909
     ) private view returns (RewardInfo[] memory incentiveData) {
         RewardInfo[] memory rewardsInformation;
@@ -150,12 +148,12 @@ contract IncentiveDataProvider is Ownable, IIncentiveDataProvider {
 
                 rewardInformation.rewardOracleAddress = IOracle(
                     miniPoolAddressProvider.getPriceOracle()
-                ).getSourceOfAsset(_underlyingAsset);
+                ).getSourceOfAsset(rewardInformation.rewardTokenAddress);
                 rewardInformation.rewardOracleAddress = rewardInformation.rewardOracleAddress
                     != address(0)
                     ? rewardInformation.rewardOracleAddress
                     : IOracle(miniPoolAddressProvider.getPriceOracle()).getSourceOfAsset(
-                        IAToken(_underlyingAsset).UNDERLYING_ASSET_ADDRESS()
+                        IAToken(rewardInformation.rewardTokenAddress).UNDERLYING_ASSET_ADDRESS()
                     );
                 rewardInformation.priceFeedDecimals =
                     IChainlinkAggregator(rewardInformation.rewardOracleAddress).decimals();
@@ -213,15 +211,13 @@ contract IncentiveDataProvider is Ownable, IIncentiveDataProvider {
                 userReservesIncentiveData.asDebtTokenId = reserveData.variableDebtTokenID;
                 userReservesIncentiveData.incentiveControllerAddress = miniPoolRewarder;
 
-                userReservesIncentiveData.asTokenIncentivesUserData = _getUserIncentiveData(
-                    user, miniPoolRewarder, userReservesIncentiveData.underlyingAsset, asset6909
-                );
+                userReservesIncentiveData.asTokenIncentivesUserData =
+                    _getUserIncentiveData(user, miniPoolRewarder, asset6909);
                 asset6909 = DistributionTypes.Asset6909(
                     reserveData.aErc6909, reserveData.variableDebtTokenID
                 );
-                userReservesIncentiveData.asDebtTokenIncentivesUserData = _getUserIncentiveData(
-                    user, miniPoolRewarder, userReservesIncentiveData.underlyingAsset, asset6909
-                );
+                userReservesIncentiveData.asDebtTokenIncentivesUserData =
+                    _getUserIncentiveData(user, miniPoolRewarder, asset6909);
             }
             previousIdx += reserves.length;
         }
@@ -231,7 +227,6 @@ contract IncentiveDataProvider is Ownable, IIncentiveDataProvider {
     function _getUserIncentiveData(
         address user,
         address _miniPoolRewarder,
-        address _underlyingAsset,
         DistributionTypes.Asset6909 memory _asset6909
     ) private view returns (UserRewardInfo[] memory userIncentiveData) {
         UserRewardInfo[] memory userRewardsInformation;
@@ -262,12 +257,12 @@ contract IncentiveDataProvider is Ownable, IIncentiveDataProvider {
 
                 userRewardInformation.rewardOracleAddress = IOracle(
                     miniPoolAddressProvider.getPriceOracle()
-                ).getSourceOfAsset(_underlyingAsset);
+                ).getSourceOfAsset(userRewardInformation.rewardTokenAddress);
                 userRewardInformation.rewardOracleAddress = userRewardInformation
                     .rewardOracleAddress != address(0)
                     ? userRewardInformation.rewardOracleAddress
                     : IOracle(miniPoolAddressProvider.getPriceOracle()).getSourceOfAsset(
-                        IAToken(_underlyingAsset).UNDERLYING_ASSET_ADDRESS()
+                        IAToken(userRewardInformation.rewardTokenAddress).UNDERLYING_ASSET_ADDRESS()
                     );
                 userRewardInformation.priceFeedDecimals =
                     IChainlinkAggregator(userRewardInformation.rewardOracleAddress).decimals();

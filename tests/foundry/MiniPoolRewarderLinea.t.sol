@@ -26,6 +26,7 @@ import {
     UserReserveIncentiveData,
     UserRewardInfo
 } from "contracts/misc/IncentiveDataProvider.sol";
+import {IncentiveDataProvider, RewardInfo} from "contracts/misc/IncentiveDataProvider.sol";
 
 contract MiniPoolRewarderTest is Common {
     using WadRayMath for uint256;
@@ -119,7 +120,7 @@ contract MiniPoolRewarderTest is Common {
     function setUp() public {
         // LINEA setup
         uint256 opFork = vm.createSelectFork(
-            "https://linea-mainnet.infura.io/v3/f47a8617e11b481fbf52c08d4e9ecf0d"
+            "https://linea-mainnet.infura.io/v3/f47a8617e11b481fbf52c08d4e9ecf0d", 24242959
         );
         assertEq(vm.activeFork(), opFork);
 
@@ -547,27 +548,22 @@ contract MiniPoolRewarderTest is Common {
         console2.log(prefix, "    rewardTokenDecimals:", info.rewardTokenDecimals);
     }
 
-    // function test_miniPoolLinea() public {
-    //     address myAddr = 0xF1D6ab29d12cF2bee25A195579F544BFcC3dD78f;
-    //     AToken wasWeth = AToken(0x9A4cA144F38963007cFAC645d77049a1Dd4b209A);
-    //     ERC20 weth = ERC20(0xe5D7C2a44FfDDf6b295A15c148167daaAf5Cf34f);
-    //     IMiniPool _miniPool = IMiniPool(miniPoolAddressesProvider.getMiniPool(1));
+    function testIncentiveProvider() external view {
+        console2.log("incentiveDataProvider deployed at:", address(incentiveDataProvider));
 
-    //     uint256 convertedBalance = wasWeth.convertToShares(weth.balanceOf(myAddr));
-    //     wasWeth.approve(address(_miniPool), convertedBalance);
-    //     console2.log(
-    //         "My Balance %s vs after convertion %s from Rabby %s",
-    //         weth.balanceOf(myAddr),
-    //         convertedBalance,
-    //         40189414104992199
-    //     );
+        RewardInfo[] memory rewardInfo =
+            incentiveDataProvider.getReservesIncentivesData()[0].asIncentiveData;
 
-    //     // console2.log("Converted balance", convertedBalance);
-    //     vm.startPrank(myAddr);
-    //     // console2.log("First deposit");
-    //     IMiniPool(_miniPool).deposit(address(wasWeth), true, convertedBalance, myAddr);
-
-    //     vm.stopPrank();
-    //     assert(false);
-    // }
+        console2.log("Reward symbol:", rewardInfo[0].rewardTokenSymbol);
+        console2.log("Reward address:", rewardInfo[0].rewardTokenAddress);
+        console2.log("Reward oracle:", rewardInfo[0].rewardOracleAddress);
+        console2.log("Reward emissionPerSecond:", rewardInfo[0].emissionPerSecond);
+        console2.log(
+            "Reward incentivesLastUpdateTimestamp:", rewardInfo[0].incentivesLastUpdateTimestamp
+        );
+        console2.log("Reward tokenIncentivesIndex:", rewardInfo[0].tokenIncentivesIndex);
+        console2.log("Reward emissionEndTimestamp:", rewardInfo[0].emissionEndTimestamp);
+        console2.log("Reward rewardPriceFeed:", rewardInfo[0].rewardPriceFeed);
+        console2.log("Reward priceFeedDecimals:", rewardInfo[0].priceFeedDecimals);
+    }
 }
