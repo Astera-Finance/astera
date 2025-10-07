@@ -103,12 +103,11 @@ contract AddStrats is Script, StratsHelper, Test {
 
         if (!vm.envBool("MAINNET")) {
             /* ****** Lending pool settings */
-            {
-                string memory outputPath =
-                    string.concat(root, "/scripts/outputs/testnet/1_LendingPoolContracts.json");
-                console2.log("PATH: ", outputPath);
-                config = vm.readFile(outputPath);
-            }
+
+            string memory outputPath =
+                string.concat(root, "/scripts/outputs/testnet/1_LendingPoolContracts.json");
+            console2.log("PATH: ", outputPath);
+            config = vm.readFile(outputPath);
 
             {
                 address[] memory stableStrats = config.readAddressArray(".stableStrategies");
@@ -166,12 +165,10 @@ contract AddStrats is Script, StratsHelper, Test {
             // }
 
             /* ******* Mini pool settings */
-            {
-                string memory outputPath =
-                    string.concat(root, "/scripts/outputs/testnet/2_MiniPoolContracts.json");
-                console2.log("PATH: ", outputPath);
-                config = vm.readFile(outputPath);
-            }
+
+            outputPath = string.concat(root, "/scripts/outputs/testnet/2_MiniPoolContracts.json");
+            console2.log("PATH: ", outputPath);
+            config = vm.readFile(outputPath);
 
             {
                 address[] memory miniStableStrats =
@@ -227,7 +224,8 @@ contract AddStrats is Script, StratsHelper, Test {
             //         );
             //     }
             // }
-
+            uint256 initialMiniPoolIndex = miniPoolPiStrategies.length;
+            uint256 initialPoolIndex = piStrategies.length;
             /* Deploy on the testnet */
             vm.startBroadcast(vm.envUint("PRIVATE_KEY"));
             _deployStrategies(
@@ -236,22 +234,42 @@ contract AddStrats is Script, StratsHelper, Test {
                 stableStrategies,
                 piStrategies
             );
-            _deployMiniPoolStrategies(
-                contracts.miniPoolAddressesProvider,
-                miniPoolId,
-                miniPoolVolatileStrategies,
-                miniPoolStableStrategies,
-                miniPoolPiStrategies
-            );
-            for (uint8 idx = 0; idx < miniPoolPiStrategies.length; idx++) {
+            /* Pi pool strats */
+            for (uint256 idx = initialPoolIndex; idx < piStrategies.length; idx++) {
                 require(
-                    uint256(contracts.miniPoolPiStrategies[idx].M_FACTOR()) == factors.m_factor,
+                    uint256(contracts.piStrategies[idx].M_FACTOR()) == factors.m_factor,
                     "Wrong M_FACTOR"
                 );
                 require(
-                    uint256(contracts.miniPoolPiStrategies[idx].N_FACTOR()) == factors.n_factor,
+                    uint256(contracts.piStrategies[idx].N_FACTOR()) == factors.n_factor,
                     "Wrong N_FACTOR"
                 );
+            }
+            if (
+                vm.exists(outputPath)
+                    && (
+                        miniPoolPiStrategies.length > 0 || miniPoolVolatileStrategies.length > 0
+                            || miniPoolStableStrategies.length > 0
+                    )
+            ) {
+                _deployMiniPoolStrategies(
+                    contracts.miniPoolAddressesProvider,
+                    miniPoolId,
+                    miniPoolVolatileStrategies,
+                    miniPoolStableStrategies,
+                    miniPoolPiStrategies
+                );
+                /* Pi miniPool strats */
+                for (uint256 idx = initialMiniPoolIndex; idx < miniPoolPiStrategies.length; idx++) {
+                    require(
+                        uint256(contracts.miniPoolPiStrategies[idx].M_FACTOR()) == factors.m_factor,
+                        "Wrong M_FACTOR"
+                    );
+                    require(
+                        uint256(contracts.miniPoolPiStrategies[idx].N_FACTOR()) == factors.n_factor,
+                        "Wrong N_FACTOR"
+                    );
+                }
             }
             vm.stopBroadcast();
             path = string.concat(root, "/scripts/outputs/testnet/3_DeployedStrategies.json");
@@ -331,7 +349,7 @@ contract AddStrats is Script, StratsHelper, Test {
                     MiniPoolAddressesProvider(config.readAddress(".miniPoolAddressesProvider"));
             }
             uint256 initialMiniPoolIndex = miniPoolPiStrategies.length;
-            uint256 initialPoolIndex = miniPoolPiStrategies.length;
+            uint256 initialPoolIndex = piStrategies.length;
             /* Deploy on the mainnet */
             vm.startBroadcast(vm.envUint("PRIVATE_KEY"));
             _deployStrategies(
@@ -340,15 +358,6 @@ contract AddStrats is Script, StratsHelper, Test {
                 stableStrategies,
                 piStrategies
             );
-            if (vm.exists(outputPath)) {
-                _deployMiniPoolStrategies(
-                    contracts.miniPoolAddressesProvider,
-                    miniPoolId,
-                    miniPoolVolatileStrategies,
-                    miniPoolStableStrategies,
-                    miniPoolPiStrategies
-                );
-            }
             /* Pi pool strats */
             for (uint256 idx = initialPoolIndex; idx < piStrategies.length; idx++) {
                 require(
@@ -360,17 +369,33 @@ contract AddStrats is Script, StratsHelper, Test {
                     "Wrong N_FACTOR"
                 );
             }
-            /* Pi miniPool strats */
-            for (uint256 idx = initialMiniPoolIndex; idx < miniPoolPiStrategies.length; idx++) {
-                require(
-                    uint256(contracts.miniPoolPiStrategies[idx].M_FACTOR()) == factors.m_factor,
-                    "Wrong M_FACTOR"
+            if (
+                vm.exists(outputPath)
+                    && (
+                        miniPoolPiStrategies.length > 0 || miniPoolVolatileStrategies.length > 0
+                            || miniPoolStableStrategies.length > 0
+                    )
+            ) {
+                _deployMiniPoolStrategies(
+                    contracts.miniPoolAddressesProvider,
+                    miniPoolId,
+                    miniPoolVolatileStrategies,
+                    miniPoolStableStrategies,
+                    miniPoolPiStrategies
                 );
-                require(
-                    uint256(contracts.miniPoolPiStrategies[idx].N_FACTOR()) == factors.n_factor,
-                    "Wrong N_FACTOR"
-                );
+                /* Pi miniPool strats */
+                for (uint256 idx = initialMiniPoolIndex; idx < miniPoolPiStrategies.length; idx++) {
+                    require(
+                        uint256(contracts.miniPoolPiStrategies[idx].M_FACTOR()) == factors.m_factor,
+                        "Wrong M_FACTOR"
+                    );
+                    require(
+                        uint256(contracts.miniPoolPiStrategies[idx].N_FACTOR()) == factors.n_factor,
+                        "Wrong N_FACTOR"
+                    );
+                }
             }
+
             vm.stopBroadcast();
             path = string.concat(root, "/scripts/outputs/mainnet/3_DeployedStrategies.json");
         }
