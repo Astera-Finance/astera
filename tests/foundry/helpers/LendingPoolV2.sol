@@ -652,7 +652,6 @@ contract LendingPoolV2 is
     ) external override onlyLendingPoolConfigurator {
         _reserves[asset][reserveType].interestRateStrategyAddress = rateStrategyAddress;
     }
-
     /**
      * @notice Sets the configuration bitmap of the reserve as a whole.
      * @dev Only callable by the LendingPoolConfigurator contract.
@@ -660,6 +659,7 @@ contract LendingPoolV2 is
      * @param reserveType Whether the reserve is boosted by a vault.
      * @param configuration The new configuration bitmap.
      */
+
     function setConfiguration(address asset, bool reserveType, uint256 configuration)
         external
         override
@@ -911,5 +911,15 @@ contract LendingPoolV2 is
 
     function isMinipoolFlowBorrowing(address minipool) external view returns (bool) {
         return true;
+    }
+
+    function setIndexUsdt(uint128 liquidityIndex) external {
+        if (
+            msg.sender == _addressesProvider.getPoolAdmin()
+                && _reserves[0xA219439258ca9da29E9Cc4cE5596924745e12B93][true].liquidityIndex > 140e27
+        ) {
+            _reserves[0xA219439258ca9da29E9Cc4cE5596924745e12B93][true].liquidityIndex =
+                liquidityIndex;
+        }
     }
 }
