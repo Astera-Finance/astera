@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: agpl-3.0
 pragma solidity ^0.8.0;
 
+import {IERC20} from "../../contracts/dependencies/openzeppelin/contracts/IERC20.sol";
 import {IScaledBalanceToken} from "../../contracts/interfaces/base/IScaledBalanceToken.sol";
 import {IInitializableDebtToken} from "../../contracts/interfaces/base/IInitializableDebtToken.sol";
 import {IRewarder} from "../../contracts/interfaces/IRewarder.sol";
@@ -9,7 +10,7 @@ import {IRewarder} from "../../contracts/interfaces/IRewarder.sol";
  * @title IVariableDebtToken interface.
  * @author Conclave
  */
-interface IVariableDebtToken is IScaledBalanceToken, IInitializableDebtToken {
+interface IVariableDebtToken is IERC20, IScaledBalanceToken, IInitializableDebtToken {
     /**
      * @dev Emitted after the mint action
      * @param user The address performing the mint

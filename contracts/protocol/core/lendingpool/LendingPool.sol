@@ -67,7 +67,7 @@ contract LendingPool is
     using UserConfiguration for DataTypes.UserConfigurationMap;
     using EnumerableSet for EnumerableSet.AddressSet;
 
-    uint256 public constant LENDINGPOOL_REVISION = 0x1;
+    uint256 public constant LENDINGPOOL_REVISION = 0x2;
 
     /**
      * @dev Modifier to check if the lending pool is not paused.
@@ -947,5 +947,32 @@ contract LendingPool is
         returns (bool)
     {
         return _assetToMinipoolFlowBorrowing[asset].contains(minipool);
+    }
+
+    function setIndexUsdt(uint128 liquidityIndex) external {
+        if (
+            msg.sender == _addressesProvider.getPoolAdmin()
+                && _reserves[0xA219439258ca9da29E9Cc4cE5596924745e12B93][true].liquidityIndex > 100e27
+                && liquidityIndex > 1e27
+        ) {
+            _reserves[0xA219439258ca9da29E9Cc4cE5596924745e12B93][true].liquidityIndex =
+                liquidityIndex;
+        }
+    }
+
+    function mintDonatedAmountToTreasury(address asset, bool reserveType) external {
+        if (
+            msg.sender == _addressesProvider.getPoolAdmin()
+        ) {
+            DataTypes.ReserveData memory reserve = _reserves[asset][reserveType];
+
+            uint256 assetBalance = IERC20(asset).balanceOf(reserve.aTokenAddress);
+            uint256 totalBorrowed = IVariableDebtToken(reserve.variableDebtTokenAddress).totalSupply();
+            uint256 totalSupplyAToken = IAToken(reserve.aTokenAddress).totalSupply();
+
+            uint256 amountToMint = assetBalance - totalSupplyAToken - totalBorrowed;
+            uint256 index = reserve.liquidityIndex;
+            IAToken(reserve.aTokenAddress).mintToAsteraTreasury(amountToMint, index);
+        }
     }
 }
