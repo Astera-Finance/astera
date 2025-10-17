@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: agpl-3.0
 pragma solidity ^0.8.23;
 
+import {IERC20} from "../../../../contracts/dependencies/openzeppelin/contracts/IERC20.sol";
 import {IVariableDebtToken} from "../../../../contracts/interfaces/IVariableDebtToken.sol";
 import {WadRayMath} from "../../../../contracts/protocol/libraries/math/WadRayMath.sol";
 import {Errors} from "../../../../contracts/protocol/libraries/helpers/Errors.sol";
@@ -110,7 +111,7 @@ contract VariableDebtToken is
      * @param user The address of the user to check balance for.
      * @return The current debt balance of the user.
      */
-    function balanceOf(address user) public view virtual override returns (uint256) {
+    function balanceOf(address user) public view virtual override(IncentivizedERC20, IERC20) returns (uint256) {
         uint256 scaledBalance = super.balanceOf(user);
 
         if (scaledBalance == 0) {
@@ -200,7 +201,7 @@ contract VariableDebtToken is
      * @notice Being non transferrable, the debt token does not implement any of the standard ERC20 functions for transfer and allowance.
      * @dev This function reverts when called.
      */
-    function transfer(address, uint256) public virtual override returns (bool) {
+    function transfer(address, uint256) public virtual override(IncentivizedERC20, IERC20) returns (bool) {
         revert("TRANSFER_NOT_SUPPORTED");
     }
 
@@ -208,7 +209,7 @@ contract VariableDebtToken is
      * @notice Being non transferrable, the debt token does not implement any of the standard ERC20 functions for transfer and allowance.
      * @dev This function reverts when called.
      */
-    function allowance(address, address) public view virtual override returns (uint256) {
+    function allowance(address, address) public view virtual override(IncentivizedERC20, IERC20) returns (uint256) {
         revert("ALLOWANCE_NOT_SUPPORTED");
     }
 
@@ -216,7 +217,7 @@ contract VariableDebtToken is
      * @notice Being non transferrable, the debt token does not implement any of the standard ERC20 functions for transfer and allowance.
      * @dev This function reverts when called.
      */
-    function approve(address, uint256) public virtual override returns (bool) {
+    function approve(address, uint256) public virtual override(IncentivizedERC20, IERC20) returns (bool) {
         revert("APPROVAL_NOT_SUPPORTED");
     }
 
@@ -224,7 +225,7 @@ contract VariableDebtToken is
      * @notice Being non transferrable, the debt token does not implement any of the standard ERC20 functions for transfer and allowance.
      * @dev This function reverts when called.
      */
-    function transferFrom(address, address, uint256) public virtual override returns (bool) {
+    function transferFrom(address, address, uint256) public virtual override(IncentivizedERC20, IERC20) returns (bool) {
         revert("TRANSFER_NOT_SUPPORTED");
     }
 
@@ -257,7 +258,7 @@ contract VariableDebtToken is
      * @notice Returns the total supply of the variable debt token.
      * @return The total supply representing the total debt accrued by users.
      */
-    function totalSupply() public view virtual override returns (uint256) {
+    function totalSupply() public view virtual override(IncentivizedERC20, IERC20) returns (uint256) {
         return super.totalSupply().rayMul(
             _pool.getReserveNormalizedVariableDebt(_underlyingAsset, RESERVE_TYPE)
         );
