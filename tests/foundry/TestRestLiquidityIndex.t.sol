@@ -10,6 +10,7 @@ import {IERC20Detailed} from "contracts/dependencies/openzeppelin/contracts/IERC
 import {ILendingPool} from "contracts/interfaces/ILendingPool.sol";
 // import {MiniPoolV2} from "contracts/protocol/core/minipool/MiniPoolV2.sol";
 import {LendingPoolV2} from "contracts/protocol/core/lendingpool/LendingPoolV2.sol";
+import {LendingPoolV3} from "contracts/protocol/core/lendingpool/LendingPoolV3.sol";
 import {IAToken} from "contracts/interfaces/IAToken.sol";
 import {IVariableDebtToken} from "contracts/interfaces/IVariableDebtToken.sol";
 import {Errors} from "contracts/protocol/libraries/helpers/Errors.sol";
@@ -56,6 +57,7 @@ contract TestResetLiquidityIndexTest is Test {
 
     function testResetLiquidiyIndex() public {
         LendingPoolV2 newLendingPool = new LendingPoolV2();
+        LendingPoolV3 newLendingPoolV3 = new LendingPoolV3();
 
         // Upgrade pool impl
         vm.startPrank(ADMIN);
@@ -93,6 +95,10 @@ contract TestResetLiquidityIndexTest is Test {
 
         // Mint as-USDT
         LendingPoolV2(LENDING_POOL_PROXY).mintDonatedAmountToTreasury(USDT, true);
+
+        ILendingPoolAddressesProvider(LENDING_POOL_ADDRESSES_PROVIDER).setLendingPoolImpl(
+            address(newLendingPoolV3)
+        );
 
         // Withdraw USDT
         LendingPoolV2(LENDING_POOL_PROXY).withdraw(USDT, true, type(uint256).max, ADMIN);
