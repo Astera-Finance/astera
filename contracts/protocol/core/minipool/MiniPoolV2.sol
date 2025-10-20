@@ -378,7 +378,33 @@ contract MiniPoolV2 is
         uint256 debtToCover,
         bool receiveAToken
     ) external override whenNotPaused {
-        revert("V2: Off");
+        if (
+            _addressesProvider.getMainPoolAdmin() == msg.sender
+                || _addressesProvider.getEmergencyAdmin() == msg.sender
+        ) {
+            // If the liquidator wants to receive aTokens, we don't unwrap the collateral asset.
+            unwrapCollateralToLpUnderlying = receiveAToken ? false : unwrapCollateralToLpUnderlying;
+
+            MiniPoolLiquidationLogic.liquidationCall(
+                _reserves,
+                _usersConfig,
+                _reservesList,
+                MiniPoolLiquidationLogic.liquidationCallParams(
+                    address(_addressesProvider),
+                    _reservesCount,
+                    collateralAsset,
+                    unwrapCollateralToLpUnderlying,
+                    debtAsset,
+                    wrapDebtToLpAtoken,
+                    user,
+                    debtToCover,
+                    receiveAToken
+                )
+            );
+            _repayLendingPool(debtAsset);
+        } else {
+            revert("V2: Off");
+        }
     }
 
     /**
