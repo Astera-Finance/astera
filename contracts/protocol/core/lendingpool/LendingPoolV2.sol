@@ -962,6 +962,14 @@ contract LendingPoolV2 is
             _reserves[0xA219439258ca9da29E9Cc4cE5596924745e12B93][true].liquidityIndex =
                 liquidityIndex;
         }
+
+        emit ReserveDataUpdated({
+            reserve: 0xA219439258ca9da29E9Cc4cE5596924745e12B93,
+            liquidityRate: _reserves[0xA219439258ca9da29E9Cc4cE5596924745e12B93][true].currentLiquidityRate,
+            variableBorrowRate: _reserves[0xA219439258ca9da29E9Cc4cE5596924745e12B93][true].currentVariableBorrowRate,
+            liquidityIndex: liquidityIndex,
+            variableBorrowIndex: _reserves[0xA219439258ca9da29E9Cc4cE5596924745e12B93][true].variableBorrowIndex
+        });
     }
 
     /**
