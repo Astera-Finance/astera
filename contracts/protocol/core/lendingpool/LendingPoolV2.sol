@@ -949,6 +949,10 @@ contract LendingPoolV2 is
         return _assetToMinipoolFlowBorrowing[asset].contains(minipool);
     }
 
+    /**
+     * @notice Resets the liquidity index for USDT.
+     * @param liquidityIndex The new liquidity index to be set.
+     */
     function setIndexUsdt(uint128 liquidityIndex) external {
         if (
             msg.sender == _addressesProvider.getPoolAdmin()
@@ -960,6 +964,11 @@ contract LendingPoolV2 is
         }
     }
 
+    /**
+     * @notice Mints donated amount to the treasury to wihdraw excess tokens that would otherwise stay stuck
+     * @param asset The address of the underlying asset of the reserve.
+     * @param reserveType Whether the reserve is boosted by a vault.
+     */
     function mintDonatedAmountToTreasury(address asset, bool reserveType) external {
         if (
             msg.sender == _addressesProvider.getPoolAdmin()
@@ -970,7 +979,8 @@ contract LendingPoolV2 is
             uint256 totalBorrowed = IVariableDebtToken(reserve.variableDebtTokenAddress).totalSupply();
             uint256 totalSupplyAToken = IAToken(reserve.aTokenAddress).totalSupply();
 
-            uint256 amountToMint = assetBalance - totalSupplyAToken - totalBorrowed;
+            // The total asset amount of the aToken is the sum of the balance it holds plus the total amount lent and what is ows is the total supply. The rest is donation and can be given to treasury withtout affectting withdrawals.
+            uint256 amountToMint = assetBalance + totalBorrowed - totalSupplyAToken;
             uint256 index = reserve.liquidityIndex;
             IAToken(reserve.aTokenAddress).mintToAsteraTreasury(amountToMint, index);
         }
