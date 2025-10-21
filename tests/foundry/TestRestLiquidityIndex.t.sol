@@ -46,7 +46,7 @@ contract TestResetLiquidityIndexTest is Test {
     address constant VDASUSD = 0xa04C8b74C9B1319DB240157cFe14504844debDf2;
     address constant VDMUSD = 0x20d2312769D6d9eAADBb57a3eEA44592440cd6C9;
 
-    uint128 constant NEW_LQUIDITY_INDEX = 1001883043396551183923396494;
+    uint128 constant NEW_LQUIDITY_INDEX = 1001883043396551183923396494; //24320598
 
     function setUp() public {
         // LINEA setup
@@ -56,8 +56,8 @@ contract TestResetLiquidityIndexTest is Test {
     }
 
     function testResetLiquidiyIndex() public {
-        LendingPoolV2 newLendingPool = new LendingPoolV2();
-        LendingPoolV3 newLendingPoolV3 = new LendingPoolV3();
+        LendingPoolV2 newLendingPool = LendingPoolV2(0x94494e217bd6bd5f618CfB528a922Df47Fa8f469);
+        LendingPoolV3 newLendingPoolV3 = LendingPoolV3(0xDf7c0D19dB5790D41cdb2aD4E95ABC9AD0C93Fe3);
 
         // Upgrade pool impl
         vm.startPrank(ADMIN);
