@@ -59,20 +59,20 @@ contract TestResetLiquidityIndexTest is Test {
     address constant wasUSDC = 0xAD7b51293DeB2B7dbCef4C5c3379AfaF63ef5944;
     address constant wasUSDT = 0x1579072d23FB3f545016Ac67E072D37e1281624C;
 
-    uint128 constant NEW_LQUIDITY_INDEX = 1001883043396551183923396494; //24320598
+    uint128 constant NEW_LQUIDITY_INDEX = 1001883043396551183923396494; // block number: 24320598
 
     mapping(address => uint256[]) miniPoolToBalances;
 
     function setUp() public {
         // LINEA setup
         string memory lineaRpc = vm.envString("LINEA_RPC_URL");
-        uint256 lineaFork = vm.createSelectFork(lineaRpc);
+        uint256 lineaFork = vm.createSelectFork(lineaRpc, 24728452); // protocol after attack (paused)
         assertEq(vm.activeFork(), lineaFork);
     }
 
     function testResetLiquidiyIndex() public {
-        LendingPoolV2 newLendingPool = LendingPoolV2(0x94494e217bd6bd5f618CfB528a922Df47Fa8f469);
-        LendingPoolV3 newLendingPoolV3 = LendingPoolV3(0xDf7c0D19dB5790D41cdb2aD4E95ABC9AD0C93Fe3);
+        LendingPoolV2 newLendingPool = new LendingPoolV2();
+        LendingPoolV3 newLendingPoolV3 = new LendingPoolV3();
 
         // Upgrade pool impl
         vm.startPrank(ADMIN);
@@ -342,105 +342,5 @@ contract TestResetLiquidityIndexTest is Test {
         //     IERC20Detailed(USDT).balanceOf(ASUSDT) + IVariableDebtToken(VDUSDT).totalSupply(),
         //     "Wrong numbers for USDT"
         // );
-    }
-
-    function testBalancesBeforeAndAfterHack() public {
-        string memory lineaRpc = vm.envString("LINEA_RPC_URL");
-        uint256 lineaFork = vm.createSelectFork(lineaRpc, 24220150);
-        assertEq(vm.activeFork(), lineaFork);
-
-        uint256 initialAsUsdcBalance = IERC20Detailed(USDC).balanceOf(ASUSDC);
-        uint256 initialAsWethBalance = IERC20Detailed(WETH).balanceOf(ASWETH);
-        uint256 initialAsWbtcBalance = IERC20Detailed(WBTC).balanceOf(ASWBTC);
-        uint256 initialAsUsdtBalance = IERC20Detailed(USDT).balanceOf(ASUSDT);
-        uint256 initialAsAsUsdBalance = IERC20Detailed(ASUSD).balanceOf(ASASUSD);
-        uint256 initialAsmUsdBalance = IERC20Detailed(MUSD).balanceOf(ASMUSD);
-
-        console2.log("--------------------BEFORE-------------------------");
-
-        console2.log("initialAsWbtcBalance: ", initialAsWbtcBalance);
-        console2.log("initialAsWethBalance: ", initialAsWethBalance);
-        console2.log("initialAsUsdcBalance: ", initialAsUsdcBalance);
-        console2.log("initialAsUsdtBalance: ", initialAsUsdtBalance);
-        console2.log("initialAsAsUsdBalance: ", initialAsAsUsdBalance);
-        console2.log("initialAsmUsdBalance: ", initialAsmUsdBalance);
-
-        for (uint256 i = 0; i < 4; i++) {
-            address erc6909 =
-                (IMiniPoolAddressesProvider(MINI_POOL_ADDRESS_PROVIDER).getMiniPoolToAERC6909(i));
-            IMiniPool miniPool =
-                IMiniPool(IMiniPoolAddressesProvider(MINI_POOL_ADDRESS_PROVIDER).getMiniPool(i));
-            (address[] memory reserves,) = miniPool.getReservesList();
-            miniPoolToBalances[erc6909] = new uint256[](reserves.length);
-            for (uint256 idx = 0; idx < reserves.length; idx++) {
-                miniPoolToBalances[erc6909][idx] = IERC20Detailed(reserves[idx]).balanceOf(erc6909);
-                console2.log(
-                    "Initial balance for %s in MiniPool %s: %s",
-                    IERC20Detailed(reserves[idx]).symbol(),
-                    i,
-                    IERC20Detailed(reserves[idx]).balanceOf(erc6909)
-                );
-            }
-        }
-
-        console2.log("--------------------AFTER-------------------------");
-        lineaFork = vm.createSelectFork(lineaRpc, 24322904);
-        assertEq(vm.activeFork(), lineaFork);
-        console2.log("finalAsWbtcBalance: ", IERC20Detailed(WBTC).balanceOf(ASWBTC));
-        console2.log("finalAsWethBalance: ", IERC20Detailed(WETH).balanceOf(ASWETH));
-        console2.log("finalAsUsdcBalance: ", IERC20Detailed(USDC).balanceOf(ASUSDC));
-        console2.log("finalAsUsdtBalance: ", IERC20Detailed(USDT).balanceOf(ASUSDT));
-        console2.log("finalAsAsUsdBalance: ", IERC20Detailed(ASUSD).balanceOf(ASASUSD));
-        console2.log("finalAsmUsdBalance: ", IERC20Detailed(MUSD).balanceOf(ASMUSD));
-
-        console2.log(
-            "Diff finalAsWbtcBalance: ",
-            int256(initialAsWbtcBalance) - int256(IERC20Detailed(WBTC).balanceOf(ASWBTC))
-        );
-        console2.log(
-            "Diff finalAsWethBalance: ",
-            int256(initialAsWethBalance) - int256(IERC20Detailed(WETH).balanceOf(ASWETH))
-        );
-        console2.log(
-            "Diff finalAsUsdcBalance: ",
-            int256(initialAsUsdcBalance) - int256(IERC20Detailed(USDC).balanceOf(ASUSDC))
-        );
-        console2.log(
-            "Diff finalAsUsdtBalance: ",
-            int256(initialAsUsdtBalance) - int256(IERC20Detailed(USDT).balanceOf(ASUSDT))
-        );
-        console2.log(
-            "Diff finalAsAsUsdBalance: ",
-            int256(initialAsAsUsdBalance) - int256(IERC20Detailed(ASUSD).balanceOf(ASASUSD))
-        );
-        console2.log(
-            "Diff finalAsmUsdBalance: ",
-            int256(initialAsmUsdBalance) - int256(IERC20Detailed(MUSD).balanceOf(ASMUSD))
-        );
-
-        for (uint256 i = 0; i < 4; i++) {
-            address erc6909 =
-                (IMiniPoolAddressesProvider(MINI_POOL_ADDRESS_PROVIDER).getMiniPoolToAERC6909(i));
-            IMiniPool miniPool =
-                IMiniPool(IMiniPoolAddressesProvider(MINI_POOL_ADDRESS_PROVIDER).getMiniPool(i));
-            (address[] memory reserves,) = miniPool.getReservesList();
-            for (uint256 idx = 0; idx < reserves.length; idx++) {
-                console2.log(
-                    "Final balance for %s in MiniPool %s: %s",
-                    IERC20Detailed(reserves[idx]).symbol(),
-                    i,
-                    IERC20Detailed(reserves[idx]).balanceOf(erc6909)
-                );
-                // console2.log(
-                //     "Diff balance for %s in MiniPool %s: ",
-                //     IERC20Detailed(reserves[idx]).symbol(),
-                //     i
-                // );
-                // console2.log(
-                //     int256(miniPoolToBalances[erc6909][idx])
-                //         - int256(IERC20Detailed(reserves[idx]).balanceOf(erc6909))
-                // );
-            }
-        }
     }
 }

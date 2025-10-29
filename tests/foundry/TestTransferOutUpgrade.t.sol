@@ -40,7 +40,7 @@ contract TestTransferOutUpgradeTest is Test {
     function setUp() public {
         // LINEA setup
         string memory lineaRpc = vm.envString("LINEA_RPC_URL");
-        uint256 lineaFork = vm.createSelectFork(lineaRpc);
+        uint256 lineaFork = vm.createSelectFork(lineaRpc, 24728452); // protocol after attack (paused)
         assertEq(vm.activeFork(), lineaFork);
     }
 
