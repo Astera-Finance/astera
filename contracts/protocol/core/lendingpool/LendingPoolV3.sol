@@ -53,7 +53,7 @@ import {IAddressProviderUpdatable} from
  *   LendingPoolAddressesProvider
  * @author Conclave
  */
-contract LendingPool is
+contract LendingPoolV3 is
     VersionedInitializable,
     ILendingPool,
     LendingPoolStorage,
@@ -67,7 +67,7 @@ contract LendingPool is
     using UserConfiguration for DataTypes.UserConfigurationMap;
     using EnumerableSet for EnumerableSet.AddressSet;
 
-    uint256 public constant LENDINGPOOL_REVISION = 0x1;
+    uint256 public constant LENDINGPOOL_REVISION = 0x3;
 
     /**
      * @dev Modifier to check if the lending pool is not paused.

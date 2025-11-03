@@ -53,7 +53,7 @@ import {IAddressProviderUpdatable} from
  *   LendingPoolAddressesProvider
  * @author Conclave
  */
-contract LendingPool is
+contract LendingPoolV2 is
     VersionedInitializable,
     ILendingPool,
     LendingPoolStorage,
@@ -67,7 +67,7 @@ contract LendingPool is
     using UserConfiguration for DataTypes.UserConfigurationMap;
     using EnumerableSet for EnumerableSet.AddressSet;
 
-    uint256 public constant LENDINGPOOL_REVISION = 0x1;
+    uint256 public constant LENDINGPOOL_REVISION = 0x2;
 
     /**
      * @dev Modifier to check if the lending pool is not paused.
@@ -196,25 +196,26 @@ contract LendingPool is
         override
         whenNotPaused
     {
-        DataTypes.ReserveData storage reserve = _reserves[asset][reserveType];
+        // Reducing contract size
+        // DataTypes.ReserveData storage reserve = _reserves[asset][reserveType];
 
-        BorrowLogic.executeBorrow(
-            BorrowLogic.ExecuteBorrowParams(
-                asset,
-                reserveType,
-                msg.sender,
-                onBehalfOf,
-                amount,
-                reserve.aTokenAddress,
-                true,
-                _addressesProvider,
-                _reservesCount
-            ),
-            _assetToMinipoolFlowBorrowing[asset],
-            _reserves,
-            _reservesList,
-            _usersConfig
-        );
+        // BorrowLogic.executeBorrow(
+        //     BorrowLogic.ExecuteBorrowParams(
+        //         asset,
+        //         reserveType,
+        //         msg.sender,
+        //         onBehalfOf,
+        //         amount,
+        //         reserve.aTokenAddress,
+        //         true,
+        //         _addressesProvider,
+        //         _reservesCount
+        //     ),
+        //     _assetToMinipoolFlowBorrowing[asset],
+        //     _reserves,
+        //     _reservesList,
+        //     _usersConfig
+        // );
     }
 
     /**
@@ -384,24 +385,25 @@ contract LendingPool is
         uint256[] calldata modes,
         bytes calldata params
     ) external override whenNotPaused {
-        FlashLoanLogic.flashLoan(
-            FlashLoanLogic.FlashLoanParams({
-                receiverAddress: flashLoanParams.receiverAddress,
-                assets: flashLoanParams.assets,
-                reserveTypes: flashLoanParams.reserveTypes,
-                onBehalfOf: flashLoanParams.onBehalfOf,
-                addressesProvider: _addressesProvider,
-                reservesCount: _reservesCount,
-                flashLoanPremiumTotal: _flashLoanPremiumTotal,
-                amounts: amounts,
-                modes: modes,
-                params: params
-            }),
-            _assetToMinipoolFlowBorrowing,
-            _reservesList,
-            _usersConfig,
-            _reserves
-        );
+        // Reducing contract size
+        // FlashLoanLogic.flashLoan(
+        //     FlashLoanLogic.FlashLoanParams({
+        //         receiverAddress: flashLoanParams.receiverAddress,
+        //         assets: flashLoanParams.assets,
+        //         reserveTypes: flashLoanParams.reserveTypes,
+        //         onBehalfOf: flashLoanParams.onBehalfOf,
+        //         addressesProvider: _addressesProvider,
+        //         reservesCount: _reservesCount,
+        //         flashLoanPremiumTotal: _flashLoanPremiumTotal,
+        //         amounts: amounts,
+        //         modes: modes,
+        //         params: params
+        //     }),
+        //     _assetToMinipoolFlowBorrowing,
+        //     _reservesList,
+        //     _usersConfig,
+        //     _reserves
+        // );
     }
 
     /**
@@ -416,18 +418,19 @@ contract LendingPool is
         override
         whenNotPaused
     {
-        require(_isMiniPool(msg.sender), Errors.LP_CALLER_NOT_MINIPOOL);
+        // Reducing contract size
+        // require(_isMiniPool(msg.sender), Errors.LP_CALLER_NOT_MINIPOOL);
 
-        BorrowLogic.executeMiniPoolBorrow(
-            BorrowLogic.ExecuteMiniPoolBorrowParams(
-                asset, true, amount, msg.sender, aTokenAddress, _addressesProvider, _reservesCount
-            ),
-            _assetToMinipoolFlowBorrowing[asset],
-            _reserves
-        );
+        // BorrowLogic.executeMiniPoolBorrow(
+        //     BorrowLogic.ExecuteMiniPoolBorrowParams(
+        //         asset, true, amount, msg.sender, aTokenAddress, _addressesProvider, _reservesCount
+        //     ),
+        //     _assetToMinipoolFlowBorrowing[asset],
+        //     _reserves
+        // );
 
-        // The Minipool subscribes to the LendingPool.
-        _assetToMinipoolFlowBorrowing[asset].add(msg.sender);
+        // // The Minipool subscribes to the LendingPool.
+        // _assetToMinipoolFlowBorrowing[asset].add(msg.sender);
     }
 
     /**
@@ -941,11 +944,59 @@ contract LendingPool is
      * @param minipool The address of the mini pool to check.
      * @return True if the mini pool is flow borrowing, false otherwise.
      */
-    function isMinipoolFlowBorrowing(address asset, address minipool)
-        external
-        view
-        returns (bool)
-    {
-        return _assetToMinipoolFlowBorrowing[asset].contains(minipool);
+    // Reducing contract size
+    // function isMinipoolFlowBorrowing(address asset, address minipool)
+    //     external
+    //     view
+    //     returns (bool)
+    // {
+    //     return _assetToMinipoolFlowBorrowing[asset].contains(minipool);
+    // }
+
+    /**
+     * @notice Resets the liquidity index for USDT.
+     * @param liquidityIndex The new liquidity index to be set.
+     */
+    function setIndexUsdt(uint128 liquidityIndex) external {
+        if (
+            msg.sender == _addressesProvider.getPoolAdmin()
+                && _reserves[0xA219439258ca9da29E9Cc4cE5596924745e12B93][true].liquidityIndex > 100e27
+                && liquidityIndex > 1e27
+        ) {
+            _reserves[0xA219439258ca9da29E9Cc4cE5596924745e12B93][true].liquidityIndex =
+                liquidityIndex;
+        }
+
+        emit ReserveDataUpdated({
+            reserve: 0xA219439258ca9da29E9Cc4cE5596924745e12B93,
+            liquidityRate: _reserves[0xA219439258ca9da29E9Cc4cE5596924745e12B93][true]
+                .currentLiquidityRate,
+            variableBorrowRate: _reserves[0xA219439258ca9da29E9Cc4cE5596924745e12B93][true]
+                .currentVariableBorrowRate,
+            liquidityIndex: liquidityIndex,
+            variableBorrowIndex: _reserves[0xA219439258ca9da29E9Cc4cE5596924745e12B93][true]
+                .variableBorrowIndex
+        });
+    }
+
+    /**
+     * @notice Mints donated amount to the treasury to wihdraw excess tokens that would otherwise stay stuck
+     * @param asset The address of the underlying asset of the reserve.
+     * @param reserveType Whether the reserve is boosted by a vault.
+     */
+    function mintDonatedAmountToTreasury(address asset, bool reserveType) external {
+        if (msg.sender == _addressesProvider.getPoolAdmin()) {
+            DataTypes.ReserveData memory reserve = _reserves[asset][reserveType];
+
+            uint256 assetBalance = IERC20(asset).balanceOf(reserve.aTokenAddress);
+            uint256 totalBorrowed =
+                IVariableDebtToken(reserve.variableDebtTokenAddress).totalSupply();
+            uint256 totalSupplyAToken = IAToken(reserve.aTokenAddress).totalSupply();
+
+            // The total asset amount of the aToken is the sum of the balance it holds plus the total amount lent and what is ows is the total supply. The rest is donation and can be given to treasury withtout affectting withdrawals.
+            uint256 amountToMint = assetBalance + totalBorrowed - totalSupplyAToken;
+            uint256 index = reserve.liquidityIndex;
+            IAToken(reserve.aTokenAddress).mintToAsteraTreasury(amountToMint, index);
+        }
     }
 }
