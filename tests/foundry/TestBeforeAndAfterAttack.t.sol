@@ -8,7 +8,7 @@ import {ILendingPoolConfigurator} from "contracts/interfaces/ILendingPoolConfigu
 import {ILendingPoolAddressesProvider} from "contracts/interfaces/ILendingPoolAddressesProvider.sol";
 import {IERC20Detailed} from "contracts/dependencies/openzeppelin/contracts/IERC20Detailed.sol";
 import {ILendingPool} from "contracts/interfaces/ILendingPool.sol";
-// import {MiniPoolV2} from "contracts/protocol/core/minipool/MiniPoolV2.sol";
+import {MiniPoolV3} from "contracts/protocol/core/minipool/MiniPoolV3.sol";
 import {LendingPoolV2} from "contracts/protocol/core/lendingpool/LendingPoolV2.sol";
 import {LendingPoolV3} from "contracts/protocol/core/lendingpool/LendingPoolV3.sol";
 import {IAToken} from "contracts/interfaces/IAToken.sol";
@@ -27,11 +27,13 @@ contract TestBeforeAndAfterAttack is Test {
     address constant LENDING_POOL_CONFIGURATOR = 0x5af0d031A3dA7c2D3b1fA9F00683004F176c28d0;
     address constant ADMIN = 0x7D66a2e916d79c0988D41F1E50a1429074ec53a4;
     address constant EMERGENCY = 0xDa77d6C0281fCb3e41BD966aC393502a1C524224;
+    address constant LIQUIDATOR = 0x71C4ebBa016Df7C4B4b23Cf7e8Cc13ef36ddA3a8;
 
     address constant LENDING_POOL_ADDRESSES_PROVIDER = 0x9a460e7BD6D5aFCEafbE795e05C48455738fB119;
     address constant LENDING_POOL_PROXY = 0x17d8a5305A37fe93E13a28f09c46db5bE24E1B9E;
 
     address constant MINI_POOL_ADDRESS_PROVIDER = 0x9399aF805e673295610B17615C65b9d0cE1Ed306;
+    address constant MINI_POOL_CONFIGURATOR = 0x41296B58279a81E20aF1c05D32b4f132b72b1B01;
 
     address constant USDC = 0x176211869cA2b568f2A7D4EE941E073a821EE1ff;
     address constant WETH = 0xe5D7C2a44FfDDf6b295A15c148167daaAf5Cf34f;
@@ -61,7 +63,8 @@ contract TestBeforeAndAfterAttack is Test {
     address constant wasUSDC = 0xAD7b51293DeB2B7dbCef4C5c3379AfaF63ef5944;
     address constant wasUSDT = 0x1579072d23FB3f545016Ac67E072D37e1281624C;
 
-    mapping(address => uint256) public assetSum;
+    mapping(address => uint256) public collateralAssetSum;
+    mapping(address => uint256) public debtAssetSum;
 
     address[] public lineaUsers = [
         0x04B062a9047A22C1413c9b7f206cfb402372A40B,
@@ -356,6 +359,85 @@ contract TestBeforeAndAfterAttack is Test {
         logAggregatedMiniPoolReservesData(data);
     }
 
+    function testRepayLeftovers() public {
+        vm.startPrank(IMiniPoolAddressesProvider(MINI_POOL_ADDRESS_PROVIDER).getMainPoolAdmin());
+        // IMiniPoolConfigurator(MINI_POOL_CONFIGURATOR).setMinDebtThreshold(
+        //     0, IMiniPool(0xE7a2c97601076065C3178BDbb22C61933f850B03)
+        // );
+        // IMiniPoolConfigurator(MINI_POOL_CONFIGURATOR).setMinDebtThreshold(
+        //     0, IMiniPool(0x0baFB30B72925e6d53F4d0A089bE1CeFbB5e3401)
+        // );
+        // IMiniPoolConfigurator(MINI_POOL_CONFIGURATOR).setMinDebtThreshold(
+        //     0, IMiniPool(0x65559abECD1227Cc1779F500453Da1f9fcADd928)
+        // );
+        // IMiniPoolConfigurator(MINI_POOL_CONFIGURATOR).setMinDebtThreshold(
+        //     0, IMiniPool(0x52280eA8979d52033E14df086F4dF555a258bEb4)
+        // );
+        vm.stopPrank();
+
+        deal(WBTC, 0xF1D6ab29d12cF2bee25A195579F544BFcC3dD78f, 1 ether);
+        deal(MUSD, 0xF1D6ab29d12cF2bee25A195579F544BFcC3dD78f, 1 ether);
+
+        vm.startPrank(0xF1D6ab29d12cF2bee25A195579F544BFcC3dD78f);
+        // IERC20Detailed(WBTC).approve(
+        //     0xE7a2c97601076065C3178BDbb22C61933f850B03,
+        //     IERC20Detailed(WBTC).balanceOf(0xF1D6ab29d12cF2bee25A195579F544BFcC3dD78f)
+        // );
+        // console2.log(
+        //     "Repaying debt: ",
+        //     IAERC6909(0x24d61C71855d62d8C7630e5E91E1EF8482E32aE0).balanceOf(
+        //         0xF1D6ab29d12cF2bee25A195579F544BFcC3dD78f, 2000
+        //     )
+        // );
+        // IMiniPool(0xE7a2c97601076065C3178BDbb22C61933f850B03).repay(
+        //     wasWBTC,
+        //     true,
+        //     IAERC6909(0x24d61C71855d62d8C7630e5E91E1EF8482E32aE0).balanceOf(
+        //         0xF1D6ab29d12cF2bee25A195579F544BFcC3dD78f, 2000
+        //     ),
+        //     0xF1D6ab29d12cF2bee25A195579F544BFcC3dD78f
+        // );
+
+        // IERC20Detailed(WBTC).approve(
+        //     0x0baFB30B72925e6d53F4d0A089bE1CeFbB5e3401,
+        //     IERC20Detailed(WBTC).balanceOf(0xF1D6ab29d12cF2bee25A195579F544BFcC3dD78f)
+        // );
+        // console2.log(
+        //     "Repaying debt: ",
+        //     IAERC6909(0x5Fb9EBDD9bcBa3FB615CD07981aa5F4650BbD90D).balanceOf(
+        //         0xF1D6ab29d12cF2bee25A195579F544BFcC3dD78f, 2000
+        //     )
+        // );
+        // IMiniPool(0x0baFB30B72925e6d53F4d0A089bE1CeFbB5e3401).repay(
+        //     wasWBTC,
+        //     true,
+        //     IAERC6909(0x5Fb9EBDD9bcBa3FB615CD07981aa5F4650BbD90D).balanceOf(
+        //         0xF1D6ab29d12cF2bee25A195579F544BFcC3dD78f, 2000
+        //     ),
+        //     0xF1D6ab29d12cF2bee25A195579F544BFcC3dD78f
+        // );
+
+        IERC20Detailed(MUSD).approve(
+            0x52280eA8979d52033E14df086F4dF555a258bEb4,
+            IERC20Detailed(MUSD).balanceOf(0xF1D6ab29d12cF2bee25A195579F544BFcC3dD78f)
+        );
+        console2.log(
+            "Repaying debt: ",
+            IAERC6909(0xc596AeF495cC08ac642A616919A8ee6213f533bb).balanceOf(
+                0xF1D6ab29d12cF2bee25A195579F544BFcC3dD78f, 2129
+            )
+        );
+        IMiniPool(0x52280eA8979d52033E14df086F4dF555a258bEb4).repay(
+            MUSD,
+            true,
+            IAERC6909(0xc596AeF495cC08ac642A616919A8ee6213f533bb).balanceOf(
+                0xF1D6ab29d12cF2bee25A195579F544BFcC3dD78f, 2129
+            ),
+            0xF1D6ab29d12cF2bee25A195579F544BFcC3dD78f
+        );
+        vm.stopPrank();
+    }
+
     function logAggregatedMiniPoolReservesData(AggregatedMiniPoolReservesData memory d)
         internal
         view
@@ -404,67 +486,15 @@ contract TestBeforeAndAfterAttack is Test {
         console2.log("currentFlow:", d.currentFlow);
     }
 
-    function testBadDebtLineaMiniPool() public {
+    function analyzeBadDebt(address[] memory users, address miniPool) internal {
+        uint256 numberOfUsersWithBadDebt = 0;
         uint256 badDebt = 0;
         uint256 badDebtExcludingHacker = 0;
-        address[] memory users = lineaUsers;
-        address miniPool = 0x52280eA8979d52033E14df086F4dF555a258bEb4;
         for (uint256 idx = 0; idx < users.length; idx++) {
             Liquidator.UsdCollateralAndDebt memory usdCollateralAndDebt =
                 liquidator.calculateUserCollateraAndDebtInUsd(users[idx], miniPool);
-            if (
-                users[idx] != 0xcd69567080Dccad1Afe61aCc022c0A7164B29AB4
-                    && users[idx] != 0x9520C9040338bE61005590cC1BD15caa10a6613c
-                    && users[idx] != 0x1D0A98B5daB763FaC9dd4d3d0FE7ada18DBb3535
-                    && users[idx] != 0x510A269A93736B5B5E3C2133e8f2e7D829ca3Fec
-                    && users[idx] != 0xA27eBF925Ec2D1db0cB6b5CAbDab108F71fa6b53
-                    && users[idx] != 0x08ef8C80eBcFCb6a3D1460657c55042cEd5F45D3
-                    && users[idx] != 0x76F844359ffBe267F4c02ffD76184e27b1AeBE6B
-                    && users[idx] != 0x9B3020F0cABc4bA0346cce5FC02e7Cf681E0e227
-                    && users[idx] != 0x9c57F65aB8c45E52128ea6630615f54E3038a4bd
-            ) {
-                console2.log("User: ", users[idx]);
-            } else {
-                console2.log("->>> HACKER: ", users[idx]);
-            }
-            console2.log("  USD Collateral: %8e", usdCollateralAndDebt.userUsdCollateral);
-            console2.log("  USD Debt: %8e", usdCollateralAndDebt.userUsdDebt);
 
-            if (usdCollateralAndDebt.userUsdDebt > usdCollateralAndDebt.userUsdCollateral) {
-                console2.log(
-                    "  Bad Debt: %8e",
-                    (usdCollateralAndDebt.userUsdDebt - usdCollateralAndDebt.userUsdCollateral)
-                );
-                badDebt +=
-                    (usdCollateralAndDebt.userUsdDebt - usdCollateralAndDebt.userUsdCollateral);
-                console2.log("    - Borrowed tokens: ");
-                for (
-                    uint256 i = 0;
-                    usdCollateralAndDebt.debtTokens[i] != address(0)
-                        && i < usdCollateralAndDebt.debtTokens.length;
-                    i++
-                ) {
-                    console2.log(
-                        "      * %s: %8e",
-                        IERC20Detailed(usdCollateralAndDebt.debtTokens[i]).symbol(),
-                        usdCollateralAndDebt.debtAmount[i] * 1e8
-                            / 10 ** IERC20Detailed(usdCollateralAndDebt.debtTokens[i]).decimals()
-                    );
-                    if (
-                        users[idx] != 0xcd69567080Dccad1Afe61aCc022c0A7164B29AB4
-                            && users[idx] != 0x9520C9040338bE61005590cC1BD15caa10a6613c
-                            && users[idx] != 0x1D0A98B5daB763FaC9dd4d3d0FE7ada18DBb3535
-                            && users[idx] != 0x510A269A93736B5B5E3C2133e8f2e7D829ca3Fec
-                            && users[idx] != 0xA27eBF925Ec2D1db0cB6b5CAbDab108F71fa6b53
-                            && users[idx] != 0x08ef8C80eBcFCb6a3D1460657c55042cEd5F45D3
-                            && users[idx] != 0x76F844359ffBe267F4c02ffD76184e27b1AeBE6B
-                            && users[idx] != 0x9B3020F0cABc4bA0346cce5FC02e7Cf681E0e227
-                            && users[idx] != 0x9c57F65aB8c45E52128ea6630615f54E3038a4bd
-                    ) {
-                        assetSum[usdCollateralAndDebt.debtTokens[i]] +=
-                            usdCollateralAndDebt.debtAmount[i];
-                    }
-                }
+            if (usdCollateralAndDebt.userUsdCollateral > 0) {
                 if (
                     users[idx] != 0xcd69567080Dccad1Afe61aCc022c0A7164B29AB4
                         && users[idx] != 0x9520C9040338bE61005590cC1BD15caa10a6613c
@@ -476,16 +506,117 @@ contract TestBeforeAndAfterAttack is Test {
                         && users[idx] != 0x9B3020F0cABc4bA0346cce5FC02e7Cf681E0e227
                         && users[idx] != 0x9c57F65aB8c45E52128ea6630615f54E3038a4bd
                 ) {
-                    badDebtExcludingHacker +=
-                        (usdCollateralAndDebt.userUsdDebt - usdCollateralAndDebt.userUsdCollateral);
+                    console2.log("User: ", users[idx]);
+                } else {
+                    console2.log("->>> HACKER: ", users[idx]);
                 }
-            } else {
-                console2.log("  Bad Debt: 0");
+                console2.log("  USD Collateral: %8e", usdCollateralAndDebt.userUsdCollateral);
+                console2.log("  USD Debt: %8e", usdCollateralAndDebt.userUsdDebt);
+
+                if (usdCollateralAndDebt.userUsdDebt > usdCollateralAndDebt.userUsdCollateral) {
+                    numberOfUsersWithBadDebt++;
+                    if (
+                        (usdCollateralAndDebt.userUsdDebt - usdCollateralAndDebt.userUsdCollateral)
+                            > 10_000e8
+                    ) {
+                        console2.log(
+                            " >$10_000 Bad Debt: %8e",
+                            (
+                                usdCollateralAndDebt.userUsdDebt
+                                    - usdCollateralAndDebt.userUsdCollateral
+                            )
+                        );
+                    } else {
+                        console2.log(
+                            "  Bad Debt: %8e",
+                            (
+                                usdCollateralAndDebt.userUsdDebt
+                                    - usdCollateralAndDebt.userUsdCollateral
+                            )
+                        );
+                    }
+                    badDebt +=
+                        (usdCollateralAndDebt.userUsdDebt - usdCollateralAndDebt.userUsdCollateral);
+                    console2.log("    - Borrowed tokens: ");
+                    for (uint256 i = 0; i < usdCollateralAndDebt.debtTokens.length; i++) {
+                        if (usdCollateralAndDebt.debtTokens[i] != address(0)) {
+                            console2.log(
+                                "      * %s: %8e",
+                                IERC20Detailed(usdCollateralAndDebt.debtTokens[i]).symbol(),
+                                usdCollateralAndDebt.debtAmount[i] * 1e8
+                                    / 10
+                                        ** IERC20Detailed(usdCollateralAndDebt.debtTokens[i]).decimals()
+                            );
+                            if (
+                                users[idx] != 0xcd69567080Dccad1Afe61aCc022c0A7164B29AB4
+                                    && users[idx] != 0x9520C9040338bE61005590cC1BD15caa10a6613c
+                                    && users[idx] != 0x1D0A98B5daB763FaC9dd4d3d0FE7ada18DBb3535
+                                    && users[idx] != 0x510A269A93736B5B5E3C2133e8f2e7D829ca3Fec
+                                    && users[idx] != 0xA27eBF925Ec2D1db0cB6b5CAbDab108F71fa6b53
+                                    && users[idx] != 0x08ef8C80eBcFCb6a3D1460657c55042cEd5F45D3
+                                    && users[idx] != 0x76F844359ffBe267F4c02ffD76184e27b1AeBE6B
+                                    && users[idx] != 0x9B3020F0cABc4bA0346cce5FC02e7Cf681E0e227
+                                    && users[idx] != 0x9c57F65aB8c45E52128ea6630615f54E3038a4bd
+                            ) {
+                                debtAssetSum[usdCollateralAndDebt.debtTokens[i]] +=
+                                    usdCollateralAndDebt.debtAmount[i];
+                            }
+                        }
+                    }
+                    console2.log("    - Provided tokens: ");
+                    for (uint256 i = 0; i < usdCollateralAndDebt.collateralTokens.length; i++) {
+                        if (usdCollateralAndDebt.collateralTokens[i] != address(0)) {
+                            console2.log(
+                                "      * %s: %8e",
+                                IERC20Detailed(usdCollateralAndDebt.collateralTokens[i]).symbol(),
+                                usdCollateralAndDebt.debtAmount[i] * 1e8
+                                    / 10
+                                        ** IERC20Detailed(usdCollateralAndDebt.collateralTokens[i]).decimals(
+                                        )
+                            );
+                            if (
+                                users[idx] != 0xcd69567080Dccad1Afe61aCc022c0A7164B29AB4
+                                    && users[idx] != 0x9520C9040338bE61005590cC1BD15caa10a6613c
+                                    && users[idx] != 0x1D0A98B5daB763FaC9dd4d3d0FE7ada18DBb3535
+                                    && users[idx] != 0x510A269A93736B5B5E3C2133e8f2e7D829ca3Fec
+                                    && users[idx] != 0xA27eBF925Ec2D1db0cB6b5CAbDab108F71fa6b53
+                                    && users[idx] != 0x08ef8C80eBcFCb6a3D1460657c55042cEd5F45D3
+                                    && users[idx] != 0x76F844359ffBe267F4c02ffD76184e27b1AeBE6B
+                                    && users[idx] != 0x9B3020F0cABc4bA0346cce5FC02e7Cf681E0e227
+                                    && users[idx] != 0x9c57F65aB8c45E52128ea6630615f54E3038a4bd
+                            ) {
+                                collateralAssetSum[usdCollateralAndDebt.collateralTokens[i]] +=
+                                    usdCollateralAndDebt.collateralAmount[i];
+                            }
+                        }
+                    }
+                    if (
+                        users[idx] != 0xcd69567080Dccad1Afe61aCc022c0A7164B29AB4
+                            && users[idx] != 0x9520C9040338bE61005590cC1BD15caa10a6613c
+                            && users[idx] != 0x1D0A98B5daB763FaC9dd4d3d0FE7ada18DBb3535
+                            && users[idx] != 0x510A269A93736B5B5E3C2133e8f2e7D829ca3Fec
+                            && users[idx] != 0xA27eBF925Ec2D1db0cB6b5CAbDab108F71fa6b53
+                            && users[idx] != 0x08ef8C80eBcFCb6a3D1460657c55042cEd5F45D3
+                            && users[idx] != 0x76F844359ffBe267F4c02ffD76184e27b1AeBE6B
+                            && users[idx] != 0x9B3020F0cABc4bA0346cce5FC02e7Cf681E0e227
+                            && users[idx] != 0x9c57F65aB8c45E52128ea6630615f54E3038a4bd
+                    ) {
+                        badDebtExcludingHacker += (
+                            usdCollateralAndDebt.userUsdDebt
+                                - usdCollateralAndDebt.userUsdCollateral
+                        );
+                    }
+                } else {
+                    console2.log("  Bad Debt: 0");
+                }
             }
         }
 
+        console2.log("---------------------------------------");
+        console2.log("Block number: ", block.number);
         console2.log("FINAL BAD DEBT: %8e", badDebt);
         console2.log("FINAL BAD DEBT excluding hacker: %8e", badDebtExcludingHacker);
+        console2.log("Number of users with bad debt: ", numberOfUsersWithBadDebt);
         console2.log("---------------------------------------");
         (address[] memory reserveList,) = IMiniPool(miniPool).getReservesList();
         IAERC6909 erc6909 = IAERC6909(
@@ -497,7 +628,15 @@ contract TestBeforeAndAfterAttack is Test {
                 console2.log(
                     "Total borrowed (excluding hacker) for %s : %8e",
                     IERC20Detailed(IAToken(reserveList[idx]).UNDERLYING_ASSET_ADDRESS()).symbol(),
-                    assetSum[IAToken(reserveList[idx]).UNDERLYING_ASSET_ADDRESS()] * 1e8
+                    debtAssetSum[IAToken(reserveList[idx]).UNDERLYING_ASSET_ADDRESS()] * 1e8
+                        / 10
+                            ** IERC20Detailed(IAToken(reserveList[idx]).UNDERLYING_ASSET_ADDRESS()).decimals(
+                            )
+                );
+                console2.log(
+                    "Collateral liquidity associated with bad debt(excluding hacker) for %s : %8e",
+                    IERC20Detailed(IAToken(reserveList[idx]).UNDERLYING_ASSET_ADDRESS()).symbol(),
+                    collateralAssetSum[IAToken(reserveList[idx]).UNDERLYING_ASSET_ADDRESS()] * 1e8
                         / 10
                             ** IERC20Detailed(IAToken(reserveList[idx]).UNDERLYING_ASSET_ADDRESS()).decimals(
                             )
@@ -506,7 +645,13 @@ contract TestBeforeAndAfterAttack is Test {
                 console2.log(
                     "Total borrowed (excluding hacker) for %s : %8e",
                     IERC20Detailed(reserveList[idx]).symbol(),
-                    assetSum[reserveList[idx]] * 1e8
+                    debtAssetSum[reserveList[idx]] * 1e8
+                        / 10 ** IERC20Detailed(reserveList[idx]).decimals()
+                );
+                console2.log(
+                    "Collateral liquidity associated with bad debt (excluding hacker) for %s : %8e",
+                    IERC20Detailed(reserveList[idx]).symbol(),
+                    collateralAssetSum[reserveList[idx]] * 1e8
                         / 10 ** IERC20Detailed(reserveList[idx]).decimals()
                 );
             }
@@ -514,11 +659,10 @@ contract TestBeforeAndAfterAttack is Test {
         console2.log("---------------------------------------");
     }
 
-    function testBadDebtRex33MiniPool() public {
+    function analyzeBadDebtOrigin(address[] memory users, address miniPool) internal {
+        uint256 numberOfUsersWithBadDebt = 0;
         uint256 badDebt = 0;
         uint256 badDebtExcludingHacker = 0;
-        address[] memory users = rex33Users;
-        address miniPool = 0x65559abECD1227Cc1779F500453Da1f9fcADd928;
         for (uint256 idx = 0; idx < users.length; idx++) {
             Liquidator.UsdCollateralAndDebt memory usdCollateralAndDebt =
                 liquidator.calculateUserCollateraAndDebtInUsd(users[idx], miniPool);
@@ -541,38 +685,72 @@ contract TestBeforeAndAfterAttack is Test {
             console2.log("  USD Debt: %8e", usdCollateralAndDebt.userUsdDebt);
 
             if (usdCollateralAndDebt.userUsdDebt > usdCollateralAndDebt.userUsdCollateral) {
-                console2.log(
-                    "  Bad Debt: %8e",
+                numberOfUsersWithBadDebt++;
+                if (
                     (usdCollateralAndDebt.userUsdDebt - usdCollateralAndDebt.userUsdCollateral)
-                );
+                        > 10_000e8
+                ) {
+                    console2.log(
+                        " >$10_000 Bad Debt: %8e",
+                        (usdCollateralAndDebt.userUsdDebt - usdCollateralAndDebt.userUsdCollateral)
+                    );
+                } else {
+                    console2.log(
+                        "  Bad Debt: %8e",
+                        (usdCollateralAndDebt.userUsdDebt - usdCollateralAndDebt.userUsdCollateral)
+                    );
+                }
                 badDebt +=
                     (usdCollateralAndDebt.userUsdDebt - usdCollateralAndDebt.userUsdCollateral);
                 console2.log("    - Borrowed tokens: ");
-                for (
-                    uint256 i = 0;
-                    usdCollateralAndDebt.debtTokens[i] != address(0)
-                        && i < usdCollateralAndDebt.debtTokens.length;
-                    i++
-                ) {
-                    console2.log(
-                        "      * %s: %8e",
-                        IERC20Detailed(usdCollateralAndDebt.debtTokens[i]).symbol(),
-                        usdCollateralAndDebt.debtAmount[i] * 1e8
-                            / 10 ** IERC20Detailed(usdCollateralAndDebt.debtTokens[i]).decimals()
-                    );
-                    if (
-                        users[idx] != 0xcd69567080Dccad1Afe61aCc022c0A7164B29AB4
-                            && users[idx] != 0x9520C9040338bE61005590cC1BD15caa10a6613c
-                            && users[idx] != 0x1D0A98B5daB763FaC9dd4d3d0FE7ada18DBb3535
-                            && users[idx] != 0x510A269A93736B5B5E3C2133e8f2e7D829ca3Fec
-                            && users[idx] != 0xA27eBF925Ec2D1db0cB6b5CAbDab108F71fa6b53
-                            && users[idx] != 0x08ef8C80eBcFCb6a3D1460657c55042cEd5F45D3
-                            && users[idx] != 0x76F844359ffBe267F4c02ffD76184e27b1AeBE6B
-                            && users[idx] != 0x9B3020F0cABc4bA0346cce5FC02e7Cf681E0e227
-                            && users[idx] != 0x9c57F65aB8c45E52128ea6630615f54E3038a4bd
-                    ) {
-                        assetSum[usdCollateralAndDebt.debtTokens[i]] +=
-                            usdCollateralAndDebt.debtAmount[i];
+                for (uint256 i = 0; i < usdCollateralAndDebt.debtTokens.length; i++) {
+                    if (usdCollateralAndDebt.debtTokens[i] != address(0)) {
+                        console2.log(
+                            "      * %s: %8e",
+                            IERC20Detailed(usdCollateralAndDebt.debtTokens[i]).symbol(),
+                            usdCollateralAndDebt.debtAmount[i] * 1e8
+                                / 10 ** IERC20Detailed(usdCollateralAndDebt.debtTokens[i]).decimals()
+                        );
+                        if (
+                            users[idx] != 0xcd69567080Dccad1Afe61aCc022c0A7164B29AB4
+                                && users[idx] != 0x9520C9040338bE61005590cC1BD15caa10a6613c
+                                && users[idx] != 0x1D0A98B5daB763FaC9dd4d3d0FE7ada18DBb3535
+                                && users[idx] != 0x510A269A93736B5B5E3C2133e8f2e7D829ca3Fec
+                                && users[idx] != 0xA27eBF925Ec2D1db0cB6b5CAbDab108F71fa6b53
+                                && users[idx] != 0x08ef8C80eBcFCb6a3D1460657c55042cEd5F45D3
+                                && users[idx] != 0x76F844359ffBe267F4c02ffD76184e27b1AeBE6B
+                                && users[idx] != 0x9B3020F0cABc4bA0346cce5FC02e7Cf681E0e227
+                                && users[idx] != 0x9c57F65aB8c45E52128ea6630615f54E3038a4bd
+                        ) {
+                            debtAssetSum[usdCollateralAndDebt.debtTokens[i]] +=
+                                usdCollateralAndDebt.debtAmount[i];
+                        }
+                    }
+                }
+                console2.log("    - Provided tokens: ");
+                for (uint256 i = 0; i < usdCollateralAndDebt.collateralTokens.length; i++) {
+                    if (usdCollateralAndDebt.collateralTokens[i] != address(0)) {
+                        console2.log(
+                            "      * %s: %8e",
+                            IERC20Detailed(usdCollateralAndDebt.collateralTokens[i]).symbol(),
+                            usdCollateralAndDebt.debtAmount[i] * 1e8
+                                / 10
+                                    ** IERC20Detailed(usdCollateralAndDebt.collateralTokens[i]).decimals()
+                        );
+                        if (
+                            users[idx] != 0xcd69567080Dccad1Afe61aCc022c0A7164B29AB4
+                                && users[idx] != 0x9520C9040338bE61005590cC1BD15caa10a6613c
+                                && users[idx] != 0x1D0A98B5daB763FaC9dd4d3d0FE7ada18DBb3535
+                                && users[idx] != 0x510A269A93736B5B5E3C2133e8f2e7D829ca3Fec
+                                && users[idx] != 0xA27eBF925Ec2D1db0cB6b5CAbDab108F71fa6b53
+                                && users[idx] != 0x08ef8C80eBcFCb6a3D1460657c55042cEd5F45D3
+                                && users[idx] != 0x76F844359ffBe267F4c02ffD76184e27b1AeBE6B
+                                && users[idx] != 0x9B3020F0cABc4bA0346cce5FC02e7Cf681E0e227
+                                && users[idx] != 0x9c57F65aB8c45E52128ea6630615f54E3038a4bd
+                        ) {
+                            collateralAssetSum[usdCollateralAndDebt.collateralTokens[i]] +=
+                                usdCollateralAndDebt.collateralAmount[i];
+                        }
                     }
                 }
                 if (
@@ -594,8 +772,11 @@ contract TestBeforeAndAfterAttack is Test {
             }
         }
 
+        console2.log("---------------------------------------");
+        console2.log("Block number: ", block.number);
         console2.log("FINAL BAD DEBT: %8e", badDebt);
         console2.log("FINAL BAD DEBT excluding hacker: %8e", badDebtExcludingHacker);
+        console2.log("Number of users with bad debt: ", numberOfUsersWithBadDebt);
         console2.log("---------------------------------------");
         (address[] memory reserveList,) = IMiniPool(miniPool).getReservesList();
         IAERC6909 erc6909 = IAERC6909(
@@ -607,7 +788,15 @@ contract TestBeforeAndAfterAttack is Test {
                 console2.log(
                     "Total borrowed (excluding hacker) for %s : %8e",
                     IERC20Detailed(IAToken(reserveList[idx]).UNDERLYING_ASSET_ADDRESS()).symbol(),
-                    assetSum[IAToken(reserveList[idx]).UNDERLYING_ASSET_ADDRESS()] * 1e8
+                    debtAssetSum[IAToken(reserveList[idx]).UNDERLYING_ASSET_ADDRESS()] * 1e8
+                        / 10
+                            ** IERC20Detailed(IAToken(reserveList[idx]).UNDERLYING_ASSET_ADDRESS()).decimals(
+                            )
+                );
+                console2.log(
+                    "Collateral liquidity associated with bad debt(excluding hacker) for %s : %8e",
+                    IERC20Detailed(IAToken(reserveList[idx]).UNDERLYING_ASSET_ADDRESS()).symbol(),
+                    collateralAssetSum[IAToken(reserveList[idx]).UNDERLYING_ASSET_ADDRESS()] * 1e8
                         / 10
                             ** IERC20Detailed(IAToken(reserveList[idx]).UNDERLYING_ASSET_ADDRESS()).decimals(
                             )
@@ -616,12 +805,52 @@ contract TestBeforeAndAfterAttack is Test {
                 console2.log(
                     "Total borrowed (excluding hacker) for %s : %8e",
                     IERC20Detailed(reserveList[idx]).symbol(),
-                    assetSum[reserveList[idx]] * 1e8
+                    debtAssetSum[reserveList[idx]] * 1e8
+                        / 10 ** IERC20Detailed(reserveList[idx]).decimals()
+                );
+                console2.log(
+                    "Collateral liquidity associated with bad debt (excluding hacker) for %s : %8e",
+                    IERC20Detailed(reserveList[idx]).symbol(),
+                    collateralAssetSum[reserveList[idx]] * 1e8
                         / 10 ** IERC20Detailed(reserveList[idx]).decimals()
                 );
             }
         }
         console2.log("---------------------------------------");
+    }
+
+    function testBadDebtLineaMiniPool() public {
+        address[] memory users = lineaUsers;
+        address miniPool = 0x52280eA8979d52033E14df086F4dF555a258bEb4;
+        analyzeBadDebt(users, miniPool);
+    }
+
+    function testDayAgoBadDebtLineaMiniPooll() public {
+        string memory lineaRpc = vm.envString("LINEA_RPC_URL");
+        uint256 lineaFork = vm.createSelectFork(lineaRpc, (25302377 - 1 days));
+        assertEq(vm.activeFork(), lineaFork);
+        liquidator = new Liquidator();
+
+        address[] memory users = lineaUsers;
+        address miniPool = 0x52280eA8979d52033E14df086F4dF555a258bEb4;
+        analyzeBadDebt(users, miniPool);
+    }
+
+    function testBadDebtRex33MiniPool() public {
+        address[] memory users = rex33Users;
+        address miniPool = 0x65559abECD1227Cc1779F500453Da1f9fcADd928;
+        analyzeBadDebt(users, miniPool);
+    }
+
+    function testDayAgoBadDebtRex33MiniPool() public {
+        string memory lineaRpc = vm.envString("LINEA_RPC_URL");
+        uint256 lineaFork = vm.createSelectFork(lineaRpc, (25302377 - 12 hours));
+        assertEq(vm.activeFork(), lineaFork);
+        liquidator = new Liquidator();
+
+        address[] memory users = rex33Users;
+        address miniPool = 0x65559abECD1227Cc1779F500453Da1f9fcADd928;
+        analyzeBadDebt(users, miniPool);
     }
 
     function testBadDebtLstMiniPool() public view {
@@ -766,5 +995,224 @@ contract TestBeforeAndAfterAttack is Test {
         console2.log("FINAL BAD DEBT excluding hacker: %8e", badDebtExcludingHacker);
     }
 
-    function testLiquidation() public {}
+    function testLiquidationLinea(address user) public {
+        MiniPoolV3 newMiniPool = new MiniPoolV3();
+        console2.log("MiniPool Impl deployed at:", address(newMiniPool));
+        vm.startPrank(ADMIN);
+        IMiniPoolAddressesProvider(MINI_POOL_ADDRESS_PROVIDER).setMiniPoolImpl(
+            address(newMiniPool), 2
+        );
+        IMiniPoolAddressesProvider(MINI_POOL_ADDRESS_PROVIDER).setMiniPoolImpl(
+            address(newMiniPool), 3
+        );
+        vm.stopPrank();
+
+        vm.assume(user != EMERGENCY && user != ADMIN && user != LIQUIDATOR);
+
+        deal(0xa500000000e482752f032eA387390b6025a2377b, user, 10e18);
+        vm.startPrank(user);
+        IERC20Detailed(0xa500000000e482752f032eA387390b6025a2377b).approve(
+            0x52280eA8979d52033E14df086F4dF555a258bEb4, 1e18
+        );
+        IERC20Detailed(0xa500000000e482752f032eA387390b6025a2377b).approve(
+            0x65559abECD1227Cc1779F500453Da1f9fcADd928, 1e18
+        );
+        vm.expectRevert(bytes("V3: Off"));
+        IMiniPool(0x52280eA8979d52033E14df086F4dF555a258bEb4).liquidationCall(
+            0x9A4cA144F38963007cFAC645d77049a1Dd4b209A,
+            true,
+            0xa500000000e482752f032eA387390b6025a2377b,
+            false,
+            0xcd69567080Dccad1Afe61aCc022c0A7164B29AB4,
+            1e18,
+            false
+        );
+        vm.expectRevert(bytes("V3: Off"));
+        IMiniPool(0x65559abECD1227Cc1779F500453Da1f9fcADd928).liquidationCall(
+            0x9A4cA144F38963007cFAC645d77049a1Dd4b209A,
+            true,
+            0xa500000000e482752f032eA387390b6025a2377b,
+            false,
+            0xcd69567080Dccad1Afe61aCc022c0A7164B29AB4,
+            1e18,
+            false
+        );
+        vm.stopPrank();
+
+        deal(0xa500000000e482752f032eA387390b6025a2377b, ADMIN, 10e18);
+        vm.startPrank(ADMIN);
+        IERC20Detailed(0xa500000000e482752f032eA387390b6025a2377b).approve(
+            0x52280eA8979d52033E14df086F4dF555a258bEb4, 1e18
+        );
+        IERC20Detailed(0xa500000000e482752f032eA387390b6025a2377b).approve(
+            0x65559abECD1227Cc1779F500453Da1f9fcADd928, 1e18
+        );
+        IMiniPool(0x52280eA8979d52033E14df086F4dF555a258bEb4).liquidationCall(
+            0x9A4cA144F38963007cFAC645d77049a1Dd4b209A,
+            true,
+            0xa500000000e482752f032eA387390b6025a2377b,
+            false,
+            0xcd69567080Dccad1Afe61aCc022c0A7164B29AB4,
+            1e18,
+            false
+        );
+        IMiniPool(0x65559abECD1227Cc1779F500453Da1f9fcADd928).liquidationCall(
+            0x9A4cA144F38963007cFAC645d77049a1Dd4b209A,
+            true,
+            0xa500000000e482752f032eA387390b6025a2377b,
+            false,
+            0xcd69567080Dccad1Afe61aCc022c0A7164B29AB4,
+            1e18,
+            false
+        );
+        vm.stopPrank();
+        deal(0xa500000000e482752f032eA387390b6025a2377b, EMERGENCY, 10e18);
+        vm.startPrank(EMERGENCY);
+        IERC20Detailed(0xa500000000e482752f032eA387390b6025a2377b).approve(
+            0x52280eA8979d52033E14df086F4dF555a258bEb4, 1e18
+        );
+        IERC20Detailed(0xa500000000e482752f032eA387390b6025a2377b).approve(
+            0x65559abECD1227Cc1779F500453Da1f9fcADd928, 1e18
+        );
+        IMiniPool(0x52280eA8979d52033E14df086F4dF555a258bEb4).liquidationCall(
+            0x9A4cA144F38963007cFAC645d77049a1Dd4b209A,
+            true,
+            0xa500000000e482752f032eA387390b6025a2377b,
+            false,
+            0xcd69567080Dccad1Afe61aCc022c0A7164B29AB4,
+            1e18,
+            false
+        );
+        IMiniPool(0x65559abECD1227Cc1779F500453Da1f9fcADd928).liquidationCall(
+            0x9A4cA144F38963007cFAC645d77049a1Dd4b209A,
+            true,
+            0xa500000000e482752f032eA387390b6025a2377b,
+            false,
+            0xcd69567080Dccad1Afe61aCc022c0A7164B29AB4,
+            1e18,
+            false
+        );
+        vm.stopPrank();
+        deal(0xa500000000e482752f032eA387390b6025a2377b, LIQUIDATOR, 10e18);
+        vm.startPrank(LIQUIDATOR);
+        IERC20Detailed(0xa500000000e482752f032eA387390b6025a2377b).approve(
+            0x52280eA8979d52033E14df086F4dF555a258bEb4, 1e18
+        );
+        IERC20Detailed(0xa500000000e482752f032eA387390b6025a2377b).approve(
+            0x65559abECD1227Cc1779F500453Da1f9fcADd928, 1e18
+        );
+        IMiniPool(0x52280eA8979d52033E14df086F4dF555a258bEb4).liquidationCall(
+            0x9A4cA144F38963007cFAC645d77049a1Dd4b209A,
+            true,
+            0xa500000000e482752f032eA387390b6025a2377b,
+            false,
+            0xcd69567080Dccad1Afe61aCc022c0A7164B29AB4,
+            1e18,
+            false
+        );
+        IMiniPool(0x65559abECD1227Cc1779F500453Da1f9fcADd928).liquidationCall(
+            0x9A4cA144F38963007cFAC645d77049a1Dd4b209A,
+            true,
+            0xa500000000e482752f032eA387390b6025a2377b,
+            false,
+            0xcd69567080Dccad1Afe61aCc022c0A7164B29AB4,
+            1e18,
+            false
+        );
+        vm.stopPrank();
+    }
+
+    function testGetAllConfigsForMiniPools() public {
+        address miniPool = 0x65559abECD1227Cc1779F500453Da1f9fcADd928; // 0x52280eA8979d52033E14df086F4dF555a258bEb4
+        (address[] memory reserveList,) = IMiniPool(miniPool).getReservesList();
+        console2.log("--------------------------------------------------");
+        console2.log("Config at miniPool:", miniPool);
+        for (uint256 idx = 0; idx < reserveList.length; idx++) {
+            console2.log("_______________________________________________");
+            AggregatedMiniPoolReservesData memory aggregatedMiniPoolReservesData =
+            AsteraDataProvider2(DATA_PROVIDER).getReserveDataForAssetAtMiniPool(
+                reserveList[idx], miniPool
+            );
+            console2.log("Reserve %s: ", IERC20Detailed(reserveList[idx]).symbol());
+            console2.log(
+                "   LTV=%d, Liq. threshold=%d, Liq. bonus=%d",
+                aggregatedMiniPoolReservesData.baseLTVasCollateral,
+                aggregatedMiniPoolReservesData.reserveLiquidationThreshold,
+                aggregatedMiniPoolReservesData.reserveLiquidationBonus
+            );
+            console2.log("Reserve %s: ", reserveList[idx]);
+            console2.log(
+                "   TO SET ->> LTV=%d, Liq. threshold=%d, Liq. bonus=%d <<-",
+                aggregatedMiniPoolReservesData.baseLTVasCollateral,
+                9000,
+                10500
+            );
+            vm.prank(ADMIN);
+            IMiniPoolConfigurator(MINI_POOL_CONFIGURATOR).configureReserveAsCollateral(
+                reserveList[idx],
+                aggregatedMiniPoolReservesData.baseLTVasCollateral,
+                9000,
+                10500,
+                IMiniPool(miniPool)
+            );
+            aggregatedMiniPoolReservesData = AsteraDataProvider2(DATA_PROVIDER)
+                .getReserveDataForAssetAtMiniPool(reserveList[idx], miniPool);
+            console2.log("_______________________AFTER____________________");
+            console2.log("Reserve %s: ", IERC20Detailed(reserveList[idx]).symbol());
+            console2.log(
+                "   LTV=%d, Liq. threshold=%d, Liq. bonus=%d",
+                aggregatedMiniPoolReservesData.baseLTVasCollateral,
+                aggregatedMiniPoolReservesData.reserveLiquidationThreshold,
+                aggregatedMiniPoolReservesData.reserveLiquidationBonus
+            );
+            console2.log("_______________________________________________");
+        }
+        console2.log("--------------------------------------------------");
+        console2.log("--------------------------------------------------");
+        miniPool = 0x52280eA8979d52033E14df086F4dF555a258bEb4;
+        (reserveList,) = IMiniPool(miniPool).getReservesList();
+        console2.log("Config at miniPool:", miniPool);
+        for (uint256 idx = 0; idx < reserveList.length; idx++) {
+            console2.log("_______________________________________________");
+            AggregatedMiniPoolReservesData memory aggregatedMiniPoolReservesData =
+            AsteraDataProvider2(DATA_PROVIDER).getReserveDataForAssetAtMiniPool(
+                reserveList[idx], miniPool
+            );
+            console2.log("Reserve %s: ", IERC20Detailed(reserveList[idx]).symbol());
+            console2.log(
+                "   LTV=%d, Liq. threshold=%d, Liq. bonus=%d",
+                aggregatedMiniPoolReservesData.baseLTVasCollateral,
+                aggregatedMiniPoolReservesData.reserveLiquidationThreshold,
+                aggregatedMiniPoolReservesData.reserveLiquidationBonus
+            );
+            console2.log("Reserve %s: ", reserveList[idx]);
+            console2.log(
+                "   TO SET ->> LTV=%d, Liq. threshold=%d, Liq. bonus=%d <<-",
+                aggregatedMiniPoolReservesData.baseLTVasCollateral,
+                9000,
+                10500
+            );
+            vm.prank(ADMIN);
+            IMiniPoolConfigurator(MINI_POOL_CONFIGURATOR).configureReserveAsCollateral(
+                reserveList[idx],
+                aggregatedMiniPoolReservesData.baseLTVasCollateral,
+                9000,
+                10500,
+                IMiniPool(miniPool)
+            );
+
+            aggregatedMiniPoolReservesData = AsteraDataProvider2(DATA_PROVIDER)
+                .getReserveDataForAssetAtMiniPool(reserveList[idx], miniPool);
+            console2.log("_______________________AFTER____________________");
+            console2.log("Reserve %s: ", IERC20Detailed(reserveList[idx]).symbol());
+            console2.log(
+                "   LTV=%d, Liq. threshold=%d, Liq. bonus=%d",
+                aggregatedMiniPoolReservesData.baseLTVasCollateral,
+                aggregatedMiniPoolReservesData.reserveLiquidationThreshold,
+                aggregatedMiniPoolReservesData.reserveLiquidationBonus
+            );
+            console2.log("_______________________________________________");
+        }
+        console2.log("--------------------------------------------------");
+    }
 }

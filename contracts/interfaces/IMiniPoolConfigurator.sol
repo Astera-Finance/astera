@@ -208,4 +208,6 @@ interface IMiniPoolConfigurator {
 
     function setMinipoolOwnerReserveFactor(address asset, uint256 reserveFactor, IMiniPool pool)
         external;
+
+    function setMinDebtThreshold(uint256 threshold, IMiniPool pool) external;
 }

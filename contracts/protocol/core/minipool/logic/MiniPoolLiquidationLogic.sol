@@ -46,7 +46,7 @@ library MiniPoolLiquidationLogic {
     using UserConfiguration for DataTypes.UserConfigurationMap;
 
     /// @dev The close factor percentage used in liquidations (50%).
-    uint256 internal constant LIQUIDATION_CLOSE_FACTOR_PERCENT = 10000;
+    uint256 internal constant LIQUIDATION_CLOSE_FACTOR_PERCENT = 5000;
 
     /**
      * @dev Emitted when a borrower is liquidated.

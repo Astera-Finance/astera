@@ -72,8 +72,6 @@ contract Liquidator is UUPSUpgradeable, Initializable {
         view
         returns (UsdCollateralAndDebt memory userCollateralAndDebt)
     {
-        uint256 collateralCounter = 0;
-        uint256 debtCounter = 0;
         ATokenERC6909 erc6909 =
             ATokenERC6909(miniPoolAddressesProvider.getMiniPoolToAERC6909(miniPool));
         (address[] memory reserveList,) = IMiniPool(miniPool).getReservesList();
@@ -89,25 +87,19 @@ contract Liquidator is UUPSUpgradeable, Initializable {
             userCollateralAndDebt.debtAmount[idx] = erc6909.balanceOf(user, debtTokenId);
             if (userCollateralAndDebt.collateralAmount[idx] > 0) {
                 if (isTranched) {
-                    userCollateralAndDebt.collateralTokens[collateralCounter] =
+                    userCollateralAndDebt.collateralTokens[idx] =
                         IAToken(reserveList[idx]).UNDERLYING_ASSET_ADDRESS();
                 } else {
-                    userCollateralAndDebt.collateralTokens[collateralCounter] = reserveList[idx];
+                    userCollateralAndDebt.collateralTokens[idx] = reserveList[idx];
                 }
-                userCollateralAndDebt.collateralAmount[collateralCounter] =
-                    userCollateralAndDebt.collateralAmount[idx];
-                collateralCounter++;
             }
             if (userCollateralAndDebt.debtAmount[idx] > 0) {
                 if (isTranched) {
-                    userCollateralAndDebt.debtTokens[debtCounter] =
+                    userCollateralAndDebt.debtTokens[idx] =
                         IAToken(reserveList[idx]).UNDERLYING_ASSET_ADDRESS();
                 } else {
-                    userCollateralAndDebt.debtTokens[debtCounter] = reserveList[idx];
+                    userCollateralAndDebt.debtTokens[idx] = reserveList[idx];
                 }
-                userCollateralAndDebt.debtAmount[debtCounter] =
-                    userCollateralAndDebt.debtAmount[idx];
-                debtCounter++;
             }
         }
         (userCollateralAndDebt.userUsdCollateral, userCollateralAndDebt.userUsdDebt,,,,) =
