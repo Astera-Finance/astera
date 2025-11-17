@@ -28,7 +28,9 @@ contract MiniPoolRewarderTest is Common {
 
     address constant ORACLE = 0xd971e9EC7357e9306c2a138E5c4eAfC04d241C87;
     ILendingPoolAddressesProvider lendingPoolAddressesProvider =
-        ILendingPoolAddressesProvider(0x9a460e7BD6D5aFCEafbE795e05C48455738fB119);
+        ILendingPoolAddressesProvider(
+            0x9a460e7BD6D5aFCEafbE795e05C48455738fB119
+        );
     IMiniPoolAddressesProvider miniPoolAddressesProvider =
         IMiniPoolAddressesProvider(0x9399aF805e673295610B17615C65b9d0cE1Ed306);
     IMiniPoolConfigurator miniPoolConfigurator =
@@ -49,7 +51,10 @@ contract MiniPoolRewarderTest is Common {
                     18
                 )
             );
-            vm.label(address(rewardTokens[idx]), string.concat("RewardToken ", uintToString(idx)));
+            vm.label(
+                address(rewardTokens[idx]),
+                string.concat("RewardToken ", uintToString(idx))
+            );
         }
     }
 
@@ -63,14 +68,18 @@ contract MiniPoolRewarderTest is Common {
                 address(rewardTokens[idx])
             );
             vm.label(
-                address(rewardsVault), string.concat("MiniPoolRewardsVault ", uintToString(idx))
+                address(rewardsVault),
+                string.concat("MiniPoolRewardsVault ", uintToString(idx))
             );
             vm.prank(address(lendingPoolAddressesProvider.getPoolAdmin()));
             rewardsVault.approveIncentivesController(type(uint256).max);
             miniPoolRewardsVaults.push(rewardsVault);
             rewardTokens[idx].mint(600 ether);
             rewardTokens[idx].transfer(address(rewardsVault), 600 ether);
-            miniPoolRewarder.setRewardsVault(address(rewardsVault), address(rewardTokens[idx]));
+            miniPoolRewarder.setRewardsVault(
+                address(rewardsVault),
+                address(rewardTokens[idx])
+            );
         }
     }
 
@@ -81,18 +90,27 @@ contract MiniPoolRewarderTest is Common {
         uint88 emissionsPerSecond,
         uint32 distributionEnd
     ) public {
-        DistributionTypes.MiniPoolRewardsConfigInput[] memory configs =
-            new DistributionTypes.MiniPoolRewardsConfigInput[](1);
-        DistributionTypes.Asset6909 memory asset =
-            DistributionTypes.Asset6909(aTokensErc6909Addr, assetID);
+        DistributionTypes.MiniPoolRewardsConfigInput[]
+            memory configs = new DistributionTypes.MiniPoolRewardsConfigInput[](
+                1
+            );
+        DistributionTypes.Asset6909 memory asset = DistributionTypes.Asset6909(
+            aTokensErc6909Addr,
+            assetID
+        );
         console2.log("rewardTokenAmount: ", rewardTokenAmount);
         configs[0] = DistributionTypes.MiniPoolRewardsConfigInput(
-            emissionsPerSecond, distributionEnd, asset, address(rewardTokens[rewardTokenIndex])
+            emissionsPerSecond,
+            distributionEnd,
+            asset,
+            address(rewardTokens[rewardTokenIndex])
         );
         console2.log("Configuring assetID: ", assetID);
         miniPoolRewarder.configureAssets(configs);
 
-        IMiniPool _miniPool = IMiniPool(ATokenERC6909(aTokensErc6909Addr).getMinipoolAddress());
+        IMiniPool _miniPool = IMiniPool(
+            ATokenERC6909(aTokensErc6909Addr).getMinipoolAddress()
+        );
         vm.startPrank(miniPoolAddressesProvider.getMainPoolAdmin());
         miniPoolConfigurator.setRewarderForReserve(
             ATokenERC6909(aTokensErc6909Addr).getUnderlyingAsset(assetID),
@@ -106,11 +124,14 @@ contract MiniPoolRewarderTest is Common {
     function setUp() public {
         // LINEA setup
         uint256 opFork = vm.createSelectFork(
-            "https://linea-mainnet.infura.io/v3/f47a8617e11b481fbf52c08d4e9ecf0d"
+            vm.envString("LINEA_RPC_URL"),
+            24096464
         );
         assertEq(vm.activeFork(), opFork);
 
-        lendingPool = ILendingPool(lendingPoolAddressesProvider.getLendingPool());
+        lendingPool = ILendingPool(
+            lendingPoolAddressesProvider.getLendingPool()
+        );
         miniPool = IMiniPool(miniPoolAddressesProvider.getMiniPool(2));
         aTokensErc6909Addr = miniPoolAddressesProvider.getMiniPoolToAERC6909(2);
 
@@ -193,53 +214,33 @@ contract MiniPoolRewarderTest is Common {
         vm.roll(block.number + 1);
 
         console2.log("Getting rewards vault");
-        address vault = miniPoolRewarder.getRewardsVault(address(rewardTokens[0]));
+        address vault = miniPoolRewarder.getRewardsVault(
+            address(rewardTokens[0])
+        );
         console2.log("vault", address(vault));
 
-        DistributionTypes.Asset6909[] memory assets = new DistributionTypes.Asset6909[](4);
+        DistributionTypes.Asset6909[]
+            memory assets = new DistributionTypes.Asset6909[](4);
         assets[0] = DistributionTypes.Asset6909(aTokensErc6909Addr, 1001);
         assets[1] = DistributionTypes.Asset6909(aTokensErc6909Addr, 1002);
         assets[2] = DistributionTypes.Asset6909(aTokensErc6909Addr, 2001);
         assets[3] = DistributionTypes.Asset6909(aTokensErc6909Addr, 2002);
 
         vm.startPrank(user1);
-        (, uint256[] memory user1Rewards) = miniPoolRewarder.claimAllRewardsToSelf(assets);
+        (, uint256[] memory user1Rewards) = miniPoolRewarder
+            .claimAllRewardsToSelf(assets);
         vm.stopPrank();
 
         console2.log("user1Rewards[0]", user1Rewards[0]);
 
         vm.startPrank(user2);
-        (, uint256[] memory user2Rewards) = miniPoolRewarder.claimAllRewardsToSelf(assets);
+        (, uint256[] memory user2Rewards) = miniPoolRewarder
+            .claimAllRewardsToSelf(assets);
         vm.stopPrank();
 
         assertGt(user1Rewards[0], 0, "wrong user1 rewards0");
         assertGt(user1Rewards[1], 0, "wrong user1 rewards1");
         assertEq(user2Rewards[0], 0 ether, "wrong user2 rewards");
-    }
-
-    function test_miniPoolLinea() public {
-        address myAddr = 0xEdeA7aAF2036686b01a5c1D1Fd09a86042BB4189;
-        AToken wasWeth = AToken(0x9A4cA144F38963007cFAC645d77049a1Dd4b209A);
-        ERC20 weth = ERC20(0xe5D7C2a44FfDDf6b295A15c148167daaAf5Cf34f);
-        IMiniPool _miniPool = IMiniPool(miniPoolAddressesProvider.getMiniPool(2));
-        // deal(address(weth), myAddr, 10 ether);
-        uint256 convertedBalance = wasWeth.convertToShares(weth.balanceOf(myAddr) / 2);
-        wasWeth.approve(address(_miniPool), convertedBalance);
-        weth.approve(address(_miniPool), weth.balanceOf(myAddr));
-        console2.log(
-            "My Balance %s vs after convertion %s from Rabby %s",
-            weth.balanceOf(myAddr),
-            convertedBalance,
-            40189414104992199
-        );
-
-        // console2.log("Converted balance", convertedBalance);
-        vm.startPrank(myAddr);
-        // console2.log("First deposit");
-        IMiniPool(_miniPool).deposit(address(wasWeth), true, convertedBalance, myAddr);
-
-        vm.stopPrank();
-        assert(false);
     }
 
     function test_setStratLinea() public {
