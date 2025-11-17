@@ -2,13 +2,15 @@
 pragma solidity ^0.8.13;
 
 import "../PropertiesBase.sol";
-import {ReserveConfiguration} from
-    "../../../contracts/protocol/libraries/configuration/ReserveConfiguration.sol";
+import {
+    ReserveConfiguration
+} from "../../../contracts/protocol/libraries/configuration/ReserveConfiguration.sol";
 import {ReserveLogic} from "../../../contracts/protocol/core/lendingpool/logic/ReserveLogic.sol";
 import {MathUtils} from "../../../contracts/protocol/libraries/math/MathUtils.sol";
 import {WadRayMath} from "../../../contracts/protocol/libraries/math/WadRayMath.sol";
-import {UserConfiguration} from
-    "../../../contracts/protocol/libraries/configuration/UserConfiguration.sol";
+import {
+    UserConfiguration
+} from "../../../contracts/protocol/libraries/configuration/UserConfiguration.sol";
 import {console} from "forge-std/console.sol";
 
 contract LendingPoolProp is PropertiesBase {
@@ -58,9 +60,9 @@ contract LendingPoolProp is PropertiesBase {
         assertEq(assetBalanceBefore - assetBalanceAfter, randAmt, "202");
 
         lastLiquidityIndexLP[address(asset)] =
-            pool.getReserveData(address(asset), true).liquidityIndex;
+        pool.getReserveData(address(asset), true).liquidityIndex;
         lastVariableBorrowIndexLP[address(asset)] =
-            pool.getReserveData(address(asset), true).variableBorrowIndex;
+        pool.getReserveData(address(asset), true).variableBorrowIndex;
     }
 
     /// @custom:invariant 224 - `withdraw()` must not result in a health factor of less than 1.
@@ -112,9 +114,9 @@ contract LendingPoolProp is PropertiesBase {
         assertEq(assetBalanceAfter - assetBalanceBefore, randAmt, "204");
 
         lastLiquidityIndexLP[address(asset)] =
-            pool.getReserveData(address(asset), true).liquidityIndex;
+        pool.getReserveData(address(asset), true).liquidityIndex;
         lastVariableBorrowIndexLP[address(asset)] =
-            pool.getReserveData(address(asset), true).variableBorrowIndex;
+        pool.getReserveData(address(asset), true).variableBorrowIndex;
     }
 
     /// @custom:invariant 205 - A user must not be able to `borrow()` if he doesn't own aTokens.
@@ -193,9 +195,9 @@ contract LendingPoolProp is PropertiesBase {
         }
 
         lastLiquidityIndexLP[address(asset)] =
-            pool.getReserveData(address(asset), true).liquidityIndex;
+        pool.getReserveData(address(asset), true).liquidityIndex;
         lastVariableBorrowIndexLP[address(asset)] =
-            pool.getReserveData(address(asset), true).variableBorrowIndex;
+        pool.getReserveData(address(asset), true).variableBorrowIndex;
     }
 
     /// @custom:invariant 210 - `repay()` must decrease the onBehalfOf debtToken balance by `amount`.
@@ -244,9 +246,9 @@ contract LendingPoolProp is PropertiesBase {
         assertGte(healthFactorAfter, healthFactorBefore, "212");
 
         lastLiquidityIndexLP[address(asset)] =
-            pool.getReserveData(address(asset), true).liquidityIndex;
+        pool.getReserveData(address(asset), true).liquidityIndex;
         lastVariableBorrowIndexLP[address(asset)] =
-            pool.getReserveData(address(asset), true).variableBorrowIndex;
+        pool.getReserveData(address(asset), true).variableBorrowIndex;
     }
 
     /// @custom:invariant 222 - Rehypothecation: farming percentage must be respected (+/- the drift) after a rebalance occured.

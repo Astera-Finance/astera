@@ -1,24 +1,28 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.23;
 
-import {IMiniPoolAddressesProvider} from
-    "../../../../../contracts/interfaces/IMiniPoolAddressesProvider.sol";
+import {
+    IMiniPoolAddressesProvider
+} from "../../../../../contracts/interfaces/IMiniPoolAddressesProvider.sol";
 import {IERC20} from "../../../../../contracts/dependencies/openzeppelin/contracts/IERC20.sol";
 import {IAERC6909} from "../../../../../contracts/interfaces/IAERC6909.sol";
 import {IAToken} from "../../../../../contracts/interfaces/IAToken.sol";
 import {IMiniPool} from "../../../../../contracts/interfaces/IMiniPool.sol";
 import {IFlowLimiter} from "../../../../../contracts/interfaces/base/IFlowLimiter.sol";
-import {IMiniPoolReserveInterestRateStrategy} from
-    "../../../../../contracts/interfaces/IMiniPoolReserveInterestRateStrategy.sol";
-import {BasePiReserveRateStrategy} from
-    "../../../../../contracts/protocol/core/interestRateStrategies/BasePiReserveRateStrategy.sol";
+import {
+    IMiniPoolReserveInterestRateStrategy
+} from "../../../../../contracts/interfaces/IMiniPoolReserveInterestRateStrategy.sol";
+import {
+    BasePiReserveRateStrategy
+} from "../../../../../contracts/protocol/core/interestRateStrategies/BasePiReserveRateStrategy.sol";
 import {WadRayMath} from "../../../../../contracts/protocol/libraries/math/WadRayMath.sol";
 import {PercentageMath} from "../../../../../contracts/protocol/libraries/math/PercentageMath.sol";
 import {MathUtils} from "../../../../../contracts/protocol/libraries/math/MathUtils.sol";
 import {DataTypes} from "../../../../../contracts/protocol/libraries/types/DataTypes.sol";
 import {ILendingPool} from "../../../../../contracts/interfaces/ILendingPool.sol";
-import {ReserveConfiguration} from
-    "../../../../../contracts/protocol/libraries/configuration/ReserveConfiguration.sol";
+import {
+    ReserveConfiguration
+} from "../../../../../contracts/protocol/libraries/configuration/ReserveConfiguration.sol";
 
 /**
  * @title MiniPoolPiReserveInterestRateStrategy contract.
@@ -185,25 +189,30 @@ contract MiniPoolPiReserveInterestRateStrategy is
         uint256 utilizationRate;
         address underlying;
         uint256 currentFlow;
-        (currentLiquidityRate, currentVariableBorrowRate, utilizationRate, underlying, currentFlow)
-        = _calculateInterestRates(
-            asset, aToken, liquidityAdded, liquidityTaken, totalVariableDebt, reserveFactor
-        );
+        (
+            currentLiquidityRate,
+            currentVariableBorrowRate,
+            utilizationRate,
+            underlying,
+            currentFlow
+        ) =
+            _calculateInterestRates(
+                asset, aToken, liquidityAdded, liquidityTaken, totalVariableDebt, reserveFactor
+            );
 
         // Here we make sure that the minipool can always repay its debt to the lendingpool.
         // https://www.desmos.com/calculator/3bigkgqbqg
         if (currentFlow != 0) {
             DataTypes.ReserveData memory r = ILendingPool(
-                IMiniPoolAddressesProvider(_addressProvider).getLendingPool()
-            ).getReserveData(underlying, true);
+                    IMiniPoolAddressesProvider(_addressProvider).getLendingPool()
+                ).getReserveData(underlying, true);
 
             uint256 commonTerm =
                 (r.currentLiquidityRate * DELTA_TIME_MARGIN / SECONDS_PER_YEAR) + WadRayMath.ray();
-            uint256 minLiquidityRate = (
-                MathUtils.calculateCompoundedInterest(
-                    r.currentVariableBorrowRate, uint40(block.timestamp - DELTA_TIME_MARGIN)
-                ) - commonTerm
-            ).rayDiv(commonTerm * DELTA_TIME_MARGIN / SECONDS_PER_YEAR);
+            uint256 minLiquidityRate = (MathUtils.calculateCompoundedInterest(
+                        r.currentVariableBorrowRate, uint40(block.timestamp - DELTA_TIME_MARGIN)
+                    ) - commonTerm)
+            .rayDiv(commonTerm * DELTA_TIME_MARGIN / SECONDS_PER_YEAR);
 
             // `&& utilizationRate != 0` to avoid 0 division. It's safe since the minipool flow is
             // always owed to a user. Since the debt is repaid as soon as possible if

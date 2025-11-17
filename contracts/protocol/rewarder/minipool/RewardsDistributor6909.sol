@@ -1,11 +1,13 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.23;
 
-import {IMiniPoolRewardsDistributor} from
-    "../../../../contracts/interfaces/IMiniPoolRewardsDistributor.sol";
+import {
+    IMiniPoolRewardsDistributor
+} from "../../../../contracts/interfaces/IMiniPoolRewardsDistributor.sol";
 import {IAERC6909} from "../../../../contracts/interfaces/IAERC6909.sol";
-import {DistributionTypes} from
-    "../../../../contracts/protocol/libraries/types/DistributionTypes.sol";
+import {
+    DistributionTypes
+} from "../../../../contracts/protocol/libraries/types/DistributionTypes.sol";
 import {Ownable} from "lib/openzeppelin-contracts/contracts/access/Ownable.sol";
 import {Errors} from "../../../../contracts/protocol/libraries/helpers/Errors.sol";
 
@@ -223,14 +225,13 @@ abstract contract RewardsDistributor6909 is IMiniPoolRewardsDistributor, Ownable
             _assets[rewardsInput[i].asset.market6909][rewardsInput[i].asset.assetID].decimals =
                 IAERC6909(rewardsInput[i].asset.market6909).decimals(rewardsInput[i].asset.assetID);
 
-            RewardData storage rewardConfig = _assets[rewardsInput[i].asset.market6909][rewardsInput[i]
-                .asset
-                .assetID].rewards[rewardsInput[i].reward];
+            RewardData storage rewardConfig = _assets[rewardsInput[i].asset
+                .market6909][rewardsInput[i].asset.assetID].rewards[rewardsInput[i].reward];
 
             // Add reward address to asset available rewards if latestUpdateTimestamp is zero.
             if (rewardConfig.lastUpdateTimestamp == 0) {
-                _assets[rewardsInput[i].asset.market6909][rewardsInput[i].asset.assetID]
-                    .availableRewards
+                _assets[rewardsInput[i].asset
+                        .market6909][rewardsInput[i].asset.assetID].availableRewards
                     .push(rewardsInput[i].reward);
             }
 
@@ -246,9 +247,8 @@ abstract contract RewardsDistributor6909 is IMiniPoolRewardsDistributor, Ownable
                 rewardsInput[i].asset.assetID,
                 rewardsInput[i].reward,
                 rewardConfig,
-                IAERC6909(rewardsInput[i].asset.market6909).scaledTotalSupply(
-                    rewardsInput[i].asset.assetID
-                ),
+                IAERC6909(rewardsInput[i].asset.market6909)
+                    .scaledTotalSupply(rewardsInput[i].asset.assetID),
                 _assets[rewardsInput[i].asset.market6909][rewardsInput[i].asset.assetID].decimals
             );
 
@@ -449,8 +449,9 @@ abstract contract RewardsDistributor6909 is IMiniPoolRewardsDistributor, Ownable
                 continue;
             }
             for (uint256 r = 0; r < rewardTokens.length; r++) {
-                unclaimedRewards[r] +=
-                    _getUnrealizedRewardsFromStake(user, rewardTokens[r], userState[i]);
+                unclaimedRewards[
+                    r
+                ] += _getUnrealizedRewardsFromStake(user, rewardTokens[r], userState[i]);
             }
         }
         return (rewardTokens, unclaimedRewards);
@@ -468,8 +469,8 @@ abstract contract RewardsDistributor6909 is IMiniPoolRewardsDistributor, Ownable
         address reward,
         DistributionTypes.UserMiniPoolAssetInput memory stake
     ) internal view returns (uint256) {
-        RewardData storage rewardData =
-            _assets[stake.asset.market6909][stake.asset.assetID].rewards[reward];
+        RewardData storage rewardData = _assets[stake.asset
+            .market6909][stake.asset.assetID].rewards[reward];
         uint8 assetDecimals = _assets[stake.asset.market6909][stake.asset.assetID].decimals;
         uint256 assetIndex = _getAssetIndex(
             rewardData.index,

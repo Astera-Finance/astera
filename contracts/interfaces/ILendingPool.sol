@@ -1,8 +1,9 @@
 // SPDX-License-Identifier: agpl-3.0
 pragma solidity ^0.8.0;
 
-import {ILendingPoolAddressesProvider} from
-    "../../contracts/interfaces/ILendingPoolAddressesProvider.sol";
+import {
+    ILendingPoolAddressesProvider
+} from "../../contracts/interfaces/ILendingPoolAddressesProvider.sol";
 import {DataTypes} from "../../contracts/protocol/libraries/types/DataTypes.sol";
 
 /**
@@ -152,8 +153,7 @@ interface ILendingPool {
      */
     event FlashLoanFeeUpdated(uint128 flashLoanPremiumTotal);
 
-    function deposit(address asset, bool reserveType, uint256 amount, address onBehalfOf)
-        external;
+    function deposit(address asset, bool reserveType, uint256 amount, address onBehalfOf) external;
 
     function withdraw(address asset, bool reserveType, uint256 amount, address to)
         external

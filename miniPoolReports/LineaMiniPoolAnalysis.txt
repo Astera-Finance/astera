@@ -1,0 +1,217 @@
+  Number of users with bad debt:  4
+
+  User:  0x2E4C9C2BB198A76Cb3d5a39991aF2B71716ff94a
+    USD Collateral: 0.60522377
+    USD Debt: 5.02037668
+    Bad Debt: 4.41515291
+      - Borrowed tokens: 
+        * asUSD: 5.020796
+      - Provided tokens: 
+        * LINEA: 51.36916335
+
+  User:  0x49D8d8a61A7807a8cC78b42A34FA223014518863
+    USD Collateral: 0.98580933
+    USD Debt: 2.44885405
+    Bad Debt: 1.46304472
+      - Borrowed tokens: 
+        * asUSD: 2.44905858
+      - Provided tokens: 
+        * LINEA: 83.67186257
+
+  User:  0x607E73C236983D56Bdfc52753016932Bf0eAd90E
+    USD Collateral: 2407.03587818
+    USD Debt: 3492.07478083
+    Bad Debt: 1085.03890265
+      - Borrowed tokens: 
+        * asUSD: 3492.36646327
+      - Provided tokens: 
+        * LINEA: 204300.33298509
+
+  ->>> HACKER:  0xcd69567080Dccad1Afe61aCc022c0A7164B29AB4
+    USD Collateral: 4169.63206462
+    USD Debt: 134710.6361522
+   >$10_000 Bad Debt: 130541.00408758
+      - Borrowed tokens: 
+        * USDC: 3671.858609
+        * asUSD: 4393.93708837
+        * LINEA: 10749028.14357695
+      - Provided tokens: 
+        * WETH: 0.32013452
+        * USDT: 3096.123381
+
+  Number of users with liquidity greater than 50 cents:  34
+
+    User:  0x04B062a9047A22C1413c9b7f206cfb402372A40B
+    USD Collateral: 1237.55594854
+    USD Debt: 928.30055215
+    Bad Debt: 0
+  User:  0x08Ec41FDcb5F9cD49a2a9d76bBEEf952A5d5739d
+    USD Collateral: 835.0786642
+    USD Debt: 537.5061581
+    Bad Debt: 0
+  User:  0x1D7f204Ca9Fcc11733fe6F465EfaCA071c05D50a
+    USD Collateral: 789.1901129
+    USD Debt: 508.19669244
+    Bad Debt: 0
+  User:  0x2C21DC4fe422fBAdd7DC1edA8AC4D10a8D9fFa2e
+    USD Collateral: 43.08336241
+    USD Debt: 36.49032083
+    Bad Debt: 0
+  User:  0x2E4C9C2BB198A76Cb3d5a39991aF2B71716ff94a
+    USD Collateral: 0.60522377
+    USD Debt: 5.02037668
+    Bad Debt: 4.41515291
+      - Borrowed tokens: 
+        * asUSD: 5.020796
+      - Provided tokens: 
+        * LINEA: 51.36916335
+  User:  0x420D8DB9647262bb3312BE9eEe510D44E9689c3F
+    USD Collateral: 126.62117103
+    USD Debt: 108.01670188
+    Bad Debt: 0
+  User:  0x429a65e517088Db3e0fe60a629Def3F603d006A7
+    USD Collateral: 549.93591071
+    USD Debt: 401.58188379
+    Bad Debt: 0
+  User:  0x4596E8fA7DFb9740B4a69a33a28bc5c65f8Dcb00
+    USD Collateral: 965.00083502
+    USD Debt: 506.26077472
+    Bad Debt: 0
+  User:  0x4697F17dc804f5916f3a41C6D522b489468E2B87
+    USD Collateral: 853.95835893
+    USD Debt: 451.82347351
+    Bad Debt: 0
+  User:  0x49D8d8a61A7807a8cC78b42A34FA223014518863
+    USD Collateral: 0.98580933
+    USD Debt: 2.44885405
+    Bad Debt: 1.46304472
+      - Borrowed tokens: 
+        * asUSD: 2.44905858
+      - Provided tokens: 
+        * LINEA: 83.67186257
+  User:  0x4d1de98D67b3dfae5B6919dA25B0EA7fE9Ff1006
+    USD Collateral: 673.14360775
+    USD Debt: 502.02299325
+    Bad Debt: 0
+  User:  0x4FfD0A59a26cB2Aa76D403215e4cC2845C053994
+    USD Collateral: 10.07805121
+    USD Debt: 8.44648685
+    Bad Debt: 0
+  ->>> HACKER:  0x510A269A93736B5B5E3C2133e8f2e7D829ca3Fec
+    USD Collateral: 3672.95571469
+    USD Debt: 3111.81833668
+    Bad Debt: 0
+  User:  0x529407C4e9584701253D93DDa4686a630Ada00e5
+    USD Collateral: 7835.55694791
+    USD Debt: 3463.57432425
+    Bad Debt: 0
+  User:  0x52b4af394C7DC271C9716084A46203ad8431e1B9
+    USD Collateral: 1003.62116885
+    USD Debt: 791.06081809
+    Bad Debt: 0
+  User:  0x607E73C236983D56Bdfc52753016932Bf0eAd90E
+    USD Collateral: 2407.03587818
+    USD Debt: 3492.07478083
+    Bad Debt: 1085.03890265
+      - Borrowed tokens: 
+        * asUSD: 3492.36646327
+      - Provided tokens: 
+        * LINEA: 204300.33298509
+  User:  0x689E994D0e4FcD7F5771DE774Bc83e4126e468F4
+    USD Collateral: 911.92646123
+    USD Debt: 502.02793875
+    Bad Debt: 0
+  User:  0x68f861D975594e3a36281bfb5E5e6A9BE67C3359
+    USD Collateral: 49.53586087
+    USD Debt: 26.78027513
+    Bad Debt: 0
+  User:  0x758dDab0f1D345b6d01333fD72946CA23bE3214C
+    USD Collateral: 0.66363608
+    USD Debt: 0.51078143
+    Bad Debt: 0
+  User:  0x75D7c741Bb242632593a42B141Cf7B8A3c84ECC2
+    USD Collateral: 978.90648798
+    USD Debt: 512.06750884
+    Bad Debt: 0
+  User:  0x7D66a2e916d79c0988D41F1E50a1429074ec53a4
+    USD Collateral: 126570.41455525
+    USD Debt: 7.0956053
+    Bad Debt: 0
+  User:  0x7F54285a9c022fC5F528045cbD63Bf9a7c51aFD8
+    USD Collateral: 703.42993587
+    USD Debt: 421.6190524
+    Bad Debt: 0
+  User:  0x89A1fDb575933ac14B5cbF3E612e7F87b5872DBf
+    USD Collateral: 609.3863272
+    USD Debt: 502.02325054
+    Bad Debt: 0
+  User:  0xA2c21c71a86Aa9ed0252cEC5e0b2070CC119E8ec
+    USD Collateral: 784.10515568
+    USD Debt: 504.92357604
+    Bad Debt: 0
+  User:  0xA7B729c880512A177c4B92Ab632E70988fb47462
+    USD Collateral: 18306.57561269
+    USD Debt: 13050.48933157
+    Bad Debt: 0
+  ->>> HACKER:  0xcd69567080Dccad1Afe61aCc022c0A7164B29AB4
+    USD Collateral: 4169.63206462
+    USD Debt: 134710.6361522
+   >$10_000 Bad Debt: 130541.00408758
+      - Borrowed tokens: 
+        * USDC: 3671.858609
+        * asUSD: 4393.93708837
+        * LINEA: 10749028.14357695
+      - Provided tokens: 
+        * WETH: 0.32013452
+        * USDT: 3096.123381
+  User:  0xD92a7F3E6e8F7731f3DC6BE3FB39E745Ec1C6482
+    USD Collateral: 1.17902509
+    USD Debt: 1.001319
+    Bad Debt: 0
+  User:  0xD9e4C45C4471F63420E434756C5026286D28fbdb
+    USD Collateral: 779.29721644
+    USD Debt: 501.8265417
+    Bad Debt: 0
+  User:  0xE229d80fdda6008ABb6aCc880556032c757F966d
+    USD Collateral: 789.76850673
+    USD Debt: 508.57022449
+    Bad Debt: 0
+  User:  0xE3666187c7Fbd30ea514a00747f27BeF2Df27d69
+    USD Collateral: 49.80131652
+    USD Debt: 20.34206603
+    Bad Debt: 0
+  User:  0xE89e8fe8936eb33e34E7A8277DD53788ADE79650
+    USD Collateral: 1304.57734686
+    USD Debt: 1113.14624479
+    Bad Debt: 0
+  User:  0xEdeA7aAF2036686b01a5c1D1Fd09a86042BB4189
+    USD Collateral: 10.3897969
+    USD Debt: 0.00608837
+    Bad Debt: 0
+  User:  0xF1D6ab29d12cF2bee25A195579F544BFcC3dD78f
+    USD Collateral: 100.64735824
+    USD Debt: 48.15033226
+    Bad Debt: 0
+  User:  0xFa0a1973413C626439C36110f960c38620d5FC18
+    USD Collateral: 1113.86661116
+    USD Debt: 701.8984441
+    Bad Debt: 0
+
+
+  FINAL BAD DEBT excluding hacker: 1090.91710028
+        ---------------------------------------
+  Total borrowed (excluding hacker) for WBTC : 0
+  Collateral liquidity associated with bad debt(excluding hacker) for WBTC : 0
+  Total borrowed (excluding hacker) for WETH : 0
+  Collateral liquidity associated with bad debt(excluding hacker) for WETH : 0
+  Total borrowed (excluding hacker) for USDC : 0
+  Collateral liquidity associated with bad debt(excluding hacker) for USDC : 0
+  Total borrowed (excluding hacker) for USDT : 0
+  Collateral liquidity associated with bad debt(excluding hacker) for USDT : 0
+  Total borrowed (excluding hacker) for asUSD : 3499.83631787
+  Collateral liquidity associated with bad debt (excluding hacker) for asUSD : 0
+  Total borrowed (excluding hacker) for mUSD : 0
+  Collateral liquidity associated with bad debt (excluding hacker) for mUSD : 0
+  Total borrowed (excluding hacker) for LINEA : 0
+  Collateral liquidity associated with bad debt (excluding hacker) for LINEA : 204435.37401102
+  ---------------------------------------

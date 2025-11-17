@@ -2,17 +2,20 @@
 pragma solidity ^0.8.23;
 
 import {IAERC6909} from "../../../../../contracts/interfaces/IAERC6909.sol";
-import {IReserveInterestRateStrategy} from
-    "../../../../../contracts/interfaces/IReserveInterestRateStrategy.sol";
-import {ReserveConfiguration} from
-    "../../../../../contracts/protocol/libraries/configuration/ReserveConfiguration.sol";
+import {
+    IReserveInterestRateStrategy
+} from "../../../../../contracts/interfaces/IReserveInterestRateStrategy.sol";
+import {
+    ReserveConfiguration
+} from "../../../../../contracts/protocol/libraries/configuration/ReserveConfiguration.sol";
 import {MathUtils} from "../../../../../contracts/protocol/libraries/math/MathUtils.sol";
 import {WadRayMath} from "../../../../../contracts/protocol/libraries/math/WadRayMath.sol";
 import {PercentageMath} from "../../../../../contracts/protocol/libraries/math/PercentageMath.sol";
 import {Errors} from "../../../../../contracts/protocol/libraries/helpers/Errors.sol";
 import {DataTypes} from "../../../../../contracts/protocol/libraries/types/DataTypes.sol";
-import {ReserveLogic} from
-    "../../../../../contracts/protocol/core/lendingpool/logic/ReserveLogic.sol";
+import {
+    ReserveLogic
+} from "../../../../../contracts/protocol/core/lendingpool/logic/ReserveLogic.sol";
 
 /**
  * @title MiniPoolReserveLogic library
@@ -64,8 +67,8 @@ library MiniPoolReserveLogic {
         }
 
         uint256 cumulated = MathUtils.calculateLinearInterest(
-            reserve.currentLiquidityRate, timestamp
-        ).rayMul(reserve.liquidityIndex);
+                reserve.currentLiquidityRate, timestamp
+            ).rayMul(reserve.liquidityIndex);
 
         return cumulated;
     }
@@ -90,8 +93,8 @@ library MiniPoolReserveLogic {
         }
 
         uint256 cumulated = MathUtils.calculateCompoundedInterest(
-            reserve.currentVariableBorrowRate, timestamp
-        ).rayMul(reserve.variableBorrowIndex);
+                reserve.currentVariableBorrowRate, timestamp
+            ).rayMul(reserve.variableBorrowIndex);
 
         return cumulated;
     }
@@ -199,21 +202,21 @@ library MiniPoolReserveLogic {
         // Calculates the total variable debt locally using the scaled total supply instead
         // of totalSupply(), as it's noticeably cheaper. Also, the index has been
         // updated by the previous updateState() call.
-        vars.totalVariableDebt = IAERC6909(reserve.aErc6909).scaledTotalSupply(
-            (reserve.variableDebtTokenID)
-        ).rayMul(reserve.variableBorrowIndex);
+        vars.totalVariableDebt = IAERC6909(reserve.aErc6909)
+            .scaledTotalSupply((reserve.variableDebtTokenID)).rayMul(reserve.variableBorrowIndex);
 
         (vars.newLiquidityRate, vars.newVariableRate) = IReserveInterestRateStrategy(
-            reserve.interestRateStrategyAddress
-        ).calculateInterestRates(
-            reserveAddress,
-            reserve.aErc6909,
-            liquidityAdded,
-            liquidityTaken,
-            vars.totalVariableDebt,
-            reserve.configuration.getAsteraReserveFactor()
-                + reserve.configuration.getMinipoolOwnerReserveFactor()
-        );
+                reserve.interestRateStrategyAddress
+            )
+            .calculateInterestRates(
+                reserveAddress,
+                reserve.aErc6909,
+                liquidityAdded,
+                liquidityTaken,
+                vars.totalVariableDebt,
+                reserve.configuration.getAsteraReserveFactor()
+                    + reserve.configuration.getMinipoolOwnerReserveFactor()
+            );
         require(vars.newLiquidityRate <= type(uint128).max, Errors.RL_LIQUIDITY_RATE_OVERFLOW);
         require(vars.newVariableRate <= type(uint128).max, Errors.RL_VARIABLE_BORROW_RATE_OVERFLOW);
 
@@ -277,9 +280,10 @@ library MiniPoolReserveLogic {
             vars.amountToMintAstera = vars.totalDebtAccrued.percentMul(vars.asteraReserveFactor);
 
             if (vars.amountToMintAstera != 0) {
-                IAERC6909(reserve.aErc6909).mintToAsteraTreasury(
-                    reserve.aTokenID, vars.amountToMintAstera, newLiquidityIndex
-                );
+                IAERC6909(reserve.aErc6909)
+                    .mintToAsteraTreasury(
+                        reserve.aTokenID, vars.amountToMintAstera, newLiquidityIndex
+                    );
             }
         }
 
@@ -288,9 +292,10 @@ library MiniPoolReserveLogic {
                 vars.totalDebtAccrued.percentMul(vars.minipoolOwnerReserveFactor);
 
             if (vars.amountToMintMinipoolOwner != 0) {
-                IAERC6909(reserve.aErc6909).mintToMinipoolOwnerTreasury(
-                    reserve.aTokenID, vars.amountToMintMinipoolOwner, newLiquidityIndex
-                );
+                IAERC6909(reserve.aErc6909)
+                    .mintToMinipoolOwnerTreasury(
+                        reserve.aTokenID, vars.amountToMintMinipoolOwner, newLiquidityIndex
+                    );
             }
         }
     }

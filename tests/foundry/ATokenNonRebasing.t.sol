@@ -100,9 +100,8 @@ contract ATokenNonRebasingTest is Common {
             AToken(commonContracts.aTokens[idx].WRAPPER_ADDRESS()).approve(user, 100e18);
 
             assertEq(
-                AToken(commonContracts.aTokens[idx].WRAPPER_ADDRESS()).allowance(
-                    address(this), user
-                ),
+                AToken(commonContracts.aTokens[idx].WRAPPER_ADDRESS())
+                    .allowance(address(this), user),
                 100e18
             );
         }
@@ -116,17 +115,15 @@ contract ATokenNonRebasingTest is Common {
         for (uint32 idx = 0; idx < commonContracts.aTokens.length; idx++) {
             AToken(commonContracts.aTokens[idx].WRAPPER_ADDRESS()).approve(user, 100e18);
             assertEq(
-                AToken(commonContracts.aTokens[idx].WRAPPER_ADDRESS()).allowance(
-                    address(this), user
-                ),
+                AToken(commonContracts.aTokens[idx].WRAPPER_ADDRESS())
+                    .allowance(address(this), user),
                 100e18,
                 "124"
             );
 
             vm.startPrank(user);
-            AToken(commonContracts.aTokens[idx].WRAPPER_ADDRESS()).transferFrom(
-                address(this), user, 50e18
-            );
+            AToken(commonContracts.aTokens[idx].WRAPPER_ADDRESS())
+                .transferFrom(address(this), user, 50e18);
             vm.stopPrank();
 
             assertEq(commonContracts.aTokens[idx].balanceOf(user), 50e18);
@@ -192,9 +189,8 @@ contract ATokenNonRebasingTest is Common {
         AToken(commonContracts.aTokens[0].WRAPPER_ADDRESS()).transfer(user, amt1);
         assertApproxEqRel(
             commonContracts.aTokens[0].balanceOf(user),
-            amt1
-                + amt1 * commonContracts.aTokens[0].balanceOf(address(this))
-                    / AToken(commonContracts.aTokens[0].WRAPPER_ADDRESS()).balanceOf(address(this)),
+            amt1 + amt1 * commonContracts.aTokens[0].balanceOf(address(this))
+                / AToken(commonContracts.aTokens[0].WRAPPER_ADDRESS()).balanceOf(address(this)),
             1e13
         );
     }

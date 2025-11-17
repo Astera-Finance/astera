@@ -1,12 +1,14 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.20;
 
-import {IMiniPoolReserveInterestRateStrategy} from
-    "../../../../../contracts/interfaces/IMiniPoolReserveInterestRateStrategy.sol";
+import {
+    IMiniPoolReserveInterestRateStrategy
+} from "../../../../../contracts/interfaces/IMiniPoolReserveInterestRateStrategy.sol";
 import {WadRayMath} from "../../../../../contracts/protocol/libraries/math/WadRayMath.sol";
 import {PercentageMath} from "../../../../../contracts/protocol/libraries/math/PercentageMath.sol";
-import {IMiniPoolAddressesProvider} from
-    "../../../../../contracts/interfaces/IMiniPoolAddressesProvider.sol";
+import {
+    IMiniPoolAddressesProvider
+} from "../../../../../contracts/interfaces/IMiniPoolAddressesProvider.sol";
 import {Errors} from "../../../../../contracts/protocol/libraries/helpers/Errors.sol";
 import {MathUtils} from "../../../../../contracts/protocol/libraries/math/MathUtils.sol";
 import {DataTypes} from "../../../../../contracts/protocol/libraries/types/DataTypes.sol";
@@ -227,22 +229,21 @@ contract MiniPoolDefaultReserveInterestRateStrategy is IMiniPoolReserveInterestR
 
             uint256 commonTerm =
                 (r.currentLiquidityRate * DELTA_TIME_MARGIN / SECONDS_PER_YEAR) + WadRayMath.ray();
-            uint256 minLiquidityRate = (
-                MathUtils.calculateCompoundedInterest(
-                    r.currentVariableBorrowRate, uint40(block.timestamp - DELTA_TIME_MARGIN)
-                ) - commonTerm
-            ).rayDiv(commonTerm * DELTA_TIME_MARGIN / SECONDS_PER_YEAR);
+            uint256 minLiquidityRate = (MathUtils.calculateCompoundedInterest(
+                        r.currentVariableBorrowRate, uint40(block.timestamp - DELTA_TIME_MARGIN)
+                    ) - commonTerm)
+            .rayDiv(commonTerm * DELTA_TIME_MARGIN / SECONDS_PER_YEAR);
 
             // `&& vars.utilizationRate != 0` to avoid 0 division. It's safe since the minipool flow is
             // always owed to a user. Since the debt is repaid as soon as possible if
             // `vars.utilizationRate != 0` then `currentFlow == 0` by the end of the transaction.
             if (vars.currentLiquidityRate < minLiquidityRate && vars.utilizationRate != 0) {
                 vars.currentLiquidityRate = minLiquidityRate;
-                vars.currentVariableBorrowRate = vars.currentLiquidityRate.rayDiv(
-                    vars.utilizationRate.percentMul(
-                        PercentageMath.PERCENTAGE_FACTOR - reserveFactor
-                    )
-                );
+                vars.currentVariableBorrowRate = vars.currentLiquidityRate
+                    .rayDiv(
+                        vars.utilizationRate
+                        .percentMul(PercentageMath.PERCENTAGE_FACTOR - reserveFactor)
+                    );
             }
         }
 

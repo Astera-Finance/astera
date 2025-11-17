@@ -4,12 +4,14 @@ pragma solidity ^0.8.23;
 import {IRewardsController} from "../../../../contracts/interfaces/IRewardsController.sol";
 import {RewardsDistributor} from "./RewardsDistributor.sol";
 import {IScaledBalanceToken} from "../../../../contracts/interfaces/base/IScaledBalanceToken.sol";
-import {DistributionTypes} from
-    "../../../../contracts/protocol/libraries/types/DistributionTypes.sol";
+import {
+    DistributionTypes
+} from "../../../../contracts/protocol/libraries/types/DistributionTypes.sol";
 import {IAERC6909} from "../../../../contracts/interfaces/IAERC6909.sol";
 import "../../../../contracts/interfaces/IAToken.sol";
-import {IMiniPoolAddressesProvider} from
-    "../../../../contracts/interfaces/IMiniPoolAddressesProvider.sol";
+import {
+    IMiniPoolAddressesProvider
+} from "../../../../contracts/interfaces/IMiniPoolAddressesProvider.sol";
 import {Errors} from "../../../../contracts/protocol/libraries/helpers/Errors.sol";
 
 /**
@@ -169,7 +171,9 @@ abstract contract RewardsController is RewardsDistributor, IRewardsController {
             uint256 totalTrackedMiniPools = _totalTrackedMiniPools;
             if (totalTrackedMiniPools != addressesProvider.getMiniPoolCount()) {
                 for (
-                    uint256 i = totalTrackedMiniPools; i < addressesProvider.getMiniPoolCount(); i++
+                    uint256 i = totalTrackedMiniPools;
+                    i < addressesProvider.getMiniPoolCount();
+                    i++
                 ) {
                     address miniPool = addressesProvider.getMiniPool(i);
                     _isMiniPool[miniPool] = true;

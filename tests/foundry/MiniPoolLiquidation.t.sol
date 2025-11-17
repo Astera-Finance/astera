@@ -5,8 +5,9 @@ import "./MiniPoolDepositBorrow.t.sol";
 import "contracts/protocol/libraries/helpers/Errors.sol";
 import {WadRayMath} from "contracts/protocol/libraries/math/WadRayMath.sol";
 import {PercentageMath} from "contracts/protocol/libraries/math/PercentageMath.sol";
-import {ReserveConfiguration} from
-    "contracts/protocol/libraries/configuration/ReserveConfiguration.sol";
+import {
+    ReserveConfiguration
+} from "contracts/protocol/libraries/configuration/ReserveConfiguration.sol";
 import "forge-std/StdUtils.sol";
 import "contracts/interfaces/IAToken.sol";
 import "contracts/protocol/tokenization/ERC20/ATokenNonRebasing.sol";
@@ -184,15 +185,16 @@ contract MiniPoolLiquidationTest is MiniPoolDepositBorrowTest {
 
             vm.startPrank(liquidator);
             borrowParams.token.approve(miniPool, liquidationVars.amountToLiquidate);
-            IMiniPool(miniPool).liquidationCall(
-                address(collateralParams.token),
-                false,
-                address(borrowParams.token),
-                false,
-                user,
-                liquidationVars.amountToLiquidate,
-                false
-            );
+            IMiniPool(miniPool)
+                .liquidationCall(
+                    address(collateralParams.token),
+                    false,
+                    address(borrowParams.token),
+                    false,
+                    user,
+                    liquidationVars.amountToLiquidate,
+                    false
+                );
             console2.log(
                 "--- aToken %s and token %s",
                 address(borrowParams.aToken),
@@ -240,8 +242,8 @@ contract MiniPoolLiquidationTest is MiniPoolDepositBorrowTest {
             );
             assertGe(
                 collateralParams.token.balanceOf(liquidator),
-                liquidationVars.liquidatorCollaterallBalance
-                    + liquidationVars.userCollateralBalance / 2
+                liquidationVars.liquidatorCollaterallBalance + liquidationVars.userCollateralBalance
+                    / 2
             );
 
             console2.log(
@@ -402,15 +404,16 @@ contract MiniPoolLiquidationTest is MiniPoolDepositBorrowTest {
             console2.log("address(collateralParams.token) : ", address(collateralParams.token));
             vm.startPrank(liquidator);
             borrowParams.aToken.approve(miniPool, amountToLiquidate);
-            IMiniPool(miniPool).liquidationCall(
-                address(collateralParams.token),
-                false,
-                address(borrowParams.aToken),
-                false,
-                user,
-                amountToLiquidate,
-                false
-            );
+            IMiniPool(miniPool)
+                .liquidationCall(
+                    address(collateralParams.token),
+                    false,
+                    address(borrowParams.aToken),
+                    false,
+                    user,
+                    amountToLiquidate,
+                    false
+                );
             vm.stopPrank();
         }
         /**
@@ -443,23 +446,21 @@ contract MiniPoolLiquidationTest is MiniPoolDepositBorrowTest {
         {
             vm.startPrank(lpUser);
             borrowParams.token.approve(miniPool, type(uint256).max);
-            IMiniPool(miniPool).deposit(
-                address(borrowParams.aToken),
-                true,
-                collateralParams.aToken.convertToShares(amountLp),
-                lpUser
-            );
+            IMiniPool(miniPool)
+                .deposit(
+                    address(borrowParams.aToken),
+                    true,
+                    collateralParams.aToken.convertToShares(amountLp),
+                    lpUser
+                );
 
             deal(address(collateralParams.token), lpUser, 10e18);
-            collateralParams.token.approve(
-                address(deployedContracts.lendingPool), type(uint256).max
-            );
-            deployedContracts.lendingPool.deposit(
-                address(collateralParams.token), true, 10e18, lpUser
-            );
-            deployedContracts.lendingPool.borrow(
-                address(collateralParams.token), true, 1e18, lpUser
-            );
+            collateralParams.token
+                .approve(address(deployedContracts.lendingPool), type(uint256).max);
+            deployedContracts.lendingPool
+                .deposit(address(collateralParams.token), true, 10e18, lpUser);
+            deployedContracts.lendingPool
+                .borrow(address(collateralParams.token), true, 1e18, lpUser);
 
             vm.stopPrank();
         }
@@ -473,12 +474,13 @@ contract MiniPoolLiquidationTest is MiniPoolDepositBorrowTest {
 
             //deposit
             collateralParams.token.approve(miniPool, type(uint256).max);
-            IMiniPool(miniPool).deposit(
-                address(collateralParams.aToken),
-                true,
-                collateralParams.aToken.convertToShares(amountColl),
-                user
-            );
+            IMiniPool(miniPool)
+                .deposit(
+                    address(collateralParams.aToken),
+                    true,
+                    collateralParams.aToken.convertToShares(amountColl),
+                    user
+                );
 
             skip(1 days);
 
@@ -530,15 +532,16 @@ contract MiniPoolLiquidationTest is MiniPoolDepositBorrowTest {
             vm.startPrank(liquidator);
             borrowParams.token.approve(miniPool, type(uint256).max);
             borrowParams.aToken.approve(miniPool, type(uint256).max);
-            IMiniPool(miniPool).liquidationCall(
-                address(collateralParams.aToken),
-                false,
-                address(borrowParams.aToken),
-                true,
-                user,
-                amountToLiquidate,
-                false
-            );
+            IMiniPool(miniPool)
+                .liquidationCall(
+                    address(collateralParams.aToken),
+                    false,
+                    address(borrowParams.aToken),
+                    true,
+                    user,
+                    amountToLiquidate,
+                    false
+                );
             vm.stopPrank();
 
             assertEq(borrowParams.token.balanceOf(address(liquidator)), 0);
@@ -574,23 +577,21 @@ contract MiniPoolLiquidationTest is MiniPoolDepositBorrowTest {
         {
             vm.startPrank(lpUser);
             borrowParams.token.approve(miniPool, type(uint256).max);
-            IMiniPool(miniPool).deposit(
-                address(borrowParams.aToken),
-                true,
-                collateralParams.aToken.convertToShares(amountLp),
-                lpUser
-            );
+            IMiniPool(miniPool)
+                .deposit(
+                    address(borrowParams.aToken),
+                    true,
+                    collateralParams.aToken.convertToShares(amountLp),
+                    lpUser
+                );
 
             deal(address(collateralParams.token), lpUser, 10e18);
-            collateralParams.token.approve(
-                address(deployedContracts.lendingPool), type(uint256).max
-            );
-            deployedContracts.lendingPool.deposit(
-                address(collateralParams.token), true, 10e18, lpUser
-            );
-            deployedContracts.lendingPool.borrow(
-                address(collateralParams.token), true, 1e18, lpUser
-            );
+            collateralParams.token
+                .approve(address(deployedContracts.lendingPool), type(uint256).max);
+            deployedContracts.lendingPool
+                .deposit(address(collateralParams.token), true, 10e18, lpUser);
+            deployedContracts.lendingPool
+                .borrow(address(collateralParams.token), true, 1e18, lpUser);
 
             vm.stopPrank();
         }
@@ -604,12 +605,13 @@ contract MiniPoolLiquidationTest is MiniPoolDepositBorrowTest {
 
             //deposit
             collateralParams.token.approve(miniPool, type(uint256).max);
-            IMiniPool(miniPool).deposit(
-                address(collateralParams.aToken),
-                true,
-                collateralParams.aToken.convertToShares(amountColl),
-                user
-            );
+            IMiniPool(miniPool)
+                .deposit(
+                    address(collateralParams.aToken),
+                    true,
+                    collateralParams.aToken.convertToShares(amountColl),
+                    user
+                );
 
             skip(1 days);
 
@@ -666,15 +668,16 @@ contract MiniPoolLiquidationTest is MiniPoolDepositBorrowTest {
             vm.startPrank(liquidator);
             borrowParams.token.approve(miniPool, type(uint256).max);
             borrowParams.aToken.approve(miniPool, type(uint256).max);
-            IMiniPool(miniPool).liquidationCall(
-                address(collateralParams.aToken),
-                true,
-                address(borrowParams.aToken),
-                true,
-                user,
-                amountToLiquidate,
-                false
-            );
+            IMiniPool(miniPool)
+                .liquidationCall(
+                    address(collateralParams.aToken),
+                    true,
+                    address(borrowParams.aToken),
+                    true,
+                    user,
+                    amountToLiquidate,
+                    false
+                );
             vm.stopPrank();
 
             assertEq(borrowParams.token.balanceOf(address(liquidator)), 0);

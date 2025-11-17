@@ -3,8 +3,9 @@ pragma solidity ^0.8.23;
 
 import {IERC20} from "../../../../contracts/dependencies/openzeppelin/contracts/IERC20.sol";
 import {SafeERC20} from "../../../../contracts/dependencies/openzeppelin/contracts/SafeERC20.sol";
-import {RewardsController6909} from
-    "../../../../contracts/protocol/rewarder/minipool/RewardsController6909.sol";
+import {
+    RewardsController6909
+} from "../../../../contracts/protocol/rewarder/minipool/RewardsController6909.sol";
 
 /**
  * @title Rewarder6909

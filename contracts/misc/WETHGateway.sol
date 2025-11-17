@@ -8,10 +8,12 @@ import {IWETHGateway} from "../../contracts/interfaces/base/IWETHGateway.sol";
 import {ILendingPool} from "../../contracts/interfaces/ILendingPool.sol";
 import {IMiniPool} from "../../contracts/interfaces/IMiniPool.sol";
 import {IAToken} from "../../contracts/interfaces/IAToken.sol";
-import {ReserveConfiguration} from
-    "../../contracts/protocol/libraries/configuration/ReserveConfiguration.sol";
-import {UserConfiguration} from
-    "../../contracts/protocol/libraries/configuration/UserConfiguration.sol";
+import {
+    ReserveConfiguration
+} from "../../contracts/protocol/libraries/configuration/ReserveConfiguration.sol";
+import {
+    UserConfiguration
+} from "../../contracts/protocol/libraries/configuration/UserConfiguration.sol";
 import {Helpers} from "../../contracts/protocol/libraries/helpers/Helpers.sol";
 import {DataTypes} from "../../contracts/protocol/libraries/types/DataTypes.sol";
 import {IAERC6909} from "../../contracts/interfaces/IAERC6909.sol";
@@ -83,9 +85,8 @@ contract WETHGateway is IWETHGateway, Ownable {
     {
         WETH.deposit{value: msg.value}();
         if (wrap) {
-            IMiniPool(miniPool).deposit(
-                address(AWETH), true, AWETH.convertToShares(msg.value), onBehalfOf
-            ); // AWETH amount is decreased by the index
+            IMiniPool(miniPool)
+                .deposit(address(AWETH), true, AWETH.convertToShares(msg.value), onBehalfOf); // AWETH amount is decreased by the index
         } else {
             IMiniPool(miniPool).deposit(address(WETH), false, msg.value, onBehalfOf);
         }
@@ -116,9 +117,8 @@ contract WETHGateway is IWETHGateway, Ownable {
             amountToWithdraw = amount;
         }
         aWETH.transferFrom(msg.sender, address(this), amountToWithdraw);
-        ILendingPool(lendingPool).withdraw(
-            address(WETH), reserveType, amountToWithdraw, address(this)
-        );
+        ILendingPool(lendingPool)
+            .withdraw(address(WETH), reserveType, amountToWithdraw, address(this));
         WETH.withdraw(amountToWithdraw);
         _safeTransferETH(to, amountToWithdraw);
     }
@@ -130,9 +130,7 @@ contract WETHGateway is IWETHGateway, Ownable {
      * @param wrap boolean indicating whether to unwrap the aTokens into ETH
      * @param to Address to receive the withdrawn ETH
      */
-    function withdrawETHMiniPool(address miniPool, uint256 amount, bool wrap, address to)
-        external
-    {
+    function withdrawETHMiniPool(address miniPool, uint256 amount, bool wrap, address to) external {
         if (wrap) {
             DataTypes.MiniPoolReserveData memory miniPoolReserveData =
                 IMiniPool(miniPool).getReserveData(address(AWETH));
@@ -140,22 +138,23 @@ contract WETHGateway is IWETHGateway, Ownable {
             uint256 amountToWithdraw;
 
             if (amount == type(uint256).max) {
-                uint256 userBalance = IAERC6909(miniPoolReserveData.aErc6909).balanceOf(
-                    msg.sender, miniPoolReserveData.aTokenID
-                );
+                uint256 userBalance = IAERC6909(miniPoolReserveData.aErc6909)
+                    .balanceOf(msg.sender, miniPoolReserveData.aTokenID);
                 amountToWithdraw = userBalance;
             } else {
                 amountToWithdraw = amount;
             }
-            IAERC6909(miniPoolReserveData.aErc6909).transferFrom(
-                msg.sender,
-                address(this),
-                miniPoolReserveData.aTokenID,
-                AWETH.convertToShares(amountToWithdraw)
-            ); // transfer aToken shares
-            IMiniPool(miniPool).withdraw(
-                address(AWETH), true, AWETH.convertToShares(amountToWithdraw), address(this)
-            );
+            IAERC6909(miniPoolReserveData.aErc6909)
+                .transferFrom(
+                    msg.sender,
+                    address(this),
+                    miniPoolReserveData.aTokenID,
+                    AWETH.convertToShares(amountToWithdraw)
+                ); // transfer aToken shares
+            IMiniPool(miniPool)
+                .withdraw(
+                    address(AWETH), true, AWETH.convertToShares(amountToWithdraw), address(this)
+                );
             WETH.withdraw(amountToWithdraw);
             _safeTransferETH(to, amountToWithdraw);
         } else {
@@ -165,16 +164,16 @@ contract WETHGateway is IWETHGateway, Ownable {
             uint256 amountToWithdraw;
 
             if (amount == type(uint256).max) {
-                uint256 userBalance = IAERC6909(miniPoolReserveData.aErc6909).balanceOf(
-                    msg.sender, miniPoolReserveData.aTokenID
-                );
+                uint256 userBalance = IAERC6909(miniPoolReserveData.aErc6909)
+                    .balanceOf(msg.sender, miniPoolReserveData.aTokenID);
                 amountToWithdraw = userBalance;
             } else {
                 amountToWithdraw = amount;
             }
-            IAERC6909(miniPoolReserveData.aErc6909).transferFrom(
-                msg.sender, address(this), miniPoolReserveData.aTokenID, amountToWithdraw
-            );
+            IAERC6909(miniPoolReserveData.aErc6909)
+                .transferFrom(
+                    msg.sender, address(this), miniPoolReserveData.aTokenID, amountToWithdraw
+                );
             IMiniPool(miniPool).withdraw(address(WETH), false, amountToWithdraw, address(this));
             WETH.withdraw(amountToWithdraw);
             _safeTransferETH(to, amountToWithdraw);
@@ -223,13 +222,11 @@ contract WETHGateway is IWETHGateway, Ownable {
     {
         uint256 paybackAmount;
         if (wrap) {
-            (uint256 variableDebt) = (
-                AWETH.convertToAssets(
+            (uint256 variableDebt) = (AWETH.convertToAssets(
                     Helpers.getUserCurrentDebtMemory(
                         onBehalfOf, IMiniPool(miniPool).getReserveData(address(AWETH))
                     )
-                )
-            ); // variable debt in underlying assets -> convert to assets
+                )); // variable debt in underlying assets -> convert to assets
 
             if (amount < variableDebt) {
                 paybackAmount = amount;
@@ -238,9 +235,8 @@ contract WETHGateway is IWETHGateway, Ownable {
             }
             require(msg.value >= paybackAmount, "msg.value is less than repayment amount");
             WETH.deposit{value: paybackAmount}();
-            IMiniPool(miniPool).repay(
-                address(AWETH), true, AWETH.convertToShares(msg.value), onBehalfOf
-            );
+            IMiniPool(miniPool)
+                .repay(address(AWETH), true, AWETH.convertToShares(msg.value), onBehalfOf);
         } else {
             (uint256 variableDebt) = Helpers.getUserCurrentDebtMemory(
                 onBehalfOf, IMiniPool(miniPool).getReserveData(address(WETH))
@@ -280,9 +276,8 @@ contract WETHGateway is IWETHGateway, Ownable {
      */
     function borrowETHMiniPool(address miniPool, uint256 amount, bool wrap) external {
         if (wrap) {
-            IMiniPool(miniPool).borrow(
-                address(AWETH), true, AWETH.convertToShares(amount), msg.sender
-            );
+            IMiniPool(miniPool)
+                .borrow(address(AWETH), true, AWETH.convertToShares(amount), msg.sender);
         } else {
             IMiniPool(miniPool).borrow(address(WETH), false, amount, msg.sender);
         }

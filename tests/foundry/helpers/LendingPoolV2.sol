@@ -4,12 +4,15 @@ pragma solidity ^0.8.23;
 import {IERC20} from "contracts/dependencies/openzeppelin/contracts/IERC20.sol";
 import {SafeERC20} from "contracts/dependencies/openzeppelin/contracts/SafeERC20.sol";
 import {Address} from "contracts/dependencies/openzeppelin/contracts/Address.sol";
-import {ILendingPoolAddressesProvider} from "contracts/interfaces/ILendingPoolAddressesProvider.sol";
+import {
+    ILendingPoolAddressesProvider
+} from "contracts/interfaces/ILendingPoolAddressesProvider.sol";
 import {IAToken} from "contracts/interfaces/IAToken.sol";
 import {IVariableDebtToken} from "contracts/interfaces/IVariableDebtToken.sol";
 import {ILendingPool} from "contracts/interfaces/ILendingPool.sol";
-import {VersionedInitializable} from
-    "contracts/protocol/libraries/upgradeability/VersionedInitializable.sol";
+import {
+    VersionedInitializable
+} from "contracts/protocol/libraries/upgradeability/VersionedInitializable.sol";
 import {Helpers} from "contracts/protocol/libraries/helpers/Helpers.sol";
 import {Errors} from "contracts/protocol/libraries/helpers/Errors.sol";
 import {WadRayMath} from "contracts/protocol/libraries/math/WadRayMath.sol";
@@ -17,8 +20,9 @@ import {PercentageMath} from "contracts/protocol/libraries/math/PercentageMath.s
 import {ReserveLogic} from "contracts/protocol/core/lendingpool/logic/ReserveLogic.sol";
 import {GenericLogic} from "contracts/protocol/core/lendingpool/logic/GenericLogic.sol";
 import {ValidationLogic} from "contracts/protocol/core/lendingpool/logic/ValidationLogic.sol";
-import {ReserveConfiguration} from
-    "contracts/protocol/libraries/configuration/ReserveConfiguration.sol";
+import {
+    ReserveConfiguration
+} from "contracts/protocol/libraries/configuration/ReserveConfiguration.sol";
 import {UserConfiguration} from "contracts/protocol/libraries/configuration/UserConfiguration.sol";
 import {DataTypes} from "contracts/protocol/libraries/types/DataTypes.sol";
 import {LendingPoolStorage} from "contracts/protocol/core/lendingpool/LendingPoolStorage.sol";
@@ -442,15 +446,17 @@ contract LendingPoolV2 is
             uint256 healthFactor
         )
     {
-        (totalCollateralETH, totalDebtETH, ltv, currentLiquidationThreshold, healthFactor) =
-        GenericLogic.calculateUserAccountData(
-            user,
-            _reserves,
-            _usersConfig[user],
-            _reservesList,
-            _reservesCount,
-            _addressesProvider.getPriceOracle()
-        );
+        (
+            totalCollateralETH, totalDebtETH, ltv, currentLiquidationThreshold, healthFactor
+        ) =
+            GenericLogic.calculateUserAccountData(
+                user,
+                _reserves,
+                _usersConfig[user],
+                _reservesList,
+                _reservesCount,
+                _addressesProvider.getPriceOracle()
+            );
 
         availableBorrowsETH =
             GenericLogic.calculateAvailableBorrowsETH(totalCollateralETH, totalDebtETH, ltv);
@@ -552,12 +558,7 @@ contract LendingPoolV2 is
      * @notice Returns the cached LendingPoolAddressesProvider connected to this contract.
      * @return The addresses provider instance.
      */
-    function getAddressesProvider()
-        external
-        view
-        override
-        returns (ILendingPoolAddressesProvider)
-    {
+    function getAddressesProvider() external view override returns (ILendingPoolAddressesProvider) {
         return _addressesProvider;
     }
 
@@ -760,12 +761,7 @@ contract LendingPoolV2 is
      * @param aTokenAddress The address of the aToken.
      * @return The total amount of assets managed by the aToken.
      */
-    function getTotalManagedAssets(address aTokenAddress)
-        external
-        view
-        override
-        returns (uint256)
-    {
+    function getTotalManagedAssets(address aTokenAddress) external view override returns (uint256) {
         return IAToken(aTokenAddress).getTotalManagedAssets();
     }
 

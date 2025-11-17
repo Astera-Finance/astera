@@ -7,11 +7,15 @@ import {MiniPoolGenericLogic} from "./MiniPoolGenericLogic.sol";
 import {MiniPoolBorrowLogic} from "./MiniPoolBorrowLogic.sol";
 import {WadRayMath} from "../../../../../contracts/protocol/libraries/math/WadRayMath.sol";
 import {PercentageMath} from "../../../../../contracts/protocol/libraries/math/PercentageMath.sol";
-import {SafeERC20} from "../../../../../contracts/dependencies/openzeppelin/contracts/SafeERC20.sol";
-import {ReserveConfiguration} from
-    "../../../../../contracts/protocol/libraries/configuration/ReserveConfiguration.sol";
-import {UserConfiguration} from
-    "../../../../../contracts/protocol/libraries/configuration/UserConfiguration.sol";
+import {
+    SafeERC20
+} from "../../../../../contracts/dependencies/openzeppelin/contracts/SafeERC20.sol";
+import {
+    ReserveConfiguration
+} from "../../../../../contracts/protocol/libraries/configuration/ReserveConfiguration.sol";
+import {
+    UserConfiguration
+} from "../../../../../contracts/protocol/libraries/configuration/UserConfiguration.sol";
 import {Errors} from "../../../../../contracts/protocol/libraries/helpers/Errors.sol";
 import {Helpers} from "../../../../../contracts/protocol/libraries/helpers/Helpers.sol";
 import {DataTypes} from "../../../../../contracts/protocol/libraries/types/DataTypes.sol";
@@ -171,7 +175,9 @@ library MiniPoolValidationLogic {
     function validateBorrow(
         ValidateBorrowParams memory validateParams,
         DataTypes.MiniPoolReserveData storage reserve,
-        mapping(address => DataTypes.MiniPoolReserveData) storage reserves,
+        mapping(
+            address => DataTypes.MiniPoolReserveData
+        ) storage reserves,
         DataTypes.UserConfigurationMap storage userConfig,
         mapping(uint256 => address) storage reservesList
     ) internal view {
@@ -189,7 +195,7 @@ library MiniPoolValidationLogic {
         require(vars.borrowingEnabled, Errors.VL_BORROWING_NOT_ENABLED);
         require(
             IAERC6909(reserve.aErc6909).totalSupply(reserve.variableDebtTokenID)
-                + validateParams.amount >= validateParams.minAmount,
+                    + validateParams.amount >= validateParams.minAmount,
             Errors.VL_DEBT_TOO_SMALL
         );
 
@@ -199,9 +205,10 @@ library MiniPoolValidationLogic {
             vars.currentLtv,
             vars.currentLiquidationThreshold,
             vars.healthFactor
-        ) = MiniPoolBorrowLogic.calculateUserAccountDataVolatile(
-            params, reserves, userConfig, reservesList
-        );
+        ) =
+            MiniPoolBorrowLogic.calculateUserAccountDataVolatile(
+                params, reserves, userConfig, reservesList
+            );
 
         require(vars.userCollateralBalanceETH > 0, Errors.VL_COLLATERAL_BALANCE_IS_0);
 

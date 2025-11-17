@@ -96,9 +96,8 @@ contract LendingPoolTest is LendingPoolFixtures {
         /* Main user repays his debt */
         uint256 wbtcBalanceBeforeRepay = wbtcTypes.token.balanceOf(address(this));
         uint256 wbtcDebtBeforeRepay = wbtcTypes.debtToken.balanceOf(address(this));
-        wbtcTypes.token.approve(
-            address(deployedContracts.lendingPool), maxBorrowTokenToBorrowInCollateralUnit
-        );
+        wbtcTypes.token
+            .approve(address(deployedContracts.lendingPool), maxBorrowTokenToBorrowInCollateralUnit);
         vm.expectEmit(true, true, true, true);
         emit Repay(
             address(wbtcTypes.token),
@@ -106,9 +105,13 @@ contract LendingPoolTest is LendingPoolFixtures {
             address(this),
             maxBorrowTokenToBorrowInCollateralUnit
         );
-        deployedContracts.lendingPool.repay(
-            address(wbtcTypes.token), true, maxBorrowTokenToBorrowInCollateralUnit, address(this)
-        );
+        deployedContracts.lendingPool
+            .repay(
+                address(wbtcTypes.token),
+                true,
+                maxBorrowTokenToBorrowInCollateralUnit,
+                address(this)
+            );
         /* Main user's balance should be the same as before borrowing */
         assertEq(
             wbtcBalanceBeforeRepay,
@@ -166,9 +169,8 @@ contract LendingPoolTest is LendingPoolFixtures {
 
         /* Main user borrows maxPossible amount of wbtc */
         vm.expectRevert(bytes(Errors.VL_COLLATERAL_CANNOT_COVER_NEW_BORROW));
-        deployedContracts.lendingPool.borrow(
-            address(wbtc), true, wbtcMaxBorrowAmountWithUsdcCollateral + 1, address(this)
-        );
+        deployedContracts.lendingPool
+            .borrow(address(wbtc), true, wbtcMaxBorrowAmountWithUsdcCollateral + 1, address(this));
     }
 
     function testBorrowTooBigForProtocolsCollateral() public {
@@ -219,9 +221,8 @@ contract LendingPoolTest is LendingPoolFixtures {
 
         /* Main user borrows maxPossible amount of wbtc */
         vm.expectRevert(bytes(Errors.LP_NOT_ENOUGH_LIQUIDITY_TO_BORROW));
-        deployedContracts.lendingPool.borrow(
-            address(wbtc), true, wbtcMaxBorrowAmountWithUsdcCollateral, address(this)
-        );
+        deployedContracts.lendingPool
+            .borrow(address(wbtc), true, wbtcMaxBorrowAmountWithUsdcCollateral, address(this));
     }
 
     function testUseReserveAsCollateral(uint256 tokenDepositAmount) public {
@@ -239,28 +240,27 @@ contract LendingPoolTest is LendingPoolFixtures {
 
         /* Main user deposits usdc and wants to borrow */
         token.approve(address(deployedContracts.lendingPool), tokenDepositAmount);
-        deployedContracts.lendingPool.deposit(
-            address(token), true, tokenDepositAmount, address(this)
-        );
+        deployedContracts.lendingPool
+            .deposit(address(token), true, tokenDepositAmount, address(this));
 
         uint256 usdcBalanceBeforeBorrow = token.balanceOf(address(this));
         /* Main user is not using his liquidity as a collateral - borrow shall fail */
         deployedContracts.lendingPool.setUserUseReserveAsCollateral(address(token), true, false);
         vm.expectRevert(bytes(Errors.VL_COLLATERAL_BALANCE_IS_0));
-        deployedContracts.lendingPool.borrow(
-            address(token), true, tokenMaxBorrowAmount - 1, address(this)
-        );
+        deployedContracts.lendingPool
+            .borrow(address(token), true, tokenMaxBorrowAmount - 1, address(this));
 
         staticData =
             deployedContracts.asteraDataProvider.getLpReserveStaticData(address(token), true);
-        (, uint256 expectedBorrowRate) = deployedContracts.volatileStrategy.calculateInterestRates(
-            address(token),
-            address(commonContracts.aTokens[idx]),
-            0,
-            tokenMaxBorrowAmount - 1,
-            tokenMaxBorrowAmount - 1,
-            staticData.asteraReserveFactor
-        );
+        (, uint256 expectedBorrowRate) = deployedContracts.volatileStrategy
+            .calculateInterestRates(
+                address(token),
+                address(commonContracts.aTokens[idx]),
+                0,
+                tokenMaxBorrowAmount - 1,
+                tokenMaxBorrowAmount - 1,
+                staticData.asteraReserveFactor
+            );
         /* Main user is using now his liquidity as a collateral - borrow shall succeed */
         deployedContracts.lendingPool.setUserUseReserveAsCollateral(address(token), true, true);
 
@@ -273,9 +273,8 @@ contract LendingPoolTest is LendingPoolFixtures {
             tokenMaxBorrowAmount - 1,
             expectedBorrowRate
         );
-        deployedContracts.lendingPool.borrow(
-            address(token), true, tokenMaxBorrowAmount - 1, address(this)
-        );
+        deployedContracts.lendingPool
+            .borrow(address(token), true, tokenMaxBorrowAmount - 1, address(this));
 
         /* Main user's balance should have: initial amount + borrowed amount */
         assertEq(usdcBalanceBeforeBorrow + tokenMaxBorrowAmount - 1, token.balanceOf(address(this)));
@@ -308,8 +307,7 @@ contract LendingPoolTest is LendingPoolFixtures {
         fixture_borrow(borrowToken, provider, address(this), borrowAmount);
 
         vm.expectRevert(bytes(Errors.VL_TRANSFER_NOT_ALLOWED));
-        deployedContracts.lendingPool.withdraw(
-            address(erc20Tokens[USDC_OFFSET]), true, usdcAmount, address(this)
-        );
+        deployedContracts.lendingPool
+            .withdraw(address(erc20Tokens[USDC_OFFSET]), true, usdcAmount, address(this));
     }
 }

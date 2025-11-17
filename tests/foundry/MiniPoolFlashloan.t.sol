@@ -5,8 +5,9 @@ import "./Common.sol";
 import "contracts/protocol/libraries/helpers/Errors.sol";
 import {WadRayMath} from "contracts/protocol/libraries/math/WadRayMath.sol";
 import {PercentageMath} from "contracts/protocol/libraries/math/PercentageMath.sol";
-import {ReserveConfiguration} from
-    "contracts/protocol/libraries/configuration/ReserveConfiguration.sol";
+import {
+    ReserveConfiguration
+} from "contracts/protocol/libraries/configuration/ReserveConfiguration.sol";
 
 import "forge-std/StdUtils.sol";
 import "contracts/interfaces/IMiniPool.sol";
@@ -72,7 +73,7 @@ contract MiniPoolFlashloanTest is Common {
             console2.log("User grain token balance shall be {initialATokenBalance + amount}");
             assertEq(tokenParams.aToken.balanceOf(user), initialATokenBalance + amount, "02");
         }
-        /* User deposits lending pool's aTokens to the mini pool and 
+        /* User deposits lending pool's aTokens to the mini pool and
         gets mini pool's aTokens */
         {
             uint256 grainTokenUserBalance = aErc6909Token.balanceOf(user, aTokenId);
@@ -92,7 +93,7 @@ contract MiniPoolFlashloanTest is Common {
             assertEq(grainTokenUserBalance + amount, aErc6909Token.balanceOf(user, aTokenId), "13");
         }
         {
-            /* User deposits tokens to the mini pool and 
+            /* User deposits tokens to the mini pool and
             gets mini pool's aTokens */
             uint256 tokenUserBalance = aErc6909Token.balanceOf(user, tokenId);
             uint256 tokenBalance = tokenParams.token.balanceOf(user);
@@ -129,8 +130,9 @@ contract MiniPoolFlashloanTest is Common {
         TokenParams memory borrowTokenParams,
         address user
     ) public {
-        IAERC6909 aErc6909Token =
-            IAERC6909(miniPoolContracts.miniPoolAddressesProvider.getMiniPoolToAERC6909(miniPool));
+        IAERC6909 aErc6909Token = IAERC6909(
+            miniPoolContracts.miniPoolAddressesProvider.getMiniPoolToAERC6909(miniPool)
+        );
         vm.label(address(aErc6909Token), "aErc6909Token");
         vm.label(address(collateralTokenParams.aToken), "aToken");
         vm.label(address(collateralTokenParams.token), "token");
@@ -138,9 +140,9 @@ contract MiniPoolFlashloanTest is Common {
         /* Test depositing */
         uint256 minNrOfTokens;
         {
-            StaticData memory staticData = deployedContracts
-                .asteraDataProvider
-                .getLpReserveStaticData(address(collateralTokenParams.token), true);
+            StaticData memory staticData =
+                deployedContracts.asteraDataProvider
+                    .getLpReserveStaticData(address(collateralTokenParams.token), true);
             uint256 borrowTokenInUsd = (amount * borrowTokenParams.price * 10_000)
                 / ((10 ** PRICE_FEED_DECIMALS) * staticData.ltv);
             uint256 borrowTokenRay = borrowTokenInUsd.rayDiv(collateralTokenParams.price);
@@ -149,10 +151,8 @@ contract MiniPoolFlashloanTest is Common {
                 borrowTokenParams.token.decimals(),
                 collateralTokenParams.token.decimals()
             );
-            minNrOfTokens = (
-                borrowTokenInCollateralToken
-                    > collateralTokenParams.token.balanceOf(address(this)) / 4
-            )
+            minNrOfTokens = (borrowTokenInCollateralToken
+                    > collateralTokenParams.token.balanceOf(address(this)) / 4)
                 ? (collateralTokenParams.token.balanceOf(address(this)) / 4)
                 : borrowTokenInCollateralToken;
             console2.log(
@@ -247,8 +247,9 @@ contract MiniPoolFlashloanTest is Common {
         TokenParams memory borrowTokenParams,
         address user
     ) public {
-        IAERC6909 aErc6909Token =
-            IAERC6909(miniPoolContracts.miniPoolAddressesProvider.getMiniPoolToAERC6909(miniPool));
+        IAERC6909 aErc6909Token = IAERC6909(
+            miniPoolContracts.miniPoolAddressesProvider.getMiniPoolToAERC6909(miniPool)
+        );
         vm.label(address(aErc6909Token), "aErc6909Token");
         vm.label(address(collateralTokenParams.aToken), "aToken");
         vm.label(address(collateralTokenParams.token), "token");
@@ -256,9 +257,9 @@ contract MiniPoolFlashloanTest is Common {
         /* Test depositing */
         uint256 minNrOfTokens;
         {
-            StaticData memory staticData = deployedContracts
-                .asteraDataProvider
-                .getLpReserveStaticData(address(collateralTokenParams.token), true);
+            StaticData memory staticData =
+                deployedContracts.asteraDataProvider
+                    .getLpReserveStaticData(address(collateralTokenParams.token), true);
             uint256 borrowTokenInUsd = (amount * borrowTokenParams.price * 10000)
                 / ((10 ** PRICE_FEED_DECIMALS) * staticData.ltv);
             uint256 borrowTokenRay = borrowTokenInUsd.rayDiv(collateralTokenParams.price);
@@ -267,10 +268,8 @@ contract MiniPoolFlashloanTest is Common {
                 borrowTokenParams.token.decimals(),
                 collateralTokenParams.token.decimals()
             );
-            minNrOfTokens = (
-                borrowTokenInCollateralToken
-                    > collateralTokenParams.token.balanceOf(address(this)) / 4
-            )
+            minNrOfTokens = (borrowTokenInCollateralToken
+                    > collateralTokenParams.token.balanceOf(address(this)) / 4)
                 ? (collateralTokenParams.token.balanceOf(address(this)) / 4)
                 : borrowTokenInCollateralToken;
         }
@@ -279,9 +278,8 @@ contract MiniPoolFlashloanTest is Common {
             address liquidityProvider = makeAddr("liquidityProvider");
             borrowTokenParams.token.approve(address(deployedContracts.lendingPool), amount);
 
-            deployedContracts.lendingPool.deposit(
-                address(borrowTokenParams.token), true, amount, liquidityProvider
-            );
+            deployedContracts.lendingPool
+                .deposit(address(borrowTokenParams.token), true, amount, liquidityProvider);
         }
 
         console2.log("Choosen amount: ", amount);
@@ -289,17 +287,14 @@ contract MiniPoolFlashloanTest is Common {
         {
             vm.startPrank(address(miniPoolContracts.miniPoolAddressesProvider));
             console2.log("address of asset:", address(borrowTokenParams.aToken));
-            uint256 currentFlow = miniPoolContracts.flowLimiter.currentFlow(
-                address(borrowTokenParams.token), miniPool
-            );
-            miniPoolContracts.flowLimiter.setFlowLimit(
-                address(borrowTokenParams.token), miniPool, currentFlow + amount
-            );
+            uint256 currentFlow = miniPoolContracts.flowLimiter
+            .currentFlow(address(borrowTokenParams.token), miniPool);
+            miniPoolContracts.flowLimiter
+                .setFlowLimit(address(borrowTokenParams.token), miniPool, currentFlow + amount);
             console2.log(
                 "FlowLimiter results",
-                miniPoolContracts.flowLimiter.getFlowLimit(
-                    address(borrowTokenParams.token), miniPool
-                )
+                miniPoolContracts.flowLimiter
+                    .getFlowLimit(address(borrowTokenParams.token), miniPool)
             );
             vm.stopPrank();
         }
@@ -315,9 +310,8 @@ contract MiniPoolFlashloanTest is Common {
             minNrOfTokens,
             collateralTokenParams.token.balanceOf(address(this))
         );
-        IMiniPool(miniPool).deposit(
-            address(collateralTokenParams.token), false, minNrOfTokens, user
-        );
+        IMiniPool(miniPool)
+            .deposit(address(collateralTokenParams.token), false, minNrOfTokens, user);
 
         (,,,,, uint256 healthFactorBefore) = IMiniPool(miniPool).getUserAccountData(user);
         Balances memory balances;
@@ -429,18 +423,15 @@ contract MiniPoolFlashloanTest is Common {
 
         vm.startPrank(user);
         tokenParamsUsdc.token.approve(address(deployedContracts.lendingPool), amountUsdc);
-        deployedContracts.lendingPool.deposit(
-            address(tokenParamsUsdc.token), true, amountUsdc, user
-        );
+        deployedContracts.lendingPool
+            .deposit(address(tokenParamsUsdc.token), true, amountUsdc, user);
 
         vm.startPrank(user2);
         tokenParamsWbtc.token.approve(address(deployedContracts.lendingPool), amountwBtc);
-        deployedContracts.lendingPool.deposit(
-            address(tokenParamsWbtc.token), true, amountwBtc, user2
-        );
-        deployedContracts.lendingPool.borrow(
-            address(tokenParamsUsdc.token), true, amountUsdc, user2
-        );
+        deployedContracts.lendingPool
+            .deposit(address(tokenParamsWbtc.token), true, amountwBtc, user2);
+        deployedContracts.lendingPool
+            .borrow(address(tokenParamsUsdc.token), true, amountUsdc, user2);
 
         vm.startPrank(user);
         uint256 amtAUsdc = tokenParamsUsdc.aToken.balanceOf(address(user)) / 2;

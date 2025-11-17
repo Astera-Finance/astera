@@ -1,7 +1,9 @@
 // SPDX-License-Identifier: agpl-3.0
 pragma solidity ^0.8.0;
 
-import {IMiniPoolAddressesProvider} from "../../contracts/interfaces/IMiniPoolAddressesProvider.sol";
+import {
+    IMiniPoolAddressesProvider
+} from "../../contracts/interfaces/IMiniPoolAddressesProvider.sol";
 import {IAERC6909} from "../../contracts/interfaces/IAERC6909.sol";
 import {DataTypes} from "../../contracts/protocol/libraries/types/DataTypes.sol";
 

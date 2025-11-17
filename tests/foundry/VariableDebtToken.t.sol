@@ -100,22 +100,20 @@ contract VariableDebtTokenTest is Common {
         for (uint32 idx = 0; idx < commonContracts.variableDebtTokens.length; idx++) {
             /* Minting tests with additiveness */
             erc20Tokens[idx].approve(address(deployedContracts.lendingPool), maxValToDeposit);
-            deployedContracts.lendingPool.deposit(
-                address(erc20Tokens[idx]), true, maxValToDeposit, address(this)
-            );
+            deployedContracts.lendingPool
+                .deposit(address(erc20Tokens[idx]), true, maxValToDeposit, address(this));
 
             assertEq(commonContracts.variableDebtTokens[idx].balanceOf(address(this)), 0);
             assertEq(commonContracts.variableDebtTokens[idx].totalSupply(), 0);
 
             /* Burning tests with additiveness */
-            StaticData memory staticData = deployedContracts
-                .asteraDataProvider
-                .getLpReserveStaticData(address(erc20Tokens[idx]), true);
+            StaticData memory staticData =
+                deployedContracts.asteraDataProvider
+                    .getLpReserveStaticData(address(erc20Tokens[idx]), true);
 
             uint256 amountToBorrowRaw = maxValToDeposit * staticData.ltv / 10_000;
-            deployedContracts.lendingPool.borrow(
-                address(erc20Tokens[idx]), true, amountToBorrowRaw - 1, address(this)
-            );
+            deployedContracts.lendingPool
+                .borrow(address(erc20Tokens[idx]), true, amountToBorrowRaw - 1, address(this));
             assertEq(
                 commonContracts.variableDebtTokens[idx].balanceOf(address(this)),
                 amountToBorrowRaw - 1

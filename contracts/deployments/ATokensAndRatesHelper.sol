@@ -2,13 +2,16 @@
 pragma solidity ^0.8.23;
 
 import {LendingPool} from "../../contracts/protocol/core/lendingpool/LendingPool.sol";
-import {LendingPoolAddressesProvider} from
-    "../../contracts/protocol/configuration/LendingPoolAddressesProvider.sol";
-import {LendingPoolConfigurator} from
-    "../../contracts/protocol/core/lendingpool/LendingPoolConfigurator.sol";
+import {
+    LendingPoolAddressesProvider
+} from "../../contracts/protocol/configuration/LendingPoolAddressesProvider.sol";
+import {
+    LendingPoolConfigurator
+} from "../../contracts/protocol/core/lendingpool/LendingPoolConfigurator.sol";
 import {AToken} from "../../contracts/protocol/tokenization/ERC20/AToken.sol";
-import {DefaultReserveInterestRateStrategy} from
-    "../../contracts/protocol/core/interestRateStrategies/lendingpool/DefaultReserveInterestRateStrategy.sol";
+import {
+    DefaultReserveInterestRateStrategy
+} from "../../contracts/protocol/core/interestRateStrategies/lendingpool/DefaultReserveInterestRateStrategy.sol";
 import {Ownable} from "../../contracts/dependencies/openzeppelin/contracts/Ownable.sol";
 
 /**

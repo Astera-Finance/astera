@@ -4,10 +4,12 @@ pragma solidity ^0.8.0;
 import {IERC20} from "../../../contracts/dependencies/openzeppelin/contracts/IERC20.sol";
 import {SafeERC20} from "../../../contracts/dependencies/openzeppelin/contracts/SafeERC20.sol";
 import {IFlashLoanReceiver} from "../../../contracts/interfaces/IFlashLoanReceiver.sol";
-import {ILendingPoolAddressesProvider} from
-    "../../../contracts/interfaces/ILendingPoolAddressesProvider.sol";
-import {IMiniPoolAddressesProvider} from
-    "../../../contracts/interfaces/IMiniPoolAddressesProvider.sol";
+import {
+    ILendingPoolAddressesProvider
+} from "../../../contracts/interfaces/ILendingPoolAddressesProvider.sol";
+import {
+    IMiniPoolAddressesProvider
+} from "../../../contracts/interfaces/IMiniPoolAddressesProvider.sol";
 import {ILendingPool} from "../../../contracts/interfaces/ILendingPool.sol";
 import {IMiniPool} from "../../../contracts/interfaces/IMiniPool.sol";
 

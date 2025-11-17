@@ -5,8 +5,9 @@ import "./MiniPoolFixtures.t.sol";
 import "contracts/protocol/libraries/helpers/Errors.sol";
 import {WadRayMath} from "contracts/protocol/libraries/math/WadRayMath.sol";
 import {PercentageMath} from "contracts/protocol/libraries/math/PercentageMath.sol";
-import {ReserveConfiguration} from
-    "contracts/protocol/libraries/configuration/ReserveConfiguration.sol";
+import {
+    ReserveConfiguration
+} from "contracts/protocol/libraries/configuration/ReserveConfiguration.sol";
 import {PercentageMath} from "contracts/protocol/libraries/math/PercentageMath.sol";
 import "contracts/misc/AsteraDataProvider.sol";
 
@@ -278,7 +279,7 @@ contract MultiplePools is MiniPoolFixtures {
                 "----------------USER DEPOSITs LIQUIDITY (aUSDC) TO MINI POOL---------------"
             );
             /* User deposits lending pool's aTokens to the mini pool and
-        gets mini pool's aTokens */
+            gets mini pool's aTokens */
             fixture_depositATokensToMiniPool(
                 amount1, 1000 + USDC_OFFSET, users.user1, usdcTokenParams, aErc6909Token
             );
@@ -287,9 +288,8 @@ contract MultiplePools is MiniPoolFixtures {
 
         console2.log("----------------USER1 BORROWs---------------");
         vm.startPrank(users.user1);
-        IMiniPool(miniPool).borrow(
-            address(wbtcParams.aTokenWrapper), false, amount2 / 4, users.user1
-        );
+        IMiniPool(miniPool)
+            .borrow(address(wbtcParams.aTokenWrapper), false, amount2 / 4, users.user1);
         vm.stopPrank();
         logState(usdcParams, wbtcParams, 5);
         console2.log(
@@ -361,16 +361,15 @@ contract MultiplePools is MiniPoolFixtures {
                 "----------------USER DEPOSITs LIQUIDITY (aWETH) TO MINI POOL---------------"
             );
             /* User deposits lending pool's aTokens to the mini pool and
-        gets mini pool's aTokens */
+            gets mini pool's aTokens */
             fixture_depositATokensToMiniPool(
                 amount1, 1000 + WETH_OFFSET, users.user1, wethTokenParams, aErc6909Token
             );
             // logState(usdcParams, wbtcParams, 8);
         }
         uint256 scaledAmountToBorrow = amount2.rayDiv(
-            deployedContracts.lendingPool.getReserveNormalizedIncome(
-                address(wbtcParams.token), true
-            )
+            deployedContracts.lendingPool
+            .getReserveNormalizedIncome(address(wbtcParams.token), true)
         );
         {
             vm.prank(address(miniPoolContracts.miniPoolAddressesProvider));
@@ -379,9 +378,8 @@ contract MultiplePools is MiniPoolFixtures {
         console2.log("----------------USER1 BORROWs---------------");
         console2.log("scaledAmountToBorrow: ", scaledAmountToBorrow);
         vm.startPrank(users.user1);
-        IMiniPool(miniPool).borrow(
-            address(wbtcParams.aTokenWrapper), false, scaledAmountToBorrow, users.user1
-        );
+        IMiniPool(miniPool)
+            .borrow(address(wbtcParams.aTokenWrapper), false, scaledAmountToBorrow, users.user1);
         vm.stopPrank();
         logState(usdcParams, wbtcParams, 9);
         console2.log(
@@ -414,12 +412,13 @@ contract MultiplePools is MiniPoolFixtures {
         console2.log("1. User1 wbtc balance: ", wbtcParams.token.balanceOf(users.user1));
 
         vm.startPrank(users.user1);
-        deployedContracts.lendingPool.withdraw(
-            address(wbtcParams.token),
-            true,
-            testBalances.borrowTokenInAToken + testBalances.borrowTokenInVault,
-            users.user1
-        );
+        deployedContracts.lendingPool
+            .withdraw(
+                address(wbtcParams.token),
+                true,
+                testBalances.borrowTokenInAToken + testBalances.borrowTokenInVault,
+                users.user1
+            );
         vm.stopPrank();
 
         console2.log("2. User1 aWbtc balance: ", wbtcParams.aToken.balanceOf(users.user1));

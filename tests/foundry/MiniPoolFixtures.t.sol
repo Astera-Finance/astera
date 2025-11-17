@@ -34,9 +34,9 @@ abstract contract MiniPoolFixtures is LendingPoolFixtures {
             deployedContracts.lendingPool.deposit(address(tokenParams.token), true, amount, user);
             // console2.log("User token balance shall be {initialTokenBalance - amount}");
             assertEq(tokenParams.token.balanceOf(user), initialTokenBalance - amount, "01");
-            DynamicData memory dynamicData = deployedContracts
-                .asteraDataProvider
-                .getLpReserveDynamicData(address(tokenParams.token), true);
+            DynamicData memory dynamicData =
+                deployedContracts.asteraDataProvider
+                    .getLpReserveDynamicData(address(tokenParams.token), true);
             // console2.log("User atoken balance shall be {initialATokenBalance + amount}");
             assertEq(
                 tokenParams.aToken.balanceOf(user),
@@ -128,14 +128,14 @@ abstract contract MiniPoolFixtures is LendingPoolFixtures {
         fixture_depositTokensToMainPool(amount, user, tokenParams);
         initialSupply = aErc6909Token.scaledTotalSupply(tokenId);
         console2.log("2. Initial supply: %s ID %s", initialSupply, tokenId);
-        /* User deposits lending pool's aTokens to the mini pool and 
+        /* User deposits lending pool's aTokens to the mini pool and
         gets mini pool's aTokens */
         fixture_depositATokensToMiniPool(amount, aTokenId, user, tokenParams, aErc6909Token);
 
         console2.log("aErc6909Token: ", address(aErc6909Token));
         initialSupply = aErc6909Token.scaledTotalSupply(tokenId);
         console2.log("3. Initial supply: %s ID %s", initialSupply, tokenId);
-        /* User deposits tokens to the mini pool and 
+        /* User deposits tokens to the mini pool and
             gets mini pool's aTokens */
         fixture_depositTokensToMiniPool(amount, tokenId, user, tokenParams, aErc6909Token);
 
@@ -162,8 +162,9 @@ abstract contract MiniPoolFixtures is LendingPoolFixtures {
         TokenParams memory borrowTokenParams,
         address user
     ) public {
-        IAERC6909 aErc6909Token =
-            IAERC6909(miniPoolContracts.miniPoolAddressesProvider.getMiniPoolToAERC6909(miniPool));
+        IAERC6909 aErc6909Token = IAERC6909(
+            miniPoolContracts.miniPoolAddressesProvider.getMiniPoolToAERC6909(miniPool)
+        );
         vm.label(address(aErc6909Token), "aErc6909Token");
         vm.label(address(collateralTokenParams.aToken), "aToken");
         vm.label(address(collateralTokenParams.token), "token");
@@ -171,9 +172,9 @@ abstract contract MiniPoolFixtures is LendingPoolFixtures {
         /* Test depositing */
         uint256 minNrOfTokens;
         {
-            StaticData memory staticData = deployedContracts
-                .asteraDataProvider
-                .getLpReserveStaticData(address(collateralTokenParams.token), true);
+            StaticData memory staticData =
+                deployedContracts.asteraDataProvider
+                    .getLpReserveStaticData(address(collateralTokenParams.token), true);
             uint256 borrowTokenInUsd = (amount * borrowTokenParams.price * 10_000)
                 / ((10 ** PRICE_FEED_DECIMALS) * staticData.ltv);
             uint256 borrowTokenRay = borrowTokenInUsd.rayDiv(collateralTokenParams.price);
@@ -182,9 +183,10 @@ abstract contract MiniPoolFixtures is LendingPoolFixtures {
                 borrowTokenParams.token.decimals(),
                 collateralTokenParams.token.decimals()
             );
-            minNrOfTokens = (
-                borrowTokenInCollateralToken > collateralTokenParams.token.balanceOf(user) / 4
-            ) ? (collateralTokenParams.token.balanceOf(user) / 4) : borrowTokenInCollateralToken;
+            minNrOfTokens = (borrowTokenInCollateralToken
+                    > collateralTokenParams.token.balanceOf(user) / 4)
+                ? (collateralTokenParams.token.balanceOf(user) / 4)
+                : borrowTokenInCollateralToken;
             console2.log(
                 "Min nr of collateral in usd: ",
                 (borrowTokenInCollateralToken * collateralTokenParams.price)
@@ -234,9 +236,8 @@ abstract contract MiniPoolFixtures is LendingPoolFixtures {
 
             IMiniPool(miniPool).borrow(address(borrowTokenParams.aToken), false, amount, user);
             uint256 scaledAmount = amount.rayDiv(
-                IMiniPool(miniPool).getReserveNormalizedVariableDebt(
-                    address(borrowTokenParams.token)
-                )
+                IMiniPool(miniPool)
+                    .getReserveNormalizedVariableDebt(address(borrowTokenParams.token))
             );
 
             console2.log("Total supply of debtAToken must be greater than before borrow");
@@ -266,9 +267,8 @@ abstract contract MiniPoolFixtures is LendingPoolFixtures {
             IMiniPool(miniPool).borrow(address(borrowTokenParams.token), false, amount, user);
 
             uint256 scaledAmount = amount.rayDiv(
-                IMiniPool(miniPool).getReserveNormalizedVariableDebt(
-                    address(borrowTokenParams.token)
-                )
+                IMiniPool(miniPool)
+                    .getReserveNormalizedVariableDebt(address(borrowTokenParams.token))
             );
             console2.log(
                 "Balance of debtToken must be greater than before borrow >>>>>>> ",
@@ -307,8 +307,9 @@ abstract contract MiniPoolFixtures is LendingPoolFixtures {
         TokenParams memory borrowTokenParams,
         address user
     ) public {
-        IAERC6909 aErc6909Token =
-            IAERC6909(miniPoolContracts.miniPoolAddressesProvider.getMiniPoolToAERC6909(miniPool));
+        IAERC6909 aErc6909Token = IAERC6909(
+            miniPoolContracts.miniPoolAddressesProvider.getMiniPoolToAERC6909(miniPool)
+        );
         vm.label(address(aErc6909Token), "aErc6909Token");
         vm.label(address(collateralTokenParams.aToken), "aToken");
         vm.label(address(collateralTokenParams.token), "token");
@@ -316,9 +317,9 @@ abstract contract MiniPoolFixtures is LendingPoolFixtures {
         /* Test depositing */
         uint256 minNrOfTokens;
         {
-            StaticData memory staticData = deployedContracts
-                .asteraDataProvider
-                .getLpReserveStaticData(address(collateralTokenParams.token), true);
+            StaticData memory staticData =
+                deployedContracts.asteraDataProvider
+                    .getLpReserveStaticData(address(collateralTokenParams.token), true);
             uint256 borrowTokenInUsd = (amount * borrowTokenParams.price * 10000)
                 / ((10 ** PRICE_FEED_DECIMALS) * staticData.ltv);
             uint256 borrowTokenRay = borrowTokenInUsd.rayDiv(collateralTokenParams.price);
@@ -327,18 +328,18 @@ abstract contract MiniPoolFixtures is LendingPoolFixtures {
                 borrowTokenParams.token.decimals(),
                 collateralTokenParams.token.decimals()
             );
-            minNrOfTokens = (
-                borrowTokenInCollateralToken > collateralTokenParams.token.balanceOf(user) / 4
-            ) ? (collateralTokenParams.token.balanceOf(user) / 4) : borrowTokenInCollateralToken;
+            minNrOfTokens = (borrowTokenInCollateralToken
+                    > collateralTokenParams.token.balanceOf(user) / 4)
+                ? (collateralTokenParams.token.balanceOf(user) / 4)
+                : borrowTokenInCollateralToken;
         }
         {
             /* Sb deposits tokens which will be borrowed */
             address liquidityProvider = makeAddr("liquidityProvider");
             borrowTokenParams.token.approve(address(deployedContracts.lendingPool), amount);
 
-            deployedContracts.lendingPool.deposit(
-                address(borrowTokenParams.token), true, amount, liquidityProvider
-            );
+            deployedContracts.lendingPool
+                .deposit(address(borrowTokenParams.token), true, amount, liquidityProvider);
         }
 
         console2.log("Choosen amount: ", amount);
@@ -346,17 +347,14 @@ abstract contract MiniPoolFixtures is LendingPoolFixtures {
         {
             vm.startPrank(address(miniPoolContracts.miniPoolAddressesProvider));
             console2.log("address of asset:", address(borrowTokenParams.aToken));
-            uint256 currentFlow = miniPoolContracts.flowLimiter.currentFlow(
-                address(borrowTokenParams.token), miniPool
-            );
-            miniPoolContracts.flowLimiter.setFlowLimit(
-                address(borrowTokenParams.token), miniPool, currentFlow + amount
-            );
+            uint256 currentFlow = miniPoolContracts.flowLimiter
+            .currentFlow(address(borrowTokenParams.token), miniPool);
+            miniPoolContracts.flowLimiter
+                .setFlowLimit(address(borrowTokenParams.token), miniPool, currentFlow + amount);
             console2.log(
                 "flowLimiter results",
-                miniPoolContracts.flowLimiter.getFlowLimit(
-                    address(borrowTokenParams.token), miniPool
-                )
+                miniPoolContracts.flowLimiter
+                    .getFlowLimit(address(borrowTokenParams.token), miniPool)
             );
             vm.stopPrank();
         }
@@ -372,9 +370,8 @@ abstract contract MiniPoolFixtures is LendingPoolFixtures {
             minNrOfTokens,
             collateralTokenParams.token.balanceOf(address(this))
         );
-        IMiniPool(miniPool).deposit(
-            address(collateralTokenParams.token), false, minNrOfTokens, user
-        );
+        IMiniPool(miniPool)
+            .deposit(address(collateralTokenParams.token), false, minNrOfTokens, user);
 
         (,,,,, uint256 healthFactorBefore) = IMiniPool(miniPool).getUserAccountData(user);
         Balances memory balances;

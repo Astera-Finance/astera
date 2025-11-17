@@ -49,12 +49,13 @@ contract LendingPoolLendingPoolFixRateStrategyTest is LendingPoolFixtures {
 
         // borrow WBTC
         vm.prank(user);
-        deployedContracts.lendingPool.borrow(
-            address(erc20Tokens[1]),
-            true,
-            0.25e8,
-            user // borrow 0.25 WBTC == 33500 / 2 USDC
-        );
+        deployedContracts.lendingPool
+            .borrow(
+                address(erc20Tokens[1]),
+                true,
+                0.25e8,
+                user // borrow 0.25 WBTC == 33500 / 2 USDC
+            );
 
         console2.log("user2 aTokenUSDC balance: ", commonContracts.aTokens[0].balanceOf(user));
         console2.log(
@@ -159,9 +160,8 @@ contract LendingPoolLendingPoolFixRateStrategyTest is LendingPoolFixtures {
 
         /* Main user borrows maxPossible amount of wbtc */
         vm.expectRevert(bytes(Errors.VL_COLLATERAL_CANNOT_COVER_NEW_BORROW));
-        deployedContracts.lendingPool.borrow(
-            address(wbtc), true, wbtcMaxBorrowAmountWithUsdcCollateral + 1, address(this)
-        );
+        deployedContracts.lendingPool
+            .borrow(address(wbtc), true, wbtcMaxBorrowAmountWithUsdcCollateral + 1, address(this));
     }
 
     function testBorrowTooBigForProtocolsCollateral() public {
@@ -212,8 +212,7 @@ contract LendingPoolLendingPoolFixRateStrategyTest is LendingPoolFixtures {
 
         /* Main user borrows maxPossible amount of wbtc */
         vm.expectRevert(bytes(Errors.LP_NOT_ENOUGH_LIQUIDITY_TO_BORROW));
-        deployedContracts.lendingPool.borrow(
-            address(wbtc), true, wbtcMaxBorrowAmountWithUsdcCollateral, address(this)
-        );
+        deployedContracts.lendingPool
+            .borrow(address(wbtc), true, wbtcMaxBorrowAmountWithUsdcCollateral, address(this));
     }
 }

@@ -46,19 +46,18 @@ contract DefaultReserveInterestRateStrategyTest is Common {
         for (uint32 idx = 0; idx < erc20Tokens.length; idx++) {
             uint256 currentLiquidityRate = 0;
             uint256 currentVariableBorrowRate = 0;
-            staticData[idx] = deployedContracts.asteraDataProvider.getLpReserveStaticData(
-                address(erc20Tokens[idx]), false
-            );
-            (currentLiquidityRate, currentVariableBorrowRate) = deployedContracts
-                .stableStrategy
-                .calculateInterestRates(
-                address(erc20Tokens[idx]),
-                address(commonContracts.aTokens[idx]),
-                0,
-                0,
-                0,
-                staticData[idx].asteraReserveFactor
-            );
+            staticData[idx] = deployedContracts.asteraDataProvider
+                .getLpReserveStaticData(address(erc20Tokens[idx]), false);
+            (currentLiquidityRate, currentVariableBorrowRate) =
+                deployedContracts.stableStrategy
+                    .calculateInterestRates(
+                        address(erc20Tokens[idx]),
+                        address(commonContracts.aTokens[idx]),
+                        0,
+                        0,
+                        0,
+                        staticData[idx].asteraReserveFactor
+                    );
             assertEq(currentLiquidityRate, 0);
             assertEq(currentVariableBorrowRate, 0);
         }
@@ -69,19 +68,18 @@ contract DefaultReserveInterestRateStrategyTest is Common {
         for (uint32 idx = 0; idx < erc20Tokens.length; idx++) {
             uint256 currentLiquidityRate = 0;
             uint256 currentVariableBorrowRate = 0;
-            staticData[idx] = deployedContracts.asteraDataProvider.getLpReserveStaticData(
-                address(erc20Tokens[idx]), false
-            );
-            (currentLiquidityRate, currentVariableBorrowRate) = deployedContracts
-                .stableStrategy
-                .calculateInterestRates(
-                address(erc20Tokens[idx]),
-                address(commonContracts.aTokens[idx]),
-                200000000000000000,
-                0,
-                800000000000000000,
-                staticData[idx].asteraReserveFactor
-            );
+            staticData[idx] = deployedContracts.asteraDataProvider
+                .getLpReserveStaticData(address(erc20Tokens[idx]), false);
+            (currentLiquidityRate, currentVariableBorrowRate) =
+                deployedContracts.stableStrategy
+                    .calculateInterestRates(
+                        address(erc20Tokens[idx]),
+                        address(commonContracts.aTokens[idx]),
+                        200000000000000000,
+                        0,
+                        800000000000000000,
+                        staticData[idx].asteraReserveFactor
+                    );
             uint256 baseVariableBorrowRate =
                 deployedContracts.stableStrategy.baseVariableBorrowRate();
             uint256 variableRateSlope1 = deployedContracts.stableStrategy.variableRateSlope1();
@@ -100,19 +98,18 @@ contract DefaultReserveInterestRateStrategyTest is Common {
         for (uint32 idx = 0; idx < erc20Tokens.length; idx++) {
             uint256 currentLiquidityRate = 0;
             uint256 currentVariableBorrowRate = 0;
-            staticData[idx] = deployedContracts.asteraDataProvider.getLpReserveStaticData(
-                address(erc20Tokens[idx]), false
-            );
-            (currentLiquidityRate, currentVariableBorrowRate) = deployedContracts
-                .stableStrategy
-                .calculateInterestRates(
-                address(erc20Tokens[idx]),
-                address(commonContracts.aTokens[idx]),
-                0,
-                0,
-                800000000000000000,
-                staticData[idx].asteraReserveFactor
-            );
+            staticData[idx] = deployedContracts.asteraDataProvider
+                .getLpReserveStaticData(address(erc20Tokens[idx]), false);
+            (currentLiquidityRate, currentVariableBorrowRate) =
+                deployedContracts.stableStrategy
+                    .calculateInterestRates(
+                        address(erc20Tokens[idx]),
+                        address(commonContracts.aTokens[idx]),
+                        0,
+                        0,
+                        800000000000000000,
+                        staticData[idx].asteraReserveFactor
+                    );
             uint256 baseVariableBorrowRate =
                 deployedContracts.stableStrategy.baseVariableBorrowRate();
             uint256 variableRateSlope1 = deployedContracts.stableStrategy.variableRateSlope1();
