@@ -2,13 +2,10 @@
 pragma solidity ^0.8.23;
 
 import {IERC20} from "../../../../../contracts/dependencies/openzeppelin/contracts/IERC20.sol";
-import {
-    SafeERC20
-} from "../../../../../contracts/dependencies/openzeppelin/contracts/SafeERC20.sol";
+import {SafeERC20} from "../../../../../contracts/dependencies/openzeppelin/contracts/SafeERC20.sol";
 import {IOracle} from "../../../../../contracts/interfaces/IOracle.sol";
-import {
-    IMiniPoolAddressesProvider
-} from "../../../../../contracts/interfaces/IMiniPoolAddressesProvider.sol";
+import {IMiniPoolAddressesProvider} from
+    "../../../../../contracts/interfaces/IMiniPoolAddressesProvider.sol";
 import {IAERC6909} from "../../../../../contracts/interfaces/IAERC6909.sol";
 import {WadRayMath} from "../../../../../contracts/protocol/libraries/math/WadRayMath.sol";
 import {PercentageMath} from "../../../../../contracts/protocol/libraries/math/PercentageMath.sol";
@@ -17,23 +14,18 @@ import {DataTypes} from "../../../../../contracts/protocol/libraries/types/DataT
 import {MiniPoolGenericLogic} from "./MiniPoolGenericLogic.sol";
 import {MiniPoolReserveLogic} from "./MiniPoolReserveLogic.sol";
 import {MiniPoolValidationLogic} from "./MiniPoolValidationLogic.sol";
-import {
-    ReserveConfiguration
-} from "../../../../../contracts/protocol/libraries/configuration/ReserveConfiguration.sol";
-import {
-    UserConfiguration
-} from "../../../../../contracts/protocol/libraries/configuration/UserConfiguration.sol";
+import {ReserveConfiguration} from
+    "../../../../../contracts/protocol/libraries/configuration/ReserveConfiguration.sol";
+import {UserConfiguration} from
+    "../../../../../contracts/protocol/libraries/configuration/UserConfiguration.sol";
 import {Helpers} from "../../../../../contracts/protocol/libraries/helpers/Helpers.sol";
 import {ILendingPool} from "../../../../../contracts/interfaces/ILendingPool.sol";
-import {
-    ATokenNonRebasing
-} from "../../../../../contracts/protocol/tokenization/ERC20/ATokenNonRebasing.sol";
-import {
-    ILendingPoolConfigurator
-} from "../../../../../contracts/interfaces/ILendingPoolConfigurator.sol";
-import {
-    ILendingPoolAddressesProvider
-} from "../../../../../contracts/interfaces/ILendingPoolAddressesProvider.sol";
+import {ATokenNonRebasing} from
+    "../../../../../contracts/protocol/tokenization/ERC20/ATokenNonRebasing.sol";
+import {ILendingPoolConfigurator} from
+    "../../../../../contracts/interfaces/ILendingPoolConfigurator.sol";
+import {ILendingPoolAddressesProvider} from
+    "../../../../../contracts/interfaces/ILendingPoolAddressesProvider.sol";
 
 /**
  * @title MiniPoolBorrowLogic library
@@ -112,9 +104,7 @@ library MiniPoolBorrowLogic {
      */
     function calculateUserAccountDataVolatile(
         CalculateUserAccountDataVolatileParams memory params,
-        mapping(
-            address => DataTypes.MiniPoolReserveData
-        ) storage reserves,
+        mapping(address => DataTypes.MiniPoolReserveData) storage reserves,
         DataTypes.UserConfigurationMap memory userConfig,
         mapping(uint256 => address) storage reservesList
     ) external view returns (uint256, uint256, uint256, uint256, uint256) {
@@ -188,8 +178,9 @@ library MiniPoolBorrowLogic {
                 vars.variableDebtTokenID = reserve.variableDebtTokenID;
                 vars.index = reserve.variableBorrowIndex;
             }
-            isFirstBorrowing = IAERC6909(vars.aErc6909)
-                .mint(vars.user, vars.onBehalfOf, vars.variableDebtTokenID, vars.amount, vars.index);
+            isFirstBorrowing = IAERC6909(vars.aErc6909).mint(
+                vars.user, vars.onBehalfOf, vars.variableDebtTokenID, vars.amount, vars.index
+            );
 
             if (isFirstBorrowing) {
                 userConfig.setBorrowing(reserve.id, true);
@@ -199,8 +190,9 @@ library MiniPoolBorrowLogic {
         reserve.updateInterestRates(vars.asset, 0, vars.releaseUnderlying ? vars.amount : 0);
 
         if (vars.releaseUnderlying) {
-            IAERC6909(vars.aErc6909)
-                .transferUnderlyingTo(vars.user, reserve.aTokenID, vars.amount, unwrap);
+            IAERC6909(vars.aErc6909).transferUnderlyingTo(
+                vars.user, reserve.aTokenID, vars.amount, unwrap
+            );
         }
 
         emit Borrow(
@@ -276,15 +268,14 @@ library MiniPoolBorrowLogic {
 
         reserve.updateState();
 
-        IAERC6909(reserve.aErc6909)
-            .burn(
-                params.onBehalfOf,
-                address(0), // we dont care about the burn receiver for debtTokens
-                reserve.variableDebtTokenID,
-                paybackAmount,
-                false,
-                reserve.variableBorrowIndex
-            );
+        IAERC6909(reserve.aErc6909).burn(
+            params.onBehalfOf,
+            address(0), // we dont care about the burn receiver for debtTokens
+            reserve.variableDebtTokenID,
+            paybackAmount,
+            false,
+            reserve.variableBorrowIndex
+        );
 
         address aToken = reserve.aErc6909;
         reserve.updateInterestRates(params.asset, paybackAmount, 0);
@@ -297,10 +288,10 @@ library MiniPoolBorrowLogic {
         if (
             wrap
                 && ILendingPoolConfigurator(
-                        ILendingPoolAddressesProvider(
-                                params.addressesProvider.getLendingPoolAddressesProvider()
-                            ).getLendingPoolConfigurator()
-                    ).getIsAToken(params.asset)
+                    ILendingPoolAddressesProvider(
+                        params.addressesProvider.getLendingPoolAddressesProvider()
+                    ).getLendingPoolConfigurator()
+                ).getIsAToken(params.asset)
         ) {
             address underlying = ATokenNonRebasing(params.asset).UNDERLYING_ASSET_ADDRESS();
             address lendingPool = params.addressesProvider.getLendingPool();
@@ -314,8 +305,9 @@ library MiniPoolBorrowLogic {
             IERC20(params.asset).safeTransferFrom(msg.sender, aToken, paybackAmount);
         }
 
-        IAERC6909(aToken)
-            .handleRepayment(msg.sender, params.onBehalfOf, reserve.aTokenID, paybackAmount);
+        IAERC6909(aToken).handleRepayment(
+            msg.sender, params.onBehalfOf, reserve.aTokenID, paybackAmount
+        );
 
         emit Repay(params.asset, params.onBehalfOf, msg.sender, paybackAmount);
 

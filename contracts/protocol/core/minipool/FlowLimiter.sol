@@ -1,12 +1,10 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.23;
 
-import {
-    ILendingPoolAddressesProvider
-} from "../../../../contracts/interfaces/ILendingPoolAddressesProvider.sol";
-import {
-    IMiniPoolAddressesProvider
-} from "../../../../contracts/interfaces/IMiniPoolAddressesProvider.sol";
+import {ILendingPoolAddressesProvider} from
+    "../../../../contracts/interfaces/ILendingPoolAddressesProvider.sol";
+import {IMiniPoolAddressesProvider} from
+    "../../../../contracts/interfaces/IMiniPoolAddressesProvider.sol";
 import {IMiniPool} from "../../../../contracts/interfaces/IMiniPool.sol";
 import {ILendingPool} from "../../../../contracts/interfaces/ILendingPool.sol";
 import {IERC20} from "../../../../contracts/dependencies/openzeppelin/contracts/IERC20.sol";
@@ -76,8 +74,9 @@ contract FlowLimiter is IFlowLimiter {
      */
     function currentFlow(address asset, address miniPool) public view returns (uint256) {
         //`reserveType` always true since miniPool internal borrow is basically rehypothecation.
-        return IERC20(_lendingPool.getReserveData(asset, true).variableDebtTokenAddress)
-            .balanceOf(address(miniPool));
+        return IERC20(_lendingPool.getReserveData(asset, true).variableDebtTokenAddress).balanceOf(
+            address(miniPool)
+        );
     }
 
     function getMiniPoolMaxDebt(address asset, address miniPool) external view returns (uint256) {

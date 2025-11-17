@@ -83,16 +83,19 @@ contract ATokenTest is Common {
 
         for (uint32 idx = 0; idx < commonContracts.aTokens.length; idx++) {
             erc20Tokens[idx].approve(address(deployedContracts.lendingPool), 2 * maxValToBurn);
-            deployedContracts.lendingPool
-                .deposit(address(erc20Tokens[idx]), true, 2 * maxValToBurn, address(this));
+            deployedContracts.lendingPool.deposit(
+                address(erc20Tokens[idx]), true, 2 * maxValToBurn, address(this)
+            );
             /* Additiveness check */
             for (uint256 cnt = 0; cnt < maxValToBurn; cnt += granuality) {
-                deployedContracts.lendingPool
-                    .withdraw(address(erc20Tokens[idx]), true, granuality, address(this));
+                deployedContracts.lendingPool.withdraw(
+                    address(erc20Tokens[idx]), true, granuality, address(this)
+                );
             }
             assertEq(commonContracts.aTokens[idx].balanceOf(address(this)), maxValToBurn);
-            deployedContracts.lendingPool
-                .withdraw(address(erc20Tokens[idx]), true, maxValToBurn, address(this));
+            deployedContracts.lendingPool.withdraw(
+                address(erc20Tokens[idx]), true, maxValToBurn, address(this)
+            );
             assertEq(commonContracts.aTokens[idx].balanceOf(address(this)), 0);
             assertEq(commonContracts.aTokens[idx].totalSupply(), 0);
         }
@@ -110,8 +113,9 @@ contract ATokenTest is Common {
             uint256 grainUserBalanceBefore = commonContracts.aTokens[idx].balanceOf(user);
 
             erc20Tokens[idx].approve(address(deployedContracts.lendingPool), 2 * amount);
-            deployedContracts.lendingPool
-                .deposit(address(erc20Tokens[idx]), true, 2 * amount, address(this));
+            deployedContracts.lendingPool.deposit(
+                address(erc20Tokens[idx]), true, 2 * amount, address(this)
+            );
             uint256 grainThisBalanceBefore = commonContracts.aTokens[idx].balanceOf(address(this));
             for (uint256 cnt = 0; cnt < amount; cnt += granuality) {
                 commonContracts.aTokens[idx].transfer(user, granuality);
@@ -135,13 +139,14 @@ contract ATokenTest is Common {
 
             vm.startPrank(user);
             uint256 amountToBorrow;
-            StaticData memory staticData =
-                deployedContracts.asteraDataProvider
-                    .getLpReserveStaticData(address(erc20Tokens[idx]), true);
+            StaticData memory staticData = deployedContracts
+                .asteraDataProvider
+                .getLpReserveStaticData(address(erc20Tokens[idx]), true);
             amountToBorrow = ((staticData.ltv * 2 * amount) / 10_000) - 1;
 
-            deployedContracts.lendingPool
-                .borrow(address(erc20Tokens[idx]), true, amountToBorrow, user);
+            deployedContracts.lendingPool.borrow(
+                address(erc20Tokens[idx]), true, amountToBorrow, user
+            );
             assertEq(erc20Tokens[idx].balanceOf(user), amountToBorrow);
             assertEq(
                 commonContracts.aTokens[idx].balanceOf(user), grainUserBalanceBefore + 2 * amount
@@ -172,9 +177,9 @@ contract ATokenTest is Common {
                     commonContracts.oracle.getAssetPrice(address(erc20Tokens[idx]));
                 uint256 nextTokenAssetPrice =
                     commonContracts.oracle.getAssetPrice(address(erc20Tokens[nextTokenIndex]));
-                StaticData memory staticData =
-                    deployedContracts.asteraDataProvider
-                        .getLpReserveStaticData(address(erc20Tokens[idx]), true);
+                StaticData memory staticData = deployedContracts
+                    .asteraDataProvider
+                    .getLpReserveStaticData(address(erc20Tokens[idx]), true);
 
                 uint256 currentAssetDepositValue =
                     amountToTransfer * currentAssetPrice / 10 ** PRICE_FEED_DECIMALS;
@@ -193,8 +198,9 @@ contract ATokenTest is Common {
             // console2.log("Symbol: ", erc20Tokens[idx].symbol());
             // console2.log("Amount to transfer: ", amountToTransfer);
             // console2.log("Balance>>>>>>>>>>>: ", erc20Tokens[idx].balanceOf(address(this)));
-            deployedContracts.lendingPool
-                .deposit(address(erc20Tokens[idx]), true, amountToTransfer, address(this));
+            deployedContracts.lendingPool.deposit(
+                address(erc20Tokens[idx]), true, amountToTransfer, address(this)
+            );
             commonContracts.aTokens[idx].transfer(user, amountToTransfer);
 
             /* Must deposit callateral of next token of the same type to have sth to borrow */
@@ -204,12 +210,14 @@ contract ATokenTest is Common {
             console2.log("Symbol: ", erc20Tokens[nextTokenIndex].symbol());
             console2.log("Amount to borrow: ", amountToBorrow);
             console2.log("Balance>>>>>>>>>: ", erc20Tokens[nextTokenIndex].balanceOf(address(this)));
-            deployedContracts.lendingPool
-                .deposit(address(erc20Tokens[nextTokenIndex]), true, amountToBorrow, address(this));
+            deployedContracts.lendingPool.deposit(
+                address(erc20Tokens[nextTokenIndex]), true, amountToBorrow, address(this)
+            );
 
             vm.startPrank(user);
-            deployedContracts.lendingPool
-                .borrow(address(erc20Tokens[nextTokenIndex]), true, amountToBorrow, user);
+            deployedContracts.lendingPool.borrow(
+                address(erc20Tokens[nextTokenIndex]), true, amountToBorrow, user
+            );
             vm.stopPrank();
 
             /* User shall have borrowed erc20 tokens */
@@ -245,8 +253,9 @@ contract ATokenTest is Common {
         for (uint8 idx = 0; idx < erc20Tokens.length; idx++) {
             deal(address(erc20Tokens[idx]), address(this), amountToTransfer);
             erc20Tokens[idx].approve(address(deployedContracts.lendingPool), amountToTransfer);
-            deployedContracts.lendingPool
-                .deposit(address(erc20Tokens[idx]), true, amountToTransfer, user1);
+            deployedContracts.lendingPool.deposit(
+                address(erc20Tokens[idx]), true, amountToTransfer, user1
+            );
             //commonContracts.aTokens[idx].transfer(user1, amountToTransfer);
 
             uint256 user1BalanceBefore = commonContracts.aTokens[idx].balanceOf(user1);

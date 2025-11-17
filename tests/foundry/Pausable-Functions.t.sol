@@ -69,36 +69,40 @@ contract PausableFunctionsTest is Common {
             amount = erc20Tokens[idx].balanceOf(address(this));
             erc20Tokens[idx].approve(address(deployedContracts.lendingPool), amount);
             vm.expectRevert(bytes(Errors.LP_IS_PAUSED));
-            deployedContracts.lendingPool
-                .deposit(address(erc20Tokens[idx]), false, amount, address(this));
+            deployedContracts.lendingPool.deposit(
+                address(erc20Tokens[idx]), false, amount, address(this)
+            );
 
             vm.expectRevert(bytes(Errors.LP_IS_PAUSED));
-            deployedContracts.lendingPool
-                .withdraw(address(erc20Tokens[idx]), false, amount, address(this));
+            deployedContracts.lendingPool.withdraw(
+                address(erc20Tokens[idx]), false, amount, address(this)
+            );
 
             vm.expectRevert(bytes(Errors.LP_IS_PAUSED));
-            deployedContracts.lendingPool
-                .borrow(address(erc20Tokens[idx]), false, amount, address(this));
+            deployedContracts.lendingPool.borrow(
+                address(erc20Tokens[idx]), false, amount, address(this)
+            );
 
             vm.expectRevert(bytes(Errors.LP_IS_PAUSED));
-            deployedContracts.lendingPool
-                .repay(address(erc20Tokens[idx]), false, amount, address(this));
+            deployedContracts.lendingPool.repay(
+                address(erc20Tokens[idx]), false, amount, address(this)
+            );
 
             vm.expectRevert(bytes(Errors.LP_IS_PAUSED));
-            deployedContracts.lendingPool
-                .liquidationCall(
-                    address(erc20Tokens[idx]),
-                    false,
-                    address(erc20Tokens[idx]),
-                    false,
-                    address(this),
-                    amount,
-                    false
-                );
+            deployedContracts.lendingPool.liquidationCall(
+                address(erc20Tokens[idx]),
+                false,
+                address(erc20Tokens[idx]),
+                false,
+                address(this),
+                amount,
+                false
+            );
 
             vm.expectRevert(bytes(Errors.LP_IS_PAUSED));
-            deployedContracts.lendingPool
-                .setUserUseReserveAsCollateral(address(erc20Tokens[idx]), false, true);
+            deployedContracts.lendingPool.setUserUseReserveAsCollateral(
+                address(erc20Tokens[idx]), false, true
+            );
 
             address[] memory tokenAddresses = new address[](3);
             uint256[] memory balancesBefore = new uint256[](3);
@@ -135,16 +139,15 @@ contract PausableFunctionsTest is Common {
             IMiniPool(miniPool).repay(address(erc20Tokens[idx]), false, amount, address(this));
 
             vm.expectRevert(bytes(Errors.LP_IS_PAUSED));
-            IMiniPool(miniPool)
-                .liquidationCall(
-                    address(erc20Tokens[idx]),
-                    false,
-                    address(erc20Tokens[idx]),
-                    false,
-                    address(this),
-                    amount,
-                    false
-                );
+            IMiniPool(miniPool).liquidationCall(
+                address(erc20Tokens[idx]),
+                false,
+                address(erc20Tokens[idx]),
+                false,
+                address(this),
+                amount,
+                false
+            );
 
             vm.expectRevert(bytes(Errors.LP_IS_PAUSED));
             IMiniPool(miniPool).setUserUseReserveAsCollateral(address(erc20Tokens[idx]), true);

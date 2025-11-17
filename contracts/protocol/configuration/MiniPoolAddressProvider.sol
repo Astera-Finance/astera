@@ -2,22 +2,17 @@
 pragma solidity ^0.8.23;
 
 import {Ownable} from "../../../contracts/dependencies/openzeppelin/contracts/Ownable.sol";
-import {
-    InitializableImmutableAdminUpgradeabilityProxy
-} from "../../../contracts/protocol/libraries/upgradeability/InitializableImmutableAdminUpgradeabilityProxy.sol";
-import {
-    ILendingPoolAddressesProvider
-} from "../../../contracts/interfaces/ILendingPoolAddressesProvider.sol";
+import {InitializableImmutableAdminUpgradeabilityProxy} from
+    "../../../contracts/protocol/libraries/upgradeability/InitializableImmutableAdminUpgradeabilityProxy.sol";
+import {ILendingPoolAddressesProvider} from
+    "../../../contracts/interfaces/ILendingPoolAddressesProvider.sol";
 import {IFlowLimiter} from "../../../contracts/interfaces/base/IFlowLimiter.sol";
-import {
-    IMiniPoolAddressesProvider
-} from "../../../contracts/interfaces/IMiniPoolAddressesProvider.sol";
-import {
-    IMiniPoolAddressProviderUpdatable
-} from "../../../contracts/interfaces/IMiniPoolAddressProviderUpdatable.sol";
-import {
-    IAddressProviderUpdatable
-} from "../../../contracts/interfaces/IAddressProviderUpdatable.sol";
+import {IMiniPoolAddressesProvider} from
+    "../../../contracts/interfaces/IMiniPoolAddressesProvider.sol";
+import {IMiniPoolAddressProviderUpdatable} from
+    "../../../contracts/interfaces/IMiniPoolAddressProviderUpdatable.sol";
+import {IAddressProviderUpdatable} from
+    "../../../contracts/interfaces/IAddressProviderUpdatable.sol";
 import {Errors} from "../libraries/helpers/Errors.sol";
 
 /**
@@ -120,9 +115,8 @@ contract MiniPoolAddressesProvider is Ownable, IMiniPoolAddressesProvider {
      * @return The lending pool address.
      */
     function getLendingPool() external view returns (address) {
-        return
-            ILendingPoolAddressesProvider(_addresses[LENDING_POOL_ADDRESSES_PROVIDER])
-                .getLendingPool();
+        return ILendingPoolAddressesProvider(_addresses[LENDING_POOL_ADDRESSES_PROVIDER])
+            .getLendingPool();
     }
 
     /**
@@ -139,9 +133,8 @@ contract MiniPoolAddressesProvider is Ownable, IMiniPoolAddressesProvider {
      * @return The main pool admin address.
      */
     function getMainPoolAdmin() external view returns (address) {
-        return
-            ILendingPoolAddressesProvider(_addresses[LENDING_POOL_ADDRESSES_PROVIDER])
-                .getPoolAdmin();
+        return ILendingPoolAddressesProvider(_addresses[LENDING_POOL_ADDRESSES_PROVIDER])
+            .getPoolAdmin();
     }
 
     /**
@@ -158,9 +151,8 @@ contract MiniPoolAddressesProvider is Ownable, IMiniPoolAddressesProvider {
      * @return The price oracle address.
      */
     function getPriceOracle() external view returns (address) {
-        return
-            ILendingPoolAddressesProvider(_addresses[LENDING_POOL_ADDRESSES_PROVIDER])
-                .getPriceOracle();
+        return ILendingPoolAddressesProvider(_addresses[LENDING_POOL_ADDRESSES_PROVIDER])
+            .getPriceOracle();
     }
 
     /**
@@ -168,9 +160,8 @@ contract MiniPoolAddressesProvider is Ownable, IMiniPoolAddressesProvider {
      * @return The flow limiter address.
      */
     function getFlowLimiter() public view returns (address) {
-        return
-            ILendingPoolAddressesProvider(_addresses[LENDING_POOL_ADDRESSES_PROVIDER])
-                .getFlowLimiter();
+        return ILendingPoolAddressesProvider(_addresses[LENDING_POOL_ADDRESSES_PROVIDER])
+            .getFlowLimiter();
     }
 
     /**

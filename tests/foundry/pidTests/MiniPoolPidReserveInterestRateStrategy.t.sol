@@ -4,7 +4,8 @@ pragma solidity ^0.8.0;
 import "../Common.sol";
 import "contracts/protocol/libraries/helpers/Errors.sol";
 import {WadRayMath} from "contracts/protocol/libraries/math/WadRayMath.sol";
-import "contracts/protocol/core/interestRateStrategies/minipool/MiniPoolPiReserveInterestRateStrategy.sol";
+import
+    "contracts/protocol/core/interestRateStrategies/minipool/MiniPoolPiReserveInterestRateStrategy.sol";
 import "openzeppelin-contracts/contracts/utils/Strings.sol";
 import "contracts/mocks/tokens/MintableERC20.sol";
 
@@ -585,26 +586,28 @@ contract MiniPoolPidReserveInterestRateStrategyTest is Common {
         deal(address(vars.counterUnderlying), vars.user, 1e26);
 
         vm.startPrank(deployedMiniPoolContracts.miniPoolAddressesProvider.getMainPoolAdmin());
-        deployedMiniPoolContracts.miniPoolConfigurator
-            .setMinDebtThreshold(debtToSet, IMiniPool(vars.mp));
+        deployedMiniPoolContracts.miniPoolConfigurator.setMinDebtThreshold(
+            debtToSet, IMiniPool(vars.mp)
+        );
         deployedMiniPoolContracts.miniPoolConfigurator.setAsteraTreasury(vars.user);
         vm.stopPrank();
 
         vm.startPrank(vars.whaleUser);
         vars.underlying.approve(address(deployedContracts.lendingPool), amount);
-        deployedContracts.lendingPool
-            .deposit(address(vars.underlying), true, amount, vars.whaleUser);
+        deployedContracts.lendingPool.deposit(
+            address(vars.underlying), true, amount, vars.whaleUser
+        );
         vm.stopPrank();
 
         console.log("Underlying: ", vars.underlying.symbol());
         console.log("Counter underlying: ", vars.counterUnderlying.symbol());
 
         vm.startPrank(vars.user);
-        uint256 counterAmount =
-            (fixture_convertWithDecimals(
-                        amount, vars.counterUnderlying.decimals(), vars.underlying.decimals()
-                    )
-                    * vars.underlyingPrice) / vars.counterUnderlyingPrice;
+        uint256 counterAmount = (
+            fixture_convertWithDecimals(
+                amount, vars.counterUnderlying.decimals(), vars.underlying.decimals()
+            ) * vars.underlyingPrice
+        ) / vars.counterUnderlyingPrice;
         console.log(
             "Counter amount: %s decimals counter: %s decimals under: %s",
             counterAmount,
@@ -631,8 +634,9 @@ contract MiniPoolPidReserveInterestRateStrategyTest is Common {
 
         // assert(false);
         vm.prank(address(deployedMiniPoolContracts.miniPoolAddressesProvider));
-        deployedMiniPoolContracts.flowLimiter
-            .setFlowLimit(address(vars.underlying), vars.mp, dust * 100);
+        deployedMiniPoolContracts.flowLimiter.setFlowLimit(
+            address(vars.underlying), vars.mp, dust * 100
+        );
 
         //@audit borrow dust from empty minipool
         vm.startPrank(vars.user);
@@ -644,8 +648,9 @@ contract MiniPoolPidReserveInterestRateStrategyTest is Common {
         vm.startPrank(vars.whaleUser);
         vars.underlying.approve(address(deployedContracts.lendingPool), amount);
         console.log("User deposits %s %s", amount, vars.underlying.symbol());
-        deployedContracts.lendingPool
-            .deposit(address(vars.underlying), true, amount, address(vars.aErc6909Token));
+        deployedContracts.lendingPool.deposit(
+            address(vars.underlying), true, amount, address(vars.aErc6909Token)
+        );
         vm.stopPrank();
 
         vm.startPrank(address(deployedMiniPoolContracts.miniPoolConfigurator));
@@ -698,8 +703,9 @@ contract MiniPoolPidReserveInterestRateStrategyTest is Common {
 
         vm.startPrank(vars.whaleUser);
         vars.underlying.approve(address(deployedContracts.lendingPool), amount * 1000); //500000 USDC
-        deployedContracts.lendingPool
-            .deposit(address(vars.underlying), true, amount * 1000, vars.whaleUser);
+        deployedContracts.lendingPool.deposit(
+            address(vars.underlying), true, amount * 1000, vars.whaleUser
+        );
         vm.stopPrank();
 
         vm.startPrank(vars.user);
@@ -712,8 +718,9 @@ contract MiniPoolPidReserveInterestRateStrategyTest is Common {
         vars.flowLimiter = address(deployedMiniPoolContracts.flowLimiter);
 
         vm.prank(address(deployedMiniPoolContracts.miniPoolAddressesProvider));
-        deployedMiniPoolContracts.flowLimiter
-            .setFlowLimit(address(vars.underlying), vars.mp, amount * 100);
+        deployedMiniPoolContracts.flowLimiter.setFlowLimit(
+            address(vars.underlying), vars.mp, amount * 100
+        );
 
         //@audit borrow dust from empty minipool
         vm.startPrank(vars.user);
@@ -725,8 +732,9 @@ contract MiniPoolPidReserveInterestRateStrategyTest is Common {
         //@audit Donate usdc to aErc6909 token
         vm.startPrank(vars.whaleUser);
         vars.underlying.approve(address(deployedContracts.lendingPool), amount * 1000); //500000 USDC
-        deployedContracts.lendingPool
-            .deposit(address(vars.underlying), true, amount * 1000, address(vars.aErc6909Token));
+        deployedContracts.lendingPool.deposit(
+            address(vars.underlying), true, amount * 1000, address(vars.aErc6909Token)
+        );
         vm.stopPrank();
 
         vm.startPrank(address(deployedMiniPoolContracts.miniPoolConfigurator));
@@ -791,26 +799,28 @@ contract MiniPoolPidReserveInterestRateStrategyTest is Common {
         deal(address(vars.counterUnderlying), vars.user, 1e26);
 
         vm.startPrank(deployedMiniPoolContracts.miniPoolAddressesProvider.getMainPoolAdmin());
-        deployedMiniPoolContracts.miniPoolConfigurator
-            .setMinDebtThreshold(debtToSet, IMiniPool(vars.mp));
+        deployedMiniPoolContracts.miniPoolConfigurator.setMinDebtThreshold(
+            debtToSet, IMiniPool(vars.mp)
+        );
         deployedMiniPoolContracts.miniPoolConfigurator.setAsteraTreasury(vars.user);
         vm.stopPrank();
 
         vm.startPrank(vars.whaleUser);
         vars.underlying.approve(address(deployedContracts.lendingPool), amount);
-        deployedContracts.lendingPool
-            .deposit(address(vars.underlying), true, amount, vars.whaleUser);
+        deployedContracts.lendingPool.deposit(
+            address(vars.underlying), true, amount, vars.whaleUser
+        );
         vm.stopPrank();
 
         console.log("Underlying: ", vars.underlying.symbol());
         console.log("Counter underlying: ", vars.counterUnderlying.symbol());
 
         vm.startPrank(vars.user);
-        uint256 counterAmount =
-            (fixture_convertWithDecimals(
-                        amount, vars.counterUnderlying.decimals(), vars.underlying.decimals()
-                    )
-                    * vars.underlyingPrice) / vars.counterUnderlyingPrice;
+        uint256 counterAmount = (
+            fixture_convertWithDecimals(
+                amount, vars.counterUnderlying.decimals(), vars.underlying.decimals()
+            ) * vars.underlyingPrice
+        ) / vars.counterUnderlyingPrice;
         console.log(
             "Counter amount: %s decimals counter: %s decimals under: %s",
             counterAmount,
@@ -837,8 +847,9 @@ contract MiniPoolPidReserveInterestRateStrategyTest is Common {
 
         // assert(false);
         vm.prank(address(deployedMiniPoolContracts.miniPoolAddressesProvider));
-        deployedMiniPoolContracts.flowLimiter
-            .setFlowLimit(address(vars.underlying), vars.mp, dust * 100);
+        deployedMiniPoolContracts.flowLimiter.setFlowLimit(
+            address(vars.underlying), vars.mp, dust * 100
+        );
 
         //@audit borrow dust from empty minipool
         vm.startPrank(vars.user);
@@ -851,8 +862,9 @@ contract MiniPoolPidReserveInterestRateStrategyTest is Common {
         vm.startPrank(vars.whaleUser);
         vars.counterUnderlying.approve(vars.mp, counterAmount);
         console.log("1.whale deposits %s %s", counterAmount, vars.counterUnderlying.symbol());
-        IMiniPool(vars.mp)
-            .deposit(address(vars.counterUnderlying), false, counterAmount, vars.whaleUser);
+        IMiniPool(vars.mp).deposit(
+            address(vars.counterUnderlying), false, counterAmount, vars.whaleUser
+        );
         vm.stopPrank();
 
         vm.startPrank(vars.whaleUser);

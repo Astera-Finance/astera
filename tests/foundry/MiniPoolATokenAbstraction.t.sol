@@ -5,9 +5,8 @@ import "./MiniPoolFixtures.t.sol";
 import "contracts/protocol/libraries/helpers/Errors.sol";
 import {WadRayMath} from "contracts/protocol/libraries/math/WadRayMath.sol";
 import {PercentageMath} from "contracts/protocol/libraries/math/PercentageMath.sol";
-import {
-    ReserveConfiguration
-} from "contracts/protocol/libraries/configuration/ReserveConfiguration.sol";
+import {ReserveConfiguration} from
+    "contracts/protocol/libraries/configuration/ReserveConfiguration.sol";
 import "contracts/misc/AsteraDataProvider.sol";
 
 import "forge-std/StdUtils.sol";
@@ -96,8 +95,9 @@ contract MiniPoolATokenAbstractionTest is MiniPoolFixtures {
             deployedContracts.lendingPool.deposit(address(tokenParams.token), true, amount, user);
 
             tokenParamsUSDC.token.approve(address(deployedContracts.lendingPool), type(uint256).max);
-            deployedContracts.lendingPool
-                .deposit(address(tokenParamsUSDC.token), true, 50_000e6, user);
+            deployedContracts.lendingPool.deposit(
+                address(tokenParamsUSDC.token), true, 50_000e6, user
+            );
 
             // Borrow 1000 USDC
             deployedContracts.lendingPool.borrow(address(tokenParams.token), true, 1e18, user);

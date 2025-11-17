@@ -75,12 +75,11 @@ contract MiniPoolLendingPoolFixRateStrategyTest is MiniPoolFixtures {
 
         // Switch WBTC (underlying) to the fixed-rate strategy
         vm.prank(miniPoolContracts.miniPoolAddressesProvider.getMainPoolAdmin());
-        miniPoolContracts.miniPoolConfigurator
-            .setReserveInterestRateStrategyAddress(
-                address(erc20Tokens[WBTC_OFFSET]),
-                address(miniPoolContracts.fixStrategy),
-                IMiniPool(miniPool)
-            );
+        miniPoolContracts.miniPoolConfigurator.setReserveInterestRateStrategyAddress(
+            address(erc20Tokens[WBTC_OFFSET]),
+            address(miniPoolContracts.fixStrategy),
+            IMiniPool(miniPool)
+        );
 
         vm.label(miniPool, "MiniPool");
     }

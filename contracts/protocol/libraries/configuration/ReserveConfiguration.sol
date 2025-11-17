@@ -461,9 +461,8 @@ library ReserveConfiguration {
         DataTypes.ReserveConfigurationMap memory self,
         bool flashLoanEnabled
     ) internal pure {
-        self.data =
-            (self.data & FLASHLOAN_ENABLED_MASK)
-                | (uint256(flashLoanEnabled ? 1 : 0) << FLASHLOAN_ENABLED_START_BIT_POSITION);
+        self.data = (self.data & FLASHLOAN_ENABLED_MASK)
+            | (uint256(flashLoanEnabled ? 1 : 0) << FLASHLOAN_ENABLED_START_BIT_POSITION);
     }
 
     /**

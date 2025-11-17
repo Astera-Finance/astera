@@ -158,7 +158,8 @@ interface IMiniPoolConfigurator {
 
     function setRewarderForReserve(address asset, address rewarder, IMiniPool pool) external;
 
-    function updateFlashloanPremiumTotal(uint128 newFlashloanPremiumTotal, IMiniPool pool) external;
+    function updateFlashloanPremiumTotal(uint128 newFlashloanPremiumTotal, IMiniPool pool)
+        external;
 
     function setAsteraTreasury(address treasury) external;
 
@@ -170,7 +171,8 @@ interface IMiniPoolConfigurator {
         IMiniPool pool
     ) external;
 
-    function setAsteraReserveFactor(address asset, uint256 reserveFactor, IMiniPool pool) external;
+    function setAsteraReserveFactor(address asset, uint256 reserveFactor, IMiniPool pool)
+        external;
 
     function setDepositCap(address asset, uint256 depositCap, IMiniPool pool) external;
 

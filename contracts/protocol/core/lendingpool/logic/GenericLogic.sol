@@ -3,12 +3,10 @@ pragma solidity ^0.8.23;
 
 import {IERC20} from "../../../../../contracts/dependencies/openzeppelin/contracts/IERC20.sol";
 import {ReserveLogic} from "./ReserveLogic.sol";
-import {
-    ReserveConfiguration
-} from "../../../../../contracts/protocol/libraries/configuration/ReserveConfiguration.sol";
-import {
-    UserConfiguration
-} from "../../../../../contracts/protocol/libraries/configuration/UserConfiguration.sol";
+import {ReserveConfiguration} from
+    "../../../../../contracts/protocol/libraries/configuration/ReserveConfiguration.sol";
+import {UserConfiguration} from
+    "../../../../../contracts/protocol/libraries/configuration/UserConfiguration.sol";
 import {WadRayMath} from "../../../../../contracts/protocol/libraries/math/WadRayMath.sol";
 import {PercentageMath} from "../../../../../contracts/protocol/libraries/math/PercentageMath.sol";
 import {IOracle} from "../../../../../contracts/interfaces/IOracle.sol";
@@ -94,9 +92,7 @@ library GenericLogic {
         }
 
         (vars.totalCollateralInETH, vars.totalDebtInETH,, vars.avgLiquidationThreshold,) =
-            calculateUserAccountData(
-                user, reserves, userConfig, reservesList, reservesCount, oracle
-            );
+        calculateUserAccountData(user, reserves, userConfig, reservesList, reservesCount, oracle);
 
         if (vars.totalDebtInETH == 0) {
             return true;
@@ -111,10 +107,10 @@ library GenericLogic {
             return false;
         }
 
-        vars.liquidationThresholdAfterDecrease =
-            ((vars.totalCollateralInETH * vars.avgLiquidationThreshold)
-                    - (vars.amountToDecreaseInETH * vars.liquidationThreshold))
-                / vars.collateralBalanceAfterDecrease;
+        vars.liquidationThresholdAfterDecrease = (
+            (vars.totalCollateralInETH * vars.avgLiquidationThreshold)
+                - (vars.amountToDecreaseInETH * vars.liquidationThreshold)
+        ) / vars.collateralBalanceAfterDecrease;
 
         uint256 healthFactorAfterDecrease = calculateHealthFactorFromBalances(
             vars.collateralBalanceAfterDecrease,
@@ -233,8 +229,8 @@ library GenericLogic {
                 vars.totalCollateralInETH = vars.totalCollateralInETH + liquidityBalanceETH;
 
                 vars.avgLtv = vars.avgLtv + (liquidityBalanceETH * vars.ltv);
-                vars.avgLiquidationThreshold = vars.avgLiquidationThreshold
-                    + (liquidityBalanceETH * vars.liquidationThreshold);
+                vars.avgLiquidationThreshold =
+                    vars.avgLiquidationThreshold + (liquidityBalanceETH * vars.liquidationThreshold);
             }
 
             if (userConfig.isBorrowing(vars.i)) {

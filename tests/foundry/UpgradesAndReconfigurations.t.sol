@@ -5,9 +5,8 @@ import "./MiniPoolFixtures.t.sol";
 import "contracts/protocol/libraries/helpers/Errors.sol";
 import {WadRayMath} from "contracts/protocol/libraries/math/WadRayMath.sol";
 import {PercentageMath} from "contracts/protocol/libraries/math/PercentageMath.sol";
-import {
-    ReserveConfiguration
-} from "contracts/protocol/libraries/configuration/ReserveConfiguration.sol";
+import {ReserveConfiguration} from
+    "contracts/protocol/libraries/configuration/ReserveConfiguration.sol";
 import {PercentageMath} from "contracts/protocol/libraries/math/PercentageMath.sol";
 import "contracts/misc/AsteraDataProvider.sol";
 import {LendingPoolV2} from "tests/foundry/helpers/LendingPoolV2.sol";
@@ -51,8 +50,9 @@ contract UpgradesAndReconfigurationsTest is MiniPoolFixtures {
                 AToken(aTokens[idx]).UNDERLYING_ASSET_ADDRESS(),
                 ERC20(AToken(aTokens[idx]).UNDERLYING_ASSET_ADDRESS()).symbol()
             );
-            dynamicDataBefore[idx] = deployedContracts.asteraDataProvider
-                .getLpReserveDynamicData(AToken(aTokens[idx]).UNDERLYING_ASSET_ADDRESS(), true);
+            dynamicDataBefore[idx] = deployedContracts.asteraDataProvider.getLpReserveDynamicData(
+                AToken(aTokens[idx]).UNDERLYING_ASSET_ADDRESS(), true
+            );
             console2.log(
                 "availableLiquidity: %s\n  totalVariableDebt: %s\n",
                 dynamicDataBefore[idx].availableLiquidity,
@@ -72,8 +72,9 @@ contract UpgradesAndReconfigurationsTest is MiniPoolFixtures {
                 AToken(aTokens[idx]).UNDERLYING_ASSET_ADDRESS(),
                 ERC20(AToken(aTokens[idx]).UNDERLYING_ASSET_ADDRESS()).symbol()
             );
-            dynamicDataAfter[idx] = deployedContracts.asteraDataProvider
-                .getLpReserveDynamicData(AToken(aTokens[idx]).UNDERLYING_ASSET_ADDRESS(), true);
+            dynamicDataAfter[idx] = deployedContracts.asteraDataProvider.getLpReserveDynamicData(
+                AToken(aTokens[idx]).UNDERLYING_ASSET_ADDRESS(), true
+            );
             console2.log(
                 "availableLiquidity: %s\n  totalVariableDebt: %s\n",
                 dynamicDataAfter[idx].availableLiquidity,
@@ -135,10 +136,9 @@ contract UpgradesAndReconfigurationsTest is MiniPoolFixtures {
                 AToken(commonContracts.aTokens[idx]).UNDERLYING_ASSET_ADDRESS(),
                 ERC20(AToken(commonContracts.aTokens[idx]).UNDERLYING_ASSET_ADDRESS()).symbol()
             );
-            dynamicDataAfter[idx] = deployedContracts.asteraDataProvider
-                .getMpReserveDynamicData(
-                    AToken(commonContracts.aTokens[idx]).UNDERLYING_ASSET_ADDRESS(), 0
-                );
+            dynamicDataAfter[idx] = deployedContracts.asteraDataProvider.getMpReserveDynamicData(
+                AToken(commonContracts.aTokens[idx]).UNDERLYING_ASSET_ADDRESS(), 0
+            );
             console2.log(
                 "availableLiquidity: %s\n  totalVariableDebt: %s\n",
                 dynamicDataAfter[idx].availableLiquidity,
@@ -327,8 +327,8 @@ contract UpgradesAndReconfigurationsTest is MiniPoolFixtures {
 
             vm.prank(address(deployedContracts.lendingPoolAddressesProvider));
             address previousPoolImpl = InitializableImmutableAdminUpgradeabilityProxy(
-                    payable(lendingPoolProxy)
-                ).implementation();
+                payable(lendingPoolProxy)
+            ).implementation();
 
             lpv2.initialize(address(deployedContracts.lendingPoolAddressesProvider));
             deployedContracts.lendingPoolAddressesProvider.setLendingPoolImpl(address(lpv2));
@@ -408,23 +408,25 @@ contract UpgradesAndReconfigurationsTest is MiniPoolFixtures {
             ATokenERC6909V2 erc6909v2 = new ATokenERC6909V2();
             vm.startPrank(address(miniPoolContracts.miniPoolAddressesProvider));
             address previousMiniPoolImpl = InitializableImmutableAdminUpgradeabilityProxy(
-                    payable(miniPoolContracts.miniPoolAddressesProvider.getMiniPool(0))
-                ).implementation();
+                payable(miniPoolContracts.miniPoolAddressesProvider.getMiniPool(0))
+            ).implementation();
             address previousAErc6909Impl = InitializableImmutableAdminUpgradeabilityProxy(
-                    payable(miniPoolContracts.miniPoolAddressesProvider.getMiniPoolToAERC6909(0))
-                ).implementation();
+                payable(miniPoolContracts.miniPoolAddressesProvider.getMiniPoolToAERC6909(0))
+            ).implementation();
 
             address previousMiniPoolProxy =
                 miniPoolContracts.miniPoolAddressesProvider.getMiniPool(0);
-            uint256 previousId = miniPoolContracts.miniPoolAddressesProvider
-                .getMiniPoolId(address(previousMiniPoolProxy));
+            uint256 previousId = miniPoolContracts.miniPoolAddressesProvider.getMiniPoolId(
+                address(previousMiniPoolProxy)
+            );
             address previousAERC6909Proxy =
                 miniPoolContracts.miniPoolAddressesProvider.getMiniPoolToAERC6909(previousId);
 
             vm.stopPrank();
             miniPoolContracts.miniPoolAddressesProvider.setMiniPoolImpl(address(mpv2), previousId);
-            miniPoolContracts.miniPoolAddressesProvider
-                .setAToken6909Impl(address(erc6909v2), previousId);
+            miniPoolContracts.miniPoolAddressesProvider.setAToken6909Impl(
+                address(erc6909v2), previousId
+            );
             miniPoolContracts.miniPoolImpl = MiniPool(address(mpv2));
 
             address currentMiniPoolProxy =
@@ -437,30 +439,29 @@ contract UpgradesAndReconfigurationsTest is MiniPoolFixtures {
             );
             assertEq(
                 previousId,
-                miniPoolContracts.miniPoolAddressesProvider
-                    .getMiniPoolId(address(currentMiniPoolProxy))
+                miniPoolContracts.miniPoolAddressesProvider.getMiniPoolId(
+                    address(currentMiniPoolProxy)
+                )
             );
 
             vm.startPrank(miniPoolContracts.miniPoolAddressesProvider.getMainPoolAdmin());
-            miniPoolContracts.miniPoolConfigurator
-                .setMinDebtThreshold(
-                    0, IMiniPool(miniPoolContracts.miniPoolAddressesProvider.getMiniPool(0))
-                );
+            miniPoolContracts.miniPoolConfigurator.setMinDebtThreshold(
+                0, IMiniPool(miniPoolContracts.miniPoolAddressesProvider.getMiniPool(0))
+            );
             vm.stopPrank();
 
             /* Check if addresses are updated */
             vm.startPrank(address(miniPoolContracts.miniPoolAddressesProvider));
             assertNotEq(
                 InitializableImmutableAdminUpgradeabilityProxy(
-                        payable(miniPoolContracts.miniPoolAddressesProvider.getMiniPool(0))
-                    ).implementation(),
+                    payable(miniPoolContracts.miniPoolAddressesProvider.getMiniPool(0))
+                ).implementation(),
                 previousMiniPoolImpl
             );
             assertNotEq(
                 InitializableImmutableAdminUpgradeabilityProxy(
-                        payable(miniPoolContracts.miniPoolAddressesProvider
-                            .getMiniPoolToAERC6909(0))
-                    ).implementation(),
+                    payable(miniPoolContracts.miniPoolAddressesProvider.getMiniPoolToAERC6909(0))
+                ).implementation(),
                 previousAErc6909Impl
             );
             vm.stopPrank();
@@ -518,34 +519,36 @@ contract UpgradesAndReconfigurationsTest is MiniPoolFixtures {
             console2.log("1.aTokenV1 ", address(commonContracts.aTokens[USDC_OFFSET]));
             console2.log("1. aTokenV1 Impl: ", address(commonContracts.aToken));
 
-            (address previousPoolImpl,) = deployedContracts.asteraDataProvider
-            .getLpTokens(address(collateralType.token), true);
+            (address previousPoolImpl,) = deployedContracts.asteraDataProvider.getLpTokens(
+                address(collateralType.token), true
+            );
             console2.log("2.aTokenV1 ", previousPoolImpl);
 
             vm.prank(address(deployedContracts.lendingPoolConfigurator));
             previousPoolImpl = InitializableImmutableAdminUpgradeabilityProxy(
-                    payable(previousPoolImpl)
-                ).implementation();
+                payable(previousPoolImpl)
+            ).implementation();
             console2.log("2.aTokenV1 Impl", previousPoolImpl);
 
             string memory tmpSymbol = collateralType.token.symbol();
-            ILendingPoolConfigurator.UpdateATokenInput memory input =
-                ILendingPoolConfigurator.UpdateATokenInput({
-                    asset: address(collateralType.token),
-                    reserveType: true,
-                    treasury: address(deployedContracts.treasury),
-                    incentivesController: address(deployedContracts.rewarder),
-                    name: string.concat("Astera ", tmpSymbol),
-                    symbol: string.concat("cl", tmpSymbol),
-                    implementation: address(aTokenV2),
-                    params: "0x10"
-                });
+            ILendingPoolConfigurator.UpdateATokenInput memory input = ILendingPoolConfigurator
+                .UpdateATokenInput({
+                asset: address(collateralType.token),
+                reserveType: true,
+                treasury: address(deployedContracts.treasury),
+                incentivesController: address(deployedContracts.rewarder),
+                name: string.concat("Astera ", tmpSymbol),
+                symbol: string.concat("cl", tmpSymbol),
+                implementation: address(aTokenV2),
+                params: "0x10"
+            });
             // vm.prank(address(deployedContracts.lendingPoolAddressesProvider));
             vm.prank(admin); //pool admin
             deployedContracts.lendingPoolConfigurator.updateAToken(input);
 
-            (address currentImpl,) = deployedContracts.asteraDataProvider
-            .getLpTokens(address(collateralType.token), true);
+            (address currentImpl,) = deployedContracts.asteraDataProvider.getLpTokens(
+                address(collateralType.token), true
+            );
 
             vm.prank(address(deployedContracts.lendingPoolConfigurator));
             currentImpl = InitializableImmutableAdminUpgradeabilityProxy(payable(currentImpl))
@@ -594,33 +597,35 @@ contract UpgradesAndReconfigurationsTest is MiniPoolFixtures {
         {
             VariableDebtTokenV2 variableDebtTokenV2 = new VariableDebtTokenV2();
 
-            (, address previousPoolImpl) = deployedContracts.asteraDataProvider
-            .getLpTokens(address(collateralType.token), true);
+            (, address previousPoolImpl) = deployedContracts.asteraDataProvider.getLpTokens(
+                address(collateralType.token), true
+            );
             console2.log("2.aTokenV1 ", previousPoolImpl);
 
             vm.prank(address(deployedContracts.lendingPoolConfigurator));
             previousPoolImpl = InitializableImmutableAdminUpgradeabilityProxy(
-                    payable(previousPoolImpl)
-                ).implementation();
+                payable(previousPoolImpl)
+            ).implementation();
             console2.log("2.aTokenV1 Impl", previousPoolImpl);
 
             string memory tmpSymbol = collateralType.token.symbol();
-            ILendingPoolConfigurator.UpdateDebtTokenInput memory input =
-                ILendingPoolConfigurator.UpdateDebtTokenInput({
-                    asset: address(collateralType.token),
-                    reserveType: true,
-                    incentivesController: address(deployedContracts.rewarder),
-                    name: string.concat("Astera Debt", tmpSymbol),
-                    symbol: string.concat("debt", tmpSymbol),
-                    implementation: address(variableDebtTokenV2),
-                    params: "0x10"
-                });
+            ILendingPoolConfigurator.UpdateDebtTokenInput memory input = ILendingPoolConfigurator
+                .UpdateDebtTokenInput({
+                asset: address(collateralType.token),
+                reserveType: true,
+                incentivesController: address(deployedContracts.rewarder),
+                name: string.concat("Astera Debt", tmpSymbol),
+                symbol: string.concat("debt", tmpSymbol),
+                implementation: address(variableDebtTokenV2),
+                params: "0x10"
+            });
             // vm.prank(address(deployedContracts.lendingPoolAddressesProvider));
             vm.prank(admin); //pool admin
             deployedContracts.lendingPoolConfigurator.updateVariableDebtToken(input);
 
-            (, address currentImpl) = deployedContracts.asteraDataProvider
-            .getLpTokens(address(collateralType.token), true);
+            (, address currentImpl) = deployedContracts.asteraDataProvider.getLpTokens(
+                address(collateralType.token), true
+            );
 
             vm.prank(address(deployedContracts.lendingPoolConfigurator));
             currentImpl = InitializableImmutableAdminUpgradeabilityProxy(payable(currentImpl))

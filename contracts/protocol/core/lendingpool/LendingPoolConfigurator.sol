@@ -1,37 +1,29 @@
 // SPDX-License-Identifier: agpl-3.0
 pragma solidity ^0.8.23;
 
-import {
-    VersionedInitializable
-} from "../../../../contracts/protocol/libraries/upgradeability/VersionedInitializable.sol";
-import {
-    InitializableImmutableAdminUpgradeabilityProxy
-} from "../../../../contracts/protocol/libraries/upgradeability/InitializableImmutableAdminUpgradeabilityProxy.sol";
-import {
-    ReserveConfiguration
-} from "../../../../contracts/protocol/libraries/configuration/ReserveConfiguration.sol";
-import {
-    ILendingPoolAddressesProvider
-} from "../../../../contracts/interfaces/ILendingPoolAddressesProvider.sol";
+import {VersionedInitializable} from
+    "../../../../contracts/protocol/libraries/upgradeability/VersionedInitializable.sol";
+import {InitializableImmutableAdminUpgradeabilityProxy} from
+    "../../../../contracts/protocol/libraries/upgradeability/InitializableImmutableAdminUpgradeabilityProxy.sol";
+import {ReserveConfiguration} from
+    "../../../../contracts/protocol/libraries/configuration/ReserveConfiguration.sol";
+import {ILendingPoolAddressesProvider} from
+    "../../../../contracts/interfaces/ILendingPoolAddressesProvider.sol";
 import {ILendingPool} from "../../../../contracts/interfaces/ILendingPool.sol";
-import {
-    IERC20Detailed
-} from "../../../../contracts/dependencies/openzeppelin/contracts/IERC20Detailed.sol";
+import {IERC20Detailed} from
+    "../../../../contracts/dependencies/openzeppelin/contracts/IERC20Detailed.sol";
 import {Errors} from "../../../../contracts/protocol/libraries/helpers/Errors.sol";
 import {PercentageMath} from "../../../../contracts/protocol/libraries/math/PercentageMath.sol";
 import {DataTypes} from "../../../../contracts/protocol/libraries/types/DataTypes.sol";
-import {
-    IInitializableDebtToken
-} from "../../../../contracts/interfaces/base/IInitializableDebtToken.sol";
+import {IInitializableDebtToken} from
+    "../../../../contracts/interfaces/base/IInitializableDebtToken.sol";
 import {IInitializableAToken} from "../../../../contracts/interfaces/base/IInitializableAToken.sol";
 import {IRewarder} from "../../../../contracts/interfaces/IRewarder.sol";
-import {
-    ILendingPoolConfigurator
-} from "../../../../contracts/interfaces/ILendingPoolConfigurator.sol";
+import {ILendingPoolConfigurator} from
+    "../../../../contracts/interfaces/ILendingPoolConfigurator.sol";
 import {IAToken} from "../../../../contracts/interfaces/IAToken.sol";
-import {
-    IAddressProviderUpdatable
-} from "../../../../contracts/interfaces/IAddressProviderUpdatable.sol";
+import {IAddressProviderUpdatable} from
+    "../../../../contracts/interfaces/IAddressProviderUpdatable.sol";
 
 /**
  * @title LendingPoolConfigurator contract
@@ -713,7 +705,10 @@ contract LendingPoolConfigurator is
      * @param rewarder The address of the new treasury.
      * @notice Only callable by pool admin.
      */
-    function setTreasury(address asset, bool reserveType, address rewarder) external onlyPoolAdmin {
+    function setTreasury(address asset, bool reserveType, address rewarder)
+        external
+        onlyPoolAdmin
+    {
         pool.setTreasury(asset, reserveType, rewarder);
     }
 

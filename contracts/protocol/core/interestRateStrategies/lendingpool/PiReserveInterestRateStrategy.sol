@@ -4,21 +4,17 @@ pragma solidity ^0.8.23;
 import {IAToken} from "../../../../../contracts/interfaces/IAToken.sol";
 import {IVariableDebtToken} from "../../../../../contracts/interfaces/IVariableDebtToken.sol";
 import {ILendingPool} from "../../../../../contracts/interfaces/ILendingPool.sol";
-import {
-    ILendingPoolAddressesProvider
-} from "../../../../../contracts/interfaces/ILendingPoolAddressesProvider.sol";
-import {
-    IReserveInterestRateStrategy
-} from "../../../../../contracts/interfaces/IReserveInterestRateStrategy.sol";
-import {
-    BasePiReserveRateStrategy
-} from "../../../../../contracts/protocol/core/interestRateStrategies/BasePiReserveRateStrategy.sol";
+import {ILendingPoolAddressesProvider} from
+    "../../../../../contracts/interfaces/ILendingPoolAddressesProvider.sol";
+import {IReserveInterestRateStrategy} from
+    "../../../../../contracts/interfaces/IReserveInterestRateStrategy.sol";
+import {BasePiReserveRateStrategy} from
+    "../../../../../contracts/protocol/core/interestRateStrategies/BasePiReserveRateStrategy.sol";
 import {WadRayMath} from "../../../../../contracts/protocol/libraries/math/WadRayMath.sol";
 import {PercentageMath} from "../../../../../contracts/protocol/libraries/math/PercentageMath.sol";
 import {DataTypes} from "../../../../../contracts/protocol/libraries/types/DataTypes.sol";
-import {
-    ReserveConfiguration
-} from "../../../../../contracts/protocol/libraries/configuration/ReserveConfiguration.sol";
+import {ReserveConfiguration} from
+    "../../../../../contracts/protocol/libraries/configuration/ReserveConfiguration.sol";
 
 /**
  * @title PiReserveInterestRateStrategy contract.
@@ -30,7 +26,10 @@ import {
  * needs to be associated with only one market.
  * @author Conclave
  */
-contract PiReserveInterestRateStrategy is BasePiReserveRateStrategy, IReserveInterestRateStrategy {
+contract PiReserveInterestRateStrategy is
+    BasePiReserveRateStrategy,
+    IReserveInterestRateStrategy
+{
     using WadRayMath for uint256;
     using WadRayMath for int256;
     using PercentageMath for uint256;

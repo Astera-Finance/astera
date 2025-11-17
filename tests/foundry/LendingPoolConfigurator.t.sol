@@ -104,8 +104,9 @@ contract LendingPoolConfiguratorTest is Common, LendingPoolFixtures {
             vm.expectEmit(true, false, false, true);
             emit BorrowingDisabledOnReserve(address(borrowType.token), true);
             vm.startPrank(admin);
-            deployedContracts.lendingPoolConfigurator
-                .disableBorrowingOnReserve(address(borrowType.token), true);
+            deployedContracts.lendingPoolConfigurator.disableBorrowingOnReserve(
+                address(borrowType.token), true
+            );
             vm.stopPrank();
 
             uint256 amount = 1_000_000 * 10 ** collateralType.token.decimals();
@@ -121,15 +122,18 @@ contract LendingPoolConfiguratorTest is Common, LendingPoolFixtures {
             uint256 amountToBorrow = (10 ** borrowType.token.decimals());
 
             vm.expectRevert(bytes(Errors.VL_BORROWING_NOT_ENABLED));
-            deployedContracts.lendingPool
-                .borrow(address(borrowType.token), true, amountToBorrow, address(this));
+            deployedContracts.lendingPool.borrow(
+                address(borrowType.token), true, amountToBorrow, address(this)
+            );
 
             vm.startPrank(admin);
-            deployedContracts.lendingPoolConfigurator
-                .enableBorrowingOnReserve(address(borrowType.token), true);
+            deployedContracts.lendingPoolConfigurator.enableBorrowingOnReserve(
+                address(borrowType.token), true
+            );
             vm.stopPrank();
-            deployedContracts.lendingPool
-                .borrow(address(borrowType.token), true, amountToBorrow, address(this));
+            deployedContracts.lendingPool.borrow(
+                address(borrowType.token), true, amountToBorrow, address(this)
+            );
         }
     }
 
@@ -138,8 +142,9 @@ contract LendingPoolConfiguratorTest is Common, LendingPoolFixtures {
             vm.expectEmit(true, false, false, true);
             emit ReserveActivated(address(erc20Tokens[idx]), true);
             vm.prank(admin);
-            deployedContracts.lendingPoolConfigurator
-                .activateReserve(address(erc20Tokens[idx]), true);
+            deployedContracts.lendingPoolConfigurator.activateReserve(
+                address(erc20Tokens[idx]), true
+            );
             // DataTypes.ReserveConfigurationMap memory currentConfig =
             //     deployedContracts.lendingPool.getConfiguration(address(erc20Tokens[idx]), false);
             // assertEq(currentConfig.getAsteraReserveFactor(), validReserveFactor);
@@ -157,36 +162,40 @@ contract LendingPoolConfiguratorTest is Common, LendingPoolFixtures {
             uint256 amount = 10 ** collateralType.token.decimals();
             deal(address(collateralType.token), address(this), amount);
             collateralType.token.approve(address(deployedContracts.lendingPool), amount);
-            deployedContracts.lendingPool
-                .deposit(address(collateralType.token), true, amount, address(this));
+            deployedContracts.lendingPool.deposit(
+                address(collateralType.token), true, amount, address(this)
+            );
             console2.log("0.Balance: ", collateralType.token.balanceOf(address(this)));
-            deployedContracts.lendingPool
-                .borrow(address(collateralType.token), true, amount / 10, address(this));
+            deployedContracts.lendingPool.borrow(
+                address(collateralType.token), true, amount / 10, address(this)
+            );
 
             vm.startPrank(admin);
             /* Shouldn't be able to deactivate when liquidity is not zero */
             vm.expectRevert(bytes(Errors.VL_RESERVE_LIQUIDITY_NOT_0));
-            deployedContracts.lendingPoolConfigurator
-                .deactivateReserve(address(erc20Tokens[idx]), true);
+            deployedContracts.lendingPoolConfigurator.deactivateReserve(
+                address(erc20Tokens[idx]), true
+            );
             vm.stopPrank();
 
             /* remove liquidity */
             collateralType.token.approve(address(deployedContracts.lendingPool), amount / 10);
-            deployedContracts.lendingPool
-                .repay(address(collateralType.token), true, amount / 10, address(this));
-            deployedContracts.lendingPool
-                .withdraw(
-                    address(collateralType.token),
-                    true,
-                    collateralType.aToken.balanceOf(address(this)),
-                    address(this)
-                );
+            deployedContracts.lendingPool.repay(
+                address(collateralType.token), true, amount / 10, address(this)
+            );
+            deployedContracts.lendingPool.withdraw(
+                address(collateralType.token),
+                true,
+                collateralType.aToken.balanceOf(address(this)),
+                address(this)
+            );
             vm.startPrank(admin);
             /* deactivate reserve - now shall be possible */
             vm.expectEmit(true, false, false, true);
             emit ReserveDeactivated(address(erc20Tokens[idx]), true);
-            deployedContracts.lendingPoolConfigurator
-                .deactivateReserve(address(erc20Tokens[idx]), true);
+            deployedContracts.lendingPoolConfigurator.deactivateReserve(
+                address(erc20Tokens[idx]), true
+            );
             vm.stopPrank();
 
             amount = 10 ** collateralType.token.decimals();
@@ -194,8 +203,9 @@ contract LendingPoolConfiguratorTest is Common, LendingPoolFixtures {
 
             /* deactivated reserve - new deposits shouldn't be possible */
             vm.expectRevert(bytes(Errors.VL_NO_ACTIVE_RESERVE));
-            deployedContracts.lendingPool
-                .deposit(address(collateralType.token), true, amount, address(this));
+            deployedContracts.lendingPool.deposit(
+                address(collateralType.token), true, amount, address(this)
+            );
         }
     }
 
@@ -210,10 +220,12 @@ contract LendingPoolConfiguratorTest is Common, LendingPoolFixtures {
             uint256 amount = 10 ** collateralType.token.decimals();
             deal(address(collateralType.token), address(this), amount);
             collateralType.token.approve(address(deployedContracts.lendingPool), amount);
-            deployedContracts.lendingPool
-                .deposit(address(collateralType.token), true, amount, address(this));
-            deployedContracts.lendingPool
-                .borrow(address(collateralType.token), true, amount / 10, address(this));
+            deployedContracts.lendingPool.deposit(
+                address(collateralType.token), true, amount, address(this)
+            );
+            deployedContracts.lendingPool.borrow(
+                address(collateralType.token), true, amount / 10, address(this)
+            );
 
             vm.expectEmit(true, false, false, true);
             emit ReserveFrozen(address(erc20Tokens[idx]), true);
@@ -225,16 +237,20 @@ contract LendingPoolConfiguratorTest is Common, LendingPoolFixtures {
 
             /* deactivated reserve - new deposits shouldn't be possible */
             vm.expectRevert(bytes(Errors.VL_RESERVE_FROZEN));
-            deployedContracts.lendingPool
-                .deposit(address(collateralType.token), true, amount, address(this));
+            deployedContracts.lendingPool.deposit(
+                address(collateralType.token), true, amount, address(this)
+            );
             vm.expectRevert(bytes(Errors.VL_RESERVE_FROZEN));
-            deployedContracts.lendingPool
-                .borrow(address(collateralType.token), true, amount / 10, address(this));
+            deployedContracts.lendingPool.borrow(
+                address(collateralType.token), true, amount / 10, address(this)
+            );
             /* repay and withdraw actions shall pass */
-            deployedContracts.lendingPool
-                .repay(address(collateralType.token), true, amount / 10, address(this));
-            deployedContracts.lendingPool
-                .withdraw(address(collateralType.token), true, amount, address(this));
+            deployedContracts.lendingPool.repay(
+                address(collateralType.token), true, amount / 10, address(this)
+            );
+            deployedContracts.lendingPool.withdraw(
+                address(collateralType.token), true, amount, address(this)
+            );
         }
     }
 
@@ -243,8 +259,9 @@ contract LendingPoolConfiguratorTest is Common, LendingPoolFixtures {
             vm.expectEmit(true, false, false, true);
             emit ReserveUnfrozen(address(erc20Tokens[idx]), true);
             vm.prank(admin);
-            deployedContracts.lendingPoolConfigurator
-                .unfreezeReserve(address(erc20Tokens[idx]), true);
+            deployedContracts.lendingPoolConfigurator.unfreezeReserve(
+                address(erc20Tokens[idx]), true
+            );
             // DataTypes.ReserveConfigurationMap memory currentConfig =
             //     deployedContracts.lendingPool.getConfiguration(address(erc20Tokens[idx]), false);
             // assertEq(currentConfig.getAsteraReserveFactor(), validReserveFactor);
@@ -257,8 +274,9 @@ contract LendingPoolConfiguratorTest is Common, LendingPoolFixtures {
             vm.expectEmit(true, false, false, false);
             emit ReserveFactorChanged(address(erc20Tokens[idx]), true, validReserveFactor);
             vm.prank(admin);
-            deployedContracts.lendingPoolConfigurator
-                .setAsteraReserveFactor(address(erc20Tokens[idx]), true, validReserveFactor);
+            deployedContracts.lendingPoolConfigurator.setAsteraReserveFactor(
+                address(erc20Tokens[idx]), true, validReserveFactor
+            );
             // DataTypes.ReserveConfigurationMap memory currentConfig =
             //     deployedContracts.lendingPool.getConfiguration(address(erc20Tokens[idx]), false);
             // assertEq(currentConfig.getAsteraReserveFactor(), validReserveFactor);
@@ -271,8 +289,9 @@ contract LendingPoolConfiguratorTest is Common, LendingPoolFixtures {
         for (uint32 idx; idx < erc20Tokens.length; idx++) {
             vm.expectRevert(bytes(Errors.RC_INVALID_RESERVE_FACTOR));
             vm.prank(admin);
-            deployedContracts.lendingPoolConfigurator
-                .setAsteraReserveFactor(address(erc20Tokens[idx]), true, invalidReserveFactor);
+            deployedContracts.lendingPoolConfigurator.setAsteraReserveFactor(
+                address(erc20Tokens[idx]), true, invalidReserveFactor
+            );
         }
     }
 
@@ -282,8 +301,9 @@ contract LendingPoolConfiguratorTest is Common, LendingPoolFixtures {
             vm.expectEmit(true, false, false, false);
             emit ReserveDepositCapChanged(address(erc20Tokens[idx]), true, validDepositCap);
             vm.prank(admin);
-            deployedContracts.lendingPoolConfigurator
-                .setDepositCap(address(erc20Tokens[idx]), true, validDepositCap);
+            deployedContracts.lendingPoolConfigurator.setDepositCap(
+                address(erc20Tokens[idx]), true, validDepositCap
+            );
             // DataTypes.ReserveConfigurationMap memory currentConfig =
             //     deployedContracts.lendingPool.getConfiguration(address(erc20Tokens[idx]), false);
             // assertEq(currentConfig.getAsteraReserveFactor(), validReserveFactor);
@@ -295,8 +315,9 @@ contract LendingPoolConfiguratorTest is Common, LendingPoolFixtures {
         for (uint32 idx; idx < erc20Tokens.length; idx++) {
             vm.expectRevert(bytes(Errors.RC_INVALID_DEPOSIT_CAP));
             vm.prank(admin);
-            deployedContracts.lendingPoolConfigurator
-                .setDepositCap(address(erc20Tokens[idx]), false, invalidDepositCap);
+            deployedContracts.lendingPoolConfigurator.setDepositCap(
+                address(erc20Tokens[idx]), false, invalidDepositCap
+            );
         }
     }
 
@@ -325,8 +346,9 @@ contract LendingPoolConfiguratorTest is Common, LendingPoolFixtures {
                 (aTokenAddress, address(commonContracts.mockedVaults[0]))
             )
         );
-        deployedContracts.lendingPoolConfigurator
-            .setVault(aTokenAddress, address(commonContracts.mockedVaults[0]));
+        deployedContracts.lendingPoolConfigurator.setVault(
+            aTokenAddress, address(commonContracts.mockedVaults[0])
+        );
 
         /* set vault negative - 84 */
         vm.expectRevert(bytes(Errors.AT_INVALID_ADDRESS));
@@ -354,8 +376,9 @@ contract LendingPoolConfiguratorTest is Common, LendingPoolFixtures {
                 (aTokenAddress, claimingThreshold)
             )
         );
-        deployedContracts.lendingPoolConfigurator
-            .setClaimingThreshold(aTokenAddress, claimingThreshold);
+        deployedContracts.lendingPoolConfigurator.setClaimingThreshold(
+            aTokenAddress, claimingThreshold
+        );
 
         /* set farming pct drift positive */
         farmingPct = bound(farmingPct, 0, 10000);
@@ -401,15 +424,17 @@ contract LendingPoolConfiguratorTest is Common, LendingPoolFixtures {
         deployedContracts.lendingPoolConfigurator.rebalance(tokenAddress);
 
         vm.expectRevert(bytes(Errors.VL_CALLER_NOT_POOL_ADMIN));
-        deployedContracts.lendingPoolConfigurator
-            .setReserveInterestRateStrategyAddress(tokenAddress, true, randomAddress);
+        deployedContracts.lendingPoolConfigurator.setReserveInterestRateStrategyAddress(
+            tokenAddress, true, randomAddress
+        );
         vm.expectRevert(bytes(Errors.VL_CALLER_NOT_EMERGENCY_ADMIN));
         deployedContracts.lendingPoolConfigurator.setPoolPause(true);
         vm.expectRevert(bytes(Errors.VL_CALLER_NOT_POOL_ADMIN));
         deployedContracts.lendingPoolConfigurator.updateFlashloanPremiumTotal(uint128(randomNumber));
         vm.expectRevert(bytes(Errors.VL_CALLER_NOT_POOL_ADMIN));
-        deployedContracts.lendingPoolConfigurator
-            .setRewarderForReserve(tokenAddress, true, randomAddress);
+        deployedContracts.lendingPoolConfigurator.setRewarderForReserve(
+            tokenAddress, true, randomAddress
+        );
         vm.expectRevert(bytes(Errors.VL_CALLER_NOT_POOL_ADMIN));
         deployedContracts.lendingPoolConfigurator.setTreasury(tokenAddress, true, randomAddress);
     }
@@ -426,10 +451,9 @@ contract LendingPoolConfiguratorTest is Common, LendingPoolFixtures {
         );
         for (uint32 idx; idx < erc20Tokens.length; idx++) {
             vm.prank(admin);
-            deployedContracts.lendingPoolConfigurator
-                .setReserveInterestRateStrategyAddress(
-                    address(erc20Tokens[idx]), true, newInterestRateStrategy
-                );
+            deployedContracts.lendingPoolConfigurator.setReserveInterestRateStrategyAddress(
+                address(erc20Tokens[idx]), true, newInterestRateStrategy
+            );
             DataTypes.ReserveData memory data =
                 deployedContracts.lendingPool.getReserveData(address(erc20Tokens[idx]), true);
             assertEq(data.interestRateStrategyAddress, newInterestRateStrategy);
@@ -447,10 +471,12 @@ contract LendingPoolConfiguratorTest is Common, LendingPoolFixtures {
         uint256 amount = 10 ** collateralType.token.decimals();
         deal(address(collateralType.token), address(this), 10 * amount);
         collateralType.token.approve(address(deployedContracts.lendingPool), 10 * amount);
-        deployedContracts.lendingPool
-            .deposit(address(collateralType.token), true, amount, address(this));
-        deployedContracts.lendingPool
-            .borrow(address(collateralType.token), true, amount / 10, address(this));
+        deployedContracts.lendingPool.deposit(
+            address(collateralType.token), true, amount, address(this)
+        );
+        deployedContracts.lendingPool.borrow(
+            address(collateralType.token), true, amount / 10, address(this)
+        );
 
         vm.expectEmit(false, false, false, false);
         emit Paused();
@@ -460,18 +486,22 @@ contract LendingPoolConfiguratorTest is Common, LendingPoolFixtures {
 
         /* pool paused - new deposits/borrows shouldn't be possible */
         vm.expectRevert(bytes(Errors.LP_IS_PAUSED));
-        deployedContracts.lendingPool
-            .deposit(address(collateralType.token), true, amount, address(this));
+        deployedContracts.lendingPool.deposit(
+            address(collateralType.token), true, amount, address(this)
+        );
         vm.expectRevert(bytes(Errors.LP_IS_PAUSED));
-        deployedContracts.lendingPool
-            .borrow(address(collateralType.token), true, amount / 10, address(this));
+        deployedContracts.lendingPool.borrow(
+            address(collateralType.token), true, amount / 10, address(this)
+        );
         /* repay and withdraw actions shall pass */
         vm.expectRevert(bytes(Errors.LP_IS_PAUSED));
-        deployedContracts.lendingPool
-            .repay(address(collateralType.token), true, amount / 10, address(this));
+        deployedContracts.lendingPool.repay(
+            address(collateralType.token), true, amount / 10, address(this)
+        );
         vm.expectRevert(bytes(Errors.LP_IS_PAUSED));
-        deployedContracts.lendingPool
-            .withdraw(address(collateralType.token), true, amount, address(this));
+        deployedContracts.lendingPool.withdraw(
+            address(collateralType.token), true, amount, address(this)
+        );
 
         vm.expectEmit(false, false, false, false);
         emit Unpaused();
@@ -479,15 +509,19 @@ contract LendingPoolConfiguratorTest is Common, LendingPoolFixtures {
         deployedContracts.lendingPoolConfigurator.setPoolPause(false);
         assertEq(deployedContracts.lendingPool.paused(), false);
 
-        deployedContracts.lendingPool
-            .deposit(address(collateralType.token), true, amount, address(this));
-        deployedContracts.lendingPool
-            .borrow(address(collateralType.token), true, amount / 10, address(this));
+        deployedContracts.lendingPool.deposit(
+            address(collateralType.token), true, amount, address(this)
+        );
+        deployedContracts.lendingPool.borrow(
+            address(collateralType.token), true, amount / 10, address(this)
+        );
         /* repay and withdraw actions shall pass */
-        deployedContracts.lendingPool
-            .repay(address(collateralType.token), true, amount / 10, address(this));
-        deployedContracts.lendingPool
-            .withdraw(address(collateralType.token), true, amount, address(this));
+        deployedContracts.lendingPool.repay(
+            address(collateralType.token), true, amount / 10, address(this)
+        );
+        deployedContracts.lendingPool.withdraw(
+            address(collateralType.token), true, amount, address(this)
+        );
     }
 
     function testGetTotalManagedAssets() public {
@@ -507,8 +541,9 @@ contract LendingPoolConfiguratorTest is Common, LendingPoolFixtures {
                 commonContracts.aTokens[idx].balanceOf(address(user))
             );
             assertEq(
-                deployedContracts.lendingPoolConfigurator
-                    .getTotalManagedAssets(address(commonContracts.aTokens[idx])),
+                deployedContracts.lendingPoolConfigurator.getTotalManagedAssets(
+                    address(commonContracts.aTokens[idx])
+                ),
                 amount
             );
         }
@@ -532,8 +567,9 @@ contract LendingPoolConfiguratorTest is Common, LendingPoolFixtures {
         address newRewarder = makeAddr("newRewarder");
         for (uint32 idx; idx < erc20Tokens.length; idx++) {
             vm.prank(admin);
-            deployedContracts.lendingPoolConfigurator
-                .setRewarderForReserve(address(erc20Tokens[idx]), true, newRewarder);
+            deployedContracts.lendingPoolConfigurator.setRewarderForReserve(
+                address(erc20Tokens[idx]), true, newRewarder
+            );
             assertEq(address(commonContracts.aTokens[idx].getIncentivesController()), newRewarder);
             assertEq(
                 address(commonContracts.variableDebtTokens[idx].getIncentivesController()),
@@ -546,8 +582,9 @@ contract LendingPoolConfiguratorTest is Common, LendingPoolFixtures {
         address newTreasury = makeAddr("newTreasury");
         for (uint32 idx; idx < erc20Tokens.length; idx++) {
             vm.prank(admin);
-            deployedContracts.lendingPoolConfigurator
-                .setTreasury(address(erc20Tokens[idx]), true, newTreasury);
+            deployedContracts.lendingPoolConfigurator.setTreasury(
+                address(erc20Tokens[idx]), true, newTreasury
+            );
             assertEq(commonContracts.aTokens[idx].RESERVE_TREASURY_ADDRESS(), newTreasury);
         }
     }
@@ -583,10 +620,9 @@ contract LendingPoolConfiguratorTest is Common, LendingPoolFixtures {
             erc20Tokens[USDC_OFFSET].approve(
                 address(deployedContracts.lendingPool), amountToDeposit
             );
-            deployedContracts.lendingPool
-                    .deposit(
-                    address(erc20Tokens[USDC_OFFSET]), true, amountToDeposit, address(this)
-                );
+            deployedContracts.lendingPool.deposit(
+                address(erc20Tokens[USDC_OFFSET]), true, amountToDeposit, address(this)
+            );
             reserveTypes[0] = true;
             tokenAddresses[0] = address(erc20Tokens[USDC_OFFSET]);
             amounts[0] = IERC20(tokens[USDC_OFFSET]).balanceOf(address(this)) / 2;
@@ -594,9 +630,8 @@ contract LendingPoolConfiguratorTest is Common, LendingPoolFixtures {
             balanceBefore[0] = IERC20(tokens[USDC_OFFSET]).balanceOf(address(this));
         }
 
-        ILendingPool.FlashLoanParams memory flashloanParams = ILendingPool.FlashLoanParams(
-            address(this), tokenAddresses, reserveTypes, address(this)
-        );
+        ILendingPool.FlashLoanParams memory flashloanParams =
+            ILendingPool.FlashLoanParams(address(this), tokenAddresses, reserveTypes, address(this));
 
         bytes memory params = abi.encode(balanceBefore, address(this));
 

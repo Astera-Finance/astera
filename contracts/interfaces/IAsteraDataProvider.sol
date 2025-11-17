@@ -535,5 +535,8 @@ interface IAsteraDataProvider {
         view
         returns (bool isConfigured, DataTypes.MiniPoolReserveData memory data);
 
-    function getBaseCurrencyInfo() external view returns (BaseCurrencyInfo memory baseCurrencyInfo);
+    function getBaseCurrencyInfo()
+        external
+        view
+        returns (BaseCurrencyInfo memory baseCurrencyInfo);
 }

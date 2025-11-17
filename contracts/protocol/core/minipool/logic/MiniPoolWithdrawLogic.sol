@@ -3,20 +3,17 @@ pragma solidity ^0.8.23;
 
 import {IAERC6909} from "../../../../../contracts/interfaces/IAERC6909.sol";
 import {IERC20} from "../../../../../contracts/dependencies/openzeppelin/contracts/IERC20.sol";
-import {
-    IMiniPoolAddressesProvider
-} from "../../../../../contracts/interfaces/IMiniPoolAddressesProvider.sol";
-import {
-    ReserveConfiguration
-} from "../../../../../contracts/protocol/libraries/configuration/ReserveConfiguration.sol";
+import {IMiniPoolAddressesProvider} from
+    "../../../../../contracts/interfaces/IMiniPoolAddressesProvider.sol";
+import {ReserveConfiguration} from
+    "../../../../../contracts/protocol/libraries/configuration/ReserveConfiguration.sol";
 import {WadRayMath} from "../../../../../contracts/protocol/libraries/math/WadRayMath.sol";
 import {PercentageMath} from "../../../../../contracts/protocol/libraries/math/PercentageMath.sol";
 import {Errors} from "../../../../../contracts/protocol/libraries/helpers/Errors.sol";
 import {DataTypes} from "../../../../../contracts/protocol/libraries/types/DataTypes.sol";
 import {MiniPoolReserveLogic} from "./MiniPoolReserveLogic.sol";
-import {
-    UserConfiguration
-} from "../../../../../contracts/protocol/libraries/configuration/UserConfiguration.sol";
+import {UserConfiguration} from
+    "../../../../../contracts/protocol/libraries/configuration/UserConfiguration.sol";
 import {MiniPoolValidationLogic} from "./MiniPoolValidationLogic.sol";
 
 /**
@@ -139,15 +136,14 @@ library MiniPoolWithdrawLogic {
             emit ReserveUsedAsCollateralDisabled(params.asset, msg.sender);
         }
 
-        IAERC6909(localVars.aToken)
-            .burn(
-                msg.sender,
-                params.to,
-                localVars.id,
-                localVars.amountToWithdraw,
-                unwrap,
-                reserve.liquidityIndex
-            );
+        IAERC6909(localVars.aToken).burn(
+            msg.sender,
+            params.to,
+            localVars.id,
+            localVars.amountToWithdraw,
+            unwrap,
+            reserve.liquidityIndex
+        );
 
         emit Withdraw(params.asset, msg.sender, params.to, localVars.amountToWithdraw);
 
@@ -268,15 +264,14 @@ library MiniPoolWithdrawLogic {
 
         reserve.updateInterestRates(params.asset, 0, localVars.amountToWithdraw);
 
-        IAERC6909(localVars.aToken)
-            .burn(
-                address(this),
-                params.to,
-                localVars.id,
-                localVars.amountToWithdraw,
-                false,
-                reserve.liquidityIndex
-            );
+        IAERC6909(localVars.aToken).burn(
+            address(this),
+            params.to,
+            localVars.id,
+            localVars.amountToWithdraw,
+            false,
+            reserve.liquidityIndex
+        );
 
         emit Withdraw(params.asset, address(this), params.to, localVars.amountToWithdraw);
     }

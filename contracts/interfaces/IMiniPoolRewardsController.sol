@@ -1,9 +1,8 @@
 // SPDX-License-Identifier: agpl-3.0
 pragma solidity ^0.8.0;
 
-import {
-    IMiniPoolRewardsDistributor
-} from "../../contracts/interfaces/IMiniPoolRewardsDistributor.sol";
+import {IMiniPoolRewardsDistributor} from
+    "../../contracts/interfaces/IMiniPoolRewardsDistributor.sol";
 import {DistributionTypes} from "../../contracts/protocol/libraries/types/DistributionTypes.sol";
 
 /**
@@ -44,7 +43,8 @@ interface IMiniPoolRewardsController is IMiniPoolRewardsDistributor {
 
     function getClaimer(address user) external view returns (address);
 
-    function configureAssets(DistributionTypes.MiniPoolRewardsConfigInput[] memory config) external;
+    function configureAssets(DistributionTypes.MiniPoolRewardsConfigInput[] memory config)
+        external;
 
     function handleAction(uint256 assetID, address user, uint256 totalSupply, uint256 userBalance)
         external;

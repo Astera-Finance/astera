@@ -4,12 +4,10 @@ pragma solidity ^0.8.0;
 import "forge-std/Test.sol";
 import "forge-std/console2.sol";
 
-import {
-    ReserveConfiguration
-} from "../../contracts/protocol/libraries/configuration/ReserveConfiguration.sol";
-import {
-    InitializableImmutableAdminUpgradeabilityProxy
-} from "../../contracts/protocol/libraries/upgradeability/InitializableImmutableAdminUpgradeabilityProxy.sol";
+import {ReserveConfiguration} from
+    "../../contracts/protocol/libraries/configuration/ReserveConfiguration.sol";
+import {InitializableImmutableAdminUpgradeabilityProxy} from
+    "../../contracts/protocol/libraries/upgradeability/InitializableImmutableAdminUpgradeabilityProxy.sol";
 import {ERC20} from "../../contracts/dependencies/openzeppelin/contracts/ERC20.sol";
 import {Rewarder} from "../../contracts/protocol/rewarder/lendingpool/Rewarder.sol";
 import {Oracle} from "../../contracts/protocol/core/Oracle.sol";
@@ -25,24 +23,20 @@ import {
     LendingPoolAddressesProvider,
     ILendingPoolAddressesProvider
 } from "../../contracts/protocol/configuration/LendingPoolAddressesProvider.sol";
-import {
-    DefaultReserveInterestRateStrategy
-} from "../../contracts/protocol/core/interestRateStrategies/lendingpool/DefaultReserveInterestRateStrategy.sol";
-import {
-    PiReserveInterestRateStrategy
-} from "../../contracts/protocol/core/interestRateStrategies/lendingpool/PiReserveInterestRateStrategy.sol";
-import {
-    MiniPoolPiReserveInterestRateStrategy
-} from "../../contracts/protocol/core/interestRateStrategies/minipool/MiniPoolPiReserveInterestRateStrategy.sol";
+import {DefaultReserveInterestRateStrategy} from
+    "../../contracts/protocol/core/interestRateStrategies/lendingpool/DefaultReserveInterestRateStrategy.sol";
+import {PiReserveInterestRateStrategy} from
+    "../../contracts/protocol/core/interestRateStrategies/lendingpool/PiReserveInterestRateStrategy.sol";
+import {MiniPoolPiReserveInterestRateStrategy} from
+    "../../contracts/protocol/core/interestRateStrategies/minipool/MiniPoolPiReserveInterestRateStrategy.sol";
 import {LendingPool} from "../../contracts/protocol/core/lendingpool/LendingPool.sol";
 import {
     LendingPoolConfigurator,
     ILendingPoolConfigurator
 } from "../../contracts/protocol/core/lendingpool/LendingPoolConfigurator.sol";
 import {MiniPool, IMiniPool} from "../../contracts/protocol/core/minipool/MiniPool.sol";
-import {
-    MiniPoolAddressesProvider
-} from "../../contracts/protocol/configuration/MiniPoolAddressProvider.sol";
+import {MiniPoolAddressesProvider} from
+    "../../contracts/protocol/configuration/MiniPoolAddressProvider.sol";
 import {
     MiniPoolConfigurator,
     IMiniPoolConfigurator
@@ -57,17 +51,16 @@ import {MockAggregator} from "../../contracts/mocks/oracle/MockAggregator.sol";
 import {MockReaperVault2} from "../../contracts/mocks/tokens/MockVault.sol";
 import {WadRayMath} from "../../contracts/protocol/libraries/math/WadRayMath.sol";
 
-import "../../contracts/protocol/core/interestRateStrategies/minipool/MiniPoolDefaultReserveInterestRate.sol";
+import
+    "../../contracts/protocol/core/interestRateStrategies/minipool/MiniPoolDefaultReserveInterestRate.sol";
 import "../../contracts/mocks/oracle/PriceOracle.sol";
 import {MockVaultUnit} from "../../contracts/mocks/tokens/MockVaultUnit.sol";
 import {MockPyth} from "node_modules/@pythnetwork/pyth-sdk-solidity/MockPyth.sol";
 import {PythAggregatorV3} from "node_modules/@pythnetwork/pyth-sdk-solidity/PythAggregatorV3.sol";
-import {
-    FixReserveInterestRateStrategy
-} from "../../contracts/protocol/core/interestRateStrategies/lendingpool/FixReserveInterestRateStrategy.sol";
-import {
-    MiniPoolFixReserveInterestRate
-} from "../../contracts/protocol/core/interestRateStrategies/minipool/MiniPoolFixReserveInterestRate.sol";
+import {FixReserveInterestRateStrategy} from
+    "../../contracts/protocol/core/interestRateStrategies/lendingpool/FixReserveInterestRateStrategy.sol";
+import {MiniPoolFixReserveInterestRate} from
+    "../../contracts/protocol/core/interestRateStrategies/minipool/MiniPoolFixReserveInterestRate.sol";
 
 event Deposit(address indexed reserve, address user, address indexed onBehalfOf, uint256 amount);
 
@@ -315,8 +308,9 @@ contract Common is Test {
         deployedContracts.treasury = new Treasury(deployedContracts.lendingPoolAddressesProvider);
 
         lendingPoolConfigurator = new LendingPoolConfigurator();
-        deployedContracts.lendingPoolAddressesProvider
-                .setLendingPoolConfiguratorImpl(address(lendingPoolConfigurator));
+        deployedContracts.lendingPoolAddressesProvider.setLendingPoolConfiguratorImpl(
+            address(lendingPoolConfigurator)
+        );
         lendingPoolConfiguratorProxyAddress =
             deployedContracts.lendingPoolAddressesProvider.getLendingPoolConfigurator();
         deployedContracts.lendingPoolConfigurator =
@@ -339,13 +333,15 @@ contract Common is Test {
             address(deployedContracts.treasury),
             address(deployedContracts.lendingPoolAddressesProvider)
         );
-        deployedContracts.lendingPoolAddressesProvider
-            .setPriceOracle(address(commonContracts.oracle));
+        deployedContracts.lendingPoolAddressesProvider.setPriceOracle(
+            address(commonContracts.oracle)
+        );
         vm.label(address(commonContracts.oracle), "Oracle");
         deployedContracts.asteraDataProvider =
             new AsteraDataProvider(ETH_USD_SOURCE, USDC_USD_SOURCE);
-        deployedContracts.asteraDataProvider
-            .setLendingPoolAddressProvider(address(deployedContracts.lendingPoolAddressesProvider));
+        deployedContracts.asteraDataProvider.setLendingPoolAddressProvider(
+            address(deployedContracts.lendingPoolAddressesProvider)
+        );
 
         deployedContracts.stableStrategy = new DefaultReserveInterestRateStrategy(
             deployedContracts.lendingPoolAddressesProvider,
@@ -449,9 +445,8 @@ contract Common is Test {
         commonContracts.aTokensWrapper = fixture_getATokensWrapper(
             tokens, AsteraDataProvider(configAddresses.asteraDataProvider)
         );
-        commonContracts.variableDebtTokens = fixture_getVarDebtTokens(
-            tokens, AsteraDataProvider(configAddresses.asteraDataProvider)
-        );
+        commonContracts.variableDebtTokens =
+            fixture_getVarDebtTokens(tokens, AsteraDataProvider(configAddresses.asteraDataProvider));
         commonContracts.wETHGateway =
             new WETHGateway(address(commonContracts.aTokensWrapper[WETH_OFFSET]));
         commonContracts.wETHGateway.authorizeLendingPool(ledingPool);
@@ -518,8 +513,9 @@ contract Common is Test {
         }
 
         lendingPoolAddressesProvider.setPoolAdmin(configAddresses.aTokensAndRatesHelper);
-        ATokensAndRatesHelper(configAddresses.aTokensAndRatesHelper)
-            .configureReserves(inputConfigParams);
+        ATokensAndRatesHelper(configAddresses.aTokensAndRatesHelper).configureReserves(
+            inputConfigParams
+        );
         lendingPoolAddressesProvider.setPoolAdmin(admin);
     }
 
@@ -701,12 +697,11 @@ contract Common is Test {
             );
             console2.log("miniPoolImpl: ", address(miniPoolContracts.miniPoolImpl));
             console2.log("aToken6909Impl: ", address(miniPoolContracts.aToken6909Impl));
-            miniPoolId = miniPoolContracts.miniPoolAddressesProvider
-                .deployMiniPool(
-                    address(miniPoolContracts.miniPoolImpl),
-                    address(miniPoolContracts.aToken6909Impl),
-                    poolOwner
-                );
+            miniPoolId = miniPoolContracts.miniPoolAddressesProvider.deployMiniPool(
+                address(miniPoolContracts.miniPoolImpl),
+                address(miniPoolContracts.aToken6909Impl),
+                poolOwner
+            );
             miniPoolContracts.flowLimiter = new FlowLimiter(
                 IMiniPoolAddressesProvider(address(miniPoolContracts.miniPoolAddressesProvider))
             );
@@ -718,8 +713,9 @@ contract Common is Test {
 
             ILendingPoolAddressesProvider(_lendingPoolAddressesProvider)
                 .setMiniPoolAddressesProvider(address(miniPoolContracts.miniPoolAddressesProvider));
-            ILendingPoolAddressesProvider(_lendingPoolAddressesProvider)
-                .setFlowLimiter(address(miniPoolContracts.flowLimiter));
+            ILendingPoolAddressesProvider(_lendingPoolAddressesProvider).setFlowLimiter(
+                address(miniPoolContracts.flowLimiter)
+            );
 
             /* Strategies */
             miniPoolContracts.stableStrategy = new MiniPoolDefaultReserveInterestRateStrategy(
@@ -747,16 +743,16 @@ contract Common is Test {
                 commonContracts.defaultPidConfig.kp,
                 commonContracts.defaultPidConfig.ki
             );
-            AsteraDataProvider(_asteraDataProvider)
-                .setMiniPoolAddressProvider(address(miniPoolContracts.miniPoolAddressesProvider));
+            AsteraDataProvider(_asteraDataProvider).setMiniPoolAddressProvider(
+                address(miniPoolContracts.miniPoolAddressesProvider)
+            );
         } else {
             /* Get the same AERC6909 impl as previously */
-            miniPoolId = miniPoolContracts.miniPoolAddressesProvider
-                .deployMiniPool(
-                    address(miniPoolContracts.miniPoolImpl),
-                    address(miniPoolContracts.aToken6909Impl),
-                    poolOwner
-                );
+            miniPoolId = miniPoolContracts.miniPoolAddressesProvider.deployMiniPool(
+                address(miniPoolContracts.miniPoolImpl),
+                address(miniPoolContracts.aToken6909Impl),
+                poolOwner
+            );
         }
 
         return (miniPoolContracts, miniPoolId);
@@ -788,8 +784,8 @@ contract Common is Test {
         DeployedMiniPoolContracts memory miniPoolContracts,
         uint256 miniPoolId
     ) public returns (address) {
-        IMiniPoolConfigurator.InitReserveInput[] memory initInputParams = new IMiniPoolConfigurator
-            .InitReserveInput[](tokensToConfigure.length);
+        IMiniPoolConfigurator.InitReserveInput[] memory initInputParams =
+            new IMiniPoolConfigurator.InitReserveInput[](tokensToConfigure.length);
         console2.log("Getting Mini pool: ");
         address miniPool = miniPoolContracts.miniPoolAddressesProvider.getMiniPool(miniPoolId);
 
@@ -811,8 +807,9 @@ contract Common is Test {
             });
         }
         vm.prank(address(miniPoolContracts.miniPoolAddressesProvider.getMainPoolAdmin()));
-        miniPoolContracts.miniPoolConfigurator
-            .batchInitReserve(initInputParams, IMiniPool(miniPool));
+        miniPoolContracts.miniPoolConfigurator.batchInitReserve(
+            initInputParams, IMiniPool(miniPool)
+        );
         assertEq(
             miniPoolContracts.miniPoolAddressesProvider.getMiniPoolConfigurator(),
             address(miniPoolContracts.miniPoolConfigurator)

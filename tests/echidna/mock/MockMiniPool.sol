@@ -21,9 +21,8 @@ contract MockMiniPool is MiniPool {
         params.reservesCount = _reservesCount;
         params.oracle = oracle;
 
-        (uint256 userCollateralBalanceETH, uint256 userBorrowBalanceETH,,,) = MiniPoolBorrowLogic.calculateUserAccountDataVolatile(
-            params, _reserves, _usersConfig[addUser], _reservesList
-        );
+        (uint256 userCollateralBalanceETH, uint256 userBorrowBalanceETH,,,) = MiniPoolBorrowLogic
+            .calculateUserAccountDataVolatile(params, _reserves, _usersConfig[addUser], _reservesList);
 
         require(userCollateralBalanceETH > 0);
         require(userCollateralBalanceETH >= userBorrowBalanceETH);

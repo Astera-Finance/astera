@@ -2,12 +2,10 @@
 pragma solidity ^0.8.23;
 
 import {IRewardsDistributor} from "../../../../contracts/interfaces/IRewardsDistributor.sol";
-import {
-    IERC20Detailed
-} from "../../../../contracts/dependencies/openzeppelin/contracts/IERC20Detailed.sol";
-import {
-    DistributionTypes
-} from "../../../../contracts/protocol/libraries/types/DistributionTypes.sol";
+import {IERC20Detailed} from
+    "../../../../contracts/dependencies/openzeppelin/contracts/IERC20Detailed.sol";
+import {DistributionTypes} from
+    "../../../../contracts/protocol/libraries/types/DistributionTypes.sol";
 import {Ownable} from "lib/openzeppelin-contracts/contracts/access/Ownable.sol";
 
 /**
@@ -203,7 +201,9 @@ abstract contract RewardsDistributor is IRewardsDistributor, Ownable {
      * @notice Configures reward distribution parameters for multiple assets.
      * @param rewardsInput Array of reward configuration parameters.
      */
-    function _configureAssets(DistributionTypes.RewardsConfigInput[] memory rewardsInput) internal {
+    function _configureAssets(DistributionTypes.RewardsConfigInput[] memory rewardsInput)
+        internal
+    {
         for (uint256 i = 0; i < rewardsInput.length; i++) {
             _assets[rewardsInput[i].asset].decimals =
                 IERC20Detailed(rewardsInput[i].asset).decimals();
@@ -417,9 +417,8 @@ abstract contract RewardsDistributor is IRewardsDistributor, Ownable {
                 continue;
             }
             for (uint256 r = 0; r < rewardTokens.length; r++) {
-                unclaimedRewards[
-                    r
-                ] += _getUnrealizedRewardsFromStake(user, rewardTokens[r], userState[i]);
+                unclaimedRewards[r] +=
+                    _getUnrealizedRewardsFromStake(user, rewardTokens[r], userState[i]);
             }
         }
         return (rewardTokens, unclaimedRewards);

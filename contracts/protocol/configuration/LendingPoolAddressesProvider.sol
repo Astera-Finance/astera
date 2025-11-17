@@ -2,15 +2,12 @@
 pragma solidity ^0.8.23;
 
 import {Ownable} from "../../../contracts/dependencies/openzeppelin/contracts/Ownable.sol";
-import {
-    InitializableImmutableAdminUpgradeabilityProxy
-} from "../../../contracts/protocol/libraries/upgradeability/InitializableImmutableAdminUpgradeabilityProxy.sol";
-import {
-    ILendingPoolAddressesProvider
-} from "../../../contracts/interfaces/ILendingPoolAddressesProvider.sol";
-import {
-    IAddressProviderUpdatable
-} from "../../../contracts/interfaces/IAddressProviderUpdatable.sol";
+import {InitializableImmutableAdminUpgradeabilityProxy} from
+    "../../../contracts/protocol/libraries/upgradeability/InitializableImmutableAdminUpgradeabilityProxy.sol";
+import {ILendingPoolAddressesProvider} from
+    "../../../contracts/interfaces/ILendingPoolAddressesProvider.sol";
+import {IAddressProviderUpdatable} from
+    "../../../contracts/interfaces/IAddressProviderUpdatable.sol";
 
 /**
  * @title LendingPoolAddressesProvider contract

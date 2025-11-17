@@ -1,28 +1,23 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.23;
 
-import {
-    VersionedInitializable
-} from "../../../../contracts/protocol/libraries/upgradeability/VersionedInitializable.sol";
-import {
-    ReserveConfiguration
-} from "../../../../contracts/protocol/libraries/configuration/ReserveConfiguration.sol";
+import {VersionedInitializable} from
+    "../../../../contracts/protocol/libraries/upgradeability/VersionedInitializable.sol";
+import {ReserveConfiguration} from
+    "../../../../contracts/protocol/libraries/configuration/ReserveConfiguration.sol";
 import {ILendingPool} from "../../../../contracts/interfaces/ILendingPool.sol";
-import {
-    IERC20Detailed
-} from "../../../../contracts/dependencies/openzeppelin/contracts/IERC20Detailed.sol";
+import {IERC20Detailed} from
+    "../../../../contracts/dependencies/openzeppelin/contracts/IERC20Detailed.sol";
 import {Errors} from "../../../../contracts/protocol/libraries/helpers/Errors.sol";
 import {PercentageMath} from "../../../../contracts/protocol/libraries/math/PercentageMath.sol";
 import {DataTypes} from "../../../../contracts/protocol/libraries/types/DataTypes.sol";
-import {
-    IMiniPoolAddressesProvider
-} from "../../../../contracts/interfaces/IMiniPoolAddressesProvider.sol";
+import {IMiniPoolAddressesProvider} from
+    "../../../../contracts/interfaces/IMiniPoolAddressesProvider.sol";
 import {IAERC6909} from "../../../../contracts/interfaces/IAERC6909.sol";
 import {IMiniPoolConfigurator} from "../../../../contracts/interfaces/IMiniPoolConfigurator.sol";
 import {IMiniPool} from "../../../../contracts/interfaces/IMiniPool.sol";
-import {
-    IAddressProviderUpdatable
-} from "../../../../contracts/interfaces/IAddressProviderUpdatable.sol";
+import {IAddressProviderUpdatable} from
+    "../../../../contracts/interfaces/IAddressProviderUpdatable.sol";
 
 /**
  * @title MiniPoolConfigurator contract.
@@ -231,13 +226,12 @@ contract MiniPoolConfigurator is
      */
     function _initReserve(IMiniPool pool, InitReserveInput calldata input) internal {
         address AERC6909proxy = addressesProvider.getMiniPoolToAERC6909(address(pool));
-        (uint256 aTokenID, uint256 debtTokenID,) = IAERC6909(AERC6909proxy)
-            .initReserve(
-                input.underlyingAsset,
-                input.underlyingAssetName,
-                input.underlyingAssetSymbol,
-                input.underlyingAssetDecimals
-            );
+        (uint256 aTokenID, uint256 debtTokenID,) = IAERC6909(AERC6909proxy).initReserve(
+            input.underlyingAsset,
+            input.underlyingAssetName,
+            input.underlyingAssetSymbol,
+            input.underlyingAssetDecimals
+        );
         pool.initReserve(
             input.underlyingAsset,
             IAERC6909(AERC6909proxy),
@@ -446,7 +440,10 @@ contract MiniPoolConfigurator is
      * @param asset The address of the underlying asset.
      * @param pool The MiniPool instance to update.
      */
-    function disableFlashloan(address asset, IMiniPool pool) external onlyPoolAdmin(address(pool)) {
+    function disableFlashloan(address asset, IMiniPool pool)
+        external
+        onlyPoolAdmin(address(pool))
+    {
         DataTypes.ReserveConfigurationMap memory currentConfig = pool.getConfiguration(asset);
 
         currentConfig.setFlashLoanEnabled(false);

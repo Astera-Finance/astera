@@ -24,5 +24,7 @@ interface IFlowLimiter {
 
     function getMiniPoolMaxDebt(address asset, address miniPool) external view returns (uint256);
 
-    function revertIfFlowLimitReached(address asset, address miniPool, uint256 amount) external view;
+    function revertIfFlowLimitReached(address asset, address miniPool, uint256 amount)
+        external
+        view;
 }

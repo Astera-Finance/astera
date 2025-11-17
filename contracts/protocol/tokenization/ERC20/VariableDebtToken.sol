@@ -6,12 +6,10 @@ import {WadRayMath} from "../../../../contracts/protocol/libraries/math/WadRayMa
 import {Errors} from "../../../../contracts/protocol/libraries/helpers/Errors.sol";
 import {ILendingPool} from "../../../../contracts/interfaces/ILendingPool.sol";
 import {IRewarder} from "../../../../contracts/interfaces/IRewarder.sol";
-import {
-    VersionedInitializable
-} from "../../../../contracts/protocol/libraries/upgradeability/VersionedInitializable.sol";
-import {
-    IncentivizedERC20
-} from "../../../../contracts/protocol/tokenization/ERC20/IncentivizedERC20.sol";
+import {VersionedInitializable} from
+    "../../../../contracts/protocol/libraries/upgradeability/VersionedInitializable.sol";
+import {IncentivizedERC20} from
+    "../../../../contracts/protocol/tokenization/ERC20/IncentivizedERC20.sol";
 
 /**
  * @title VariableDebtToken
@@ -260,8 +258,9 @@ contract VariableDebtToken is
      * @return The total supply representing the total debt accrued by users.
      */
     function totalSupply() public view virtual override returns (uint256) {
-        return super.totalSupply()
-            .rayMul(_pool.getReserveNormalizedVariableDebt(_underlyingAsset, RESERVE_TYPE));
+        return super.totalSupply().rayMul(
+            _pool.getReserveNormalizedVariableDebt(_underlyingAsset, RESERVE_TYPE)
+        );
     }
 
     /**

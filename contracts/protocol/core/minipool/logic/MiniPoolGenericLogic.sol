@@ -3,12 +3,10 @@ pragma solidity ^0.8.23;
 
 import {IAERC6909} from "../../../../../contracts/interfaces/IAERC6909.sol";
 import {MiniPoolReserveLogic} from "./MiniPoolReserveLogic.sol";
-import {
-    ReserveConfiguration
-} from "../../../../../contracts/protocol/libraries/configuration/ReserveConfiguration.sol";
-import {
-    UserConfiguration
-} from "../../../../../contracts/protocol/libraries/configuration/UserConfiguration.sol";
+import {ReserveConfiguration} from
+    "../../../../../contracts/protocol/libraries/configuration/ReserveConfiguration.sol";
+import {UserConfiguration} from
+    "../../../../../contracts/protocol/libraries/configuration/UserConfiguration.sol";
 import {WadRayMath} from "../../../../../contracts/protocol/libraries/math/WadRayMath.sol";
 import {PercentageMath} from "../../../../../contracts/protocol/libraries/math/PercentageMath.sol";
 import {IOracle} from "../../../../../contracts/interfaces/IOracle.sol";
@@ -79,9 +77,7 @@ library MiniPoolGenericLogic {
         }
 
         (vars.totalCollateralInETH, vars.totalDebtInETH,, vars.avgLiquidationThreshold,) =
-            calculateUserAccountData(
-                user, reserves, userConfig, reservesList, reservesCount, oracle
-            );
+        calculateUserAccountData(user, reserves, userConfig, reservesList, reservesCount, oracle);
         if (vars.totalDebtInETH == 0) {
             return true;
         }
@@ -95,10 +91,10 @@ library MiniPoolGenericLogic {
             return false;
         }
 
-        vars.liquidationThresholdAfterDecrease =
-            ((vars.totalCollateralInETH * vars.avgLiquidationThreshold)
-                    - (vars.amountToDecreaseInETH * vars.liquidationThreshold))
-                / vars.collateralBalanceAfterDecrease;
+        vars.liquidationThresholdAfterDecrease = (
+            (vars.totalCollateralInETH * vars.avgLiquidationThreshold)
+                - (vars.amountToDecreaseInETH * vars.liquidationThreshold)
+        ) / vars.collateralBalanceAfterDecrease;
 
         uint256 healthFactorAfterDecrease = calculateHealthFactorFromBalances(
             vars.collateralBalanceAfterDecrease,
@@ -197,13 +193,14 @@ library MiniPoolGenericLogic {
                 vars.totalCollateralInETH = vars.totalCollateralInETH + liquidityBalanceETH;
 
                 vars.avgLtv = vars.avgLtv + (liquidityBalanceETH * vars.ltv);
-                vars.avgLiquidationThreshold = vars.avgLiquidationThreshold
-                    + (liquidityBalanceETH * vars.liquidationThreshold);
+                vars.avgLiquidationThreshold =
+                    vars.avgLiquidationThreshold + (liquidityBalanceETH * vars.liquidationThreshold);
             }
 
             if (userConfig.isBorrowing(vars.i)) {
-                vars.compoundedBorrowBalance = IAERC6909(currentReserve.aErc6909)
-                    .balanceOf(user, currentReserve.variableDebtTokenID);
+                vars.compoundedBorrowBalance = IAERC6909(currentReserve.aErc6909).balanceOf(
+                    user, currentReserve.variableDebtTokenID
+                );
 
                 vars.totalDebtInETH = vars.totalDebtInETH
                     + WadRayMath.divUp(

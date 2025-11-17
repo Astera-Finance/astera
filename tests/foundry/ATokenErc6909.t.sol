@@ -97,7 +97,9 @@ contract ATokenErc6909Test is Common {
         }
     }
 
-    function testErc6909Minting_AToken(uint256 maxValToMint, uint256 index, uint256 offset) public {
+    function testErc6909Minting_AToken(uint256 maxValToMint, uint256 index, uint256 offset)
+        public
+    {
         uint8 nrOfIterations = 20;
 
         /* Fuzz vector creation */
@@ -331,13 +333,15 @@ contract ATokenErc6909Test is Common {
 
         /* Deposit token to the lending pool */
         tokenParams.token.approve(address(deployedContracts.lendingPool), 3 * maxValToBurn);
-        deployedContracts.lendingPool
-            .deposit(address(tokenParams.token), true, 3 * maxValToBurn, address(this));
+        deployedContracts.lendingPool.deposit(
+            address(tokenParams.token), true, 3 * maxValToBurn, address(this)
+        );
 
         /* Deposit aToken into the mini pool */
         tokenParams.aToken.approve(miniPool, 3 * maxValToBurn);
-        IMiniPool(miniPool)
-            .deposit(address(tokenParams.aToken), false, 3 * maxValToBurn, address(this));
+        IMiniPool(miniPool).deposit(
+            address(tokenParams.aToken), false, 3 * maxValToBurn, address(this)
+        );
 
         /* Borrow aToken from mini pool */
         console2.log(
@@ -507,13 +511,15 @@ contract ATokenErc6909Test is Common {
         vm.assume(valToTransfer % granuality == 0); // accept only multiplicity of {nrOfIterations} -> avoid issues with rounding
 
         tokenParams.token.approve(address(deployedContracts.lendingPool), 4 * valToTransfer);
-        deployedContracts.lendingPool
-            .deposit(address(tokenParams.token), true, 4 * valToTransfer, address(this));
+        deployedContracts.lendingPool.deposit(
+            address(tokenParams.token), true, 4 * valToTransfer, address(this)
+        );
 
         console2.log(
             "1. aErc6909Token before deposit to the mini pool %s ",
-            IERC20(aErc6909Token.getUnderlyingAsset(testParams.id))
-                .balanceOf(address(aErc6909Token))
+            IERC20(aErc6909Token.getUnderlyingAsset(testParams.id)).balanceOf(
+                address(aErc6909Token)
+            )
         );
         console2.log(
             "1. underlyingToken before deposit to the mini pool %s ",
@@ -521,12 +527,14 @@ contract ATokenErc6909Test is Common {
         );
 
         tokenParams.aToken.approve(miniPool, 4 * valToTransfer);
-        IMiniPool(miniPool)
-            .deposit(address(tokenParams.aToken), false, 4 * valToTransfer, address(this));
+        IMiniPool(miniPool).deposit(
+            address(tokenParams.aToken), false, 4 * valToTransfer, address(this)
+        );
         console2.log(
             "2. aErc6909Token after deposit %s ",
-            IERC20(aErc6909Token.getUnderlyingAsset(testParams.id))
-                .balanceOf(address(aErc6909Token))
+            IERC20(aErc6909Token.getUnderlyingAsset(testParams.id)).balanceOf(
+                address(aErc6909Token)
+            )
         );
         console2.log(
             "2. underlyingToken after deposit %s ",
@@ -732,8 +740,9 @@ contract ATokenErc6909Test is Common {
         );
 
         underlyingToken.approve(address(deployedContracts.lendingPool), 3 * valToTransfer);
-        deployedContracts.lendingPool
-            .deposit(address(underlyingToken), true, 3 * valToTransfer, address(this));
+        deployedContracts.lendingPool.deposit(
+            address(underlyingToken), true, 3 * valToTransfer, address(this)
+        );
 
         console2.log(
             "2. aErc6909Token before deposit to the mini pool %s ",
@@ -745,8 +754,9 @@ contract ATokenErc6909Test is Common {
         );
 
         grainUnderlyingToken.approve(miniPool, 3 * valToTransfer);
-        IMiniPool(miniPool)
-            .deposit(address(grainUnderlyingToken), false, 3 * valToTransfer, address(this));
+        IMiniPool(miniPool).deposit(
+            address(grainUnderlyingToken), false, 3 * valToTransfer, address(this)
+        );
         console2.log(
             "3. aErc6909Token after deposit %s ",
             IERC20(aErc6909Token.getUnderlyingAsset(id)).balanceOf(address(aErc6909Token))
@@ -829,8 +839,9 @@ contract ATokenErc6909Test is Common {
         );
 
         tokenParams.token.approve(address(deployedContracts.lendingPool), 3 * valToTransfer);
-        deployedContracts.lendingPool
-            .deposit(address(tokenParams.token), true, 3 * valToTransfer, address(this));
+        deployedContracts.lendingPool.deposit(
+            address(tokenParams.token), true, 3 * valToTransfer, address(this)
+        );
 
         console2.log(
             "2. aErc6909Token before deposit to the mini pool %s ",
@@ -842,8 +853,9 @@ contract ATokenErc6909Test is Common {
         );
 
         tokenParams.aToken.approve(miniPool, 3 * valToTransfer);
-        IMiniPool(miniPool)
-            .deposit(address(tokenParams.aToken), false, 3 * valToTransfer, address(this));
+        IMiniPool(miniPool).deposit(
+            address(tokenParams.aToken), false, 3 * valToTransfer, address(this)
+        );
         console2.log(
             "3. aErc6909Token after deposit %s ",
             IERC20(aErc6909Token.getUnderlyingAsset(id)).balanceOf(address(aErc6909Token))
@@ -886,12 +898,11 @@ contract ATokenErc6909Test is Common {
     }
 
     function test_RevertErc6909Initialize() public {
-        miniPoolContracts.miniPoolAddressesProvider
-            .deployMiniPool(
-                address(miniPoolContracts.miniPoolImpl),
-                address(miniPoolContracts.aToken6909Impl),
-                admin
-            );
+        miniPoolContracts.miniPoolAddressesProvider.deployMiniPool(
+            address(miniPoolContracts.miniPoolImpl),
+            address(miniPoolContracts.aToken6909Impl),
+            admin
+        );
         address[] memory reserves = new address[](1);
         reserves[0] = tokens[0];
 

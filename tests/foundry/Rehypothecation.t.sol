@@ -5,9 +5,8 @@ import "./MiniPoolDepositBorrow.t.sol";
 import "contracts/protocol/libraries/helpers/Errors.sol";
 import {WadRayMath} from "contracts/protocol/libraries/math/WadRayMath.sol";
 import {PercentageMath} from "contracts/protocol/libraries/math/PercentageMath.sol";
-import {
-    ReserveConfiguration
-} from "contracts/protocol/libraries/configuration/ReserveConfiguration.sol";
+import {ReserveConfiguration} from
+    "contracts/protocol/libraries/configuration/ReserveConfiguration.sol";
 import {LendingPoolTest} from "./LendingPool.t.sol";
 import {MockStrategy} from "../../contracts/mocks/tokens/MockStrategy.sol";
 
@@ -150,8 +149,9 @@ contract RehypothecationTest is Common, LendingPoolTest {
         // Artificially increasing balance of vault should result in yield for the graintoken
         uint256 yieldAmount;
         {
-            uint256 index = deployedContracts.lendingPool
-                .getReserveNormalizedIncome(address(wbtcTypes.token), true);
+            uint256 index = deployedContracts.lendingPool.getReserveNormalizedIncome(
+                address(wbtcTypes.token), true
+            );
             console2.log("index: ", index);
             yieldAmount = index * wbtcVault.totalSupply() / 1e27 - wbtcVault.totalSupply();
             console2.log("yieldAmount: ", yieldAmount);
@@ -419,15 +419,12 @@ contract RehypothecationTest is Common, LendingPoolTest {
             availableFundsAfterBorrow
         );
 
-        wbtcTypes.token
-            .approve(address(deployedContracts.lendingPool), maxBorrowTokenToBorrowInCollateralUnit);
-        deployedContracts.lendingPool
-            .repay(
-                address(wbtcTypes.token),
-                true,
-                maxBorrowTokenToBorrowInCollateralUnit,
-                address(this)
-            );
+        wbtcTypes.token.approve(
+            address(deployedContracts.lendingPool), maxBorrowTokenToBorrowInCollateralUnit
+        );
+        deployedContracts.lendingPool.repay(
+            address(wbtcTypes.token), true, maxBorrowTokenToBorrowInCollateralUnit, address(this)
+        );
         assertEq(
             wbtcBalanceBeforeRepay,
             wbtcTypes.token.balanceOf(address(this)) + maxBorrowTokenToBorrowInCollateralUnit,

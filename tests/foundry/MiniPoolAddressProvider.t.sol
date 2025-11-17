@@ -253,19 +253,22 @@ contract MiniPoolAddressProvider is Common {
             uint256 flowLimit;
             flowLimit = bound(
                 flowLimit,
-                miniPoolContracts.flowLimiter
-                    .currentFlow(tokens[0], address(miniPoolContracts.miniPoolImpl)) + 1,
+                miniPoolContracts.flowLimiter.currentFlow(
+                    tokens[0], address(miniPoolContracts.miniPoolImpl)
+                ) + 1,
                 1e27
             );
 
             console2.log(
                 "1. FlowLimit",
-                miniPoolContracts.flowLimiter
-                    .getFlowLimit(tokens[0], address(miniPoolContracts.miniPoolImpl))
+                miniPoolContracts.flowLimiter.getFlowLimit(
+                    tokens[0], address(miniPoolContracts.miniPoolImpl)
+                )
             );
             vm.prank(address(miniPoolContracts.miniPoolConfigurator));
-            miniPoolContracts.miniPoolAddressesProvider
-                .setFlowLimit(tokens[0], address(miniPool), flowLimit);
+            miniPoolContracts.miniPoolAddressesProvider.setFlowLimit(
+                tokens[0], address(miniPool), flowLimit
+            );
             console2.log(
                 "2. FlowLimit",
                 miniPoolContracts.flowLimiter.getFlowLimit(tokens[0], address(miniPool))
@@ -386,8 +389,8 @@ contract MiniPoolAddressProvider is Common {
         assertEq(miniPoolList.length, 2, "Wrong mini pools number");
         vm.prank(address(miniPoolContracts.miniPoolAddressesProvider));
         assertEq(
-            InitializableImmutableAdminUpgradeabilityProxy(payable(miniPoolList[1]))
-                .implementation(),
+            InitializableImmutableAdminUpgradeabilityProxy(payable(miniPoolList[1])).implementation(
+            ),
             miniPoolImpl,
             "Wrong implementation after deployment"
         );
@@ -400,8 +403,9 @@ contract MiniPoolAddressProvider is Common {
 
         assertEq(
             1,
-            miniPoolContracts.miniPoolAddressesProvider
-                .getMiniPoolId(miniPoolContracts.miniPoolAddressesProvider.getMiniPool(1))
+            miniPoolContracts.miniPoolAddressesProvider.getMiniPoolId(
+                miniPoolContracts.miniPoolAddressesProvider.getMiniPool(1)
+            )
         );
         /* getMiniPool shall revert when id not found */
         vm.expectRevert(bytes(Errors.PAP_NO_MINI_POOL_ID_FOR_ADDRESS));
@@ -420,19 +424,22 @@ contract MiniPoolAddressProvider is Common {
         miniPoolContracts.miniPoolAddressesProvider.setMiniPoolImpl(mockedContractToUpdate, 0);
         miniPoolContracts.miniPoolAddressesProvider.setAToken6909Impl(mockedContractToUpdate, 0);
         miniPoolContracts.miniPoolAddressesProvider.setAddress(randomBytes, randomAddress);
-        miniPoolContracts.miniPoolAddressesProvider
-            .deployMiniPool(mockedContractToUpdate, mockedContractToUpdate, randomAddress);
+        miniPoolContracts.miniPoolAddressesProvider.deployMiniPool(
+            mockedContractToUpdate, mockedContractToUpdate, randomAddress
+        );
         miniPoolContracts.miniPoolAddressesProvider.setMiniPoolConfigurator(mockedContractToUpdate);
         vm.stopPrank();
 
         /* Only configurator */
         vm.startPrank(address(miniPoolContracts.miniPoolConfigurator));
-        miniPoolContracts.miniPoolAddressesProvider
-            .setFlowLimit(address(erc20Tokens[0]), miniPool, randomNumber);
+        miniPoolContracts.miniPoolAddressesProvider.setFlowLimit(
+            address(erc20Tokens[0]), miniPool, randomNumber
+        );
         miniPoolContracts.miniPoolAddressesProvider.setPoolAdmin(0, randomAddress);
         miniPoolContracts.miniPoolAddressesProvider.setAsteraTreasury(address(0));
-        miniPoolContracts.miniPoolAddressesProvider
-            .setMinipoolOwnerTreasuryToMiniPool(0, randomAddress);
+        miniPoolContracts.miniPoolAddressesProvider.setMinipoolOwnerTreasuryToMiniPool(
+            0, randomAddress
+        );
         vm.stopPrank();
 
         vm.startPrank(randomAddress);
@@ -451,21 +458,24 @@ contract MiniPoolAddressProvider is Common {
         vm.expectRevert();
         miniPoolContracts.miniPoolAddressesProvider.setAddress(randomBytes, randomAddress);
         vm.expectRevert();
-        miniPoolContracts.miniPoolAddressesProvider
-            .deployMiniPool(mockedContractToUpdate, mockedContractToUpdate, randomAddress);
+        miniPoolContracts.miniPoolAddressesProvider.deployMiniPool(
+            mockedContractToUpdate, mockedContractToUpdate, randomAddress
+        );
         vm.expectRevert();
         miniPoolContracts.miniPoolAddressesProvider.setMiniPoolConfigurator(mockedContractToUpdate);
 
         vm.expectRevert(bytes(Errors.LP_CALLER_NOT_LENDING_POOL_CONFIGURATOR));
-        miniPoolContracts.miniPoolAddressesProvider
-            .setFlowLimit(address(erc20Tokens[0]), miniPool, randomNumber);
+        miniPoolContracts.miniPoolAddressesProvider.setFlowLimit(
+            address(erc20Tokens[0]), miniPool, randomNumber
+        );
         vm.expectRevert(bytes(Errors.LP_CALLER_NOT_LENDING_POOL_CONFIGURATOR));
         miniPoolContracts.miniPoolAddressesProvider.setPoolAdmin(0, randomAddress);
         vm.expectRevert(bytes(Errors.LP_CALLER_NOT_LENDING_POOL_CONFIGURATOR));
         miniPoolContracts.miniPoolAddressesProvider.setAsteraTreasury(address(0));
         vm.expectRevert(bytes(Errors.LP_CALLER_NOT_LENDING_POOL_CONFIGURATOR));
-        miniPoolContracts.miniPoolAddressesProvider
-            .setMinipoolOwnerTreasuryToMiniPool(0, randomAddress);
+        miniPoolContracts.miniPoolAddressesProvider.setMinipoolOwnerTreasuryToMiniPool(
+            0, randomAddress
+        );
         vm.stopPrank();
     }
 }

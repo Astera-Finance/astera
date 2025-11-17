@@ -7,15 +7,11 @@ import {GenericLogic} from "./GenericLogic.sol";
 import {BorrowLogic} from "./BorrowLogic.sol";
 import {WadRayMath} from "../../../../../contracts/protocol/libraries/math/WadRayMath.sol";
 import {PercentageMath} from "../../../../../contracts/protocol/libraries/math/PercentageMath.sol";
-import {
-    SafeERC20
-} from "../../../../../contracts/dependencies/openzeppelin/contracts/SafeERC20.sol";
-import {
-    ReserveConfiguration
-} from "../../../../../contracts/protocol/libraries/configuration/ReserveConfiguration.sol";
-import {
-    UserConfiguration
-} from "../../../../../contracts/protocol/libraries/configuration/UserConfiguration.sol";
+import {SafeERC20} from "../../../../../contracts/dependencies/openzeppelin/contracts/SafeERC20.sol";
+import {ReserveConfiguration} from
+    "../../../../../contracts/protocol/libraries/configuration/ReserveConfiguration.sol";
+import {UserConfiguration} from
+    "../../../../../contracts/protocol/libraries/configuration/UserConfiguration.sol";
 import {Errors} from "../../../../../contracts/protocol/libraries/helpers/Errors.sol";
 import {Helpers} from "../../../../../contracts/protocol/libraries/helpers/Helpers.sol";
 import {DataTypes} from "../../../../../contracts/protocol/libraries/types/DataTypes.sol";
@@ -105,7 +101,8 @@ library ValidationLogic {
             Errors.VL_NOT_ENOUGH_AVAILABLE_USER_BALANCE
         );
 
-        (bool isActive,,) = reserves[validateParams.reserveAddress][validateParams.reserveType].configuration
+        (bool isActive,,) = reserves[validateParams.reserveAddress][validateParams.reserveType]
+            .configuration
             .getFlags();
         require(isActive, Errors.VL_NO_ACTIVE_RESERVE);
 
@@ -173,9 +170,7 @@ library ValidationLogic {
     function validateBorrow(
         ValidateBorrowParams memory validateParams,
         DataTypes.ReserveData storage reserve,
-        mapping(
-            address => mapping(bool => DataTypes.ReserveData)
-        ) storage reserves,
+        mapping(address => mapping(bool => DataTypes.ReserveData)) storage reserves,
         DataTypes.UserConfigurationMap storage userConfig,
         mapping(uint256 => DataTypes.ReserveReference) storage reservesList
     ) internal view {

@@ -1,24 +1,18 @@
 // SPDX-License-Identifier: agpl-3.0
 pragma solidity ^0.8.23;
 
-import {
-    IERC20Detailed
-} from "../../contracts/dependencies/openzeppelin/contracts/IERC20Detailed.sol";
+import {IERC20Detailed} from
+    "../../contracts/dependencies/openzeppelin/contracts/IERC20Detailed.sol";
 import {IAToken} from "../../contracts/interfaces/IAToken.sol";
-import {
-    ILendingPoolAddressesProvider
-} from "../../contracts/interfaces/ILendingPoolAddressesProvider.sol";
+import {ILendingPoolAddressesProvider} from
+    "../../contracts/interfaces/ILendingPoolAddressesProvider.sol";
 import {ILendingPool} from "../../contracts/interfaces/ILendingPool.sol";
 import {IVariableDebtToken} from "../../contracts/interfaces/IVariableDebtToken.sol";
-import {
-    ReserveConfiguration
-} from "../../contracts/protocol/libraries/configuration/ReserveConfiguration.sol";
-import {
-    UserConfiguration
-} from "../../contracts/protocol/libraries/configuration/UserConfiguration.sol";
-import {
-    IMiniPoolAddressesProvider
-} from "../../contracts/interfaces/IMiniPoolAddressesProvider.sol";
+import {ReserveConfiguration} from
+    "../../contracts/protocol/libraries/configuration/ReserveConfiguration.sol";
+import {UserConfiguration} from
+    "../../contracts/protocol/libraries/configuration/UserConfiguration.sol";
+import {IMiniPoolAddressesProvider} from "../../contracts/interfaces/IMiniPoolAddressesProvider.sol";
 import {IMiniPool} from "../../contracts/interfaces/IMiniPool.sol";
 import {IAERC6909} from "../../contracts/interfaces/IAERC6909.sol";
 import {Ownable} from "../../contracts/dependencies/openzeppelin/contracts/Ownable.sol";
@@ -136,7 +130,7 @@ contract AsteraDataProvider is Ownable, IAsteraDataProvider {
             allLpPoolData.liquidityIndex = dynamicData.liquidityIndex;
             allLpPoolData.variableBorrowIndex = dynamicData.variableBorrowIndex;
             allLpPoolData.priceInMarketReferenceCurrency =
-            dynamicData.priceInMarketReferenceCurrency;
+                dynamicData.priceInMarketReferenceCurrency;
             allLpPoolData.lastUpdateTimestamp = dynamicData.lastUpdateTimestamp;
             allLpPoolData.id = dynamicData.id;
         }
@@ -163,8 +157,8 @@ contract AsteraDataProvider is Ownable, IAsteraDataProvider {
         returns (StaticData memory staticData)
     {
         DataTypes.ReserveConfigurationMap memory configuration = ILendingPool(
-                lendingPoolAddressProvider.getLendingPool()
-            ).getConfiguration(asset, reserveType);
+            lendingPoolAddressProvider.getLendingPool()
+        ).getConfiguration(asset, reserveType);
 
         staticData.symbol = IERC20Detailed(asset).symbol();
 
@@ -216,8 +210,8 @@ contract AsteraDataProvider is Ownable, IAsteraDataProvider {
         returns (DynamicData memory dynamicData)
     {
         DataTypes.ReserveData memory reserve = ILendingPool(
-                lendingPoolAddressProvider.getLendingPool()
-            ).getReserveData(asset, reserveType);
+            lendingPoolAddressProvider.getLendingPool()
+        ).getReserveData(asset, reserveType);
 
         dynamicData.availableLiquidity = IERC20Detailed(asset).balanceOf(reserve.aTokenAddress);
         dynamicData.totalVariableDebt =
@@ -453,7 +447,7 @@ contract AsteraDataProvider is Ownable, IAsteraDataProvider {
             allMpPoolData.liquidityIndex = dynamicData.liquidityIndex;
             allMpPoolData.variableBorrowIndex = dynamicData.variableBorrowIndex;
             allMpPoolData.priceInMarketReferenceCurrency =
-            dynamicData.priceInMarketReferenceCurrency;
+                dynamicData.priceInMarketReferenceCurrency;
             allMpPoolData.lastUpdateTimestamp = dynamicData.lastUpdateTimestamp;
             allMpPoolData.interestRateStrategyAddress = dynamicData.interestRateStrategyAddress;
             allMpPoolData.id = dynamicData.id;
@@ -870,8 +864,9 @@ contract AsteraDataProvider is Ownable, IAsteraDataProvider {
         returns (uint256 underlyingBalance)
     {
         IAERC6909 aErc6909Token = IAERC6909(miniPoolAddressProvider.getMiniPoolToAERC6909(miniPool));
-        underlyingBalance = IERC20Detailed(aErc6909Token.getUnderlyingAsset(tokenId))
-            .balanceOf(address(aErc6909Token));
+        underlyingBalance = IERC20Detailed(aErc6909Token.getUnderlyingAsset(tokenId)).balanceOf(
+            address(aErc6909Token)
+        );
     }
 
     /**
@@ -888,8 +883,9 @@ contract AsteraDataProvider is Ownable, IAsteraDataProvider {
     {
         IAERC6909 aErc6909Token =
             IAERC6909(miniPoolAddressProvider.getMiniPoolToAERC6909(miniPoolId));
-        underlyingBalance = IERC20Detailed(aErc6909Token.getUnderlyingAsset(tokenId))
-            .balanceOf(address(aErc6909Token));
+        underlyingBalance = IERC20Detailed(aErc6909Token.getUnderlyingAsset(tokenId)).balanceOf(
+            address(aErc6909Token)
+        );
     }
 
     /**
@@ -1020,7 +1016,8 @@ contract AsteraDataProvider is Ownable, IAsteraDataProvider {
         view
         returns (BaseCurrencyInfo memory baseCurrencyInfo)
     {
-        baseCurrencyInfo.networkBaseTokenPriceInUsd = networkBaseTokenPriceInUsdProxyAggregator.latestAnswer();
+        baseCurrencyInfo.networkBaseTokenPriceInUsd =
+            networkBaseTokenPriceInUsdProxyAggregator.latestAnswer();
         baseCurrencyInfo.networkBaseTokenPriceDecimals =
             networkBaseTokenPriceInUsdProxyAggregator.decimals();
         IOracle oracle = IOracle(lendingPoolAddressProvider.getPriceOracle()); //Oracle is the same so can be retrieved only from main pool
@@ -1033,8 +1030,7 @@ contract AsteraDataProvider is Ownable, IAsteraDataProvider {
                 baseCurrencyInfo.marketReferenceCurrencyUnit = baseCurrencyUnit;
                 // baseCurrencyInfo.marketReferenceCurrencyPriceInUsd = int256(baseCurrencyUnit);
             }
-        } catch (bytes memory) {
-            /*lowLevelData*/
+        } catch (bytes memory) /*lowLevelData*/ {
             baseCurrencyInfo.marketReferenceCurrencyUnit = ETH_CURRENCY_UNIT;
             // baseCurrencyInfo.marketReferenceCurrencyPriceInUsd =
             //     marketReferenceCurrencyPriceInUsdProxyAggregator.latestAnswer();
@@ -1043,8 +1039,10 @@ contract AsteraDataProvider is Ownable, IAsteraDataProvider {
             marketReferenceCurrencyPriceInUsdProxyAggregator.latestRoundData();
 
         require(
-            (roundId != 0 && timestamp == 0 && timestamp > block.timestamp && price <= 0
-                    && startedAt == 0),
+            (
+                roundId != 0 && timestamp == 0 && timestamp > block.timestamp && price <= 0
+                    && startedAt == 0
+            ),
             Errors.O_PRICE_FEED_INCONSISTENCY
         );
 

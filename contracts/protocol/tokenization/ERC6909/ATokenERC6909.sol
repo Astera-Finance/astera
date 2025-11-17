@@ -5,34 +5,27 @@ import {ILendingPool} from "../../../../contracts/interfaces/ILendingPool.sol";
 import {IAToken} from "../../../../contracts/interfaces/IAToken.sol";
 import {WadRayMath} from "../../../../contracts/protocol/libraries/math/WadRayMath.sol";
 import {Errors} from "../../../../contracts/protocol/libraries/helpers/Errors.sol";
-import {
-    VersionedInitializable
-} from "../../../../contracts/protocol/libraries/upgradeability/VersionedInitializable.sol";
+import {VersionedInitializable} from
+    "../../../../contracts/protocol/libraries/upgradeability/VersionedInitializable.sol";
 import {DataTypes} from "../../../../contracts/protocol/libraries/types/DataTypes.sol";
 import {ReserveLogic} from "../../../../contracts/protocol/core/lendingpool/logic/ReserveLogic.sol";
-import {
-    IncentivizedERC6909
-} from "../../../../contracts/protocol/tokenization/ERC6909/IncentivizedERC6909.sol";
+import {IncentivizedERC6909} from
+    "../../../../contracts/protocol/tokenization/ERC6909/IncentivizedERC6909.sol";
 import {IMiniPoolRewarder} from "../../../../contracts/interfaces/IMiniPoolRewarder.sol";
 import {IERC20} from "../../../../contracts/dependencies/openzeppelin/contracts/IERC20.sol";
-import {
-    IMiniPoolAddressesProvider
-} from "../../../../contracts/interfaces/IMiniPoolAddressesProvider.sol";
+import {IMiniPoolAddressesProvider} from
+    "../../../../contracts/interfaces/IMiniPoolAddressesProvider.sol";
 import {IMiniPool} from "../../../../contracts/interfaces/IMiniPool.sol";
-import {
-    ATokenNonRebasing
-} from "../../../../contracts/protocol/tokenization/ERC20/ATokenNonRebasing.sol";
+import {ATokenNonRebasing} from
+    "../../../../contracts/protocol/tokenization/ERC20/ATokenNonRebasing.sol";
 import {Strings} from "openzeppelin-contracts/contracts/utils/Strings.sol";
 import {SafeERC20} from "../../../../contracts/dependencies/openzeppelin/contracts/SafeERC20.sol";
-import {
-    IMiniPoolAddressProviderUpdatable
-} from "../../../../contracts/interfaces/IMiniPoolAddressProviderUpdatable.sol";
-import {
-    ILendingPoolConfigurator
-} from "../../../../contracts/interfaces/ILendingPoolConfigurator.sol";
-import {
-    ILendingPoolAddressesProvider
-} from "../../../../contracts/interfaces/ILendingPoolAddressesProvider.sol";
+import {IMiniPoolAddressProviderUpdatable} from
+    "../../../../contracts/interfaces/IMiniPoolAddressProviderUpdatable.sol";
+import {ILendingPoolConfigurator} from
+    "../../../../contracts/interfaces/ILendingPoolConfigurator.sol";
+import {ILendingPoolAddressesProvider} from
+    "../../../../contracts/interfaces/ILendingPoolAddressesProvider.sol";
 
 /**
  * @title ERC6909-MultiToken
@@ -281,14 +274,14 @@ contract ATokenERC6909 is
         if (
             unwrap
                 && ILendingPoolConfigurator(
-                        ILendingPoolAddressesProvider(
-                                _addressesProvider.getLendingPoolAddressesProvider()
-                            ).getLendingPoolConfigurator()
-                    ).getIsAToken(underlyingAsset)
+                    ILendingPoolAddressesProvider(_addressesProvider.getLendingPoolAddressesProvider())
+                        .getLendingPoolConfigurator()
+                ).getIsAToken(underlyingAsset)
         ) {
             ATokenNonRebasing asset = ATokenNonRebasing(underlyingAsset);
-            ILendingPool(_addressesProvider.getLendingPool())
-                .withdraw(asset.UNDERLYING_ASSET_ADDRESS(), true, asset.convertToAssets(amount), to);
+            ILendingPool(_addressesProvider.getLendingPool()).withdraw(
+                asset.UNDERLYING_ASSET_ADDRESS(), true, asset.convertToAssets(amount), to
+            );
         } else {
             IERC20(underlyingAsset).safeTransfer(to, amount);
         }
@@ -406,7 +399,6 @@ contract ATokenERC6909 is
      * @notice Handles repayment of debt.
      */
     function handleRepayment(address, address, uint256, uint256) external view {}
-
     // ======================= Internal Function =======================
 
     /**
@@ -501,7 +493,10 @@ contract ATokenERC6909 is
      * @return A tuple containing (aTokenID, debtTokenID, isTrancheRet).
      * @dev For ATokens, returns IDs based on reserve data. For other assets, generates new IDs.
      */
-    function _getNextIdForUnderlying(address underlying) internal returns (uint256, uint256, bool) {
+    function _getNextIdForUnderlying(address underlying)
+        internal
+        returns (uint256, uint256, bool)
+    {
         ILendingPool pool = ILendingPool(_addressesProvider.getLendingPool());
         if (_determineIfAToken(underlying, address(pool))) {
             address tokenUnderlying = IAToken(underlying).UNDERLYING_ASSET_ADDRESS();
@@ -547,7 +542,9 @@ contract ATokenERC6909 is
      * @param treasury The treasury address to mint to.
      * @dev Only callable by the lending pool. Skips rounding checks for small amounts.
      */
-    function _mintToTreasury(uint256 id, uint256 amount, uint256 index, address treasury) internal {
+    function _mintToTreasury(uint256 id, uint256 amount, uint256 index, address treasury)
+        internal
+    {
         require(msg.sender == address(POOL), Errors.AT_CALLER_MUST_BE_LENDING_POOL);
         if (amount == 0) {
             return;
@@ -690,11 +687,13 @@ contract ATokenERC6909 is
      */
     function balanceOf(address user, uint256 id) public view override returns (uint256) {
         if (isDebtToken(id)) {
-            return super.balanceOf(user, id)
-                .rayMul(POOL.getReserveNormalizedVariableDebt(_underlyingAssetAddresses[id]));
+            return super.balanceOf(user, id).rayMul(
+                POOL.getReserveNormalizedVariableDebt(_underlyingAssetAddresses[id])
+            );
         } else {
-            return super.balanceOf(user, id)
-                .rayMul(POOL.getReserveNormalizedIncome(_underlyingAssetAddresses[id]));
+            return super.balanceOf(user, id).rayMul(
+                POOL.getReserveNormalizedIncome(_underlyingAssetAddresses[id])
+            );
         }
     }
 

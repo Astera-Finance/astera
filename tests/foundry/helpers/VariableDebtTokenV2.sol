@@ -6,9 +6,8 @@ import {WadRayMath} from "contracts/protocol/libraries/math/WadRayMath.sol";
 import {Errors} from "contracts/protocol/libraries/helpers/Errors.sol";
 import {ILendingPool} from "contracts/interfaces/ILendingPool.sol";
 import {IRewarder} from "contracts/interfaces/IRewarder.sol";
-import {
-    VersionedInitializable
-} from "contracts/protocol/libraries/upgradeability/VersionedInitializable.sol";
+import {VersionedInitializable} from
+    "contracts/protocol/libraries/upgradeability/VersionedInitializable.sol";
 import {IncentivizedERC20} from "contracts/protocol/tokenization/ERC20/IncentivizedERC20.sol";
 
 /**
@@ -288,8 +287,9 @@ contract VariableDebtTokenV2 is
      * @return The total supply representing the total debt accrued by users.
      */
     function totalSupply() public view virtual override returns (uint256) {
-        return super.totalSupply()
-            .rayMul(_pool.getReserveNormalizedVariableDebt(_underlyingAsset, RESERVE_TYPE));
+        return super.totalSupply().rayMul(
+            _pool.getReserveNormalizedVariableDebt(_underlyingAsset, RESERVE_TYPE)
+        );
     }
 
     /**

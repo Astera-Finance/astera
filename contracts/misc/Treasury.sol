@@ -2,9 +2,8 @@
 pragma solidity ^0.8.23;
 
 import {Errors} from "../../contracts/protocol/libraries/helpers/Errors.sol";
-import {
-    ILendingPoolAddressesProvider
-} from "../../contracts/interfaces/ILendingPoolAddressesProvider.sol";
+import {ILendingPoolAddressesProvider} from
+    "../../contracts/interfaces/ILendingPoolAddressesProvider.sol";
 import {ILendingPool} from "../../contracts/interfaces/ILendingPool.sol";
 import {IAToken} from "../../contracts/interfaces/IAToken.sol";
 import {IERC20} from "../../contracts/dependencies/openzeppelin/contracts/IERC20.sol";

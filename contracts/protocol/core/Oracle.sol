@@ -6,14 +6,12 @@ import {IERC20} from "../../../contracts/dependencies/openzeppelin/contracts/IER
 import {IOracle} from "../../../contracts/interfaces/IOracle.sol";
 import {IChainlinkAggregator} from "../../../contracts/interfaces/base/IChainlinkAggregator.sol";
 import {SafeERC20} from "../../../contracts/dependencies/openzeppelin/contracts/SafeERC20.sol";
-import {
-    ATokenNonRebasing
-} from "../../../contracts/protocol/tokenization/ERC20/ATokenNonRebasing.sol";
+import {ATokenNonRebasing} from
+    "../../../contracts/protocol/tokenization/ERC20/ATokenNonRebasing.sol";
 import {Errors} from "../../../contracts/protocol/libraries/helpers/Errors.sol";
 import {ILendingPoolConfigurator} from "../../../contracts/interfaces/ILendingPoolConfigurator.sol";
-import {
-    ILendingPoolAddressesProvider
-} from "../../../contracts/interfaces/ILendingPoolAddressesProvider.sol";
+import {ILendingPoolAddressesProvider} from
+    "../../../contracts/interfaces/ILendingPoolAddressesProvider.sol";
 
 /**
  * @title Oracle
