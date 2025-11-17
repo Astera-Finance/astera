@@ -1,21 +1,25 @@
 # 📜 **Table of Contents**
-1. [🔍 Overview](#overview)
-2. [💡 How to Use Scripts](#how-to-use-scripts)
-3. [🛠️ Configuration Files](#configuration-files)
-   - [🧪 0_MockedTokens](#0_mockedtokens)
-   - [🏗️ 1_DeploymentConfig (Main Pool)](#1_deploymentconfig)
-   - [🏗️ 2_DeploymentConfig (Mini Pool)](#2_deploymentconfig)
-   - [📈 3_StratsToAdd](#3_stratstoadd)
-   - [💰 4_AssetsToAdd](#4_assetstoadd)
-   - [🔧 5_Reconfigure](#5_reconfigure)
-   - [🏦 6_ChangePeripherials](#6_changeperipherials)
-   - [🔧 7_TransferOwnerships](#7_transferownerships)
-   - [🧪 8_TestConfig](#8_testconfig)
-4. [📤 Output Files](#output-files)
-   - [🧪 0_MockedTokens Output](#0_mockedtokens)
-   - [🏦 1_LendingPoolContracts](#1_lendingpoolcontracts)
-   - [🏦 2_MiniPoolContracts](#2_minipoolcontracts)
-   - [📊 3_DeployedStrategies](#3_deployedstrategies)
+- [📜 **Table of Contents**](#-table-of-contents)
+    - [Overview](#overview)
+    - [How to use scripts](#how-to-use-scripts)
+    - [Configuration files](#configuration-files)
+        - [**0\_MockedTokens**](#0_mockedtokens)
+        - [**1\_DeploymentConfig**](#1_deploymentconfig)
+        - [**2\_DeploymentConfig**](#2_deploymentconfig)
+        - [**3\_StratsToAdd**](#3_stratstoadd)
+        - [**4\_AssetsToAdd**](#4_assetstoadd)
+        - [**5\_Reconfigure**](#5_reconfigure)
+        - [**6\_ChangePeripherials**](#6_changeperipherials)
+        - [**7\_TransferOwnerships**](#7_transferownerships)
+        - [**8\_TestConfig**](#8_testconfig)
+    - [Output files](#output-files)
+        - [**0\_MockedTokens**](#0_mockedtokens-1)
+        - [**1\_LendingPoolContracts**](#1_lendingpoolcontracts)
+        - [**2\_MiniPoolContracts**](#2_minipoolcontracts)
+        - [**3\_DeployedStrategies**](#3_deployedstrategies)
+        - [**4\_AddedAssets**](#4_addedassets)
+        - [**6\_DeployedPeripherials**](#6_deployedperipherials)
+        - [**contracts.csv**](#contractscsv)
 
 ### Overview
 Scripts allow to deploy Astera infrastructure and properly configure it.
@@ -50,6 +54,7 @@ The deployment process involves configuration files `./inputs/<Nr>_<InputJsonNam
      - Standard Input Json - `forge verify-contract --show-standard-json-input <contract address> <contract name> > std.json`
    - Examples:
       - `forge script scripts/2_DeployMiniPool.s.sol --chain-id 84532 --rpc-url $BASE_SEPOLIA_RPC_URL --resume --verify --verifier etherscan --etherscan-api-key $BASE_ETHERSCAN_API_KEY --private-key $PRIVATE_KEY`
+      - `forge script scripts/1_DeployLendingPool.s.sol --chain-id $LINEA_CHAIN_ID --rpc-url $LINEA_RPC_URL --broadcast -vvvv --private-key $PRIVATE_KEY`
 
 ### Configuration files
 **Important !!** All params listed inside json's keys MUST be in alphabetical order !
