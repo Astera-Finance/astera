@@ -113,7 +113,7 @@ library WithdrawLogic {
             uint256 => DataTypes.ReserveReference
         ) storage reservesList,
         ILendingPoolAddressesProvider addressesProvider
-    ) internal returns (uint256) {
+    ) external returns (uint256) {
         DataTypes.ReserveData storage reserve = reserves[params.asset][params.reserveType];
         withdrawLocalVars memory localVars;
 
@@ -197,7 +197,7 @@ library WithdrawLogic {
         mapping(address => DataTypes.UserConfigurationMap) storage usersConfig,
         mapping(uint256 => DataTypes.ReserveReference) storage reservesList,
         ILendingPoolAddressesProvider addressesProvider
-    ) internal {
+    ) external {
         require(
             msg.sender == reserves[params.asset][params.reserveType].aTokenAddress,
             Errors.LP_CALLER_MUST_BE_AN_ATOKEN

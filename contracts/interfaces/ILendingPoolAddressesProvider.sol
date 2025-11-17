@@ -85,6 +85,8 @@ interface ILendingPoolAddressesProvider {
 
     function getAddress(bytes32 id) external view returns (address);
 
+    function getAccessManager() external returns (address);
+
     function setAddress(bytes32 id, address newAddress) external;
 
     function setAddressAsProxy(bytes32 id, address impl) external;
@@ -102,4 +104,6 @@ interface ILendingPoolAddressesProvider {
     function setMiniPoolAddressesProvider(address provider) external;
 
     function setFlowLimiter(address flowLimiter) external;
+
+    function setAccessManager(address accessManager) external;
 }

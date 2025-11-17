@@ -201,7 +201,7 @@ library GenericLogic {
         mapping(uint256 => DataTypes.ReserveReference) storage reservesList,
         uint256 reservesCount,
         address oracle
-    ) internal view returns (uint256, uint256, uint256, uint256, uint256) {
+    ) public view returns (uint256, uint256, uint256, uint256, uint256) {
         CalculateUserAccountDataLocalVars memory vars;
 
         if (userConfig.isEmpty()) {
@@ -295,7 +295,7 @@ library GenericLogic {
         uint256 totalCollateralInETH,
         uint256 totalDebtInETH,
         uint256 ltv
-    ) internal pure returns (uint256) {
+    ) public pure returns (uint256) {
         uint256 availableBorrowsETH = totalCollateralInETH.percentMul(ltv);
 
         if (availableBorrowsETH < totalDebtInETH) {

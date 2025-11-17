@@ -10,7 +10,6 @@ import {
 import {IAToken} from "../../../../contracts/interfaces/IAToken.sol";
 import {IVariableDebtToken} from "../../../../contracts/interfaces/IVariableDebtToken.sol";
 import {ILendingPool} from "../../../../contracts/interfaces/ILendingPool.sol";
-import {IFlowLimiter} from "../../../../contracts/interfaces/base/IFlowLimiter.sol";
 import {
     VersionedInitializable
 } from "../../../../contracts/protocol/libraries/upgradeability/VersionedInitializable.sol";
@@ -42,15 +41,14 @@ import {
 import {
     LiquidationLogic
 } from "../../../../contracts/protocol/core/lendingpool/logic/LiquidationLogic.sol";
-import {
-    IMiniPoolAddressesProvider
-} from "../../../../contracts/interfaces/IMiniPoolAddressesProvider.sol";
+
 import {
     EnumerableSet
 } from "../../../../lib/openzeppelin-contracts/contracts/utils/structs/EnumerableSet.sol";
 import {
     IAddressProviderUpdatable
 } from "../../../../contracts/interfaces/IAddressProviderUpdatable.sol";
+import {IAccessManager} from "../../../../contracts/interfaces/IAccessManager.sol";
 
 /**
  * @title LendingPool contract
@@ -98,6 +96,13 @@ contract LendingPool is
         _;
     }
 
+    modifier onlyFlashloanWhitelisted() {
+        require(
+            IAccessManager(_addressesProvider.getAccessManager()).isFlashloanWhitelisted(msg.sender)
+        );
+        _;
+    }
+
     /**
      * @dev Internal function to check if lending pool is not paused.
      * Reverts with `LP_IS_PAUSED` if `_paused` is true.
@@ -135,7 +140,7 @@ contract LendingPool is
      */
     function initialize(address provider) public initializer {
         _addressesProvider = ILendingPoolAddressesProvider(provider);
-        _updateFlashLoanFee(9);
+        _updateFlashLoanFee(0);
         _maxNumberOfReserves = 128;
     }
 
@@ -274,25 +279,6 @@ contract LendingPool is
             _reserves,
             _usersConfig
         );
-
-        // `repayWithATokens()` is used for minipool repayment.
-        if (_isMiniPool(msg.sender) && getCurrentLendingPoolDebt(asset, msg.sender) == 0) {
-            // The Minipool unsubscribes from the LendingPool.
-            _assetToMinipoolFlowBorrowing[asset].remove(msg.sender);
-        }
-    }
-
-    /**
-     * @dev Returns the current lending pool debt for a specific asset.
-     * @param asset The address of the asset to check the debt for.
-     * @return The current lending pool debt amount.
-     */
-    function getCurrentLendingPoolDebt(address asset, address minipool)
-        public
-        view
-        returns (uint256)
-    {
-        return IFlowLimiter(_addressesProvider.getFlowLimiter()).currentFlow(asset, minipool);
     }
 
     /**
@@ -352,8 +338,6 @@ contract LendingPool is
         uint256 debtToCover,
         bool receiveAToken
     ) external override whenNotPaused {
-        require(!_isMiniPool(user), Errors.VL_MINIPOOL_CANNOT_BE_LIQUIDATED);
-
         LiquidationLogic.liquidationCall(
             _reserves,
             _assetToMinipoolFlowBorrowing,
@@ -394,7 +378,7 @@ contract LendingPool is
         uint256[] calldata amounts,
         uint256[] calldata modes,
         bytes calldata params
-    ) external override whenNotPaused {
+    ) external override whenNotPaused onlyFlashloanWhitelisted {
         FlashLoanLogic.flashLoan(
             FlashLoanLogic.FlashLoanParams({
                 receiverAddress: flashLoanParams.receiverAddress,
@@ -427,8 +411,6 @@ contract LendingPool is
         override
         whenNotPaused
     {
-        require(_isMiniPool(msg.sender), Errors.LP_CALLER_NOT_MINIPOOL);
-
         BorrowLogic.executeMiniPoolBorrow(
             BorrowLogic.ExecuteMiniPoolBorrowParams(
                 asset, true, amount, msg.sender, aTokenAddress, _addressesProvider, _reservesCount
@@ -436,20 +418,6 @@ contract LendingPool is
             _assetToMinipoolFlowBorrowing[asset],
             _reserves
         );
-
-        // The Minipool subscribes to the LendingPool.
-        _assetToMinipoolFlowBorrowing[asset].add(msg.sender);
-    }
-
-    /**
-     * @notice Checks if a user is a minipool.
-     * @param user The address of the user.
-     * @return True if the user is a minipool, false otherwise.
-     */
-    function _isMiniPool(address user) internal view returns (bool) {
-        address minipoolAddressProvider = _addressesProvider.getMiniPoolAddressesProvider();
-        if (minipoolAddressProvider == address(0)) return false;
-        return IMiniPoolAddressesProvider(minipoolAddressProvider).isMiniPool(user);
     }
 
     /**

@@ -29,6 +29,7 @@ contract LendingPoolAddressesProvider is Ownable, ILendingPoolAddressesProvider 
     bytes32 private constant PRICE_ORACLE = keccak256("PRICE_ORACLE");
     bytes32 private constant MINIPOOL_ADDRESSES_PROVIDER = keccak256("MINIPOOL_ADDRESSES_PROVIDER");
     bytes32 private constant FLOW_LIMITER = keccak256("FLOW_LIMITER");
+    bytes32 private constant ACCESS_MANAGER = keccak256("ACCESS_MANAGER");
 
     constructor() Ownable(msg.sender) {}
 
@@ -226,5 +227,23 @@ contract LendingPoolAddressesProvider is Ownable, ILendingPoolAddressesProvider 
         _addresses[FLOW_LIMITER] = flowLimiter;
 
         emit FlowLimiterUpdated(flowLimiter);
+    }
+
+    /**
+     * @dev Returns the address of the access manager.
+     * @return The current access manager address.
+     */
+    function getAccessManager() external view override returns (address) {
+        return getAddress(ACCESS_MANAGER);
+    }
+
+    /**
+     * @dev Updates the access manager address.
+     * @param accessManager The new access manager address.
+     */
+    function setAccessManager(address accessManager) external override onlyOwner {
+        _addresses[ACCESS_MANAGER] = accessManager;
+
+        emit FlowLimiterUpdated(accessManager);
     }
 }

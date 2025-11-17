@@ -257,7 +257,7 @@ library FlashLoanLogic {
             );
 
             premiums[i] = DataTypes.InterestRateMode(mode) == DataTypes.InterestRateMode.NONE
-                ? amounts[i] * flashLoanPremiumTotal / 10000
+                ? (amounts[i] * flashLoanPremiumTotal) / 10000
                 : 0;
 
             IAToken(aTokenAddresses[i]).transferUnderlyingTo(receiverAddress, amounts[i]);
@@ -275,20 +275,23 @@ library FlashLoanLogic {
         EnumerableSet.AddressSet storage minipoolFlowBorrowing,
         FlashLoanRepaymentParams memory params
     ) internal {
-        uint256 amountPlusPremium = params.amount + params.totalPremium;
-
         // DataTypes.ReserveCache memory reserveCache = reserve.cache();
         reserve.updateState();
-        reserve.cumulateToLiquidityIndex(IERC20(params.aToken).totalSupply(), params.totalPremium);
 
         reserve.updateInterestRates(
-            minipoolFlowBorrowing, params.asset, params.aToken, amountPlusPremium, 0
+            minipoolFlowBorrowing, params.asset, params.aToken, params.amount, 0
         );
 
+        IERC20(params.asset).safeTransferFrom(params.receiverAddress, params.aToken, params.amount);
         IERC20(params.asset)
-            .safeTransferFrom(params.receiverAddress, params.aToken, amountPlusPremium);
+            .safeTransferFrom(
+                params.receiverAddress,
+                IAToken(params.aToken).RESERVE_TREASURY_ADDRESS(),
+                params.totalPremium
+            );
 
         IAToken(params.aToken)
-            .handleRepayment(params.receiverAddress, params.receiverAddress, amountPlusPremium);
+            .handleRepayment(params.receiverAddress, params.receiverAddress, params.amount);
+
     }
 }

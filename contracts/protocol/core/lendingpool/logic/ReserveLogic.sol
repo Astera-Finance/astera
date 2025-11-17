@@ -140,28 +140,6 @@ library ReserveLogic {
     }
 
     /**
-     * @dev Accumulates a predefined amount of asset to the reserve as a fixed, instantaneous income.
-     * @notice Used for example to accumulate the flashloan fee to the reserve, and spread it between all the depositors.
-     * @param reserve The reserve object.
-     * @param totalLiquidity The total liquidity available in the reserve.
-     * @param amount The amount to accumulate.
-     */
-    function cumulateToLiquidityIndex(
-        DataTypes.ReserveData storage reserve,
-        uint256 totalLiquidity,
-        uint256 amount
-    ) internal {
-        uint256 amountToLiquidityRatio = amount.rayDiv(totalLiquidity);
-
-        uint256 result = amountToLiquidityRatio + WadRayMath.ray();
-
-        result = result.rayMul(reserve.liquidityIndex);
-        require(result <= type(uint128).max, Errors.RL_LIQUIDITY_INDEX_OVERFLOW);
-
-        reserve.liquidityIndex = uint128(result);
-    }
-
-    /**
      * @dev Initializes a reserve.
      * @param reserve The reserve object.
      * @param aTokenAddress The address of the overlying atoken contract.

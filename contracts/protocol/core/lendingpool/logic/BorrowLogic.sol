@@ -29,6 +29,9 @@ import {IFlowLimiter} from "../../../../../contracts/interfaces/base/IFlowLimite
 import {
     EnumerableSet
 } from "../../../../../lib/openzeppelin-contracts/contracts/utils/structs/EnumerableSet.sol";
+import {
+    IMiniPoolAddressesProvider
+} from "../../../../../contracts/interfaces/IMiniPoolAddressesProvider.sol";
 
 /**
  * @title BorrowLogic library
@@ -159,7 +162,7 @@ library BorrowLogic {
         mapping(
             address => DataTypes.UserConfigurationMap
         ) storage usersConfig
-    ) internal {
+    ) public {
         DataTypes.ReserveData storage reserve = reserves[vars.asset][vars.reserveType];
         require(reserve.configuration.getActive(), Errors.VL_NO_ACTIVE_RESERVE);
 
@@ -238,7 +241,11 @@ library BorrowLogic {
         ExecuteMiniPoolBorrowParams memory params,
         EnumerableSet.AddressSet storage minipoolFlowBorrowing,
         mapping(address => mapping(bool => DataTypes.ReserveData)) storage reserves
-    ) internal {
+    ) external {
+        bool isMiniPool = IMiniPoolAddressesProvider(
+                params.addressesProvider.getMiniPoolAddressesProvider()
+            ).isMiniPool(msg.sender);
+        require(isMiniPool, Errors.LP_CALLER_NOT_MINIPOOL);
         IFlowLimiter flowLimiter = IFlowLimiter(params.addressesProvider.getFlowLimiter());
         DataTypes.ReserveData storage reserve = reserves[params.asset][params.reserveType];
 
@@ -265,6 +272,7 @@ library BorrowLogic {
         );
 
         IAToken(params.aTokenAddress).transferUnderlyingTo(params.miniPoolAddress, params.amount);
+        minipoolFlowBorrowing.add(msg.sender);
 
         emit Borrow(
             params.asset,
@@ -288,7 +296,7 @@ library BorrowLogic {
         view
         returns (uint256)
     {
-        return IOracle(oracle).getAssetPrice(asset) * amount / (10 ** decimals);
+        return (IOracle(oracle).getAssetPrice(asset) * amount) / (10 ** decimals);
     }
 
     /**
@@ -335,7 +343,7 @@ library BorrowLogic {
             )
         ) storage _reserves,
         mapping(address => DataTypes.UserConfigurationMap) storage _usersConfig
-    ) internal returns (uint256) {
+    ) external returns (uint256) {
         DataTypes.ReserveData storage reserve = _reserves[params.asset][params.reserveType];
 
         (address aToken, uint256 paybackAmount) =
@@ -367,7 +375,7 @@ library BorrowLogic {
             )
         ) storage _reserves,
         mapping(address => DataTypes.UserConfigurationMap) storage _usersConfig
-    ) internal returns (uint256) {
+    ) external returns (uint256) {
         DataTypes.ReserveData storage reserve = _reserves[params.asset][params.reserveType];
 
         (address aToken, uint256 paybackAmount) =
@@ -376,6 +384,19 @@ library BorrowLogic {
         IAToken(aToken).burn(params.onBehalfOf, aToken, paybackAmount, reserve.liquidityIndex);
 
         IAToken(aToken).handleRepayment(msg.sender, params.onBehalfOf, paybackAmount);
+
+        bool isMiniPool = IMiniPoolAddressesProvider(
+                params.addressesProvider.getMiniPoolAddressesProvider()
+            ).isMiniPool(msg.sender);
+        // `repayWithATokens()` is used for minipool repayment.
+        if (
+            isMiniPool
+                && IFlowLimiter(params.addressesProvider.getFlowLimiter())
+                        .currentFlow(params.asset, msg.sender) == 0
+        ) {
+            // The Minipool unsubscribes from the LendingPool.
+            minipoolFlowBorrowing.remove(msg.sender);
+        }
 
         emit Repay(params.asset, params.onBehalfOf, msg.sender, paybackAmount);
 
@@ -396,7 +417,7 @@ library BorrowLogic {
         DataTypes.ReserveData storage reserve,
         mapping(address => DataTypes.UserConfigurationMap) storage _usersConfig
     ) private returns (address aToken, uint256 paybackAmount) {
-        (uint256 variableDebt) = Helpers.getUserCurrentDebt(params.onBehalfOf, reserve);
+        uint256 variableDebt = Helpers.getUserCurrentDebt(params.onBehalfOf, reserve);
 
         ValidationLogic.validateRepay(reserve, params.amount, params.onBehalfOf, variableDebt);
 

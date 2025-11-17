@@ -36,6 +36,9 @@ import {DataTypes} from "../../../../../contracts/protocol/libraries/types/DataT
 import {
     EnumerableSet
 } from "../../../../../lib/openzeppelin-contracts/contracts/utils/structs/EnumerableSet.sol";
+import {
+    IMiniPoolAddressesProvider
+} from "../../../../../contracts/interfaces/IMiniPoolAddressesProvider.sol";
 
 /**
  * @title LiquidationLogic library
@@ -161,7 +164,11 @@ library LiquidationLogic {
         LiquidationCallLocalVars memory vars;
         ILendingPoolAddressesProvider addressesProvider =
             ILendingPoolAddressesProvider(params.addressesProvider);
+        bool isMiniPool = IMiniPoolAddressesProvider(
+                addressesProvider.getMiniPoolAddressesProvider()
+            ).isMiniPool(msg.sender);
 
+        require(!isMiniPool, Errors.VL_MINIPOOL_CANNOT_BE_LIQUIDATED);
         (,,,, vars.healthFactor) = GenericLogic.calculateUserAccountData(
             params.user,
             reserves,
