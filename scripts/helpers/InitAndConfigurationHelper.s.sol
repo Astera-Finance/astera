@@ -222,9 +222,6 @@ contract InitAndConfigurationHelper {
         _contracts.miniPoolConfigurator.batchInitReserve(initInputParams, IMiniPool(mp));
         console2.log("Configuring");
         _configureMiniPoolReserves(_contracts, _reservesConfig, mp, _usdBootstrapAmount);
-        if (_contracts.lendingPool.paused()) {
-            _contracts.lendingPoolConfigurator.setPoolPause(true);
-        }
         if (IMiniPool(mp).paused()) {
             _contracts.miniPoolConfigurator.setPoolPause(true, IMiniPool(mp));
         }
