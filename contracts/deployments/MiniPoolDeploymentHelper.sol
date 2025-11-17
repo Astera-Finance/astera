@@ -2,18 +2,22 @@
 pragma solidity ^0.8.23;
 
 import {LendingPool} from "../../contracts/protocol/core/lendingpool/LendingPool.sol";
-import {MiniPoolAddressesProvider} from
-    "../../contracts/protocol/configuration/MiniPoolAddressProvider.sol";
+import {
+    MiniPoolAddressesProvider
+} from "../../contracts/protocol/configuration/MiniPoolAddressProvider.sol";
 import {IMiniPoolConfigurator} from "../../contracts/interfaces/IMiniPoolConfigurator.sol";
 import {IAERC6909} from "../../contracts/interfaces/IAERC6909.sol";
 import {Ownable} from "../../contracts/dependencies/openzeppelin/contracts/Ownable.sol";
 import {IMiniPool} from "../../contracts/interfaces/IMiniPool.sol";
 import {IOracle} from "../../contracts/interfaces/IOracle.sol";
-import {IERC20Detailed} from
-    "../../contracts/dependencies/openzeppelin/contracts/IERC20Detailed.sol";
+import {
+    IERC20Detailed
+} from "../../contracts/dependencies/openzeppelin/contracts/IERC20Detailed.sol";
 import {DataTypes} from "../../contracts/protocol/libraries/types/DataTypes.sol";
 import {ILendingPoolConfigurator} from "contracts/interfaces/ILendingPoolConfigurator.sol";
-import {ILendingPoolAddressesProvider} from "contracts/interfaces/ILendingPoolAddressesProvider.sol";
+import {
+    ILendingPoolAddressesProvider
+} from "contracts/interfaces/ILendingPoolAddressesProvider.sol";
 import {IChainlinkAggregator} from "contracts/interfaces/base/IChainlinkAggregator.sol";
 import {ATokenNonRebasing} from "contracts/protocol/tokenization/ERC20/ATokenNonRebasing.sol";
 import {
@@ -21,8 +25,9 @@ import {
     AggregatedMiniPoolReservesData
 } from "contracts/misc/AsteraDataProvider2.sol";
 
-import {IPiReserveInterestRateStrategy} from
-    "contracts/interfaces/IPiReserveInterestRateStrategy.sol";
+import {
+    IPiReserveInterestRateStrategy
+} from "contracts/interfaces/IPiReserveInterestRateStrategy.sol";
 
 import {console2} from "forge-std/console2.sol";
 
@@ -107,8 +112,9 @@ contract MiniPoolDeploymentHelper is Ownable {
         address treasury,
         address poolOwnerTreasury
     ) internal returns (address miniPool) {
-        uint256 miniPoolId =
-            miniPoolAddressesProvider.deployMiniPool(miniPoolImpl, aTokenImpl, poolAdmin);
+        uint256 miniPoolId = miniPoolAddressesProvider.deployMiniPool(
+            miniPoolImpl, aTokenImpl, poolAdmin
+        );
         miniPool = miniPoolAddressesProvider.getMiniPool(miniPoolId);
         if (
             treasury == address(0)
@@ -149,8 +155,9 @@ contract MiniPoolDeploymentHelper is Ownable {
         HelperPoolReserversConfig[] calldata _reservesConfig,
         uint256 _usdBootstrapAmount
     ) external onlyOwner returns (address) {
-        address miniPool =
-            _deployMiniPool(miniPoolImpl, aTokenImpl, poolAdmin, treasury, poolOwnerTreasury);
+        address miniPool = _deployMiniPool(
+            miniPoolImpl, aTokenImpl, poolAdmin, treasury, poolOwnerTreasury
+        );
         _initAndConfigureMiniPoolReserves(
             _initInputParams, _reservesConfig, miniPool, _usdBootstrapAmount
         );
@@ -185,7 +192,7 @@ contract MiniPoolDeploymentHelper is Ownable {
     ) public view returns (uint256 errCode, uint8) {
         errCode = 0;
         AggregatedMiniPoolReservesData[] memory reservesData =
-            dataProvider.getMiniPoolData(_miniPool).reservesData;
+        dataProvider.getMiniPoolData(_miniPool).reservesData;
 
         if (reservesData.length != _desiredConfig.length) {
             errCode |= WRONG_LENGTH;
@@ -344,10 +351,9 @@ contract MiniPoolDeploymentHelper is Ownable {
 
             if (
                 IAERC6909(miniPoolReserveData.aErc6909).totalSupply(miniPoolReserveData.aTokenID)
-                    == 0
-                    && IAERC6909(miniPoolReserveData.aErc6909).totalSupply(
-                        miniPoolReserveData.variableDebtTokenID
-                    ) == 0
+                        == 0
+                    && IAERC6909(miniPoolReserveData.aErc6909)
+                            .totalSupply(miniPoolReserveData.variableDebtTokenID) == 0
             ) errCode |= NO_LIQUIDITY;
             if (errCode != 0) return (errCode, i);
         }
@@ -429,40 +435,40 @@ contract MiniPoolDeploymentHelper is Ownable {
                 //     reserveConfig.tokenAddress, reserveConfig.reserveType
                 // );
                 IERC20Detailed(reserveConfig.tokenAddress).approve(address(_miniPool), tokenAmount);
-                IMiniPool(_miniPool).deposit(
-                    reserveConfig.tokenAddress,
-                    false,
-                    tokenAmount,
-                    miniPoolAddressesProvider.getPoolAdmin(
-                        miniPoolAddressesProvider.getMiniPoolId(_miniPool)
-                    )
-                );
+                IMiniPool(_miniPool)
+                    .deposit(
+                        reserveConfig.tokenAddress,
+                        false,
+                        tokenAmount,
+                        miniPoolAddressesProvider.getPoolAdmin(
+                            miniPoolAddressesProvider.getMiniPoolId(_miniPool)
+                        )
+                    );
                 DataTypes.MiniPoolReserveData memory miniPoolReserveData =
                     IMiniPool(_miniPool).getReserveData(reserveConfig.tokenAddress);
                 require(
-                    IAERC6909(miniPoolReserveData.aErc6909).totalSupply(
-                        miniPoolReserveData.aTokenID
-                    ) == tokenAmount,
+                    IAERC6909(miniPoolReserveData.aErc6909)
+                            .totalSupply(miniPoolReserveData.aTokenID) == tokenAmount,
                     "TotalSupply not equal to deposited amount!"
                 );
 
                 miniPoolConfigurator.enableBorrowingOnReserve(
                     reserveConfig.tokenAddress, IMiniPool(_miniPool)
                 );
-                IMiniPool(_miniPool).borrow(
-                    reserveConfig.tokenAddress,
-                    false,
-                    tokenAmount / 2,
-                    miniPoolAddressesProvider.getPoolAdmin(
-                        miniPoolAddressesProvider.getMiniPoolId(_miniPool)
-                    )
-                );
+                IMiniPool(_miniPool)
+                    .borrow(
+                        reserveConfig.tokenAddress,
+                        false,
+                        tokenAmount / 2,
+                        miniPoolAddressesProvider.getPoolAdmin(
+                            miniPoolAddressesProvider.getMiniPoolId(_miniPool)
+                        )
+                    );
                 miniPoolReserveData =
                     IMiniPool(_miniPool).getReserveData(reserveConfig.tokenAddress);
                 require(
-                    IAERC6909(miniPoolReserveData.aErc6909).totalSupply(
-                        miniPoolReserveData.variableDebtTokenID
-                    ) == tokenAmount / 2,
+                    IAERC6909(miniPoolReserveData.aErc6909)
+                        .totalSupply(miniPoolReserveData.variableDebtTokenID) == tokenAmount / 2,
                     "TotalSupply of debt not equal to borrowed amount!"
                 );
             }
@@ -497,22 +503,21 @@ contract MiniPoolDeploymentHelper is Ownable {
         returns (uint256)
     {
         uint256 tokenPrice = oracle.getAssetPrice(tokenAddress);
-        if (
-            ILendingPoolConfigurator(
-                ILendingPoolAddressesProvider(
-                    miniPoolAddressesProvider.getLendingPoolAddressesProvider()
-                ).getLendingPoolConfigurator()
-            ).getIsAToken(tokenAddress)
-        ) {
-            return usdBootstrapAmount
-                * 10
-                    ** IChainlinkAggregator(
-                        oracle.getSourceOfAsset(ATokenNonRebasing(tokenAddress).UNDERLYING_ASSET_ADDRESS())
-                    ).decimals() * 10 ** IERC20Detailed(tokenAddress).decimals() / tokenPrice;
+        if (ILendingPoolConfigurator(
+                    ILendingPoolAddressesProvider(
+                            miniPoolAddressesProvider.getLendingPoolAddressesProvider()
+                        ).getLendingPoolConfigurator()
+                ).getIsAToken(tokenAddress)) {
+            return usdBootstrapAmount * 10
+                ** IChainlinkAggregator(
+                    oracle.getSourceOfAsset(
+                    ATokenNonRebasing(tokenAddress).UNDERLYING_ASSET_ADDRESS()
+                )
+                ).decimals() * 10 ** IERC20Detailed(tokenAddress).decimals() / tokenPrice;
         } else {
-            return usdBootstrapAmount
-                * 10 ** IChainlinkAggregator(oracle.getSourceOfAsset(tokenAddress)).decimals()
-                * 10 ** IERC20Detailed(tokenAddress).decimals() / tokenPrice;
+            return usdBootstrapAmount * 10
+                ** IChainlinkAggregator(oracle.getSourceOfAsset(tokenAddress)).decimals() * 10
+                ** IERC20Detailed(tokenAddress).decimals() / tokenPrice;
         }
     }
 }

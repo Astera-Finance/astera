@@ -6,10 +6,13 @@ import {PropertiesAsserts} from "./util/PropertiesAsserts.sol";
 import {MarketParams} from "./MarketParams.sol";
 
 import {
-    IERC20, ERC20, IERC20Metadata
+    IERC20,
+    ERC20,
+    IERC20Metadata
 } from "contracts/dependencies/openzeppelin/contracts/ERC20.sol";
-import {BaseImmutableAdminUpgradeabilityProxy} from
-    "contracts/protocol/libraries/upgradeability/BaseImmutableAdminUpgradeabilityProxy.sol";
+import {
+    BaseImmutableAdminUpgradeabilityProxy
+} from "contracts/protocol/libraries/upgradeability/BaseImmutableAdminUpgradeabilityProxy.sol";
 
 import {ATokensAndRatesHelper} from "contracts/deployments/ATokensAndRatesHelper.sol";
 
@@ -19,8 +22,9 @@ import {MockAggregator} from "./mock/oracle/MockAggregator.sol";
 
 import {DataTypes} from "contracts/protocol/libraries/types/DataTypes.sol";
 import {UserConfiguration} from "contracts/protocol/libraries/configuration/UserConfiguration.sol";
-import {ReserveConfiguration} from
-    "contracts/protocol/libraries/configuration/ReserveConfiguration.sol";
+import {
+    ReserveConfiguration
+} from "contracts/protocol/libraries/configuration/ReserveConfiguration.sol";
 
 import {IAERC6909} from "contracts/interfaces/IAERC6909.sol";
 import {IAToken} from "contracts/interfaces/IAToken.sol";
@@ -28,13 +32,16 @@ import {IVariableDebtToken} from "contracts/interfaces/IVariableDebtToken.sol";
 import {IAsteraDataProvider} from "contracts/interfaces/IAsteraDataProvider.sol";
 import {IFlashLoanReceiver} from "contracts/interfaces/IFlashLoanReceiver.sol";
 import {ILendingPool} from "contracts/interfaces/ILendingPool.sol";
-import {ILendingPoolAddressesProvider} from "contracts/interfaces/ILendingPoolAddressesProvider.sol";
+import {
+    ILendingPoolAddressesProvider
+} from "contracts/interfaces/ILendingPoolAddressesProvider.sol";
 import {ILendingPoolConfigurator} from "contracts/interfaces/ILendingPoolConfigurator.sol";
 import {IMiniPool} from "contracts/interfaces/IMiniPool.sol";
 import {IMiniPoolAddressesProvider} from "contracts/interfaces/IMiniPoolAddressesProvider.sol";
 import {IMiniPoolConfigurator} from "contracts/interfaces/IMiniPoolConfigurator.sol";
-import {IMiniPoolReserveInterestRateStrategy} from
-    "contracts/interfaces/IMiniPoolReserveInterestRateStrategy.sol";
+import {
+    IMiniPoolReserveInterestRateStrategy
+} from "contracts/interfaces/IMiniPoolReserveInterestRateStrategy.sol";
 import {IMiniPoolRewarder} from "contracts/interfaces/IMiniPoolRewarder.sol";
 import {IMiniPoolRewardsController} from "contracts/interfaces/IMiniPoolRewardsController.sol";
 import {IMiniPoolRewardsDistributor} from "contracts/interfaces/IMiniPoolRewardsDistributor.sol";
@@ -52,17 +59,21 @@ import {WETHGateway} from "contracts/misc/WETHGateway.sol";
 import {Oracle} from "contracts/protocol/core/Oracle.sol";
 
 /// LendingPool
-import {LendingPoolAddressesProvider} from
-    "contracts/protocol/configuration/LendingPoolAddressesProvider.sol";
+import {
+    LendingPoolAddressesProvider
+} from "contracts/protocol/configuration/LendingPoolAddressesProvider.sol";
 
-import {DefaultReserveInterestRateStrategy} from
-    "contracts/protocol/core/interestRateStrategies/lendingpool/DefaultReserveInterestRateStrategy.sol";
-import {PiReserveInterestRateStrategy} from
-    "contracts/protocol/core/interestRateStrategies/lendingpool/PiReserveInterestRateStrategy.sol";
+import {
+    DefaultReserveInterestRateStrategy
+} from "contracts/protocol/core/interestRateStrategies/lendingpool/DefaultReserveInterestRateStrategy.sol";
+import {
+    PiReserveInterestRateStrategy
+} from "contracts/protocol/core/interestRateStrategies/lendingpool/PiReserveInterestRateStrategy.sol";
 
 import {LendingPool} from "contracts/protocol/core/lendingpool/LendingPool.sol";
-import {LendingPoolConfigurator} from
-    "contracts/protocol/core/lendingpool/LendingPoolConfigurator.sol";
+import {
+    LendingPoolConfigurator
+} from "contracts/protocol/core/lendingpool/LendingPoolConfigurator.sol";
 import {LendingPoolStorage} from "contracts/protocol/core/lendingpool/LendingPoolStorage.sol";
 
 import {BorrowLogic} from "contracts/protocol/core/lendingpool/logic/BorrowLogic.sol";
@@ -93,32 +104,48 @@ import {MiniPool} from "contracts/protocol/core/minipool/MiniPool.sol";
 import {MiniPoolConfigurator} from "contracts/protocol/core/minipool/MiniPoolConfigurator.sol";
 import {MiniPoolStorage} from "contracts/protocol/core/minipool/MiniPoolStorage.sol";
 
-import {MiniPoolDefaultReserveInterestRateStrategy} from
-    "contracts/protocol/core/interestRateStrategies/minipool/MiniPoolDefaultReserveInterestRate.sol";
-import {MiniPoolPiReserveInterestRateStrategy} from
-    "contracts/protocol/core/interestRateStrategies/minipool/MiniPoolPiReserveInterestRateStrategy.sol";
-import {MiniPoolAddressesProvider} from
-    "contracts/protocol/configuration/MiniPoolAddressProvider.sol";
+import {
+    MiniPoolDefaultReserveInterestRateStrategy
+} from "contracts/protocol/core/interestRateStrategies/minipool/MiniPoolDefaultReserveInterestRate.sol";
+import {
+    MiniPoolPiReserveInterestRateStrategy
+} from "contracts/protocol/core/interestRateStrategies/minipool/MiniPoolPiReserveInterestRateStrategy.sol";
+import {
+    MiniPoolAddressesProvider
+} from "contracts/protocol/configuration/MiniPoolAddressProvider.sol";
 
 import {MiniPoolBorrowLogic} from "contracts/protocol/core/minipool/logic/MiniPoolBorrowLogic.sol";
-import {MiniPoolDepositLogic} from "contracts/protocol/core/minipool/logic/MiniPoolDepositLogic.sol";
-import {MiniPoolFlashLoanLogic} from
-    "contracts/protocol/core/minipool/logic/MiniPoolFlashLoanLogic.sol";
-import {MiniPoolGenericLogic} from "contracts/protocol/core/minipool/logic/MiniPoolGenericLogic.sol";
-import {MiniPoolLiquidationLogic} from
-    "contracts/protocol/core/minipool/logic/MiniPoolLiquidationLogic.sol";
-import {MiniPoolReserveLogic} from "contracts/protocol/core/minipool/logic/MiniPoolReserveLogic.sol";
-import {MiniPoolValidationLogic} from
-    "contracts/protocol/core/minipool/logic/MiniPoolValidationLogic.sol";
-import {MiniPoolWithdrawLogic} from
-    "contracts/protocol/core/minipool/logic/MiniPoolWithdrawLogic.sol";
+import {
+    MiniPoolDepositLogic
+} from "contracts/protocol/core/minipool/logic/MiniPoolDepositLogic.sol";
+import {
+    MiniPoolFlashLoanLogic
+} from "contracts/protocol/core/minipool/logic/MiniPoolFlashLoanLogic.sol";
+import {
+    MiniPoolGenericLogic
+} from "contracts/protocol/core/minipool/logic/MiniPoolGenericLogic.sol";
+import {
+    MiniPoolLiquidationLogic
+} from "contracts/protocol/core/minipool/logic/MiniPoolLiquidationLogic.sol";
+import {
+    MiniPoolReserveLogic
+} from "contracts/protocol/core/minipool/logic/MiniPoolReserveLogic.sol";
+import {
+    MiniPoolValidationLogic
+} from "contracts/protocol/core/minipool/logic/MiniPoolValidationLogic.sol";
+import {
+    MiniPoolWithdrawLogic
+} from "contracts/protocol/core/minipool/logic/MiniPoolWithdrawLogic.sol";
 
 import {ATokenERC6909} from "contracts/protocol/tokenization/ERC6909/ATokenERC6909.sol";
 
 import {Rewarder6909} from "contracts/protocol/rewarder/minipool/Rewarder6909.sol";
-import {RewardsController6909} from "contracts/protocol/rewarder/minipool/RewardsController6909.sol";
-import {RewardsDistributor6909} from
-    "contracts/protocol/rewarder/minipool/RewardsDistributor6909.sol";
+import {
+    RewardsController6909
+} from "contracts/protocol/rewarder/minipool/RewardsController6909.sol";
+import {
+    RewardsDistributor6909
+} from "contracts/protocol/rewarder/minipool/RewardsDistributor6909.sol";
 
 // Users are defined in users
 // Admin is address(this)
@@ -167,7 +194,7 @@ contract PropertiesBase is PropertiesAsserts, MarketParams {
     ATokensAndRatesHelper internal aHelper;
     AToken internal aToken;
     VariableDebtToken internal vToken;
-    DefaultReserveInterestRateStrategy /*[]*/ internal defaultRateStrategies;
+    DefaultReserveInterestRateStrategy internal /*[]*/ defaultRateStrategies;
     PiReserveInterestRateStrategy[] internal piRateStrategies;
     mapping(address => mapping(address => bool)) internal isUseReserveAsCollateralDeactivatedLP; // [user][asset] = isUseReserveAsCollateral
 
@@ -180,7 +207,7 @@ contract PropertiesBase is PropertiesAsserts, MarketParams {
     MockMiniPool[] internal miniPools;
     uint256[] internal miniPoolIds;
     ATokenERC6909[] internal aTokens6909;
-    MiniPoolDefaultReserveInterestRateStrategy /*[]*/ internal minipoolDefaultRateStrategies;
+    MiniPoolDefaultReserveInterestRateStrategy internal /*[]*/ minipoolDefaultRateStrategies;
     mapping(uint256 => MiniPoolPiReserveInterestRateStrategy[]) internal minipoolPiRateStrategies; // [minipoolId][tokenId]
     mapping(uint256 => mapping(address => mapping(address => bool))) internal
         isUseReserveAsCollateralDeactivatedMP; // [minipoolId][user][asset] = isUseReserveAsCollateral
@@ -494,9 +521,9 @@ contract PropertiesBase is PropertiesAsserts, MarketParams {
 
             for (uint256 j = 0; j < totalNbMinipool; j++) {
                 lastLiquidityIndexMP[address(miniPools[j])][asset] =
-                    miniPools[j].getReserveData(asset).liquidityIndex;
+                miniPools[j].getReserveData(asset).liquidityIndex;
                 lastVariableBorrowIndexMP[address(miniPools[j])][asset] =
-                    miniPools[j].getReserveData(asset).variableBorrowIndex;
+                miniPools[j].getReserveData(asset).variableBorrowIndex;
             }
         }
 
@@ -556,7 +583,8 @@ contract PropertiesBase is PropertiesAsserts, MarketParams {
 
         assertWithMsg(
             flowLimiter.getFlowLimit(asset, miniPool) == randLimit
-                || flowLimiter.getFlowLimit(asset, miniPool) == flowLimiter.currentFlow(asset, miniPool),
+                || flowLimiter.getFlowLimit(asset, miniPool)
+                    == flowLimiter.currentFlow(asset, miniPool),
             "106"
         );
 
@@ -564,9 +592,9 @@ contract PropertiesBase is PropertiesAsserts, MarketParams {
         lastVariableBorrowIndexLP[asset] = pool.getReserveData(asset, true).variableBorrowIndex;
 
         lastLiquidityIndexMP[address(miniPool)][asset] =
-            IMiniPool(miniPool).getReserveData(asset).liquidityIndex;
+        IMiniPool(miniPool).getReserveData(asset).liquidityIndex;
         lastVariableBorrowIndexMP[address(miniPool)][asset] =
-            IMiniPool(miniPool).getReserveData(asset).variableBorrowIndex;
+        IMiniPool(miniPool).getReserveData(asset).variableBorrowIndex;
     }
 
     struct LocalVars_UPTL {
@@ -698,19 +726,20 @@ contract PropertiesBase is PropertiesAsserts, MarketParams {
 
                 v.randAmt = clampBetween(seedAmt, 0, v.targetVTokenDebtBalanceBefore);
 
-                (bool success,) = v.liquidator.proxy(
-                    address(pool),
-                    abi.encodeWithSelector(
-                        pool.liquidationCall.selector,
-                        address(v.collAsset),
-                        true,
-                        address(v.debtAsset),
-                        true,
-                        address(v.target),
-                        v.randAmt,
-                        v.randReceiveAToken
-                    )
-                );
+                (bool success,) = v.liquidator
+                    .proxy(
+                        address(pool),
+                        abi.encodeWithSelector(
+                            pool.liquidationCall.selector,
+                            address(v.collAsset),
+                            true,
+                            address(v.debtAsset),
+                            true,
+                            address(v.target),
+                            v.randAmt,
+                            v.randReceiveAToken
+                        )
+                    );
 
                 if (v.targetATokenCollBalanceBefore == 0) {
                     assertWithMsg(!success, "100");
@@ -743,14 +772,14 @@ contract PropertiesBase is PropertiesAsserts, MarketParams {
                 }
 
                 lastLiquidityIndexLP[address(v.collAsset)] =
-                    pool.getReserveData(address(v.collAsset), true).liquidityIndex;
+                pool.getReserveData(address(v.collAsset), true).liquidityIndex;
                 lastVariableBorrowIndexLP[address(v.collAsset)] =
-                    pool.getReserveData(address(v.collAsset), true).variableBorrowIndex;
+                pool.getReserveData(address(v.collAsset), true).variableBorrowIndex;
 
                 lastLiquidityIndexLP[address(v.debtAsset)] =
-                    pool.getReserveData(address(v.debtAsset), true).liquidityIndex;
+                pool.getReserveData(address(v.debtAsset), true).liquidityIndex;
                 lastVariableBorrowIndexLP[address(v.debtAsset)] =
-                    pool.getReserveData(address(v.debtAsset), true).variableBorrowIndex;
+                pool.getReserveData(address(v.debtAsset), true).variableBorrowIndex;
             }
         }
     }
@@ -806,19 +835,20 @@ contract PropertiesBase is PropertiesAsserts, MarketParams {
                     v.randAmt = clampBetween(seedAmt, 0, v.targetVTokenDebtBalanceBefore);
                     // ---
 
-                    (bool success,) = v.liquidator.proxy(
-                        address(pool_),
-                        abi.encodeWithSelector(
-                            pool_.liquidationCall.selector,
-                            address(v.collAsset),
-                            false,
-                            address(v.debtAsset),
-                            false,
-                            address(v.target),
-                            v.randAmt,
-                            v.randReceiveAToken
-                        )
-                    );
+                    (bool success,) = v.liquidator
+                        .proxy(
+                            address(pool_),
+                            abi.encodeWithSelector(
+                                pool_.liquidationCall.selector,
+                                address(v.collAsset),
+                                false,
+                                address(v.debtAsset),
+                                false,
+                                address(v.target),
+                                v.randAmt,
+                                v.randReceiveAToken
+                            )
+                        );
 
                     if (v.targetATokenCollBalanceBefore == 0) {
                         assertWithMsg(!success, "100");
@@ -855,24 +885,24 @@ contract PropertiesBase is PropertiesAsserts, MarketParams {
                     }
 
                     lastLiquidityIndexLP[address(v.collAsset)] =
-                        pool.getReserveData(address(v.collAsset), true).liquidityIndex;
+                    pool.getReserveData(address(v.collAsset), true).liquidityIndex;
                     lastVariableBorrowIndexLP[address(v.collAsset)] =
-                        pool.getReserveData(address(v.collAsset), true).variableBorrowIndex;
+                    pool.getReserveData(address(v.collAsset), true).variableBorrowIndex;
 
                     lastLiquidityIndexLP[address(v.debtAsset)] =
-                        pool.getReserveData(address(v.debtAsset), true).liquidityIndex;
+                    pool.getReserveData(address(v.debtAsset), true).liquidityIndex;
                     lastVariableBorrowIndexLP[address(v.debtAsset)] =
-                        pool.getReserveData(address(v.debtAsset), true).variableBorrowIndex;
+                    pool.getReserveData(address(v.debtAsset), true).variableBorrowIndex;
 
                     lastLiquidityIndexMP[address(pool_)][address(v.collAsset)] =
-                        pool_.getReserveData(address(v.collAsset)).liquidityIndex;
+                    pool_.getReserveData(address(v.collAsset)).liquidityIndex;
                     lastVariableBorrowIndexMP[address(pool_)][address(v.collAsset)] =
-                        pool_.getReserveData(address(v.collAsset)).variableBorrowIndex;
+                    pool_.getReserveData(address(v.collAsset)).variableBorrowIndex;
 
                     lastLiquidityIndexMP[address(pool_)][address(v.debtAsset)] =
-                        pool_.getReserveData(address(v.debtAsset)).liquidityIndex;
+                    pool_.getReserveData(address(v.debtAsset)).liquidityIndex;
                     lastVariableBorrowIndexMP[address(pool_)][address(v.debtAsset)] =
-                        pool_.getReserveData(address(v.debtAsset)).variableBorrowIndex;
+                    pool_.getReserveData(address(v.debtAsset)).variableBorrowIndex;
                 }
             }
         }

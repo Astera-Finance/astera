@@ -101,9 +101,8 @@ contract WethGatewayTest is Common {
         vm.assume(user != address(0));
         uint256 amount = 1 ether;
         deal(address(user), amount);
-        uint256 initialBalance = ERC20(address(tokens[WETH_OFFSET])).balanceOf(
-            address(commonContracts.aTokens[WETH_OFFSET])
-        );
+        uint256 initialBalance = ERC20(address(tokens[WETH_OFFSET]))
+            .balanceOf(address(commonContracts.aTokens[WETH_OFFSET]));
         uint256 initialATokenBalance = commonContracts.aTokensWrapper[WETH_OFFSET].balanceOf(user);
 
         commonContracts.wETHGateway.authorizeLendingPool(address(deployedContracts.lendingPool));
@@ -115,9 +114,8 @@ contract WethGatewayTest is Common {
         vm.stopPrank();
         // Check the balance of the contract
         assertEq(
-            ERC20(address(tokens[WETH_OFFSET])).balanceOf(
-                address(commonContracts.aTokens[WETH_OFFSET])
-            ),
+            ERC20(address(tokens[WETH_OFFSET]))
+                .balanceOf(address(commonContracts.aTokens[WETH_OFFSET])),
             initialBalance + amount,
             "Wrong WETH balance after deposit"
         );
@@ -141,10 +139,12 @@ contract WethGatewayTest is Common {
             IAERC6909(miniPoolContracts.miniPoolAddressesProvider.getMiniPoolToAERC6909(miniPool));
         commonContracts.wETHGateway.authorizeMiniPool(address(miniPool));
         uint256 initialBalance = ERC20(
-            address(
-                fixture_getATokensWrapper(tokens, deployedContracts.asteraDataProvider)[WETH_OFFSET]
-            )
-        ).balanceOf(address(aTokensErc6909));
+                address(
+                    fixture_getATokensWrapper(
+                        tokens, deployedContracts.asteraDataProvider
+                    )[WETH_OFFSET]
+                )
+            ).balanceOf(address(aTokensErc6909));
         uint256 initialATokenBalance = aTokensErc6909.balanceOf(user, 1000 + WETH_OFFSET);
 
         deal(address(user), amount);
@@ -156,10 +156,12 @@ contract WethGatewayTest is Common {
         // Check the balance of the contract
         assertEq(
             ERC20(
-                address(
-                    fixture_getATokensWrapper(tokens, deployedContracts.asteraDataProvider)[WETH_OFFSET]
-                )
-            ).balanceOf(address(aTokensErc6909)),
+                    address(
+                        fixture_getATokensWrapper(
+                            tokens, deployedContracts.asteraDataProvider
+                        )[WETH_OFFSET]
+                    )
+                ).balanceOf(address(aTokensErc6909)),
             initialBalance + commonContracts.wETHGateway.AWETH().convertToShares(amount),
             "Wrong aWETH balance"
         );
@@ -222,9 +224,8 @@ contract WethGatewayTest is Common {
         console2.log("testWithdrawETH");
         vm.assume(user != address(0));
         uint256 amount = 1 ether;
-        uint256 initialBalance = ERC20(address(tokens[WETH_OFFSET])).balanceOf(
-            address(commonContracts.aTokens[WETH_OFFSET])
-        );
+        uint256 initialBalance = ERC20(address(tokens[WETH_OFFSET]))
+            .balanceOf(address(commonContracts.aTokens[WETH_OFFSET]));
         console2.log("Initial WETH balance: ", initialBalance);
         commonContracts.wETHGateway.authorizeLendingPool(address(deployedContracts.lendingPool));
 
@@ -240,15 +241,13 @@ contract WethGatewayTest is Common {
 
         // Call the withdrawETH function
         commonContracts.aTokens[WETH_OFFSET].approve(address(commonContracts.wETHGateway), amount);
-        commonContracts.wETHGateway.withdrawETH(
-            address(deployedContracts.lendingPool), true, amount, user
-        );
+        commonContracts.wETHGateway
+            .withdrawETH(address(deployedContracts.lendingPool), true, amount, user);
 
         // Check the balance of the contract
         assertEq(
-            ERC20(address(tokens[WETH_OFFSET])).balanceOf(
-                address(commonContracts.aTokens[WETH_OFFSET])
-            ),
+            ERC20(address(tokens[WETH_OFFSET]))
+                .balanceOf(address(commonContracts.aTokens[WETH_OFFSET])),
             initialBalance,
             "Wrong WETH balance after withdraw"
         );
@@ -271,10 +270,12 @@ contract WethGatewayTest is Common {
             IAERC6909(miniPoolContracts.miniPoolAddressesProvider.getMiniPoolToAERC6909(miniPool));
         commonContracts.wETHGateway.authorizeMiniPool(address(miniPool));
         uint256 initialBalance = ERC20(
-            address(
-                fixture_getATokensWrapper(tokens, deployedContracts.asteraDataProvider)[WETH_OFFSET]
-            )
-        ).balanceOf(address(aTokensErc6909));
+                address(
+                    fixture_getATokensWrapper(
+                        tokens, deployedContracts.asteraDataProvider
+                    )[WETH_OFFSET]
+                )
+            ).balanceOf(address(aTokensErc6909));
         deal(address(user), amount);
         vm.startPrank(user);
         // Call the depositETH function
@@ -292,10 +293,12 @@ contract WethGatewayTest is Common {
         // Check the balance of the contract
         assertEq(
             ERC20(
-                address(
-                    fixture_getATokensWrapper(tokens, deployedContracts.asteraDataProvider)[WETH_OFFSET]
-                )
-            ).balanceOf(address(aTokensErc6909)),
+                    address(
+                        fixture_getATokensWrapper(
+                            tokens, deployedContracts.asteraDataProvider
+                        )[WETH_OFFSET]
+                    )
+                ).balanceOf(address(aTokensErc6909)),
             initialBalance,
             "Wrong aWETH balance after withdrawal"
         );
@@ -313,9 +316,8 @@ contract WethGatewayTest is Common {
 
     function borrowETH(address user) public {
         vm.assume(user != address(0));
-        uint256 initialBalance = ERC20(address(tokens[WETH_OFFSET])).balanceOf(
-            address(commonContracts.aTokens[WETH_OFFSET])
-        );
+        uint256 initialBalance = ERC20(address(tokens[WETH_OFFSET]))
+            .balanceOf(address(commonContracts.aTokens[WETH_OFFSET]));
         uint256 amount = 1 ether;
         commonContracts.wETHGateway.authorizeLendingPool(address(deployedContracts.lendingPool));
         deal(address(user), amount);
@@ -338,9 +340,8 @@ contract WethGatewayTest is Common {
                 user, address(commonContracts.wETHGateway)
             )
         );
-        commonContracts.wETHGateway.borrowETH(
-            address(deployedContracts.lendingPool), true, amount / 2
-        );
+        commonContracts.wETHGateway
+            .borrowETH(address(deployedContracts.lendingPool), true, amount / 2);
         vm.stopPrank();
         // Check the balance of the contract
         assertEq(initialBalance + amount / 2, user.balance, "Wrong ETH balance after repay");
@@ -353,9 +354,8 @@ contract WethGatewayTest is Common {
     function borrowAndRepayETH(address user) public {
         vm.assume(user != address(0));
         uint256 amount = 1 ether;
-        uint256 initialBalance = ERC20(address(tokens[WETH_OFFSET])).balanceOf(
-            address(commonContracts.aTokens[WETH_OFFSET])
-        );
+        uint256 initialBalance = ERC20(address(tokens[WETH_OFFSET]))
+            .balanceOf(address(commonContracts.aTokens[WETH_OFFSET]));
         commonContracts.wETHGateway.authorizeLendingPool(address(deployedContracts.lendingPool));
         // Call the depositETH function
         console2.log("Call the depositETH function");
@@ -379,9 +379,8 @@ contract WethGatewayTest is Common {
                 user, address(commonContracts.wETHGateway)
             )
         );
-        commonContracts.wETHGateway.borrowETH(
-            address(deployedContracts.lendingPool), true, amount / 2
-        );
+        commonContracts.wETHGateway
+            .borrowETH(address(deployedContracts.lendingPool), true, amount / 2);
 
         // Check the balance of the contract
         assertEq(initialBalance + amount / 2, user.balance, "Wrong ETH balance after borrow");

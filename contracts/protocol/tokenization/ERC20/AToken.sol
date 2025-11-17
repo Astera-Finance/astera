@@ -7,14 +7,17 @@ import {ILendingPool} from "../../../../contracts/interfaces/ILendingPool.sol";
 import {IAToken} from "../../../../contracts/interfaces/IAToken.sol";
 import {WadRayMath} from "../../../../contracts/protocol/libraries/math/WadRayMath.sol";
 import {Errors} from "../../../../contracts/protocol/libraries/helpers/Errors.sol";
-import {VersionedInitializable} from
-    "../../../../contracts/protocol/libraries/upgradeability/VersionedInitializable.sol";
-import {IncentivizedERC20} from
-    "../../../../contracts/protocol/tokenization/ERC20/IncentivizedERC20.sol";
+import {
+    VersionedInitializable
+} from "../../../../contracts/protocol/libraries/upgradeability/VersionedInitializable.sol";
+import {
+    IncentivizedERC20
+} from "../../../../contracts/protocol/tokenization/ERC20/IncentivizedERC20.sol";
 import {IRewarder} from "../../../../contracts/interfaces/IRewarder.sol";
 import {IERC4626} from "lib/openzeppelin-contracts/lib/forge-std/src/interfaces/IERC4626.sol";
-import {ATokenNonRebasing} from
-    "../../../../contracts/protocol/tokenization/ERC20/ATokenNonRebasing.sol";
+import {
+    ATokenNonRebasing
+} from "../../../../contracts/protocol/tokenization/ERC20/ATokenNonRebasing.sol";
 
 /**
  * @title Astera ERC20 AToken
@@ -227,11 +230,7 @@ contract AToken is
      * @param amount The amount of tokens to mint.
      * @param index The new liquidity index of the reserve.
      */
-    function mintToAsteraTreasury(uint256 amount, uint256 index)
-        external
-        override
-        onlyLendingPool
-    {
+    function mintToAsteraTreasury(uint256 amount, uint256 index) external override onlyLendingPool {
         if (amount == 0) {
             return;
         }
@@ -278,9 +277,8 @@ contract AToken is
         override(IncentivizedERC20, IERC20)
         returns (uint256)
     {
-        return super.balanceOf(user).rayMul(
-            _pool.getReserveNormalizedIncome(_underlyingAsset, RESERVE_TYPE)
-        );
+        return super.balanceOf(user)
+            .rayMul(_pool.getReserveNormalizedIncome(_underlyingAsset, RESERVE_TYPE));
     }
 
     /**

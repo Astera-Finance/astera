@@ -1,12 +1,14 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.20;
 
-import {IMiniPoolReserveInterestRateStrategy} from
-    "../../../../../contracts/interfaces/IMiniPoolReserveInterestRateStrategy.sol";
+import {
+    IMiniPoolReserveInterestRateStrategy
+} from "../../../../../contracts/interfaces/IMiniPoolReserveInterestRateStrategy.sol";
 import {WadRayMath} from "../../../../../contracts/protocol/libraries/math/WadRayMath.sol";
 import {PercentageMath} from "../../../../../contracts/protocol/libraries/math/PercentageMath.sol";
-import {IMiniPoolAddressesProvider} from
-    "../../../../../contracts/interfaces/IMiniPoolAddressesProvider.sol";
+import {
+    IMiniPoolAddressesProvider
+} from "../../../../../contracts/interfaces/IMiniPoolAddressesProvider.sol";
 import {Errors} from "../../../../../contracts/protocol/libraries/helpers/Errors.sol";
 import {IAERC6909} from "../../../../../contracts/interfaces/IAERC6909.sol";
 import {IERC20} from "../../../../../contracts/dependencies/openzeppelin/contracts/IERC20.sol";
@@ -86,9 +88,10 @@ contract MiniPoolFixReserveInterestRate is IMiniPoolReserveInterestRateStrategy 
         //avoid stack too deep
         availableLiquidity = availableLiquidity + liquidityAdded - liquidityTaken;
 
-        return calculateInterestRates(
-            address(0), 0, availableLiquidity, totalVariableDebt, reserveFactor
-        );
+        return
+            calculateInterestRates(
+                address(0), 0, availableLiquidity, totalVariableDebt, reserveFactor
+            );
     }
 
     /**
@@ -113,9 +116,8 @@ contract MiniPoolFixReserveInterestRate is IMiniPoolReserveInterestRateStrategy 
             ? 0
             : totalVariableDebt.rayDiv(availableLiquidity + totalVariableDebt);
 
-        uint256 currentLiquidityRate = OPTIMAL_UTILIZATION_RATE.rayMul(utilizationRate).percentMul(
-            PercentageMath.PERCENTAGE_FACTOR - reserveFactor
-        );
+        uint256 currentLiquidityRate = OPTIMAL_UTILIZATION_RATE.rayMul(utilizationRate)
+            .percentMul(PercentageMath.PERCENTAGE_FACTOR - reserveFactor);
 
         if (currentFlow != 0 || underlying != address(0)) {
             revert(Errors.VL_TRANCHED_ASSETS_NOT_SUPPORTED_WITH_FIX_RATE);

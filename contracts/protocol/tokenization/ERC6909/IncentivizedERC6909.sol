@@ -9,7 +9,8 @@ import {ERC6909} from "lib/solady/src/tokens/ERC6909.sol";
  * @notice Basic ERC6909 implementation with incentives functionality.
  * @author Conclave, inspired by the Solady ERC6909 implementation and AAVEs incentivized ERC20
  */
-abstract contract IncentivizedERC6909 is ERC6909 /*, IAERC6909 */ {
+abstract contract IncentivizedERC6909 is ERC6909 {
+    /*, IAERC6909 */
     /// @dev Mapping from `id` to token name.
     mapping(uint256 => string) private _name;
     /// @dev Mapping from `id` to token symbol.

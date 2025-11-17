@@ -2,9 +2,12 @@
 pragma solidity ^0.8.23;
 
 import {IERC20} from "../../../../../contracts/dependencies/openzeppelin/contracts/IERC20.sol";
-import {SafeERC20} from "../../../../../contracts/dependencies/openzeppelin/contracts/SafeERC20.sol";
-import {ILendingPoolAddressesProvider} from
-    "../../../../../contracts/interfaces/ILendingPoolAddressesProvider.sol";
+import {
+    SafeERC20
+} from "../../../../../contracts/dependencies/openzeppelin/contracts/SafeERC20.sol";
+import {
+    ILendingPoolAddressesProvider
+} from "../../../../../contracts/interfaces/ILendingPoolAddressesProvider.sol";
 import {IAToken} from "../../../../../contracts/interfaces/IAToken.sol";
 import {WadRayMath} from "../../../../../contracts/protocol/libraries/math/WadRayMath.sol";
 import {PercentageMath} from "../../../../../contracts/protocol/libraries/math/PercentageMath.sol";
@@ -12,15 +15,18 @@ import {Errors} from "../../../../../contracts/protocol/libraries/helpers/Errors
 import {DataTypes} from "../../../../../contracts/protocol/libraries/types/DataTypes.sol";
 import {ReserveLogic} from "./ReserveLogic.sol";
 import {ValidationLogic} from "./ValidationLogic.sol";
-import {ReserveConfiguration} from
-    "../../../../../contracts/protocol/libraries/configuration/ReserveConfiguration.sol";
-import {UserConfiguration} from
-    "../../../../../contracts/protocol/libraries/configuration/UserConfiguration.sol";
+import {
+    ReserveConfiguration
+} from "../../../../../contracts/protocol/libraries/configuration/ReserveConfiguration.sol";
+import {
+    UserConfiguration
+} from "../../../../../contracts/protocol/libraries/configuration/UserConfiguration.sol";
 import {Helpers} from "../../../../../contracts/protocol/libraries/helpers/Helpers.sol";
 import {IFlashLoanReceiver} from "../../../../../contracts/interfaces/IFlashLoanReceiver.sol"; // Add this line
 import {BorrowLogic} from "./BorrowLogic.sol";
-import {EnumerableSet} from
-    "../../../../../lib/openzeppelin-contracts/contracts/utils/structs/EnumerableSet.sol";
+import {
+    EnumerableSet
+} from "../../../../../lib/openzeppelin-contracts/contracts/utils/structs/EnumerableSet.sol";
 
 /**
  * @title FlashLoanLogic
@@ -152,13 +158,14 @@ library FlashLoanLogic {
         );
 
         require(
-            vars.receiver.executeOperation(
-                flashLoanParams.assets,
-                flashLoanParams.amounts,
-                premiums,
-                msg.sender,
-                flashLoanParams.params
-            ),
+            vars.receiver
+                .executeOperation(
+                    flashLoanParams.assets,
+                    flashLoanParams.amounts,
+                    premiums,
+                    msg.sender,
+                    flashLoanParams.params
+                ),
             Errors.LP_INVALID_FLASH_LOAN_EXECUTOR_RETURN
         );
 
@@ -278,12 +285,10 @@ library FlashLoanLogic {
             minipoolFlowBorrowing, params.asset, params.aToken, amountPlusPremium, 0
         );
 
-        IERC20(params.asset).safeTransferFrom(
-            params.receiverAddress, params.aToken, amountPlusPremium
-        );
+        IERC20(params.asset)
+            .safeTransferFrom(params.receiverAddress, params.aToken, amountPlusPremium);
 
-        IAToken(params.aToken).handleRepayment(
-            params.receiverAddress, params.receiverAddress, amountPlusPremium
-        );
+        IAToken(params.aToken)
+            .handleRepayment(params.receiverAddress, params.receiverAddress, amountPlusPremium);
     }
 }

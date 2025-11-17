@@ -3,15 +3,18 @@ pragma solidity ^0.8.23;
 
 import {Address} from "../../../../contracts/dependencies/openzeppelin/contracts/Address.sol";
 import {IAERC6909} from "../../../../contracts/interfaces/IAERC6909.sol";
-import {IERC20Detailed} from
-    "../../../../contracts/dependencies/openzeppelin/contracts/IERC20Detailed.sol";
+import {
+    IERC20Detailed
+} from "../../../../contracts/dependencies/openzeppelin/contracts/IERC20Detailed.sol";
 import {SafeERC20} from "../../../../contracts/dependencies/openzeppelin/contracts/SafeERC20.sol";
-import {IMiniPoolAddressesProvider} from
-    "../../../../contracts/interfaces/IMiniPoolAddressesProvider.sol";
+import {
+    IMiniPoolAddressesProvider
+} from "../../../../contracts/interfaces/IMiniPoolAddressesProvider.sol";
 import {IFlowLimiter} from "../../../../contracts/interfaces/base/IFlowLimiter.sol";
 import {ILendingPool} from "../../../../contracts/interfaces/ILendingPool.sol";
-import {VersionedInitializable} from
-    "../../../../contracts/protocol/libraries/upgradeability/VersionedInitializable.sol";
+import {
+    VersionedInitializable
+} from "../../../../contracts/protocol/libraries/upgradeability/VersionedInitializable.sol";
 import {Helpers} from "../../../../contracts/protocol/libraries/helpers/Helpers.sol";
 import {Errors} from "../../../../contracts/protocol/libraries/helpers/Errors.sol";
 import {WadRayMath} from "../../../../contracts/protocol/libraries/math/WadRayMath.sol";
@@ -19,23 +22,27 @@ import {PercentageMath} from "../../../../contracts/protocol/libraries/math/Perc
 import {MiniPoolReserveLogic} from "./logic/MiniPoolReserveLogic.sol";
 import {MiniPoolGenericLogic} from "./logic/MiniPoolGenericLogic.sol";
 import {MiniPoolValidationLogic} from "./logic/MiniPoolValidationLogic.sol";
-import {ReserveConfiguration} from
-    "../../../../contracts/protocol/libraries/configuration/ReserveConfiguration.sol";
-import {UserConfiguration} from
-    "../../../../contracts/protocol/libraries/configuration/UserConfiguration.sol";
+import {
+    ReserveConfiguration
+} from "../../../../contracts/protocol/libraries/configuration/ReserveConfiguration.sol";
+import {
+    UserConfiguration
+} from "../../../../contracts/protocol/libraries/configuration/UserConfiguration.sol";
 import {DataTypes} from "../../../../contracts/protocol/libraries/types/DataTypes.sol";
 import {MiniPoolStorage} from "./MiniPoolStorage.sol";
 import {IMiniPool} from "../../../../contracts/interfaces/IMiniPool.sol";
-import {ATokenNonRebasing} from
-    "../../../../contracts/protocol/tokenization/ERC20/ATokenNonRebasing.sol";
+import {
+    ATokenNonRebasing
+} from "../../../../contracts/protocol/tokenization/ERC20/ATokenNonRebasing.sol";
 import {MiniPoolDepositLogic} from "./logic/MiniPoolDepositLogic.sol";
 import {MiniPoolWithdrawLogic} from "./logic/MiniPoolWithdrawLogic.sol";
 import {MiniPoolBorrowLogic} from "./logic/MiniPoolBorrowLogic.sol";
 import {MiniPoolFlashLoanLogic} from "./logic/MiniPoolFlashLoanLogic.sol";
 import {MiniPoolLiquidationLogic} from "./logic/MiniPoolLiquidationLogic.sol";
 import {IMiniPoolRewarder} from "../../../../contracts/interfaces/IMiniPoolRewarder.sol";
-import {IMiniPoolAddressProviderUpdatable} from
-    "../../../../contracts/interfaces/IMiniPoolAddressProviderUpdatable.sol";
+import {
+    IMiniPoolAddressProviderUpdatable
+} from "../../../../contracts/interfaces/IMiniPoolAddressProviderUpdatable.sol";
 
 /**
  * @title MiniPool contract
@@ -241,18 +248,18 @@ contract MiniPool is
         ) {
             address underlying = ATokenNonRebasing(asset).UNDERLYING_ASSET_ADDRESS();
             vars.LendingPool = _addressesProvider.getLendingPool();
-            ILendingPool(vars.LendingPool).miniPoolBorrow(
-                underlying,
-                ATokenNonRebasing(asset).convertToAssets(amount - vars.availableLiquidity), // amount - availableLiquidity converted to asset
-                ATokenNonRebasing(asset).ATOKEN_ADDRESS()
-            );
+            ILendingPool(vars.LendingPool)
+                .miniPoolBorrow(
+                    underlying,
+                    ATokenNonRebasing(asset).convertToAssets(amount - vars.availableLiquidity), // amount - availableLiquidity converted to asset
+                    ATokenNonRebasing(asset).ATOKEN_ADDRESS()
+                );
 
             vars.amountReceived = IERC20Detailed(underlying).balanceOf(address(this));
 
             IERC20Detailed(underlying).forceApprove(vars.LendingPool, vars.amountReceived);
-            ILendingPool(vars.LendingPool).deposit(
-                underlying, true, vars.amountReceived, address(this)
-            );
+            ILendingPool(vars.LendingPool)
+                .deposit(underlying, true, vars.amountReceived, address(this));
 
             vars.amountReceived = IERC20Detailed(asset).balanceOf(address(this));
             assert(vars.amountReceived >= amount - vars.availableLiquidity);
@@ -411,8 +418,8 @@ contract MiniPool is
 
         if (IAERC6909(aErc6909).isTranche(reserve.aTokenID)) {
             underlyingAsset = ATokenNonRebasing(asset).UNDERLYING_ASSET_ADDRESS();
-            uint256 underlyingDebt =
-                ATokenNonRebasing(asset).convertToShares(getCurrentLendingPoolDebt(underlyingAsset)); // share
+            uint256 underlyingDebt = ATokenNonRebasing(asset)
+                .convertToShares(getCurrentLendingPoolDebt(underlyingAsset)); // share
 
             if (underlyingDebt != 0) {
                 MiniPoolWithdrawLogic.internalWithdraw(
@@ -425,13 +432,13 @@ contract MiniPool is
                     _addressesProvider
                 ); // MUST use share
 
-                ILendingPool(_addressesProvider.getLendingPool()).repayWithATokens(
-                    underlyingAsset,
-                    true,
-                    IERC20Detailed(ATokenNonRebasing(asset).ATOKEN_ADDRESS()).balanceOf(
-                        address(this)
-                    )
-                ); // MUST use asset
+                ILendingPool(_addressesProvider.getLendingPool())
+                    .repayWithATokens(
+                        underlyingAsset,
+                        true,
+                        IERC20Detailed(ATokenNonRebasing(asset).ATOKEN_ADDRESS())
+                            .balanceOf(address(this))
+                    ); // MUST use asset
             }
             uint256 remainingBalance =
                 IAERC6909(aErc6909).balanceOf(address(this), reserve.aTokenID);
@@ -531,18 +538,21 @@ contract MiniPool is
             uint256 healthFactor
         )
     {
-        (totalCollateralETH, totalDebtETH, ltv, currentLiquidationThreshold, healthFactor) =
-        MiniPoolGenericLogic.calculateUserAccountData(
-            user,
-            _reserves,
-            _usersConfig[user],
-            _reservesList,
-            _reservesCount,
-            _addressesProvider.getPriceOracle()
-        );
+        (
+            totalCollateralETH, totalDebtETH, ltv, currentLiquidationThreshold, healthFactor
+        ) =
+            MiniPoolGenericLogic.calculateUserAccountData(
+                user,
+                _reserves,
+                _usersConfig[user],
+                _reservesList,
+                _reservesCount,
+                _addressesProvider.getPriceOracle()
+            );
 
-        availableBorrowsETH =
-            MiniPoolGenericLogic.calculateAvailableBorrowsETH(totalCollateralETH, totalDebtETH, ltv);
+        availableBorrowsETH = MiniPoolGenericLogic.calculateAvailableBorrowsETH(
+            totalCollateralETH, totalDebtETH, ltv
+        );
     }
 
     /**

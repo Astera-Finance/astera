@@ -104,21 +104,20 @@ abstract contract LendingPoolFixtures is Common {
         uint256 borrowTokenBalanceBeforeBorrow = borrowToken.token.balanceOf(borrower);
         uint256 debtBalanceBefore = borrowToken.debtToken.balanceOf(borrower);
 
-        DynamicData memory dynamicData = deployedContracts
-            .asteraDataProvider
+        DynamicData memory dynamicData = deployedContracts.asteraDataProvider
             .getLpReserveDynamicData(address(borrowToken.token), true);
 
-        StaticData memory staticData = deployedContracts.asteraDataProvider.getLpReserveStaticData(
-            address(borrowToken.token), true
-        );
-        (, uint256 expectedBorrowRate) = deployedContracts.volatileStrategy.calculateInterestRates(
-            address(borrowToken.token),
-            address(borrowToken.aToken),
-            0,
-            amountToBorrow,
-            dynamicData.totalVariableDebt + amountToBorrow,
-            staticData.asteraReserveFactor
-        );
+        StaticData memory staticData = deployedContracts.asteraDataProvider
+            .getLpReserveStaticData(address(borrowToken.token), true);
+        (, uint256 expectedBorrowRate) = deployedContracts.volatileStrategy
+            .calculateInterestRates(
+                address(borrowToken.token),
+                address(borrowToken.aToken),
+                0,
+                amountToBorrow,
+                dynamicData.totalVariableDebt + amountToBorrow,
+                staticData.asteraReserveFactor
+            );
         console2.log(
             "1. AToken balance: ", borrowToken.token.balanceOf(address(borrowToken.aToken))
         );
@@ -128,9 +127,8 @@ abstract contract LendingPoolFixtures is Common {
         emit Borrow(
             address(borrowToken.token), borrower, borrower, amountToBorrow, expectedBorrowRate
         );
-        deployedContracts.lendingPool.borrow(
-            address(borrowToken.token), true, amountToBorrow, borrower
-        );
+        deployedContracts.lendingPool
+            .borrow(address(borrowToken.token), true, amountToBorrow, borrower);
         vm.stopPrank();
         console2.log(
             "2. AToken balance: ", borrowToken.token.balanceOf(address(borrowToken.aToken))
@@ -173,12 +171,15 @@ abstract contract LendingPoolFixtures is Common {
         vm.startPrank(user);
         uint256 wbtcBalanceBeforeRepay = borrowToken.token.balanceOf(address(this));
         uint256 wbtcDebtBeforeRepay = borrowToken.debtToken.balanceOf(address(this));
-        borrowToken.token.approve(
-            address(deployedContracts.lendingPool), maxBorrowTokenToBorrowInCollateralUnit
-        );
-        deployedContracts.lendingPool.repay(
-            address(borrowToken.token), true, maxBorrowTokenToBorrowInCollateralUnit, address(this)
-        );
+        borrowToken.token
+            .approve(address(deployedContracts.lendingPool), maxBorrowTokenToBorrowInCollateralUnit);
+        deployedContracts.lendingPool
+            .repay(
+                address(borrowToken.token),
+                true,
+                maxBorrowTokenToBorrowInCollateralUnit,
+                address(this)
+            );
         /* Main user's balance should be the same as before borrowing */
         assertEq(
             wbtcBalanceBeforeRepay,

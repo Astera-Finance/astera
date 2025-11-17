@@ -1,8 +1,9 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.23;
 
-import {VersionedInitializable} from
-    "contracts/protocol/libraries/upgradeability/VersionedInitializable.sol";
+import {
+    VersionedInitializable
+} from "contracts/protocol/libraries/upgradeability/VersionedInitializable.sol";
 
 import {IMiniPoolAddressesProvider} from "contracts/interfaces/IMiniPoolAddressesProvider.sol";
 

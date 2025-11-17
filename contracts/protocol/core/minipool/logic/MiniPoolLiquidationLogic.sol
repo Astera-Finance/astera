@@ -1,35 +1,46 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.23;
 
-import {IMiniPoolAddressesProvider} from
-    "../../../../../contracts/interfaces/IMiniPoolAddressesProvider.sol";
+import {
+    IMiniPoolAddressesProvider
+} from "../../../../../contracts/interfaces/IMiniPoolAddressesProvider.sol";
 import {Errors} from "../../../../../contracts/protocol/libraries/helpers/Errors.sol";
 import {IERC20} from "../../../../../contracts/dependencies/openzeppelin/contracts/IERC20.sol";
 import {IAERC6909} from "../../../../../contracts/interfaces/IAERC6909.sol";
 import {IOracle} from "../../../../../contracts/interfaces/IOracle.sol";
-import {MiniPoolGenericLogic} from
-    "../../../../../contracts/protocol/core/minipool/logic/MiniPoolGenericLogic.sol";
+import {
+    MiniPoolGenericLogic
+} from "../../../../../contracts/protocol/core/minipool/logic/MiniPoolGenericLogic.sol";
 import {Helpers} from "../../../../../contracts/protocol/libraries/helpers/Helpers.sol";
 import {WadRayMath} from "../../../../../contracts/protocol/libraries/math/WadRayMath.sol";
 import {PercentageMath} from "../../../../../contracts/protocol/libraries/math/PercentageMath.sol";
-import {SafeERC20} from "../../../../../contracts/dependencies/openzeppelin/contracts/SafeERC20.sol";
+import {
+    SafeERC20
+} from "../../../../../contracts/dependencies/openzeppelin/contracts/SafeERC20.sol";
 import {Errors} from "../../../../../contracts/protocol/libraries/helpers/Errors.sol";
-import {MiniPoolValidationLogic} from
-    "../../../../../contracts/protocol/core/minipool/logic/MiniPoolValidationLogic.sol";
-import {UserConfiguration} from
-    "../../../../../contracts/protocol/libraries/configuration/UserConfiguration.sol";
-import {ReserveConfiguration} from
-    "../../../../../contracts/protocol/libraries/configuration/ReserveConfiguration.sol";
-import {MiniPoolReserveLogic} from
-    "../../../../../contracts/protocol/core/minipool/logic/MiniPoolReserveLogic.sol";
+import {
+    MiniPoolValidationLogic
+} from "../../../../../contracts/protocol/core/minipool/logic/MiniPoolValidationLogic.sol";
+import {
+    UserConfiguration
+} from "../../../../../contracts/protocol/libraries/configuration/UserConfiguration.sol";
+import {
+    ReserveConfiguration
+} from "../../../../../contracts/protocol/libraries/configuration/ReserveConfiguration.sol";
+import {
+    MiniPoolReserveLogic
+} from "../../../../../contracts/protocol/core/minipool/logic/MiniPoolReserveLogic.sol";
 import {DataTypes} from "../../../../../contracts/protocol/libraries/types/DataTypes.sol";
 import {ILendingPool} from "../../../../../contracts/interfaces/ILendingPool.sol";
-import {ILendingPoolConfigurator} from
-    "../../../../../contracts/interfaces/ILendingPoolConfigurator.sol";
-import {ILendingPoolAddressesProvider} from
-    "../../../../../contracts/interfaces/ILendingPoolAddressesProvider.sol";
-import {ATokenNonRebasing} from
-    "../../../../../contracts/protocol/tokenization/ERC6909/ATokenERC6909.sol";
+import {
+    ILendingPoolConfigurator
+} from "../../../../../contracts/interfaces/ILendingPoolConfigurator.sol";
+import {
+    ILendingPoolAddressesProvider
+} from "../../../../../contracts/interfaces/ILendingPoolAddressesProvider.sol";
+import {
+    ATokenNonRebasing
+} from "../../../../../contracts/protocol/tokenization/ERC6909/ATokenERC6909.sol";
 
 /**
  * @title MiniPoolLiquidationLogic
@@ -125,7 +136,9 @@ library MiniPoolLiquidationLogic {
      */
     function liquidationCall(
         mapping(address => DataTypes.MiniPoolReserveData) storage reserves,
-        mapping(address => DataTypes.UserConfigurationMap) storage usersConfig,
+        mapping(
+            address => DataTypes.UserConfigurationMap
+        ) storage usersConfig,
         mapping(uint256 => address) storage reservesList,
         liquidationCallParams memory params
     ) external {
@@ -167,15 +180,15 @@ library MiniPoolLiquidationLogic {
             : params.debtToCover;
 
         (vars.maxCollateralToLiquidate, vars.debtAmountNeeded) =
-        _calculateAvailableCollateralToLiquidate(
-            addressesProvider,
-            collateralReserve,
-            debtReserve,
-            params.collateralAsset,
-            params.debtAsset,
-            vars.actualDebtToLiquidate,
-            vars.userCollateralBalance
-        );
+            _calculateAvailableCollateralToLiquidate(
+                addressesProvider,
+                collateralReserve,
+                debtReserve,
+                params.collateralAsset,
+                params.debtAsset,
+                vars.actualDebtToLiquidate,
+                vars.userCollateralBalance
+            );
 
         // If `debtAmountNeeded` < `actualDebtToLiquidate`, there isn't enough
         // collateral to cover the actual amount that is being liquidated, hence we liquidate
@@ -198,23 +211,25 @@ library MiniPoolLiquidationLogic {
         debtReserve.updateState();
 
         if (vars.userVariableDebt >= vars.actualDebtToLiquidate) {
-            vars.atoken6909.burn(
-                params.user,
-                msg.sender,
-                vars.debtID,
-                vars.actualDebtToLiquidate,
-                false,
-                debtReserve.variableBorrowIndex
-            );
+            vars.atoken6909
+                .burn(
+                    params.user,
+                    msg.sender,
+                    vars.debtID,
+                    vars.actualDebtToLiquidate,
+                    false,
+                    debtReserve.variableBorrowIndex
+                );
         } else {
-            vars.atoken6909.burn(
-                params.user,
-                msg.sender,
-                vars.debtID,
-                vars.userVariableDebt,
-                false,
-                debtReserve.variableBorrowIndex
-            );
+            vars.atoken6909
+                .burn(
+                    params.user,
+                    msg.sender,
+                    vars.debtID,
+                    vars.userVariableDebt,
+                    false,
+                    debtReserve.variableBorrowIndex
+                );
         }
 
         debtReserve.updateInterestRates(params.debtAsset, vars.actualDebtToLiquidate, 0);
@@ -222,9 +237,10 @@ library MiniPoolLiquidationLogic {
         if (params.receiveAToken) {
             vars.liquidatorPreviousATokenBalance =
                 vars.atoken6909.balanceOf(msg.sender, vars.aTokenID);
-            vars.atoken6909.transferOnLiquidation(
-                params.user, msg.sender, vars.aTokenID, vars.maxCollateralToLiquidate
-            );
+            vars.atoken6909
+                .transferOnLiquidation(
+                    params.user, msg.sender, vars.aTokenID, vars.maxCollateralToLiquidate
+                );
 
             if (vars.liquidatorPreviousATokenBalance == 0) {
                 DataTypes.UserConfigurationMap storage liquidatorConfig = usersConfig[msg.sender];
@@ -238,14 +254,15 @@ library MiniPoolLiquidationLogic {
             );
 
             // Burn the equivalent amount of aToken, sending the underlying to the liquidator.
-            vars.atoken6909.burn(
-                params.user,
-                msg.sender,
-                vars.aTokenID,
-                vars.maxCollateralToLiquidate,
-                params.unwrapCollateralToLpUnderlying,
-                collateralReserve.liquidityIndex
-            );
+            vars.atoken6909
+                .burn(
+                    params.user,
+                    msg.sender,
+                    vars.aTokenID,
+                    vars.maxCollateralToLiquidate,
+                    params.unwrapCollateralToLpUnderlying,
+                    collateralReserve.liquidityIndex
+                );
         }
 
         // If the collateral being liquidated is equal to the user balance,
@@ -259,9 +276,10 @@ library MiniPoolLiquidationLogic {
         if (
             params.wrapDebtToLpAtoken
                 && ILendingPoolConfigurator(
-                    ILendingPoolAddressesProvider(addressesProvider.getLendingPoolAddressesProvider())
-                        .getLendingPoolConfigurator()
-                ).getIsAToken(params.debtAsset)
+                        ILendingPoolAddressesProvider(
+                                addressesProvider.getLendingPoolAddressesProvider()
+                            ).getLendingPoolConfigurator()
+                    ).getIsAToken(params.debtAsset)
         ) {
             address underlying = ATokenNonRebasing(params.debtAsset).UNDERLYING_ASSET_ADDRESS();
             address lendingPool = addressesProvider.getLendingPool();
@@ -270,19 +288,18 @@ library MiniPoolLiquidationLogic {
 
             IERC20(underlying).safeTransferFrom(msg.sender, address(this), underlyingAmount);
             IERC20(underlying).forceApprove(lendingPool, underlyingAmount);
-            ILendingPool(lendingPool).deposit(
-                underlying, true, underlyingAmount, address(vars.atoken6909)
-            );
+            ILendingPool(lendingPool)
+                .deposit(underlying, true, underlyingAmount, address(vars.atoken6909));
         } else {
             // Transfers the debt asset being repaid to the aToken, where the liquidity is kept.
-            IERC20(params.debtAsset).safeTransferFrom(
-                msg.sender, address(vars.atoken6909), vars.actualDebtToLiquidate
-            );
+            IERC20(params.debtAsset)
+                .safeTransferFrom(msg.sender, address(vars.atoken6909), vars.actualDebtToLiquidate);
         }
 
-        vars.atoken6909.handleRepayment(
-            msg.sender, params.user, debtReserve.aTokenID, vars.actualDebtToLiquidate
-        );
+        vars.atoken6909
+            .handleRepayment(
+                msg.sender, params.user, debtReserve.aTokenID, vars.actualDebtToLiquidate
+            );
 
         emit LiquidationCall(
             params.collateralAsset,
@@ -346,18 +363,18 @@ library MiniPoolLiquidationLogic {
 
         // This is the maximum possible amount of the selected collateral that can be liquidated, given the
         // max amount of liquidatable debt.
-        vars.maxAmountCollateralToLiquidate = (
-            (vars.debtAssetPrice * debtToCover * (10 ** vars.collateralDecimals)).percentMul(
-                vars.liquidationBonus
-            )
-        ) / (vars.collateralPrice * (10 ** vars.debtAssetDecimals));
+        vars.maxAmountCollateralToLiquidate =
+            ((vars.debtAssetPrice * debtToCover * (10 ** vars.collateralDecimals))
+                    .percentMul(vars.liquidationBonus))
+                / (vars.collateralPrice * (10 ** vars.debtAssetDecimals));
 
         if (vars.maxAmountCollateralToLiquidate > userCollateralBalance) {
             collateralAmount = userCollateralBalance;
-            debtAmountNeeded = (
-                (vars.collateralPrice * collateralAmount * (10 ** vars.debtAssetDecimals))
-                    / (vars.debtAssetPrice * (10 ** vars.collateralDecimals))
-            ).percentDiv(vars.liquidationBonus);
+            debtAmountNeeded = ((vars.collateralPrice
+                        * collateralAmount
+                        * (10 ** vars.debtAssetDecimals))
+                    / (vars.debtAssetPrice * (10 ** vars.collateralDecimals)))
+            .percentDiv(vars.liquidationBonus);
         } else {
             collateralAmount = vars.maxAmountCollateralToLiquidate;
             debtAmountNeeded = debtToCover;

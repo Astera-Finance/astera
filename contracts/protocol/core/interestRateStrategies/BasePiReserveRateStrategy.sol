@@ -4,8 +4,9 @@ pragma solidity ^0.8.23;
 import {WadRayMath} from "../../../../contracts/protocol/libraries/math/WadRayMath.sol";
 import {PercentageMath} from "../../../../contracts/protocol/libraries/math/PercentageMath.sol";
 import {DataTypes} from "../../../../contracts/protocol/libraries/types/DataTypes.sol";
-import {ReserveConfiguration} from
-    "../../../../contracts/protocol/libraries/configuration/ReserveConfiguration.sol";
+import {
+    ReserveConfiguration
+} from "../../../../contracts/protocol/libraries/configuration/ReserveConfiguration.sol";
 import {Ownable} from "../../../../contracts/dependencies/openzeppelin/contracts/Ownable.sol";
 import {Errors} from "../../../../contracts/protocol/libraries/helpers/Errors.sol";
 
@@ -327,9 +328,8 @@ abstract contract BasePiReserveRateStrategy is Ownable {
         uint256 utilizationRate,
         uint256 reserveFactor
     ) internal pure returns (uint256) {
-        return currentVariableBorrowRate.rayMul(utilizationRate).percentMul(
-            PercentageMath.PERCENTAGE_FACTOR - reserveFactor
-        );
+        return currentVariableBorrowRate.rayMul(utilizationRate)
+            .percentMul(PercentageMath.PERCENTAGE_FACTOR - reserveFactor);
     }
 
     /**

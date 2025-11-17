@@ -1,11 +1,13 @@
 // SPDX-License-Identifier: agpl-3.0
 pragma solidity ^0.8.23;
 
-import {ILendingPoolAddressesProvider} from
-    "../../../../contracts/interfaces/ILendingPoolAddressesProvider.sol";
+import {
+    ILendingPoolAddressesProvider
+} from "../../../../contracts/interfaces/ILendingPoolAddressesProvider.sol";
 import {DataTypes} from "../../../../contracts/protocol/libraries/types/DataTypes.sol";
-import {EnumerableSet} from
-    "../../../../lib/openzeppelin-contracts/contracts/utils/structs/EnumerableSet.sol";
+import {
+    EnumerableSet
+} from "../../../../lib/openzeppelin-contracts/contracts/utils/structs/EnumerableSet.sol";
 
 /**
  * @title LendingPoolStorage

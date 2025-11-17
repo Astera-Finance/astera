@@ -54,9 +54,9 @@ contract MiniPoolProp is PropertiesBase {
         );
 
         lastLiquidityIndexMP[address(minipool)][address(asset)] =
-            minipool.getReserveData(address(asset)).liquidityIndex;
+        minipool.getReserveData(address(asset)).liquidityIndex;
         lastVariableBorrowIndexMP[address(minipool)][address(asset)] =
-            minipool.getReserveData(address(asset)).variableBorrowIndex;
+        minipool.getReserveData(address(asset)).variableBorrowIndex;
 
         assertWithMsg(success, "500");
 
@@ -121,9 +121,9 @@ contract MiniPoolProp is PropertiesBase {
         require(success);
 
         lastLiquidityIndexMP[address(minipool)][address(asset)] =
-            minipool.getReserveData(address(asset)).liquidityIndex;
+        minipool.getReserveData(address(asset)).liquidityIndex;
         lastVariableBorrowIndexMP[address(minipool)][address(asset)] =
-            minipool.getReserveData(address(asset)).variableBorrowIndex;
+        minipool.getReserveData(address(asset)).variableBorrowIndex;
 
         if (healthFactorAfter < 1e18) {
             assertWithMsg(!success, "505");
@@ -212,9 +212,8 @@ contract MiniPoolProp is PropertiesBase {
         // So `balanceOf()` used in `debtTokenBalanceBefore` is not coherent for 509 property with the one used in
         // `debtTokenBalanceAfter`.
         if (
-            IFlowLimiter(miniPoolProvider.getFlowLimiter()).currentFlow(
-                address(asset), address(minipool)
-            ) == 0
+            IFlowLimiter(miniPoolProvider.getFlowLimiter())
+                    .currentFlow(address(asset), address(minipool)) == 0
         ) {
             assertEqApprox(
                 aToken6909.balanceOf(address(onBehalfOf), debtTokenID) - debtTokenBalanceBefore,
@@ -234,9 +233,9 @@ contract MiniPoolProp is PropertiesBase {
         }
 
         lastLiquidityIndexMP[address(minipool)][address(asset)] =
-            minipool.getReserveData(address(asset)).liquidityIndex;
+        minipool.getReserveData(address(asset)).liquidityIndex;
         lastVariableBorrowIndexMP[address(minipool)][address(asset)] =
-            minipool.getReserveData(address(asset)).variableBorrowIndex;
+        minipool.getReserveData(address(asset)).variableBorrowIndex;
     }
 
     /// @custom:invariant 511 - `repay()` must decrease the onBehalfOf debtToken balance by `amount`.
@@ -285,9 +284,9 @@ contract MiniPoolProp is PropertiesBase {
         require(success);
 
         lastLiquidityIndexMP[address(minipool)][address(asset)] =
-            minipool.getReserveData(address(asset)).liquidityIndex;
+        minipool.getReserveData(address(asset)).liquidityIndex;
         lastVariableBorrowIndexMP[address(minipool)][address(asset)] =
-            minipool.getReserveData(address(asset)).variableBorrowIndex;
+        minipool.getReserveData(address(asset)).variableBorrowIndex;
 
         uint256 debtTokenBalanceAfter = aToken6909.balanceOf(address(onBehalfOf), debtTokenID);
         uint256 assetBalanceAfter = isAToken
@@ -335,7 +334,7 @@ contract MiniPoolProp is PropertiesBase {
         require(success);
 
         isUseReserveAsCollateralDeactivatedMP[randMinipool][address(user)][address(asset)] =
-            !randIsColl;
+        !randIsColl;
 
         (,,,,, uint256 healthFactorAfter) = minipool.getUserAccountData(address(user));
         if (randIsColl) {
@@ -349,9 +348,9 @@ contract MiniPoolProp is PropertiesBase {
         }
 
         lastLiquidityIndexMP[address(minipool)][address(asset)] =
-            minipool.getReserveData(address(asset)).liquidityIndex;
+        minipool.getReserveData(address(asset)).liquidityIndex;
         lastVariableBorrowIndexMP[address(minipool)][address(asset)] =
-            minipool.getReserveData(address(asset)).variableBorrowIndex;
+        minipool.getReserveData(address(asset)).variableBorrowIndex;
     }
 
     struct LocalVars_RandFlashloanMP {
@@ -402,15 +401,14 @@ contract MiniPoolProp is PropertiesBase {
         for (uint256 i = 0; i < v.randNbAssets; i++) {
             v.assetBalanceBefore[i] = MintableERC20(allTokens(i)).balanceOf(address(v.user));
             v.assetsFl[i] = allTokens(i);
-            v.amountsFl[i] =
-                clampBetween(seedAmt, 1, minipool.getReserveData(allTokens(i)).currentLiquidityRate);
+            v.amountsFl[i] = clampBetween(
+                seedAmt, 1, minipool.getReserveData(allTokens(i)).currentLiquidityRate
+            );
             v.modesFl[i] = v.randMode;
         }
 
         IMiniPool.FlashLoanParams memory flp = IMiniPool.FlashLoanParams({
-            receiverAddress: address(v.user),
-            assets: v.assetsFl,
-            onBehalfOf: address(v.user)
+            receiverAddress: address(v.user), assets: v.assetsFl, onBehalfOf: address(v.user)
         });
 
         v.user.execFlMP(address(minipool), flp, v.amountsFl, v.modesFl, v.params);
@@ -427,9 +425,9 @@ contract MiniPoolProp is PropertiesBase {
         for (uint256 i = 0; i < totalNbTokens * 2; i++) {
             address asset = allTokens(i);
             lastLiquidityIndexMP[address(minipool)][asset] =
-                minipool.getReserveData(asset).liquidityIndex;
+            minipool.getReserveData(asset).liquidityIndex;
             lastVariableBorrowIndexMP[address(minipool)][asset] =
-                minipool.getReserveData(asset).variableBorrowIndex;
+            minipool.getReserveData(asset).variableBorrowIndex;
         }
     }
 
@@ -446,9 +444,8 @@ contract MiniPoolProp is PropertiesBase {
                 address asset = allTokens(i);
 
                 if (
-                    IFlowLimiter(miniPoolProvider.getFlowLimiter()).currentFlow(
-                        address(asset), address(minipool)
-                    ) == 0
+                    IFlowLimiter(miniPoolProvider.getFlowLimiter())
+                            .currentFlow(address(asset), address(minipool)) == 0
                 ) {
                     return;
                 }
@@ -567,9 +564,9 @@ contract MiniPoolProp is PropertiesBase {
                         minipool.getUserConfiguration(address(user));
                     if (
                         aToken6909.balanceOf(address(user), aTokenId) != 0
-                            && !isUseReserveAsCollateralDeactivatedMP[j][address(user)][address(
-                                allTokens(k)
-                            )]
+                            && !isUseReserveAsCollateralDeactivatedMP[
+                                j
+                            ][address(user)][address(allTokens(k))]
                     ) {
                         assertWithMsg(
                             UserConfiguration.isUsingAsCollateralOrBorrowing(userConfig, k), "521"
@@ -615,9 +612,8 @@ contract MiniPoolProp is PropertiesBase {
 
             for (uint256 k = 0; k < totalNbTokens; k++) {
                 address asset = address(assets[k]);
-                uint256 currentFlow = IFlowLimiter(miniPoolProvider.getFlowLimiter()).currentFlow(
-                    asset, address(minipool)
-                );
+                uint256 currentFlow = IFlowLimiter(miniPoolProvider.getFlowLimiter())
+                    .currentFlow(asset, address(minipool));
 
                 if (currentFlow != 0) {
                     uint256 minipoolRate = minipool.getDebtInterestRate(asset);
@@ -650,9 +646,8 @@ contract MiniPoolProp is PropertiesBase {
 
             for (uint256 k = 0; k < totalNbTokens; k++) {
                 address asset = address(assets[k]);
-                uint256 currentFlow = IFlowLimiter(miniPoolProvider.getFlowLimiter()).currentFlow(
-                    asset, address(minipool)
-                );
+                uint256 currentFlow = IFlowLimiter(miniPoolProvider.getFlowLimiter())
+                    .currentFlow(asset, address(minipool));
 
                 if (currentFlow != 0) {
                     assertWithMsg(pool.isMinipoolFlowBorrowing(asset, address(minipool)), "525");

@@ -2,8 +2,9 @@
 pragma solidity ^0.8.23;
 
 import {IERC20} from "../../../../contracts/dependencies/openzeppelin/contracts/IERC20.sol";
-import {IERC20Detailed} from
-    "../../../../contracts/dependencies/openzeppelin/contracts/IERC20Detailed.sol";
+import {
+    IERC20Detailed
+} from "../../../../contracts/dependencies/openzeppelin/contracts/IERC20Detailed.sol";
 import {IRewarder} from "../../../../contracts/interfaces/IRewarder.sol";
 
 /**
@@ -191,9 +192,8 @@ abstract contract IncentivizedERC20 is IERC20, IERC20Detailed {
             uint256 currentTotalSupply = _totalSupply;
             _getIncentivesController().handleAction(sender, currentTotalSupply, oldSenderBalance);
             if (sender != recipient) {
-                _getIncentivesController().handleAction(
-                    recipient, currentTotalSupply, oldRecipientBalance
-                );
+                _getIncentivesController()
+                    .handleAction(recipient, currentTotalSupply, oldRecipientBalance);
             }
         }
     }

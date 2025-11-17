@@ -1,19 +1,22 @@
 // SPDX-License-Identifier: agpl-3.0
 pragma solidity ^0.8.23;
 
-import {IReserveInterestRateStrategy} from
-    "../../../contracts/interfaces/IReserveInterestRateStrategy.sol";
+import {
+    IReserveInterestRateStrategy
+} from "../../../contracts/interfaces/IReserveInterestRateStrategy.sol";
 import {WadRayMath} from "../../../contracts/protocol/libraries/math/WadRayMath.sol";
 import {PercentageMath} from "../../../contracts/protocol/libraries/math/PercentageMath.sol";
-import {ILendingPoolAddressesProvider} from
-    "../../../contracts/interfaces/ILendingPoolAddressesProvider.sol";
+import {
+    ILendingPoolAddressesProvider
+} from "../../../contracts/interfaces/ILendingPoolAddressesProvider.sol";
 import {IERC20} from "../../../contracts/dependencies/openzeppelin/contracts/IERC20.sol";
 import {IAToken} from "../../../contracts/interfaces/IAToken.sol";
 import {Errors} from "../../../contracts/protocol/libraries/helpers/Errors.sol";
 import {DataTypes} from "../../../contracts/protocol/libraries/types/DataTypes.sol";
 import {ILendingPool} from "../../../contracts/interfaces/ILendingPool.sol";
-import {ReserveConfiguration} from
-    "../../../contracts/protocol/libraries/configuration/ReserveConfiguration.sol";
+import {
+    ReserveConfiguration
+} from "../../../contracts/protocol/libraries/configuration/ReserveConfiguration.sol";
 
 /**
  * @title MockLendingpoolReserveInterestRateStrategy contract
@@ -80,8 +83,8 @@ contract MockLendingpoolReserveInterestRateStrategy {
 
     function getAsteraReserveFactor(address _asset) public view returns (uint256) {
         DataTypes.ReserveConfigurationMap memory reserve = ILendingPool(
-            ILendingPoolAddressesProvider(addressesProvider).getLendingPool()
-        ).getConfiguration(_asset, true);
+                ILendingPoolAddressesProvider(addressesProvider).getLendingPool()
+            ).getConfiguration(_asset, true);
         return _getAsteraReserveFactor(reserve);
     }
 

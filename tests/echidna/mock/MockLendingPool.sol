@@ -21,8 +21,9 @@ contract MockLendingPool is LendingPool {
         params.reservesCount = _reservesCount;
         params.oracle = oracle;
 
-        (uint256 userCollateralBalanceETH, uint256 userBorrowBalanceETH,,,) = BorrowLogic
-            .calculateUserAccountDataVolatile(params, _reserves, _usersConfig[addUser], _reservesList);
+        (uint256 userCollateralBalanceETH, uint256 userBorrowBalanceETH,,,) = BorrowLogic.calculateUserAccountDataVolatile(
+            params, _reserves, _usersConfig[addUser], _reservesList
+        );
 
         require(userCollateralBalanceETH > 0);
         require(userCollateralBalanceETH >= userBorrowBalanceETH);

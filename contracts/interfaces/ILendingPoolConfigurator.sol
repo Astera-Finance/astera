@@ -223,8 +223,7 @@ interface ILendingPoolConfigurator {
 
     function disableFlashloan(address asset, bool reserveType) external;
 
-    function setAsteraReserveFactor(address asset, bool reserveType, uint256 reserveFactor)
-        external;
+    function setAsteraReserveFactor(address asset, bool reserveType, uint256 reserveFactor) external;
 
     function setDepositCap(address asset, bool reserveType, uint256 depositCap) external;
 

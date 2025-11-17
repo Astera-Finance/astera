@@ -1,30 +1,39 @@
 // SPDX-License-Identifier: agpl-3.0
 pragma solidity 0.8.23;
 
-import {IERC20Detailed} from
-    "../../contracts/dependencies/openzeppelin/contracts/IERC20Detailed.sol";
+import {
+    IERC20Detailed
+} from "../../contracts/dependencies/openzeppelin/contracts/IERC20Detailed.sol";
 import {IAToken} from "../../contracts/interfaces/IAToken.sol";
-import {ILendingPoolAddressesProvider} from
-    "../../contracts/interfaces/ILendingPoolAddressesProvider.sol";
+import {
+    ILendingPoolAddressesProvider
+} from "../../contracts/interfaces/ILendingPoolAddressesProvider.sol";
 import {ILendingPool} from "../../contracts/interfaces/ILendingPool.sol";
 import {IVariableDebtToken} from "../../contracts/interfaces/IVariableDebtToken.sol";
-import {ReserveConfiguration} from
-    "../../contracts/protocol/libraries/configuration/ReserveConfiguration.sol";
-import {UserConfiguration} from
-    "../../contracts/protocol/libraries/configuration/UserConfiguration.sol";
-import {IMiniPoolAddressesProvider} from "../../contracts/interfaces/IMiniPoolAddressesProvider.sol";
+import {
+    ReserveConfiguration
+} from "../../contracts/protocol/libraries/configuration/ReserveConfiguration.sol";
+import {
+    UserConfiguration
+} from "../../contracts/protocol/libraries/configuration/UserConfiguration.sol";
+import {
+    IMiniPoolAddressesProvider
+} from "../../contracts/interfaces/IMiniPoolAddressesProvider.sol";
 import {IMiniPool} from "../../contracts/interfaces/IMiniPool.sol";
 import {IAERC6909} from "../../contracts/interfaces/IAERC6909.sol";
 import {ATokenNonRebasing} from "../../contracts/protocol/tokenization/ERC20/ATokenNonRebasing.sol";
 import {Ownable} from "../../contracts/dependencies/openzeppelin/contracts/Ownable.sol";
 import {Errors} from "../../contracts/protocol/libraries/helpers/Errors.sol";
 import {IFlowLimiter} from "../../contracts/interfaces/base/IFlowLimiter.sol";
-import {IPiReserveInterestRateStrategy} from
-    "../../contracts/interfaces/IPiReserveInterestRateStrategy.sol";
-import {DefaultReserveInterestRateStrategy} from
-    "../../contracts/protocol/core/interestRateStrategies/lendingpool/DefaultReserveInterestRateStrategy.sol";
-import {MiniPoolDefaultReserveInterestRateStrategy} from
-    "../../contracts/protocol/core/interestRateStrategies/minipool/MiniPoolDefaultReserveInterestRate.sol";
+import {
+    IPiReserveInterestRateStrategy
+} from "../../contracts/interfaces/IPiReserveInterestRateStrategy.sol";
+import {
+    DefaultReserveInterestRateStrategy
+} from "../../contracts/protocol/core/interestRateStrategies/lendingpool/DefaultReserveInterestRateStrategy.sol";
+import {
+    MiniPoolDefaultReserveInterestRateStrategy
+} from "../../contracts/protocol/core/interestRateStrategies/minipool/MiniPoolDefaultReserveInterestRate.sol";
 import {
     IAsteraDataProvider2,
     DataTypes,
@@ -199,8 +208,7 @@ contract AsteraDataProvider2 is Ownable, IAsteraDataProvider2 {
                 reserveData.reserveLiquidationThreshold,
                 reserveData.reserveLiquidationBonus,
                 reserveData.decimals,
-                reserveData.asteraReserveFactor,
-                , // miniPoolOwnerReserveFactor
+                reserveData.asteraReserveFactor,, // miniPoolOwnerReserveFactor
                 reserveData.depositCap
             ) = _decodeConfig(reserveConfig);
             reserveData.miniPoolOwnerReserveFactor = reserveConfig.getMinipoolOwnerReserveMemory();
@@ -247,39 +255,39 @@ contract AsteraDataProvider2 is Ownable, IAsteraDataProvider2 {
                 IPiReserveInterestRateStrategy(reserve.interestRateStrategyAddress);
             try strat._optimalUtilizationRate() {
                 reserveData.optimalUtilizationRate = IPiReserveInterestRateStrategy(
-                    reserve.interestRateStrategyAddress
-                )._optimalUtilizationRate();
+                        reserve.interestRateStrategyAddress
+                    )._optimalUtilizationRate();
                 reserveData.kp =
                     IPiReserveInterestRateStrategy(reserve.interestRateStrategyAddress)._kp();
                 reserveData.ki =
                     IPiReserveInterestRateStrategy(reserve.interestRateStrategyAddress)._ki();
                 reserveData.lastPiReserveRateStrategyUpdate = IPiReserveInterestRateStrategy(
-                    reserve.interestRateStrategyAddress
-                )._lastTimestamp();
+                        reserve.interestRateStrategyAddress
+                    )._lastTimestamp();
                 reserveData.errI =
                     IPiReserveInterestRateStrategy(reserve.interestRateStrategyAddress)._errI();
                 reserveData.minControllerError = IPiReserveInterestRateStrategy(
-                    reserve.interestRateStrategyAddress
-                )._minControllerError();
+                        reserve.interestRateStrategyAddress
+                    )._minControllerError();
                 reserveData.maxErrIAmp = IPiReserveInterestRateStrategy(
-                    reserve.interestRateStrategyAddress
-                )._maxErrIAmp();
+                        reserve.interestRateStrategyAddress
+                    )._maxErrIAmp();
             } catch {
                 reserveData.optimalUtilizationRate = DefaultReserveInterestRateStrategy(
-                    reserve.interestRateStrategyAddress
-                ).OPTIMAL_UTILIZATION_RATE();
+                        reserve.interestRateStrategyAddress
+                    ).OPTIMAL_UTILIZATION_RATE();
                 reserveData.baseVariableBorrowRate = DefaultReserveInterestRateStrategy(
-                    reserve.interestRateStrategyAddress
-                ).baseVariableBorrowRate();
+                        reserve.interestRateStrategyAddress
+                    ).baseVariableBorrowRate();
                 reserveData.variableRateSlope1 = DefaultReserveInterestRateStrategy(
-                    reserve.interestRateStrategyAddress
-                ).variableRateSlope1();
+                        reserve.interestRateStrategyAddress
+                    ).variableRateSlope1();
                 reserveData.variableRateSlope2 = DefaultReserveInterestRateStrategy(
-                    reserve.interestRateStrategyAddress
-                ).variableRateSlope2();
+                        reserve.interestRateStrategyAddress
+                    ).variableRateSlope2();
                 reserveData.maxVariableBorrowRate = DefaultReserveInterestRateStrategy(
-                    reserve.interestRateStrategyAddress
-                ).getMaxVariableBorrowRate();
+                        reserve.interestRateStrategyAddress
+                    ).getMaxVariableBorrowRate();
             }
         }
         return reserveData;
@@ -396,7 +404,9 @@ contract AsteraDataProvider2 is Ownable, IAsteraDataProvider2 {
         returns (AggregatedMiniPoolReservesData[] memory)
     {
         IMiniPool miniPool = IMiniPool(miniPoolAddress);
-        (address[] memory reserves, /*all types are false*/ ) = miniPool.getReservesList();
+        (
+            address[] memory reserves, /*all types are false*/
+        ) = miniPool.getReservesList();
         AggregatedMiniPoolReservesData[] memory reservesData =
             new AggregatedMiniPoolReservesData[](reserves.length);
         for (uint256 idx = 0; idx < reserves.length; idx++) {
@@ -422,8 +432,7 @@ contract AsteraDataProvider2 is Ownable, IAsteraDataProvider2 {
                 reserveData.reserveLiquidationThreshold,
                 reserveData.reserveLiquidationBonus,
                 reserveData.decimals,
-                reserveData.asteraReserveFactor,
-                , // miniPoolOwnerReserveFactor
+                reserveData.asteraReserveFactor,, // miniPoolOwnerReserveFactor
                 reserveData.depositCap
             ) = _decodeConfig(reserveConfig);
             reserveData.miniPoolOwnerReserveFactor = reserveConfig.getMinipoolOwnerReserveMemory();
@@ -472,39 +481,39 @@ contract AsteraDataProvider2 is Ownable, IAsteraDataProvider2 {
                 IPiReserveInterestRateStrategy(reserve.interestRateStrategyAddress);
             try strat._optimalUtilizationRate() {
                 reserveData.optimalUtilizationRate = IPiReserveInterestRateStrategy(
-                    reserve.interestRateStrategyAddress
-                )._optimalUtilizationRate();
+                        reserve.interestRateStrategyAddress
+                    )._optimalUtilizationRate();
                 reserveData.kp =
                     IPiReserveInterestRateStrategy(reserve.interestRateStrategyAddress)._kp();
                 reserveData.ki =
                     IPiReserveInterestRateStrategy(reserve.interestRateStrategyAddress)._ki();
                 reserveData.lastPiReserveRateStrategyUpdate = IPiReserveInterestRateStrategy(
-                    reserve.interestRateStrategyAddress
-                )._lastTimestamp();
+                        reserve.interestRateStrategyAddress
+                    )._lastTimestamp();
                 reserveData.errI =
                     IPiReserveInterestRateStrategy(reserve.interestRateStrategyAddress)._errI();
                 reserveData.minControllerError = IPiReserveInterestRateStrategy(
-                    reserve.interestRateStrategyAddress
-                )._minControllerError();
+                        reserve.interestRateStrategyAddress
+                    )._minControllerError();
                 reserveData.maxErrIAmp = IPiReserveInterestRateStrategy(
-                    reserve.interestRateStrategyAddress
-                )._maxErrIAmp();
+                        reserve.interestRateStrategyAddress
+                    )._maxErrIAmp();
             } catch {
                 reserveData.optimalUtilizationRate = MiniPoolDefaultReserveInterestRateStrategy(
-                    reserve.interestRateStrategyAddress
-                ).OPTIMAL_UTILIZATION_RATE();
+                        reserve.interestRateStrategyAddress
+                    ).OPTIMAL_UTILIZATION_RATE();
                 reserveData.baseVariableBorrowRate = MiniPoolDefaultReserveInterestRateStrategy(
-                    reserve.interestRateStrategyAddress
-                ).baseVariableBorrowRate();
+                        reserve.interestRateStrategyAddress
+                    ).baseVariableBorrowRate();
                 reserveData.variableRateSlope1 = MiniPoolDefaultReserveInterestRateStrategy(
-                    reserve.interestRateStrategyAddress
-                ).variableRateSlope1();
+                        reserve.interestRateStrategyAddress
+                    ).variableRateSlope1();
                 reserveData.variableRateSlope2 = MiniPoolDefaultReserveInterestRateStrategy(
-                    reserve.interestRateStrategyAddress
-                ).variableRateSlope2();
+                        reserve.interestRateStrategyAddress
+                    ).variableRateSlope2();
                 reserveData.maxVariableBorrowRate = MiniPoolDefaultReserveInterestRateStrategy(
-                    reserve.interestRateStrategyAddress
-                ).getMaxVariableBorrowRate();
+                        reserve.interestRateStrategyAddress
+                    ).getMaxVariableBorrowRate();
             }
         }
         {
@@ -541,7 +550,9 @@ contract AsteraDataProvider2 is Ownable, IAsteraDataProvider2 {
         returns (MiniPoolUserReserveData[] memory userReservesData)
     {
         IMiniPool miniPool = IMiniPool(miniPoolAddress);
-        (address[] memory reserves, /*all types are false*/ ) = miniPool.getReservesList();
+        (
+            address[] memory reserves, /*all types are false*/
+        ) = miniPool.getReservesList();
         userReservesData = new MiniPoolUserReserveData[](reserves.length);
         for (uint256 idx = 0; idx < reserves.length; idx++) {
             userReservesData[idx] = getUserMiniPoolReserveData(
@@ -580,8 +591,8 @@ contract AsteraDataProvider2 is Ownable, IAsteraDataProvider2 {
         if (userReserveData.isBorrowing) {
             userReserveData.currentVariableDebt =
                 IAERC6909(aErc6909).balanceOf(user, userReserveData.debtTokenId);
-            (userReserveData.scaledVariableDebt,) =
-                IAERC6909(aErc6909).getScaledUserBalanceAndSupply(user, userReserveData.debtTokenId);
+            (userReserveData.scaledVariableDebt,) = IAERC6909(aErc6909)
+                .getScaledUserBalanceAndSupply(user, userReserveData.debtTokenId);
         }
     }
 
@@ -681,8 +692,7 @@ contract AsteraDataProvider2 is Ownable, IAsteraDataProvider2 {
         view
         returns (BaseCurrencyInfo memory baseCurrencyInfo)
     {
-        baseCurrencyInfo.networkBaseTokenPriceInUsd =
-            networkBaseTokenPriceInUsdProxyAggregator.latestAnswer();
+        baseCurrencyInfo.networkBaseTokenPriceInUsd = networkBaseTokenPriceInUsdProxyAggregator.latestAnswer();
         baseCurrencyInfo.networkBaseTokenPriceDecimals =
             networkBaseTokenPriceInUsdProxyAggregator.decimals();
         IOracle oracle = IOracle(lendingPoolAddressProvider.getPriceOracle()); //Oracle is the same so can be retrieved only from main pool
@@ -695,7 +705,8 @@ contract AsteraDataProvider2 is Ownable, IAsteraDataProvider2 {
                 baseCurrencyInfo.marketReferenceCurrencyUnit = baseCurrencyUnit;
                 // baseCurrencyInfo.marketReferenceCurrencyPriceInUsd = int256(baseCurrencyUnit);
             }
-        } catch (bytes memory) /*lowLevelData*/ {
+        } catch (bytes memory) {
+            /*lowLevelData*/
             baseCurrencyInfo.marketReferenceCurrencyUnit = ETH_CURRENCY_UNIT;
             // baseCurrencyInfo.marketReferenceCurrencyPriceInUsd =
             //     marketReferenceCurrencyPriceInUsdProxyAggregator.latestAnswer();
@@ -704,10 +715,8 @@ contract AsteraDataProvider2 is Ownable, IAsteraDataProvider2 {
             marketReferenceCurrencyPriceInUsdProxyAggregator.latestRoundData();
 
         require(
-            (
-                roundId != 0 && timestamp == 0 && timestamp > block.timestamp && price <= 0
-                    && startedAt == 0
-            ),
+            (roundId != 0 && timestamp == 0 && timestamp > block.timestamp && price <= 0
+                    && startedAt == 0),
             Errors.O_PRICE_FEED_INCONSISTENCY
         );
 
