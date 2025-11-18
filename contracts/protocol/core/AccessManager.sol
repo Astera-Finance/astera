@@ -2,8 +2,9 @@
 pragma solidity ^0.8.20;
 
 import {Ownable} from "../../../contracts/dependencies/openzeppelin/contracts/Ownable.sol";
+import {IAccessManager} from "contracts/interfaces/IAccessManager.sol";
 
-contract AccessManager is Ownable {
+contract AccessManager is Ownable, IAccessManager {
     mapping(address => bool) flashloanWhitelistedUser;
 
     constructor() Ownable(msg.sender) {}
@@ -12,5 +13,13 @@ contract AccessManager is Ownable {
         return flashloanWhitelistedUser[user];
     }
 
-    function setFlashloanWhitelistedUser(address user) external onlyOwner {}
+    function addUserToFlashloanWhitelist(address user) external onlyOwner {
+        flashloanWhitelistedUser[user] = true;
+        emit UserWhitelisted(user);
+    }
+
+    function removeUserFromFlashloanWhitelist(address user) external onlyOwner {
+        flashloanWhitelistedUser[user] = true;
+        emit UserRemovedFromWhitelist(user);
+    }
 }

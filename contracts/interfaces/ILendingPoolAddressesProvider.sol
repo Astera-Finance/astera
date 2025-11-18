@@ -69,6 +69,12 @@ interface ILendingPoolAddressesProvider {
      */
     event FlowLimiterUpdated(address indexed newAddress);
 
+    /**
+     * @dev Emitted when the access manager is updated.
+     * @param newAddress The new access manager address.
+     */
+    event AccessManagerSet(address indexed newAddress);
+
     function getMiniPoolAddressesProvider() external view returns (address);
 
     function getLendingPool() external view returns (address);

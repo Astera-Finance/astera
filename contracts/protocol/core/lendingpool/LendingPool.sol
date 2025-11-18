@@ -98,7 +98,9 @@ contract LendingPool is
 
     modifier onlyFlashloanWhitelisted() {
         require(
-            IAccessManager(_addressesProvider.getAccessManager()).isFlashloanWhitelisted(msg.sender)
+            IAccessManager(_addressesProvider.getAccessManager())
+                .isFlashloanWhitelisted(msg.sender),
+            Errors.LP_CALLER_NOT_WHITELISTED
         );
         _;
     }

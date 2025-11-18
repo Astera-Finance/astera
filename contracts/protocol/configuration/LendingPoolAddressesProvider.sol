@@ -244,6 +244,6 @@ contract LendingPoolAddressesProvider is Ownable, ILendingPoolAddressesProvider 
     function setAccessManager(address accessManager) external override onlyOwner {
         _addresses[ACCESS_MANAGER] = accessManager;
 
-        emit FlowLimiterUpdated(accessManager);
+        emit AccessManagerSet(accessManager);
     }
 }

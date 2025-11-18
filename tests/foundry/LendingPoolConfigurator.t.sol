@@ -81,6 +81,10 @@ contract LendingPoolConfiguratorTest is Common, LendingPoolFixtures {
             deployedContracts.lendingPoolAddressesProvider
         );
 
+        vm.startPrank(admin);
+        deployedContracts.accessManager.addUserToFlashloanWhitelist(address(this));
+        vm.stopPrank();
+
         commonContracts.mockedVaults =
             fixture_deployReaperVaultMocks(tokens, address(deployedContracts.treasury));
         erc20Tokens = fixture_getErc20Tokens(tokens);

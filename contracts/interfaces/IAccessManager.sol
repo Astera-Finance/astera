@@ -8,6 +8,18 @@ pragma solidity ^0.8.20;
  */
 interface IAccessManager {
     /**
+     * @notice Emitted when a user is added to the flashloan whitelist
+     * @param user The address of the user being whitelisted
+     */
+    event UserWhitelisted(address indexed user);
+
+    /**
+     * @notice Emitted when a user is removed from the flashloan whitelist
+     * @param user The address of the user being removed
+     */
+    event UserRemovedFromWhitelist(address indexed user);
+
+    /**
      * @notice Checks if a user is whitelisted for flashloans
      * @param user The address to check
      * @return bool True if the user is whitelisted, false otherwise
@@ -18,5 +30,5 @@ interface IAccessManager {
      * @notice Adds or updates a user's flashloan whitelist status
      * @param user The address to whitelist
      */
-    function setFlashloanWhitelistedUser(address user) external;
+    function addUserToFlashloanWhitelist(address user) external;
 }

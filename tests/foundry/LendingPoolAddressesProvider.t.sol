@@ -22,6 +22,7 @@ contract LendingPoolAddressesProviderTest is Common {
     event PriceOracleUpdated(address indexed newAddress);
     event ProxyCreated(bytes32 id, address indexed newAddress);
     event AddressSet(bytes32 id, address indexed newAddress, bool hasProxy);
+    event AccessManagerSet(address indexed newAddress);
 
     function setUp() public {
         opFork = vm.createSelectFork(RPC, FORK_BLOCK);
@@ -119,6 +120,17 @@ contract LendingPoolAddressesProviderTest is Common {
         provider.setPriceOracle((priceOracle));
 
         assertEq(provider.getPriceOracle(), priceOracle);
+    }
+
+    function testSetAndGetAccessManager() public {
+        LendingPoolAddressesProvider provider = new LendingPoolAddressesProvider();
+        address accessManager = makeAddr("AccessManager");
+
+        vm.expectEmit(false, false, false, false);
+        emit AccessManagerSet(accessManager);
+        provider.setAccessManager((accessManager));
+
+        assertEq(provider.getAccessManager(), accessManager);
     }
 
     /* @issue: Temporary disabled due to long time of execution */

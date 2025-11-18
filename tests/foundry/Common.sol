@@ -69,6 +69,8 @@ import {
     MiniPoolFixReserveInterestRate
 } from "../../contracts/protocol/core/interestRateStrategies/minipool/MiniPoolFixReserveInterestRate.sol";
 
+import {AccessManager} from "contracts/protocol/core/AccessManager.sol";
+
 event Deposit(address indexed reserve, address user, address indexed onBehalfOf, uint256 amount);
 
 event Withdraw(address indexed reserve, address indexed user, address indexed to, uint256 amount);
@@ -134,6 +136,7 @@ contract Common is Test {
         FixReserveInterestRateStrategy fixStrategy;
         AsteraDataProvider asteraDataProvider;
         ATokensAndRatesHelper aTokensAndRatesHelper;
+        AccessManager accessManager;
     }
 
     struct DeployedMiniPoolContracts {
@@ -308,6 +311,7 @@ contract Common is Test {
         deployedContracts.lendingPoolAddressesProvider.setEmergencyAdmin(admin);
 
         lendingPool = new LendingPool();
+
         deployedContracts.lendingPoolAddressesProvider.setLendingPoolImpl(address(lendingPool));
         lendingPoolProxyAddress =
             address(deployedContracts.lendingPoolAddressesProvider.getLendingPool());
@@ -321,8 +325,13 @@ contract Common is Test {
             deployedContracts.lendingPoolAddressesProvider.getLendingPoolConfigurator();
         deployedContracts.lendingPoolConfigurator =
             LendingPoolConfigurator(lendingPoolConfiguratorProxyAddress);
-        vm.prank(admin);
+        vm.startPrank(admin);
+        deployedContracts.accessManager = new AccessManager();
         deployedContracts.lendingPoolConfigurator.setPoolPause(true);
+        vm.stopPrank();
+
+        deployedContracts.lendingPoolAddressesProvider
+            .setAccessManager(address(deployedContracts.accessManager));
 
         // stableAndVariableTokensHelper = new StableAndVariableTokensHelper(lendingPoolProxyAddress, address(lendingPoolAddressesProvider));
         deployedContracts.aTokensAndRatesHelper = new ATokensAndRatesHelper(
