@@ -96,6 +96,10 @@ contract LendingPool is
         _;
     }
 
+    /**
+     * @dev Modifier to check if caller is the whitelisted for flashloan.
+     * Reverts if caller is not whitelisted.
+     */
     modifier onlyFlashloanWhitelisted() {
         require(
             IAccessManager(_addressesProvider.getAccessManager())

@@ -78,6 +78,7 @@ library MiniPoolFlashLoanLogic {
         address asset;
         address aToken;
         address receiverAddress;
+        IMiniPoolAddressesProvider addressesProvider;
     }
 
     /**
@@ -163,7 +164,8 @@ library MiniPoolFlashLoanLogic {
                         totalPremium: vars.currentPremium,
                         asset: vars.currentAsset,
                         aToken: vars.currentATokenAddress,
-                        receiverAddress: flashLoanParams.receiverAddress
+                        receiverAddress: flashLoanParams.receiverAddress,
+                        addressesProvider: flashLoanParams.addressesProvider
                     })
                 );
             } else {
@@ -252,16 +254,18 @@ library MiniPoolFlashLoanLogic {
         reserve.updateState();
 
         uint256 id = reserve.aTokenID;
-        reserve.cumulateToLiquidityIndex(
-            IAERC6909(params.aToken).totalSupply(id), params.totalPremium
-        );
 
-        reserve.updateInterestRates(params.asset, amountPlusPremium, 0);
+        reserve.updateInterestRates(params.asset, params.amount, 0);
 
+        IERC20(params.asset).safeTransferFrom(params.receiverAddress, params.aToken, params.amount);
         IERC20(params.asset)
-            .safeTransferFrom(params.receiverAddress, params.aToken, amountPlusPremium);
+            .safeTransferFrom(
+                params.receiverAddress,
+                params.addressesProvider.getMiniPoolAsteraTreasury(),
+                params.totalPremium
+            );
 
         IAERC6909(params.aToken)
-            .handleRepayment(params.receiverAddress, params.receiverAddress, id, amountPlusPremium);
+            .handleRepayment(params.receiverAddress, params.receiverAddress, id, params.amount);
     }
 }

@@ -45,7 +45,7 @@ library MiniPoolValidationLogic {
      * - The reserve is active and not frozen.
      */
     function validateDeposit(DataTypes.MiniPoolReserveData storage reserve, uint256 amount)
-        external
+        internal
         view
     {
         (bool isActive, bool isFrozen,) = reserve.configuration.getFlags();

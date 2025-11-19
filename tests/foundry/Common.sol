@@ -240,6 +240,7 @@ contract Common is Test {
 
     address admin = 0xe027880CEB8114F2e367211dF977899d00e66138;
     address poolOwner = makeAddr("poolOwner");
+    address treasury = makeAddr("treasury");
     uint256[] rates = [0.039e27, 0.03e27, 0.03e27]; //usdc, wbtc, eth
     uint256[] volStrat = [
         VOLATILE_OPTIMAL_UTILIZATION_RATE,
@@ -721,10 +722,15 @@ contract Common is Test {
             );
             address miniPoolConfigImpl = address(new MiniPoolConfigurator());
             miniPoolContracts.miniPoolAddressesProvider.setMiniPoolConfigurator(miniPoolConfigImpl);
+            miniPoolContracts.miniPoolAddressesProvider
+                .setAccessManager(address(new AccessManager()));
+
             miniPoolContracts.miniPoolConfigurator = MiniPoolConfigurator(
                 miniPoolContracts.miniPoolAddressesProvider.getMiniPoolConfigurator()
             );
-
+            vm.prank(admin);
+            miniPoolContracts.miniPoolConfigurator
+                .setAsteraTreasury(treasury);
             ILendingPoolAddressesProvider(_lendingPoolAddressesProvider)
                 .setMiniPoolAddressesProvider(address(miniPoolContracts.miniPoolAddressesProvider));
             ILendingPoolAddressesProvider(_lendingPoolAddressesProvider)

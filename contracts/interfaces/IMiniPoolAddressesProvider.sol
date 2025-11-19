@@ -83,6 +83,12 @@ interface IMiniPoolAddressesProvider {
      */
     event MaxReservesWithFlowBorrowingUpdated(uint256 newMax);
 
+    /**
+     * @dev Emitted when the access manager is updated.
+     * @param newAddress The new access manager address.
+     */
+    event AccessManagerSet(address indexed newAddress);
+
     // Functions related to getting various addresses
     function getMiniPoolCount() external view returns (uint256);
 
@@ -123,6 +129,8 @@ interface IMiniPoolAddressesProvider {
 
     function getMiniPoolList() external view returns (address[] memory);
 
+    function getAccessManager() external view returns (address);
+
     // Setters
     function setPoolAdmin(uint256 id, address newAdmin) external;
 
@@ -143,4 +151,6 @@ interface IMiniPoolAddressesProvider {
     function setMiniPoolConfigurator(address configuratorImpl) external;
 
     function setMaxReservesWithFlowBorrowing(uint256 newMax) external;
+
+    function setAccessManager(address accessManager) external;
 }

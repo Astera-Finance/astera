@@ -37,6 +37,12 @@ contract MiniPoolConfiguratorTest is MiniPoolDepositBorrowTest {
     event EnableFlashloan(address indexed asset);
     event DisableFlashloan(address indexed asset);
 
+    function setUp() public override {
+        super.setUp();
+        address accessManager = miniPoolContracts.miniPoolAddressesProvider.getAccessManager();
+        AccessManager(accessManager).addUserToFlashloanWhitelist(address(this));
+    }
+
     function testMiniPoolConfiguratorAccessControl(uint256 randomNumber) public {
         address tokenAddress = makeAddr("tokenAddress");
         address randomAddress = makeAddr("randomAddress");
@@ -749,6 +755,7 @@ contract MiniPoolConfiguratorTest is MiniPoolDepositBorrowTest {
         miniPoolContracts.miniPoolConfigurator.activateReserve(tokens[0], IMiniPool(miniPool));
     }
 
+    /// @custom:fuzz runs=32
     function testSetMainPoolAdmin(address newAdmin) public {
         vm.assume(
             newAdmin != address(0) && newAdmin != address(miniPoolContracts.miniPoolConfigurator)

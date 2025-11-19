@@ -22,7 +22,7 @@ contract MiniPoolDepositBorrowTest is MiniPoolFixtures {
 
     ERC20[] erc20Tokens;
 
-    function setUp() public override {
+    function setUp() public virtual override {
         opFork = vm.createSelectFork(RPC, FORK_BLOCK);
         assertEq(vm.activeFork(), opFork);
         deployedContracts = fixture_deployProtocol();

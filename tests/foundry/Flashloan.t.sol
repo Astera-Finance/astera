@@ -331,6 +331,7 @@ contract FlashloanTest is Common {
         deployedContracts.lendingPool.flashLoan(flashloanParams, amounts, modes, params);
     }
 
+    /// @custom:fuzz runs=32
     function testFlashloanCanDoWhitelistedUsers(address user) public {
         bool[] memory reserveTypes = new bool[](tokens.length);
         address[] memory tokenAddresses = new address[](tokens.length);

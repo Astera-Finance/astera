@@ -89,6 +89,7 @@ contract MiniPoolAddressesProvider is Ownable, IMiniPoolAddressesProvider {
     bytes32 private constant MINI_POOL_CONFIGURATOR = keccak256("MINI_POOL_CONFIGURATOR");
     bytes32 private constant MINI_POOL = keccak256("MINI_POOL");
     bytes32 private constant ATOKEN_ERC6909 = keccak256("ATOKEN_ERC6909");
+    bytes32 private constant MINI_POOL_ACCESS_MANAGER = keccak256("MINI_POOL_ACCESS_MANAGER");
 
     /**
      * @dev Constructor to initialize the contract.
@@ -309,6 +310,14 @@ contract MiniPoolAddressesProvider is Ownable, IMiniPoolAddressesProvider {
         );
     }
 
+    /**
+     * @dev Returns the address of the access manager.
+     * @return The current access manager address.
+     */
+    function getAccessManager() external view returns (address) {
+        return getAddress(MINI_POOL_ACCESS_MANAGER);
+    }
+
     /* Setters */
     // ======= OnlyOwner =======
     /**
@@ -384,6 +393,16 @@ contract MiniPoolAddressesProvider is Ownable, IMiniPoolAddressesProvider {
     function setMiniPoolConfigurator(address configuratorImpl) external onlyOwner {
         _updateImpl(MINI_POOL_CONFIGURATOR, configuratorImpl);
         emit MiniPoolConfiguratorUpdated(configuratorImpl);
+    }
+
+    /**
+     * @dev Updates the access manager address.
+     * @param accessManager The new access manager address.
+     */
+    function setAccessManager(address accessManager) external onlyOwner {
+        _addresses[MINI_POOL_ACCESS_MANAGER] = accessManager;
+
+        emit AccessManagerSet(accessManager);
     }
 
     // ======= Only configurator =======

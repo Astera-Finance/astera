@@ -43,6 +43,7 @@ import {IMiniPoolRewarder} from "../../../../contracts/interfaces/IMiniPoolRewar
 import {
     IMiniPoolAddressProviderUpdatable
 } from "../../../../contracts/interfaces/IMiniPoolAddressProviderUpdatable.sol";
+import {IAccessManager} from "../../../../contracts/interfaces/IAccessManager.sol";
 
 /**
  * @title MiniPool contract
@@ -103,6 +104,19 @@ contract MiniPool is
      */
     modifier onlyMiniPoolConfigurator() {
         _onlyMiniPoolConfigurator();
+        _;
+    }
+
+    /**
+     * @dev Modifier to check if caller is the whitelisted for flashloan.
+     * Reverts if caller is not whitelisted.
+     */
+    modifier onlyFlashloanWhitelisted() {
+        require(
+            IAccessManager(_addressesProvider.getAccessManager())
+                .isFlashloanWhitelisted(msg.sender),
+            Errors.LP_CALLER_NOT_WHITELISTED
+        );
         _;
     }
 
@@ -476,7 +490,7 @@ contract MiniPool is
         uint256[] calldata amounts,
         uint256[] calldata modes,
         bytes calldata params
-    ) external override whenNotPaused {
+    ) external override whenNotPaused onlyFlashloanWhitelisted {
         uint256[] memory minAmounts = new uint256[](flashLoanParams.assets.length);
         for (uint256 idx = 0; idx < flashLoanParams.assets.length; idx++) {
             minAmounts[idx] =

@@ -19,7 +19,7 @@ contract AccessManager is Ownable, IAccessManager {
     }
 
     function removeUserFromFlashloanWhitelist(address user) external onlyOwner {
-        flashloanWhitelistedUser[user] = true;
+        flashloanWhitelistedUser[user] = false;
         emit UserRemovedFromWhitelist(user);
     }
 }

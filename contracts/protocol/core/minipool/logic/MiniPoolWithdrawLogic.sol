@@ -188,7 +188,7 @@ library MiniPoolWithdrawLogic {
         mapping(address => DataTypes.UserConfigurationMap) storage usersConfig,
         mapping(uint256 => address) storage reservesList,
         IMiniPoolAddressesProvider addressesProvider
-    ) internal {
+    ) external {
         require(msg.sender == reserves[params.asset].aErc6909, Errors.LP_CALLER_MUST_BE_AN_ATOKEN);
 
         MiniPoolValidationLogic.validateTransfer(
@@ -231,7 +231,7 @@ library MiniPoolWithdrawLogic {
         mapping(address => DataTypes.UserConfigurationMap) storage usersConfig,
         mapping(uint256 => address) storage reservesList,
         IMiniPoolAddressesProvider addressesProvider
-    ) internal {
+    ) external {
         DataTypes.MiniPoolReserveData storage reserve = reserves[params.asset];
         withdrawLocalVars memory localVars;
 
