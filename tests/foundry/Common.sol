@@ -729,8 +729,7 @@ contract Common is Test {
                 miniPoolContracts.miniPoolAddressesProvider.getMiniPoolConfigurator()
             );
             vm.prank(admin);
-            miniPoolContracts.miniPoolConfigurator
-                .setAsteraTreasury(treasury);
+            miniPoolContracts.miniPoolConfigurator.setAsteraTreasury(treasury);
             ILendingPoolAddressesProvider(_lendingPoolAddressesProvider)
                 .setMiniPoolAddressesProvider(address(miniPoolContracts.miniPoolAddressesProvider));
             ILendingPoolAddressesProvider(_lendingPoolAddressesProvider)

@@ -727,4 +727,6 @@ contract LendingPoolConfiguratorTest is Common, LendingPoolFixtures {
         assertEq(afterUserAccountData.ltv, beforeUserAccountData.ltv);
         assertEq(afterUserAccountData.healthFactor, beforeUserAccountData.healthFactor);
     }
+
+    // @TODO Add test for liquidity/borrow index threshold
 }

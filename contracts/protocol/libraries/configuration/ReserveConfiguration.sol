@@ -34,6 +34,10 @@ library ReserveConfiguration {
         0xFFFFFFFFFFFFFFFFFFFFFFF000000000000000000FFFFFFFFFFFFFFFFFFFFFFF;
     uint256 internal constant RESERVE_TYPE_MASK =
         0xFFFFFFFFFFFFFFFFFFFFFFEFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF;
+    uint256 internal constant LIQUIDITY_INDEX_THRESHOLD_MASK =
+        0xFFFFFFFFFFFFFFFFFF0000FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF;
+    uint256 internal constant BORROW_INDEX_THRESHOLD_MASK =
+        0xFFFFFFFFFFFFFF0000FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF;
 
     /// @dev For the LTV, the start bit is 0 (up to 15), hence no bitshifting is needed
     uint256 internal constant LIQUIDATION_THRESHOLD_START_BIT_POSITION = 16;
@@ -47,6 +51,8 @@ library ReserveConfiguration {
     uint256 internal constant MINIPOOL_OWNER_FACTOR_START_BIT_POSITION = 76;
     uint256 internal constant DEPOSIT_CAP_START_BIT_POSITION = 92;
     uint256 internal constant RESERVE_TYPE_START_BIT_POSITION = 164;
+    uint256 internal constant LIQUIDITY_INDEX_THRESHOLD_BIT_POSITION = 168;
+    uint256 internal constant BORROW_INDEX_THRESHOLD_BIT_POSITION = 184;
 
     uint256 internal constant MAX_VALID_LTV = type(uint16).max;
     uint256 internal constant MAX_VALID_LIQUIDATION_THRESHOLD = type(uint16).max;
@@ -54,6 +60,8 @@ library ReserveConfiguration {
     uint256 internal constant MAX_VALID_DECIMALS = type(uint8).max;
     uint256 internal constant MAX_VALID_RESERVE_FACTOR = 4000; // 40% // theorical max: type(uint16).max
     uint256 internal constant MAX_VALID_DEPOSIT_CAP = type(uint72).max; // Enough to represent SHIBA total supply.
+    uint256 internal constant MAX_VALID_LIQUIDITY_INDEX_THRESHOLD = type(uint16).max;
+    uint256 internal constant MAX_VALID_BORROW_INDEX_THRESHOLD = type(uint16).max;
 
     /**
      * @dev Sets the Loan to Value of the reserve.
@@ -477,5 +485,68 @@ library ReserveConfiguration {
         returns (bool)
     {
         return (self.data & ~FLASHLOAN_ENABLED_MASK) != 0;
+    }
+
+    /**
+     * @dev Sets the daily liquidity index threshold of the reserve.
+     * @param self The reserve configuration map.
+     * @param dailyLiquidityIndexThreshold Max allowed daily liquidity index threshold
+     */
+    function setDailyLiquidityIndexThreshold(
+        DataTypes.ReserveConfigurationMap memory self,
+        uint256 dailyLiquidityIndexThreshold
+    ) internal pure {
+        require(
+            dailyLiquidityIndexThreshold <= MAX_VALID_LIQUIDITY_INDEX_THRESHOLD,
+            Errors.RC_INVALID_LIQUIDITY_INDEX_THRESHOLD
+        );
+
+        self.data = (self.data & LIQUIDITY_INDEX_THRESHOLD_MASK)
+            | (dailyLiquidityIndexThreshold << LIQUIDITY_INDEX_THRESHOLD_BIT_POSITION);
+    }
+
+    /**
+     * @dev Gets the daily liquidity index threshold of the reserve.
+     * @param self The reserve configuration map.
+     * @return The current daily liquidity index threshold .
+     */
+    function getDailyLiquidityIndexThreshold(DataTypes.ReserveConfigurationMap storage self)
+        internal
+        view
+        returns (uint256)
+    {
+        return
+            (self.data & ~LIQUIDITY_INDEX_THRESHOLD_MASK) >> LIQUIDITY_INDEX_THRESHOLD_BIT_POSITION;
+    }
+
+    /**
+     * @dev Sets the daily borrow index threshold of the reserve.
+     * @param self The reserve configuration map.
+     * @param dailyLiquidityIndexThreshold Max allowed daily borrow index threshold
+     */
+    function setDailyBorrowIndexThreshold(
+        DataTypes.ReserveConfigurationMap memory self,
+        uint256 dailyLiquidityIndexThreshold
+    ) internal pure {
+        require(
+            dailyLiquidityIndexThreshold <= MAX_VALID_BORROW_INDEX_THRESHOLD,
+            Errors.RC_INVALID_BORROW_INDEX_THRESHOLD
+        );
+
+        self.data = (self.data & BORROW_INDEX_THRESHOLD_MASK)
+            | (dailyLiquidityIndexThreshold << BORROW_INDEX_THRESHOLD_BIT_POSITION);
+    }
+
+    /**
+     * @dev Gets the daily borrow index threshold of the reserve.
+     * @param self The reserve configuration map.
+     * @return The current daily borrow index threshold .
+     */
+    function getDailyBorrowIndexThreshold(DataTypes.ReserveConfigurationMap storage self)
+        internal
+        view
+        returns (uint256)
+    {
+        return (self.data & ~BORROW_INDEX_THRESHOLD_MASK) >> BORROW_INDEX_THRESHOLD_BIT_POSITION;
     }
 }

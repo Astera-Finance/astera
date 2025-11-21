@@ -179,67 +179,77 @@ library Errors {
     string public constant RL_LIQUIDITY_RATE_OVERFLOW = "79";
     /// @notice Variable borrow rate overflows uint128.
     string public constant RL_VARIABLE_BORROW_RATE_OVERFLOW = "80";
+    /// @notice Liquidity index threshold exceeded.
+    string public constant RL_LIQUIDITY_INDEX_THRESHOLD_EXCEEDED = "81";
+    /// @notice Variable borrow index threshold exceeded.
+    string public constant RL_BORROW_INDEX_THRESHOLD_EXCEEDED = "82";
+    /// @notice Liquidity index threshold exceeded.
+    string public constant RL_WRONG_TIMESTAMPS = "83";
+    /// @notice Variable borrow index threshold exceeded.
+    string public constant RL_WRONG_INDEX_VALUES = "84";
 
-    // 2 Errors Gap
+    // 0 Errors Gap
 
     /// @notice Health factor is not below the threshold.
-    string public constant LPCM_HEALTH_FACTOR_NOT_BELOW_THRESHOLD = "83";
+    string public constant LPCM_HEALTH_FACTOR_NOT_BELOW_THRESHOLD = "85";
     /// @notice The collateral chosen cannot be liquidated.
-    string public constant LPCM_COLLATERAL_CANNOT_BE_LIQUIDATED = "84";
+    string public constant LPCM_COLLATERAL_CANNOT_BE_LIQUIDATED = "86";
     /// @notice User did not borrow the specified currency.
-    string public constant LPCM_SPECIFIED_CURRENCY_NOT_BORROWED_BY_USER = "85";
+    string public constant LPCM_SPECIFIED_CURRENCY_NOT_BORROWED_BY_USER = "87";
     /// @notice There is not enough liquidity available to liquidate.
-    string public constant LPCM_NOT_ENOUGH_LIQUIDITY_TO_LIQUIDATE = "86";
+    string public constant LPCM_NOT_ENOUGH_LIQUIDITY_TO_LIQUIDATE = "88";
 
     // 1 Errors Gap
 
     /// @notice Inconsistent parameters length.
-    string public constant O_INCONSISTENT_PARAMS_LENGTH = "88";
+    string public constant O_INCONSISTENT_PARAMS_LENGTH = "90";
     /// @notice Price feed inconsistency.
-    string public constant O_PRICE_FEED_INCONSISTENCY = "89";
-
-    // 1 Errors Gap
+    string public constant O_PRICE_FEED_INCONSISTENCY = "91";
 
     /// @notice No mini pool ID for address.
-    string public constant PAP_NO_MINI_POOL_ID_FOR_ADDRESS = "91";
+    string public constant PAP_NO_MINI_POOL_ID_FOR_ADDRESS = "92";
     /// @notice Pool ID out of range.
-    string public constant PAP_POOL_ID_OUT_OF_RANGE = "92";
+    string public constant PAP_POOL_ID_OUT_OF_RANGE = "93";
 
     // 1 Errors Gap
 
     /// @notice Invalid LTV.
-    string public constant RC_INVALID_LTV = "94";
+    string public constant RC_INVALID_LTV = "95";
     /// @notice Invalid liquidation threshold.
-    string public constant RC_INVALID_LIQ_THRESHOLD = "95";
+    string public constant RC_INVALID_LIQ_THRESHOLD = "96";
     /// @notice Invalid liquidation bonus.
-    string public constant RC_INVALID_LIQ_BONUS = "96";
+    string public constant RC_INVALID_LIQ_BONUS = "97";
     /// @notice Invalid decimals.
-    string public constant RC_INVALID_DECIMALS = "97";
+    string public constant RC_INVALID_DECIMALS = "98";
     /// @notice Invalid reserve factor.
-    string public constant RC_INVALID_RESERVE_FACTOR = "98";
+    string public constant RC_INVALID_RESERVE_FACTOR = "99";
     /// @notice Invalid deposit cap.
-    string public constant RC_INVALID_DEPOSIT_CAP = "99";
+    string public constant RC_INVALID_DEPOSIT_CAP = "100";
     /// @notice LendingPool not set.
-    string public constant DP_LENDINGPOOL_NOT_SET = "100";
+    string public constant DP_LENDINGPOOL_NOT_SET = "101";
     /// @notice Reserve is not configured.
-    string public constant DP_RESERVE_NOT_CONFIGURED = "101";
+    string public constant DP_RESERVE_NOT_CONFIGURED = "102";
+    /// @notice Invalid liquidity index threshold.
+    string public constant RC_INVALID_LIQUIDITY_INDEX_THRESHOLD = "103";
+    /// @notice Invalid borrow index threshold.
+    string public constant RC_INVALID_BORROW_INDEX_THRESHOLD = "104";
 
-    // 1 Errors Gap
+    // 2 Errors Gap
 
     /// @notice Not registered.
-    string public constant R_NOT_REGISTERED = "103";
+    string public constant R_NOT_REGISTERED = "107";
     /// @notice Too many reward tokens.
-    string public constant R_TOO_MANY_REWARD_TOKENS = "104";
+    string public constant R_TOO_MANY_REWARD_TOKENS = "108";
     /// @notice No forwarder set.
-    string public constant R_NO_FORWARDER_SET = "105";
+    string public constant R_NO_FORWARDER_SET = "109";
     /// @notice Claimer unauthorized.
-    string public constant R_CLAIMER_UNAUTHORIZED = "106";
+    string public constant R_CLAIMER_UNAUTHORIZED = "110";
     /// @notice Invalid address.
-    string public constant R_INVALID_ADDRESS = "107";
+    string public constant R_INVALID_ADDRESS = "111";
     /// @notice Already set.
-    string public constant R_ALREADY_SET = "108";
+    string public constant R_ALREADY_SET = "112";
     /// @notice Transfer error.
-    string public constant R_TRANSFER_ERROR = "109";
+    string public constant R_TRANSFER_ERROR = "113";
     /// @notice Rewarder not set.
-    string public constant R_REWARDER_NOT_SET = "110";
+    string public constant R_REWARDER_NOT_SET = "114";
 }

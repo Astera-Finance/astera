@@ -15,6 +15,8 @@ library DataTypes {
      * @param variableBorrowIndex Current `variableBorrowIndex`, expressed in ray.
      * @param currentLiquidityRate Current supply interest rate, expressed in ray.
      * @param currentVariableBorrowRate Current variable borrow interest rate, expressed in ray.
+     * @param lastDayLiquidityIndex Index value from last day use to check maximum index change per day
+     * @param lastDayVariableBorrowIndex Index value from last day use to check maximum index change per day
      * @param lastUpdateTimestamp Timestamp of the last reserve update.
      * @param aTokenAddress Address of the `aToken` contract.
      * @param variableDebtTokenAddress Address of the variable debt token.
@@ -27,7 +29,10 @@ library DataTypes {
         uint128 variableBorrowIndex;
         uint128 currentLiquidityRate;
         uint128 currentVariableBorrowRate;
+        uint128 lastDayLiquidityIndex;
+        uint128 lastDayVariableBorrowIndex;
         uint40 lastUpdateTimestamp;
+        uint40 lastDayTimestamp;
         address aTokenAddress;
         address variableDebtTokenAddress;
         address interestRateStrategyAddress;

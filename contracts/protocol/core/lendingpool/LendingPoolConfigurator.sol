@@ -170,6 +170,8 @@ contract LendingPoolConfigurator is
         currentConfig.setFrozen(false);
         currentConfig.setFlashLoanEnabled(true);
         currentConfig.setReserveType(input.reserveType);
+        currentConfig.setDailyLiquidityIndexThreshold(2000); // 30% daily rate
+        currentConfig.setDailyBorrowIndexThreshold(6000); // 60% daily rate
 
         pool.setConfiguration(input.underlyingAsset, input.reserveType, currentConfig.data);
 
@@ -710,11 +712,54 @@ contract LendingPoolConfigurator is
      * @dev Sets the treasury address for a reserve.
      * @param asset The address of the underlying asset of the reserve.
      * @param reserveType Whether the reserve is boosted by a vault (`true`) or not (`false`).
-     * @param rewarder The address of the new treasury.
+     * @param treasury The address of the new treasury.
      * @notice Only callable by pool admin.
      */
-    function setTreasury(address asset, bool reserveType, address rewarder) external onlyPoolAdmin {
-        pool.setTreasury(asset, reserveType, rewarder);
+    function setTreasury(address asset, bool reserveType, address treasury) external onlyPoolAdmin {
+        pool.setTreasury(asset, reserveType, treasury);
+    }
+
+    /**
+     * @dev Sets the treasury address for a reserve.
+     * @param asset The address of the underlying asset of the reserve.
+     * @param reserveType Whether the reserve is boosted by a vault (`true`) or not (`false`).
+     * @param liquidityIndexThreshold Max allowed daily liquidity index threshold.
+     * @notice Only callable by pool admin.
+     */
+    function setLiquidityIndexThreshold(
+        address asset,
+        bool reserveType,
+        uint256 liquidityIndexThreshold
+    ) external onlyPoolAdmin {
+        DataTypes.ReserveConfigurationMap memory currentConfig =
+            pool.getConfiguration(asset, reserveType);
+
+        currentConfig.setDailyLiquidityIndexThreshold(liquidityIndexThreshold);
+
+        pool.setConfiguration(asset, reserveType, currentConfig.data);
+
+        emit ReserveDepositCapChanged(asset, reserveType, liquidityIndexThreshold);
+    }
+
+    /**
+     * @dev Sets the treasury address for a reserve.
+     * @param asset The address of the underlying asset of the reserve.
+     * @param reserveType Whether the reserve is boosted by a vault (`true`) or not (`false`).
+     * @param borrowIndexThreshold Max allowed daily liquidity index threshold.
+     * @notice Only callable by pool admin.
+     */
+    function setBorrowIndexThreshold(address asset, bool reserveType, uint256 borrowIndexThreshold)
+        external
+        onlyPoolAdmin
+    {
+        DataTypes.ReserveConfigurationMap memory currentConfig =
+            pool.getConfiguration(asset, reserveType);
+
+        currentConfig.setDailyBorrowIndexThreshold(borrowIndexThreshold);
+
+        pool.setConfiguration(asset, reserveType, currentConfig.data);
+
+        emit ReserveDepositCapChanged(asset, reserveType, borrowIndexThreshold);
     }
 
     /**

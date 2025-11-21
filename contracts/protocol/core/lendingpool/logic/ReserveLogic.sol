@@ -156,6 +156,9 @@ library ReserveLogic {
 
         reserve.liquidityIndex = uint128(WadRayMath.ray());
         reserve.variableBorrowIndex = uint128(WadRayMath.ray());
+        reserve.lastDayLiquidityIndex = uint128(WadRayMath.ray());
+        reserve.lastDayVariableBorrowIndex = uint128(WadRayMath.ray());
+        reserve.lastDayTimestamp = uint40(block.timestamp);
         reserve.aTokenAddress = aTokenAddress;
         reserve.variableDebtTokenAddress = variableDebtTokenAddress;
         reserve.interestRateStrategyAddress = interestRateStrategyAddress;
@@ -304,7 +307,18 @@ library ReserveLogic {
                 MathUtils.calculateLinearInterest(currentLiquidityRate, timestamp);
             newLiquidityIndex = cumulatedLiquidityInterest.rayMul(liquidityIndex);
             require(newLiquidityIndex <= type(uint128).max, Errors.RL_LIQUIDITY_INDEX_OVERFLOW);
-
+            uint256 dailyIndexExtrapolationRate = _dailyIndexLinearExtrapolation(
+                reserve.lastDayTimestamp,
+                reserve.lastDayLiquidityIndex,
+                block.timestamp,
+                uint128(newLiquidityIndex)
+            );
+            uint256 dailyLiquidityIndexThreshold =
+                reserve.configuration.getDailyLiquidityIndexThreshold();
+            require(
+                dailyIndexExtrapolationRate <= dailyLiquidityIndexThreshold,
+                Errors.RL_LIQUIDITY_INDEX_THRESHOLD_EXCEEDED
+            );
             reserve.liquidityIndex = uint128(newLiquidityIndex);
         }
 
@@ -316,10 +330,57 @@ library ReserveLogic {
                 newVariableBorrowIndex <= type(uint128).max,
                 Errors.RL_VARIABLE_BORROW_INDEX_OVERFLOW
             );
+            uint256 dailyIndexExtrapolationRate = _dailyIndexLinearExtrapolation(
+                reserve.lastDayTimestamp,
+                reserve.lastDayVariableBorrowIndex,
+                block.timestamp,
+                uint128(newVariableBorrowIndex)
+            );
+            uint256 dailyBorrowIndexThreshold = reserve.configuration.getDailyBorrowIndexThreshold();
+            require(
+                dailyIndexExtrapolationRate <= dailyBorrowIndexThreshold,
+                Errors.RL_BORROW_INDEX_THRESHOLD_EXCEEDED
+            );
             reserve.variableBorrowIndex = uint128(newVariableBorrowIndex);
+        }
+
+        // Don't have to be exactly 1 day, linear extrapolation works even for > 1 day
+        if (reserve.lastDayTimestamp + 1 days <= block.timestamp) {
+            reserve.lastDayTimestamp = uint40(block.timestamp);
+            reserve.lastDayLiquidityIndex = reserve.liquidityIndex;
+            reserve.lastDayVariableBorrowIndex = reserve.variableBorrowIndex;
         }
 
         reserve.lastUpdateTimestamp = uint40(block.timestamp);
         return (newLiquidityIndex, newVariableBorrowIndex);
+    }
+
+    function _dailyIndexLinearExtrapolation(
+        uint256 previousValueTimestamp,
+        uint256 previousValue,
+        uint256 currentValueTimestamp,
+        uint256 currentValue
+    ) internal pure returns (uint256 dailyChangeAmount) {
+        require(currentValueTimestamp >= previousValueTimestamp, Errors.RL_WRONG_TIMESTAMPS);
+        require(currentValue >= previousValue, Errors.RL_WRONG_INDEX_VALUES);
+
+        // Calculate time difference in seconds
+        uint256 secondsElapsed = currentValueTimestamp - previousValueTimestamp;
+
+        // Calculate change in value (absolute)
+        uint256 valueChange;
+        valueChange = currentValue - previousValue;
+
+        // If no change, daily change is 0
+        if (valueChange == 0) {
+            return 0;
+        }
+
+        // Linear extrapolation: dailyChange = 86400 * valueChange / secondsElapsed
+        uint256 dailyChange = (valueChange * 1 days) / secondsElapsed;
+
+        // Convert to basis points: (dailyChange / previousValue) * 10000
+        // Usually the rate change is so small that it's floored to 0
+        return (dailyChange * 10_000) / previousValue;
     }
 }
