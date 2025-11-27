@@ -17,6 +17,7 @@ pragma solidity ^0.8.23;
  *  - PAP  :: PoolAddressesProvider
  *  - RC   :: Reserve configuration
  *  - R    :: Rewarder
+ *  - SAM  :: SecurityAccessManager
  */
 library Errors {
     /// @notice Amount must be greater than 0.
@@ -188,68 +189,91 @@ library Errors {
     /// @notice Variable borrow index threshold exceeded.
     string public constant RL_WRONG_INDEX_VALUES = "84";
 
-    // 0 Errors Gap
+    // 2 Errors Gap
 
     /// @notice Health factor is not below the threshold.
-    string public constant LPCM_HEALTH_FACTOR_NOT_BELOW_THRESHOLD = "85";
+    string public constant LPCM_HEALTH_FACTOR_NOT_BELOW_THRESHOLD = "87";
     /// @notice The collateral chosen cannot be liquidated.
-    string public constant LPCM_COLLATERAL_CANNOT_BE_LIQUIDATED = "86";
+    string public constant LPCM_COLLATERAL_CANNOT_BE_LIQUIDATED = "88";
     /// @notice User did not borrow the specified currency.
-    string public constant LPCM_SPECIFIED_CURRENCY_NOT_BORROWED_BY_USER = "87";
+    string public constant LPCM_SPECIFIED_CURRENCY_NOT_BORROWED_BY_USER = "89";
     /// @notice There is not enough liquidity available to liquidate.
-    string public constant LPCM_NOT_ENOUGH_LIQUIDITY_TO_LIQUIDATE = "88";
+    string public constant LPCM_NOT_ENOUGH_LIQUIDITY_TO_LIQUIDATE = "90";
 
     // 1 Errors Gap
 
     /// @notice Inconsistent parameters length.
-    string public constant O_INCONSISTENT_PARAMS_LENGTH = "90";
+    string public constant O_INCONSISTENT_PARAMS_LENGTH = "92";
     /// @notice Price feed inconsistency.
-    string public constant O_PRICE_FEED_INCONSISTENCY = "91";
+    string public constant O_PRICE_FEED_INCONSISTENCY = "93";
+
+    // 1 Errors Gap
 
     /// @notice No mini pool ID for address.
-    string public constant PAP_NO_MINI_POOL_ID_FOR_ADDRESS = "92";
+    string public constant PAP_NO_MINI_POOL_ID_FOR_ADDRESS = "95";
     /// @notice Pool ID out of range.
-    string public constant PAP_POOL_ID_OUT_OF_RANGE = "93";
+    string public constant PAP_POOL_ID_OUT_OF_RANGE = "96";
 
     // 1 Errors Gap
 
     /// @notice Invalid LTV.
-    string public constant RC_INVALID_LTV = "95";
+    string public constant RC_INVALID_LTV = "98";
     /// @notice Invalid liquidation threshold.
-    string public constant RC_INVALID_LIQ_THRESHOLD = "96";
+    string public constant RC_INVALID_LIQ_THRESHOLD = "99";
     /// @notice Invalid liquidation bonus.
-    string public constant RC_INVALID_LIQ_BONUS = "97";
+    string public constant RC_INVALID_LIQ_BONUS = "100";
     /// @notice Invalid decimals.
-    string public constant RC_INVALID_DECIMALS = "98";
+    string public constant RC_INVALID_DECIMALS = "101";
     /// @notice Invalid reserve factor.
-    string public constant RC_INVALID_RESERVE_FACTOR = "99";
+    string public constant RC_INVALID_RESERVE_FACTOR = "102";
     /// @notice Invalid deposit cap.
-    string public constant RC_INVALID_DEPOSIT_CAP = "100";
+    string public constant RC_INVALID_DEPOSIT_CAP = "103";
     /// @notice LendingPool not set.
-    string public constant DP_LENDINGPOOL_NOT_SET = "101";
+    string public constant DP_LENDINGPOOL_NOT_SET = "104";
     /// @notice Reserve is not configured.
-    string public constant DP_RESERVE_NOT_CONFIGURED = "102";
+    string public constant DP_RESERVE_NOT_CONFIGURED = "105";
     /// @notice Invalid liquidity index threshold.
-    string public constant RC_INVALID_LIQUIDITY_INDEX_THRESHOLD = "103";
+    string public constant RC_INVALID_LIQUIDITY_INDEX_THRESHOLD = "106";
     /// @notice Invalid borrow index threshold.
-    string public constant RC_INVALID_BORROW_INDEX_THRESHOLD = "104";
+    string public constant RC_INVALID_BORROW_INDEX_THRESHOLD = "107";
 
     // 2 Errors Gap
 
     /// @notice Not registered.
-    string public constant R_NOT_REGISTERED = "107";
+    string public constant R_NOT_REGISTERED = "110";
     /// @notice Too many reward tokens.
-    string public constant R_TOO_MANY_REWARD_TOKENS = "108";
+    string public constant R_TOO_MANY_REWARD_TOKENS = "111";
     /// @notice No forwarder set.
-    string public constant R_NO_FORWARDER_SET = "109";
+    string public constant R_NO_FORWARDER_SET = "112";
     /// @notice Claimer unauthorized.
-    string public constant R_CLAIMER_UNAUTHORIZED = "110";
+    string public constant R_CLAIMER_UNAUTHORIZED = "113";
     /// @notice Invalid address.
-    string public constant R_INVALID_ADDRESS = "111";
+    string public constant R_INVALID_ADDRESS = "114";
     /// @notice Already set.
-    string public constant R_ALREADY_SET = "112";
+    string public constant R_ALREADY_SET = "115";
     /// @notice Transfer error.
-    string public constant R_TRANSFER_ERROR = "113";
+    string public constant R_TRANSFER_ERROR = "116";
     /// @notice Rewarder not set.
-    string public constant R_REWARDER_NOT_SET = "114";
+    string public constant R_REWARDER_NOT_SET = "117";
+
+    // 2 Errors Gap
+
+    /// @notice Arrays must be of equal length.
+    string public constant SAM_WRONG_ARRAY_LENGTH = "120";
+    /// @notice Cooldown times must be decreasing.
+    string public constant SAM_COOLDOWN_NOT_DECREASING = "121";
+    /// @notice Max deposits must be increasing.
+    string public constant SAM_MAX_DEPOSIT_NOT_INCREASING = "122";
+    /// @notice Trust points thresholds must be increasing.
+    string public constant SAM_TRUSTPOINTS_NOT_INCREASING = "123";
+    /// @notice Deposit amount exceeds max deposit.
+    string public constant SAM_EXCEEDED_MAX_DEPOSIT = "124";
+    /// @notice Max checkpoints reached.
+    string public constant SAM_MAX_CHECKPOINTS_REACHED = "125";
+    /// @notice Checkpoint length must be greater than 0.
+    string public constant SAM_WRONG_CHECKPOINTS_LENGTH = "126";
+    /// @notice Amount must be greater than 0.
+    string public constant SAM_WRONG_AMOUNT = "127";
+    /// @notice Not enough funds to withdraw.
+    string public constant SAM_NOT_ENOGUH_FUNDS = "128";
 }
