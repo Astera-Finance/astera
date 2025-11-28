@@ -82,7 +82,7 @@ contract LendingPoolConfiguratorTest is Common, LendingPoolFixtures {
         );
 
         vm.startPrank(admin);
-        deployedContracts.accessManager.addUserToFlashloanWhitelist(address(this));
+        deployedContracts.securityAccessManager.addUserToFlashloanWhitelist(address(this));
         vm.stopPrank();
 
         commonContracts.mockedVaults =

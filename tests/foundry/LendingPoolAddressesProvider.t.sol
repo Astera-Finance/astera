@@ -22,7 +22,7 @@ contract LendingPoolAddressesProviderTest is Common {
     event PriceOracleUpdated(address indexed newAddress);
     event ProxyCreated(bytes32 id, address indexed newAddress);
     event AddressSet(bytes32 id, address indexed newAddress, bool hasProxy);
-    event AccessManagerSet(address indexed newAddress);
+    event SecurityAccessManagerSet(address indexed newAddress);
 
     function setUp() public {
         opFork = vm.createSelectFork(RPC, FORK_BLOCK);
@@ -122,15 +122,15 @@ contract LendingPoolAddressesProviderTest is Common {
         assertEq(provider.getPriceOracle(), priceOracle);
     }
 
-    function testSetAndGetAccessManager() public {
+    function testSetAndgetSecurityAccessManager() public {
         LendingPoolAddressesProvider provider = new LendingPoolAddressesProvider();
         address accessManager = makeAddr("AccessManager");
 
         vm.expectEmit(false, false, false, false);
-        emit AccessManagerSet(accessManager);
-        provider.setAccessManager((accessManager));
+        emit SecurityAccessManagerSet(accessManager);
+        provider.setSecurityAccessManager((accessManager));
 
-        assertEq(provider.getAccessManager(), accessManager);
+        assertEq(provider.getSecurityAccessManager(), accessManager);
     }
 
     /* @issue: Temporary disabled due to long time of execution */

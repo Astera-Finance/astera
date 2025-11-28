@@ -314,7 +314,7 @@ contract MiniPoolAddressesProvider is Ownable, IMiniPoolAddressesProvider {
      * @dev Returns the address of the access manager.
      * @return The current access manager address.
      */
-    function getAccessManager() external view returns (address) {
+    function getSecurityAccessManager() external view returns (address) {
         return getAddress(MINI_POOL_ACCESS_MANAGER);
     }
 
@@ -397,12 +397,12 @@ contract MiniPoolAddressesProvider is Ownable, IMiniPoolAddressesProvider {
 
     /**
      * @dev Updates the access manager address.
-     * @param accessManager The new access manager address.
+     * @param securityAccessManager The new access manager address.
      */
-    function setAccessManager(address accessManager) external onlyOwner {
-        _addresses[MINI_POOL_ACCESS_MANAGER] = accessManager;
+    function setSecurityAccessManager(address securityAccessManager) external onlyOwner {
+        _addresses[MINI_POOL_ACCESS_MANAGER] = securityAccessManager;
 
-        emit AccessManagerSet(accessManager);
+        emit SecurityAccessManagerSet(securityAccessManager);
     }
 
     // ======= Only configurator =======

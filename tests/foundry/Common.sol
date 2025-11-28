@@ -69,7 +69,7 @@ import {
     MiniPoolFixReserveInterestRate
 } from "../../contracts/protocol/core/interestRateStrategies/minipool/MiniPoolFixReserveInterestRate.sol";
 
-import {AccessManager} from "contracts/protocol/core/AccessManager.sol";
+import {SecurityAccessManager} from "contracts/protocol/core/SecurityAccessManager.sol";
 
 event Deposit(address indexed reserve, address user, address indexed onBehalfOf, uint256 amount);
 
@@ -136,7 +136,7 @@ contract Common is Test {
         FixReserveInterestRateStrategy fixStrategy;
         AsteraDataProvider asteraDataProvider;
         ATokensAndRatesHelper aTokensAndRatesHelper;
-        AccessManager accessManager;
+        SecurityAccessManager securityAccessManager;
     }
 
     struct DeployedMiniPoolContracts {
@@ -327,12 +327,12 @@ contract Common is Test {
         deployedContracts.lendingPoolConfigurator =
             LendingPoolConfigurator(lendingPoolConfiguratorProxyAddress);
         vm.startPrank(admin);
-        deployedContracts.accessManager = new AccessManager();
+        deployedContracts.securityAccessManager = new SecurityAccessManager(admin, new address[](0));
         deployedContracts.lendingPoolConfigurator.setPoolPause(true);
         vm.stopPrank();
 
         deployedContracts.lendingPoolAddressesProvider
-            .setAccessManager(address(deployedContracts.accessManager));
+            .setSecurityAccessManager(address(deployedContracts.securityAccessManager));
 
         // stableAndVariableTokensHelper = new StableAndVariableTokensHelper(lendingPoolProxyAddress, address(lendingPoolAddressesProvider));
         deployedContracts.aTokensAndRatesHelper = new ATokensAndRatesHelper(
@@ -723,7 +723,9 @@ contract Common is Test {
             address miniPoolConfigImpl = address(new MiniPoolConfigurator());
             miniPoolContracts.miniPoolAddressesProvider.setMiniPoolConfigurator(miniPoolConfigImpl);
             miniPoolContracts.miniPoolAddressesProvider
-                .setAccessManager(address(new AccessManager()));
+                .setSecurityAccessManager(
+                    address(new SecurityAccessManager(admin, new address[](0)))
+                );
 
             miniPoolContracts.miniPoolConfigurator = MiniPoolConfigurator(
                 miniPoolContracts.miniPoolAddressesProvider.getMiniPoolConfigurator()

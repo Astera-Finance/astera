@@ -46,7 +46,7 @@ contract FlashloanTest is Common {
             deployedContracts.lendingPoolAddressesProvider
         );
         vm.startPrank(admin);
-        deployedContracts.accessManager.addUserToFlashloanWhitelist(address(this));
+        deployedContracts.securityAccessManager.addUserToFlashloanWhitelist(address(this));
         vm.stopPrank();
 
         commonContracts.mockedVaults =

@@ -73,7 +73,7 @@ interface ILendingPoolAddressesProvider {
      * @dev Emitted when the access manager is updated.
      * @param newAddress The new access manager address.
      */
-    event AccessManagerSet(address indexed newAddress);
+    event SecurityAccessManagerSet(address indexed newAddress);
 
     function getMiniPoolAddressesProvider() external view returns (address);
 
@@ -91,7 +91,7 @@ interface ILendingPoolAddressesProvider {
 
     function getAddress(bytes32 id) external view returns (address);
 
-    function getAccessManager() external returns (address);
+    function getSecurityAccessManager() external returns (address);
 
     function setAddress(bytes32 id, address newAddress) external;
 
@@ -111,5 +111,5 @@ interface ILendingPoolAddressesProvider {
 
     function setFlowLimiter(address flowLimiter) external;
 
-    function setAccessManager(address accessManager) external;
+    function setSecurityAccessManager(address securityAccessManager) external;
 }

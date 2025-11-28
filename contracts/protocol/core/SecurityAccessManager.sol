@@ -72,15 +72,21 @@ contract SecurityAccessManager is AccessControl, ISecurityAccessManager {
     }
 
     function increaseTrustPoints(address user, uint16 amount) public {
-        if (hasRole(DEFAULT_ADMIN_ROLE, msg.sender) || hasRole(POINTS_MANAGER, msg.sender)) {
-            // change to only keeper -> offchain action
-            userRegister[user].trustPoints += amount;
-            emit TrustPointsChanged(user, amount);
-        }
+        require(
+            hasRole(DEFAULT_ADMIN_ROLE, msg.sender) || hasRole(POINTS_MANAGER, msg.sender),
+            Errors.SAM_UNAUTHORIZED
+        );
+        // change to only keeper -> offchain action
+        userRegister[user].trustPoints += amount;
+        emit TrustPointsChanged(user, amount);
     }
 
     function decreaseTrustPoints(address user, uint16 amount) public {
-        if (hasRole(DEFAULT_ADMIN_ROLE, msg.sender) || hasRole(POINTS_MANAGER, msg.sender)) {
+        require(
+            hasRole(DEFAULT_ADMIN_ROLE, msg.sender) || hasRole(POINTS_MANAGER, msg.sender),
+            Errors.SAM_UNAUTHORIZED
+        );
+        if (userRegister[user].trustPoints >= amount) {
             // change to only keeper -> offchain action
             userRegister[user].trustPoints -= amount;
             emit TrustPointsChanged(user, amount);
@@ -97,6 +103,7 @@ contract SecurityAccessManager is AccessControl, ISecurityAccessManager {
         require(
             _cooldownTimes.length == _trustPointsThresholds.length, Errors.SAM_WRONG_ARRAY_LENGTH
         );
+        delete levelParams;
         for (uint256 i = 0; i < _cooldownTimes.length; i++) {
             uint256 previousCooldownTime = i == 0 ? MAX_COOLDOWN : _cooldownTimes[i - 1];
             require(_cooldownTimes[i] <= previousCooldownTime, Errors.SAM_COOLDOWN_NOT_DECREASING);
@@ -155,12 +162,13 @@ contract SecurityAccessManager is AccessControl, ISecurityAccessManager {
     function getUserLevel(address user) public view returns (uint8) {
         uint256 trustPoints = userRegister[user].trustPoints;
         LevelParams[] memory _levelParams = levelParams;
-        for (uint8 i = 0; i < _levelParams.length; i++) {
-            if (trustPoints <= _levelParams[i].trustPointsThreshold) {
-                return i;
+
+        for (uint8 i = uint8(_levelParams.length - 1); i >= 0; i--) {
+            if (trustPoints >= _levelParams[uint8(i)].trustPointsThreshold) {
+                return uint8(i);
             }
         }
-        return uint8(_levelParams.length);
+        return 0; // Default to lowest tier
     }
 
     /**
@@ -188,7 +196,6 @@ contract SecurityAccessManager is AccessControl, ISecurityAccessManager {
 
     function getAllFunds(address user, address _asset) public view returns (uint256) {
         uint256 totalDeposit = 0;
-        uint8 userLevel = getUserLevel(user);
 
         DepositCheckpoints[] memory _depositCheckpoints =
             userRegister[user].depositCheckpoints[_asset];

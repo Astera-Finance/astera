@@ -43,7 +43,7 @@ import {IMiniPoolRewarder} from "../../../../contracts/interfaces/IMiniPoolRewar
 import {
     IMiniPoolAddressProviderUpdatable
 } from "../../../../contracts/interfaces/IMiniPoolAddressProviderUpdatable.sol";
-import {IAccessManager} from "../../../../contracts/interfaces/IAccessManager.sol";
+import {ISecurityAccessManager} from "../../../../contracts/interfaces/ISecurityAccessManager.sol";
 
 /**
  * @title MiniPool contract
@@ -113,7 +113,7 @@ contract MiniPool is
      */
     modifier onlyFlashloanWhitelisted() {
         require(
-            IAccessManager(_addressesProvider.getAccessManager())
+            ISecurityAccessManager(_addressesProvider.getSecurityAccessManager())
                 .isFlashloanWhitelisted(msg.sender),
             Errors.LP_CALLER_NOT_WHITELISTED
         );

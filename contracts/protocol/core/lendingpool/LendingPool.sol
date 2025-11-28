@@ -48,7 +48,7 @@ import {
 import {
     IAddressProviderUpdatable
 } from "../../../../contracts/interfaces/IAddressProviderUpdatable.sol";
-import {IAccessManager} from "../../../../contracts/interfaces/IAccessManager.sol";
+import {ISecurityAccessManager} from "../../../../contracts/interfaces/ISecurityAccessManager.sol";
 
 /**
  * @title LendingPool contract
@@ -102,7 +102,7 @@ contract LendingPool is
      */
     modifier onlyFlashloanWhitelisted() {
         require(
-            IAccessManager(_addressesProvider.getAccessManager())
+            ISecurityAccessManager(_addressesProvider.getSecurityAccessManager())
                 .isFlashloanWhitelisted(msg.sender),
             Errors.LP_CALLER_NOT_WHITELISTED
         );

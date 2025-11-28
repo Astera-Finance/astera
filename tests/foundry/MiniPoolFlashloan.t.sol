@@ -381,8 +381,9 @@ contract MiniPoolFlashloanTest is Common {
             miniPoolContracts
         );
 
-        address accessManager = miniPoolContracts.miniPoolAddressesProvider.getAccessManager();
-        AccessManager(accessManager).addUserToFlashloanWhitelist(address(this));
+        address accessManager =
+            miniPoolContracts.miniPoolAddressesProvider.getSecurityAccessManager();
+        SecurityAccessManager(accessManager).addUserToFlashloanWhitelist(address(this));
 
         address[] memory reserves = new address[](2 * tokens.length);
         for (uint8 idx = 0; idx < (2 * tokens.length); idx++) {

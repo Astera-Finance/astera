@@ -233,17 +233,17 @@ contract LendingPoolAddressesProvider is Ownable, ILendingPoolAddressesProvider 
      * @dev Returns the address of the access manager.
      * @return The current access manager address.
      */
-    function getAccessManager() external view override returns (address) {
+    function getSecurityAccessManager() external view override returns (address) {
         return getAddress(ACCESS_MANAGER);
     }
 
     /**
      * @dev Updates the access manager address.
-     * @param accessManager The new access manager address.
+     * @param securityAccessManager The new access manager address.
      */
-    function setAccessManager(address accessManager) external override onlyOwner {
-        _addresses[ACCESS_MANAGER] = accessManager;
+    function setSecurityAccessManager(address securityAccessManager) external override onlyOwner {
+        _addresses[ACCESS_MANAGER] = securityAccessManager;
 
-        emit AccessManagerSet(accessManager);
+        emit SecurityAccessManagerSet(securityAccessManager);
     }
 }

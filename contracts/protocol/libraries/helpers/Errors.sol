@@ -276,4 +276,6 @@ library Errors {
     string public constant SAM_WRONG_AMOUNT = "127";
     /// @notice Not enough funds to withdraw.
     string public constant SAM_NOT_ENOGUH_FUNDS = "128";
+    /// @notice Caller not authorized.
+    string public constant SAM_UNAUTHORIZED = "128";
 }

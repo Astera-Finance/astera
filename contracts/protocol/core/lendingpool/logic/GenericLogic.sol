@@ -50,6 +50,7 @@ library GenericLogic {
         uint256 amountToDecreaseInETH;
         uint256 collateralBalanceAfterDecrease;
         uint256 liquidationThresholdAfterDecrease;
+        uint256 liquidFunds;
     }
 
     /**
@@ -105,6 +106,10 @@ library GenericLogic {
         vars.amountToDecreaseInETH = getAmountToDecreaseInEth(oracle, asset, amount, vars.decimals);
 
         vars.collateralBalanceAfterDecrease = vars.totalCollateralInETH - vars.amountToDecreaseInETH;
+
+        // if (vars.liquidFunds - vars.amountToDecreaseInETH == 0) {
+        //     return false;
+        // }
 
         // If there is a borrow, there can't be 0 collateral.
         if (vars.collateralBalanceAfterDecrease == 0) {
@@ -175,6 +180,7 @@ library GenericLogic {
         uint256 totalDebtInETH;
         uint256 avgLtv;
         uint256 avgLiquidationThreshold;
+        uint256 liquidFunds;
         address currentReserveAddress;
         bool currentReserveType;
     }
@@ -231,6 +237,11 @@ library GenericLogic {
                     vars.reserveUnitPrice * vars.compoundedLiquidityBalance / vars.tokenUnit;
 
                 vars.totalCollateralInETH = vars.totalCollateralInETH + liquidityBalanceETH;
+
+                // uint256 liquidFundsETH = vars.reserveUnitPrice
+                //     * getLiquidFunds(user, vars.currentReserveAddress) / vars.tokenUnit;
+                // vars.liquidFunds = vars.liquidFunds + liquidFundsETH;
+                // require(vars.liquidFunds <= vars.totalCollateralInETH);
 
                 vars.avgLtv = vars.avgLtv + (liquidityBalanceETH * vars.ltv);
                 vars.avgLiquidationThreshold = vars.avgLiquidationThreshold
@@ -291,6 +302,21 @@ library GenericLogic {
      * @param ltv The average loan to value.
      * @return The amount available to borrow in ETH for the user.
      */
+    // function calculateAvailableBorrowsETH(
+    //     uint256 liquidFunds,
+    //     uint256 totalDebtInETH,
+    //     uint256 ltv
+    // ) public pure returns (uint256) {
+    //     uint256 availableBorrowsETH = liquidFunds.percentMul(ltv);
+
+    //     if (availableBorrowsETH < totalDebtInETH) {
+    //         return 0;
+    //     }
+
+    //     availableBorrowsETH = availableBorrowsETH - totalDebtInETH;
+    //     return availableBorrowsETH;
+    // }
+
     function calculateAvailableBorrowsETH(
         uint256 totalCollateralInETH,
         uint256 totalDebtInETH,

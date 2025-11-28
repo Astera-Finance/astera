@@ -8,7 +8,7 @@ pragma solidity ^0.8.20;
  */
 interface ISecurityAccessManager {
     struct DepositCheckpoints {
-        uint208 depositAmount;
+        uint208 depositAmount; // inUSD
         uint48 depositTime;
     }
 
