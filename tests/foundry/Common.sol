@@ -327,10 +327,12 @@ contract Common is Test {
         deployedContracts.lendingPoolConfigurator =
             LendingPoolConfigurator(lendingPoolConfiguratorProxyAddress);
         vm.startPrank(admin);
-        deployedContracts.securityAccessManager = new SecurityAccessManager(admin, new address[](0));
+        deployedContracts.securityAccessManager =
+            new SecurityAccessManager(admin, new address[](0), tokens);
         deployedContracts.lendingPoolConfigurator.setPoolPause(true);
         vm.stopPrank();
 
+        // Potentially comment this out to allow all tests to work
         deployedContracts.lendingPoolAddressesProvider
             .setSecurityAccessManager(address(deployedContracts.securityAccessManager));
 
@@ -724,7 +726,7 @@ contract Common is Test {
             miniPoolContracts.miniPoolAddressesProvider.setMiniPoolConfigurator(miniPoolConfigImpl);
             miniPoolContracts.miniPoolAddressesProvider
                 .setSecurityAccessManager(
-                    address(new SecurityAccessManager(admin, new address[](0)))
+                    address(new SecurityAccessManager(admin, new address[](0), tokens))
                 );
 
             miniPoolContracts.miniPoolConfigurator = MiniPoolConfigurator(

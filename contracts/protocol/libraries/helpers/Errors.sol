@@ -277,5 +277,7 @@ library Errors {
     /// @notice Not enough funds to withdraw.
     string public constant SAM_NOT_ENOGUH_FUNDS = "128";
     /// @notice Caller not authorized.
-    string public constant SAM_UNAUTHORIZED = "128";
+    string public constant SAM_UNAUTHORIZED = "129";
+    /// @notice Asset doesn't have level params.
+    string public constant SAM_NO_LEVEL_PARAMS_FOR_ASSET = "130";
 }
