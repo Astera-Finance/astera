@@ -209,7 +209,8 @@ library WithdrawLogic {
             usersConfig[params.from],
             reservesList,
             params.reservesCount,
-            addressesProvider.getPriceOracle()
+            addressesProvider.getPriceOracle(),
+            addressesProvider.getSecurityAccessManager()
         );
 
         uint256 reserveId = reserves[params.asset][params.reserveType].id;

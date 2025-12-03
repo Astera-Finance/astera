@@ -702,7 +702,7 @@ contract PropertiesBase is PropertiesAsserts, MarketParams {
 
             v.randReceiveAToken = randReceiveAToken;
             v.target = users[i];
-            (,,,,, v.targetHealthFactorBefore) = pool.getUserAccountData(address(v.target));
+            (,,,,, v.targetHealthFactorBefore,) = pool.getUserAccountData(address(v.target));
             if (v.targetHealthFactorBefore < 1e18) {
                 (v.userAToken, v.userCollAssets, v.lenATokenUser) = getAllATokens(v.target);
                 (v.userDebtToken, v.userDebtAssets, v.lenDebtTokenUser) = getAllDebtTokens(v.target);

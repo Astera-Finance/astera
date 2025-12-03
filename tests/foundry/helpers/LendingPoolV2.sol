@@ -80,6 +80,15 @@ contract LendingPoolV2 is
     }
 
     /**
+     * @dev Modifier to check if caller is the whitelisted for flashloan.
+     * Reverts if caller is not whitelisted.
+     */
+    modifier onlyFlashloanWhitelisted() {
+        require(isFlashloanWhitelisted(msg.sender), Errors.LP_CALLER_NOT_WHITELISTED);
+        _;
+    }
+
+    /**
      * @dev Internal function to check if lending pool is not paused.
      * Reverts with `LP_IS_PAUSED` if `_paused` is true.
      */
@@ -101,6 +110,10 @@ contract LendingPoolV2 is
     /// @dev Returns the revision number of the contract.
     function getRevision() internal pure override returns (uint256) {
         return LENDINGPOOL_REVISION;
+    }
+
+    constructor() {
+        _blockInitializing();
     }
 
     /**
@@ -237,15 +250,15 @@ contract LendingPoolV2 is
      * @param asset The address of the underlying asset of the reserve.
      * @param reserveType Whether the reserve is boosted by a vault.
      * @param amount The amount to repay.
-     * @return The final amount repaid.
+     * @return amountRepaid The final amount repaid.
      */
     function repayWithATokens(address asset, bool reserveType, uint256 amount)
         external
         override
         whenNotPaused
-        returns (uint256)
+        returns (uint256 amountRepaid)
     {
-        return BorrowLogic.repayWithAtokens(
+        amountRepaid = BorrowLogic.repayWithAtokens(
             BorrowLogic.RepayParams(asset, reserveType, amount, msg.sender, _addressesProvider),
             _assetToMinipoolFlowBorrowing[asset],
             _reserves,
@@ -276,7 +289,8 @@ contract LendingPoolV2 is
             _usersConfig[msg.sender],
             _reservesList,
             _reservesCount,
-            _addressesProvider.getPriceOracle()
+            _addressesProvider.getPriceOracle(),
+            _addressesProvider.getSecurityAccessManager()
         );
 
         _usersConfig[msg.sender].setUsingAsCollateral(reserve.id, useAsCollateral);
@@ -310,8 +324,6 @@ contract LendingPoolV2 is
         uint256 debtToCover,
         bool receiveAToken
     ) external override whenNotPaused {
-        require(!_isMiniPool(user), Errors.VL_MINIPOOL_CANNOT_BE_LIQUIDATED);
-
         LiquidationLogic.liquidationCall(
             _reserves,
             _assetToMinipoolFlowBorrowing,
@@ -352,7 +364,7 @@ contract LendingPoolV2 is
         uint256[] calldata amounts,
         uint256[] calldata modes,
         bytes calldata params
-    ) external override whenNotPaused {
+    ) external override whenNotPaused onlyFlashloanWhitelisted {
         FlashLoanLogic.flashLoan(
             FlashLoanLogic.FlashLoanParams({
                 receiverAddress: flashLoanParams.receiverAddress,
@@ -375,7 +387,7 @@ contract LendingPoolV2 is
 
     /**
      * @notice Allows minipools to borrow unbacked amounts of reserve assets.
-     * @dev This function is restricted to minipools only.
+     * @dev This function is restricted to minipools only. `reserveType` is hardcoded to `true`.
      * @param asset The address of the underlying asset to borrow.
      * @param amount The amount to borrow.
      * @param aTokenAddress The address of the aToken.
@@ -385,8 +397,6 @@ contract LendingPoolV2 is
         override
         whenNotPaused
     {
-        require(_isMiniPool(msg.sender), Errors.LP_CALLER_NOT_MINIPOOL);
-
         BorrowLogic.executeMiniPoolBorrow(
             BorrowLogic.ExecuteMiniPoolBorrowParams(
                 asset, true, amount, msg.sender, aTokenAddress, _addressesProvider, _reservesCount
@@ -394,18 +404,6 @@ contract LendingPoolV2 is
             _assetToMinipoolFlowBorrowing[asset],
             _reserves
         );
-    }
-
-    /**
-     * @notice Checks if a user is a minipool.
-     * @param user The address of the user.
-     * @return True if the user is a minipool, false otherwise.
-     */
-    function _isMiniPool(address user) internal view returns (bool) {
-        address minipoolAddressProvider = _addressesProvider.getMiniPoolAddressesProvider();
-        if (minipoolAddressProvider == address(0)) return false;
-        return IMiniPoolAddressesProvider(minipoolAddressProvider).getMiniPoolToAERC6909(user)
-            != address(0);
     }
 
     /**
@@ -443,20 +441,26 @@ contract LendingPoolV2 is
             uint256 availableBorrowsETH,
             uint256 currentLiquidationThreshold,
             uint256 ltv,
-            uint256 healthFactor
+            uint256 healthFactor,
+            uint256 liquidFunds
         )
     {
+        DataTypes.CalculateUserAccountDataParams memory params =
+            DataTypes.CalculateUserAccountDataParams({
+                userConfig: _usersConfig[user],
+                reservesCount: _reservesCount,
+                user: user,
+                oracle: _addressesProvider.getPriceOracle(),
+                securityAccessManager: _addressesProvider.getSecurityAccessManager()
+            });
         (
-            totalCollateralETH, totalDebtETH, ltv, currentLiquidationThreshold, healthFactor
-        ) =
-            GenericLogic.calculateUserAccountData(
-                user,
-                _reserves,
-                _usersConfig[user],
-                _reservesList,
-                _reservesCount,
-                _addressesProvider.getPriceOracle()
-            );
+            totalCollateralETH,
+            totalDebtETH,
+            ltv,
+            currentLiquidationThreshold,
+            healthFactor,
+            liquidFunds
+        ) = GenericLogic.calculateUserAccountData(_reserves, _reservesList, params);
 
         availableBorrowsETH =
             GenericLogic.calculateAvailableBorrowsETH(totalCollateralETH, totalDebtETH, ltv);
@@ -675,6 +679,8 @@ contract LendingPoolV2 is
      * @param val `true` to pause the reserve, `false` to un-pause it.
      */
     function setPause(bool val) external override onlyLendingPoolConfigurator {
+        require(val != _paused, Errors.VL_INVALID_INPUT);
+
         _paused = val;
         if (_paused) {
             emit Paused();
@@ -775,15 +781,15 @@ contract LendingPoolV2 is
 
         require(reservesCount < _maxNumberOfReserves, Errors.LP_NO_MORE_RESERVES_ALLOWED);
 
-        bool reserveAlreadyAdded =
-            _reserves[asset][reserveType].id != 0 || _reservesList[0].asset == asset;
+        bool reserveAlreadyAdded = _reserves[asset][reserveType].id != 0
+            || (_reservesList[0].asset == asset && _reservesList[0].reserveType == reserveType);
 
-        if (!reserveAlreadyAdded) {
-            _reserves[asset][reserveType].id = uint8(reservesCount);
-            _reservesList[reservesCount] = DataTypes.ReserveReference(asset, reserveType);
+        require(!reserveAlreadyAdded, Errors.LP_RESERVE_ALREADY_ADDED);
 
-            _reservesCount = reservesCount + 1;
-        }
+        _reserves[asset][reserveType].id = uint8(reservesCount);
+        _reservesList[reservesCount] = DataTypes.ReserveReference(asset, reserveType);
+
+        _reservesCount = reservesCount + 1;
     }
 
     /**
@@ -804,45 +810,8 @@ contract LendingPoolV2 is
      */
     function _updateFlashLoanFee(uint128 flashLoanPremiumTotal) internal {
         _flashLoanPremiumTotal = flashLoanPremiumTotal;
-    }
 
-    /**
-     * @notice Sets the rewarder contract for a specific reserve.
-     * @param asset The address of the underlying asset of the reserve.
-     * @param reserveType Whether the reserve is boosted by a vault.
-     * @param rewarder The address of the rewarder contract to be set.
-     */
-    function setRewarderForReserve(address asset, bool reserveType, address rewarder)
-        external
-        override
-        onlyLendingPoolConfigurator
-    {
-        IAToken(_reserves[asset][reserveType].aTokenAddress).setIncentivesController(rewarder);
-        IVariableDebtToken(_reserves[asset][reserveType].variableDebtTokenAddress)
-            .setIncentivesController(rewarder);
-    }
-
-    /**
-     * @notice Sets the treasury for a specific reserve.
-     * @param asset The address of the underlying asset of the reserve.
-     * @param reserveType Whether the reserve is boosted by a vault.
-     * @param treasury The address of the treasury to be set.
-     */
-    function setTreasury(address asset, bool reserveType, address treasury)
-        external
-        override
-        onlyLendingPoolConfigurator
-    {
-        IAToken(_reserves[asset][reserveType].aTokenAddress).setTreasury(treasury);
-    }
-
-    /**
-     * @notice Returns the non-rebasing aToken address associated with a aToken.
-     * @param aToken The address of the aToken.
-     * @return The address of the non-rebasing aToken.
-     */
-    function getATokenNonRebasingFromAtoken(address aToken) external view returns (address) {
-        return IAToken(aToken).WRAPPER_ADDRESS();
+        emit FlashLoanFeeUpdated(flashLoanPremiumTotal);
     }
 
     /**
@@ -882,30 +851,74 @@ contract LendingPoolV2 is
     }
 
     /**
+     * @notice Sets the rewarder contract for a specific reserve.
+     * @param asset The address of the underlying asset of the reserve.
+     * @param reserveType Whether the reserve is boosted by a vault.
+     * @param rewarder The address of the rewarder contract to be set.
+     */
+    function setRewarderForReserve(address asset, bool reserveType, address rewarder)
+        external
+        override
+        onlyLendingPoolConfigurator
+    {
+        IAToken(_reserves[asset][reserveType].aTokenAddress).setIncentivesController(rewarder);
+        IVariableDebtToken(_reserves[asset][reserveType].variableDebtTokenAddress)
+            .setIncentivesController(rewarder);
+    }
+
+    /**
+     * @notice Sets the treasury for a specific reserve.
+     * @param asset The address of the underlying asset of the reserve.
+     * @param reserveType Whether the reserve is boosted by a vault.
+     * @param treasury The address of the treasury to be set.
+     */
+    function setTreasury(address asset, bool reserveType, address treasury)
+        external
+        override
+        onlyLendingPoolConfigurator
+    {
+        IAToken(_reserves[asset][reserveType].aTokenAddress).setTreasury(treasury);
+    }
+
+    function addUserToFlashloanWhitelist(address user) external onlyLendingPoolConfigurator {
+        _flashloanWhitelistedUser[user] = true;
+        emit UserWhitelisted(user);
+    }
+
+    function removeUserFromFlashloanWhitelist(address user) external onlyLendingPoolConfigurator {
+        _flashloanWhitelistedUser[user] = false;
+        emit UserRemovedFromWhitelist(user);
+    }
+
+    /**
+     * @notice Returns the non-rebasing aToken address associated with a aToken.
+     * @param aToken The address of the aToken.
+     * @return The address of the non-rebasing aToken.
+     */
+    function getATokenNonRebasingFromAtoken(address aToken) external view returns (address) {
+        return IAToken(aToken).WRAPPER_ADDRESS();
+    }
+
+    /**
      * @notice Returns the list of minipools that are currently flow borrowing from a specific asset.
      * @param asset The address of the asset.
      * @return The list of minipool addresses that are flow borrowing from the asset.
      */
     function getMinipoolFlowBorrowing(address asset) external view returns (address[] memory) {
-        address[] memory minipools = new address[](1);
-        return minipools;
+        // return _assetToMinipoolFlowBorrowing[asset].values();
     }
-    /**
-     * @notice Returns the list of mini pools that are currently flow borrowing.
-     * @return The list of mini pool addresses that are flow borrowing.
-     */
 
-    function getMinipoolFlowBorrowing() external view returns (address[] memory) {
-        address[] memory minipoolFlowBorrowing = new address[](1);
-        return minipoolFlowBorrowing;
-    }
     /**
      * @notice Checks if a mini pool is currently flow borrowing.
+     * @param asset The address of the asset.
      * @param minipool The address of the mini pool to check.
      * @return True if the mini pool is flow borrowing, false otherwise.
      */
+    function isMinipoolFlowBorrowing(address asset, address minipool) external view returns (bool) {
+        // return _assetToMinipoolFlowBorrowing[asset].contains(minipool);
+    }
 
-    function isMinipoolFlowBorrowing(address minipool) external view returns (bool) {
-        return true;
+    function isFlashloanWhitelisted(address _user) public view returns (bool) {
+        return _flashloanWhitelistedUser[_user];
     }
 }

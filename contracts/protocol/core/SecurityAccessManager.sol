@@ -6,6 +6,8 @@ import {ISecurityAccessManager} from "contracts/interfaces/ISecurityAccessManage
 import {Errors} from "contracts/protocol/libraries/helpers/Errors.sol";
 import {IERC20Detailed} from "contracts/dependencies/openzeppelin/contracts/IERC20Detailed.sol";
 
+// import {console2} from "forge-std/console2.sol";
+
 contract SecurityAccessManager is AccessControl, ISecurityAccessManager {
     // Add upgradeablity due to user register
     uint208 public constant LVL1_DEFAULT_MAX_DEPOSIT = 1000e8;
@@ -26,9 +28,12 @@ contract SecurityAccessManager is AccessControl, ISecurityAccessManager {
 
     mapping(address user => UserRegister) private userRegister;
 
-    mapping(address user => bool) private flashloanWhitelistedUser;
-
     mapping(address asset => LevelParams[]) private levelParams;
+
+    modifier onlyAToken(address sender) {
+        require(levelParams[sender].length > 0, Errors.SAM_UNAUTHORIZED);
+        _;
+    }
 
     constructor(address _admin, address[] memory _pointsManagers, address[] memory assets) {
         // Initialize level parameters via _setLevelParams
@@ -57,16 +62,6 @@ contract SecurityAccessManager is AccessControl, ISecurityAccessManager {
     /**
      * SETTERS
      */
-
-    function addUserToFlashloanWhitelist(address user) external onlyRole(DEFAULT_ADMIN_ROLE) {
-        flashloanWhitelistedUser[user] = true;
-        emit UserWhitelisted(user);
-    }
-
-    function removeUserFromFlashloanWhitelist(address user) external onlyRole(DEFAULT_ADMIN_ROLE) {
-        flashloanWhitelistedUser[user] = false;
-        emit UserRemovedFromWhitelist(user);
-    }
 
     /**
      * @dev Sets level parameters for a specific asset
@@ -138,32 +133,32 @@ contract SecurityAccessManager is AccessControl, ISecurityAccessManager {
         }
     }
 
-    function registerDeposit(uint208 _amount, address _asset) public {
-        uint8 userLevel = getUserLevel(msg.sender, _asset);
-        uint256 allFunds = getAllFunds(msg.sender, _asset);
+    function registerDeposit(uint208 _amount, address _user) public onlyAToken(msg.sender) {
+        uint8 userLevel = getUserLevel(_user, msg.sender);
+        uint256 allFunds = getAllFunds(_user, msg.sender);
 
-        require(levelParams[_asset].length > 0, Errors.SAM_NO_LEVEL_PARAMS_FOR_ASSET);
+        require(levelParams[msg.sender].length > 0, Errors.SAM_NO_LEVEL_PARAMS_FOR_ASSET);
 
         require(
-            allFunds + _amount <= getMaxDepositInOriginDecimals(userLevel, _asset),
+            allFunds + _amount <= getMaxDepositInOriginDecimals(userLevel, msg.sender),
             Errors.SAM_EXCEEDED_MAX_DEPOSIT
         );
         require(
-            userRegister[msg.sender].depositCheckpoints[_asset].length + 1 < MAX_CHECKPOINTS,
+            userRegister[_user].depositCheckpoints[msg.sender].length + 1 < MAX_CHECKPOINTS,
             Errors.SAM_MAX_CHECKPOINTS_REACHED
         );
 
         DepositCheckpoints memory newCheckpoint =
             DepositCheckpoints({depositAmount: _amount, depositTime: uint48(block.timestamp)});
-        userRegister[msg.sender].depositCheckpoints[_asset].push(newCheckpoint);
+        userRegister[_user].depositCheckpoints[msg.sender].push(newCheckpoint);
     }
 
-    function unregisterDeposit(uint208 _amount, address _asset) public {
+    function unregisterDeposit(uint208 _amount, address _user) public onlyAToken(msg.sender) {
         DepositCheckpoints[] storage depositCheckpointsPtr =
-            userRegister[msg.sender].depositCheckpoints[_asset];
+            userRegister[_user].depositCheckpoints[msg.sender];
         require(depositCheckpointsPtr.length > 0, Errors.SAM_WRONG_CHECKPOINTS_LENGTH);
         require(_amount > 0, Errors.SAM_WRONG_AMOUNT);
-        require(_amount < getAllFunds(msg.sender, _asset), Errors.SAM_NOT_ENOGUH_FUNDS);
+        require(_amount < getAllFunds(_user, msg.sender), Errors.SAM_NOT_ENOGUH_FUNDS);
         for (uint256 i = depositCheckpointsPtr.length - 1; i >= 0; i--) {
             if (depositCheckpointsPtr[i].depositAmount > _amount) {
                 depositCheckpointsPtr[i].depositAmount -= _amount;
@@ -180,9 +175,6 @@ contract SecurityAccessManager is AccessControl, ISecurityAccessManager {
     /**
      * GETTERS
      */
-    function isFlashloanWhitelisted(address _user) external view returns (bool) {
-        return flashloanWhitelistedUser[_user];
-    }
 
     function getUserLevel(address _user, address _asset) public view returns (uint8) {
         uint256 trustPoints = userRegister[_user].trustPoints;
@@ -207,6 +199,9 @@ contract SecurityAccessManager is AccessControl, ISecurityAccessManager {
             userRegister[_user].depositCheckpoints[_asset];
         uint256 userDepositCheckpointsLength = _depositCheckpoints.length;
         for (uint256 i = 0; i < userDepositCheckpointsLength; i++) {
+            // console2.log("Deposit time: ", _depositCheckpoints[i].depositTime);
+            // console2.log(" Current time: ", block.timestamp);
+            // console2.log(" Cooldown: ", levelParams[_asset][userLevel].cooldownTime);
             if (
                 block.timestamp - _depositCheckpoints[i].depositTime
                     >= levelParams[_asset][userLevel].cooldownTime
@@ -244,10 +239,6 @@ contract SecurityAccessManager is AccessControl, ISecurityAccessManager {
 
     function getLevelParams(address _asset) external view returns (LevelParams[] memory) {
         return levelParams[_asset];
-    }
-
-    function getFlashloanWhitelistedUser(address _user) external view returns (bool) {
-        return flashloanWhitelistedUser[_user];
     }
 
     function getMaxDepositInOriginDecimals(uint256 _userLevel, address _asset)

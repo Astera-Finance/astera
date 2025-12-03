@@ -18,6 +18,7 @@ pragma solidity ^0.8.23;
  *  - RC   :: Reserve configuration
  *  - R    :: Rewarder
  *  - SAM  :: SecurityAccessManager
+ *  - GL   :: GenericLogic
  */
 library Errors {
     /// @notice Amount must be greater than 0.
@@ -280,4 +281,9 @@ library Errors {
     string public constant SAM_UNAUTHORIZED = "129";
     /// @notice Asset doesn't have level params.
     string public constant SAM_NO_LEVEL_PARAMS_FOR_ASSET = "130";
+
+    // 2 Errors Gap
+
+    /// @notice Arrays must be of equal length.
+    string public constant GL_WRONG_LIQUID_FUNDS = "133";
 }

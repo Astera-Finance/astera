@@ -802,6 +802,16 @@ contract MiniPoolV2 is
         _reservesCount = reservesCount + 1;
     }
 
+    function addUserToFlashloanWhitelist(address user) external onlyMiniPoolConfigurator {
+        _flashloanWhitelistedUser[user] = true;
+        emit UserWhitelisted(user);
+    }
+
+    function removeUserFromFlashloanWhitelist(address user) external onlyMiniPoolConfigurator {
+        _flashloanWhitelistedUser[user] = false;
+        emit UserRemovedFromWhitelist(user);
+    }
+
     /**
      * @dev Returns the current lending pool debt for a specific asset.
      * @param asset The address of the asset to check the debt for.
@@ -868,5 +878,9 @@ contract MiniPoolV2 is
      */
     function _updateFlashLoanFee(uint128 flashLoanPremiumTotal) internal {
         _flashLoanPremiumTotal = flashLoanPremiumTotal;
+    }
+
+    function isFlashloanWhitelisted(address _user) public view returns (bool) {
+        return _flashloanWhitelistedUser[_user];
     }
 }

@@ -47,6 +47,9 @@ contract MiniPoolStorage {
     /// @dev Minimal possible debt threshold
     uint256 internal _minDebtThreshold;
 
+    /// @dev Mapping to track flashloan whitelisted users.
+    mapping(address user => bool) internal _flashloanWhitelistedUser;
+
     /// @dev Minimal decimals amount
     uint256 internal constant THRESHOLD_SCALING_DECIMALS = 6;
 }

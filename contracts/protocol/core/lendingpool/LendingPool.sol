@@ -48,7 +48,6 @@ import {
 import {
     IAddressProviderUpdatable
 } from "../../../../contracts/interfaces/IAddressProviderUpdatable.sol";
-import {ISecurityAccessManager} from "../../../../contracts/interfaces/ISecurityAccessManager.sol";
 
 /**
  * @title LendingPool contract
@@ -101,11 +100,7 @@ contract LendingPool is
      * Reverts if caller is not whitelisted.
      */
     modifier onlyFlashloanWhitelisted() {
-        require(
-            ISecurityAccessManager(_addressesProvider.getSecurityAccessManager())
-                .isFlashloanWhitelisted(msg.sender),
-            Errors.LP_CALLER_NOT_WHITELISTED
-        );
+        require(isFlashloanWhitelisted(msg.sender), Errors.LP_CALLER_NOT_WHITELISTED);
         _;
     }
 
@@ -310,7 +305,8 @@ contract LendingPool is
             _usersConfig[msg.sender],
             _reservesList,
             _reservesCount,
-            _addressesProvider.getPriceOracle()
+            _addressesProvider.getPriceOracle(),
+            _addressesProvider.getSecurityAccessManager()
         );
 
         _usersConfig[msg.sender].setUsingAsCollateral(reserve.id, useAsCollateral);
@@ -461,20 +457,26 @@ contract LendingPool is
             uint256 availableBorrowsETH,
             uint256 currentLiquidationThreshold,
             uint256 ltv,
-            uint256 healthFactor
+            uint256 healthFactor,
+            uint256 liquidFunds
         )
     {
+        DataTypes.CalculateUserAccountDataParams memory params =
+            DataTypes.CalculateUserAccountDataParams({
+                userConfig: _usersConfig[user],
+                reservesCount: _reservesCount,
+                user: user,
+                oracle: _addressesProvider.getPriceOracle(),
+                securityAccessManager: _addressesProvider.getSecurityAccessManager()
+            });
         (
-            totalCollateralETH, totalDebtETH, ltv, currentLiquidationThreshold, healthFactor
-        ) =
-            GenericLogic.calculateUserAccountData(
-                user,
-                _reserves,
-                _usersConfig[user],
-                _reservesList,
-                _reservesCount,
-                _addressesProvider.getPriceOracle()
-            );
+            totalCollateralETH,
+            totalDebtETH,
+            ltv,
+            currentLiquidationThreshold,
+            healthFactor,
+            liquidFunds
+        ) = GenericLogic.calculateUserAccountData(_reserves, _reservesList, params);
 
         availableBorrowsETH =
             GenericLogic.calculateAvailableBorrowsETH(totalCollateralETH, totalDebtETH, ltv);
@@ -894,6 +896,16 @@ contract LendingPool is
         IAToken(_reserves[asset][reserveType].aTokenAddress).setTreasury(treasury);
     }
 
+    function addUserToFlashloanWhitelist(address user) external onlyLendingPoolConfigurator {
+        _flashloanWhitelistedUser[user] = true;
+        emit UserWhitelisted(user);
+    }
+
+    function removeUserFromFlashloanWhitelist(address user) external onlyLendingPoolConfigurator {
+        _flashloanWhitelistedUser[user] = false;
+        emit UserRemovedFromWhitelist(user);
+    }
+
     /**
      * @notice Returns the non-rebasing aToken address associated with a aToken.
      * @param aToken The address of the aToken.
@@ -920,5 +932,9 @@ contract LendingPool is
      */
     function isMinipoolFlowBorrowing(address asset, address minipool) external view returns (bool) {
         return _assetToMinipoolFlowBorrowing[asset].contains(minipool);
+    }
+
+    function isFlashloanWhitelisted(address _user) public view returns (bool) {
+        return _flashloanWhitelistedUser[_user];
     }
 }

@@ -119,7 +119,8 @@ library ValidationLogic {
                 userConfig,
                 reservesList,
                 validateParams.reservesCount,
-                validateParams.oracle
+                validateParams.oracle,
+                address(0)
             ),
             Errors.VL_TRANSFER_NOT_ALLOWED
         );
@@ -139,6 +140,7 @@ library ValidationLogic {
         uint256 amountInETH;
         uint256 reservesCount;
         address oracle;
+        address securityAccessManager;
     }
 
     /**
@@ -151,6 +153,7 @@ library ValidationLogic {
         uint256 userCollateralBalanceETH;
         uint256 userBorrowBalanceETH;
         uint256 healthFactor;
+        uint256 liquidFunds;
         bool isActive;
         bool isFrozen;
         bool borrowingEnabled;
@@ -184,6 +187,7 @@ library ValidationLogic {
         params.user = validateParams.userAddress;
         params.reservesCount = validateParams.reservesCount;
         params.oracle = validateParams.oracle;
+        params.securityAccessManager = validateParams.securityAccessManager;
 
         (vars.isActive, vars.isFrozen, vars.borrowingEnabled) = reserve.configuration.getFlags();
 
@@ -197,10 +201,15 @@ library ValidationLogic {
             vars.userBorrowBalanceETH,
             vars.currentLtv,
             vars.currentLiquidationThreshold,
-            vars.healthFactor
+            vars.healthFactor,
+            vars.liquidFunds
         ) = BorrowLogic.calculateUserAccountDataVolatile(params, reserves, userConfig, reservesList);
 
         require(vars.userCollateralBalanceETH > 0, Errors.VL_COLLATERAL_BALANCE_IS_0);
+
+        require(vars.liquidFunds > 0, Errors.VL_COLLATERAL_BALANCE_IS_0);
+
+        require(vars.userCollateralBalanceETH >= vars.liquidFunds, Errors.GL_WRONG_LIQUID_FUNDS);
 
         require(
             vars.healthFactor >= GenericLogic.HEALTH_FACTOR_LIQUIDATION_THRESHOLD,
@@ -269,7 +278,8 @@ library ValidationLogic {
         DataTypes.UserConfigurationMap storage userConfig,
         mapping(uint256 => DataTypes.ReserveReference) storage reservesList,
         uint256 reservesCount,
-        address oracle
+        address oracle,
+        address securityAccessManager
     ) internal view {
         uint256 underlyingBalance = IERC20(reserve.aTokenAddress).balanceOf(msg.sender);
 
@@ -286,7 +296,8 @@ library ValidationLogic {
                     userConfig,
                     reservesList,
                     reservesCount,
-                    oracle
+                    oracle,
+                    securityAccessManager
                 ),
             Errors.VL_DEPOSIT_ALREADY_IN_USE
         );
@@ -394,11 +405,19 @@ library ValidationLogic {
         DataTypes.UserConfigurationMap storage userConfig,
         mapping(uint256 => DataTypes.ReserveReference) storage reservesList,
         uint256 reservesCount,
-        address oracle
+        address oracle,
+        address securityAccessManager
     ) internal view {
-        (,,,, uint256 healthFactor) = GenericLogic.calculateUserAccountData(
-            from, reserves, userConfig, reservesList, reservesCount, oracle
-        );
+        DataTypes.CalculateUserAccountDataParams memory calcParams =
+            DataTypes.CalculateUserAccountDataParams({
+                userConfig: userConfig,
+                reservesCount: reservesCount,
+                user: from,
+                oracle: oracle,
+                securityAccessManager: securityAccessManager
+            });
+        (,,,, uint256 healthFactor,) =
+            GenericLogic.calculateUserAccountData(reserves, reservesList, calcParams);
 
         require(
             healthFactor >= GenericLogic.HEALTH_FACTOR_LIQUIDATION_THRESHOLD,

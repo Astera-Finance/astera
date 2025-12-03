@@ -41,7 +41,7 @@ contract ATokenProp is PropertiesBase {
             abi.encodeWithSelector(aToken.transfer.selector, address(recipient), randAmt)
         );
 
-        (,,,,, uint256 hf) = pool.getUserAccountData(address(user));
+        (,,,,, uint256 hf,) = pool.getUserAccountData(address(user));
 
         if (hf < 1e18) {
             assertWithMsg(!success, "301");
@@ -108,7 +108,7 @@ contract ATokenProp is PropertiesBase {
             )
         );
 
-        (,,,,, uint256 hf) = pool.getUserAccountData(address(from));
+        (,,,,, uint256 hf,) = pool.getUserAccountData(address(from));
 
         if (hf < 1e18) {
             assertWithMsg(!success, "306");

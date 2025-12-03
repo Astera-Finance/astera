@@ -219,7 +219,7 @@ contract LiquidationTest is Common {
                 );
         }
         {
-            (,,,,, uint256 healthFactor) =
+            (,,,,, uint256 healthFactor,) =
                 deployedContracts.lendingPool.getUserAccountData(address(this));
             assertGe(healthFactor, 1 ether);
         }
@@ -242,7 +242,7 @@ contract LiquidationTest is Common {
                 .getLpReserveDynamicData(address(tokensParams[USDC_OFFSET].token), true);
 
         {
-            (,,,,, uint256 healthFactor) =
+            (,,,,, uint256 healthFactor,) =
                 deployedContracts.lendingPool.getUserAccountData(address(this));
             assertLt(healthFactor, 1 ether);
         }
@@ -309,7 +309,7 @@ contract LiquidationTest is Common {
             block.timestamp
         );
         {
-            (,,,,, uint256 healthFactor) =
+            (,,,,, uint256 healthFactor,) =
                 deployedContracts.lendingPool.getUserAccountData(address(this));
             // console2.log("AFTER LIQUIDATION: ");
             // console2.log("healthFactor: ", healthFactor);
@@ -403,7 +403,7 @@ contract LiquidationTest is Common {
                 );
         }
         {
-            (,,,,, uint256 healthFactor) =
+            (,,,,, uint256 healthFactor,) =
                 deployedContracts.lendingPool.getUserAccountData(address(this));
             // console2.log("BEFORE: ");
             // console2.log("healthFactor: ", healthFactor);
@@ -431,7 +431,7 @@ contract LiquidationTest is Common {
             deployedContracts.asteraDataProvider
                 .getLpReserveDynamicData(address(tokensParams[USDC_OFFSET].token), true);
         {
-            (,,,,, uint256 healthFactor) =
+            (,,,,, uint256 healthFactor,) =
                 deployedContracts.lendingPool.getUserAccountData(address(this));
             // console2.log("AFTER PRICE CHANGE: ");
             console2.log("healthFactor :::: ", healthFactor);
@@ -503,7 +503,7 @@ contract LiquidationTest is Common {
             block.timestamp
         );
         {
-            (,,,,, uint256 healthFactor) =
+            (,,,,, uint256 healthFactor,) =
                 deployedContracts.lendingPool.getUserAccountData(address(this));
             // console2.log("AFTER LIQUIDATION: ");
             // console2.log("healthFactor: ", healthFactor);

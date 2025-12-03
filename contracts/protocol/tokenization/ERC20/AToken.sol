@@ -19,6 +19,8 @@ import {
     ATokenNonRebasing
 } from "../../../../contracts/protocol/tokenization/ERC20/ATokenNonRebasing.sol";
 
+import {ISecurityAccessManager} from "../../../../contracts/interfaces/ISecurityAccessManager.sol";
+
 /**
  * @title Astera ERC20 AToken
  * @notice Implementation of the interest bearing token for the Astera protocol.
@@ -745,5 +747,26 @@ contract AToken is
     /// @dev Returns the address of the lending pool contract.
     function getPool() external view returns (address) {
         return address(_pool);
+    }
+
+    function _beforeTokenTransfer(address from, address to, uint256 amount) internal override {
+        address securityAccessManager =
+            ILendingPool(address(_pool)).getAddressesProvider().getSecurityAccessManager();
+        if (securityAccessManager != address(0)) {
+            require(type(uint208).max >= amount);
+            if (from == address(0)) {
+                // Minting -> deposit -> register
+                ISecurityAccessManager(securityAccessManager).registerDeposit(uint208(amount), to);
+            } else if (to == address(0)) {
+                // Burning -> withdraw -> unregister
+                ISecurityAccessManager(securityAccessManager)
+                    .unregisterDeposit(uint208(amount), from);
+            } else {
+                // Transfer -> update both sides
+                ISecurityAccessManager(securityAccessManager).registerDeposit(uint208(amount), to);
+                ISecurityAccessManager(securityAccessManager)
+                    .unregisterDeposit(uint208(amount), from);
+            }
+        }
     }
 }

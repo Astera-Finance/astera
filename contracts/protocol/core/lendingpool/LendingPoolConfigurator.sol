@@ -771,4 +771,13 @@ contract LendingPoolConfigurator is
     function getIsAToken(address token) external view returns (bool) {
         return isAToken[token];
     }
+
+    function addUserToFlashloanWhitelist(address user) external onlyPoolAdmin {
+        pool.addUserToFlashloanWhitelist(user);
+    }
+
+    function removeUserFromFlashloanWhitelist(address user) external onlyPoolAdmin {
+        pool.removeUserFromFlashloanWhitelist(user);
+    }
 }
+

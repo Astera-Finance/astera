@@ -223,7 +223,8 @@ interface IAsteraDataProvider {
             uint256 availableBorrowsETH,
             uint256 currentLiquidationThreshold,
             uint256 ltv,
-            uint256 healthFactor
+            uint256 healthFactor,
+            uint256 liquidFunds
         );
 
     /*------ Mini Pool data providers ------*/

@@ -244,8 +244,8 @@ contract SecurityAccessManagerTest is Test {
         registry.setLevelParams(cooldownTimes, maxDeposits, trustThresholds, asset);
 
         // User deposits
-        vm.startPrank(user1);
-        registry.registerDeposit(uint208(1000 * 10 ** IERC20Detailed(asset).decimals()), asset);
+        vm.startPrank(asset);
+        registry.registerDeposit(uint208(1000 * 10 ** IERC20Detailed(asset).decimals()), user1);
 
         // Immediately after deposit, should be locked
         uint256 liquid = registry.getLiquidFunds(user1, asset);
@@ -277,8 +277,8 @@ contract SecurityAccessManagerTest is Test {
         registry.setLevelParams(cooldownTimes, maxDeposits, trustThresholds, asset);
 
         // Deposit A at T+0
-        vm.startPrank(user1);
-        registry.registerDeposit(uint208(500 * 10 ** IERC20Detailed(asset).decimals()), asset);
+        vm.startPrank(asset);
+        registry.registerDeposit(uint208(500 * 10 ** IERC20Detailed(asset).decimals()), user1);
 
         uint256 liquid = registry.getLiquidFunds(user1, asset);
         assertEq(liquid, 0, "Both deposits still locked");
@@ -286,7 +286,7 @@ contract SecurityAccessManagerTest is Test {
 
         // Deposit B at T+1 day
         vm.warp(block.timestamp + 1 days);
-        registry.registerDeposit(uint208(500 * 10 ** IERC20Detailed(asset).decimals()), asset);
+        registry.registerDeposit(uint208(500 * 10 ** IERC20Detailed(asset).decimals()), user1);
 
         // At T+1.5 days: First deposit (2 day cooldown) still locked
         // Second deposit (1.5 days passed) still locked
@@ -320,8 +320,8 @@ contract SecurityAccessManagerTest is Test {
         registry.setLevelParams(cooldownTimes, maxDeposits, trustThresholds, asset);
 
         // User starts at Tier 0 (2 day cooldown)
-        vm.startPrank(user1);
-        registry.registerDeposit(uint208(1000 * 10 ** IERC20Detailed(asset).decimals()), asset);
+        vm.startPrank(asset);
+        registry.registerDeposit(uint208(1000 * 10 ** IERC20Detailed(asset).decimals()), user1);
         vm.stopPrank();
 
         // After 1 day, promote to Tier 1 (1 day cooldown)
@@ -370,8 +370,8 @@ contract SecurityAccessManagerTest is Test {
         vm.stopPrank();
 
         // Tier 0: Max 1000e8
-        vm.startPrank(user1);
-        registry.registerDeposit(uint208(1000 * 10 ** IERC20Detailed(asset1).decimals()), asset1); // Should succeed
+        vm.startPrank(asset1);
+        registry.registerDeposit(uint208(1000 * 10 ** IERC20Detailed(asset1).decimals()), user1); // Should succeed
 
         console2.log("All funds 1:", registry.getAllFunds(user1, asset1));
         console2.log("Max funds 1:", registry.getMaxDepositInOriginDecimals(0, asset1));
@@ -379,7 +379,7 @@ contract SecurityAccessManagerTest is Test {
         // Try to exceed limit
         uint208 depositAmount = uint208(1 * 10 ** IERC20Detailed(asset1).decimals());
         vm.expectRevert(bytes(Errors.SAM_EXCEEDED_MAX_DEPOSIT));
-        registry.registerDeposit(depositAmount, asset1);
+        registry.registerDeposit(depositAmount, user1);
         vm.stopPrank();
 
         // Promote to Tier 1: Max 5000e8
@@ -393,18 +393,22 @@ contract SecurityAccessManagerTest is Test {
 
         depositAmount = uint208(5000 * 10 ** IERC20Detailed(asset2).decimals());
         // Can now deposit more (new deposit, independent)
-        vm.startPrank(user1);
-        registry.registerDeposit(uint208(depositAmount), asset2); // Different asset
+        vm.startPrank(asset2);
+        registry.registerDeposit(uint208(depositAmount), user1); // Different asset
         depositAmount = uint208(4000 * 10 ** IERC20Detailed(asset1).decimals());
-        registry.registerDeposit(depositAmount, asset1); // Different asset
+        vm.stopPrank();
+        vm.startPrank(asset1);
+        registry.registerDeposit(depositAmount, user1); // Different asset
+        vm.stopPrank();
 
         console2.log("2222 All funds 1:", registry.getAllFunds(user1, asset2));
         console2.log("2222 Max funds 1:", registry.getMaxDepositInOriginDecimals(1, asset2));
 
+        vm.startPrank(asset2);
         // But still can't exceed 5000e8 limit
         depositAmount = uint208(10 ** IERC20Detailed(asset2).decimals());
         vm.expectRevert(bytes(Errors.SAM_EXCEEDED_MAX_DEPOSIT));
-        registry.registerDeposit(depositAmount, asset2);
+        registry.registerDeposit(depositAmount, user1);
         vm.stopPrank();
     }
 
@@ -421,14 +425,17 @@ contract SecurityAccessManagerTest is Test {
         vm.stopPrank();
 
         // Deposit 1
-        vm.startPrank(user1);
-        registry.registerDeposit(uint208(1000 * 10 ** IERC20Detailed(asset1).decimals()), asset1);
+        vm.startPrank(asset1);
+        registry.registerDeposit(uint208(1000 * 10 ** IERC20Detailed(asset1).decimals()), user1);
+        vm.stopPrank();
 
         // Wait for cooldown
         vm.warp(block.timestamp + 2 days + 1 seconds);
 
+        vm.startPrank(asset2);
         // Deposit 2 (each is separate, no cumulative limit)
-        registry.registerDeposit(uint208(1000 * 10 ** IERC20Detailed(asset2).decimals()), asset2);
+        registry.registerDeposit(uint208(1000 * 10 ** IERC20Detailed(asset2).decimals()), user1);
+        vm.stopPrank();
 
         // Total deposits = 2000e8, but each deposit respects 1000e8 limit
         uint256 usdcAll = registry.getAllFunds(user1, asset1);
@@ -436,7 +443,6 @@ contract SecurityAccessManagerTest is Test {
 
         assertEq(usdcAll, 1000 * 10 ** IERC20Detailed(asset1).decimals(), "asset1 total correct");
         assertEq(usdtAll, 1000 * 10 ** IERC20Detailed(asset2).decimals(), "asset2 total correct");
-        vm.stopPrank();
     }
 
     // ============ ACCESS CONTROL TESTS ============
@@ -586,8 +592,8 @@ contract SecurityAccessManagerTest is Test {
         vm.stopPrank();
 
         // Day 1: User deposits at Tier 0
-        vm.startPrank(user1);
-        registry.registerDeposit(uint208(500 * 10 ** IERC20Detailed(asset).decimals()), asset);
+        vm.startPrank(asset);
+        registry.registerDeposit(uint208(500 * 10 ** IERC20Detailed(asset).decimals()), user1);
         vm.stopPrank();
 
         assertEq(registry.getUserLevel(user1, asset), 0, "Should start at Tier 0");
@@ -610,8 +616,8 @@ contract SecurityAccessManagerTest is Test {
         // Day 4: Make new deposit with Tier 1 limits
         vm.warp(block.timestamp + 1 days);
 
-        vm.startPrank(user1);
-        registry.registerDeposit(uint208(5000 * 10 ** IERC20Detailed(asset1).decimals()), asset1);
+        vm.startPrank(asset1);
+        registry.registerDeposit(uint208(5000 * 10 ** IERC20Detailed(asset1).decimals()), user1);
         vm.stopPrank();
         assertEq(registry.getLiquidFunds(user1, asset1), 0, "New deposit locked (1 day cooldown)");
 
@@ -665,8 +671,8 @@ contract SecurityAccessManagerTest is Test {
         vm.prank(admin);
         registry.setLevelParams(cooldownTimes, maxDeposits, trustThresholds, asset);
 
-        vm.startPrank(user1);
-        registry.registerDeposit(uint208(1000 * 10 ** IERC20Detailed(asset).decimals()), asset);
+        vm.startPrank(asset);
+        registry.registerDeposit(uint208(1000 * 10 ** IERC20Detailed(asset).decimals()), user1);
         vm.stopPrank();
 
         uint256 depositTime = block.timestamp;

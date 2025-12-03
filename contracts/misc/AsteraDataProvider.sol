@@ -370,7 +370,8 @@ contract AsteraDataProvider is Ownable, IAsteraDataProvider {
             uint256 availableBorrowsETH,
             uint256 currentLiquidationThreshold,
             uint256 ltv,
-            uint256 healthFactor
+            uint256 healthFactor,
+            uint256 liquidFunds
         )
     {
         ILendingPool lendingPool = ILendingPool(lendingPoolAddressProvider.getLendingPool());
@@ -380,7 +381,8 @@ contract AsteraDataProvider is Ownable, IAsteraDataProvider {
             availableBorrowsETH,
             currentLiquidationThreshold,
             ltv,
-            healthFactor
+            healthFactor,
+            liquidFunds
         ) = lendingPool.getUserAccountData(user);
     }
 

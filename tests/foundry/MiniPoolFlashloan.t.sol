@@ -10,7 +10,6 @@ import {
 } from "contracts/protocol/libraries/configuration/ReserveConfiguration.sol";
 
 import "forge-std/StdUtils.sol";
-import "contracts/interfaces/IMiniPool.sol";
 // import {ILendingPool} from "contracts/interfaces/ILendingPool.sol";
 
 contract MiniPoolFlashloanTest is Common {
@@ -381,10 +380,6 @@ contract MiniPoolFlashloanTest is Common {
             miniPoolContracts
         );
 
-        address accessManager =
-            miniPoolContracts.miniPoolAddressesProvider.getSecurityAccessManager();
-        SecurityAccessManager(accessManager).addUserToFlashloanWhitelist(address(this));
-
         address[] memory reserves = new address[](2 * tokens.length);
         for (uint8 idx = 0; idx < (2 * tokens.length); idx++) {
             console2.log(idx);
@@ -400,6 +395,11 @@ contract MiniPoolFlashloanTest is Common {
         configAddresses.volatileStrategy = address(miniPoolContracts.volatileStrategy);
         miniPool =
             fixture_configureMiniPoolReserves(reserves, configAddresses, miniPoolContracts, 0);
+
+        vm.startPrank(admin);
+        miniPoolContracts.miniPoolConfigurator
+            .addUserToFlashloanWhitelist(address(this), IMiniPool(miniPool));
+        vm.stopPrank();
         vm.label(miniPool, "MiniPool");
     }
 

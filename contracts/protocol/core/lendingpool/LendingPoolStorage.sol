@@ -50,4 +50,7 @@ contract LendingPoolStorage {
 
     /// @dev Maximum number of reserves that can be initialized.
     uint256 internal _maxNumberOfReserves;
+
+    /// @dev Mapping to track flashloan whitelisted users.
+    mapping(address user => bool) internal _flashloanWhitelistedUser;
 }

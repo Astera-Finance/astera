@@ -91,7 +91,7 @@ contract LendingPoolProp is PropertiesBase {
 
         uint256 randAmt = clampBetween(seedAmt, 0, aTokenBalanceBefore);
 
-        (,,,,, uint256 healthFactorBefore) = pool.getUserAccountData(address(to));
+        (,,,,, uint256 healthFactorBefore,) = pool.getUserAccountData(address(to));
 
         (bool success,) = user.proxy(
             address(pool),
@@ -100,7 +100,7 @@ contract LendingPoolProp is PropertiesBase {
             )
         );
 
-        (,,,,, uint256 healthFactorAfter) = pool.getUserAccountData(address(user));
+        (,,,,, uint256 healthFactorAfter,) = pool.getUserAccountData(address(user));
 
         if (healthFactorAfter < 1e18) {
             assertWithMsg(!success, "224");
@@ -158,7 +158,7 @@ contract LendingPoolProp is PropertiesBase {
         uint256 borrowAllowanceBefore =
             debtToken.borrowAllowance(address(onBehalfOf), address(user));
         uint256 vTokenBalanceBefore = debtToken.balanceOf(address(onBehalfOf));
-        (,,,,, uint256 healthFactorBefore) = pool.getUserAccountData(address(onBehalfOf));
+        (,,,,, uint256 healthFactorBefore,) = pool.getUserAccountData(address(onBehalfOf));
 
         (success,) = user.proxy(
             address(pool),
@@ -175,7 +175,7 @@ contract LendingPoolProp is PropertiesBase {
             assertWithMsg(!success, "206");
         }
 
-        (,,,,, uint256 healthFactorAfter) = pool.getUserAccountData(address(onBehalfOf));
+        (,,,,, uint256 healthFactorAfter,) = pool.getUserAccountData(address(onBehalfOf));
         if (healthFactorAfter < 1e18) {
             assertWithMsg(!success, "207");
         }
@@ -224,7 +224,7 @@ contract LendingPoolProp is PropertiesBase {
 
         uint256 vTokenBalanceBefore = debtToken.balanceOf(address(onBehalfOf));
         uint256 assetBalanceBefore = asset.balanceOf(address(user));
-        (,,,,, uint256 healthFactorBefore) = pool.getUserAccountData(address(onBehalfOf));
+        (,,,,, uint256 healthFactorBefore,) = pool.getUserAccountData(address(onBehalfOf));
 
         uint256 randAmt = clampBetween(seedAmt, 0, vTokenBalanceBefore);
 
@@ -239,7 +239,7 @@ contract LendingPoolProp is PropertiesBase {
 
         uint256 vTokenBalanceAfter = debtToken.balanceOf(address(onBehalfOf));
         uint256 assetBalanceAfter = asset.balanceOf(address(user));
-        (,,,,, uint256 healthFactorAfter) = pool.getUserAccountData(address(onBehalfOf));
+        (,,,,, uint256 healthFactorAfter,) = pool.getUserAccountData(address(onBehalfOf));
 
         assertEqApprox(vTokenBalanceBefore - vTokenBalanceAfter, randAmt, 1, "210");
         assertEqApprox(assetBalanceBefore - assetBalanceAfter, randAmt, 1, "211");
@@ -302,7 +302,7 @@ contract LendingPoolProp is PropertiesBase {
         User user = users[randUser];
         MintableERC20 asset = assets[randAsset];
 
-        (,,,,, uint256 healthFactorBefore) = pool.getUserAccountData(address(user));
+        (,,,,, uint256 healthFactorBefore,) = pool.getUserAccountData(address(user));
 
         (bool success,) = user.proxy(
             address(pool),
@@ -313,7 +313,7 @@ contract LendingPoolProp is PropertiesBase {
         require(success);
         isUseReserveAsCollateralDeactivatedLP[address(user)][address(asset)] = !randIsColl;
 
-        (,,,,, uint256 healthFactorAfter) = pool.getUserAccountData(address(user));
+        (,,,,, uint256 healthFactorAfter,) = pool.getUserAccountData(address(user));
         if (randIsColl) {
             assertLte(healthFactorBefore, healthFactorAfter, "213");
         } else {

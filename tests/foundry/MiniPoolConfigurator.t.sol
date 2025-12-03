@@ -39,9 +39,6 @@ contract MiniPoolConfiguratorTest is MiniPoolDepositBorrowTest {
 
     function setUp() public override {
         super.setUp();
-        address accessManager =
-            miniPoolContracts.miniPoolAddressesProvider.getSecurityAccessManager();
-        SecurityAccessManager(accessManager).addUserToFlashloanWhitelist(address(this));
     }
 
     function testMiniPoolConfiguratorAccessControl(uint256 randomNumber) public {

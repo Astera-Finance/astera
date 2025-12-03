@@ -112,11 +112,7 @@ contract MiniPool is
      * Reverts if caller is not whitelisted.
      */
     modifier onlyFlashloanWhitelisted() {
-        require(
-            ISecurityAccessManager(_addressesProvider.getSecurityAccessManager())
-                .isFlashloanWhitelisted(msg.sender),
-            Errors.LP_CALLER_NOT_WHITELISTED
-        );
+        require(isFlashloanWhitelisted(msg.sender), Errors.LP_CALLER_NOT_WHITELISTED);
         _;
     }
 
@@ -818,6 +814,16 @@ contract MiniPool is
         _reservesCount = reservesCount + 1;
     }
 
+    function addUserToFlashloanWhitelist(address user) external onlyMiniPoolConfigurator {
+        _flashloanWhitelistedUser[user] = true;
+        emit UserWhitelisted(user);
+    }
+
+    function removeUserFromFlashloanWhitelist(address user) external onlyMiniPoolConfigurator {
+        _flashloanWhitelistedUser[user] = false;
+        emit UserRemovedFromWhitelist(user);
+    }
+
     /**
      * @dev Returns the current lending pool debt for a specific asset.
      * @param asset The address of the asset to check the debt for.
@@ -884,5 +890,9 @@ contract MiniPool is
      */
     function _updateFlashLoanFee(uint128 flashLoanPremiumTotal) internal {
         _flashLoanPremiumTotal = flashLoanPremiumTotal;
+    }
+
+    function isFlashloanWhitelisted(address _user) public view returns (bool) {
+        return _flashloanWhitelistedUser[_user];
     }
 }

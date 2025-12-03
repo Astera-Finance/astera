@@ -94,6 +94,7 @@ library BorrowLogic {
         address user;
         uint256 reservesCount;
         address oracle;
+        address securityAccessManager;
     }
 
     /**
@@ -115,10 +116,16 @@ library BorrowLogic {
         ) storage reserves,
         DataTypes.UserConfigurationMap memory userConfig,
         mapping(uint256 => DataTypes.ReserveReference) storage reservesList
-    ) external view returns (uint256, uint256, uint256, uint256, uint256) {
-        return GenericLogic.calculateUserAccountData(
-            params.user, reserves, userConfig, reservesList, params.reservesCount, params.oracle
-        );
+    ) external view returns (uint256, uint256, uint256, uint256, uint256, uint256) {
+        DataTypes.CalculateUserAccountDataParams memory dataParams =
+            DataTypes.CalculateUserAccountDataParams({
+                userConfig: userConfig,
+                reservesCount: params.reservesCount,
+                user: params.user,
+                oracle: params.oracle,
+                securityAccessManager: params.securityAccessManager
+            });
+        return GenericLogic.calculateUserAccountData(reserves, reservesList, dataParams);
     }
 
     /**

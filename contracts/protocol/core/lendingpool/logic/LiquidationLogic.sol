@@ -169,14 +169,16 @@ library LiquidationLogic {
             ).isMiniPool(msg.sender);
 
         require(!isMiniPool, Errors.VL_MINIPOOL_CANNOT_BE_LIQUIDATED);
-        (,,,, vars.healthFactor) = GenericLogic.calculateUserAccountData(
-            params.user,
-            reserves,
-            userConfig,
-            reservesList,
-            params.reservesCount,
-            addressesProvider.getPriceOracle()
-        );
+        DataTypes.CalculateUserAccountDataParams memory calcParams =
+            DataTypes.CalculateUserAccountDataParams({
+                userConfig: userConfig,
+                reservesCount: params.reservesCount,
+                user: params.user,
+                oracle: addressesProvider.getPriceOracle(),
+                securityAccessManager: addressesProvider.getSecurityAccessManager()
+            });
+        (,,,, vars.healthFactor,) =
+            GenericLogic.calculateUserAccountData(reserves, reservesList, calcParams);
 
         (vars.userVariableDebt) = Helpers.getUserCurrentDebt(params.user, debtReserve);
 

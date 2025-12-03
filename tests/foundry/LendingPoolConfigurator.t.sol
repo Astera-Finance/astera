@@ -8,7 +8,7 @@ import {LendingPoolFixtures} from "tests/foundry/LendingPoolFixtures.t.sol";
 
 // import {ILendingPool} from "contracts/interfaces/ILendingPool.sol";
 
-contract LendingPoolConfiguratorTest is Common, LendingPoolFixtures {
+contract LendingPoolConfiguratorTest is LendingPoolFixtures {
     using ReserveConfiguration for DataTypes.ReserveConfigurationMap;
 
     uint256 constant MAX_VALID_RESERVE_FACTOR = 4000;
@@ -82,7 +82,7 @@ contract LendingPoolConfiguratorTest is Common, LendingPoolFixtures {
         );
 
         vm.startPrank(admin);
-        deployedContracts.securityAccessManager.addUserToFlashloanWhitelist(address(this));
+        deployedContracts.lendingPoolConfigurator.addUserToFlashloanWhitelist(address(this));
         vm.stopPrank();
 
         commonContracts.mockedVaults =
@@ -638,6 +638,7 @@ contract LendingPoolConfiguratorTest is Common, LendingPoolFixtures {
         uint256 currentLiquidationThreshold;
         uint256 ltv;
         uint256 healthFactor;
+        uint256 liquidFunds;
     }
 
     function testLpUniqueTokensReinitialization(uint256 offset, uint256 amount) public {
@@ -668,7 +669,8 @@ contract LendingPoolConfiguratorTest is Common, LendingPoolFixtures {
             beforeUserAccountData.availableBorrowsETH,
             beforeUserAccountData.currentLiquidationThreshold,
             beforeUserAccountData.ltv,
-            beforeUserAccountData.healthFactor
+            beforeUserAccountData.healthFactor,
+            beforeUserAccountData.liquidFunds
         ) = deployedContracts.asteraDataProvider.getLpUserAccountData(address(this));
 
         {
@@ -712,7 +714,8 @@ contract LendingPoolConfiguratorTest is Common, LendingPoolFixtures {
             afterUserAccountData.availableBorrowsETH,
             afterUserAccountData.currentLiquidationThreshold,
             afterUserAccountData.ltv,
-            afterUserAccountData.healthFactor
+            afterUserAccountData.healthFactor,
+            afterUserAccountData.liquidFunds
         ) = deployedContracts.asteraDataProvider.getLpUserAccountData(address(this));
 
         assertEq(afterUserAccountData.totalCollateralETH, beforeUserAccountData.totalCollateralETH);

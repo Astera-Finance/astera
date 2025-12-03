@@ -333,8 +333,8 @@ contract Common is Test {
         vm.stopPrank();
 
         // Potentially comment this out to allow all tests to work
-        deployedContracts.lendingPoolAddressesProvider
-            .setSecurityAccessManager(address(deployedContracts.securityAccessManager));
+        // deployedContracts.lendingPoolAddressesProvider
+        //     .setSecurityAccessManager(address(deployedContracts.securityAccessManager));
 
         // stableAndVariableTokensHelper = new StableAndVariableTokensHelper(lendingPoolProxyAddress, address(lendingPoolAddressesProvider));
         deployedContracts.aTokensAndRatesHelper = new ATokensAndRatesHelper(
@@ -724,10 +724,10 @@ contract Common is Test {
             );
             address miniPoolConfigImpl = address(new MiniPoolConfigurator());
             miniPoolContracts.miniPoolAddressesProvider.setMiniPoolConfigurator(miniPoolConfigImpl);
-            miniPoolContracts.miniPoolAddressesProvider
-                .setSecurityAccessManager(
-                    address(new SecurityAccessManager(admin, new address[](0), tokens))
-                );
+            // miniPoolContracts.miniPoolAddressesProvider
+            //     .setSecurityAccessManager(
+            //         address(new SecurityAccessManager(admin, new address[](0), tokens))
+            //     );
 
             miniPoolContracts.miniPoolConfigurator = MiniPoolConfigurator(
                 miniPoolContracts.miniPoolAddressesProvider.getMiniPoolConfigurator()

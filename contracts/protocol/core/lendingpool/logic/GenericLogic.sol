@@ -13,6 +13,10 @@ import {WadRayMath} from "../../../../../contracts/protocol/libraries/math/WadRa
 import {PercentageMath} from "../../../../../contracts/protocol/libraries/math/PercentageMath.sol";
 import {IOracle} from "../../../../../contracts/interfaces/IOracle.sol";
 import {DataTypes} from "../../../../../contracts/protocol/libraries/types/DataTypes.sol";
+import {
+    ISecurityAccessManager
+} from "../../../../../contracts/interfaces/ISecurityAccessManager.sol";
+import {Errors} from "../../../../../contracts/protocol/libraries/helpers/Errors.sol";
 
 /**
  * @title GenericLogic library
@@ -76,7 +80,8 @@ library GenericLogic {
         DataTypes.UserConfigurationMap storage userConfig,
         mapping(uint256 => DataTypes.ReserveReference) storage reservesList,
         uint256 reservesCount,
-        address oracle
+        address oracle,
+        address securityAccessManager
     ) external view returns (bool) {
         if (
             !userConfig.isBorrowingAny()
@@ -93,11 +98,20 @@ library GenericLogic {
         if (vars.liquidationThreshold == 0) {
             return true;
         }
-
-        (vars.totalCollateralInETH, vars.totalDebtInETH,, vars.avgLiquidationThreshold,) =
-            calculateUserAccountData(
-                user, reserves, userConfig, reservesList, reservesCount, oracle
-            );
+        DataTypes.CalculateUserAccountDataParams memory params =
+            DataTypes.CalculateUserAccountDataParams({
+                userConfig: userConfig,
+                reservesCount: reservesCount,
+                user: user,
+                oracle: oracle,
+                securityAccessManager: securityAccessManager
+            });
+        (
+            vars.totalCollateralInETH,
+            vars.totalDebtInETH,,
+            vars.avgLiquidationThreshold,,
+            vars.liquidFunds
+        ) = calculateUserAccountData(reserves, reservesList, params);
 
         if (vars.totalDebtInETH == 0) {
             return true;
@@ -188,33 +202,28 @@ library GenericLogic {
     /**
      * @notice Calculates the user data across all reserves.
      * @dev Computes total liquidity/collateral/borrow balances in ETH, average LTV, liquidation ratio, and health factor.
-     * @param user The address of the user.
      * @param reserves Data of all the reserves.
-     * @param userConfig The configuration of the user.
      * @param reservesList The list of the available reserves.
-     * @param reservesCount The count of initialized reserves.
-     * @param oracle The price oracle address.
+     * @param params - data used in function: user, userConfig, reservesCount, oracle, securityAccessManager
      * @return totalCollateralETH Total collateral in ETH.
      * @return totalDebtETH Total debt in ETH.
      * @return avgLtv Average loan to value ratio.
      * @return avgLiquidationThreshold Average liquidation threshold.
      * @return healthFactor User's health factor.
+     * @return liquidFunds User's liquid funds in ETH.
      */
     function calculateUserAccountData(
-        address user,
         mapping(address => mapping(bool => DataTypes.ReserveData)) storage reserves,
-        DataTypes.UserConfigurationMap memory userConfig,
         mapping(uint256 => DataTypes.ReserveReference) storage reservesList,
-        uint256 reservesCount,
-        address oracle
-    ) public view returns (uint256, uint256, uint256, uint256, uint256) {
+        DataTypes.CalculateUserAccountDataParams memory params
+    ) public view returns (uint256, uint256, uint256, uint256, uint256, uint256) {
         CalculateUserAccountDataLocalVars memory vars;
 
-        if (userConfig.isEmpty()) {
-            return (0, 0, 0, 0, type(uint256).max);
+        if (params.userConfig.isEmpty()) {
+            return (0, 0, 0, 0, type(uint256).max, 0);
         }
-        for (vars.i = 0; vars.i < reservesCount; vars.i++) {
-            if (!userConfig.isUsingAsCollateralOrBorrowing(vars.i)) {
+        for (vars.i = 0; vars.i < params.reservesCount; vars.i++) {
+            if (!params.userConfig.isUsingAsCollateralOrBorrowing(vars.i)) {
                 continue;
             }
 
@@ -227,30 +236,38 @@ library GenericLogic {
                 currentReserve.configuration.getParams();
 
             vars.tokenUnit = 10 ** vars.decimals;
-            vars.reserveUnitPrice = IOracle(oracle).getAssetPrice(vars.currentReserveAddress);
+            vars.reserveUnitPrice = IOracle(params.oracle).getAssetPrice(vars.currentReserveAddress);
 
-            if (vars.liquidationThreshold != 0 && userConfig.isUsingAsCollateral(vars.i)) {
+            if (vars.liquidationThreshold != 0 && params.userConfig.isUsingAsCollateral(vars.i)) {
                 vars.compoundedLiquidityBalance =
-                    IERC20(currentReserve.aTokenAddress).balanceOf(user);
+                    IERC20(currentReserve.aTokenAddress).balanceOf(params.user);
 
                 uint256 liquidityBalanceETH =
                     vars.reserveUnitPrice * vars.compoundedLiquidityBalance / vars.tokenUnit;
 
                 vars.totalCollateralInETH = vars.totalCollateralInETH + liquidityBalanceETH;
 
-                // uint256 liquidFundsETH = vars.reserveUnitPrice
-                //     * getLiquidFunds(user, vars.currentReserveAddress) / vars.tokenUnit;
-                // vars.liquidFunds = vars.liquidFunds + liquidFundsETH;
-                // require(vars.liquidFunds <= vars.totalCollateralInETH);
+                if (address(0) == params.securityAccessManager) {
+                    vars.liquidFunds = vars.totalCollateralInETH;
+                } else {
+                    uint256 liquidFundsETH = vars.reserveUnitPrice
+                        * ISecurityAccessManager(params.securityAccessManager)
+                            .getLiquidFunds(params.user, vars.currentReserveAddress)
+                        / vars.tokenUnit;
+                    vars.liquidFunds = vars.liquidFunds + liquidFundsETH;
+                    require(
+                        vars.liquidFunds <= vars.totalCollateralInETH, Errors.GL_WRONG_LIQUID_FUNDS
+                    );
+                }
 
                 vars.avgLtv = vars.avgLtv + (liquidityBalanceETH * vars.ltv);
                 vars.avgLiquidationThreshold = vars.avgLiquidationThreshold
                     + (liquidityBalanceETH * vars.liquidationThreshold);
             }
 
-            if (userConfig.isBorrowing(vars.i)) {
+            if (params.userConfig.isBorrowing(vars.i)) {
                 vars.compoundedBorrowBalance =
-                    IERC20(currentReserve.variableDebtTokenAddress).balanceOf(user);
+                    IERC20(currentReserve.variableDebtTokenAddress).balanceOf(params.user);
 
                 vars.totalDebtInETH = vars.totalDebtInETH
                     + WadRayMath.divUp(
@@ -272,7 +289,8 @@ library GenericLogic {
             vars.totalDebtInETH,
             vars.avgLtv,
             vars.avgLiquidationThreshold,
-            vars.healthFactor
+            vars.healthFactor,
+            vars.liquidFunds
         );
     }
 

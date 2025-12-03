@@ -106,6 +106,14 @@ library DataTypes {
         uint256 data;
     }
 
+    struct CalculateUserAccountDataParams {
+        UserConfigurationMap userConfig;
+        uint256 reservesCount;
+        address user;
+        address oracle;
+        address securityAccessManager;
+    }
+
     /**
      * @notice Defines the possible interest rate modes for flashloans.
      * @param NONE The flashloan must not be paid back.

@@ -153,6 +153,18 @@ interface ILendingPool {
      */
     event FlashLoanFeeUpdated(uint128 flashLoanPremiumTotal);
 
+    /**
+     * @notice Emitted when a user is added to the flashloan whitelist
+     * @param user The address of the user being whitelisted
+     */
+    event UserWhitelisted(address indexed user);
+
+    /**
+     * @notice Emitted when a user is removed from the flashloan whitelist
+     * @param user The address of the user being removed
+     */
+    event UserRemovedFromWhitelist(address indexed user);
+
     function deposit(address asset, bool reserveType, uint256 amount, address onBehalfOf) external;
 
     function withdraw(address asset, bool reserveType, uint256 amount, address to)
@@ -207,7 +219,8 @@ interface ILendingPool {
             uint256 availableBorrowsETH,
             uint256 currentLiquidationThreshold,
             uint256 ltv,
-            uint256 healthFactor
+            uint256 healthFactor,
+            uint256 liquidFunds
         );
 
     function initReserve(
@@ -302,4 +315,23 @@ interface ILendingPool {
     function syncRatesState(address asset, bool reserveType) external;
 
     function getMinipoolFlowBorrowing(address asset) external view returns (address[] memory);
+
+    /**
+     * @notice Adds a user to the flashloan whitelist
+     * @param user The address of the user to whitelist
+     */
+    function addUserToFlashloanWhitelist(address user) external;
+
+    /**
+     * @notice Removes a user from the flashloan whitelist
+     * @param user The address of the user to remove
+     */
+    function removeUserFromFlashloanWhitelist(address user) external;
+
+    /**
+     * @notice Checks if a user is whitelisted for flashloans
+     * @param _user The address to check
+     * @return bool True if the user is whitelisted, false otherwise
+     */
+    function isFlashloanWhitelisted(address _user) external view returns (bool);
 }
