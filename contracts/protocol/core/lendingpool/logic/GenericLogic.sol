@@ -252,7 +252,7 @@ library GenericLogic {
                 } else {
                     uint256 liquidFundsETH = vars.reserveUnitPrice
                         * ISecurityAccessManager(params.securityAccessManager)
-                            .getLiquidFunds(params.user, vars.currentReserveAddress)
+                            .getLiquidFunds(params.user, currentReserve.aTokenAddress)
                         / vars.tokenUnit;
                     vars.liquidFunds = vars.liquidFunds + liquidFundsETH;
                     require(
@@ -315,32 +315,17 @@ library GenericLogic {
     /**
      * @notice Calculates the equivalent amount in ETH that a user can borrow.
      * @dev Determines borrowing power based on collateral and average LTV.
-     * @param totalCollateralInETH The total collateral in ETH.
+     * @param liquidFunds The total liquid collateral.
      * @param totalDebtInETH The total borrow balance.
      * @param ltv The average loan to value.
      * @return The amount available to borrow in ETH for the user.
      */
-    // function calculateAvailableBorrowsETH(
-    //     uint256 liquidFunds,
-    //     uint256 totalDebtInETH,
-    //     uint256 ltv
-    // ) public pure returns (uint256) {
-    //     uint256 availableBorrowsETH = liquidFunds.percentMul(ltv);
-
-    //     if (availableBorrowsETH < totalDebtInETH) {
-    //         return 0;
-    //     }
-
-    //     availableBorrowsETH = availableBorrowsETH - totalDebtInETH;
-    //     return availableBorrowsETH;
-    // }
-
-    function calculateAvailableBorrowsETH(
-        uint256 totalCollateralInETH,
-        uint256 totalDebtInETH,
-        uint256 ltv
-    ) public pure returns (uint256) {
-        uint256 availableBorrowsETH = totalCollateralInETH.percentMul(ltv);
+    function calculateAvailableBorrowsETH(uint256 liquidFunds, uint256 totalDebtInETH, uint256 ltv)
+        public
+        pure
+        returns (uint256)
+    {
+        uint256 availableBorrowsETH = liquidFunds.percentMul(ltv);
 
         if (availableBorrowsETH < totalDebtInETH) {
             return 0;

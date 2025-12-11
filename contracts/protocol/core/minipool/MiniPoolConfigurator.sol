@@ -511,6 +511,17 @@ contract MiniPoolConfigurator is
         pool.setMinDebtThreshold(threshold);
     }
 
+    function addUserToFlashloanWhitelist(address user, IMiniPool pool) external onlyMainPoolAdmin {
+        pool.addUserToFlashloanWhitelist(user);
+    }
+
+    function removeUserFromFlashloanWhitelist(address user, IMiniPool pool)
+        external
+        onlyMainPoolAdmin
+    {
+        pool.removeUserFromFlashloanWhitelist(user);
+    }
+
     /**
      * @dev Checks if a reserve has zero liquidity.
      * @param asset The address of the underlying asset.

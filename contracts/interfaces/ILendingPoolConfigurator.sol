@@ -256,4 +256,8 @@ interface ILendingPoolConfigurator {
     function setTreasury(address asset, bool reserveType, address rewarder) external;
 
     function getIsAToken(address token) external view returns (bool);
+
+    function addUserToFlashloanWhitelist(address user) external;
+
+    function removeUserFromFlashloanWhitelist(address user) external;
 }

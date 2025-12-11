@@ -206,4 +206,8 @@ interface IMiniPoolConfigurator {
 
     function setMinipoolOwnerReserveFactor(address asset, uint256 reserveFactor, IMiniPool pool)
         external;
+
+    function addUserToFlashloanWhitelist(address user, IMiniPool pool) external;
+
+    function removeUserFromFlashloanWhitelist(address user, IMiniPool pool) external;
 }

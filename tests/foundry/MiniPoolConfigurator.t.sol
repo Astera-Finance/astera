@@ -39,6 +39,10 @@ contract MiniPoolConfiguratorTest is MiniPoolDepositBorrowTest {
 
     function setUp() public override {
         super.setUp();
+        vm.startPrank(admin);
+        miniPoolContracts.miniPoolConfigurator
+            .addUserToFlashloanWhitelist(address(this), IMiniPool(miniPool));
+        vm.stopPrank();
     }
 
     function testMiniPoolConfiguratorAccessControl(uint256 randomNumber) public {

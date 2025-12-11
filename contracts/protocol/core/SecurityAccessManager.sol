@@ -6,7 +6,7 @@ import {ISecurityAccessManager} from "contracts/interfaces/ISecurityAccessManage
 import {Errors} from "contracts/protocol/libraries/helpers/Errors.sol";
 import {IERC20Detailed} from "contracts/dependencies/openzeppelin/contracts/IERC20Detailed.sol";
 
-// import {console2} from "forge-std/console2.sol";
+import {console2} from "forge-std/console2.sol";
 
 contract SecurityAccessManager is AccessControl, ISecurityAccessManager {
     // Add upgradeablity due to user register
@@ -31,6 +31,8 @@ contract SecurityAccessManager is AccessControl, ISecurityAccessManager {
     mapping(address asset => LevelParams[]) private levelParams;
 
     modifier onlyAToken(address sender) {
+        console2.log("Checking AToken: ", sender);
+        console2.log("Level params length: ", levelParams[sender].length);
         require(levelParams[sender].length > 0, Errors.SAM_UNAUTHORIZED);
         _;
     }
@@ -51,6 +53,10 @@ contract SecurityAccessManager is AccessControl, ISecurityAccessManager {
         trustPointsThresholds[2] = LVL3_DEFAULT_TRUST_POINTS_THRESHOLD;
         for (uint256 i = 0; i < assets.length; i++) {
             _setLevelParams(cooldownTimes, maxDeposits, trustPointsThresholds, assets[i]);
+            console2.log("LevelParams %s: %s", assets[0], levelParams[assets[0]].length);
+            console2.log("LevelParams %s: %s", assets[1], levelParams[assets[1]].length);
+            console2.log("LevelParams %s: %s", assets[2], levelParams[assets[2]].length);
+            console2.log("LevelParams %s: %s", assets[i], levelParams[assets[i]].length);
         }
 
         _grantRole(DEFAULT_ADMIN_ROLE, _admin);
@@ -130,6 +136,13 @@ contract SecurityAccessManager is AccessControl, ISecurityAccessManager {
             internalLevelParams.maxDeposit = _maxDeposits[i];
             internalLevelParams.trustPointsThreshold = _trustPointsThresholds[i];
             levelParams[_asset].push(internalLevelParams);
+            emit LevelParamsChanged(
+                _asset,
+                i,
+                internalLevelParams.cooldownTime,
+                internalLevelParams.maxDeposit,
+                internalLevelParams.trustPointsThreshold
+            );
         }
     }
 
@@ -158,17 +171,20 @@ contract SecurityAccessManager is AccessControl, ISecurityAccessManager {
             userRegister[_user].depositCheckpoints[msg.sender];
         require(depositCheckpointsPtr.length > 0, Errors.SAM_WRONG_CHECKPOINTS_LENGTH);
         require(_amount > 0, Errors.SAM_WRONG_AMOUNT);
-        require(_amount < getAllFunds(_user, msg.sender), Errors.SAM_NOT_ENOGUH_FUNDS);
-        for (uint256 i = depositCheckpointsPtr.length - 1; i >= 0; i--) {
-            if (depositCheckpointsPtr[i].depositAmount > _amount) {
-                depositCheckpointsPtr[i].depositAmount -= _amount;
+        console2.log("All funds: %s vs amount: %s", getAllFunds(_user, msg.sender), _amount);
+        require(_amount <= getAllFunds(_user, msg.sender), Errors.SAM_NOT_ENOGUH_FUNDS);
+
+        for (uint256 i = depositCheckpointsPtr.length; i > 0; i--) {
+            if (depositCheckpointsPtr[i - 1].depositAmount > _amount) {
+                depositCheckpointsPtr[i - 1].depositAmount -= _amount;
                 _amount = 0;
                 break;
             } else {
-                _amount -= depositCheckpointsPtr[i].depositAmount;
+                _amount -= depositCheckpointsPtr[i - 1].depositAmount;
                 depositCheckpointsPtr.pop();
             }
         }
+        console2.log("Unregister amount: ", _amount);
         require(_amount == 0, Errors.SAM_NOT_ENOGUH_FUNDS);
     }
 

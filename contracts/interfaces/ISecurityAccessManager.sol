@@ -63,6 +63,22 @@ interface ISecurityAccessManager {
     event TrustPointsChanged(address indexed user, uint16 amount);
 
     /**
+     *
+     * @param asset The address of the asset
+     * @param level The level index
+     * @param cooldownTime Time in seconds for cooldown
+     * @param maxDeposit Maximum deposit in USD (8 decimals)
+     * @param trustPointsThreshold Trust points threshold for the level
+     */
+    event LevelParamsChanged(
+        address indexed asset,
+        uint256 indexed level,
+        uint32 cooldownTime,
+        uint208 maxDeposit,
+        uint16 trustPointsThreshold
+    );
+
+    /**
      * @notice Sets level parameters for a specific asset
      * @param _cooldownTimes Array of cooldown times for each level in seconds
      * @param _maxDeposits Array of max deposits for specific assets in 8 decimals

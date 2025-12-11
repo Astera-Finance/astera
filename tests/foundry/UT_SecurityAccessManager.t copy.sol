@@ -17,7 +17,7 @@ import {console2} from "forge-std/console2.sol";
 contract SecurityAccessManagerTest is Test {
     // ============ State Variables ============
 
-    SecurityAccessManager public registry;
+    SecurityAccessManager public securityAccessManager;
 
     // Test addresses
     address public admin = address(0x1);
@@ -55,7 +55,7 @@ contract SecurityAccessManagerTest is Test {
 
         address[] memory managers = new address[](1);
         managers[0] = pointsManager;
-        registry = new SecurityAccessManager(admin, managers, assets);
+        securityAccessManager = new SecurityAccessManager(admin, managers, assets);
 
         // Configure default tiers
         cooldownTimes = new uint32[](3);
@@ -75,17 +75,14 @@ contract SecurityAccessManagerTest is Test {
         trustThresholds[2] = 500;
     }
 
-    // ============ CRITICAL BUG FIX TESTS ============
-
     /**
-     * @notice TEST FIX #1: setLevelParams() must delete before pushing
      * @dev Verifies that calling setLevelParams() twice replaces params, not appends
      */
     function test_SetLevelParams_ReplacesNotAppends(uint256 offset) public {
         offset = bound(offset, 0, 3);
         address asset = assets[offset];
         vm.prank(admin);
-        registry.setLevelParams(cooldownTimes, maxDeposits, trustThresholds, asset);
+        securityAccessManager.setLevelParams(cooldownTimes, maxDeposits, trustThresholds, asset);
 
         // First call should create 3 tiers
         uint8 tierCount1 = 3;
@@ -105,14 +102,14 @@ contract SecurityAccessManagerTest is Test {
         trustThresholds2[1] = 200;
 
         vm.prank(admin);
-        registry.setLevelParams(cooldownTimes2, maxDeposits2, trustThresholds2, asset);
+        securityAccessManager.setLevelParams(cooldownTimes2, maxDeposits2, trustThresholds2, asset);
 
         // Should have 2 tiers NOW, not 5
         // Verify by checking tier assignment
         vm.prank(pointsManager);
-        registry.increaseTrustPoints(user1, 150);
+        securityAccessManager.increaseTrustPoints(user1, 150);
 
-        uint8 tier = registry.getUserLevel(user1, asset);
+        uint8 tier = securityAccessManager.getUserLevel(user1, asset);
         // With thresholds [0, 200], 150 pts should be Tier 0
         // (150 >= 0 and 150 < 200)
         assertEq(tier, 0, "Should have only 2 tiers, not duplicates");
@@ -125,42 +122,42 @@ contract SecurityAccessManagerTest is Test {
         offset = bound(offset, 0, 3);
         address asset = assets[offset];
         vm.prank(admin);
-        registry.setLevelParams(cooldownTimes, maxDeposits, trustThresholds, asset);
+        securityAccessManager.setLevelParams(cooldownTimes, maxDeposits, trustThresholds, asset);
 
         // Test case 1: User at boundary
         vm.prank(pointsManager);
-        registry.increaseTrustPoints(user1, 150);
+        securityAccessManager.increaseTrustPoints(user1, 150);
 
-        uint8 tier = registry.getUserLevel(user1, asset);
+        uint8 tier = securityAccessManager.getUserLevel(user1, asset);
         // With thresholds [0, 100, 500]
         // 150 >= 100 but 150 < 500 → Should be Tier 1
         assertEq(tier, 1, "User with 150 points should be Tier 1");
 
         // Test case 2: User at exact threshold
         vm.startPrank(pointsManager);
-        registry.decreaseTrustPoints(user1, 150);
-        registry.increaseTrustPoints(user1, 100);
+        securityAccessManager.decreaseTrustPoints(user1, 150);
+        securityAccessManager.increaseTrustPoints(user1, 100);
         vm.stopPrank();
 
-        tier = registry.getUserLevel(user1, asset);
+        tier = securityAccessManager.getUserLevel(user1, asset);
         // 100 >= 100 and 100 < 500 → Should be Tier 1
         assertEq(tier, 1, "User with 100 points should be Tier 1");
 
         // Test case 3: User exceeds all thresholds
         vm.startPrank(pointsManager);
-        registry.decreaseTrustPoints(user1, 100);
-        registry.increaseTrustPoints(user1, 1000);
+        securityAccessManager.decreaseTrustPoints(user1, 100);
+        securityAccessManager.increaseTrustPoints(user1, 1000);
         vm.stopPrank();
 
-        tier = registry.getUserLevel(user1, asset);
+        tier = securityAccessManager.getUserLevel(user1, asset);
         // 1000 >= 500 → Should be Tier 2
         assertEq(tier, 2, "User with 1000 points should be Tier 2");
 
         // Test case 4: User below all thresholds
         vm.prank(pointsManager);
-        registry.decreaseTrustPoints(user1, 1000);
+        securityAccessManager.decreaseTrustPoints(user1, 1000);
 
-        tier = registry.getUserLevel(user1, asset);
+        tier = securityAccessManager.getUserLevel(user1, asset);
         // 0 >= 0 but 0 < 100 → Should be Tier 0
         assertEq(tier, 0, "User with 0 points should be Tier 0");
     }
@@ -174,7 +171,7 @@ contract SecurityAccessManagerTest is Test {
         offset = bound(offset, 0, 3);
         address asset = assets[offset];
         vm.prank(admin);
-        registry.setLevelParams(cooldownTimes, maxDeposits, trustThresholds, asset);
+        securityAccessManager.setLevelParams(cooldownTimes, maxDeposits, trustThresholds, asset);
 
         // Test all boundary cases
         uint16[] memory testPoints = new uint16[](6);
@@ -196,9 +193,9 @@ contract SecurityAccessManagerTest is Test {
         for (uint256 i = 0; i < testPoints.length; i++) {
             // Set user points
             vm.prank(pointsManager);
-            registry.increaseTrustPoints(user1, testPoints[i]);
+            securityAccessManager.increaseTrustPoints(user1, testPoints[i]);
 
-            uint8 tier = registry.getUserLevel(user1, asset);
+            uint8 tier = securityAccessManager.getUserLevel(user1, asset);
             assertEq(
                 tier,
                 expectedTiers[i],
@@ -208,7 +205,7 @@ contract SecurityAccessManagerTest is Test {
             // Reset for next test
             if (testPoints[i] > 0) {
                 vm.prank(pointsManager);
-                registry.decreaseTrustPoints(user1, testPoints[i]);
+                securityAccessManager.decreaseTrustPoints(user1, testPoints[i]);
             }
         }
     }
@@ -220,13 +217,13 @@ contract SecurityAccessManagerTest is Test {
         offset = bound(offset, 0, 3);
         address asset = assets[offset];
         vm.prank(admin);
-        registry.setLevelParams(cooldownTimes, maxDeposits, trustThresholds, asset);
+        securityAccessManager.setLevelParams(cooldownTimes, maxDeposits, trustThresholds, asset);
 
         vm.prank(pointsManager);
-        registry.increaseTrustPoints(user1, 250);
+        securityAccessManager.increaseTrustPoints(user1, 250);
 
-        uint8 tier1 = registry.getUserLevel(user1, asset);
-        uint8 tier2 = registry.getUserLevel(user1, asset);
+        uint8 tier1 = securityAccessManager.getUserLevel(user1, asset);
+        uint8 tier2 = securityAccessManager.getUserLevel(user1, asset);
 
         assertEq(tier1, tier2, "Tier should be consistent for same points");
         assertEq(tier1, 1, "User should be Tier 1");
@@ -241,24 +238,26 @@ contract SecurityAccessManagerTest is Test {
         offset = bound(offset, 0, 3);
         address asset = assets[offset];
         vm.prank(admin);
-        registry.setLevelParams(cooldownTimes, maxDeposits, trustThresholds, asset);
+        securityAccessManager.setLevelParams(cooldownTimes, maxDeposits, trustThresholds, asset);
 
         // User deposits
         vm.startPrank(asset);
-        registry.registerDeposit(uint208(1000 * 10 ** IERC20Detailed(asset).decimals()), user1);
+        securityAccessManager.registerDeposit(
+            uint208(1000 * 10 ** IERC20Detailed(asset).decimals()), user1
+        );
 
         // Immediately after deposit, should be locked
-        uint256 liquid = registry.getLiquidFunds(user1, asset);
+        uint256 liquid = securityAccessManager.getLiquidFunds(user1, asset);
         assertEq(liquid, 0, "Deposit should be locked immediately");
 
         // After 1 day (less than 2 day cooldown for Tier 0), still locked
         vm.warp(block.timestamp + 1 days);
-        liquid = registry.getLiquidFunds(user1, asset);
+        liquid = securityAccessManager.getLiquidFunds(user1, asset);
         assertEq(liquid, 0, "Deposit should be locked after 1 day (Tier 0 = 2 days)");
 
         // After 2 days, should be unlocked
         vm.warp(block.timestamp + 1 days);
-        liquid = registry.getLiquidFunds(user1, asset);
+        liquid = securityAccessManager.getLiquidFunds(user1, asset);
         assertEq(
             liquid,
             1000 * 10 ** IERC20Detailed(asset).decimals(),
@@ -274,36 +273,40 @@ contract SecurityAccessManagerTest is Test {
         offset = bound(offset, 0, 3);
         address asset = assets[offset];
         vm.prank(admin);
-        registry.setLevelParams(cooldownTimes, maxDeposits, trustThresholds, asset);
+        securityAccessManager.setLevelParams(cooldownTimes, maxDeposits, trustThresholds, asset);
 
         // Deposit A at T+0
         vm.startPrank(asset);
-        registry.registerDeposit(uint208(500 * 10 ** IERC20Detailed(asset).decimals()), user1);
+        securityAccessManager.registerDeposit(
+            uint208(500 * 10 ** IERC20Detailed(asset).decimals()), user1
+        );
 
-        uint256 liquid = registry.getLiquidFunds(user1, asset);
+        uint256 liquid = securityAccessManager.getLiquidFunds(user1, asset);
         assertEq(liquid, 0, "Both deposits still locked");
         uint256 time1 = block.timestamp;
 
         // Deposit B at T+1 day
         vm.warp(block.timestamp + 1 days);
-        registry.registerDeposit(uint208(500 * 10 ** IERC20Detailed(asset).decimals()), user1);
+        securityAccessManager.registerDeposit(
+            uint208(500 * 10 ** IERC20Detailed(asset).decimals()), user1
+        );
 
         // At T+1.5 days: First deposit (2 day cooldown) still locked
         // Second deposit (1.5 days passed) still locked
         vm.warp(block.timestamp + 12 hours);
-        liquid = registry.getLiquidFunds(user1, asset);
+        liquid = securityAccessManager.getLiquidFunds(user1, asset);
         assertEq(liquid, 0, "Both deposits still locked");
 
         // At T+2 days: First deposit unlocks, second still locked
         vm.warp(time1 + 2 days + 1 seconds);
-        liquid = registry.getLiquidFunds(user1, asset);
+        liquid = securityAccessManager.getLiquidFunds(user1, asset);
         assertEq(
             liquid, 500 * 10 ** IERC20Detailed(asset).decimals(), "Only first deposit should unlock"
         );
 
         // At T+3 days: Both deposits unlocked
         vm.warp(time1 + 3 days + 1 seconds);
-        liquid = registry.getLiquidFunds(user1, asset);
+        liquid = securityAccessManager.getLiquidFunds(user1, asset);
         assertEq(
             liquid, 1000 * 10 ** IERC20Detailed(asset).decimals(), "Both deposits should be liquid"
         );
@@ -317,36 +320,38 @@ contract SecurityAccessManagerTest is Test {
         offset = bound(offset, 0, 3);
         address asset = assets[offset];
         vm.prank(admin);
-        registry.setLevelParams(cooldownTimes, maxDeposits, trustThresholds, asset);
+        securityAccessManager.setLevelParams(cooldownTimes, maxDeposits, trustThresholds, asset);
 
         // User starts at Tier 0 (2 day cooldown)
         vm.startPrank(asset);
-        registry.registerDeposit(uint208(1000 * 10 ** IERC20Detailed(asset).decimals()), user1);
+        securityAccessManager.registerDeposit(
+            uint208(1000 * 10 ** IERC20Detailed(asset).decimals()), user1
+        );
         vm.stopPrank();
 
         // After 1 day, promote to Tier 1 (1 day cooldown)
         vm.warp(block.timestamp + 1 days);
         vm.prank(pointsManager);
-        registry.increaseTrustPoints(user1, 100);
+        securityAccessManager.increaseTrustPoints(user1, 100);
 
         // After 1 day and promotion, should be liquid
         // // (OLD deposit time + NEW tier's 1-day cooldown)
         // vm.warp(block.timestamp + 1 days + 1 seconds);
-        uint256 liquid = registry.getLiquidFunds(user1, asset);
+        uint256 liquid = securityAccessManager.getLiquidFunds(user1, asset);
         assertEq(
             liquid,
             1000 * 10 ** IERC20Detailed(asset).decimals(),
             "Should be liquid with Tier 1 cooldown applied"
         );
         vm.prank(pointsManager);
-        registry.decreaseTrustPoints(user1, 20);
-        liquid = registry.getLiquidFunds(user1, asset);
+        securityAccessManager.decreaseTrustPoints(user1, 20);
+        liquid = securityAccessManager.getLiquidFunds(user1, asset);
         assertEq(liquid, 0, "Should be illiquid after trust points deduction");
         vm.warp(block.timestamp + 1 days - 1);
-        liquid = registry.getLiquidFunds(user1, asset);
+        liquid = securityAccessManager.getLiquidFunds(user1, asset);
         assertEq(liquid, 0, "Should be illiquid after not all day of waiting");
         vm.warp(block.timestamp + 1);
-        liquid = registry.getLiquidFunds(user1, asset);
+        liquid = securityAccessManager.getLiquidFunds(user1, asset);
         assertEq(
             liquid,
             1000 * 10 ** IERC20Detailed(asset).decimals(),
@@ -365,50 +370,54 @@ contract SecurityAccessManagerTest is Test {
         address asset1 = assets[offset];
         address asset2 = assets[(offset + 1) % 4];
         vm.startPrank(admin);
-        registry.setLevelParams(cooldownTimes, maxDeposits, trustThresholds, asset1);
-        registry.setLevelParams(cooldownTimes, maxDeposits, trustThresholds, asset2);
+        securityAccessManager.setLevelParams(cooldownTimes, maxDeposits, trustThresholds, asset1);
+        securityAccessManager.setLevelParams(cooldownTimes, maxDeposits, trustThresholds, asset2);
         vm.stopPrank();
 
         // Tier 0: Max 1000e8
         vm.startPrank(asset1);
-        registry.registerDeposit(uint208(1000 * 10 ** IERC20Detailed(asset1).decimals()), user1); // Should succeed
+        securityAccessManager.registerDeposit(
+            uint208(1000 * 10 ** IERC20Detailed(asset1).decimals()), user1
+        ); // Should succeed
 
-        console2.log("All funds 1:", registry.getAllFunds(user1, asset1));
-        console2.log("Max funds 1:", registry.getMaxDepositInOriginDecimals(0, asset1));
+        console2.log("All funds 1:", securityAccessManager.getAllFunds(user1, asset1));
+        console2.log("Max funds 1:", securityAccessManager.getMaxDepositInOriginDecimals(0, asset1));
 
         // Try to exceed limit
         uint208 depositAmount = uint208(1 * 10 ** IERC20Detailed(asset1).decimals());
         vm.expectRevert(bytes(Errors.SAM_EXCEEDED_MAX_DEPOSIT));
-        registry.registerDeposit(depositAmount, user1);
+        securityAccessManager.registerDeposit(depositAmount, user1);
         vm.stopPrank();
 
         // Promote to Tier 1: Max 5000e8
         vm.prank(pointsManager);
-        registry.increaseTrustPoints(user1, 100);
+        securityAccessManager.increaseTrustPoints(user1, 100);
 
         // Wait for cooldown
         vm.warp(block.timestamp + 2 days + 1 seconds);
-        console2.log("All funds 2:", registry.getAllFunds(user1, asset2));
-        console2.log("Max funds 2:", registry.getLevelParams(asset2)[1].maxDeposit);
+        console2.log("All funds 2:", securityAccessManager.getAllFunds(user1, asset2));
+        console2.log("Max funds 2:", securityAccessManager.getLevelParams(asset2)[1].maxDeposit);
 
         depositAmount = uint208(5000 * 10 ** IERC20Detailed(asset2).decimals());
         // Can now deposit more (new deposit, independent)
         vm.startPrank(asset2);
-        registry.registerDeposit(uint208(depositAmount), user1); // Different asset
+        securityAccessManager.registerDeposit(uint208(depositAmount), user1); // Different asset
         depositAmount = uint208(4000 * 10 ** IERC20Detailed(asset1).decimals());
         vm.stopPrank();
         vm.startPrank(asset1);
-        registry.registerDeposit(depositAmount, user1); // Different asset
+        securityAccessManager.registerDeposit(depositAmount, user1); // Different asset
         vm.stopPrank();
 
-        console2.log("2222 All funds 1:", registry.getAllFunds(user1, asset2));
-        console2.log("2222 Max funds 1:", registry.getMaxDepositInOriginDecimals(1, asset2));
+        console2.log("2222 All funds 1:", securityAccessManager.getAllFunds(user1, asset2));
+        console2.log(
+            "2222 Max funds 1:", securityAccessManager.getMaxDepositInOriginDecimals(1, asset2)
+        );
 
         vm.startPrank(asset2);
         // But still can't exceed 5000e8 limit
         depositAmount = uint208(10 ** IERC20Detailed(asset2).decimals());
         vm.expectRevert(bytes(Errors.SAM_EXCEEDED_MAX_DEPOSIT));
-        registry.registerDeposit(depositAmount, user1);
+        securityAccessManager.registerDeposit(depositAmount, user1);
         vm.stopPrank();
     }
 
@@ -420,13 +429,15 @@ contract SecurityAccessManagerTest is Test {
         address asset1 = assets[offset];
         address asset2 = assets[(offset + 1) % 4];
         vm.startPrank(admin);
-        registry.setLevelParams(cooldownTimes, maxDeposits, trustThresholds, asset1);
-        registry.setLevelParams(cooldownTimes, maxDeposits, trustThresholds, asset2);
+        securityAccessManager.setLevelParams(cooldownTimes, maxDeposits, trustThresholds, asset1);
+        securityAccessManager.setLevelParams(cooldownTimes, maxDeposits, trustThresholds, asset2);
         vm.stopPrank();
 
         // Deposit 1
         vm.startPrank(asset1);
-        registry.registerDeposit(uint208(1000 * 10 ** IERC20Detailed(asset1).decimals()), user1);
+        securityAccessManager.registerDeposit(
+            uint208(1000 * 10 ** IERC20Detailed(asset1).decimals()), user1
+        );
         vm.stopPrank();
 
         // Wait for cooldown
@@ -434,12 +445,14 @@ contract SecurityAccessManagerTest is Test {
 
         vm.startPrank(asset2);
         // Deposit 2 (each is separate, no cumulative limit)
-        registry.registerDeposit(uint208(1000 * 10 ** IERC20Detailed(asset2).decimals()), user1);
+        securityAccessManager.registerDeposit(
+            uint208(1000 * 10 ** IERC20Detailed(asset2).decimals()), user1
+        );
         vm.stopPrank();
 
         // Total deposits = 2000e8, but each deposit respects 1000e8 limit
-        uint256 usdcAll = registry.getAllFunds(user1, asset1);
-        uint256 usdtAll = registry.getAllFunds(user1, asset2);
+        uint256 usdcAll = securityAccessManager.getAllFunds(user1, asset1);
+        uint256 usdtAll = securityAccessManager.getAllFunds(user1, asset2);
 
         assertEq(usdcAll, 1000 * 10 ** IERC20Detailed(asset1).decimals(), "asset1 total correct");
         assertEq(usdtAll, 1000 * 10 ** IERC20Detailed(asset2).decimals(), "asset2 total correct");
@@ -454,22 +467,22 @@ contract SecurityAccessManagerTest is Test {
         offset = bound(offset, 0, 3);
         address asset = assets[offset];
         vm.prank(admin);
-        registry.setLevelParams(cooldownTimes, maxDeposits, trustThresholds, asset);
+        securityAccessManager.setLevelParams(cooldownTimes, maxDeposits, trustThresholds, asset);
 
         // Unauthorized user tries
         vm.prank(unauthorizedUser);
         vm.expectRevert(bytes(Errors.SAM_UNAUTHORIZED));
-        registry.increaseTrustPoints(user1, 100);
+        securityAccessManager.increaseTrustPoints(user1, 100);
 
         // POINTS_MANAGER succeeds
         vm.prank(pointsManager);
-        registry.increaseTrustPoints(user1, 100);
+        securityAccessManager.increaseTrustPoints(user1, 100);
 
         // ADMIN succeeds
         vm.prank(admin);
-        registry.increaseTrustPoints(user1, 100);
+        securityAccessManager.increaseTrustPoints(user1, 100);
 
-        uint8 tier = registry.getUserLevel(user1, asset);
+        uint8 tier = securityAccessManager.getUserLevel(user1, asset);
         assertEq(tier, 1, "Trust points increased successfully");
     }
 
@@ -480,26 +493,26 @@ contract SecurityAccessManagerTest is Test {
         offset = bound(offset, 0, 3);
         address asset = assets[offset];
         vm.prank(admin);
-        registry.setLevelParams(cooldownTimes, maxDeposits, trustThresholds, asset);
+        securityAccessManager.setLevelParams(cooldownTimes, maxDeposits, trustThresholds, asset);
 
         // Setup
         vm.prank(pointsManager);
-        registry.increaseTrustPoints(user1, 100);
+        securityAccessManager.increaseTrustPoints(user1, 100);
 
         // Unauthorized user tries
         vm.prank(unauthorizedUser);
         vm.expectRevert(bytes(Errors.SAM_UNAUTHORIZED));
-        registry.decreaseTrustPoints(user1, 50);
+        securityAccessManager.decreaseTrustPoints(user1, 50);
 
         // POINTS_MANAGER succeeds
         vm.prank(pointsManager);
-        registry.decreaseTrustPoints(user1, 50);
+        securityAccessManager.decreaseTrustPoints(user1, 50);
 
         // ADMIN succeeds
         vm.prank(admin);
-        registry.decreaseTrustPoints(user1, 50);
+        securityAccessManager.decreaseTrustPoints(user1, 50);
 
-        uint8 tier = registry.getUserLevel(user1, asset);
+        uint8 tier = securityAccessManager.getUserLevel(user1, asset);
         assertEq(tier, 0, "Trust points decreased successfully");
     }
 
@@ -512,14 +525,14 @@ contract SecurityAccessManagerTest is Test {
         // Unauthorized user tries
         vm.prank(unauthorizedUser);
         vm.expectRevert();
-        registry.setLevelParams(cooldownTimes, maxDeposits, trustThresholds, asset);
+        securityAccessManager.setLevelParams(cooldownTimes, maxDeposits, trustThresholds, asset);
 
         // Admin succeeds
         vm.prank(admin);
-        registry.setLevelParams(cooldownTimes, maxDeposits, trustThresholds, asset);
+        securityAccessManager.setLevelParams(cooldownTimes, maxDeposits, trustThresholds, asset);
 
         // Verify params set
-        uint8 tier = registry.getUserLevel(user1, asset);
+        uint8 tier = securityAccessManager.getUserLevel(user1, asset);
         assertEq(tier, 0, "Initial tier is 0");
     }
 
@@ -539,7 +552,7 @@ contract SecurityAccessManagerTest is Test {
 
         vm.prank(admin);
         vm.expectRevert(bytes(Errors.SAM_COOLDOWN_NOT_DECREASING));
-        registry.setLevelParams(badCooldown, maxDeposits, trustThresholds, asset);
+        securityAccessManager.setLevelParams(badCooldown, maxDeposits, trustThresholds, asset);
 
         // Test 2: Max deposits not increasing (should be rejected)
         uint208[] memory badDeposits = new uint208[](3);
@@ -549,7 +562,7 @@ contract SecurityAccessManagerTest is Test {
 
         vm.prank(admin);
         vm.expectRevert(bytes(Errors.SAM_MAX_DEPOSIT_NOT_INCREASING));
-        registry.setLevelParams(cooldownTimes, badDeposits, trustThresholds, asset);
+        securityAccessManager.setLevelParams(cooldownTimes, badDeposits, trustThresholds, asset);
 
         // Test 3: Thresholds not increasing (should be rejected)
         uint16[] memory badThresholds = new uint16[](3);
@@ -559,7 +572,7 @@ contract SecurityAccessManagerTest is Test {
 
         vm.prank(admin);
         vm.expectRevert(bytes(Errors.SAM_TRUSTPOINTS_NOT_INCREASING));
-        registry.setLevelParams(cooldownTimes, maxDeposits, badThresholds, asset);
+        securityAccessManager.setLevelParams(cooldownTimes, maxDeposits, badThresholds, asset);
     }
 
     /**
@@ -574,7 +587,7 @@ contract SecurityAccessManagerTest is Test {
 
         vm.prank(admin);
         vm.expectRevert(bytes(Errors.SAM_WRONG_ARRAY_LENGTH));
-        registry.setLevelParams(shortCooldown, maxDeposits, trustThresholds, asset);
+        securityAccessManager.setLevelParams(shortCooldown, maxDeposits, trustThresholds, asset);
     }
 
     // ============ INTEGRATION TESTS ============
@@ -587,56 +600,64 @@ contract SecurityAccessManagerTest is Test {
         address asset = assets[offset];
         address asset1 = assets[(offset + 1) % 4];
         vm.startPrank(admin);
-        registry.setLevelParams(cooldownTimes, maxDeposits, trustThresholds, asset);
-        registry.setLevelParams(cooldownTimes, maxDeposits, trustThresholds, asset1);
+        securityAccessManager.setLevelParams(cooldownTimes, maxDeposits, trustThresholds, asset);
+        securityAccessManager.setLevelParams(cooldownTimes, maxDeposits, trustThresholds, asset1);
         vm.stopPrank();
 
         // Day 1: User deposits at Tier 0
         vm.startPrank(asset);
-        registry.registerDeposit(uint208(500 * 10 ** IERC20Detailed(asset).decimals()), user1);
+        securityAccessManager.registerDeposit(
+            uint208(500 * 10 ** IERC20Detailed(asset).decimals()), user1
+        );
         vm.stopPrank();
 
-        assertEq(registry.getUserLevel(user1, asset), 0, "Should start at Tier 0");
-        assertEq(registry.getLiquidFunds(user1, asset), 0, "Locked (2 day cooldown)");
+        assertEq(securityAccessManager.getUserLevel(user1, asset), 0, "Should start at Tier 0");
+        assertEq(securityAccessManager.getLiquidFunds(user1, asset), 0, "Locked (2 day cooldown)");
 
         // Day 3: Deposit unlocks, gets promoted to Tier 1
         vm.warp(block.timestamp + 2 days + 1 seconds);
 
         assertEq(
-            registry.getLiquidFunds(user1, asset),
+            securityAccessManager.getLiquidFunds(user1, asset),
             500 * 10 ** IERC20Detailed(asset).decimals(),
             "Not unlocked after cooldown"
         );
 
         vm.prank(pointsManager);
-        registry.increaseTrustPoints(user1, 150); // Now Tier 1
+        securityAccessManager.increaseTrustPoints(user1, 150); // Now Tier 1
 
-        assertEq(registry.getUserLevel(user1, asset), 1, "Promoted to Tier 1");
+        assertEq(securityAccessManager.getUserLevel(user1, asset), 1, "Promoted to Tier 1");
 
         // Day 4: Make new deposit with Tier 1 limits
         vm.warp(block.timestamp + 1 days);
 
         vm.startPrank(asset1);
-        registry.registerDeposit(uint208(5000 * 10 ** IERC20Detailed(asset1).decimals()), user1);
+        securityAccessManager.registerDeposit(
+            uint208(5000 * 10 ** IERC20Detailed(asset1).decimals()), user1
+        );
         vm.stopPrank();
-        assertEq(registry.getLiquidFunds(user1, asset1), 0, "New deposit locked (1 day cooldown)");
+        assertEq(
+            securityAccessManager.getLiquidFunds(user1, asset1),
+            0,
+            "New deposit locked (1 day cooldown)"
+        );
 
         // Day 5: New deposit unlocks
         vm.warp(block.timestamp + 1 days);
 
         assertEq(
-            registry.getAllFunds(user1, asset),
+            securityAccessManager.getAllFunds(user1, asset),
             500 * 10 ** IERC20Detailed(asset).decimals(),
             "USDC changed"
         );
         assertEq(
-            registry.getAllFunds(user1, asset1),
+            securityAccessManager.getAllFunds(user1, asset1),
             5000 * 10 ** IERC20Detailed(asset1).decimals(),
             "USDT not accumulated"
         );
         vm.warp(block.timestamp + 1 seconds);
         assertEq(
-            registry.getLiquidFunds(user1, asset1),
+            securityAccessManager.getLiquidFunds(user1, asset1),
             5000 * 10 ** IERC20Detailed(asset1).decimals(),
             "Not unlocked after 1 day"
         );
@@ -651,14 +672,14 @@ contract SecurityAccessManagerTest is Test {
         offset = bound(offset, 0, 3);
         address asset = assets[offset];
         vm.prank(admin);
-        registry.setLevelParams(cooldownTimes, maxDeposits, trustThresholds, asset);
+        securityAccessManager.setLevelParams(cooldownTimes, maxDeposits, trustThresholds, asset);
 
         address newUser = address(0x12345);
 
-        uint8 tier = registry.getUserLevel(newUser, asset);
+        uint8 tier = securityAccessManager.getUserLevel(newUser, asset);
         assertEq(tier, 0, "New user should be Tier 0");
 
-        uint256 funds = registry.getAllFunds(newUser, USDC);
+        uint256 funds = securityAccessManager.getAllFunds(newUser, USDC);
         assertEq(funds, 0, "New user has no funds");
     }
 
@@ -669,10 +690,12 @@ contract SecurityAccessManagerTest is Test {
         offset = bound(offset, 0, 3);
         address asset = assets[offset];
         vm.prank(admin);
-        registry.setLevelParams(cooldownTimes, maxDeposits, trustThresholds, asset);
+        securityAccessManager.setLevelParams(cooldownTimes, maxDeposits, trustThresholds, asset);
 
         vm.startPrank(asset);
-        registry.registerDeposit(uint208(1000 * 10 ** IERC20Detailed(asset).decimals()), user1);
+        securityAccessManager.registerDeposit(
+            uint208(1000 * 10 ** IERC20Detailed(asset).decimals()), user1
+        );
         vm.stopPrank();
 
         uint256 depositTime = block.timestamp;
@@ -680,12 +703,12 @@ contract SecurityAccessManagerTest is Test {
 
         // At T + 2 days - 1 second: Should be 0
         vm.warp(depositTime + cooldownPeriod - 1 seconds);
-        uint256 liquid = registry.getLiquidFunds(user1, asset);
+        uint256 liquid = securityAccessManager.getLiquidFunds(user1, asset);
         assertEq(liquid, 0, "Not liquid 1 second before cooldown expires");
 
         // At T + 2 days: Should be 0 (already passed)
         vm.warp(depositTime + cooldownPeriod);
-        liquid = registry.getLiquidFunds(user1, asset);
+        liquid = securityAccessManager.getLiquidFunds(user1, asset);
         assertEq(
             liquid,
             1000 * 10 ** IERC20Detailed(asset).decimals(),
@@ -694,9 +717,11 @@ contract SecurityAccessManagerTest is Test {
 
         // At T + 2 days + 1 second: Should unlock
         vm.warp(depositTime + cooldownPeriod + 1 seconds);
-        liquid = registry.getLiquidFunds(user1, asset);
+        liquid = securityAccessManager.getLiquidFunds(user1, asset);
         assertEq(
             liquid, 1000 * 10 ** IERC20Detailed(asset).decimals(), "Should be liquid after cooldown"
         );
     }
+
+    function unregisterRegisterVariations() public {}
 }

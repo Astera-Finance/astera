@@ -479,7 +479,7 @@ contract LendingPool is
         ) = GenericLogic.calculateUserAccountData(_reserves, _reservesList, params);
 
         availableBorrowsETH =
-            GenericLogic.calculateAvailableBorrowsETH(totalCollateralETH, totalDebtETH, ltv);
+            GenericLogic.calculateAvailableBorrowsETH(liquidFunds, totalDebtETH, ltv);
     }
 
     /**
