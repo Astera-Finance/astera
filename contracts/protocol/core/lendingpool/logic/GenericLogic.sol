@@ -248,12 +248,15 @@ library GenericLogic {
                 vars.totalCollateralInETH = vars.totalCollateralInETH + liquidityBalanceETH;
 
                 if (address(0) == params.securityAccessManager) {
+                    // if security access manager is not configured collaterals are accounted instantly
                     vars.liquidFunds = vars.totalCollateralInETH;
                 } else {
-                    uint256 liquidFundsETH = vars.reserveUnitPrice
-                        * ISecurityAccessManager(params.securityAccessManager)
-                            .getLiquidFunds(params.user, currentReserve.aTokenAddress)
-                        / vars.tokenUnit;
+                    uint256 compoundedLiquidFunds = ISecurityAccessManager(
+                            params.securityAccessManager
+                        ).getLiquidFunds(params.user, currentReserve.aTokenAddress)
+                        .rayMul(currentReserve.getNormalizedIncome());
+                    uint256 liquidFundsETH =
+                        vars.reserveUnitPrice * compoundedLiquidFunds / vars.tokenUnit;
                     vars.liquidFunds = vars.liquidFunds + liquidFundsETH;
                     require(
                         vars.liquidFunds <= vars.totalCollateralInETH, Errors.GL_WRONG_LIQUID_FUNDS

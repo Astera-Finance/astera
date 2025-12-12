@@ -216,22 +216,18 @@ contract SecurityAccessManagerTest is LendingPoolFixtures {
         uint256 liquidFunds;
     }
 
-    function test_userAccountDataChanges(
+    function userAccountDataChanges(
         uint256 collateralOffset,
         uint256 borrowOffset,
-        uint256 cooldownTime
+        uint256 cooldownTime,
+        uint256 amount
     ) public {
-        collateralOffset = bound(collateralOffset, 0, erc20Tokens.length - 1);
-        borrowOffset = bound(borrowOffset, 0, erc20Tokens.length - 1);
-        cooldownTime = bound(cooldownTime, cooldownTimes[0], 2 * cooldownTimes[0]);
         TokenTypes memory borrowToken = TokenTypes({
             token: erc20Tokens[borrowOffset],
             aToken: commonContracts.aTokens[borrowOffset],
             debtToken: commonContracts.variableDebtTokens[borrowOffset]
         });
-        uint256 amount = securityAccessManager.getMaxDepositInOriginDecimals(
-            0, address(commonContracts.aTokens[collateralOffset])
-        );
+
         console2.log("Amount: ", amount);
         fixture_deposit(
             erc20Tokens[collateralOffset],
@@ -314,7 +310,7 @@ contract SecurityAccessManagerTest is LendingPoolFixtures {
             userDataAccountData.healthFactor,
             userDataAccountData.liquidFunds
         ) = deployedContracts.lendingPool.getUserAccountData(address(this));
-        console2.log("HhealthFactor: ", userDataAccountData.healthFactor);
+        console2.log("HealthFactor: ", userDataAccountData.healthFactor);
         console2.log("availableBorrowsETH: ", userDataAccountData.availableBorrowsETH);
 
         console2.log("ltv: ", userDataAccountData.ltv);
@@ -334,6 +330,20 @@ contract SecurityAccessManagerTest is LendingPoolFixtures {
             0,
             "Total collateral should be greater than zero"
         );
+    }
+
+    function test_userAccountDataChanges(
+        uint256 collateralOffset,
+        uint256 borrowOffset,
+        uint256 cooldownTime
+    ) public {
+        collateralOffset = bound(collateralOffset, 0, erc20Tokens.length - 1);
+        borrowOffset = bound(borrowOffset, 0, erc20Tokens.length - 1);
+        cooldownTime = bound(cooldownTime, cooldownTimes[0], 2 * cooldownTimes[0]);
+        uint256 amount = securityAccessManager.getMaxDepositInOriginDecimals(
+            0, address(commonContracts.aTokens[collateralOffset])
+        );
+        userAccountDataChanges(collateralOffset, borrowOffset, cooldownTime, amount);
     }
 
     function test_withdrawalDecreaseLiquidFundsAndCanBeDoneJustAfterDeployment(
@@ -486,6 +496,7 @@ contract SecurityAccessManagerTest is LendingPoolFixtures {
             previousUserDataAccountData.availableBorrowsETH, 0, "Available borrows should be zero"
         );
 
+        // Wait cooldown time
         vm.warp(block.timestamp + cooldownTime);
 
         (
@@ -519,19 +530,34 @@ contract SecurityAccessManagerTest is LendingPoolFixtures {
         ) = deployedContracts.lendingPool.getUserAccountData(address(this));
         console2.log("HealthFactor: ", userDataAccountData.healthFactor);
         console2.log("availableBorrowsETH: ", userDataAccountData.availableBorrowsETH);
-
-        console2.log("ltv: ", userDataAccountData.ltv);
         console2.log("liquidFunds: ", userDataAccountData.liquidFunds);
+        console2.log(
+            "previousUserDataAccountData.liquidFunds: ", previousUserDataAccountData.liquidFunds
+        );
+        uint256 amountInETH =
+            (commonContracts.oracle.getAssetPrice(address(erc20Tokens[collateralOffset]))
+                    * (amount / 2)) / (10 ** erc20Tokens[collateralOffset].decimals());
+
+        console2.log("amountInETH: ", amountInETH);
+        console2.log(
+            "previousUserDataAccountData.liquidFunds - amountInETH",
+            previousUserDataAccountData.liquidFunds - amountInETH
+        );
 
         assertLt(
-            userDataAccountData.liquidFunds,
-            previousUserDataAccountData.liquidFunds,
-            "Liquid funds should be the same as total collateral"
+            userDataAccountData.availableBorrowsETH,
+            previousUserDataAccountData.availableBorrowsETH,
+            "Available to borrow in ETH is not less after transfer"
         );
-        assertLt(
+        assertEq(
+            userDataAccountData.liquidFunds,
+            previousUserDataAccountData.liquidFunds - amountInETH,
+            "Liquid funds should be less by {amountInETH}"
+        );
+        assertEq(
             userDataAccountData.totalCollateralETH,
-            previousUserDataAccountData.totalCollateralETH,
-            "Total collateral should be greater than zero"
+            previousUserDataAccountData.totalCollateralETH - amountInETH,
+            "Total collateral should be less by {amountInETH}"
         );
         (
             userDataAccountData.totalCollateralETH,,
@@ -539,26 +565,329 @@ contract SecurityAccessManagerTest is LendingPoolFixtures {
             userDataAccountData.ltv,
             userDataAccountData.healthFactor,
             userDataAccountData.liquidFunds
-        ) = deployedContracts.lendingPool.getUserAccountData(address(this));
-        console2.log("HealthFactor: ", userDataAccountData.healthFactor);
-        console2.log("availableBorrowsETH: ", userDataAccountData.availableBorrowsETH);
-
-        console2.log("ltv: ", userDataAccountData.ltv);
-        console2.log("liquidFunds: ", userDataAccountData.liquidFunds);
-        console2.log("total collateral: ", userDataAccountData.totalCollateralETH);
+        ) = deployedContracts.lendingPool.getUserAccountData(user1);
+        console2.log("User's healthFactor: ", userDataAccountData.healthFactor);
+        console2.log("User's availableBorrowsETH: ", userDataAccountData.availableBorrowsETH);
+        console2.log("User's liquidFunds: ", userDataAccountData.liquidFunds);
+        console2.log("User's total collateral: ", userDataAccountData.totalCollateralETH);
 
         assertGt(
             userDataAccountData.totalCollateralETH,
             0,
-            "Total collateral should be greater than zero"
+            "User's Total collateral should be greater than zero"
+        );
+        assertEq(userDataAccountData.liquidFunds, 0, "User's liquidFunds collateral should be zero");
+        assertEq(
+            userDataAccountData.availableBorrowsETH, 0, "User's availableBorrowsETH should be zero"
         );
 
-        // TODO: complete test !!
+        // Wait cooldown time
+        vm.warp(block.timestamp + cooldownTime);
+
+        (
+            userDataAccountData.totalCollateralETH,,
+            userDataAccountData.availableBorrowsETH,,
+            userDataAccountData.ltv,
+            userDataAccountData.healthFactor,
+            userDataAccountData.liquidFunds
+        ) = deployedContracts.lendingPool.getUserAccountData(user1);
+        console2.log("User's availableBorrowsETH: ", userDataAccountData.availableBorrowsETH);
+        console2.log("User's liquidFunds: ", userDataAccountData.liquidFunds);
+        assertGt(
+            userDataAccountData.liquidFunds, 0, "User's liquidFunds should be greater than zero"
+        );
+        assertGt(
+            userDataAccountData.availableBorrowsETH,
+            0,
+            "User's availableBorrowsETH should be greater than zero"
+        );
     }
 
     function test_liquidFundsIncreasesTogertherWithLiquidityIndex(
         uint256 collateralOffset,
         uint256 borrowOffset,
         uint256 cooldownTime
-    ) public {}
+    ) public {
+        collateralOffset = bound(collateralOffset, 0, erc20Tokens.length - 1);
+        borrowOffset = bound(borrowOffset, 0, erc20Tokens.length - 1);
+        cooldownTime = bound(cooldownTime, cooldownTimes[0], 2 * cooldownTimes[0]);
+        uint256 amount = securityAccessManager.getMaxDepositInOriginDecimals(
+            0, address(commonContracts.aTokens[collateralOffset])
+        );
+        userAccountDataChanges(collateralOffset, borrowOffset, cooldownTime, amount);
+
+        // Wait cooldown time
+        vm.warp(block.timestamp + cooldownTime);
+
+        UserDataAccountData memory previousUserDataAccount;
+        (
+            previousUserDataAccount.totalCollateralETH,,
+            previousUserDataAccount.availableBorrowsETH,,
+            previousUserDataAccount.ltv,
+            previousUserDataAccount.healthFactor,
+            previousUserDataAccount.liquidFunds
+        ) = deployedContracts.lendingPool.getUserAccountData(user1);
+
+        // Wait cooldown time
+        vm.warp(block.timestamp + 7 days);
+
+        // Withdraw in order to sync index
+        deployedContracts.lendingPool
+            .withdraw(address(erc20Tokens[collateralOffset]), true, 100, address(this));
+
+        UserDataAccountData memory userDataAccountData;
+        (
+            userDataAccountData.totalCollateralETH,,
+            userDataAccountData.availableBorrowsETH,,
+            userDataAccountData.ltv,
+            userDataAccountData.healthFactor,
+            userDataAccountData.liquidFunds
+        ) = deployedContracts.lendingPool.getUserAccountData(user1);
+
+        console2.log(
+            "userDataAccountData.totalCollateralETH: ", userDataAccountData.totalCollateralETH
+        );
+        console2.log(
+            "previousUserDataAccount.totalCollateralETH: ",
+            previousUserDataAccount.totalCollateralETH
+        );
+
+        console2.log(
+            "userDataAccountData.availableBorrowsETH: ", userDataAccountData.availableBorrowsETH
+        );
+        console2.log(
+            "previousUserDataAccount.availableBorrowsETH: ",
+            previousUserDataAccount.availableBorrowsETH
+        );
+
+        console2.log("userDataAccountData.liquidFunds: ", userDataAccountData.liquidFunds);
+
+        console2.log("previousUserDataAccount.liquidFunds: ", previousUserDataAccount.liquidFunds);
+
+        assertGt(
+            userDataAccountData.availableBorrowsETH,
+            previousUserDataAccount.availableBorrowsETH,
+            "User's availableBorrowsETH should be greater than previous as user1 accrued interests"
+        );
+        assertGt(
+            userDataAccountData.liquidFunds,
+            previousUserDataAccount.liquidFunds,
+            "User's liquidFunds should be greater than previous as user1 accrued interests"
+        );
+        // assertGt(
+        //     userDataAccountData.availableBorrowsETH,
+        //     previousUserDataAccount.availableBorrowsETH,
+        //     "User's availableBorrowsETH should be greater than previous as user1 accrued interests"
+        // );
+    }
+
+    function test_multipleDepositsBorrows(
+        uint256 collateralOffset,
+        uint256 borrowOffset,
+        uint256 cooldownTime
+    ) public {
+        collateralOffset = bound(collateralOffset, 0, erc20Tokens.length - 1);
+        borrowOffset = bound(borrowOffset, 0, erc20Tokens.length - 1);
+        cooldownTime = bound(cooldownTime, cooldownTimes[0], 2 * cooldownTimes[0]);
+        uint256 collateralAmount = securityAccessManager.getMaxDepositInOriginDecimals(
+            0, address(commonContracts.aTokens[collateralOffset])
+        );
+        uint256 borrowAmount = securityAccessManager.getMaxDepositInOriginDecimals(
+            0, address(commonContracts.aTokens[borrowOffset])
+        );
+        userAccountDataChanges(collateralOffset, borrowOffset, cooldownTime, collateralAmount / 3);
+
+        // Wait cooldown time
+        vm.warp(block.timestamp + cooldownTime);
+
+        console2.log("Deposit borrow token by user2");
+        deal(address(erc20Tokens[borrowOffset]), user2, borrowAmount);
+        vm.startPrank(user2);
+        erc20Tokens[borrowOffset].approve(address(deployedContracts.lendingPool), type(uint256).max);
+        deployedContracts.lendingPool
+            .deposit(address(erc20Tokens[borrowOffset]), true, borrowAmount, user2);
+        vm.stopPrank();
+
+        vm.startPrank(address(this));
+        erc20Tokens[collateralOffset].approve(
+            address(deployedContracts.lendingPool), type(uint256).max
+        );
+        erc20Tokens[borrowOffset].approve(address(deployedContracts.lendingPool), type(uint256).max);
+
+        UserDataAccountData memory previousUserDataAccount;
+        (
+            previousUserDataAccount.totalCollateralETH,,
+            previousUserDataAccount.availableBorrowsETH,,,
+            previousUserDataAccount.healthFactor,
+            previousUserDataAccount.liquidFunds
+        ) = deployedContracts.lendingPool.getUserAccountData(address(this));
+
+        console2.log("Loop");
+
+        for (uint256 idx = 0; idx < 100; idx++) {
+            console2.log("->>>>> IDX: ", idx);
+            deployedContracts.lendingPool
+                .deposit(
+                    address(erc20Tokens[collateralOffset]),
+                    true,
+                    collateralAmount / 100,
+                    address(this)
+                );
+            deployedContracts.lendingPool
+                .borrow(address(erc20Tokens[borrowOffset]), true, borrowAmount / 200, address(this));
+            deployedContracts.lendingPool
+                .repay(address(erc20Tokens[borrowOffset]), true, borrowAmount / 200, address(this));
+            deployedContracts.lendingPool
+                .withdraw(
+                    address(erc20Tokens[collateralOffset]),
+                    true,
+                    collateralAmount / 100,
+                    address(this)
+                );
+            vm.warp(block.timestamp + cooldownTime / 100);
+        }
+        vm.stopPrank();
+
+        UserDataAccountData memory userDataAccount;
+        (
+            userDataAccount.totalCollateralETH,,
+            userDataAccount.availableBorrowsETH,,,
+            userDataAccount.healthFactor,
+            userDataAccount.liquidFunds
+        ) = deployedContracts.lendingPool.getUserAccountData(address(this));
+
+        console2.log(
+            "TotalCollateral before: %s after: %s",
+            previousUserDataAccount.totalCollateralETH,
+            userDataAccount.totalCollateralETH
+        );
+        console2.log(
+            "AvailableBorrowsETH before: %s after: %s",
+            previousUserDataAccount.availableBorrowsETH,
+            userDataAccount.availableBorrowsETH
+        );
+        console2.log(
+            "healthFactor before: %s after: %s",
+            previousUserDataAccount.healthFactor,
+            userDataAccount.healthFactor
+        );
+        console2.log(
+            "liquidFunds before: %s after: %s",
+            previousUserDataAccount.liquidFunds,
+            userDataAccount.liquidFunds
+        );
+
+        assertEq(
+            userDataAccount.totalCollateralETH,
+            userDataAccount.liquidFunds,
+            "Liquid funds are not equal with total collateral"
+        );
+        assertApproxEqRel(
+            previousUserDataAccount.liquidFunds,
+            userDataAccount.liquidFunds,
+            1e16,
+            "liquid funds shall be almost the same after txs (1% deviation allowed)"
+        );
+    }
+
+    function test_multipleTransfers(
+        uint256 collateralOffset,
+        uint256 borrowOffset,
+        uint256 cooldownTime
+    ) public {
+        collateralOffset = bound(collateralOffset, 0, erc20Tokens.length - 1);
+        borrowOffset = bound(borrowOffset, 0, erc20Tokens.length - 1);
+        cooldownTime = bound(cooldownTime, cooldownTimes[0], 2 * cooldownTimes[0]);
+        uint256 collateralAmount = securityAccessManager.getMaxDepositInOriginDecimals(
+            0, address(commonContracts.aTokens[collateralOffset])
+        );
+
+        deal(address(erc20Tokens[collateralOffset]), user1, collateralAmount);
+        console2.log("User deposits... ");
+        fixture_deposit(
+            erc20Tokens[collateralOffset],
+            commonContracts.aTokens[collateralOffset],
+            user1,
+            user1,
+            collateralAmount
+        );
+
+        // Wait cooldown time
+        vm.warp(block.timestamp + cooldownTime);
+
+        UserDataAccountData memory previousUserDataAccount;
+        (
+            previousUserDataAccount.totalCollateralETH,,
+            previousUserDataAccount.availableBorrowsETH,,,
+            previousUserDataAccount.healthFactor,
+            previousUserDataAccount.liquidFunds
+        ) = deployedContracts.lendingPool.getUserAccountData(user1);
+
+        console2.log(
+            "User1 deposit checkpoints length: ",
+            securityAccessManager.getUserDepositCheckpoints(
+                user1, address(commonContracts.aTokens[collateralOffset])
+            )
+            .length
+        );
+
+        vm.startPrank(user1);
+
+        console2.log("Loop");
+        for (uint256 idx = 0; idx < 100; idx++) {
+            console2.log("->>>>> IDX: ", idx);
+            commonContracts.aTokens[collateralOffset].transfer(user2, 1);
+            vm.warp(block.timestamp + cooldownTime / 100);
+        }
+
+        // commonContracts.aTokens[collateralOffset].transfer(user2, 1);
+        vm.stopPrank();
+
+        UserDataAccountData memory userDataAccount;
+        (
+            userDataAccount.totalCollateralETH,,
+            userDataAccount.availableBorrowsETH,,,
+            userDataAccount.healthFactor,
+            userDataAccount.liquidFunds
+        ) = deployedContracts.lendingPool.getUserAccountData(user1);
+
+        console2.log(
+            "TotalCollateral before: %s after: %s",
+            previousUserDataAccount.totalCollateralETH,
+            userDataAccount.totalCollateralETH
+        );
+        console2.log(
+            "AvailableBorrowsETH before: %s after: %s",
+            previousUserDataAccount.availableBorrowsETH,
+            userDataAccount.availableBorrowsETH
+        );
+        console2.log(
+            "healthFactor before: %s after: %s",
+            previousUserDataAccount.healthFactor,
+            userDataAccount.healthFactor
+        );
+        console2.log(
+            "liquidFunds before: %s after: %s",
+            previousUserDataAccount.liquidFunds,
+            userDataAccount.liquidFunds
+        );
+
+        assertEq(
+            userDataAccount.totalCollateralETH,
+            userDataAccount.liquidFunds,
+            "Liquid funds are not equal with total collateral"
+        );
+        uint256 amountInETH =
+            (commonContracts.oracle.getAssetPrice(address(erc20Tokens[collateralOffset])) * 100)
+                / (10 ** erc20Tokens[collateralOffset].decimals());
+
+        console2.log("Amount in ETH: ", amountInETH);
+
+        assertApproxEqAbs(
+            previousUserDataAccount.liquidFunds,
+            userDataAccount.liquidFunds + amountInETH,
+            1,
+            "liquid funds shall be less by {amountInETH}"
+        );
+    }
 }

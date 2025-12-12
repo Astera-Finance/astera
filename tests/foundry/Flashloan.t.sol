@@ -4,6 +4,7 @@ pragma solidity ^0.8.0;
 import "./Common.sol";
 import "contracts/protocol/libraries/helpers/Errors.sol";
 import {WadRayMath} from "contracts/protocol/libraries/math/WadRayMath.sol";
+import {SecurityAccessManager} from "contracts/protocol/core/SecurityAccessManager.sol";
 // import {ILendingPool} from "contracts/interfaces/ILendingPool.sol";
 
 contract FlashloanTest is Common {
@@ -454,5 +455,123 @@ contract FlashloanTest is Common {
         reserveData = deployedContracts.lendingPool.getReserveData(tokens[0], true);
 
         assertEq(reserveData.liquidityIndex, previousLiquidityIndex);
+    }
+
+    function test_flashloanWithSecurityManager() public {
+        SecurityAccessManager securityAccessManager;
+
+        //Configuration
+        {
+            uint32[] memory cooldownTimes;
+            uint208[] memory maxDeposits;
+            uint16[] memory trustThresholds;
+            address pointsManager = address(0x2);
+            address[] memory aTokensAddr = new address[](commonContracts.aTokens.length);
+            for (uint256 i = 0; i < commonContracts.aTokens.length; i++) {
+                aTokensAddr[i] = address(commonContracts.aTokens[i]);
+            }
+
+            address[] memory managers = new address[](1);
+            managers[0] = pointsManager;
+            securityAccessManager = new SecurityAccessManager(admin, managers, aTokensAddr);
+            deployedContracts.lendingPoolAddressesProvider
+                    .setSecurityAccessManager(address(securityAccessManager));
+
+            // Configure default tiers
+            cooldownTimes = new uint32[](3);
+            maxDeposits = new uint208[](3);
+            trustThresholds = new uint16[](3);
+
+            cooldownTimes[0] = 2 days;
+            cooldownTimes[1] = 1 days;
+            cooldownTimes[2] = 12 hours;
+
+            trustThresholds[0] = 0;
+            trustThresholds[1] = 100;
+            trustThresholds[2] = 500;
+
+            vm.startPrank(admin);
+            for (uint256 i = 0; i < aTokensAddr.length; i++) {
+                maxDeposits[0] = uint208(
+                    (erc20Tokens[i].balanceOf(address(this)) * 10 ** 8)
+                        / (10 ** erc20Tokens[i].decimals() * 4)
+                );
+                maxDeposits[1] = uint208(
+                    (erc20Tokens[i].balanceOf(address(this)) * 10 ** 8)
+                        / (10 ** erc20Tokens[i].decimals() * 2)
+                );
+                maxDeposits[2] = uint208(
+                    (erc20Tokens[i].balanceOf(address(this)) * 10 ** 8) / 10
+                        ** erc20Tokens[i].decimals()
+                );
+                securityAccessManager.setLevelParams(
+                    cooldownTimes, maxDeposits, trustThresholds, aTokensAddr[i]
+                );
+            }
+            vm.stopPrank();
+        }
+
+        // Test
+        bool[] memory reserveTypes = new bool[](tokens.length);
+        address[] memory tokenAddresses = new address[](tokens.length);
+        uint256[] memory amounts = new uint256[](tokens.length);
+        uint256[] memory modes = new uint256[](tokens.length);
+        Balances memory balances;
+        balances.balancesBefore = new uint256[](tokens.length);
+        balances.aTokenBalancesBefore = new uint256[](tokens.length);
+        balances.totalManagedAssetsBefore = new uint256[](tokens.length);
+
+        for (uint32 idx = 0; idx < tokens.length; idx++) {
+            uint256 maxDeposit = securityAccessManager.getMaxDepositInOriginDecimals(
+                0, address(commonContracts.aTokens[idx])
+            );
+            // console2.log("max deposit: ", maxDeposit);
+            // uint256 amountToDeposit = (maxDeposit * 10 ** erc20Tokens[idx].decimals()) / 10 ** 8;
+            console2.log(
+                "Amount to deposit %s vs balance: %s",
+                maxDeposit,
+                erc20Tokens[idx].balanceOf(address(this))
+            );
+            erc20Tokens[idx].approve(address(deployedContracts.lendingPool), maxDeposit);
+            deployedContracts.lendingPool
+                .deposit(address(erc20Tokens[idx]), true, maxDeposit, address(this));
+            reserveTypes[idx] = true;
+            tokenAddresses[idx] = address(erc20Tokens[idx]);
+            amounts[idx] = maxDeposit / 2;
+            modes[idx] = 0;
+            balances.balancesBefore[idx] = IERC20(tokens[idx]).balanceOf(address(this));
+            balances.aTokenBalancesBefore[idx] =
+                IERC20(tokens[idx]).balanceOf(address(commonContracts.aTokens[idx]));
+            balances.totalManagedAssetsBefore[idx] =
+                AToken(commonContracts.aTokens[idx]).getTotalManagedAssets();
+        }
+
+        ILendingPool.FlashLoanParams memory flashloanParams = ILendingPool.FlashLoanParams(
+            address(this), tokenAddresses, reserveTypes, address(this)
+        );
+        bytes memory params = abi.encode(balances.balancesBefore, address(this));
+
+        deployedContracts.lendingPool.flashLoan(flashloanParams, amounts, modes, params);
+
+        for (uint32 idx = 0; idx < tokens.length; idx++) {
+            console2.log(
+                "Balance now: %s vs Balance before: %s",
+                IERC20(tokens[idx]).balanceOf(address(commonContracts.aTokens[idx])),
+                balances.aTokenBalancesBefore[idx]
+            );
+            assertEq(
+                IERC20(tokens[idx]).balanceOf(address(commonContracts.aTokens[idx])),
+                balances.aTokenBalancesBefore[idx]
+            );
+            console2.log(
+                "Managed assets now: %s vs Managed assets before: %s",
+                AToken(commonContracts.aTokens[idx]).getTotalManagedAssets(),
+                balances.totalManagedAssetsBefore[idx]
+            );
+            assertEq(
+                AToken(commonContracts.aTokens[idx]).getTotalManagedAssets(),
+                balances.totalManagedAssetsBefore[idx]
+            );
+        }
     }
 }

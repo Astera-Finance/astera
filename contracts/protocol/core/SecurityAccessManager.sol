@@ -184,7 +184,7 @@ contract SecurityAccessManager is AccessControl, ISecurityAccessManager {
                 depositCheckpointsPtr.pop();
             }
         }
-        console2.log("Unregister amount: ", _amount);
+        console2.log("[AFTER] All funds: %s vs amount: %s", getAllFunds(_user, msg.sender), _amount);
         require(_amount == 0, Errors.SAM_NOT_ENOGUH_FUNDS);
     }
 
@@ -224,7 +224,7 @@ contract SecurityAccessManager is AccessControl, ISecurityAccessManager {
             ) {
                 totalDeposit += _depositCheckpoints[i].depositAmount;
             }
-            // Potentially add else with break because from first indexes - there are the oldest deposits so later we can't have older
+            // Potentially add else with break because, first indexed values are the oldest deposits so later we can't have older
         }
         return totalDeposit;
     }
@@ -241,16 +241,16 @@ contract SecurityAccessManager is AccessControl, ISecurityAccessManager {
         return totalDeposit;
     }
 
-    function getUserTrustPoints(address _user, address _asset)
+    function getUserTrustPoints(address _user) external view returns (uint256) {
+        return userRegister[_user].trustPoints;
+    }
+
+    function getUserDepositCheckpoints(address _user, address _asset)
         external
         view
         returns (DepositCheckpoints[] memory)
     {
         return userRegister[_user].depositCheckpoints[_asset];
-    }
-
-    function getUserDepositCheckpoints(address _user) external view returns (uint256) {
-        return userRegister[_user].trustPoints;
     }
 
     function getLevelParams(address _asset) external view returns (LevelParams[] memory) {

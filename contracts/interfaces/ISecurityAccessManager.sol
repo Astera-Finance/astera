@@ -147,20 +147,21 @@ interface ISecurityAccessManager {
     /**
      * @notice Gets the deposit checkpoints for a user
      * @param _user The address of the user
-     * @param _asset The address of the asset
-     * @return DepositCheckpoints[] Array of deposit checkpoints
+     * @return uint256 The trust points amount
+     *
      */
-    function getUserTrustPoints(address _user, address _asset)
-        external
-        view
-        returns (DepositCheckpoints[] memory);
+    function getUserTrustPoints(address _user) external view returns (uint256);
 
     /**
      * @notice Gets the trust points balance for a user
      * @param _user The address of the user
-     * @return uint256 The trust points amount
+     * @param _asset The address of the asset
+     * @return DepositCheckpoints[] Array of deposit checkpoints
      */
-    function getUserDepositCheckpoints(address _user) external view returns (uint256);
+    function getUserDepositCheckpoints(address _user, address _asset)
+        external
+        view
+        returns (DepositCheckpoints[] memory);
 
     /**
      * @notice Gets the level parameters for an asset

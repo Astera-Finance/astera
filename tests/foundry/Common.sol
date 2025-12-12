@@ -656,7 +656,7 @@ contract Common is Test {
         address _testContractAddress
     ) public {
         for (uint32 idx = 0; idx < _tokens.length; idx++) {
-            console2.log("IDX: ", idx);
+            console2.log("Index: ", idx);
             uint256 price = commonContracts.oracle.getAssetPrice(address(_tokens[idx]));
             console2.log("_toGiveInUsd:", _toGiveInUsd);
             uint256 rawGive = (_toGiveInUsd / price) * 10 ** PRICE_FEED_DECIMALS;
